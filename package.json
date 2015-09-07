@@ -1,0 +1,25 @@
+{
+  "name": "adonis-database",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "iojs ./node_modules/mocha/bin/mocha --harmony_proxies test/unit --bail"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^3.2.0",
+    "co": "^4.6.0",
+    "mocha": "^2.3.0",
+    "mysql": "^2.9.0",
+    "sqlite3": "git://github.com/kkoopa/node-sqlite3.git#nan2"
+  },
+  "dependencies": {
+    "change-case": "^2.3.0",
+    "i": "^0.3.3",
+    "knex": "^0.8.6",
+    "lodash": "^3.10.1",
+    "string": "^3.3.1"
+  }
+}
