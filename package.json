@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "iojs ./node_modules/mocha/bin/mocha --harmony_proxies test/implementation --bail"
+    "test": "iojs ./node_modules/mocha/bin/mocha --harmony_proxies test/implementation test/unit --bail"
   },
   "author": "",
   "license": "ISC",

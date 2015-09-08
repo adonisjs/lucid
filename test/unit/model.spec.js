@@ -602,29 +602,6 @@ describe('Model', function () {
 
   })
 
-  it('should be able to forceDelete model instance even when soft delete is enabled', function (done) {
-
-    class User extends Model{
-
-      static get table(){
-        return 'users'
-      }
-    }
-
-    User = User.extend()
-
-    User
-    .find(1)
-    .then (function (user) {
-      let deleteQuery = user.forceDelete().toSQL()
-      expect(deleteQuery.sql).to.equal('delete from "users" where "id" = ?')
-      expect(deleteQuery.bindings).deep.equal([1])
-      done()
-    }).catch(done)
-
-
-  })
-
   it('should add created_at and updated_at timestamps when timestamps are enabled', function () {
 
     class User extends Model{
