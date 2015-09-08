@@ -69,15 +69,12 @@ hijacker.find = function (target,id) {
     .where(target.primaryKey, id)
     .first()
     .then(function (values) {
-
       let instance = new target(values)
       instance.connection.where(target.primaryKey, id)
       resolve(instance)
-
     })
     .catch(reject)
     .finally(function () {
-
       /**
        * here we empty query chain after returning
        * all data, it is required otherwise old
@@ -85,7 +82,6 @@ hijacker.find = function (target,id) {
        * new query
        */
       target.new()
-
     })
   })
 }

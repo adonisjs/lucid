@@ -92,10 +92,21 @@ class Model {
    * @return {Promise}
    */
   forceDelete () {
+    let self = this
     if(!helpers.isFetched(this)){
       throw new Error(`You cannot delete a fresh model instance , trying fetching one using find method`)
     }
-    return this.constructor.forceDelete(this.connection)
+    return new Promise(function (resolve,reject) {
+      self
+      .constructor
+      .forceDelete(self.connection)
+      .then (function (response) {
+        self.attributes = {}
+        self.connection = self.constructor.database.table(self.constructor.table)
+        resolve(response)
+      })
+      .catch(reject)
+    })
   }
 
   /**

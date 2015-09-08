@@ -34,6 +34,10 @@ mapper.get = function (target, name) {
  * @param {*} value
  */
 mapper.set = function (target, name, value) {
+  if(name === 'attributes'){
+    target[name] = value
+    return true
+  }
   const setter = helpers.mutateField(target, name)
   target.attributes[name] = setter ? setter(value) : value
 }
