@@ -28,6 +28,13 @@ hijacker.then = function (target,name,cb) {
   return target.activeConnection[name](function (values) {
 
     /**
+     * here we empty query chain after returning
+     * all data, it is required otherwise old
+     * methods will be called while making a
+     * new query
+    */
+    target.new()
+    /**
      * here we set visibility of values fetched
      * from model query.
      */
@@ -39,17 +46,7 @@ hijacker.then = function (target,name,cb) {
      */
     values = helpers.mutateValues(target, values)
 
-    cb(values)
-
-  }).finally(function () {
-
-    /**
-     * here we empty query chain after returning
-     * all data, it is required otherwise old
-     * methods will be called while making a
-     * new query
-     */
-    target.new()
+    return cb(values)
 
   })
 }

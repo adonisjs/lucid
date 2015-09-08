@@ -21,7 +21,7 @@ class StaticProxy {
      * @see addons.create
      */
     Model.create = function (values, isMutated, connection) {
-      return addons.create(Model, values, isMutated, connection)
+      return addons.create(this, values, isMutated, connection)
     }
 
     /**
@@ -29,7 +29,7 @@ class StaticProxy {
      * @see addons.update
      */
     Model.update = function (values, isMutated, connection) {
-      return addons.update(Model, values, isMutated, connection)
+      return addons.update(this, values, isMutated, connection)
     }
 
     /**
@@ -37,7 +37,7 @@ class StaticProxy {
      * @see addons.delete
      */
     Model.delete = function (connection) {
-      return addons.delete(Model, connection)
+      return addons.delete(this, connection)
     }
 
     /**
@@ -45,7 +45,7 @@ class StaticProxy {
      * @see addons.forceDelete
      */
     Model.forceDelete = function (connection) {
-      return addons.forceDelete(Model, connection)
+      return addons.forceDelete(this, connection)
     }
 
     /**
@@ -55,8 +55,9 @@ class StaticProxy {
      * chain will we prepended.
      */
     Model.new = function () {
-      Model.disableSoftDeletes = false
-      Model.activeConnection._statements = []
+      this.disableSoftDeletes = false
+      this.activeConnection._statements = []
+      return this
     }
 
     return new Proxy(Model, mapper)

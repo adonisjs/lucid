@@ -820,5 +820,108 @@ describe('Model', function () {
 
   })
 
+  it('should not be able to update a model if it was not fetched ', function () {
+
+    class User extends Model{
+      static extend(){
+        return new StaticProxy(this)
+      }
+    }
+
+    User = User.extend()
+    const user = new User()
+
+    const fn = function () {
+      return user.update()
+    }
+
+    expect(fn).to.throw(/You cannot update/)
+
+  })
+
+  it('should not be able to delete a model if it was not fetched ', function () {
+
+    class User extends Model{
+      static extend(){
+        return new StaticProxy(this)
+      }
+    }
+
+    User = User.extend()
+    const user = new User()
+
+    const fn = function () {
+      return user.delete()
+    }
+
+    expect(fn).to.throw(/You cannot delete/)
+
+  })
+
+
+  it('should not be able to forceDelete a model if it was not fetched ', function () {
+
+    class User extends Model{
+      static extend(){
+        return new StaticProxy(this)
+      }
+    }
+
+    User = User.extend()
+    const user = new User()
+
+    const fn = function () {
+      return user.forceDelete()
+    }
+
+    expect(fn).to.throw(/You cannot delete/)
+
+  })
+
+  it('should not use existing query chain , when values for one is fetched', function (done) {
+
+    class User extends Model{
+      static extend(){
+        return new StaticProxy(this)
+      }
+    }
+
+    let user1 = []
+
+    User = User.extend()
+
+    User
+    .where('id',1)
+    .then (function (user) {
+      user1 = user
+      return User.where('id',2)
+    })
+    .then (function (user) {
+      expect(user1.first().id).to.equal(1)
+      expect(user.first().id).to.equal(2)
+      done()
+    })
+    .catch(done)
+
+  })
+
+  it('should not use existing query chain , when new function is used while building another query' , function () {
+
+    class User extends Model{
+      static extend(){
+        return new StaticProxy(this)
+      }
+    }
+
+    User = User.extend()
+
+    let user1 = User.where('id',1)
+    let user2 = User.new().where('id',2)
+
+    expect(user1.toSQL().sql).to.equal('select * from "users" where "id" = ?')
+    expect(user2.toSQL().sql).to.equal('select * from "users" where "id" = ?')
+
+  })
+
 
 })

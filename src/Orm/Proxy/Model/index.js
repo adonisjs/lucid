@@ -63,6 +63,9 @@ class Model {
    * @return {Promise}
    */
   update (values) {
+    if(!helpers.isFetched(this)){
+      throw new Error(`You cannot update a fresh model instance , trying fetching one using find method`)
+    }
     let isMutated = !values
     values = values || this.attributes
     return this.constructor.update(values, isMutated, this.connection)
@@ -75,6 +78,9 @@ class Model {
    * @return {Promise}
    */
   delete () {
+    if(!helpers.isFetched(this)){
+      throw new Error(`You cannot delete a fresh model instance , trying fetching one using find method`)
+    }
     return this.constructor.delete(this.connection)
   }
 
@@ -85,6 +91,9 @@ class Model {
    * @return {Promise}
    */
   forceDelete () {
+    if(!helpers.isFetched(this)){
+      throw new Error(`You cannot delete a fresh model instance , trying fetching one using find method`)
+    }
     return this.constructor.forceDelete(this.connection)
   }
 

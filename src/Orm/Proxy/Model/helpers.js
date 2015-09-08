@@ -89,3 +89,8 @@ helpers.rowTimeStamp = function (row, keys) {
   })
   return row
 }
+
+
+helpers.isFetched = function (target) {
+  return _.size(target.connection._statements) > 0
+}

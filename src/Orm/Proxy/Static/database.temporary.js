@@ -16,7 +16,8 @@ let Config = {
       client: 'sqlite3',
       connection: {
         filename: path.join(__dirname, '../../../../test/unit/storage/test.sqlite3')
-      }
+      },
+      debug: false
     }
   }
 }
