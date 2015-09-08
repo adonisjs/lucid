@@ -16,6 +16,9 @@
     "mysql": "^2.9.0",
     "sqlite3": "git://github.com/kkoopa/node-sqlite3.git#nan2"
   },
+  "peerDependencies": {
+    "adonis-fold": "^1.0.0"
+  },
   "dependencies": {
     "change-case": "^2.3.0",
     "i": "^0.3.3",
