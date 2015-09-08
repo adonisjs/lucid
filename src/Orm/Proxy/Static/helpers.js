@@ -20,7 +20,7 @@ let helpers = exports = module.exports = {}
  * @param  {String} name
  * @return {*}
  */
-helpers.makeScoped = function(target,name){
+helpers.makeScoped = function (target, name) {
   name = `scope${changeCase.pascalCase(name)}`
   return target[name] || null
 }
@@ -32,7 +32,7 @@ helpers.makeScoped = function(target,name){
  * @param  {Class} target
  * @return {String}
  */
-helpers.getTableName = function(target){
+helpers.getTableName = function (target) {
   const modelName = target.name
   return changeCase.lowerCase(inflect.pluralize(modelName))
 }
@@ -43,52 +43,52 @@ helpers.getTableName = function(target){
  * @param  {Class} target
  * @return {String}
  */
-helpers.getPrimaryKey = function(target){
+helpers.getPrimaryKey = function (target) {
   return target.primaryKey || 'id'
 }
 
-helpers.hasGetter = function(target,fieldName){
+helpers.hasGetter = function (target, fieldName) {
   const getter = `get${changeCase.pascalCase(fieldName)}`
   return target.prototype[getter] || null
 }
 
-helpers.mutateRow = function (target,row) {
-  return _.object(_.map(row, function (item,key) {
-    const getter = helpers.hasGetter(target,key)
+helpers.mutateRow = function (target, row) {
+  return _.object(_.map(row, function (item, key) {
+    const getter = helpers.hasGetter(target, key)
     const mutatedValue = getter ? getter(item) : item
-    return [key,mutatedValue]
+    return [key, mutatedValue]
   }))
 }
 
-helpers.mutateValues = function(target,values){
-  let collection;
-  if(_.isArray(values)){
-    collection = _.map(values, function (value){
-      return helpers.mutateRow(target,value)
+helpers.mutateValues = function (target, values) {
+  let collection
+  if (_.isArray(values)) {
+    collection = _.map(values, function (value) {
+      return helpers.mutateRow(target, value)
     })
-  }else{
-    collection = helpers.mutateRow(target,values)
+  } else {
+    collection = helpers.mutateRow(target, values)
   }
   return new Collection(collection)
 }
 
-helpers.setVisibility = function (target,values){
-  if(target.hidden && !target.visible){
-    values = _.map(values,function (value) {
-      return helpers.omitFields(target.hidden,value)
+helpers.setVisibility = function (target, values) {
+  if (target.hidden && !target.visible) {
+    values = _.map(values, function (value) {
+      return helpers.omitFields(target.hidden, value)
     })
-  }else if(target.visible){
-    values = _.map(values,function (value) {
-      return helpers.pickFields(target.visible,value)
+  }else if (target.visible) {
+    values = _.map(values, function (value) {
+      return helpers.pickFields(target.visible, value)
     })
   }
   return values
 }
 
-helpers.omitFields = function (hidden,row) {
-  return _.omit(row,hidden)
+helpers.omitFields = function (hidden, row) {
+  return _.omit(row, hidden)
 }
 
-helpers.pickFields = function (visible,row) {
-  return _.pick(row,visible)
+helpers.pickFields = function (visible, row) {
+  return _.pick(row, visible)
 }

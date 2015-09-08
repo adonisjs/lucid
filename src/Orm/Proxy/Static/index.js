@@ -11,28 +11,28 @@ const Database = require('./database.temporary')
  * model class, it helps in creating magical methods
  * out of the box
  */
-class StaticProxy{
+class StaticProxy {
 
-  constructor(Model){
+  constructor (Model) {
     Model.activeConnection = Database.table(Model.table)
 
-    Model.create = function (values,isMutated,connection) {
-      return addons.create(Model,values,isMutated,connection)
+    Model.create = function (values, isMutated, connection) {
+      return addons.create(Model, values, isMutated, connection)
     }
 
-    Model.update = function (values,isMutated,connection) {
-      return addons.update(Model,values,isMutated,connection)
+    Model.update = function (values, isMutated, connection) {
+      return addons.update(Model, values, isMutated, connection)
     }
 
     Model.delete = function (connection) {
-      return addons.delete(Model,connection)
+      return addons.delete(Model, connection)
     }
 
     Model.forceDelete = function (connection) {
-      return addons.forceDelete(Model,connection)
+      return addons.forceDelete(Model, connection)
     }
 
-    return new Proxy(Model,mapper)
+    return new Proxy(Model, mapper)
   }
 
 }

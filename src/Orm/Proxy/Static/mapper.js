@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 const helpers = require('./helpers')
 
@@ -17,35 +17,34 @@ let mapper = exports = module.exports = {}
  * @param  {String} name
  * @return {*}
  */
-mapper.get = function(target,name){
-
+mapper.get = function (target, name) {
   /**
    * if property exists on class , return that
    * first
    */
-  if(target[name]){
+  if (target[name]) {
     return target[name]
   }
 
-  if(name === 'withTrashed'){
+  if (name === 'withTrashed') {
     return function () {
       target.disableSoftDeletes = true
       return this
     }
   }
 
-  if(name === 'find'){
+  if (name === 'find') {
     return function (id) {
-      return new Promise(function (resolve,reject) {
+      return new Promise(function (resolve, reject) {
         target
-        .activeConnection
-        .where('id',id)
-        .first()
-        .then (function (values){
-          let instance = new target(values)
-          instance.connection.where('id',id)
-          resolve(instance)
-        }).catch(reject).finally(function(){
+          .activeConnection
+          .where('id', id)
+          .first()
+          .then(function (values) {
+            let instance = new target(values)
+            instance.connection.where('id', id)
+            resolve(instance)
+          }).catch(reject).finally(function () {
           target.activeConnection._statements = []
         })
       })
@@ -56,31 +55,31 @@ mapper.get = function(target,name){
    * hijack then method here to return values as
    * instance of collection class
    */
-  if(name === 'then'){
-    if(target.softDeletes && !target.disableSoftDeletes){
-      target.activeConnection.where(target.softDeletes,null)
+  if (name === 'then') {
+    if (target.softDeletes && !target.disableSoftDeletes) {
+      target.activeConnection.where(target.softDeletes, null)
     }
-    return function(cb){
-      return target.activeConnection[name](function (values){
+    return function (cb) {
+      return target.activeConnection[name](function (values) {
         target.disableSoftDeletes = false
-        values = helpers.setVisibility(target,values)
-        values = helpers.mutateValues(target,values)
+        values = helpers.setVisibility(target, values)
+        values = helpers.mutateValues(target, values)
         cb(values)
-      }).finally(function(){
-        target.activeConnection._statements = []        
+      }).finally(function () {
+        target.activeConnection._statements = []
       })
     }
   }
 
-  const scopeFunction = helpers.makeScoped(target,name)
+  const scopeFunction = helpers.makeScoped(target, name)
   /**
    * check to see if method is one of the scoped
    * methods or not, if method falls into a
    * scope method call that and pass current
    * query
    */
-  if(scopeFunction){
-    return function(){
+  if (scopeFunction) {
+    return function () {
       return scopeFunction(this.activeConnection)
     }
   }
@@ -93,7 +92,7 @@ mapper.get = function(target,name){
 
 }
 
-mapper.set = function(target,name,value){
+mapper.set = function (target, name, value) {
   target[name] = value
 }
 
@@ -104,7 +103,7 @@ mapper.set = function(target,name,value){
  * @param  {Class} target
  * @return {Object}
  */
-mapper.construct = function(target,options){
-  var _bind = Function.prototype.bind;
+mapper.construct = function (target, options) {
+  var _bind = Function.prototype.bind
   return new (_bind.apply(target, [null].concat(options)))()
 }

@@ -7,16 +7,15 @@ const knex = require('knex')
  * @namespace Adonis/Src/Database
  * @description Fluent query builder for adonis framework
  */
-class Database{
+class Database {
 
-  constructor(Env,Config){
-
+  constructor (Env, Config) {
     /**
      * grab default database connection from env file
 =   */
     const dbConnection = Env.get('DB_CONNECTION')
 
-    if(!dbConnection){
+    if (!dbConnection) {
       throw new Error(`Specify DB_CONNECTION under .env file`)
     }
 
@@ -40,6 +39,5 @@ class Database{
   }
 
 }
-
 
 module.exports = Database

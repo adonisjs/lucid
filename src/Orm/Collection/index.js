@@ -4,7 +4,7 @@ const _ = require('lodash')
 
 class Collection {
 
-  constructor(values){
+  constructor (values) {
     return _(values)
   }
 

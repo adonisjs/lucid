@@ -7,57 +7,57 @@ const Database = require('../Static/database.temporary')
 const staticHelpers = require('../Static/helpers')
 const _ = require('lodash')
 
-class Model{
+class Model {
 
-  constructor(attributes){
-    if(_.isArray(attributes)){
+  constructor (attributes) {
+    if (_.isArray(attributes)) {
       throw new Error('Cannot initiate model with bulk values, use create method for bulk insert')
     }
-    this.attributes = attributes ? helpers.mutateRow(this,attributes) : {}
+    this.attributes = attributes ? helpers.mutateRow(this, attributes) : {}
     this.connection = Database.table(this.constructor.table)
-    return new Proxy(this,mapper)
+    return new Proxy(this, mapper)
   }
 
   create (values) {
-    let isMutated = values ? false : true
+    let isMutated = !values
     values = values || this.attributes
-    return this.constructor.create(values,isMutated,this.connection)
+    return this.constructor.create(values, isMutated, this.connection)
   }
 
   update (values) {
-    let isMutated = values ? false : true
+    let isMutated = !values
     values = values || this.attributes
-    return this.constructor.update(values,isMutated,this.connection)
+    return this.constructor.update(values, isMutated, this.connection)
   }
 
-  delete (){
+  delete () {
     return this.constructor.delete(this.connection)
   }
 
-  forceDelete (){
+  forceDelete () {
     return this.constructor.forceDelete(this.connection)
   }
 
   isTrashed () {
     const softDeleteKey = this.constructor.softDeletes
-    if(!softDeleteKey){
+    if (!softDeleteKey) {
       return false
     }
-    if(this.attributes && this.attributes[softDeleteKey] && this.attributes[softDeleteKey] !== null){
-      return true;
+    if (this.attributes && this.attributes[softDeleteKey] && this.attributes[softDeleteKey] !== null) {
+      return true
     }
     return false
   }
 
-  static get softDeletes(){
+  static get softDeletes () {
     return 'deleted_at'
   }
 
-  static get timestamps(){
+  static get timestamps () {
     return true
   }
 
-  static get table(){
+  static get table () {
     return staticHelpers.getTableName(this)
   }
 
