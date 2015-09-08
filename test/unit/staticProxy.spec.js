@@ -4,8 +4,28 @@ const path = require('path')
 const chai = require('chai')
 const expect = chai.expect
 const co = require('co')
-const Database = require('../../src/Orm/Proxy/Static/database.temporary')
+const Database = require('../../src/Database')
 const StaticProxy = require('../../src/Orm/Proxy/Static')
+
+let Env = {
+  get: function(){
+    return 'sqlite'
+  }
+}
+
+let Config = {
+  get: function(name){
+    return {
+      client: 'sqlite3',
+      connection: {
+        filename: path.join(__dirname,'./storage/test.sqlite3')
+      },
+      debug: false
+    }
+  }
+}
+
+const db = new Database(Env,Config)
 
 describe('StaticProxy', function () {
 
@@ -14,7 +34,7 @@ describe('StaticProxy', function () {
     class User{
 
       static extend(){
-        return new StaticProxy(this,Database);
+        return new StaticProxy(this,db);
       }
 
       static get table(){
@@ -33,7 +53,7 @@ describe('StaticProxy', function () {
     class User{
 
       static extend(){
-        return new StaticProxy(this,Database);
+        return new StaticProxy(this,db);
       }
 
       static get table(){
@@ -52,7 +72,7 @@ describe('StaticProxy', function () {
       class User{
 
         static extend(){
-          return new StaticProxy(this,Database);
+          return new StaticProxy(this,db);
         }
 
         static get database(){
@@ -68,7 +88,7 @@ describe('StaticProxy', function () {
         }
       }
 
-      User.database = Database
+      User.database = db
       User = User.extend()
 
       User
@@ -86,7 +106,7 @@ describe('StaticProxy', function () {
     class User{
 
       static extend(){
-        return new StaticProxy(this,Database);
+        return new StaticProxy(this,db);
       }
       static get table(){
         return 'users'
