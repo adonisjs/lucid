@@ -14,7 +14,7 @@ let hijacker = exports = module.exports = {}
  * @param  {String}   name
  * @param  {Function} cb
  */
-hijacker.fetch = function (target,name) {
+hijacker.fetch = function (target) {
 
   /**
    * checking if soft deletes are enabled and user has not
@@ -84,4 +84,8 @@ hijacker.find = function (target,id) {
       target.new()
     })
   })
+}
+
+hijacker.all = function (target) {
+  return hijacker.fetch(target)
 }

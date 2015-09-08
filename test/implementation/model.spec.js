@@ -41,8 +41,12 @@ User = User.extend()
 class Posts extends Model{
 }
 
+Posts.database = db
+Posts = Posts.extend()
+
 let user_id = null
 let instanceUserId = null
+let postId = null
 
 describe('Database Implementation', function () {
 
@@ -77,8 +81,8 @@ describe('Database Implementation', function () {
       .fetch()
       .then (function (users) {
         users.each(function (user){
-          expect(user.id).not.to.be('undefined')
-        })
+          expect(user.id).not.to.equal(undefined)
+        }).value()
         done()
       })
       .catch(done)
@@ -220,6 +224,73 @@ describe('Database Implementation', function () {
         return User.where('id',instanceUserId).fetch()
       }).then (function (user) {
         expect(user.size()).to.equal(0)
+        done()
+      }).catch(done)
+
+    })
+
+  })
+
+  context('User Posts', function () {
+
+    let userid = null
+
+    it('should be able to save a new post', function (done) {
+
+      User
+      .create({username:'postuser'})
+      .then (function (user) {
+        userid = user[0]
+        return Posts.create({user_id:userid,post_title:'foo',post_body:'bar'})
+      })
+      .then(function (post) {
+        postId = post[0]
+        return Posts.where('id',postId).fetch()
+      })
+      .then(function (post) {
+        expect(post.first().user_id).to.equal(userid)
+        done()
+      }).catch(done)
+    })
+
+    it('should be able to fetch all posts', function (done) {
+
+      Posts
+      .all()
+      .then (function (posts) {
+        posts.each(function (post) {
+          expect(post.id).not.to.equal(undefined)
+        }).value()
+        done()
+      }).catch(done)
+
+    })
+
+    it('should be able update a given post', function (done) {
+
+      Posts
+      .where('id',postId)
+      .update({post_title:'baz'})
+      .then (function () {
+        return Posts.where('id',postId).fetch()
+      })
+      .then (function (post) {
+        expect(post.first().post_title).to.equal('baz')
+        done()
+      }).catch(done)
+
+    })
+
+    it('should be able to soft delete posts using user id', function (done) {
+
+      Posts
+      .where('user_id',userid)
+      .delete()
+      .then (function () {
+        return Posts.where('user_id',userid).fetch()
+      })
+      .then(function (post) {
+        expect(post.size()).to.equal(0)
         done()
       }).catch(done)
 

@@ -50,6 +50,17 @@ mapper.get = function (target, name) {
     }
   }
 
+
+  /**
+   * if name is all , then return a new function by
+   * fetching all values from a given table
+   */
+  if (name === 'all') {
+    return function () {
+      return hijacker.all(target)
+    }
+  }
+
   /**
    * implement fetch method here to return values as
    * instance of collection class
