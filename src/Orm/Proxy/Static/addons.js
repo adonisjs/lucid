@@ -20,11 +20,13 @@ let addons = exports = module.exports = {}
  */
 addons.create = function (target, values, isMutated, connection) {
 
+  let insertQuery = {}
+  connection = connection || target.activeConnection
+
   /**
    * here we use given connection or falls back to
    * default connection on model static interface
    */
-  connection = connection || target.activeConnection
 
   if (!isMutated) {
     values = modelHelpers.mutateSetters(target.prototype, values)
@@ -34,7 +36,9 @@ addons.create = function (target, values, isMutated, connection) {
     values = modelHelpers.addTimeStamps(values, ['created_at', 'updated_at'])
   }
 
-  return connection.insert(values)
+  insertQuery = connection.insert(values)
+  target.new()
+  return connection
 }
 
 /**
@@ -49,6 +53,7 @@ addons.create = function (target, values, isMutated, connection) {
  */
 addons.update = function (target, values, isMutated, connection) {
   connection = connection || target.activeConnection
+  let updateQuery = {}
 
   if (!isMutated) {
     values = modelHelpers.mutateSetters(target.prototype, values)
@@ -56,7 +61,9 @@ addons.update = function (target, values, isMutated, connection) {
   if (target.timestamps) {
     values = modelHelpers.addTimeStamps(values, ['updated_at'])
   }
-  return connection.update(values)
+  updateQuery = connection.update(values)
+  target.new()
+  return updateQuery
 }
 
 /**
@@ -69,12 +76,15 @@ addons.update = function (target, values, isMutated, connection) {
  */
 addons.delete = function (target, connection) {
   connection = connection || target.activeConnection
+  let deleteQuery = {}
 
   if (target.softDeletes) {
-    return connection.update(target.softDeletes, new Date())
+    deleteQuery = connection.update(target.softDeletes, new Date())
   } else {
-    return connection.del()
+    deleteQuery = connection.del()
   }
+  target.new()
+  return deleteQuery
 }
 
 /**
@@ -87,5 +97,8 @@ addons.delete = function (target, connection) {
  */
 addons.forceDelete = function (target, connection) {
   connection = connection || target.activeConnection
-  return connection.del()
+  let deleteQuery = {}
+  deleteQuery = connection.del()
+  target.new()
+  return deleteQuery
 }

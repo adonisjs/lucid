@@ -51,12 +51,12 @@ mapper.get = function (target, name) {
   }
 
   /**
-   * hijack then method here to return values as
+   * implement fetch method here to return values as
    * instance of collection class
    */
-  if (name === 'then') {
-    return function (cb) {
-      return hijacker.then(target,name,cb)
+  if (name === 'fetch') {
+    return function () {
+      return hijacker.fetch(target,name)
     }
   }
 

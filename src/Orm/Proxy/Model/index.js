@@ -34,7 +34,7 @@ class Model {
     /**
      * creating an isoloted database instance using Database provider
      */
-    this.connection = Database.table(this.constructor.table)
+    this.connection = this.constructor.database.table(this.constructor.table)
 
     /**
      * returning proxied model instance , it helps in having
@@ -156,8 +156,29 @@ class Model {
     return 'id'
   }
 
+  /**
+   * @function extend
+   * @description extending static interface of class via StaticProxy
+   * @return {Object}
+   */
   static extend(){
-    return new StaticProxy(this,Database)
+    return new StaticProxy(this,this.database)
+  }
+
+  /**
+   * @getter
+   * database instance for this model
+   */
+  static get database(){
+    return this._database || Database;
+  }
+
+  /**
+   * @setter
+   * database instance for this model
+   */
+  static set database(database){
+    this._database = database
   }
 
 }

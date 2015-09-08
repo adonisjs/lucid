@@ -54,8 +54,7 @@ class StaticProxy {
      * chain will we prepended.
      */
     Model.new = function () {
-      this.disableSoftDeletes = false
-      this.activeConnection._statements = []
+      this.activeConnection = this.database.table(this.table)
       return this
     }
 

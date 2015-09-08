@@ -14,7 +14,7 @@ let hijacker = exports = module.exports = {}
  * @param  {String}   name
  * @param  {Function} cb
  */
-hijacker.then = function (target,name,cb) {
+hijacker.fetch = function (target,name) {
 
   /**
    * checking if soft deletes are enabled and user has not
@@ -25,29 +25,31 @@ hijacker.then = function (target,name,cb) {
     target.activeConnection.where(target.softDeletes, null)
   }
 
-  return target.activeConnection[name](function (values) {
+  return new Promise (function (resolve,reject) {
+    target.activeConnection.then(function (values) {
 
-    /**
-     * here we empty query chain after returning
-     * all data, it is required otherwise old
-     * methods will be called while making a
-     * new query
-    */
-    target.new()
-    /**
-     * here we set visibility of values fetched
-     * from model query.
-     */
-    values = helpers.setVisibility(target, values)
+      /**
+       * here we empty query chain after returning
+       * all data, it is required otherwise old
+       * methods will be called while making a
+       * new query
+      */
+      target.new()
+      /**
+       * here we set visibility of values fetched
+       * from model query.
+       */
+      values = helpers.setVisibility(target, values)
 
-    /**
-     * finally before returning we need to mutate values
-     * by calling getters defined on model
-     */
-    values = helpers.mutateValues(target, values)
+      /**
+       * finally before returning we need to mutate values
+       * by calling getters defined on model
+       */
+      values = helpers.mutateValues(target, values)
 
-    return cb(values)
+      resolve(values)
 
+    }).catch(reject)
   })
 }
 

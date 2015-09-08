@@ -50,18 +50,31 @@ describe('StaticProxy', function () {
   it('should return an instance of collection on values fetched from model queries', function(done) {
 
       class User{
+
         static extend(){
           return new StaticProxy(this,Database);
         }
+
+        static get database(){
+          return this._database
+        }
+
+        static set database(value){
+          this._database = value
+        }
+
         static get table(){
           return 'users'
         }
       }
+
+      User.database = Database
       User = User.extend()
 
       User
       .select('*')
       .first()
+      .fetch()
       .then(function (users) {
         expect(users.__actions__).deep.equal([])
         done()

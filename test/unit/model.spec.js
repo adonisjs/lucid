@@ -101,6 +101,7 @@ describe('Model', function () {
 
     User
     .where('id',1)
+    .fetch()
     .then (function (values){
       expect(values.first().username).to.equal(username)
       done()
@@ -128,6 +129,7 @@ describe('Model', function () {
 
     User
     .where('id',1)
+    .fetch()
     .then (function (values){
       expect(values.first().username).to.equal(username)
       done()
@@ -403,6 +405,7 @@ describe('Model', function () {
 
     User
     .where('id',10)
+    .fetch()
     .then (function (result) {
       expect(result.first().deleted_at).to.equal(null)
       done()
@@ -428,6 +431,7 @@ describe('Model', function () {
 
     User
     .where('id',11)
+    .fetch()
     .then (function (result) {
       expect(result.size()).to.equal(0)
       done()
@@ -453,6 +457,7 @@ describe('Model', function () {
 
     User
     .where('id',11)
+    .fetch()
     .then (function (result) {
       expect(result.first().id).to.equal(11)
       done()
@@ -480,6 +485,7 @@ describe('Model', function () {
     User
     .withTrashed()
     .where('id',11)
+    .fetch()
     .then (function (result) {
       expect(result.first().id).to.equal(11)
       done()
@@ -675,6 +681,7 @@ describe('Model', function () {
 
     User
     .where('id',1)
+    .fetch()
     .then (function (user){
       expect(user.first().email).to.equal(undefined)
       done()
@@ -701,6 +708,7 @@ describe('Model', function () {
 
     User
     .where('id',1)
+    .fetch()
     .then (function (user){
       expect(user.first().username).to.equal(undefined)
       expect(user.first().age).to.be.a('number')
@@ -769,9 +777,10 @@ describe('Model', function () {
 
     User
     .where('id',1)
+    .fetch()
     .then (function (user) {
       user1 = user
-      return User.where('id',2)
+      return User.where('id',2).fetch()
     })
     .then (function (user) {
       expect(user1.first().id).to.equal(1)
