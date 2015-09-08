@@ -1,6 +1,7 @@
 'use strict'
 
 const helpers = require('./helpers')
+const hijacker = require('./hijacker')
 
 /**
  * @module mapper
@@ -18,6 +19,7 @@ let mapper = exports = module.exports = {}
  * @return {*}
  */
 mapper.get = function (target, name) {
+
   /**
    * if property exists on class , return that
    * first
@@ -26,6 +28,11 @@ mapper.get = function (target, name) {
     return target[name]
   }
 
+  /**
+   * if method name is withTrashed , return a new
+   * function by setting soft deletes to false
+   * till query instance.
+   */
   if (name === 'withTrashed') {
     return function () {
       target.disableSoftDeletes = true
@@ -33,21 +40,13 @@ mapper.get = function (target, name) {
     }
   }
 
+  /**
+   * if name is find , then return a new function by
+   * fetching data and set value as model instance
+   */
   if (name === 'find') {
     return function (id) {
-      return new Promise(function (resolve, reject) {
-        target
-          .activeConnection
-          .where('id', id)
-          .first()
-          .then(function (values) {
-            let instance = new target(values)
-            instance.connection.where('id', id)
-            resolve(instance)
-          }).catch(reject).finally(function () {
-          target.activeConnection._statements = []
-        })
-      })
+      return hijacker.find(target,id)
     }
   }
 
@@ -56,18 +55,8 @@ mapper.get = function (target, name) {
    * instance of collection class
    */
   if (name === 'then') {
-    if (target.softDeletes && !target.disableSoftDeletes) {
-      target.activeConnection.where(target.softDeletes, null)
-    }
     return function (cb) {
-      return target.activeConnection[name](function (values) {
-        target.disableSoftDeletes = false
-        values = helpers.setVisibility(target, values)
-        values = helpers.mutateValues(target, values)
-        cb(values)
-      }).finally(function () {
-        target.activeConnection._statements = []
-      })
+      return hijacker.then(target,name,cb)
     }
   }
 

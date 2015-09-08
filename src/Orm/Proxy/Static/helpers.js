@@ -47,11 +47,27 @@ helpers.getPrimaryKey = function (target) {
   return target.primaryKey || 'id'
 }
 
+/**
+ * @function hasGetter
+ * @description returns getter function on a given model
+ * if exists , or returns null
+ * @param  {Object}  target
+ * @param  {String}  fieldName
+ * @return {Boolean}
+ */
 helpers.hasGetter = function (target, fieldName) {
   const getter = `get${changeCase.pascalCase(fieldName)}`
   return target.prototype[getter] || null
 }
 
+/**
+ * @function mutateRow
+ * @description here we call getters on all fields
+ * inside an object.
+ * @param  {Object} target
+ * @param  {Object} row
+ * @return {Object}
+ */
 helpers.mutateRow = function (target, row) {
   return _.object(_.map(row, function (item, key) {
     const getter = helpers.hasGetter(target, key)
@@ -60,6 +76,13 @@ helpers.mutateRow = function (target, row) {
   }))
 }
 
+/**
+ * @function mutateValues
+ * @description here we call getters on rows inside an array
+ * @param  {Object} target
+ * @param  {Array|Object} values
+ * @return {Array|Object}
+ */
 helpers.mutateValues = function (target, values) {
   let collection
   if (_.isArray(values)) {
@@ -72,6 +95,14 @@ helpers.mutateValues = function (target, values) {
   return new Collection(collection)
 }
 
+/**
+ * @function setVisibility
+ * @description here we loop through on fetched values
+ * and omit or pick fields based on visibility and
+ * hidden functions defined on model
+ * @param {Object} target
+ * @param {Object} values
+ */
 helpers.setVisibility = function (target, values) {
   if (target.hidden && !target.visible) {
     values = _.map(values, function (value) {
@@ -85,10 +116,24 @@ helpers.setVisibility = function (target, values) {
   return values
 }
 
+/**
+ * @function omitFields
+ * @description here we omit fields on a given row
+ * @param  {Array} hidden
+ * @param  {Object} row
+ * @return {Object}
+ */
 helpers.omitFields = function (hidden, row) {
   return _.omit(row, hidden)
 }
 
+/**
+ * @function pickFields
+ * @description here we fields fields on a given row
+ * @param  {Array} visible
+ * @param  {Object} row
+ * @return {Object}
+ */
 helpers.pickFields = function (visible, row) {
   return _.pick(row, visible)
 }
