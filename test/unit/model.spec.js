@@ -4,8 +4,29 @@ const path = require('path')
 const chai = require('chai')
 const expect = chai.expect
 const co = require('co')
+const Database = require('../../src/Database')
 const Model = require('../../src/Orm/Proxy/Model')
 const StaticProxy = require('../../src/Orm/Proxy/Static')
+
+let Env = {
+  get: function(){
+    return 'sqlite'
+  }
+}
+
+let Config = {
+  get: function(name){
+    return {
+      client: 'sqlite3',
+      connection: {
+        filename: path.join(__dirname,'./storage/test.sqlite3')
+      },
+      debug: false
+    }
+  }
+}
+
+const db = new Database(Env,Config)
 
 describe('Model', function () {
 
@@ -18,7 +39,7 @@ describe('Model', function () {
       }
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     const user = new User()
     expect(user instanceof Model).to.equal(true)
 
@@ -33,7 +54,7 @@ describe('Model', function () {
       }
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     const user = new User()
     user.username = 'anku'
     expect(user.attributes.username).to.equal('anku')
@@ -51,7 +72,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     const user = new User()
     user.username = 'anku'
     expect(user.attributes.username).to.equal(user.username)
@@ -73,7 +94,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     const user = new User()
     user.username = 'anku'
     expect(user.create().toSQL().sql).to.equal('insert into "users" ("username") values (?)')
@@ -97,7 +118,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .where('id',1)
@@ -125,7 +146,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .where('id',1)
@@ -151,7 +172,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     const user = new User()
 
     user.username = 'AMAN'
@@ -173,7 +194,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     const user = new User({username:'AMAN'})
     expect(user.username).to.equal('aman')
@@ -194,7 +215,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     const fn = function () {
       return new User([{username:'something'},{username:'someotherthing'}])
@@ -221,7 +242,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     const user = new User()
 
     let create = user.create([{username:'FOO'},{username:'BAR'}])
@@ -247,7 +268,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     let create = User.create([{username:'FOO'},{username:'BAR'}])
     expect(create.toSQL().bindings).deep.equal(['foo','bar'])
 
@@ -263,7 +284,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .find(1)
@@ -283,7 +304,7 @@ describe('Model', function () {
       }
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .find(1)
@@ -319,7 +340,7 @@ describe('Model', function () {
       }
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     let update = User.update({displayName:'foo'})
     expect(update.toSQL().sql).to.equal('update "users" set "displayName" = ?')
     expect(update.toSQL().bindings).deep.equal(['foo'])
@@ -344,7 +365,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     let update = User.update({displayName:'foo'})
     expect(update.toSQL().sql).to.equal('update "users" set "displayName" = ?')
     expect(update.toSQL().bindings).deep.equal(['FOO'])
@@ -366,7 +387,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     User
     .find(2)
     .then(function (user) {
@@ -401,7 +422,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .where('id',10)
@@ -427,7 +448,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .where('id',11)
@@ -453,7 +474,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .where('id',11)
@@ -480,7 +501,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .withTrashed()
@@ -507,7 +528,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .find(11)
@@ -534,7 +555,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .find(11)
@@ -555,7 +576,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     const deleteQuery = User.where('id',2).delete().toSQL()
     expect(deleteQuery.sql).to.equal('update "users" set "deleted_at" = ? where "id" = ?')
@@ -573,7 +594,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     const deleteQuery = User.where('id',2).forceDelete().toSQL()
     expect(deleteQuery.sql).to.equal('delete from "users" where "id" = ?')
@@ -590,7 +611,7 @@ describe('Model', function () {
       }
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .find(1)
@@ -611,7 +632,7 @@ describe('Model', function () {
       }
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     const createQuery = User.create({username:'foo'}).toSQL()
     expect(createQuery.sql).to.equal('insert into "users" ("created_at", "updated_at", "username") values (?, ?, ?)')
@@ -624,7 +645,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     expect(User.table).to.equal('users')
 
   })
@@ -636,7 +657,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     expect(User.table).to.equal('users')
     expect(User.softDeletes).to.equal('deleted_at')
     expect(User.timestamps).to.equal(true)
@@ -654,7 +675,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .where('id',1)
@@ -681,7 +702,7 @@ describe('Model', function () {
 
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .where('id',1)
@@ -699,7 +720,7 @@ describe('Model', function () {
     class User extends Model{
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     const user = new User()
 
     const fn = function () {
@@ -715,7 +736,7 @@ describe('Model', function () {
     class User extends Model{
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     const user = new User()
 
     const fn = function () {
@@ -732,7 +753,7 @@ describe('Model', function () {
     class User extends Model{
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
     const user = new User()
 
     const fn = function () {
@@ -750,7 +771,7 @@ describe('Model', function () {
 
     let user1 = []
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     User
     .where('id',1)
@@ -773,7 +794,7 @@ describe('Model', function () {
     class User extends Model{
     }
 
-    User = User.extend()
+    User.database = db; User = User.extend()
 
     let user1 = User.where('id',1)
     let user2 = User.new().where('id',2)
