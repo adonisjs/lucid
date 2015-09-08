@@ -4,6 +4,7 @@ require('harmony-reflect')
 const mapper = require('./mapper')
 const helpers = require('./helpers')
 const Database = require('../Static/database.temporary')
+const StaticProxy = require('../Static')
 const staticHelpers = require('../Static/helpers')
 const _ = require('lodash')
 
@@ -153,6 +154,10 @@ class Model {
    */
   static get primaryKey(){
     return 'id'
+  }
+
+  static extend(){
+    return new StaticProxy(this,Database)
   }
 
 }

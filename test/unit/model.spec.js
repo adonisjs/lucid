@@ -13,10 +13,6 @@ describe('Model', function () {
 
     class User extends Model{
 
-      static extend(){
-        return new StaticProxy(this);
-      }
-
       static get table(){
         return 'users'
       }
@@ -31,10 +27,6 @@ describe('Model', function () {
   it('should be able to define properties as model attributes', function () {
 
     class User extends Model{
-
-      static extend(){
-        return new StaticProxy(this);
-      }
 
       static get table(){
         return 'users'
@@ -53,10 +45,6 @@ describe('Model', function () {
 
     class User extends Model{
 
-      static extend(){
-        return new StaticProxy(this);
-      }
-
       static get table(){
         return 'users'
       }
@@ -74,10 +62,6 @@ describe('Model', function () {
   it('should create row inside database using model attributes with create command', function () {
 
     class User extends Model{
-
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -102,10 +86,6 @@ describe('Model', function () {
     let username = null
 
     class User extends Model{
-
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -134,10 +114,6 @@ describe('Model', function () {
 
     class User extends Model{
 
-      static extend(){
-        return new StaticProxy(this)
-      }
-
       static get table(){
         return 'users'
       }
@@ -163,10 +139,6 @@ describe('Model', function () {
 
     class User extends Model{
 
-      static extend(){
-        return new StaticProxy(this)
-      }
-
       static get table(){
         return 'users'
       }
@@ -189,10 +161,6 @@ describe('Model', function () {
 
     class User extends Model{
 
-      static extend(){
-        return new StaticProxy(this)
-      }
-
       static get table(){
         return 'users'
       }
@@ -213,10 +181,6 @@ describe('Model', function () {
   it('should throw an error when trying to initiate model with bulk values', function () {
 
     class User extends Model{
-
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -240,10 +204,6 @@ describe('Model', function () {
   it('should insert mutated values inside database using create method directly' , function () {
 
     class User extends Model{
-
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -271,10 +231,6 @@ describe('Model', function () {
 
     class User extends Model{
 
-      static extend(){
-        return new StaticProxy(this)
-      }
-
       static get table(){
         return 'users'
       }
@@ -299,10 +255,6 @@ describe('Model', function () {
 
     class User extends Model{
 
-      static extend(){
-        return new StaticProxy(this)
-      }
-
       static get table(){
         return 'users'
       }
@@ -323,9 +275,6 @@ describe('Model', function () {
   it('should return instance of model using static find method and should be able to update properties using instance', function (done) {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -358,9 +307,6 @@ describe('Model', function () {
   it('should be able to update rows using static update method' , function () {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -381,9 +327,6 @@ describe('Model', function () {
   it('should be able to bulk update rows using static update method and use setter method return value' , function () {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -410,9 +353,6 @@ describe('Model', function () {
   it('should be able to update values when using model instance and should not re mutate values' , function (done) {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -448,9 +388,6 @@ describe('Model', function () {
   it('should be able to use soft deletes ', function (done) {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -476,9 +413,6 @@ describe('Model', function () {
   it('should return empty collection when deleted_at is mentioned', function (done) {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -504,9 +438,6 @@ describe('Model', function () {
   it('should fetch soft deleted values when soft deletes have been disabled', function (done) {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -533,9 +464,6 @@ describe('Model', function () {
   it('should be able to fetch trashed items when using soft deletes', function (done) {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -562,9 +490,6 @@ describe('Model', function () {
   it('should be able to find value using primary key even when soft deletes are on', function (done) {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -592,9 +517,6 @@ describe('Model', function () {
   it('should be able to find where model instance is trashed or not', function (done) {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -621,10 +543,6 @@ describe('Model', function () {
 
     class User extends Model{
 
-      static extend(){
-        return new StaticProxy(this)
-      }
-
       static get table(){
         return 'users'
       }
@@ -643,10 +561,6 @@ describe('Model', function () {
 
     class User extends Model{
 
-      static extend(){
-        return new StaticProxy(this)
-      }
-
       static get table(){
         return 'users'
       }
@@ -664,9 +578,6 @@ describe('Model', function () {
   it('should be able to soft delete model instance', function (done) {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -688,9 +599,6 @@ describe('Model', function () {
   it('should be able to forceDelete model instance even when soft delete is enabled', function (done) {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -714,9 +622,6 @@ describe('Model', function () {
   it('should add created_at and updated_at timestamps when timestamps are enabled', function () {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get table(){
         return 'users'
@@ -734,10 +639,6 @@ describe('Model', function () {
 
     class User extends Model{
 
-      static extend(){
-        return new StaticProxy(this)
-      }
-
     }
 
     User = User.extend()
@@ -749,10 +650,6 @@ describe('Model', function () {
 
 
     class User extends Model{
-
-      static extend(){
-        return new StaticProxy(this)
-      }
 
     }
 
@@ -767,10 +664,6 @@ describe('Model', function () {
   it('should be able to define hidden fields , which will be excluded from results' , function (done) {
 
     class User extends Model{
-
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get hidden(){
         return ['email']
@@ -793,10 +686,6 @@ describe('Model', function () {
   it('should be able to define visible fields , which should get preference over hidden fields' , function (done) {
 
     class User extends Model{
-
-      static extend(){
-        return new StaticProxy(this)
-      }
 
       static get hidden(){
         return ['email']
@@ -823,9 +712,6 @@ describe('Model', function () {
   it('should not be able to update a model if it was not fetched ', function () {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
     }
 
     User = User.extend()
@@ -842,9 +728,6 @@ describe('Model', function () {
   it('should not be able to delete a model if it was not fetched ', function () {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
     }
 
     User = User.extend()
@@ -862,9 +745,6 @@ describe('Model', function () {
   it('should not be able to forceDelete a model if it was not fetched ', function () {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
     }
 
     User = User.extend()
@@ -881,9 +761,6 @@ describe('Model', function () {
   it('should not use existing query chain , when values for one is fetched', function (done) {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
     }
 
     let user1 = []
@@ -908,9 +785,6 @@ describe('Model', function () {
   it('should not use existing query chain , when new function is used while building another query' , function () {
 
     class User extends Model{
-      static extend(){
-        return new StaticProxy(this)
-      }
     }
 
     User = User.extend()

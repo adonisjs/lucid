@@ -3,7 +3,6 @@
 require('harmony-reflect')
 const mapper = require('./mapper')
 const addons = require('./addons')
-const Database = require('./database.temporary')
 
 /**
  * @module StaticProxy
@@ -13,7 +12,7 @@ const Database = require('./database.temporary')
  */
 class StaticProxy {
 
-  constructor (Model) {
+  constructor (Model,Database) {
     Model.activeConnection = Database.table(Model.table)
 
     /**

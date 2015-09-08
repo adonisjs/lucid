@@ -4,6 +4,7 @@ const path = require('path')
 const chai = require('chai')
 const expect = chai.expect
 const co = require('co')
+const Database = require('../../src/Orm/Proxy/Static/database.temporary')
 const StaticProxy = require('../../src/Orm/Proxy/Static')
 
 describe('StaticProxy', function () {
@@ -13,7 +14,7 @@ describe('StaticProxy', function () {
     class User{
 
       static extend(){
-        return new StaticProxy(this);
+        return new StaticProxy(this,Database);
       }
 
       static get table(){
@@ -32,7 +33,7 @@ describe('StaticProxy', function () {
     class User{
 
       static extend(){
-        return new StaticProxy(this);
+        return new StaticProxy(this,Database);
       }
 
       static get table(){
@@ -50,7 +51,7 @@ describe('StaticProxy', function () {
 
       class User{
         static extend(){
-          return new StaticProxy(this);
+          return new StaticProxy(this,Database);
         }
         static get table(){
           return 'users'
@@ -72,7 +73,7 @@ describe('StaticProxy', function () {
     class User{
 
       static extend(){
-        return new StaticProxy(this);
+        return new StaticProxy(this,Database);
       }
       static get table(){
         return 'users'
@@ -90,6 +91,6 @@ describe('StaticProxy', function () {
     expect(User.toSQL().bindings).deep.equal(['active'])
 
   })
-  
+
 
 })
