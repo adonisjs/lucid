@@ -6,7 +6,7 @@ const Database = require('../src/Database')
 class DatabaseProvider extends ServiceProvider{
 
   static get inject(){
-    return ["Adonis/Src/Env", "Adonis/Src/Config"]
+    return ["Adonis/Src/Env", "Adonis/Addons/Config"]
   }
 
   * register() {
