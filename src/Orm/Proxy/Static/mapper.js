@@ -29,6 +29,14 @@ mapper.get = function (target, name) {
   }
 
   /**
+   * if prototype exists as a instance property on class
+   * then call it
+   */
+  if(target.prototype[name]){
+    return target.prototype[name]
+  }
+
+  /**
    * if method name is withTrashed , return a new
    * function by setting soft deletes to false
    * till query instance.
@@ -80,7 +88,8 @@ mapper.get = function (target, name) {
    */
   if (scopeFunction) {
     return function () {
-      return scopeFunction(this.activeConnection)
+      scopeFunction(this.activeConnection)
+      return this
     }
   }
 

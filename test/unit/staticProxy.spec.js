@@ -112,7 +112,7 @@ describe('StaticProxy', function () {
         return 'users'
       }
 
-      static scopeActive(query){
+      scopeActive(query){
         return query.where('status','active')
       }
 

@@ -22,7 +22,7 @@ let helpers = exports = module.exports = {}
  */
 helpers.makeScoped = function (target, name) {
   name = `scope${changeCase.pascalCase(name)}`
-  return target[name] || null
+  return target.prototype[name] || null
 }
 
 /**

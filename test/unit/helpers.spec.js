@@ -10,13 +10,13 @@ describe('Helpers', function () {
 
   it('should convert snake case methods into camelcase scope methods', function () {
 
-    const target = {
-      scopeActiveUsers: function(){
+    class Target{
+      scopeActiveUsers(){
         return 'foo'
       }
     }
 
-    const scopedMethod = helpers.makeScoped(target,'active_users')
+    const scopedMethod = helpers.makeScoped(Target,'active_users')
     expect(scopedMethod()).to.equal('foo')
 
   })

@@ -61,6 +61,39 @@ describe('Model', function () {
 
   })
 
+  it('should be able to write custom method using query chain' , function () {
+
+    class User extends Model{
+
+      active(){
+        return this.where('status','active')
+      }
+
+    }
+    User.database = db; User = User.extend()
+    expect(User.active().toSQL().sql).to.equal('select * from "users" where "status" = ?')
+
+  })
+
+  it('should be able to write scopedMethods and user defined query chain', function () {
+
+    class User extends Model{
+
+      scopeActive(query){
+        query.where('status','active')
+      }
+
+      scopeIsAdult(query){
+        query.where('age','>',22)
+      }
+
+    }
+
+    User.database = db; User = User.extend()
+    expect(User.active().is_adult().toSQL().sql).to.equal('select * from "users" where "status" = ? and "age" > ?')
+
+  })
+
 
   it('should be able to fetch model attributes', function () {
 
