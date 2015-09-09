@@ -1,6 +1,6 @@
 'use strict';
 
-const ServiceProvider = require('fold').ServiceProvider
+const ServiceProvider = require('adonis-fold').ServiceProvider
 const Database = require('../src/Database')
 
 class DatabaseProvider extends ServiceProvider{

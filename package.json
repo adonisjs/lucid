@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "change-case": "^2.3.0",
+    "harmony-reflect": "^1.4.2",
     "i": "^0.3.3",
     "knex": "^0.8.6",
     "lodash": "^3.10.1"
