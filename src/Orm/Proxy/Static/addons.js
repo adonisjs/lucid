@@ -1,5 +1,11 @@
 'use strict'
 
+/**
+ * adonis-lucid
+ * Copyright(c) 2015-2015 Harminder Virk
+ * MIT Licensed
+*/
+
 const modelHelpers = require('../Model/helpers')
 
 /**
@@ -17,11 +23,11 @@ let addons = exports = module.exports = {}
  * @param  {Boolean} isMutated
  * @param  {Object}  connection
  * @return {Promise}
+ * @public
  */
 addons.create = function (target, values, isMutated, connection) {
-
-  let insertQuery = {}
   connection = connection || target.activeConnection
+  let insertQuery = {}
 
   /**
    * here we use given connection or falls back to
@@ -38,7 +44,7 @@ addons.create = function (target, values, isMutated, connection) {
 
   insertQuery = connection.insert(values)
   target.new()
-  return connection
+  return insertQuery
 }
 
 /**
@@ -50,6 +56,7 @@ addons.create = function (target, values, isMutated, connection) {
  * @param  {Boolean} isMutated
  * @param  {Object}  connection
  * @return {Promise}
+ * @public
  */
 addons.update = function (target, values, isMutated, connection) {
   connection = connection || target.activeConnection
@@ -73,6 +80,7 @@ addons.update = function (target, values, isMutated, connection) {
  * @param  {Object} target
  * @param  {Object} connection
  * @return {Promise}
+ * @public
  */
 addons.delete = function (target, connection) {
   connection = connection || target.activeConnection
@@ -94,6 +102,7 @@ addons.delete = function (target, connection) {
  * @param  {Object} target
  * @param  {Object} connection
  * @return {Promise}
+ * @public
  */
 addons.forceDelete = function (target, connection) {
   connection = connection || target.activeConnection

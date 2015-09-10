@@ -1,5 +1,11 @@
 'use strict'
 
+/**
+ * adonis-lucid
+ * Copyright(c) 2015-2015 Harminder Virk
+ * MIT Licensed
+*/
+
 const changeCase = require('change-case')
 const _ = require('lodash')
 
@@ -16,6 +22,7 @@ let helpers = exports = module.exports = {}
  * @param  {Object} target
  * @param  {String} field
  * @return {Function|Null}
+ * @public
  */
 helpers.mutateField = function (target, field) {
   const setter = `set${changeCase.pascalCase(field)}`
@@ -29,6 +36,7 @@ helpers.mutateField = function (target, field) {
  * @param  {Object} target
  * @param  {Object} row
  * @return {Object}
+ * @public
  */
 helpers.mutateRow = function (target, row) {
   return _.object(_.map(row, function (item, index) {
@@ -45,6 +53,7 @@ helpers.mutateRow = function (target, row) {
  * @param  {Object} target
  * @param  {Array} values
  * @return {Array}
+ * @public
  */
 helpers.mutateSetters = function (target, values) {
   if (_.isArray(values)) {
@@ -62,6 +71,7 @@ helpers.mutateSetters = function (target, values) {
  * @param {Array|Object} rows
  * @param {Array} keys
  * @return {Array|Object}
+ * @public
  */
 helpers.addTimeStamps = function (rows, keys) {
   if (_.isArray(rows)) {
@@ -81,6 +91,7 @@ helpers.addTimeStamps = function (rows, keys) {
  * @param  {Object} row
  * @param  {Array} keys
  * @return {Object}
+ * @public
  */
 helpers.rowTimeStamp = function (row, keys) {
   const currentTimeStamp = new Date()
@@ -90,7 +101,16 @@ helpers.rowTimeStamp = function (row, keys) {
   return row
 }
 
-
+/**
+ * @function isFetched
+ * @description determines whether there are any where
+ * statements available on query chain. Required
+ * to make sure we are updating models whose
+ * instance belongs to a user via find
+ * @param  {Object}  target
+ * @return {Boolean}
+ * @public
+ */
 helpers.isFetched = function (target) {
   return _.size(target.connection._statements) > 0
 }

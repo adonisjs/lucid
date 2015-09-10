@@ -1,5 +1,11 @@
 'use strict'
 
+/**
+ * adonis-lucid
+ * Copyright(c) 2015-2015 Harminder Virk
+ * MIT Licensed
+*/
+
 const helpers = require('./helpers')
 
 /**
@@ -14,6 +20,7 @@ let mapper = exports = module.exports = {}
  * @param  {Object} target
  * @param  {String} name
  * @return {*}
+ * @public
  */
 mapper.get = function (target, name) {
   if (target[name]) {
@@ -32,9 +39,10 @@ mapper.get = function (target, name) {
  * @param {Object} target
  * @param {String} name
  * @param {*} value
+ * @public
  */
 mapper.set = function (target, name, value) {
-  if(name === 'attributes'){
+  if (name === 'attributes') {
     target[name] = value
     return true
   }

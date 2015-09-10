@@ -1,5 +1,11 @@
 'use strict'
 
+/**
+ * adonis-lucid
+ * Copyright(c) 2015-2015 Harminder Virk
+ * MIT Licensed
+*/
+
 require('harmony-reflect')
 const mapper = require('./mapper')
 const addons = require('./addons')
@@ -12,12 +18,13 @@ const addons = require('./addons')
  */
 class StaticProxy {
 
-  constructor (Model,Database) {
+  constructor (Model, Database) {
     Model.activeConnection = Database.table(Model.table)
 
     /**
      * @function create
      * @see addons.create
+     * @public
      */
     Model.create = function (values, isMutated, connection) {
       return addons.create(this, values, isMutated, connection)
@@ -26,6 +33,7 @@ class StaticProxy {
     /**
      * @function update
      * @see addons.update
+     * @public
      */
     Model.update = function (values, isMutated, connection) {
       return addons.update(this, values, isMutated, connection)
@@ -34,6 +42,7 @@ class StaticProxy {
     /**
      * @function delete
      * @see addons.delete
+     * @public
      */
     Model.delete = function (connection) {
       return addons.delete(this, connection)
@@ -42,16 +51,19 @@ class StaticProxy {
     /**
      * @function forceDelete
      * @see addons.forceDelete
+     * @public
      */
     Model.forceDelete = function (connection) {
       return addons.forceDelete(this, connection)
     }
 
     /**
-     * it makes model chained values back to normal,
+     * @function new
+     * @description it makes model chained values back to normal,
      * which is required while making different
      * queries , otherwise knex old query
      * chain will we prepended.
+     * @public
      */
     Model.new = function () {
       this.disableSoftDeletes = false

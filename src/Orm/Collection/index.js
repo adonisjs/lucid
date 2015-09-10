@@ -1,19 +1,17 @@
 'use strict'
 
+/**
+ * adonis-lucid
+ * Copyright(c) 2015-2015 Harminder Virk
+ * MIT Licensed
+*/
+
 const _ = require('lodash')
 
-/**
- * @module Collection
- * @namespace Adonis/Src/Collection
- * @description Convert an array of object of data into
- * lodash collection
- */
 class Collection {
-
   constructor (values) {
     return _(values)
   }
-
 }
 
 module.exports = Collection

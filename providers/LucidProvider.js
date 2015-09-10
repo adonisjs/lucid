@@ -1,5 +1,11 @@
 'use strict';
 
+/**
+ * adonis-lucid
+ * Copyright(c) 2015-2015 Harminder Virk
+ * MIT Licensed
+*/
+
 const ServiceProvider = require('adonis-fold').ServiceProvider
 const Lucid = require('../src/Orm/Proxy/Model')
 

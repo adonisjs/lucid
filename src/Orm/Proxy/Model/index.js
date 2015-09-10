@@ -1,5 +1,11 @@
 'use strict'
 
+/**
+ * adonis-lucid
+ * Copyright(c) 2015-2015 Harminder Virk
+ * MIT Licensed
+*/
+
 require('harmony-reflect')
 const mapper = require('./mapper')
 const helpers = require('./helpers')
@@ -15,7 +21,6 @@ const _ = require('lodash')
 class Model {
 
   constructor (attributes) {
-
     /**
      * initiating model with array of data is not allowed , as it will
      * be considered as bulk inserts
@@ -48,6 +53,7 @@ class Model {
    * static create method.
    * @param  {Array|Object} values
    * @return {Promise}
+   * @public
    */
   create (values) {
     let isMutated = !values
@@ -61,9 +67,10 @@ class Model {
    * or passing new attributes
    * @param  {Array|Object} values
    * @return {Promise}
+   * @public
    */
   update (values) {
-    if(!helpers.isFetched(this)){
+    if (!helpers.isFetched(this)) {
       throw new Error(`You cannot update a fresh model instance , trying fetching one using find method`)
     }
     let isMutated = !values
@@ -76,9 +83,10 @@ class Model {
    * @description soft deleting or deleting rows based upon
    * model settings
    * @return {Promise}
+   * @public
    */
   delete () {
-    if(!helpers.isFetched(this)){
+    if (!helpers.isFetched(this)) {
       throw new Error(`You cannot delete a fresh model instance , trying fetching one using find method`)
     }
     return this.constructor.delete(this.connection)
@@ -89,22 +97,23 @@ class Model {
    * @description force deleting rows even if soft deletes
    * are enabled
    * @return {Promise}
+   * @public
    */
   forceDelete () {
     let self = this
-    if(!helpers.isFetched(this)){
+    if (!helpers.isFetched(this)) {
       throw new Error(`You cannot delete a fresh model instance , trying fetching one using find method`)
     }
-    return new Promise(function (resolve,reject) {
+    return new Promise(function (resolve, reject) {
       self
-      .constructor
-      .forceDelete(self.connection)
-      .then (function (response) {
-        self.attributes = {}
-        self.connection = self.constructor.database.table(self.constructor.table)
-        resolve(response)
-      })
-      .catch(reject)
+        .constructor
+        .forceDelete(self.connection)
+        .then(function (response) {
+          self.attributes = {}
+          self.connection = self.constructor.database.table(self.constructor.table)
+          resolve(response)
+        })
+        .catch(reject)
     })
   }
 
@@ -112,6 +121,7 @@ class Model {
    * @function isTrashed
    * @description finding whether row has been soft deleted or not
    * @return {Boolean}
+   * @public
    */
   isTrashed () {
     const softDeleteKey = this.constructor.softDeletes
@@ -129,6 +139,7 @@ class Model {
    * @static true
    * @description default field name for soft deletes
    * @return {String}
+   * @public
    */
   static get softDeletes () {
     return 'deleted_at'
@@ -140,6 +151,7 @@ class Model {
    * @description by default timestamps are enabled
    * on models
    * @return {Boolean}
+   * @public
    */
   static get timestamps () {
     return true
@@ -150,6 +162,7 @@ class Model {
    * @static true
    * @description default table name for a given model
    * @return {String}
+   * @public
    */
   static get table () {
     return staticHelpers.getTableName(this)
@@ -161,33 +174,47 @@ class Model {
    * @description by default id is considered to be the primary key on
    * a model
    * @return {String}
+   * @public
    */
-  static get primaryKey(){
+  static get primaryKey () {
     return 'id'
+  }
+
+  /**
+   * hooks are used by ioc container to transform return
+   * value and here we want to return proxied model
+   * @return {Array}
+   * @public
+   */
+  static get hooks () {
+    return ['extend']
   }
 
   /**
    * @function extend
    * @description extending static interface of class via StaticProxy
    * @return {Object}
+   * @public
    */
-  static extend(){
-    return new StaticProxy(this,this.database)
+  static extend () {
+    return new StaticProxy(this, this.database)
   }
 
   /**
    * @getter
    * database instance for this model
+   * @public
    */
-  static get database(){
-    return this._database;
+  static get database () {
+    return this._database
   }
 
   /**
    * @setter
    * database instance for this model
+   * @public
    */
-  static set database(database){
+  static set database (database) {
     this._database = database
   }
 

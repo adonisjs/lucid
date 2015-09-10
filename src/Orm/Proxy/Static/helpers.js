@@ -1,5 +1,11 @@
 'use strict'
 
+/**
+ * adonis-lucid
+ * Copyright(c) 2015-2015 Harminder Virk
+ * MIT Licensed
+*/
+
 const changeCase = require('change-case')
 const inflect = require('i')()
 const _ = require('lodash')
@@ -19,6 +25,7 @@ let helpers = exports = module.exports = {}
  * @param  {Class} target
  * @param  {String} name
  * @return {*}
+ * @public
  */
 helpers.makeScoped = function (target, name) {
   name = `scope${changeCase.pascalCase(name)}`
@@ -31,6 +38,7 @@ helpers.makeScoped = function (target, name) {
  * for a given table
  * @param  {Class} target
  * @return {String}
+ * @public
  */
 helpers.getTableName = function (target) {
   const modelName = target.name
@@ -42,6 +50,7 @@ helpers.getTableName = function (target) {
  * @description returns table primaryKey
  * @param  {Class} target
  * @return {String}
+ * @public
  */
 helpers.getPrimaryKey = function (target) {
   return target.primaryKey || 'id'
@@ -54,6 +63,7 @@ helpers.getPrimaryKey = function (target) {
  * @param  {Object}  target
  * @param  {String}  fieldName
  * @return {Boolean}
+ * @public
  */
 helpers.hasGetter = function (target, fieldName) {
   const getter = `get${changeCase.pascalCase(fieldName)}`
@@ -67,6 +77,7 @@ helpers.hasGetter = function (target, fieldName) {
  * @param  {Object} target
  * @param  {Object} row
  * @return {Object}
+ * @public
  */
 helpers.mutateRow = function (target, row) {
   return _.object(_.map(row, function (item, key) {
@@ -82,6 +93,7 @@ helpers.mutateRow = function (target, row) {
  * @param  {Object} target
  * @param  {Array|Object} values
  * @return {Array|Object}
+ * @public
  */
 helpers.mutateValues = function (target, values) {
   let collection
@@ -102,6 +114,7 @@ helpers.mutateValues = function (target, values) {
  * hidden functions defined on model
  * @param {Object} target
  * @param {Object} values
+ * @public
  */
 helpers.setVisibility = function (target, values) {
   if (target.hidden && !target.visible) {
@@ -122,6 +135,7 @@ helpers.setVisibility = function (target, values) {
  * @param  {Array} hidden
  * @param  {Object} row
  * @return {Object}
+ * @public
  */
 helpers.omitFields = function (hidden, row) {
   return _.omit(row, hidden)
@@ -133,6 +147,7 @@ helpers.omitFields = function (hidden, row) {
  * @param  {Array} visible
  * @param  {Object} row
  * @return {Object}
+ * @public
  */
 helpers.pickFields = function (visible, row) {
   return _.pick(row, visible)

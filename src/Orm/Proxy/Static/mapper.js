@@ -1,5 +1,11 @@
 'use strict'
 
+/**
+ * adonis-lucid
+ * Copyright(c) 2015-2015 Harminder Virk
+ * MIT Licensed
+*/
+
 const helpers = require('./helpers')
 const hijacker = require('./hijacker')
 
@@ -17,9 +23,9 @@ let mapper = exports = module.exports = {}
  * @param  {Class} target
  * @param  {String} name
  * @return {*}
+ * @public
  */
 mapper.get = function (target, name) {
-
   /**
    * if property exists on class , return that
    * first
@@ -32,7 +38,7 @@ mapper.get = function (target, name) {
    * if prototype exists as a instance property on class
    * then call it
    */
-  if(target.prototype[name]){
+  if (target.prototype[name]) {
     return target.prototype[name]
   }
 
@@ -54,10 +60,9 @@ mapper.get = function (target, name) {
    */
   if (name === 'find') {
     return function (id) {
-      return hijacker.find(target,id)
+      return hijacker.find(target, id)
     }
   }
-
 
   /**
    * if name is all , then return a new function by
@@ -75,7 +80,7 @@ mapper.get = function (target, name) {
    */
   if (name === 'fetch') {
     return function () {
-      return hijacker.fetch(target,name)
+      return hijacker.fetch(target, name)
     }
   }
 
@@ -101,6 +106,14 @@ mapper.get = function (target, name) {
 
 }
 
+/**
+ * @function set
+ * @description setter for proxy
+ * @param {Object} target
+ * @param {String} name
+ * @param {*} value
+ * @publc
+ */
 mapper.set = function (target, name, value) {
   target[name] = value
 }
@@ -111,6 +124,7 @@ mapper.set = function (target, name, value) {
  * when someone asks for a new instance.
  * @param  {Class} target
  * @return {Object}
+ * @publc
  */
 mapper.construct = function (target, options) {
   var _bind = Function.prototype.bind

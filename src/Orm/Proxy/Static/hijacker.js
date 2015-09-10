@@ -1,5 +1,11 @@
 'use strict'
 
+/**
+ * adonis-lucid
+ * Copyright(c) 2015-2015 Harminder Virk
+ * MIT Licensed
+*/
+
 const helpers = require('./helpers')
 
 let hijacker = exports = module.exports = {}
@@ -13,9 +19,9 @@ let hijacker = exports = module.exports = {}
  * @param  {Object}   target
  * @param  {String}   name
  * @param  {Function} cb
+ * @public
  */
 hijacker.fetch = function (target) {
-
   /**
    * checking if soft deletes are enabled and user has not
    * called withTrashed , if above true conditions we
@@ -25,9 +31,8 @@ hijacker.fetch = function (target) {
     target.activeConnection.where(target.softDeletes, null)
   }
 
-  return new Promise (function (resolve,reject) {
+  return new Promise(function (resolve, reject) {
     target.activeConnection.then(function (values) {
-
       /**
        * here we empty query chain after returning
        * all data, it is required otherwise old
@@ -61,28 +66,29 @@ hijacker.fetch = function (target) {
  * @param  {Object} target [description]
  * @param  {Number} id     [description]
  * @return {Object}        [description]
+ * @public
  */
-hijacker.find = function (target,id) {
+hijacker.find = function (target, id) {
   return new Promise(function (resolve, reject) {
     target
-    .activeConnection
-    .where(target.primaryKey, id)
-    .first()
-    .then(function (values) {
-      let instance = new target(values)
-      instance.connection.where(target.primaryKey, id)
-      resolve(instance)
-    })
-    .catch(reject)
-    .finally(function () {
-      /**
-       * here we empty query chain after returning
-       * all data, it is required otherwise old
-       * methods will be called while making a
-       * new query
-       */
-      target.new()
-    })
+      .activeConnection
+      .where(target.primaryKey, id)
+      .first()
+      .then(function (values) {
+        let instance = new target(values)
+        instance.connection.where(target.primaryKey, id)
+        resolve(instance)
+      })
+      .catch(reject)
+      .finally(function () {
+        /**
+         * here we empty query chain after returning
+         * all data, it is required otherwise old
+         * methods will be called while making a
+         * new query
+         */
+        target.new()
+      })
   })
 }
 

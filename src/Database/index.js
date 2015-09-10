@@ -1,10 +1,15 @@
 'use strict'
 
+/**
+ * adonis-lucid
+ * Copyright(c) 2015-2015 Harminder Virk
+ * MIT Licensed
+*/
+
 const knex = require('knex')
 
 /**
  * @module Database
- * @namespace Adonis/Src/Database
  * @description Fluent query builder for adonis framework
  */
 class Database {
