@@ -75,6 +75,7 @@ hijacker.find = function (target, id) {
       .where(target.primaryKey, id)
       .first()
       .then(function (values) {
+        values = helpers.mutateRow(target, values)
         let instance = new target(values)
         instance.connection.where(target.primaryKey, id)
         resolve(instance)

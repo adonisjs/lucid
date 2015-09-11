@@ -257,6 +257,49 @@ describe('Model', function () {
 
   })
 
+  it('should mutate values for those whose getters are defined' , function (done) {
+
+    class User extends Model{
+
+      getUsername(value){
+        return value.toUpperCase()
+      }
+
+    }
+
+    User.database = db;
+    User = User.extend()
+
+    User
+    .where('id',1)
+    .fetch()
+    .then (function (user) {
+      expect(user.first().username).to.equal('NIKK')
+      done()
+    }).catch(done)
+
+  })
+
+  it('should mutate values when initiating model using find method', function (done) {
+
+    class User extends Model{
+      getUsername(value){
+        return value.toUpperCase()
+      }
+    }
+
+    User.database = db
+    User = User.extend()
+
+    User
+    .find(1)
+    .then (function (user) {
+      expect(user.username).to.equal('NIKK')
+      done()
+    }).catch(done)
+
+  })
+
   it('should insert mutated values inside database using create method directly' , function () {
 
     class User extends Model{
