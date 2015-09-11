@@ -33,6 +33,11 @@ hijacker.fetch = function (target) {
 
   return new Promise(function (resolve, reject) {
     target.activeConnection.then(function (values) {
+
+      if(target.activeConnection._single && target.activeConnection._single.limit && target.activeConnection._single.limit === 1){
+        values = values[0]
+      }
+
       /**
        * here we empty query chain after returning
        * all data, it is required otherwise old

@@ -880,5 +880,23 @@ describe('Model', function () {
 
   })
 
+  it('should return object when used first method on query chain', function (done) {
+
+    class User extends Model{
+
+    }
+    User.database = db; User = User.extend()
+
+    User
+    .where('id',1)
+    .first()
+    .fetch()
+    .then (function (user) {
+      expect(user.toJSON().username).not.to.equal(undefined)
+      done()
+    }).catch(done)
+
+  })
+
 
 })
