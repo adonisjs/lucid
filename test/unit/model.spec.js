@@ -108,7 +108,7 @@ describe('Model', function () {
     }
 
     User.database = db; User = User.extend()
-    expect(User.active().is_adult().toSQL().sql).to.equal('select * from "users" where "status" = ? and "age" > ?')
+    expect(User.active().isAdult().toSQL().sql).to.equal('select * from "users" where "status" = ? and "age" > ?')
 
   })
 
