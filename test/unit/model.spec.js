@@ -75,6 +75,24 @@ describe('Model', function () {
 
   })
 
+  it('should be able to define where clause as callback methods' , function (done) {
+
+    class User extends Model{
+
+    }
+    User.database = db; User = User.extend()
+
+    co (function *() {
+      return yield User.where(function(){
+        this.where('id',1)
+      }).fetch()
+    }).then(function (user) {
+      expect(user.first().id).to.equal(1)
+      done()
+    }).catch(done)
+
+  })
+
   it('should be able to write scopedMethods and user defined query chain', function () {
 
     class User extends Model{
@@ -509,6 +527,29 @@ describe('Model', function () {
     }).catch(done)
 
   })
+
+
+  it('should be able to use soft deletes when using orWhere clauses inside closure', function (done) {
+
+    class User extends Model{
+    }
+
+    User.database = db;
+    User = User.extend()
+
+    User
+    .where(function () {
+      this.where('id',11).orWhere('status','inactive')
+    })
+    .fetch()
+    .then (function (result) {
+      expect(result.size()).to.equal(0)
+      done()
+    }).catch(done)
+
+  })
+
+
 
   it('should return empty collection when deleted_at is mentioned', function (done) {
 
