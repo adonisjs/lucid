@@ -112,6 +112,39 @@ describe('Model', function () {
 
   })
 
+  it('should be able to pass arguments to query scopes', function () {
+
+    class User extends Model{
+
+      scopeOfType(query,status){
+        query.where('status',status)
+      }
+
+    }
+
+    User.database = db; User = User.extend()
+    const querySql = User.ofType('active').toSQL()
+    expect(querySql.sql).to.equal('select * from "users" where "status" = ?')
+    expect(querySql.bindings).deep.equal(['active'])
+
+  })
+
+  it('should be able to pass multiple arguments to query scopes', function () {
+
+    class User extends Model{
+
+      scopeOfType(query,status,status1){
+        query.where('status',status).orWhere('status',status1)
+      }
+
+    }
+
+    User.database = db; User = User.extend()
+    const querySql = User.ofType('active','inactive').toSQL()
+    expect(querySql.sql).to.equal('select * from "users" where "status" = ? or "status" = ?')
+    expect(querySql.bindings).deep.equal(['active','inactive'])
+
+  })
 
   it('should be able to fetch model attributes', function () {
 

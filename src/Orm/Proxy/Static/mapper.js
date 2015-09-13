@@ -8,6 +8,7 @@
 
 const helpers = require('./helpers')
 const hijacker = require('./hijacker')
+const _ = require('lodash')
 
 /**
  * @module mapper
@@ -93,7 +94,8 @@ mapper.get = function (target, name) {
    */
   if (scopeFunction) {
     return function () {
-      scopeFunction(this.activeConnection)
+      const args = [this.activeConnection].concat(_.values(arguments))
+      scopeFunction.apply(target,args)
       return this
     }
   }
