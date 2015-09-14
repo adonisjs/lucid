@@ -1,7 +1,7 @@
 {
   "name": "adonis-lucid",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.0.1",
+  "description": "Database Orm for adonis framework",
   "main": "index.js",
   "scripts": {
     "test": "iojs ./node_modules/mocha/bin/mocha --harmony_proxies test/implementation test/unit --bail",
