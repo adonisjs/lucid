@@ -7,13 +7,12 @@
 */
 
 const ServiceProvider = require('adonis-fold').ServiceProvider
-const Collection = require('../src/Orm/Collection')
 
 class CollectionProvider extends ServiceProvider{
 
   * register() {
     this.app.bind('Adonis/Src/Collection', function () {
-      return Collection;
+      return require('../src/Orm/Collection')
     })
   }
 

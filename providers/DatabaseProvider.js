@@ -7,7 +7,6 @@
 */
 
 const ServiceProvider = require('adonis-fold').ServiceProvider
-const Database = require('../src/Database')
 
 class DatabaseProvider extends ServiceProvider{
 
@@ -17,6 +16,7 @@ class DatabaseProvider extends ServiceProvider{
 
   * register() {
     this.app.singleton('Adonis/Src/Database', function (Env,Config) {
+      const Database = require('../src/Database')
       return new Database(Env,Config)
     })
   }

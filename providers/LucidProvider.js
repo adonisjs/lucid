@@ -7,7 +7,6 @@
 */
 
 const ServiceProvider = require('adonis-fold').ServiceProvider
-const Lucid = require('../src/Orm/Proxy/Model')
 
 class LucidProvider extends ServiceProvider{
 
@@ -17,6 +16,7 @@ class LucidProvider extends ServiceProvider{
 
   * register() {
     this.app.bind('Adonis/Src/Lucid', function (Database) {
+      const Lucid = require('../src/Orm/Proxy/Model')
       Lucid.database = Database
       return Lucid
     })
