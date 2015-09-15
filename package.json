@@ -17,7 +17,7 @@
     "mocha": "^2.3.0",
     "mocha-lcov-reporter": "0.0.2",
     "mysql": "^2.9.0",
-    "sqlite3": "git://github.com/kkoopa/node-sqlite3.git#nan2"
+    "sqlite3": "^3.1.0"
   },
   "peerDependencies": {
     "adonis-fold": "^1.0.0"
