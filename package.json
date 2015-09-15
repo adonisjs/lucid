@@ -4,16 +4,18 @@
   "description": "Database Orm for adonis framework",
   "main": "index.js",
   "scripts": {
-    "test": "iojs ./node_modules/mocha/bin/mocha --harmony_proxies test/implementation test/unit --bail",
-    "coverage": "iojs --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/.bin/_mocha test/implementation test/unit --bail"
+    "test": "node --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec test/implementation test/unit && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
+    "coverage": "node --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/.bin/_mocha test/implementation test/unit --bail"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "chai": "^3.2.0",
     "co": "^4.6.0",
+    "coveralls": "^2.11.4",
     "loadtest": "^1.2.14",
     "mocha": "^2.3.0",
+    "mocha-lcov-reporter": "0.0.2",
     "mysql": "^2.9.0",
     "sqlite3": "git://github.com/kkoopa/node-sqlite3.git#nan2"
   },
