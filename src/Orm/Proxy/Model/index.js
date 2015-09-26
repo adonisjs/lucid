@@ -10,6 +10,7 @@ require('harmony-reflect')
 const mapper = require('./mapper')
 const helpers = require('./helpers')
 const StaticProxy = require('../Static')
+const Ioc = require('adonis-fold').Ioc
 const staticHelpers = require('../Static/helpers')
 const _ = require('lodash')
 
@@ -216,6 +217,125 @@ class Model {
    */
   static set database (database) {
     this._database = database
+  }
+
+  /**
+   * returns defination for hasOne relation
+   * @param  {String}  binding           [description]
+   * @param  {String}  primaryId         [description]
+   * @param  {String}  relationPrimaryId [description]
+   * @return {Object}                   [description]
+   */
+  hasOne(binding, targetPrimaryKey, relationPrimaryKey){
+
+    /**
+     * grabs model from Ioc container
+     * @type {Object}
+    */
+    const model = Ioc.use(binding)
+
+    /**
+     * primary id for the target model, the one
+     * who has defined relationship
+     * @type {String}
+     */
+    targetPrimaryKey = targetPrimaryKey || this.constructor.primaryKey
+
+    /**
+     * relationship primary key to be used on relation model
+     * @type {String}
+     */
+    relationPrimaryKey = relationPrimaryKey || staticHelpers.getRelationKey(this)
+
+    this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relation:'hasOne'}
+
+    return this
+
+  }
+
+
+  query (callback) {
+
+    this.constructor._activeRelation.query = callback
+    return this
+
+  }
+
+
+  withPivot () {
+
+    this.constructor._activeRelation.withPivot = arguments
+    return this
+
+  }
+
+  /**
+   * returns defination for hasMany relation
+   * @param  {String}  binding           [description]
+   * @param  {String}  primaryId         [description]
+   * @param  {String}  relationPrimaryId [description]
+   * @return {Object}                   [description]
+   */
+  hasMany(binding, targetPrimaryKey, relationPrimaryKey){
+
+    /**
+     * grabs model from Ioc container
+     * @type {Object}
+    */
+    const model = Ioc.use(binding)
+
+    /**
+     * primary id for the target model, the one
+     * who has defined relationship
+     * @type {String}
+     */
+    targetPrimaryKey = targetPrimaryKey || this.constructor.primaryKey
+
+    /**
+     * relationship primary key to be used on relation model
+     * @type {String}
+     */
+    relationPrimaryKey = relationPrimaryKey || staticHelpers.getRelationKey(this)
+
+    this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relation:'hasMany'}
+
+  }
+
+
+  belongsToMany (binding, pivotTable, pivotPrimaryKey, pivotOtherKey) {
+
+    /**
+     * grabs model from Ioc container
+     * @type {Object}
+    */
+    const model = Ioc.use(binding)
+
+    /**
+     * make target table to be used as pivot table
+     * for relationship
+     * @type {String}
+     */
+    pivotTable = pivotTable || staticHelpers.getPivotTableName(this.constructor.table,model.table)
+
+    /**
+     * setting up primary key for target model
+     * @type {String}
+     */
+    pivotPrimaryKey = pivotPrimaryKey || staticHelpers.getRelationKey(this)
+
+    /**
+     * setting up primary key for relation model
+     * @type {String}
+     */
+    pivotOtherKey = pivotOtherKey || staticHelpers.getRelationKey(model, true)
+
+    const targetPrimaryKey = this.constructor.primaryKey
+    const relationPrimaryKey = model.primaryKey
+
+    this.constructor._activeRelation = { model, pivotTable, pivotPrimaryKey, pivotOtherKey, targetPrimaryKey, relationPrimaryKey, relation:'belongsToMany'}
+
+    return this
+
   }
 
 }

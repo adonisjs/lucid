@@ -85,6 +85,18 @@ mapper.get = function (target, name) {
     }
   }
 
+
+  /**
+   * implement `with` method here to fetch related models
+   * with target model result
+   */
+  if (name === 'with') {
+    return function (models) {
+      return hijacker.with(target, models)
+    }
+  }
+
+
   const scopeFunction = helpers.makeScoped(target, name)
   /**
    * check to see if method is one of the scoped

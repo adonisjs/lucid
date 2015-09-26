@@ -11,11 +11,10 @@ const helpers = require('./helpers')
 let hijacker = exports = module.exports = {}
 
 /**
+ *
  * @function then
- * @description here we hijack then method on db
- * query builder, it is required to return
- * collection , set visibility and mutate
- * fields
+ * @description here we hijack then method on db query builder, it is required
+ * to return collection , set visibility and mutate fields
  * @param  {Object}   target
  * @param  {String}   name
  * @param  {Function} cb
@@ -23,15 +22,15 @@ let hijacker = exports = module.exports = {}
  */
 hijacker.fetch = function (target) {
   /**
-   * checking if soft deletes are enabled and user has not
-   * called withTrashed , if above true conditions we
-   * will not fetch deleted values
+   * checking if soft deletes are enabled and user has not called withTrashed
+   * , if above true conditions we will not fetch deleted values
    */
   if (target.softDeletes && !target.disableSoftDeletes) {
-    target.activeConnection.where(target.softDeletes, null)
+    target.activeConnection.where(`${target.table}.${target.softDeletes}`, null)
   }
 
   return new Promise(function (resolve, reject) {
+
     target.activeConnection.then(function (values) {
 
       if(target.activeConnection._single && target.activeConnection._single.limit && target.activeConnection._single.limit === 1){
@@ -39,10 +38,8 @@ hijacker.fetch = function (target) {
       }
 
       /**
-       * here we empty query chain after returning
-       * all data, it is required otherwise old
-       * methods will be called while making a
-       * new query
+       * here we empty query chain after returning all data, it is required
+       * otherwise old methods will be called while making a new query
       */
       target.new()
       /**
@@ -64,13 +61,13 @@ hijacker.fetch = function (target) {
 }
 
 /**
+ *
  * @function find
- * @description find methods returns a model instance
- * with single user attributes attached to model
- * attributes
- * @param  {Object} target [description]
- * @param  {Number} id     [description]
- * @return {Object}        [description]
+ * @description find methods returns a model instance with single user
+ * attributes attached to model attributes
+ * @param  {Object} target
+ * @param  {Number} id
+ * @return {Object}
  * @public
  */
 hijacker.find = function (target, id) {
@@ -88,16 +85,59 @@ hijacker.find = function (target, id) {
       .catch(reject)
       .finally(function () {
         /**
-         * here we empty query chain after returning
-         * all data, it is required otherwise old
-         * methods will be called while making a
-         * new query
+         * here we empty query chain after returning all data, it is required
+         * otherwise old methods will be called while making a new query
          */
         target.new()
       })
   })
 }
 
-hijacker.all = function (target) {
+/**
+ * @function all
+ * @description clone of fetch by fetching all values without
+ * any where clause
+ * @param  {Object} target
+ * @return {Object}
+ * @public
+ */
+hijacker.all = function (targets) {
   return hijacker.fetch(target)
+}
+
+/**
+ * @function with
+ * @description attaches results for related models
+ * @param  {Object} target
+ * @param  {Array} models
+ * @return {Object}
+ */
+hijacker.with = function (target, models) {
+
+  /**
+   * my job is to fetch values for target model and then handover relations to
+   * a helper method with required models. If target model is empty i will
+   * resolve without fetching relations.
+   */
+
+  return new Promise(function(resolve, reject){
+    hijacker
+    .fetch(target)
+    .then (function (result) {
+      /**
+       * if target model has entries , then only pull results for given
+       * relationship.
+       */
+      if(result.size() > 0){
+        return helpers.fetchRelated(target, result, models)
+      }
+
+      /**
+       * other resolve with empty array collection , like normal fetch call
+       * will result it.
+      */
+      resolve(result)
+    })
+    .then(resolve).catch(reject)
+  })
 }

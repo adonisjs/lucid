@@ -21,6 +21,8 @@ class StaticProxy {
   constructor (Model, Database) {
     Model.activeConnection = Database.table(Model.table)
 
+    Model._activeRelation = {}
+
     /**
      * @function create
      * @see addons.create
