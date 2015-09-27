@@ -147,6 +147,71 @@ describe('Model Relations', function () {
     .catch(done)
   })
 
+
+  it('should be able to define belongsTo relationship using belongsTo method', function(done) {
+
+    /**
+     * Phone model binded to Ioc container
+     * under App/Model/Phone namespace
+     */
+    class Phone extends Model{
+      user(){
+        return this.belongsTo('App/Model/User')
+      }
+    }
+    Phone.database = db; Phone = Phone.extend()
+
+
+    class User extends Model{
+    }
+    User.database = db; User = User.extend()
+    Ioc.bind('App/Model/User', function() {
+      return User
+    })
+
+    Phone
+    .with(['user'])
+    .then(function(phone){
+      expect(phone.first().user).to.be.an('object')
+      expect(phone.first().user).to.have.property('id')
+      done()
+    })
+    .catch(done)
+  })
+
+
+  it('should be able to fetch belongsTo relationship values for a single result', function(done) {
+
+    /**
+     * Phone model binded to Ioc container
+     * under App/Model/Phone namespace
+     */
+    class Phone extends Model{
+      user(){
+        return this.belongsTo('App/Model/User')
+      }
+    }
+    Phone.database = db; Phone = Phone.extend()
+
+
+    class User extends Model{
+    }
+    User.database = db; User = User.extend()
+    Ioc.bind('App/Model/User', function() {
+      return User
+    })
+
+    Phone
+    .first()
+    .with(['user'])
+    .then(function(phone){
+      expect(phone.toJSON().user).to.be.an('object')
+      expect(phone.toJSON().user).to.have.property('id')
+      done()
+    })
+    .catch(done)
+  })
+
   it('should be able to define hasMany relationship', function(done) {
 
     /**

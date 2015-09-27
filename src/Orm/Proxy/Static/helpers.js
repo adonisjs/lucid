@@ -379,6 +379,18 @@ helpers.hasMany = function (values, model) {
 }
 
 /**
+ * belongsTo method for model relation , it is similar to hasOne
+ * but with opposite keys
+ * @method belongsTo
+ * @param  {Object}  values
+ * @param  {Object}  model
+ * @return {Object}
+ */
+helpers.belongsTo = function (values, model) {
+  return helpers.hasOne(values, model)
+}
+
+/**
  * @function belongsToMany
  * @description returns transformed values for belongs to 
  * many relationship

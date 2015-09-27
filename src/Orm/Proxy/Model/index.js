@@ -220,11 +220,35 @@ class Model {
   }
 
   /**
+   * @function query
+   * @description query chain that can be executed on relationship
+   * definations
+   * @param  {Function} callback
+   * @return {Object}
+   */
+  query (callback) {
+    this.constructor._activeRelation.query = callback
+    return this
+  }
+
+
+  /**
+   * @function withPivot
+   * @description method to define columns to be selected on pivot 
+   * table with many to many relations
+   * @return {Object}
+   */
+  withPivot () {
+    this.constructor._activeRelation.withPivot = arguments
+    return this
+  }
+
+  /**
    * returns defination for hasOne relation
-   * @param  {String}  binding           [description]
-   * @param  {String}  primaryId         [description]
-   * @param  {String}  relationPrimaryId [description]
-   * @return {Object}                   [description]
+   * @param  {String}  binding
+   * @param  {String}  primaryId
+   * @param  {String}  relationPrimaryId
+   * @return {Object}
    */
   hasOne(binding, targetPrimaryKey, relationPrimaryKey){
 
@@ -254,27 +278,49 @@ class Model {
   }
 
 
-  query (callback) {
+  /**
+   * @function belongsTo
+   * @description belongsTo defines one to one relation from relation
+   * model to host model.
+   * @method belongsTo
+   * @param  {String}  binding
+   * @param  {String}  targetPrimaryKey
+   * @param  {String}  relationPrimaryKey
+   * @return {Object}
+   */
+  belongsTo(binding, targetPrimaryKey, relationPrimaryKey) {
 
-    this.constructor._activeRelation.query = callback
+    /**
+     * grabs model from Ioc container
+     * @type {Object}
+    */
+    const model  = Ioc.use(binding)
+
+    /**
+     * relationship primary key to be used on relation model
+     * @type {String}
+     */
+    relationPrimaryKey = relationPrimaryKey || model.primaryKey
+
+    /**
+     * primary id for the target model, the one
+     * who has defined relationship
+     * @type {String}
+     */
+    targetPrimaryKey = targetPrimaryKey || staticHelpers.getRelationKey(model,true)
+
+    this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relation:'belongsTo'}
     return this
 
   }
 
-
-  withPivot () {
-
-    this.constructor._activeRelation.withPivot = arguments
-    return this
-
-  }
 
   /**
    * returns defination for hasMany relation
-   * @param  {String}  binding           [description]
-   * @param  {String}  primaryId         [description]
-   * @param  {String}  relationPrimaryId [description]
-   * @return {Object}                   [description]
+   * @param  {String}  binding
+   * @param  {String}  primaryId
+   * @param  {String}  relationPrimaryId
+   * @return {Object}
    */
   hasMany(binding, targetPrimaryKey, relationPrimaryKey){
 
