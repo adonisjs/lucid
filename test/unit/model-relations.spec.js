@@ -55,6 +55,7 @@ describe('Model Relations', function () {
 
     User
     .with(['phone'])
+    .fetch()
     .then(function(user){
       expect(user.first().phone).to.be.an('object')
       expect(user.first().phone).to.have.property('user_id')
@@ -89,6 +90,7 @@ describe('Model Relations', function () {
 
     User
     .with(['phone'])
+    .fetch()
     .then(function(user){
       expect(user.first().phone).to.be.an('object')
       expect(user.first().phone).not.to.have.property('user_id')
@@ -137,6 +139,7 @@ describe('Model Relations', function () {
 
     User
     .with(['phone','cars'])
+    .fetch()
     .then(function(user){
       expect(user.first().phone).to.be.an('object')
       expect(user.first().phone).to.have.property('user_id')
@@ -171,6 +174,7 @@ describe('Model Relations', function () {
 
     Phone
     .with(['user'])
+    .fetch()
     .then(function(phone){
       expect(phone.first().user).to.be.an('object')
       expect(phone.first().user).to.have.property('id')
@@ -204,6 +208,7 @@ describe('Model Relations', function () {
     Phone
     .first()
     .with(['user'])
+    .fetch()
     .then(function(phone){
       expect(phone.toJSON().user).to.be.an('object')
       expect(phone.toJSON().user).to.have.property('id')
@@ -235,6 +240,7 @@ describe('Model Relations', function () {
 
     User
     .with(['phone'])
+    .fetch()
     .then(function(user){
       expect(user.first().phone).to.be.an('array')
       expect(user.first().phone[0]).to.have.property('user_id')
@@ -297,6 +303,7 @@ describe('Model Relations', function () {
 
     Author
     .with(['books'])
+    .fetch()
     .then (function (author) {
       expect(author.first()).to.have.property('books')
       expect(author.first().books).to.be.an('array')
@@ -333,6 +340,7 @@ describe('Model Relations', function () {
 
     Author
     .with(['books'])
+    .fetch()
     .then (function (author) {
       expect(author.first()).to.have.property('books')
       expect(author.first().books).to.be.an('array')
@@ -373,6 +381,7 @@ describe('Model Relations', function () {
 
     Author
     .with(['books'])
+    .fetch()
     .then (function (author) {
       expect(author.first()).to.have.property('books')
       expect(author.first().books).to.be.an('array')
@@ -410,6 +419,7 @@ describe('Model Relations', function () {
 
     Book
     .with(['author'])
+    .fetch()
     .then (function (book) {
       expect(book.first()).to.have.property('author')
       expect(book.first().author).to.be.an('array')
@@ -449,6 +459,7 @@ describe('Model Relations', function () {
 
     Book
     .with(['author'])
+    .fetch()
     .then (function (book) {
       expect(book.first()).to.have.property('author')
       expect(book.first().author).to.be.an('array')
@@ -458,4 +469,56 @@ describe('Model Relations', function () {
     }).catch(done)
 
   })
+
+  
+  it('should be able to using relation model scope methods when fetching related values', function (done) {
+
+    class Book extends Model{
+
+      author () {
+        return this.belongsToMany('App/Model/Author','books_authors')
+      }
+
+    }
+    Book.database = db; Book = Book.extend()
+
+    Ioc.bind('App/Model/Book', function() {
+      return Book
+    })
+
+    class Author extends Model{
+      
+      scopeNotVirk(query) {
+        return query.whereNot('author_name','virk')
+      }
+    
+    }
+
+    Author.database = db; Author = Author.extend()
+
+    Ioc.bind('App/Model/Author', function() {
+      return Author
+    })
+
+    Book
+    .with(['author'])
+    .scope('author', function (query) {
+      query.notVirk()
+    })
+    .fetch()
+    .then (function (book) {
+      expect(book.first()).to.have.property('author')
+      expect(book.first().author).to.be.an('array')
+
+      _.each(book.first().author, function (author) {
+        expect(author.author_name).not.to.equal('virk')
+      });
+
+      done()
+    }).catch(done)
+
+  })
+  
+  
+
 })

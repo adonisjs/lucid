@@ -22,6 +22,8 @@ class StaticProxy {
     Model.activeConnection = Database.table(Model.table)
 
     Model._activeRelation = {}
+    Model._relations = []
+    Model._relationsScope = []
 
     /**
      * @function create
@@ -69,6 +71,9 @@ class StaticProxy {
      */
     Model.new = function () {
       this.disableSoftDeletes = false
+      this._activeRelation = {}
+      this._relations = []
+      this._relationScope = []
       this.activeConnection = this.database.table(this.table)
       return this
     }

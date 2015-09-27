@@ -92,7 +92,15 @@ mapper.get = function (target, name) {
    */
   if (name === 'with') {
     return function (models) {
-      return hijacker.with(target, models)
+      target._relations = models
+      return this
+    }
+  }
+
+  if(name === 'scope'){
+    return function (key, callback){
+      target._relationsScope[key] = callback
+      return this
     }
   }
 

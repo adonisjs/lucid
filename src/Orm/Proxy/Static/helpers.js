@@ -299,6 +299,14 @@ helpers.hasOne = function (values, model, limit) {
   if(model.query) { model.query(builder) }
 
   /**
+   * if relationsScope is defined on runtime, call scope
+   * method and by passing relational model
+   */
+  if(model.relationsScope && model.relationsScope[model.key]) {
+    model.relationsScope[model.key](builder)
+  }
+
+  /**
    * related model will have a whereIn clause based upon relationPrimaryKey
    * and targetPrimaryKey.
    * @type {Array}
@@ -432,6 +440,14 @@ helpers.belongsToMany = function (values, model) {
    * with query builder
    */
   if(model.query) { model.query(builder) }
+
+  /**
+   * if relationsScope is defined on runtime, call scope
+   * method and by passing relational model
+   */
+  if(model.relationsScope && model.relationsScope[model.key]) {
+    model.relationsScope[model.key](builder)
+  }
 
   /**
    * related model will have a whereIn clause based upon relationPrimaryKey

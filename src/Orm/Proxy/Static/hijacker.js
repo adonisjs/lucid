@@ -21,6 +21,7 @@ let hijacker = exports = module.exports = {}
  * @public
  */
 hijacker.fetch = function (target) {
+
   /**
    * checking if soft deletes are enabled and user has not called withTrashed
    * , if above true conditions we will not fetch deleted values
@@ -38,11 +39,6 @@ hijacker.fetch = function (target) {
       }
 
       /**
-       * here we empty query chain after returning all data, it is required
-       * otherwise old methods will be called while making a new query
-      */
-      target.new()
-      /**
        * here we set visibility of values fetched
        * from model query.
        */
@@ -54,7 +50,25 @@ hijacker.fetch = function (target) {
        */
       values = helpers.mutateValues(target, values)
 
-      resolve(values)
+
+      /**
+       * if any relations have been defined using with method , simply fetch 
+       * them as attach them to final values
+       */
+      if(target._relations && target._relations.length && values.size() > 0){
+        return helpers.fetchRelated(target, values, target._relations)
+      }
+
+      return values
+
+    }).then(function (response) {
+
+      /**
+       * here we empty query chain after returning all data, it is required
+       * otherwise old methods will be called while making a new query
+      */
+      target.new()
+      resolve(response)
 
     }).catch(reject)
   })
@@ -103,41 +117,4 @@ hijacker.find = function (target, id) {
  */
 hijacker.all = function (target) {
   return hijacker.fetch(target)
-}
-
-/**
- * @function with
- * @description attaches results for related models
- * @param  {Object} target
- * @param  {Array} models
- * @return {Object}
- */
-hijacker.with = function (target, models) {
-
-  /**
-   * my job is to fetch values for target model and then handover relations to
-   * a helper method with required models. If target model is empty i will
-   * resolve without fetching relations.
-   */
-
-  return new Promise(function(resolve, reject){
-    hijacker
-    .fetch(target)
-    .then (function (result) {
-      /**
-       * if target model has entries , then only pull results for given
-       * relationship.
-       */
-      if(result.size() > 0){
-        return helpers.fetchRelated(target, result, models)
-      }
-
-      /**
-       * other resolve with empty array collection , like normal fetch call
-       * will result it.
-      */
-      resolve(result)
-    })
-    .then(resolve).catch(reject)
-  })
 }

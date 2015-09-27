@@ -270,8 +270,9 @@ class Model {
      * @type {String}
      */
     relationPrimaryKey = relationPrimaryKey || staticHelpers.getRelationKey(this)
+    const relationsScope = this.constructor._relationsScope
 
-    this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relation:'hasOne'}
+    this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relationsScope, relation:'hasOne'}
 
     return this
 
@@ -308,8 +309,9 @@ class Model {
      * @type {String}
      */
     targetPrimaryKey = targetPrimaryKey || staticHelpers.getRelationKey(model,true)
+    const relationsScope = this.constructor._relationsScope
 
-    this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relation:'belongsTo'}
+    this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relationsScope, relation:'belongsTo'}
     return this
 
   }
@@ -342,8 +344,9 @@ class Model {
      * @type {String}
      */
     relationPrimaryKey = relationPrimaryKey || staticHelpers.getRelationKey(this)
+    const relationsScope = this.constructor._relationsScope
 
-    this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relation:'hasMany'}
+    this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relationsScope, relation:'hasMany'}
 
   }
 
@@ -377,8 +380,9 @@ class Model {
 
     const targetPrimaryKey = this.constructor.primaryKey
     const relationPrimaryKey = model.primaryKey
+    const relationsScope = this.constructor._relationsScope
 
-    this.constructor._activeRelation = { model, pivotTable, pivotPrimaryKey, pivotOtherKey, targetPrimaryKey, relationPrimaryKey, relation:'belongsToMany'}
+    this.constructor._activeRelation = { model, pivotTable, pivotPrimaryKey, pivotOtherKey, targetPrimaryKey, relationPrimaryKey, relationsScope, relation:'belongsToMany'}
 
     return this
 
