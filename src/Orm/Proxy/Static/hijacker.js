@@ -101,7 +101,7 @@ hijacker.find = function (target, id) {
  * @return {Object}
  * @public
  */
-hijacker.all = function (targets) {
+hijacker.all = function (target) {
   return hijacker.fetch(target)
 }
 
