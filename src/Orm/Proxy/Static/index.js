@@ -51,6 +51,15 @@ class StaticProxy {
     Model._relationsScope = {}
 
     /**
+     * this key comes in use when this model is referenced as a relational
+     * model under many to many relation. The end user can push
+     * values to be fetched from pivot table.
+     * @type {Array}
+     */
+    Model._withPivot = []
+    Model._pivotTable = null
+
+    /**
      * @function create
      * @see addons.create
      * @public
@@ -99,6 +108,7 @@ class StaticProxy {
       this._activeRelation = {}
       this._relations = []
       this._relationScope = {}
+      this._withPivot = []
       this.activeConnection = this.database.table(this.table)
       return this
     }

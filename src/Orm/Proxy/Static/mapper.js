@@ -108,6 +108,18 @@ mapper.get = function (target, name) {
   }
 
   /**
+   * setting up pivot columns to be fetched while making
+   * many to many relation. Make sure this value will
+   * be set on relational model, not on host model.
+   */
+  if(name === 'withPivot'){
+    return function () {
+      target._withPivot = _.values(arguments)
+      return this
+    }
+  }
+
+  /**
    * check to see if method is one of the scoped
    * methods or not, if method falls into a
    * scope method call that and pass current

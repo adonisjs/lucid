@@ -30,6 +30,12 @@ hijacker.fetch = function (target) {
     target.activeConnection.where(`${target.table}.${target.softDeletes}`, null)
   }
 
+  /**
+   * here we transforming fields to be selected from table. This transformation 
+   * is required for relationships where pivot tables are in use.
+  */
+  helpers.transformSelectColumns(target.activeConnection._statements, target._withPivot, target._pivotTable)
+
   return new Promise(function (resolve, reject) {
 
     target.activeConnection.then(function (values) {

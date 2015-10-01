@@ -204,11 +204,19 @@ helpers.fetchRelated = function (target, values, models) {
   const relationPromises = _.map(models, function (model) {
 
     /**
-     * here we grab model binding from Ioc container for 
-     * model to be attached with target result.
+     * here we expect that value of model should exists
+     * on model as a function which calls relationship
+     * methods to define their relation.
      */
     target.prototype[model]()
 
+    /**
+     * once relationship method has been called
+     * we fetch active relation meta data to 
+     * be used for dynamic queries on related
+     * model
+     * @type {Object}
+     */
     const resolvedModel = target._activeRelation
 
     /**
@@ -290,19 +298,26 @@ helpers.hasOne = function (values, model, limit) {
   const table = builder.table
   const targetPrimaryKey = model.targetPrimaryKey
   const relationPrimaryKey = model.relationPrimaryKey
-  
+
   /**
-   * if query is defined on relation , invoke query
-   * with query builder
+   * this is key where we attach data for relational model. 
+   * @example
+   * class User extends Model{
+   *   profile(){
+   *     this.hasOne('App/Model/Profile')
+   *   }
+   * }
+   * `profile` is the key here
+   * @type {String}
    */
-  if(model.query) { model.query(builder) }
+  const keyToBindOn = model.key
 
   /**
    * if relationsScope is defined on runtime, call scope
    * method and by passing relational model
    */
-  if(model.relationsScope && model.relationsScope[model.key]) {
-    model.relationsScope[model.key](builder)
+  if(model.relationsScope && model.relationsScope[keyToBindOn]) {
+    model.relationsScope[keyToBindOn](builder)
   }
 
   /**
@@ -339,10 +354,33 @@ helpers.hasOne = function (values, model, limit) {
          * their targetPrimaryKey.
          */
         if(limit === 'noLimit'){
-          relationGroup = response.groupBy(relationPrimaryKey).toJSON()
+
+          /**
+           * here we make sure relational model has returned some values after
+           * query execution,it not we make relationGroup equals to an empty
+           * array.We can also stop execution of this method here but that
+           * will make results unstable as in situation of multiple results we
+           * have to set key/values to each row inside an array.So it is
+           * better to keep this empty here and let execution going on to keep
+           * results stable.
+           */
+          relationGroup = response.size() ? response.groupBy(relationPrimaryKey).toJSON() : []
+          /**
+           * we set response to an empty array if response is empty, it is required so
+           * that while attaching values on host model , we can set empty array of
+           * relation where there are no values
+           * @type {Array}
+           */
+          response = []
         }else{
           response = response.first()
-          relationGroup[response[relationPrimaryKey]] = response
+          /**
+           * again here we make sure response.first() returns something, if not we let relationGroup
+           * to be an empty object as defined at first place
+           */
+          if(response){
+            relationGroup[response[relationPrimaryKey]] = response
+          }
         }
       }else{
 
@@ -353,14 +391,13 @@ helpers.hasOne = function (values, model, limit) {
          */
         response = response.toJSON()
         relationGroup[response[relationPrimaryKey]] = response
-
       }
 
       /**
        * finally we transform values and set key/value pair on target model
        * values
        */
-      helpers.transformValues(values, relationGroup, isArray, targetPrimaryKey, model.key, _.isArray(response))
+      helpers.transformValues(values, relationGroup, isArray, targetPrimaryKey, keyToBindOn, _.isArray(response))
       
       resolve(values)
     })
@@ -406,6 +443,8 @@ helpers.belongsTo = function (values, model) {
  */
 helpers.belongsToMany = function (values, model) {
 
+  const pivotPrefix = '_pivot_'
+
   /**
    * finding whether original values for the target model
    * is an array or not , for non-arrays we need to set
@@ -434,12 +473,6 @@ helpers.belongsToMany = function (values, model) {
   const targetPrimaryKey = model.targetPrimaryKey
 
   /**
-   * if query is defined on relation , invoke query
-   * with query builder
-   */
-  if(model.query) { model.query(builder) }
-
-  /**
    * if relationsScope is defined on runtime, call scope
    * method and by passing relational model
    */
@@ -461,21 +494,16 @@ helpers.belongsToMany = function (values, model) {
    */
   let selectionKeys = [
     `${table}.*`,
-    `${pivotTable}.${pivotPrimaryKey} as _pivot_${pivotPrimaryKey}`,
-    `${pivotTable}.${pivotOtherKey} as _pivot_${pivotOtherKey}`
+    `${pivotTable}.${pivotPrimaryKey} as ${pivotPrefix}${pivotPrimaryKey}`,
+    `${pivotTable}.${pivotOtherKey} as ${pivotPrefix}${pivotOtherKey}`
   ]
 
   /**
-   * if keys are available to be picked from pivot table , please
-   * pick them up by concatenating them to selectionKeys
+   * we set the pivot table here. This will be used by fetch 
+   * method to fetch extra pivot columns defined by user.
+   * @type {String}
    */
-  if(model.withPivot){
-    model.withPivot = _.toArray(model.withPivot)
-
-    selectionKeys = selectionKeys.concat(_.transform(model.withPivot, function (result ,column) {
-      return result.push(`${pivotTable}.${column}`)
-    }))
-  }
+  builder._pivotTable = pivotTable
 
   return new Promise (function (resolve,reject) {
 
@@ -500,8 +528,16 @@ helpers.belongsToMany = function (values, model) {
 
       if(response.isArray()){
 
-        relationGroup = response.groupBy(`_pivot_${pivotPrimaryKey}`).toJSON()
-
+        /**
+         * here we make sure relational model has returned some values after
+         * query execution,it not we make relationGroup equals to an empty
+         * array.We can also stop execution of this method here but that
+         * will make results unstable as in situation of multiple results we
+         * have to set key/values to each row inside an array.So it is
+         * better to keep this empty here and let execution going on to keep
+         * results stable.
+         */
+        relationGroup = response.size() ? response.groupBy(`${pivotPrefix}${pivotPrimaryKey}`).toJSON() : []
       }else{
 
         /**
@@ -510,8 +546,7 @@ helpers.belongsToMany = function (values, model) {
          * code.
          */
         response = response.toJSON()
-        relationGroup[response[`_pivot_${pivotPrimaryKey}`]] = response
-
+        relationGroup[response[`${pivotPrefix}${pivotPrimaryKey}`]] = response
       }
 
       /**
@@ -594,59 +629,30 @@ helpers.getWhereInArray = function (values, isArray, targetPrimaryKey) {
   }).value()
 }
 
-/**
- * here we resolve relationships defined on models via model
- * instances. Single relation is resolved at a time on
- * model instance.
- * @method resolveRelation
- * @param  {Object}        values
- * @param  {Object}        relationDefination
- * @return {Object}
- */
-helpers.resolveRelation = function (values, relationDefination) {
-
-  /**
-   * here we call different methods based upon relation type
-   * it is best practice to keep all methods isolated for
-   * each relation [ following SRP ]
-   */
-
-  switch(relationDefination.relation){
-    /**
-     * hasOne will call resolveHasOne method on helpers
-     * object.
-     */
-    case 'hasOne':
-      return helpers.resolveHasOne(values,relationDefination)
-      break;
-
-
-    /**
-     * belongsTo relation will call belongsTo method on
-     * helpers object
-     */
-    case 'belongsTo':
-      return helpers.resolveBelongsTo(values,relationDefination)
-      break;
-  }
-
-}
-
 
 /**
- * resolving relationship model with hasOne relationship
- * @method resolveHasOne
+ * @function resolveHasOne
+ * @description This method is used by model instances to fetch related models
+ * directly from model instance instead of calling `with` method. To keep
+ * this simple and follow SRP, we define one method for each relation
+ * type.
  * @param  {Object}      values
  * @param  {Object}      relationDefination
  * @return {Object}
  */
-helpers.resolveHasOne = function (values, relationDefination) {
+helpers.resolveHasOne = function (values, relationDefination, limit) {
 
   /**
    * getting relation model
    * @type {Class}
    */
   const model = relationDefination.model
+
+  /**
+   * if limit is not defined , set it to 1
+   * @type {[type]}
+   */
+  limit = limit || 1
 
   /**
    * target key on host model
@@ -661,19 +667,173 @@ helpers.resolveHasOne = function (values, relationDefination) {
   const relationPrimaryKey = relationDefination.relationPrimaryKey
 
   /**
-   * execute defined query on relation model
+   * returning model instance with required where clause
    */
-  if(relationDefination.query){
-    relationDefination.query(model)
-  }
+  model.where(relationPrimaryKey,values[targetPrimaryKey])
 
-  if(relationDefination.scope){
-    relationDefination.scope(model)
+  /**
+   * if there is a limit defined , set limit clause. It
+   * is true byDefault for hasOne and belongsTo
+   */
+  if(limit && limit !== 'noLimit'){
+    model.limit(limit)
   }
 
   /**
-   * returning model instance with required where clause
+   * returning model
    */
-  return model.where(relationPrimaryKey,values[targetPrimaryKey]).limit(1)
+  return model
+
+}
+
+/**
+ * @function resolveBelongsTo
+ * @description setting up model with initial query params for belongsTo
+ * relation, under the hood it calls hasOne but with opposite keys.
+ * @param  {Object}         values
+ * @param  {Object}         relationDefination
+ * @return {Object}
+ */
+helpers.resolveBelongsTo = function (values, relationDefination) {
+  return helpers.resolveHasOne(values, relationDefination)
+}
+
+/**
+ * @function resolveHasMany
+ * @description setting up model with initial query params for hasMany
+ * relation, under the hood it calls hasOne but without limit clause.
+ * @param  {Object}         values
+ * @param  {Object}         relationDefination
+ * @return {Object}
+ */
+helpers.resolveHasMany = function (values, relationDefination) {
+  return helpers.resolveHasOne(values,relationDefination, 'noLimit')
+}
+
+
+helpers.resolveBelongsToMany = function (values, relationDefination) {
+
+  /**
+   * prefix to be prepended before values of pivot table
+   * @type {String}
+   */
+  const pivotPrefix = '_pivot_'
+
+  /**
+   * getting relation model
+   * @type {Class}
+   */
+  const model = relationDefination.model
+
+  /**
+   * table name of relational model
+   */
+  const table = model.table
+
+  /**
+   * target key on host model
+   * @type {Integer}
+   */
+  const targetPrimaryKey = relationDefination.targetPrimaryKey
+
+  /**
+   * getting name for pivot table
+   * @type {String}
+   */
+  const pivotTable = relationDefination.pivotTable
+
+
+  /**
+   * foriegn key to be referenced on relational model
+   * @type {Integer}
+   */
+  const relationPrimaryKey = relationDefination.relationPrimaryKey
+
+  /**
+   * getting primary key for pivot table
+   * @type {Integer}
+   */
+  const pivotPrimaryKey = relationDefination.pivotPrimaryKey
+
+  /**
+   * getting other/foreigh key for pivot table
+   * @type {Integer}
+   */
+  const pivotOtherKey = relationDefination.pivotOtherKey
+
+  /**
+   * selectionKeys are keys to be selected when making innerjoin
+   * query
+   * @type {Array}
+   */
+  let selectionKeys = [
+    `${table}.*`,
+    `${pivotTable}.${pivotPrimaryKey} as ${pivotPrefix}${pivotPrimaryKey}`,
+    `${pivotTable}.${pivotOtherKey} as ${pivotPrefix}${pivotOtherKey}`
+  ]
+
+  /**
+   * we set the pivot table here. This will be used by fetch 
+   * method to fetch extra pivot columns defined by user.
+   * @type {String}
+   */
+  model._pivotTable = pivotTable
+
+  model
+  .select.apply(model,selectionKeys)
+  .where(`${pivotTable}.${pivotPrimaryKey}`,values[targetPrimaryKey])
+  .innerJoin(pivotTable,function () {
+    this.on(`${table}.${targetPrimaryKey}`,`${pivotTable}.${pivotOtherKey}`)
+  })
+
+  return model
+
+}
+
+/**
+ * @description Transforming select columns on query builder
+ * by attaching pivot columns defined by user on relation
+ * methods.
+ * @method transformSelectColumns
+ * @param  {Array}               statementGroups
+ * @param  {Array}               pivotColumns
+ * @param  {String}               pivotTable
+ * @return {void}
+ */
+helpers.transformSelectColumns = function (statementGroups, pivotColumns, pivotTable) {
+
+  const pivotPrefix = '_pivot_'
+
+  /**
+   * if user has asked for pivotColumns to be fetched , we 
+   * update query builder columns array by concatenating
+   * extra columns
+   */
+  if(pivotColumns.length){
+
+    /**
+     * first we fetch columns defined on existing query chain, query chain
+     * has multiple groups and anyone group will belong to the columns.
+     * For that we need to filter the one that belongs to columns
+     */
+    const selectedColumns = _.first(_.filter(statementGroups, function (group) {
+      return group.grouping === 'columns'
+    }))
+
+    /**
+     * next we transform extra keys to be fetched from query and prefix them with
+     * pivotTable prefix
+     */
+    pivotColumns = _.transform(pivotColumns, function (result, column) {
+      return result.push(`${pivotTable}.${column} as ${pivotPrefix}${column}`)
+    })
+
+    /**
+     * updating query builder columns here
+     * @type {Array}
+     */
+    selectedColumns.value = selectedColumns.value ? selectedColumns.value.concat(pivotColumns) : []
+
+  }
 
 }

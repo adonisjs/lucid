@@ -6,8 +6,13 @@
  * MIT Licensed
 */
 
+/**
+ * required to make proxy api stable
+ * as of latest spec by ES6
+ */
 require('harmony-reflect')
-const mapper = require('./mapper')
+
+const proxy = require('./proxy')
 const helpers = require('./helpers')
 const StaticProxy = require('../Static')
 const Ioc = require('adonis-fold').Ioc
@@ -46,7 +51,7 @@ class Model {
      * returning proxied model instance , it helps in having
      * magical methods.
      */
-    return new Proxy(this, mapper)
+    return new Proxy(this, proxy)
   }
 
   /**
@@ -220,65 +225,6 @@ class Model {
     this._database = database
   }
 
-
-  /**
-   * defining fetch as a getter on model,here's why - static proxy of class
-   * will look for fetch as a property and if it is not defined it will
-   * execute it's own fetch method. When fetching relations this
-   * method will return relational model other it will return
-   * undefined to make static proxy to fetch it's own method
-   */
-  // get fetch () {
-  //   if(!this.attributes){
-  //     return undefined
-  //   }
-  //   /**
-  //    * getting latest relation stored by relational Methods like
-  //    * hasOne, belongsTo etc.
-  //    * @type {Object}
-  //    */
-  //   const activeRelation = this.constructor._activeRelation
-
-  //   /**
-  //    * returning relational model query chain, returned chain can 
-  //    * be queried further.
-  //    */
-  //   return staticHelpers.resolveRelation(this.attributes, activeRelation)
-  // }
-
-  // get scope () {
-  //   if(!this.attributes){
-  //     return undefined
-  //   }
-  //   return function (callback) {
-  //     this.constructor._activeRelation.scope = callback
-  //     return this
-  //   }
-  // }
-
-  /**
-   * @function query
-   * @description query chain that can be executed on relationship
-   * definations
-   * @param  {Function} callback
-   * @return {Object}
-   */
-  query (callback) {
-    this.constructor._activeRelation.query = callback
-    return this
-  }
-
-  /**
-   * @function withPivot
-   * @description method to define columns to be selected on pivot 
-   * table with many to many relations
-   * @return {Object}
-   */
-  withPivot () {
-    this.constructor._activeRelation.withPivot = arguments
-    return this
-  }
-
   /**
    * returns defination for hasOne relation
    * @param  {String}  binding
@@ -306,13 +252,35 @@ class Model {
      * @type {String}
      */
     relationPrimaryKey = relationPrimaryKey || staticHelpers.getRelationKey(this)
-    const relationsScope = this.constructor._relationsScope
 
-    this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relationsScope, relation:'hasOne'}
+    /**
+     * meta data for a given relation , required to make dynamic queries
+     * @type {Object}
+     */
+    const relationMetaData = {model, targetPrimaryKey, relationPrimaryKey, relation:'hasOne'}
 
+    /**
+     * if calling this method on model instance , return query builder for
+     * relational model.
+     */
     if(this.attributes){
-      return staticHelpers.resolveHasOne(this.attributes,this.constructor._activeRelation)
+      return staticHelpers.resolveHasOne(this.attributes,relationMetaData)
     }
+
+    /**
+     * relation scopes are nested queries on relationship models, they are
+     * not required by model instance, but required when fetching 
+     * relationships using with method.
+     * @type {Object}
+     */
+    relationMetaData.relationsScope = this.constructor._relationsScope
+
+    /**
+     * otherwise set relation meta data on model defination,
+     * later it will be used by fetch method to resolve
+     * relations
+     */
+    this.constructor._activeRelation = relationMetaData
     return model
   }
 
@@ -347,11 +315,36 @@ class Model {
      * @type {String}
      */
     targetPrimaryKey = targetPrimaryKey || staticHelpers.getRelationKey(model,true)
-    const relationsScope = this.constructor._relationsScope
 
-    this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relationsScope, relation:'belongsTo'}
+    /**
+     * meta data for a given relation , required to make dynamic queries
+     * @type {Object}
+     */
+    const relationMetaData = {model, targetPrimaryKey, relationPrimaryKey, relation:'belongsTo'}
 
-    return this
+    /**
+     * if calling this method on model instance , return query builder for
+     * relational model.
+     */
+    if(this.attributes){
+      return staticHelpers.resolveBelongsTo(this.attributes,relationMetaData)
+    }
+
+    /**
+     * relation scopes are nested queries on relationship models, they are
+     * not required by model instance, but required when fetching 
+     * relationships using with method.
+     * @type {Object}
+     */
+    relationMetaData.relationsScope = this.constructor._relationsScope
+
+    /**
+     * otherwise set relation meta data on model defination,
+     * later it will be used by fetch method to resolve
+     * relations
+     */
+    this.constructor._activeRelation = relationMetaData
+    return model
   }
 
 
@@ -382,11 +375,32 @@ class Model {
      * @type {String}
      */
     relationPrimaryKey = relationPrimaryKey || staticHelpers.getRelationKey(this)
-    const relationsScope = this.constructor._relationsScope
 
-    this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relationsScope, relation:'hasMany'}
+    const relationMetaData = {model, targetPrimaryKey, relationPrimaryKey, relation:'hasMany'}
 
-    return this
+    /**
+     * if calling this method on model instance , return query builder for
+     * relational model.
+     */
+    if(this.attributes){
+      return staticHelpers.resolveHasMany(this.attributes,relationMetaData)
+    }
+
+    /**
+     * relation scopes are nested queries on relationship models, they are
+     * not required by model instance, but required when fetching 
+     * relationships using with method.
+     * @type {Object}
+     */
+    relationMetaData.relationsScope = this.constructor._relationsScope
+
+    /**
+     * otherwise set relation meta data on model defination,
+     * later it will be used by fetch method to resolve
+     * relations
+     */
+    this.constructor._activeRelation = relationMetaData
+    return model
   }
 
 
@@ -417,13 +431,43 @@ class Model {
      */
     pivotOtherKey = pivotOtherKey || staticHelpers.getRelationKey(model, true)
 
+    /**
+     * host model primary key
+     * @type {String}
+     */
     const targetPrimaryKey = this.constructor.primaryKey
+
+    /**
+     * foreign key on relational model [ NOT PIVOT TABLE ]
+     * @type {String}
+     */
     const relationPrimaryKey = model.primaryKey
-    const relationsScope = this.constructor._relationsScope
 
-    this.constructor._activeRelation = { model, pivotTable, pivotPrimaryKey, pivotOtherKey, targetPrimaryKey, relationPrimaryKey, relationsScope, relation:'belongsToMany'}
+    const relationMetaData = { model, pivotTable, pivotPrimaryKey, pivotOtherKey, targetPrimaryKey, relationPrimaryKey, relation:'belongsToMany'}
 
-    return this
+    /**
+     * if calling this method on model instance , return query builder for
+     * relational model.
+     */
+    if(this.attributes){
+      return staticHelpers.resolveBelongsToMany(this.attributes,relationMetaData)
+    }
+
+    /**
+     * relation scopes are nested queries on relationship models, they are
+     * not required by model instance, but required when fetching 
+     * relationships using with method.
+     * @type {Object}
+     */
+    relationMetaData.relationsScope = this.constructor._relationsScope
+
+    /**
+     * otherwise set relation meta data on model defination,
+     * later it will be used by fetch method to resolve
+     * relations
+     */
+    this.constructor._activeRelation = relationMetaData
+    return model
 
   }
 
