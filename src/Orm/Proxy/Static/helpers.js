@@ -56,7 +56,7 @@ helpers.getTableName = function (target) {
  */
 helpers.getPivotTableName = function (targetTable, relationTable) {
   const tables = _.sortBy([targetTable,relationTable], function (name) { return name });
-  return `${tables[0]}_${tables[1]}`
+  return `${inflect.singularize(tables[0])}_${inflect.singularize(tables[1])}`
 }
 
 
@@ -203,6 +203,10 @@ helpers.fetchRelated = function (target, values, models) {
   */
   const relationPromises = _.map(models, function (model) {
 
+    model = model.split('.')
+    const nestedModels = _.rest(model).join('.')
+    model = model[0]
+
     /**
      * here we expect that value of model should exists
      * on model as a function which calls relationship
@@ -236,6 +240,8 @@ helpers.fetchRelated = function (target, values, models) {
      *   }
      */
     resolvedModel.key = model
+
+    resolvedModel.nestedModels = nestedModels
 
     /**
      * here we call relation method for a given relation and pass values to be
@@ -316,6 +322,7 @@ helpers.hasOne = function (values, model, limit) {
    * if relationsScope is defined on runtime, call scope
    * method and by passing relational model
    */
+
   if(model.relationsScope && model.relationsScope[keyToBindOn]) {
     model.relationsScope[keyToBindOn](builder)
   }
@@ -331,6 +338,27 @@ helpers.hasOne = function (values, model, limit) {
 
   if(limit && limit !== 'noLimit'){
     builder = builder.first()
+  }
+
+  /**
+   * if there are nested models to be fetched
+   * set with clause with them
+   */
+  if(model.nestedModels){
+    builder.with(model.nestedModels)
+  }
+
+  /**
+   * if there is nestedScope set on the model object , 
+   * set it on builder object. 
+   * @note - We will keep on sending nested
+   * object until it is picked up by any
+   * model/or cleared by last model.
+   */
+  if(model.nestedScope){
+    _.each(model.nestedScope, function (callback, key){
+      builder.scope(key,callback)
+    })
   }
 
   return new Promise (function (resolve, reject) {
@@ -504,6 +532,14 @@ helpers.belongsToMany = function (values, model) {
    * @type {String}
    */
   builder._pivotTable = pivotTable
+
+  /**
+   * if there are nested models to be fetched
+   * set with clause with them
+   */
+  if(model.nestedModels){
+    builder.with(model.nestedModels)
+  }
 
   return new Promise (function (resolve,reject) {
 

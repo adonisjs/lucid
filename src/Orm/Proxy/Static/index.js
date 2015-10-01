@@ -49,6 +49,7 @@ class StaticProxy {
      * @type {Object}
      */
     Model._relationsScope = {}
+    Model._nestedScope = {}
 
     /**
      * this key comes in use when this model is referenced as a relational
@@ -57,6 +58,7 @@ class StaticProxy {
      * @type {Array}
      */
     Model._withPivot = []
+
     Model._pivotTable = null
 
     /**
@@ -108,6 +110,7 @@ class StaticProxy {
       this._activeRelation = {}
       this._relations = []
       this._relationScope = {}
+      this._nestedScope = {}
       this._withPivot = []
       this.activeConnection = this.database.table(this.table)
       return this

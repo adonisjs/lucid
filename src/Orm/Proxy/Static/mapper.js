@@ -102,7 +102,16 @@ mapper.get = function (target, name) {
    */
   if (name === 'scope'){
     return function (key, callback) {
-      target._relationsScope[key] = callback
+
+      key = key.split('.')
+
+      if(key.length > 1){
+        const nestedScope = _.rest(key).join('.')
+        target._nestedScope[nestedScope] = callback
+      }else{
+        key = key[0]
+        target._relationsScope[key] = callback
+      }
       return this
     }
   }

@@ -274,6 +274,7 @@ class Model {
      * @type {Object}
      */
     relationMetaData.relationsScope = this.constructor._relationsScope
+    relationMetaData.nestedScope = this.constructor._nestedScope
 
     /**
      * otherwise set relation meta data on model defination,
@@ -337,6 +338,7 @@ class Model {
      * @type {Object}
      */
     relationMetaData.relationsScope = this.constructor._relationsScope
+    relationMetaData.nestedScope = this.constructor._nestedScope
 
     /**
      * otherwise set relation meta data on model defination,
@@ -393,6 +395,7 @@ class Model {
      * @type {Object}
      */
     relationMetaData.relationsScope = this.constructor._relationsScope
+    relationMetaData.nestedScope = this.constructor._nestedScope
 
     /**
      * otherwise set relation meta data on model defination,
