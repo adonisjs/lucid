@@ -85,33 +85,35 @@ mapper.get = function (target, name) {
     }
   }
 
-
   /**
    * implement `with` method here to fetch related models
    * with target model result
    */
   if (name === 'with') {
-    return function (models) {
-      target._relations = models
+    return function () {
+      target._relations = _.values(arguments)
       return this
     }
   }
 
-  if(name === 'scope'){
-    return function (key, callback){
+  /**
+   * if scope method is called , set relation
+   * scope to be used by fetch method
+   */
+  if (name === 'scope'){
+    return function (key, callback) {
       target._relationsScope[key] = callback
       return this
     }
   }
 
-
-  const scopeFunction = helpers.makeScoped(target, name)
   /**
    * check to see if method is one of the scoped
    * methods or not, if method falls into a
    * scope method call that and pass current
    * query
    */
+  const scopeFunction = helpers.makeScoped(target, name)
   if (scopeFunction) {
     return function () {
       const args = [this.activeConnection].concat(_.values(arguments))

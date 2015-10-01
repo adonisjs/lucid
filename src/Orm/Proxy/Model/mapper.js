@@ -23,6 +23,7 @@ let mapper = exports = module.exports = {}
  * @public
  */
 mapper.get = function (target, name) {
+
   if (target[name]) {
     return target[name]
   }

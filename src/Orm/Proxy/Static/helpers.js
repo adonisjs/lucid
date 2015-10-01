@@ -21,7 +21,7 @@ let helpers = exports = module.exports = {}
 
 /**
  * @function makeScoped
- * @description covert function defination to scope
+ * @description convert function defination to scope
  * defination
  * @param  {Class} target
  * @param  {String} name
@@ -55,7 +55,6 @@ helpers.getTableName = function (target) {
  * @return {String}
  */
 helpers.getPivotTableName = function (targetTable, relationTable) {
-
   const tables = _.sortBy([targetTable,relationTable], function (name) { return name });
   return `${tables[0]}_${tables[1]}`
 }
@@ -366,7 +365,6 @@ helpers.hasOne = function (values, model, limit) {
       resolve(values)
     })
     .catch(function (err) {
-      console.log(err)
       reject(err)
     })
 
@@ -594,4 +592,88 @@ helpers.getWhereInArray = function (values, isArray, targetPrimaryKey) {
   return values.map(function (value) {
     return value[targetPrimaryKey]
   }).value()
+}
+
+/**
+ * here we resolve relationships defined on models via model
+ * instances. Single relation is resolved at a time on
+ * model instance.
+ * @method resolveRelation
+ * @param  {Object}        values
+ * @param  {Object}        relationDefination
+ * @return {Object}
+ */
+helpers.resolveRelation = function (values, relationDefination) {
+
+  /**
+   * here we call different methods based upon relation type
+   * it is best practice to keep all methods isolated for
+   * each relation [ following SRP ]
+   */
+
+  switch(relationDefination.relation){
+    /**
+     * hasOne will call resolveHasOne method on helpers
+     * object.
+     */
+    case 'hasOne':
+      return helpers.resolveHasOne(values,relationDefination)
+      break;
+
+
+    /**
+     * belongsTo relation will call belongsTo method on
+     * helpers object
+     */
+    case 'belongsTo':
+      return helpers.resolveBelongsTo(values,relationDefination)
+      break;
+  }
+
+}
+
+
+/**
+ * resolving relationship model with hasOne relationship
+ * @method resolveHasOne
+ * @param  {Object}      values
+ * @param  {Object}      relationDefination
+ * @return {Object}
+ */
+helpers.resolveHasOne = function (values, relationDefination) {
+
+  /**
+   * getting relation model
+   * @type {Class}
+   */
+  const model = relationDefination.model
+
+  /**
+   * target key on host model
+   * @type {Integer}
+   */
+  const targetPrimaryKey = relationDefination.targetPrimaryKey
+
+  /**
+   * foriegn key to be referenced on relational model
+   * @type {Integer}
+   */
+  const relationPrimaryKey = relationDefination.relationPrimaryKey
+
+  /**
+   * execute defined query on relation model
+   */
+  if(relationDefination.query){
+    relationDefination.query(model)
+  }
+
+  if(relationDefination.scope){
+    relationDefination.scope(model)
+  }
+
+  /**
+   * returning model instance with required where clause
+   */
+  return model.where(relationPrimaryKey,values[targetPrimaryKey]).limit(1)
+
 }

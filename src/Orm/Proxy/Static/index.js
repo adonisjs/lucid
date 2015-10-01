@@ -21,9 +21,34 @@ class StaticProxy {
   constructor (Model, Database) {
     Model.activeConnection = Database.table(Model.table)
 
+    /**
+     * here we store active relation as an object which 
+     * has useful information like 
+     * relational model
+     * foreign key
+     * other key
+     * relation type [hasOne,belongsTo,etc.]
+     * pivot table info [ if pivot table is in use ]
+     * @type {Object}
+     */
     Model._activeRelation = {}
+
+    /**
+     * here we store relation keys to be fetched when fetching 
+     * host/target model. In short these are keys sent with
+     * `with` method
+     * @type {Array}
+     */
     Model._relations = []
-    Model._relationsScope = []
+
+    /**
+     * here we store scope methods, which should be executed on 
+     * relational query builder. We simply store these
+     * and invoke them when running relational model
+     * queries.
+     * @type {Object}
+     */
+    Model._relationsScope = {}
 
     /**
      * @function create
@@ -73,7 +98,7 @@ class StaticProxy {
       this.disableSoftDeletes = false
       this._activeRelation = {}
       this._relations = []
-      this._relationScope = []
+      this._relationScope = {}
       this.activeConnection = this.database.table(this.table)
       return this
     }

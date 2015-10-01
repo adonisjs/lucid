@@ -13,6 +13,7 @@ const StaticProxy = require('../Static')
 const Ioc = require('adonis-fold').Ioc
 const staticHelpers = require('../Static/helpers')
 const _ = require('lodash')
+const Collection = require('../../Collection')
 
 /**
  * @module Model
@@ -219,6 +220,42 @@ class Model {
     this._database = database
   }
 
+
+  /**
+   * defining fetch as a getter on model,here's why - static proxy of class
+   * will look for fetch as a property and if it is not defined it will
+   * execute it's own fetch method. When fetching relations this
+   * method will return relational model other it will return
+   * undefined to make static proxy to fetch it's own method
+   */
+  // get fetch () {
+  //   if(!this.attributes){
+  //     return undefined
+  //   }
+  //   /**
+  //    * getting latest relation stored by relational Methods like
+  //    * hasOne, belongsTo etc.
+  //    * @type {Object}
+  //    */
+  //   const activeRelation = this.constructor._activeRelation
+
+  //   /**
+  //    * returning relational model query chain, returned chain can 
+  //    * be queried further.
+  //    */
+  //   return staticHelpers.resolveRelation(this.attributes, activeRelation)
+  // }
+
+  // get scope () {
+  //   if(!this.attributes){
+  //     return undefined
+  //   }
+  //   return function (callback) {
+  //     this.constructor._activeRelation.scope = callback
+  //     return this
+  //   }
+  // }
+
   /**
    * @function query
    * @description query chain that can be executed on relationship
@@ -230,7 +267,6 @@ class Model {
     this.constructor._activeRelation.query = callback
     return this
   }
-
 
   /**
    * @function withPivot
@@ -274,8 +310,10 @@ class Model {
 
     this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relationsScope, relation:'hasOne'}
 
-    return this
-
+    if(this.attributes){
+      return staticHelpers.resolveHasOne(this.attributes,this.constructor._activeRelation)
+    }
+    return model
   }
 
 
@@ -312,8 +350,8 @@ class Model {
     const relationsScope = this.constructor._relationsScope
 
     this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relationsScope, relation:'belongsTo'}
-    return this
 
+    return this
   }
 
 
@@ -348,6 +386,7 @@ class Model {
 
     this.constructor._activeRelation = {model, targetPrimaryKey, relationPrimaryKey, relationsScope, relation:'hasMany'}
 
+    return this
   }
 
 

@@ -7,6 +7,7 @@
 */
 
 const modelHelpers = require('../Model/helpers')
+const helpers = require('./helpers')
 
 /**
  * @module addons
@@ -27,7 +28,6 @@ let addons = exports = module.exports = {}
  */
 addons.create = function (target, values, isMutated, connection) {
   connection = connection || target.activeConnection
-  let insertQuery = {}
 
   /**
    * here we use given connection or falls back to
@@ -42,7 +42,14 @@ addons.create = function (target, values, isMutated, connection) {
     values = modelHelpers.addTimeStamps(values, ['created_at', 'updated_at'])
   }
 
-  insertQuery = connection.insert(values)
+  /**
+   * saving reference to insert query inside a variable
+   * because we need to clear the query builder before
+   * returning, so that is not chaining into old
+   * queries
+   * @type {Object}
+   */
+  const insertQuery = connection.insert(values)
   target.new()
   return insertQuery
 }
@@ -60,7 +67,6 @@ addons.create = function (target, values, isMutated, connection) {
  */
 addons.update = function (target, values, isMutated, connection) {
   connection = connection || target.activeConnection
-  let updateQuery = {}
 
   if (!isMutated) {
     values = modelHelpers.mutateSetters(target.prototype, values)
@@ -68,7 +74,7 @@ addons.update = function (target, values, isMutated, connection) {
   if (target.timestamps) {
     values = modelHelpers.addTimeStamps(values, ['updated_at'])
   }
-  updateQuery = connection.update(values)
+  const updateQuery = connection.update(values)
   target.new()
   return updateQuery
 }
@@ -106,8 +112,8 @@ addons.delete = function (target, connection) {
  */
 addons.forceDelete = function (target, connection) {
   connection = connection || target.activeConnection
-  let deleteQuery = {}
-  deleteQuery = connection.del()
+
+  const deleteQuery = connection.del()
   target.new()
   return deleteQuery
 }
