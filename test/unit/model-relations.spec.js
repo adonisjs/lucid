@@ -1991,6 +1991,223 @@ describe('Model Relations', function () {
 
     })
 
+  })
+
+  context('Relational Expecations', function () {
+
+    it('should not return values defined as hidden on relational model',function (done) {
+
+      /**
+       * declaring phone model by
+       * extending base model
+       */
+      class Phone extends Model{
+        static get hidden () {
+          return ['phone_number']
+        }
+      }
+
+      /**
+       * setting up model database, and 
+       * extending its static object
+       */
+      Phone.database = db; Phone = Phone.extend()
+
+      /**
+       * binding model to the ioc container to be used
+       * by relationship methods
+       */
+      Ioc.bind('App/Model/Phone', function() {
+        return Phone
+      })
+
+      /**
+       * defining User model by extending 
+       * based model
+       */
+      class User extends Model{
+
+        /**
+         * defining hasOne relationship on 
+         * phoneModel via phone key
+         * @method phone
+         * @return {Object} 
+         */
+        phone(){
+          return this.hasOne('App/Model/Phone')
+        }
+
+      }
+
+      /**
+       * setting up model database, and 
+       * extending its static object
+       */
+      User.database = db; User = User.extend()
+
+      co (function *() {
+
+        /**
+         * fetching all users and their associated 
+         * phones
+         */
+        const user = yield User.with('phone').fetch()
+
+        /**
+         * test expectations
+         */
+        expect(user.first().phone).to.be.an('object')
+        expect(user.first().phone.phone_number).to.equal(undefined)
+
+      }).then(function () {
+        done()
+      }).catch(done)
+
+    })
+
+    it('should only return values defined as visible on relational model',function (done) {
+
+      /**
+       * declaring phone model by
+       * extending base model
+       */
+      class Phone extends Model{
+        static get visible () {
+          return ['is_mobile']
+        }
+      }
+
+      /**
+       * setting up model database, and 
+       * extending its static object
+       */
+      Phone.database = db; Phone = Phone.extend()
+
+      /**
+       * binding model to the ioc container to be used
+       * by relationship methods
+       */
+      Ioc.bind('App/Model/Phone', function() {
+        return Phone
+      })
+
+      /**
+       * defining User model by extending 
+       * based model
+       */
+      class User extends Model{
+
+        /**
+         * defining hasOne relationship on 
+         * phoneModel via phone key
+         * @method phone
+         * @return {Object} 
+         */
+        phone(){
+          return this.hasOne('App/Model/Phone')
+        }
+
+      }
+
+      /**
+       * setting up model database, and 
+       * extending its static object
+       */
+      User.database = db; User = User.extend()
+
+      co (function *() {
+
+        /**
+         * fetching all users and their associated 
+         * phones
+         */
+        const user = yield User.with('phone').fetch()
+
+        /**
+         * test expectations
+         */
+        expect(user.first().phone).to.be.an('object')
+        expect(user.first().phone.phone_number).to.equal(undefined)
+        expect(user.first().phone.user_id).to.equal(undefined)
+
+      }).then(function () {
+        done()
+      }).catch(done)
+
+    })
+
+    it('should transform values when getters are defined on relational model',function (done) {
+
+      /**
+       * declaring phone model by
+       * extending base model
+       */
+      class Phone extends Model{
+
+        getPhoneNumber(phone) {
+          return phone.toString().replace(/(\d{3})(\d{3})(\d{4})/,'$1-$2-$3')
+        }
+
+      }
+
+      /**
+       * setting up model database, and 
+       * extending its static object
+       */
+      Phone.database = db; Phone = Phone.extend()
+
+      /**
+       * binding model to the ioc container to be used
+       * by relationship methods
+       */
+      Ioc.bind('App/Model/Phone', function() {
+        return Phone
+      })
+
+      /**
+       * defining User model by extending 
+       * based model
+       */
+      class User extends Model{
+
+        /**
+         * defining hasOne relationship on 
+         * phoneModel via phone key
+         * @method phone
+         * @return {Object} 
+         */
+        phone(){
+          return this.hasOne('App/Model/Phone')
+        }
+
+      }
+
+      /**
+       * setting up model database, and 
+       * extending its static object
+       */
+      User.database = db; User = User.extend()
+
+      co (function *() {
+
+        /**
+         * fetching all users and their associated 
+         * phones
+         */
+        const user = yield User.with('phone').fetch()
+
+        /**
+         * test expectations
+         */
+        expect(user.first().phone).to.be.an('object')
+        expect(user.first().phone.phone_number).to.match(/\d{3}-\d{3}-\d{4}/g)
+
+      }).then(function () {
+        done()
+      }).catch(done)
+
+    })
+
 
   })
 
