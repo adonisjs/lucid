@@ -186,7 +186,7 @@ describe('Model', function () {
   })
 
 
-  it('should create row inside database using model attributes with create command', function () {
+  it('should create row inside database using model attributes with create command', function (done) {
 
     class User extends Model{
 
@@ -203,8 +203,15 @@ describe('Model', function () {
     User.database = db; User = User.extend()
     const user = new User()
     user.username = 'anku'
-    expect(user.create().toSQL().sql).to.equal('insert into "users" ("username") values (?)')
-    expect(user.create().toSQL().bindings).deep.equal(['anku'])
+
+    user
+    .create()
+    .then(function (response) {
+      expect(response).to.be.an('array')
+      expect(user.attributes.username).to.equal('anku')
+      expect(user.attributes.id).to.equal(response[0])
+      done()
+    }).catch(done)
 
   })
 
@@ -379,7 +386,7 @@ describe('Model', function () {
 
   })
 
-  it('should insert mutated values inside database using create method directly' , function () {
+  it('should insert mutated values inside database using create method directly' , function (done) {
 
     class User extends Model{
 
@@ -400,8 +407,47 @@ describe('Model', function () {
     User.database = db; User = User.extend()
     const user = new User()
 
-    let create = user.create([{username:'FOO'},{username:'BAR'}])
-    expect(create.toSQL().bindings).deep.equal(['foo','bar'])
+    let create = 
+    user
+    .create({username:'FOO'})
+    .then(function (response) {
+      expect(user.attributes.username).to.equal('foo')
+      expect(user.attributes.id).to.equal(response[0])
+      done()
+    }).catch(done)
+
+  })
+
+  it('should not be able to create multiple users via user instance' , function (done) {
+
+    class User extends Model{
+
+      static get table(){
+        return 'users'
+      }
+
+      static get timestamps(){
+        return false;
+      }
+
+      setUsername(value){
+        return value.toLowerCase()
+      }
+
+    }
+
+    User.database = db; User = User.extend()
+    const user = new User()
+
+    let create = 
+    user
+    .create([{username:'FOO'},{username:'BAR'}])
+    .then(function (response) {
+      done()
+    }).catch(function (error) {
+      expect(error.message).to.match(/cannot persist model with multiple rows/)
+      done()
+    })
 
   })
 

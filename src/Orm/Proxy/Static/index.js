@@ -93,7 +93,11 @@ class StaticProxy {
      */
     Model._associationAttributes = {}
 
-
+    /**
+     * pivotAttributes are required to save belongsToMany relationship
+     * under a pivot table
+     * @type {Object}
+     */
     Model._pivotAttributes = {}
 
     /**
@@ -123,7 +127,9 @@ class StaticProxy {
         const key = Object.keys(this._foreignKey)[0];
         values[key] = this._foreignKey[key]
       }
+
       return addons.create(this, values, isMutated, connection)
+
     }
 
     /**

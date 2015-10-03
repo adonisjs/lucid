@@ -147,7 +147,16 @@ mapper.get = function (target, name) {
     }
   }
 
+  /**
+   * associating foreign key via belongsTo
+   * relationship
+   */
   if(name === 'associate'){
+
+    /**
+     * @param  {Object} model Model to associate
+     * @return {void}
+     */
     return function (model) {
 
       /**
@@ -165,8 +174,12 @@ mapper.get = function (target, name) {
   }
 
 
+  /**
+   * dissociating foreign key via belongsTo
+   * relationship
+   */
   if(name === 'dissociate'){
-    return function (model) {
+    return function () {
 
       /**
        * making sure that dissociate is called on belongsTo relation only.
@@ -182,7 +195,64 @@ mapper.get = function (target, name) {
     }
   }
 
+  /**
+   * attaching belongsToMany relationships on pivot tables. 
+   * this method read relation defination and make a
+   * raw query using `database` property from model
+   * constructor
+   */
   if(name === 'attach'){
+
+    return function (relationValue, extraFields){
+
+      return new Promise(function (resolve, reject) {
+        /**
+         * making sure that attach is called on belongsToMany relation only.
+         */
+        if(!target._associationModel._activeRelation || !target._pivotAttributes){
+          return reject('unable to call attach , make sure to call relationship method before dissociate')
+        }
+        if(target._associationModel._activeRelation.relation !== 'belongsToMany'){
+          return reject(`Unable to call attach on ${target._associationModel._activeRelation.relation}`)
+        }
+
+        /**
+         * properly reading pivot relation keys from association model relation.
+         */
+        const pivotTable = target._associationModel._activeRelation.pivotTable
+        const pivotPrimaryKey = target._associationModel._activeRelation.pivotPrimaryKey
+        const pivotOtherKey = target._associationModel._activeRelation.pivotOtherKey
+        const targetPrimaryKey = target._associationModel._activeRelation.targetPrimaryKey
+
+        /**
+         * values object to be inserted inside pivot table
+         * @type {Object}
+         */
+        const pivotValues = extraFields || {}
+        pivotValues[pivotPrimaryKey] = target._pivotAttributes[targetPrimaryKey]
+        pivotValues[pivotOtherKey] = relationValue
+
+        /**
+         * here we need to clean the association model also , as
+         * no other method will be called on association model
+         * after attach.
+         */
+        target._associationModel.new()
+
+        target.new()
+
+        /**
+         * raw query to insert relationship inside pivot table
+         */
+        target.database.table(pivotTable).insert(pivotValues).then(resolve).catch(reject)
+      })
+
+    }
+  }
+
+
+  if(name === 'detach'){
+
     return function (relationValue){
 
       return new Promise(function (resolve, reject) {
@@ -196,24 +266,41 @@ mapper.get = function (target, name) {
           return reject(`Unable to call attach on ${target._associationModel._activeRelation.relation}`)
         }
 
+        /**
+         * properly reading pivot relation keys from association model relation.
+         */
         const pivotTable = target._associationModel._activeRelation.pivotTable
         const pivotPrimaryKey = target._associationModel._activeRelation.pivotPrimaryKey
         const pivotOtherKey = target._associationModel._activeRelation.pivotOtherKey
         const targetPrimaryKey = target._associationModel._activeRelation.targetPrimaryKey
 
-        const pivotValues = {}
-        pivotValues[pivotPrimaryKey] = target._pivotAttributes[targetPrimaryKey]
-        pivotValues[pivotOtherKey] = relationValue
+        /**
+         * values object to be inserted inside pivot table
+         * @type {Object}
+         */
+        const whereClause = {}
+        whereClause[pivotPrimaryKey] = target._pivotAttributes[targetPrimaryKey]
+        if(relationValue){
+          whereClause[pivotOtherKey] = relationValue
+        }
 
+        /**
+         * here we need to clean the association model also , as
+         * no other method will be called on association model
+         * after attach.
+         */
         target._associationModel.new()
+
         target.new()
 
-        return target.database.table(pivotTable).insert(pivotValues).then(resolve).catch(reject)
+        /**
+         * raw query to insert relationship inside pivot table
+         */
+        target.database.table(pivotTable).where(whereClause).delete().then(resolve).catch(reject)
       })
 
     }
   }
-
 
   /**
    * check to see if method is one of the scoped

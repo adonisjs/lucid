@@ -2828,6 +2828,8 @@ describe('Model Relations', function () {
 
       })
 
+      
+
       it('should throw an error when trying to associate on hasOne method', function (done) {
 
         /**
@@ -3012,7 +3014,6 @@ describe('Model Relations', function () {
 
       })
 
-
       it('should be able to dissociate existing belongsTo relation', function (done) {
 
         /**
@@ -3071,6 +3072,67 @@ describe('Model Relations', function () {
         }).catch(done)
 
       })
+
+      it('should be able to update existing belongsTo relation but ignore additional where clauses', function (done) {
+
+        /**
+         * declaring phone model by
+         * extending base model
+         */
+        class Phone extends Model{
+
+          user () {
+            return this.belongsTo('App/Model/User').where('username','bar')
+          }
+
+        }
+
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Phone.database = db; Phone = Phone.extend()
+
+        /**
+         * defining User model by extending 
+         * based model
+         */
+        class User extends Model{
+        }
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        User.database = db; User = User.extend()
+
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/User', function() {
+          return User
+        })
+
+
+        co(function *() {
+
+          const phone = yield Phone.find(3)
+          const user = yield User.find(2)
+          phone.user().associate(user)
+
+          yield phone.update();
+
+          const savedPhone = yield Phone.where('phone_number',phone.attributes.phone_number).first().fetch()
+          expect(savedPhone.get('user_id')).to.equal(2)
+
+
+        }).then(function () {
+          done()
+        }).catch(done)
+
+      })
+
+
     })
     
     context('belongsToMany', function () {
@@ -3133,6 +3195,180 @@ describe('Model Relations', function () {
 
       })
 
+      it('should be able to insert related model with extra data under belongsToMany relation', function (done) {
+
+        /**
+         * declaring phone model by
+         * extending base model
+         */
+        class Book extends Model{
+        }
+
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Book.database = db; Book = Book.extend()
+
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/Book', function() {
+          return Book
+        })
+
+
+        /**
+         * defining User model by extending 
+         * based model
+         */
+        class Author extends Model{
+          books(){
+            return this.belongsToMany('App/Model/Book')
+          }
+        }
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Author.database = db; Author = Author.extend()
+
+        co(function *() {
+
+          const book = new Book({book_title:'Node for experts'})
+          yield book.create()
+
+          const author = yield Author.find(1)
+          yield author.books().attach(book.attributes.id, {is_primary:1})
+
+          const authorBooks = yield author.books().where('books.book_title','Node for experts').withPivot('is_primary').fetch()
+          expect(authorBooks.toJSON()).to.be.an('array')
+          expect(authorBooks.first().book_title).to.equal('Node for experts')
+          expect(authorBooks.first()._pivot_is_primary).to.equal(1)
+
+
+        }).then(function () {
+          done()
+        }).catch(done)
+
+      })
+
+      it('should be able to delete related model under belongsToMany relation using relational model id', function (done) {
+
+        /**
+         * declaring phone model by
+         * extending base model
+         */
+        class Book extends Model{
+        }
+
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Book.database = db; Book = Book.extend()
+
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/Book', function() {
+          return Book
+        })
+
+
+        /**
+         * defining User model by extending 
+         * based model
+         */
+        class Author extends Model{
+          books(){
+            return this.belongsToMany('App/Model/Book')
+          }
+        }
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Author.database = db; Author = Author.extend()
+
+        co(function *() {
+
+          const book = yield Book.find(3)
+
+          const author = yield Author.find(1)
+          yield author.books().detach(book.attributes.id)
+
+          const authorBooks = yield author.books().fetch()
+          expect(authorBooks.toJSON()).to.be.an('array')
+
+          authorBooks.each(function (book) {
+            expect(book._pivot_book_id).not.to.equal(3)
+          }).value()
+
+
+        }).then(function () {
+          done()
+        }).catch(done)
+
+      })
+
+     it('should be able to delete all related model under belongsToMany relation ', function (done) {
+
+        /**
+         * declaring phone model by
+         * extending base model
+         */
+        class Book extends Model{
+        }
+
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Book.database = db; Book = Book.extend()
+
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/Book', function() {
+          return Book
+        })
+
+
+        /**
+         * defining User model by extending 
+         * based model
+         */
+        class Author extends Model{
+          books(){
+            return this.belongsToMany('App/Model/Book')
+          }
+        }
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Author.database = db; Author = Author.extend()
+
+        co(function *() {
+
+          const book = yield Book.find(3)
+
+          const author = yield Author.find(1)
+          yield author.books().detach()
+
+          const authorBooks = yield author.books().fetch()
+          expect(authorBooks.toJSON()).to.be.an('array')
+          expect(authorBooks.size()).to.equal(0)
+
+        }).then(function () {
+          done()
+        }).catch(done)
+
+      })
     })
 
   })

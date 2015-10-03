@@ -63,8 +63,6 @@ class Model {
    * @public
    */
   create (values) {
-    let isMutated = !values
-    values = values || this.attributes
 
     /**
      * here we consume the create method on model
@@ -72,10 +70,23 @@ class Model {
      * as primary key on model instance.
      */
     return new Promise((resolve,reject) => {
+
+      /**
+       * throw an error if trying to save multiple
+       * rows via model instance
+       */
+      if(values && _.isArray(values)){
+        return reject(new Error('cannot persist model with multiple rows'))
+      }
+
+      let isMutated = !values
+      values = values || this.attributes
+
       this.constructor
       .create(values, isMutated, this.connection)
       .then ((response) => {
         if(response[0]){
+          this.attributes = helpers.mutateRow(this,values)
           this.attributes[this.constructor.primaryKey] = response[0]
         }
         resolve(response)
@@ -92,12 +103,12 @@ class Model {
    * @return {Promise}
    * @public
    */
-  update (values) {
+  update () {
     if (!helpers.isFetched(this)) {
       throw new Error(`You cannot update a fresh model instance , trying fetching one using find method`)
     }
-    let isMutated = !values
-    values = values || this.attributes
+    const values = this.attributes
+    const isMutated = true
     return this.constructor.update(values, isMutated, this.connection)
   }
 
