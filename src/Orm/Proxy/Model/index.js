@@ -7,18 +7,18 @@
 */
 
 /**
- * required to make proxy api stable
- * as of latest spec by ES6
+ * harmony-reflect is required to make proxy
+ * api stable as of latest spec by ES6
  */
 require('harmony-reflect')
 
-const proxy = require('./proxy')
-const helpers = require('./helpers')
-const StaticProxy = require('../Static')
-const Ioc = require('adonis-fold').Ioc
-const staticHelpers = require('../Static/helpers')
-const _ = require('lodash')
-const Collection = require('../../Collection')
+const proxy         = require('./proxy')
+const helper       = require('./helper')
+const StaticProxy   = require('../Static')
+const Ioc           = require('adonis-fold').Ioc
+const relation      = require('./relation')
+const _             = require('lodash')
+const Collection    = require('../../Collection')
 
 /**
  * @module Model
@@ -29,27 +29,28 @@ class Model {
 
   constructor (attributes) {
     /**
-     * initiating model with array of data is not allowed , as it will
-     * be considered as bulk inserts
+     * initiating model with array of data is not allowed, as single
+     * model instance should only belongs to a single user.
      */
     if (_.isArray(attributes)) {
-      throw new Error('Cannot initiate model with bulk values, use create method for bulk insert')
+      throw new Error('Cannot initiate model with bulk values, use static create method for bulk insert')
     }
 
     /**
-     * setting up model attributes and calling setter functions
-     * on them before storing
+     * we set constructor arguments as attributes on model instance.
+     * we also mutate them before setting attributes
      */
-    this.attributes = attributes ? helpers.mutateRow(this, attributes) : {}
+    this.attributes = attributes ? helper.mutateRow(this, attributes) : {}
 
     /**
-     * creating an isoloted database instance using Database provider
+     * here we create an isolated connection to 
+     * the database, one per model instance.
      */
     this.connection = this.constructor.database.table(this.constructor.table)
 
     /**
-     * returning proxied model instance , it helps in having
-     * magical methods.
+     * finally we return an instance of proxy. It helps in
+     * resolving class methods/properties on runtime.
      */
     return new Proxy(this, proxy)
   }
@@ -63,17 +64,15 @@ class Model {
    * @public
    */
   create (values) {
-
     /**
-     * here we consume the create method on model
-     * constructor but makes sure to set it back
-     * as primary key on model instance.
+     * here we consume the create method from model
+     * constructor and set primaryKey value to
+     * value returned by create method.
      */
     return new Promise((resolve,reject) => {
-
       /**
        * throw an error if trying to save multiple
-       * rows via model instance
+       * rows via model instance.
        */
       if(values && _.isArray(values)){
         return reject(new Error('cannot persist model with multiple rows'))
@@ -83,14 +82,14 @@ class Model {
       values = values || this.attributes
 
       this.constructor
-      .create(values, isMutated, this.connection)
-      .then ((response) => {
-        if(response[0]){
-          this.attributes = helpers.mutateRow(this,values)
-          this.attributes[this.constructor.primaryKey] = response[0]
-        }
-        resolve(response)
-      }).catch(reject)
+        .create(values, isMutated, this.connection)
+        .then ((response) => {
+          if(response[0]){
+            this.attributes = helper.mutateRow(this,values)
+            this.attributes[this.constructor.primaryKey] = response[0]
+          }
+          resolve(response)
+        }).catch(reject)
     })
 
   }
@@ -98,13 +97,15 @@ class Model {
   /**
    * @function update
    * @description updating existing model with current attributes
-   * or passing new attributes
-   * @param  {Array|Object} values
    * @return {Promise}
    * @public
    */
   update () {
-    if (!helpers.isFetched(this)) {
+    /**
+     * one can only update existing model. Here we make 
+     * sure this model is initiated after db fetch.
+     */
+    if (!helper.isFetched(this)) {
       throw new Error(`You cannot update a fresh model instance , trying fetching one using find method`)
     }
     const values = this.attributes
@@ -120,7 +121,11 @@ class Model {
    * @public
    */
   delete () {
-    if (!helpers.isFetched(this)) {
+    /**
+     * one can only delete existing model. Here we make 
+     * sure this model is initiated after db fetch.
+     */
+    if (!helper.isFetched(this)) {
       throw new Error(`You cannot delete a fresh model instance , trying fetching one using find method`)
     }
     return this.constructor.delete(this.connection)
@@ -134,7 +139,11 @@ class Model {
    * @public
    */
   forceDelete () {
-    if (!helpers.isFetched(this)) {
+    /**
+     * one can only delete existing model. Here we make 
+     * sure this model is initiated after db fetch.
+     */
+    if (!helper.isFetched(this)) {
       throw new Error(`You cannot delete a fresh model instance , trying fetching one using find method`)
     }
     return new Promise((resolve, reject) => {
@@ -198,7 +207,7 @@ class Model {
    * @public
    */
   static get table () {
-    return staticHelpers.getTableName(this)
+    return helper.getTableName(this)
   }
 
   /**
@@ -252,16 +261,18 @@ class Model {
   }
 
   /**
-   * returns defination for hasOne relation
+   * @function hasOne
+   * @description defination for hasOne relation
    * @param  {String}  binding
    * @param  {String}  primaryId
    * @param  {String}  relationPrimaryId
    * @return {Object}
+   * @public
    */
   hasOne(binding, targetPrimaryKey, relationPrimaryKey){
 
     /**
-     * grabs model from Ioc container
+     * grab model from Ioc container
      * @type {Object}
     */
     const model = Ioc.use(binding)
@@ -277,7 +288,7 @@ class Model {
      * relationship primary key to be used on relation model
      * @type {String}
      */
-    relationPrimaryKey = relationPrimaryKey || staticHelpers.getRelationKey(this)
+    relationPrimaryKey = relationPrimaryKey || helper.getRelationKey(this)
 
     /**
      * meta data for a given relation , required to make dynamic queries
@@ -295,15 +306,14 @@ class Model {
 
     /**
      * here we attach nestedScope added by `scope` method, and to
-     * be used by relational methods
+     * be used by relational methods.
      * @type {Object}
      */
     relationMetaData.nestedScope = this.constructor._nestedScope
 
     /**
-     * otherwise set relation meta data on model defination,
-     * later it will be used by fetch method to resolve
-     * relations
+     * here we attach relation meta data on model
+     * constructor to be used by fetch method.
      */
     this.constructor._activeRelation = relationMetaData
 
@@ -314,11 +324,11 @@ class Model {
     if(this.attributes){
 
       /**
-       * this method also sets the foreign key and it's value to be utilized
-       * by relational model.
+       * this method also sets the foreign key and it's value to be utilized by
+       * relational model while creating a new record using create method.
        */
       model._foreignKey[relationPrimaryKey] = this.attributes[targetPrimaryKey]
-      return staticHelpers.resolveHasOne(this.attributes,relationMetaData)
+      return relation.resolveHasOne(this.attributes,relationMetaData)
     }
 
     return model
@@ -334,6 +344,7 @@ class Model {
    * @param  {String}  targetPrimaryKey
    * @param  {String}  relationPrimaryKey
    * @return {Object}
+   * @public
    */
   belongsTo(binding, targetPrimaryKey, relationPrimaryKey) {
 
@@ -354,7 +365,7 @@ class Model {
      * who has defined relationship
      * @type {String}
      */
-    targetPrimaryKey = targetPrimaryKey || staticHelpers.getRelationKey(model,true)
+    targetPrimaryKey = targetPrimaryKey || helper.getRelationKey(model,true)
 
     /**
      * meta data for a given relation , required to make dynamic queries
@@ -378,9 +389,8 @@ class Model {
     relationMetaData.nestedScope = this.constructor._nestedScope
 
     /**
-     * otherwise set relation meta data on model defination,
-     * later it will be used by fetch method to resolve
-     * relations
+     * here we attach relation meta data on model
+     * constructor to be used by fetch method.
      */
     this.constructor._activeRelation = relationMetaData
 
@@ -390,7 +400,7 @@ class Model {
      */
     if(this.attributes){
       model._associationModel = this.constructor
-      return staticHelpers.resolveBelongsTo(this.attributes,relationMetaData)
+      return relation.resolveBelongsTo(this.attributes,relationMetaData)
     }
 
     return model
@@ -398,7 +408,8 @@ class Model {
 
 
   /**
-   * returns defination for hasMany relation
+   * @function hasMany
+   * @description creates defination for hasMany relation
    * @param  {String}  binding
    * @param  {String}  primaryId
    * @param  {String}  relationPrimaryId
@@ -423,8 +434,12 @@ class Model {
      * relationship primary key to be used on relation model
      * @type {String}
      */
-    relationPrimaryKey = relationPrimaryKey || staticHelpers.getRelationKey(this)
+    relationPrimaryKey = relationPrimaryKey || helper.getRelationKey(this)
 
+    /**
+     * meta data for a given relation , required to make dynamic queries
+     * @type {Object}
+     */
     const relationMetaData = {model, targetPrimaryKey, relationPrimaryKey, relation:'hasMany'}
 
     /**
@@ -443,9 +458,8 @@ class Model {
     relationMetaData.nestedScope = this.constructor._nestedScope
 
     /**
-     * otherwise set relation meta data on model defination,
-     * later it will be used by fetch method to resolve
-     * relations
+     * here we attach relation meta data on model
+     * constructor to be used by fetch method.
      */
     this.constructor._activeRelation = relationMetaData
 
@@ -461,13 +475,22 @@ class Model {
        * by relational model.
        */
       model._foreignKey[relationPrimaryKey] = this.attributes[targetPrimaryKey]
-      return staticHelpers.resolveHasMany(this.attributes,relationMetaData)
+      return relation.resolveHasMany(this.attributes,relationMetaData)
     }
 
     return model
   }
 
-
+  /**
+   * @function belongsToMany
+   * @description creates relation defination for belongsToMany
+   * @method belongsToMany
+   * @param  {String}      binding         [description]
+   * @param  {String}      pivotTable      [description]
+   * @param  {String}      pivotPrimaryKey [description]
+   * @param  {String}      pivotOtherKey   [description]
+   * @return {Object}                      [description]
+   */
   belongsToMany (binding, pivotTable, pivotPrimaryKey, pivotOtherKey) {
 
     /**
@@ -481,19 +504,19 @@ class Model {
      * for relationship
      * @type {String}
      */
-    pivotTable = pivotTable || staticHelpers.getPivotTableName(this.constructor.table,model.table)
+    pivotTable = pivotTable || helper.getPivotTableName(this.constructor.table,model.table)
 
     /**
      * setting up primary key for target model
      * @type {String}
      */
-    pivotPrimaryKey = pivotPrimaryKey || staticHelpers.getRelationKey(this)
+    pivotPrimaryKey = pivotPrimaryKey || helper.getRelationKey(this)
 
     /**
      * setting up primary key for relation model
      * @type {String}
      */
-    pivotOtherKey = pivotOtherKey || staticHelpers.getRelationKey(model, true)
+    pivotOtherKey = pivotOtherKey || helper.getRelationKey(model, true)
 
     /**
      * host model primary key
@@ -536,15 +559,19 @@ class Model {
      * relational model.
      */
     if(this.attributes){
+
+      /**
+       * below is required to make attach/detach function work, as here we
+       * setup all required data to be used for attaching pivot table
+       * data
+       */
       model._associationModel = this.constructor
       model._pivotAttributes = this.attributes
-      return staticHelpers.resolveBelongsToMany(this.attributes,relationMetaData)
+
+      return relation.resolveBelongsToMany(this.attributes,relationMetaData)
     }
-
     return model
-
   }
-
 }
 
 module.exports = Model

@@ -7,8 +7,8 @@
 */
 
 require('harmony-reflect')
-const mapper = require('./mapper')
-const addons = require('./addons')
+const proxy = require('./proxy')
+const query = require('./query')
 
 /**
  * @module StaticProxy
@@ -102,7 +102,7 @@ class StaticProxy {
 
     /**
      * @function create
-     * @see addons.create
+     * @see query.create
      * @public
      */
     Model.create = function (values, isMutated, connection) {
@@ -128,13 +128,13 @@ class StaticProxy {
         values[key] = this._foreignKey[key]
       }
 
-      return addons.create(this, values, isMutated, connection)
+      return query.create(this, values, isMutated, connection)
 
     }
 
     /**
      * @function update
-     * @see addons.update
+     * @see query.update
      * @public
      */
     Model.update = function (values, isMutated, connection) {
@@ -173,25 +173,25 @@ class StaticProxy {
         values[key] = this._foreignKey[key]
       }
 
-      return addons.update(this, values, isMutated, connection)
+      return query.update(this, values, isMutated, connection)
     }
 
     /**
      * @function delete
-     * @see addons.delete
+     * @see query.delete
      * @public
      */
     Model.delete = function (connection) {
-      return addons.delete(this, connection)
+      return query.delete(this, connection)
     }
 
     /**
      * @function forceDelete
-     * @see addons.forceDelete
+     * @see query.forceDelete
      * @public
      */
     Model.forceDelete = function (connection) {
-      return addons.forceDelete(this, connection)
+      return query.forceDelete(this, connection)
     }
 
     /**
@@ -223,7 +223,7 @@ class StaticProxy {
       return this
     }
 
-    return new Proxy(Model, mapper)
+    return new Proxy(Model, proxy)
   }
 
 }

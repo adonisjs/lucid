@@ -6,7 +6,7 @@
  * MIT Licensed
 */
 
-const helpers = require('./helpers')
+const helper = require('./helper')
 
 /**
  * @module mapper
@@ -47,6 +47,6 @@ mapper.set = function (target, name, value) {
     target[name] = value
     return true
   }
-  const setter = helpers.mutateField(target, name)
+  const setter = helper.mutateField(target, name)
   target.attributes[name] = setter ? setter(value) : value
 }

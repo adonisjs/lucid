@@ -51,7 +51,7 @@ let Config = {
       connection: {
         filename: path.join(__dirname,'./storage/test.sqlite3')
       },
-      debug: true
+      debug: false
     }
   }
 }

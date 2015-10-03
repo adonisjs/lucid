@@ -4,6 +4,7 @@ const path = require('path')
 const chai = require('chai')
 const expect = chai.expect
 const Database = require('../../src/Database')
+const blueprint = require('./blueprints/model-blueprint')
 const Model = require('../../src/Orm/Proxy/Model')
 
 let Env = {
@@ -49,6 +50,23 @@ let instanceUserId = null
 let postId = null
 
 describe('Database Implementation', function () {
+
+  before(function (done) {
+    blueprint
+    .setup(db)
+    .then (function () {
+      done()
+    }).catch(done)
+  })
+
+  after(function (done) {
+    blueprint
+    .tearDown(db)
+    .then (function () {
+      done()
+    }).catch(done)
+  })
+
 
   context('Users', function () {
 

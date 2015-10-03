@@ -4,7 +4,8 @@ const path = require('path')
 const chai = require('chai')
 const expect = chai.expect
 const co = require('co')
-const helpers = require('../../src/Orm/Proxy/Static/helpers')
+const helper = require('../../src/Orm/Proxy/Static/helper')
+const modelHelper = require('../../src/Orm/Proxy/Model/helper')
 
 describe('Helpers', function () {
 
@@ -16,7 +17,7 @@ describe('Helpers', function () {
       }
     }
 
-    const scopedMethod = helpers.makeScoped(Target,'active_users')
+    const scopedMethod = helper.makeScoped(Target,'active_users')
     expect(scopedMethod()).to.equal('foo')
 
   })
@@ -25,7 +26,7 @@ describe('Helpers', function () {
   it('should make table name when table name does not exists as model static property', function () {
     class User{
     }
-    expect(helpers.getTableName(User)).to.equal('users')
+    expect(modelHelper.getTableName(User)).to.equal('users')
   })
 
 

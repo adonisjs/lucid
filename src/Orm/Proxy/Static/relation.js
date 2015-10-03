@@ -6,185 +6,10 @@
  * MIT Licensed
 */
 
-const changeCase = require('change-case')
-const inflect = require('i')()
 const _ = require('lodash')
 const Q = require('q')
-const Collection = require('../../Collection')
 
-/**
- * @module helpers
- * @description Helpers for doing DRY operations while
- * setting up models
- */
-let helpers = exports = module.exports = {}
-
-/**
- * @function makeScoped
- * @description convert function defination to scope
- * defination
- * @param  {Class} target
- * @param  {String} name
- * @return {*}
- * @public
- */
-helpers.makeScoped = function (target, name) {
-  name = `scope${changeCase.pascalCase(name)}`
-  return target.prototype[name] || null
-}
-
-/**
- * @function getTableName
- * @description makes table name based upon available properties
- * for a given table
- * @param  {Class} target
- * @return {String}
- * @public
- */
-helpers.getTableName = function (target) {
-  const modelName = target.name
-  return changeCase.lowerCase(inflect.pluralize(modelName))
-}
-
-/**
- * @function getPivotTableName
- * @description returns pivot table name for belongsToMany and
- * other pivot relations.
- * @param  {String}         targetTable
- * @param  {String}         relationTable
- * @return {String}
- */
-helpers.getPivotTableName = function (targetTable, relationTable) {
-  const tables = _.sortBy([targetTable,relationTable], function (name) { return name });
-  return `${inflect.singularize(tables[0])}_${inflect.singularize(tables[1])}`
-}
-
-
-/**
- * @function getRelationKey
- * @description makes relation key for a model based on it's 
- * table name
- * @param  {Class} target
- * @param  {Boolean} isConstructor
- * @return {String}
- * @public
- */
-helpers.getRelationKey = function (target, isConstructor) {
-
-  const table = isConstructor ? target.table : target.constructor.table
-  const primaryKey = isConstructor ? target.primaryKey : target.constructor.primaryKey
-
-  return `${inflect.singularize(table)}_${primaryKey}`
-}
-
-/**
- * @function getPrimaryKey
- * @description returns table primaryKey
- * @param  {Class} target
- * @return {String}
- * @public
- */
-helpers.getPrimaryKey = function (target) {
-  return target.primaryKey || 'id'
-}
-
-/**
- * @function hasGetter
- * @description returns getter function on a given model
- * if exists , or returns null
- * @param  {Object}  target
- * @param  {String}  fieldName
- * @return {Boolean}
- * @public
- */
-helpers.hasGetter = function (target, fieldName) {
-  const getter = `get${changeCase.pascalCase(fieldName)}`
-  return target.prototype[getter] || null
-}
-
-/**
- * @function mutateRow
- * @description here we call getters on all fields
- * inside an object.
- * @param  {Object} target
- * @param  {Object} row
- * @return {Object}
- * @public
- */
-helpers.mutateRow = function (target, row) {
-  return _.object(_.map(row, function (item, key) {
-    const getter = helpers.hasGetter(target, key)
-    const mutatedValue = getter ? getter(item) : item
-    return [key, mutatedValue]
-  }))
-}
-
-/**
- * @function mutateValues
- * @description here we call getters on rows inside an array
- * @param  {Object} target
- * @param  {Array|Object} values
- * @return {Array|Object}
- * @public
- */
-helpers.mutateValues = function (target, values) {
-  let collection
-  if (_.isArray(values)) {
-    collection = _.map(values, function (value) {
-      return helpers.mutateRow(target, value)
-    })
-  } else {
-    collection = helpers.mutateRow(target, values)
-  }
-  return new Collection(collection)
-}
-
-/**
- * @function setVisibility
- * @description here we loop through on fetched values
- * and omit or pick fields based on visibility and
- * hidden functions defined on model
- * @param {Object} target
- * @param {Object} values
- * @public
- */
-helpers.setVisibility = function (target, values) {
-  if (target.hidden && !target.visible) {
-    values = _.map(values, function (value) {
-      return helpers.omitFields(target.hidden, value)
-    })
-  }else if (target.visible) {
-    values = _.map(values, function (value) {
-      return helpers.pickFields(target.visible, value)
-    })
-  }
-  return values
-}
-
-/**
- * @function omitFields
- * @description here we omit fields on a given row
- * @param  {Array} hidden
- * @param  {Object} row
- * @return {Object}
- * @public
- */
-helpers.omitFields = function (hidden, row) {
-  return _.omit(row, hidden)
-}
-
-/**
- * @function pickFields
- * @description here we fields fields on a given row
- * @param  {Array} visible
- * @param  {Object} row
- * @return {Object}
- * @public
- */
-helpers.pickFields = function (visible, row) {
-  return _.pick(row, visible)
-}
-
+let relation = exports = module.exports = {}
 
 /**
  * @function fetchRelated
@@ -192,17 +17,29 @@ helpers.pickFields = function (visible, row) {
  * @param  {Object}     values
  * @param  {Array}     models
  * @return {Object}
+ * @public
  */
-helpers.fetchRelated = function (target, values, models) {
+relation.fetchRelated = function (target, values, models) {
 
   /**
    * here we setup relation methods by fetching related models 
    * from Ioc container and make an array of promises to be
-   * used with Q.all. Each realtion method is responsible
+   * used with Q.all. Each relation method is responsible
    * for transforming the actual values object.
   */
   const relationPromises = _.map(models, function (model) {
 
+    /**
+     * here we take all the required steps to segregate nested models.
+     * This is how it works.
+     * @example
+     * given nested relation users.posts
+     * we first resolve users relation and call it's with
+     * method by passing `posts`. Which will resolve 
+     * posts automatically on users.
+     * Above cycle goes on until we reach the last relation.
+     * @type {Array}
+     */
     model = model.split('.')
     const nestedModels = _.rest(model).join('.')
     model = model[0]
@@ -253,7 +90,7 @@ helpers.fetchRelated = function (target, values, models) {
      * here we call relation method for a given relation and pass values to be
      * transformed with model binding from Ioc container.
      */
-    return helpers[resolvedModel.relation](values,resolvedModel)
+    return relation[resolvedModel.relation](values,resolvedModel)
   })
 
   /**
@@ -270,15 +107,16 @@ helpers.fetchRelated = function (target, values, models) {
 }
 
 /**
- * hasOne method is a relation method , who's job is 
+ * @function hasOne
+ * @description hasOne method is a relation method , who's job is 
  * to fetch related values from a given model and
  * attach them to original values object.
- * @method hasOne
  * @param  {Object}  values
  * @param  {Object}  model
  * @return {Object}
+ * @public
  */
-helpers.hasOne = function (values, model, limit) {
+relation.hasOne = function (values, model, limit) {
 
   /**
    * finding whether original values for the target model
@@ -338,7 +176,7 @@ helpers.hasOne = function (values, model, limit) {
    * and targetPrimaryKey.
    * @type {Array}
    */
-  let whereInValues = helpers.getWhereInArray(values, isArray, targetPrimaryKey)
+  let whereInValues = relation.getWhereInArray(values, isArray, targetPrimaryKey)
 
   builder = builder.whereIn(`${table}.${relationPrimaryKey}`,whereInValues)
 
@@ -431,7 +269,7 @@ helpers.hasOne = function (values, model, limit) {
        * finally we transform values and set key/value pair on target model
        * values
        */
-      helpers.transformValues(values, relationGroup, isArray, targetPrimaryKey, keyToBindOn, _.isArray(response))
+      relation.transformValues(values, relationGroup, isArray, targetPrimaryKey, keyToBindOn, _.isArray(response))
       
       resolve(values)
     })
@@ -444,38 +282,41 @@ helpers.hasOne = function (values, model, limit) {
 }
 
 /**
- * hasMany method for model relation, it is similar to hasone
+ * @function hasMany
+ * @description hasMany method for model relation, it is similar to hasone
  * but instead return multiple values
- * @method hasMany
  * @param  {Object}  values
  * @param  {Object}  model
  * @return {Object}
+ * @public
  */
-helpers.hasMany = function (values, model) {
-  return helpers.hasOne(values, model, 'noLimit')
+relation.hasMany = function (values, model) {
+  return relation.hasOne(values, model, 'noLimit')
 }
 
 /**
- * belongsTo method for model relation , it is similar to hasOne
+ * @function belongsTo
+ * @description belongsTo method for model relation , it is similar to hasOne
  * but with opposite keys
- * @method belongsTo
  * @param  {Object}  values
  * @param  {Object}  model
  * @return {Object}
+ * @public
  */
-helpers.belongsTo = function (values, model) {
-  return helpers.hasOne(values, model)
+relation.belongsTo = function (values, model) {
+  return relation.hasOne(values, model)
 }
 
 /**
  * @function belongsToMany
  * @description returns transformed values for belongs to 
  * many relationship
- * @param  {Object|Array}      values
- * @param  {Object}      model
+ * @param  {Object|Array} values
+ * @param  {Object}       model
  * @return {Object}
+ * @public
  */
-helpers.belongsToMany = function (values, model) {
+relation.belongsToMany = function (values, model) {
 
   const pivotPrefix = '_pivot_'
 
@@ -519,7 +360,7 @@ helpers.belongsToMany = function (values, model) {
    * and targetPrimaryKey.
    * @type {Array}
    */
-  let whereInValues = helpers.getWhereInArray(values, isArray, targetPrimaryKey)
+  let whereInValues = relation.getWhereInArray(values, isArray, targetPrimaryKey)
 
   /**
    * selectionKeys are keys to be selected when making innerjoin
@@ -608,7 +449,7 @@ helpers.belongsToMany = function (values, model) {
        * finally we transform values and set key/value pair on target model
        * values
        */
-      helpers.transformValues(values, relationGroup, isArray, targetPrimaryKey, model.key, true)
+      relation.transformValues(values, relationGroup, isArray, targetPrimaryKey, model.key, true)
       
       resolve(values)      
 
@@ -620,9 +461,9 @@ helpers.belongsToMany = function (values, model) {
 }
 
 /**
+ * @function transformValues
  * @description transforming values of target model and attaching
  * relation model values to a given key
- * @method transformValues
  * @param  {Object|Array}        values
  * @param  {Object|Array}        relationValues
  * @param  {Boolean}       isArray
@@ -630,8 +471,9 @@ helpers.belongsToMany = function (values, model) {
  * @param  {String}        objectKey
  * @param  {Boolean}       isRelationArray
  * @return {Object|Array}
+ * @public
  */
-helpers.transformValues = function (values, relationValues, isArray, primaryKey, objectKey, isRelationArray) {
+relation.transformValues = function (values, relationValues, isArray, primaryKey, objectKey, isRelationArray) {
 
   if(!isArray) {
 
@@ -666,8 +508,9 @@ helpers.transformValues = function (values, relationValues, isArray, primaryKey,
  * @param  {Boolean}       isArray
  * @param  {String}        targetPrimaryKey
  * @return {Array}
+ * @public
  */
-helpers.getWhereInArray = function (values, isArray, targetPrimaryKey) {
+relation.getWhereInArray = function (values, isArray, targetPrimaryKey) {
   /**
    * if values are not an array , simply fetch targetPrimaryKey
    * value.
@@ -684,178 +527,18 @@ helpers.getWhereInArray = function (values, isArray, targetPrimaryKey) {
   }).value()
 }
 
-
 /**
- * @function resolveHasOne
- * @description This method is used by model instances to fetch related models
- * directly from model instance instead of calling `with` method. To keep
- * this simple and follow SRP, we define one method for each relation
- * type.
- * @param  {Object}      values
- * @param  {Object}      relationDefination
- * @return {Object}
- */
-helpers.resolveHasOne = function (values, relationDefination, limit) {
-
-  /**
-   * getting relation model
-   * @type {Class}
-   */
-  const model = relationDefination.model
-
-  /**
-   * if limit is not defined , set it to 1
-   * @type {[type]}
-   */
-  limit = limit || 1
-
-  /**
-   * target key on host model
-   * @type {Integer}
-   */
-  const targetPrimaryKey = relationDefination.targetPrimaryKey
-
-  /**
-   * foriegn key to be referenced on relational model
-   * @type {Integer}
-   */
-  const relationPrimaryKey = relationDefination.relationPrimaryKey
-
-  /**
-   * returning model instance with required where clause
-   */
-  model.where(relationPrimaryKey,values[targetPrimaryKey])
-
-  /**
-   * if there is a limit defined , set limit clause. It
-   * is true byDefault for hasOne and belongsTo
-   */
-  if(limit && limit !== 'noLimit'){
-    model.limit(limit)
-  }
-
-  /**
-   * returning model
-   */
-  return model
-
-}
-
-/**
- * @function resolveBelongsTo
- * @description setting up model with initial query params for belongsTo
- * relation, under the hood it calls hasOne but with opposite keys.
- * @param  {Object}         values
- * @param  {Object}         relationDefination
- * @return {Object}
- */
-helpers.resolveBelongsTo = function (values, relationDefination) {
-  return helpers.resolveHasOne(values, relationDefination)
-}
-
-/**
- * @function resolveHasMany
- * @description setting up model with initial query params for hasMany
- * relation, under the hood it calls hasOne but without limit clause.
- * @param  {Object}         values
- * @param  {Object}         relationDefination
- * @return {Object}
- */
-helpers.resolveHasMany = function (values, relationDefination) {
-  return helpers.resolveHasOne(values,relationDefination, 'noLimit')
-}
-
-
-helpers.resolveBelongsToMany = function (values, relationDefination) {
-
-  /**
-   * prefix to be prepended before values of pivot table
-   * @type {String}
-   */
-  const pivotPrefix = '_pivot_'
-
-  /**
-   * getting relation model
-   * @type {Class}
-   */
-  const model = relationDefination.model
-
-  /**
-   * table name of relational model
-   */
-  const table = model.table
-
-  /**
-   * target key on host model
-   * @type {Integer}
-   */
-  const targetPrimaryKey = relationDefination.targetPrimaryKey
-
-  /**
-   * getting name for pivot table
-   * @type {String}
-   */
-  const pivotTable = relationDefination.pivotTable
-
-
-  /**
-   * foriegn key to be referenced on relational model
-   * @type {Integer}
-   */
-  const relationPrimaryKey = relationDefination.relationPrimaryKey
-
-  /**
-   * getting primary key for pivot table
-   * @type {Integer}
-   */
-  const pivotPrimaryKey = relationDefination.pivotPrimaryKey
-
-  /**
-   * getting other/foreigh key for pivot table
-   * @type {Integer}
-   */
-  const pivotOtherKey = relationDefination.pivotOtherKey
-
-  /**
-   * selectionKeys are keys to be selected when making innerjoin
-   * query
-   * @type {Array}
-   */
-  let selectionKeys = [
-    `${table}.*`,
-    `${pivotTable}.${pivotPrimaryKey} as ${pivotPrefix}${pivotPrimaryKey}`,
-    `${pivotTable}.${pivotOtherKey} as ${pivotPrefix}${pivotOtherKey}`
-  ]
-
-  /**
-   * we set the pivot table here. This will be used by fetch 
-   * method to fetch extra pivot columns defined by user.
-   * @type {String}
-   */
-  model._pivotTable = pivotTable
-
-  model
-  .select.apply(model,selectionKeys)
-  .where(`${pivotTable}.${pivotPrimaryKey}`,values[targetPrimaryKey])
-  .innerJoin(pivotTable,function () {
-    this.on(`${table}.${targetPrimaryKey}`,`${pivotTable}.${pivotOtherKey}`)
-  })
-
-  return model
-
-}
-
-/**
+ * @function transformSelectColumns
  * @description Transforming select columns on query builder
  * by attaching pivot columns defined by user on relation
  * methods.
- * @method transformSelectColumns
  * @param  {Array}               statementGroups
  * @param  {Array}               pivotColumns
  * @param  {String}               pivotTable
  * @return {void}
+ * @public
  */
-helpers.transformSelectColumns = function (statementGroups, pivotColumns, pivotTable) {
+relation.transformSelectColumns = function (statementGroups, pivotColumns, pivotTable) {
 
   const pivotPrefix = '_pivot_'
 
@@ -890,5 +573,4 @@ helpers.transformSelectColumns = function (statementGroups, pivotColumns, pivotT
     selectedColumns.value = selectedColumns.value ? selectedColumns.value.concat(pivotColumns) : []
 
   }
-
 }
