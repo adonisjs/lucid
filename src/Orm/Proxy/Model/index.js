@@ -65,7 +65,23 @@ class Model {
   create (values) {
     let isMutated = !values
     values = values || this.attributes
-    return this.constructor.create(values, isMutated, this.connection)
+
+    /**
+     * here we consume the create method on model
+     * constructor but makes sure to set it back
+     * as primary key on model instance.
+     */
+    return new Promise((resolve,reject) => {
+      this.constructor
+      .create(values, isMutated, this.connection)
+      .then ((response) => {
+        if(response[0]){
+          this.attributes[this.constructor.primaryKey] = response[0]
+        }
+        resolve(response)
+      }).catch(reject)
+    })
+
   }
 
   /**
@@ -107,17 +123,16 @@ class Model {
    * @public
    */
   forceDelete () {
-    let self = this
     if (!helpers.isFetched(this)) {
       throw new Error(`You cannot delete a fresh model instance , trying fetching one using find method`)
     }
-    return new Promise(function (resolve, reject) {
-      self
+    return new Promise((resolve, reject) => {
+      this
         .constructor
-        .forceDelete(self.connection)
-        .then(function (response) {
-          self.attributes = {}
-          self.connection = self.constructor.database.table(self.constructor.table)
+        .forceDelete(this.connection)
+        .then((response) => {
+          this.attributes = {}
+          this.connection = this.constructor.database.table(this.constructor.table)
           resolve(response)
         })
         .catch(reject)
@@ -260,20 +275,18 @@ class Model {
     const relationMetaData = {model, targetPrimaryKey, relationPrimaryKey, relation:'hasOne'}
 
     /**
-     * if calling this method on model instance , return query builder for
-     * relational model.
-     */
-    if(this.attributes){
-      return staticHelpers.resolveHasOne(this.attributes,relationMetaData)
-    }
-
-    /**
      * relation scopes are nested queries on relationship models, they are
      * not required by model instance, but required when fetching 
      * relationships using with method.
      * @type {Object}
      */
     relationMetaData.relationsScope = this.constructor._relationsScope
+
+    /**
+     * here we attach nestedScope added by `scope` method, and to
+     * be used by relational methods
+     * @type {Object}
+     */
     relationMetaData.nestedScope = this.constructor._nestedScope
 
     /**
@@ -282,6 +295,21 @@ class Model {
      * relations
      */
     this.constructor._activeRelation = relationMetaData
+
+    /**
+     * if calling this method on model instance , setup query builder for
+     * relational model.
+     */
+    if(this.attributes){
+
+      /**
+       * this method also sets the foreign key and it's value to be utilized
+       * by relational model.
+       */
+      model._foreignKey[relationPrimaryKey] = this.attributes[targetPrimaryKey]
+      return staticHelpers.resolveHasOne(this.attributes,relationMetaData)
+    }
+
     return model
   }
 
@@ -324,20 +352,18 @@ class Model {
     const relationMetaData = {model, targetPrimaryKey, relationPrimaryKey, relation:'belongsTo'}
 
     /**
-     * if calling this method on model instance , return query builder for
-     * relational model.
-     */
-    if(this.attributes){
-      return staticHelpers.resolveBelongsTo(this.attributes,relationMetaData)
-    }
-
-    /**
      * relation scopes are nested queries on relationship models, they are
      * not required by model instance, but required when fetching 
      * relationships using with method.
      * @type {Object}
      */
     relationMetaData.relationsScope = this.constructor._relationsScope
+
+    /**
+     * here we attach nestedScope added by `scope` method, and to
+     * be used by relational methods
+     * @type {Object}
+     */
     relationMetaData.nestedScope = this.constructor._nestedScope
 
     /**
@@ -346,6 +372,16 @@ class Model {
      * relations
      */
     this.constructor._activeRelation = relationMetaData
+
+    /**
+     * if calling this method on model instance , return query builder for
+     * relational model.
+     */
+    if(this.attributes){
+      model._associationModel = this.constructor
+      return staticHelpers.resolveBelongsTo(this.attributes,relationMetaData)
+    }
+
     return model
   }
 
@@ -381,20 +417,18 @@ class Model {
     const relationMetaData = {model, targetPrimaryKey, relationPrimaryKey, relation:'hasMany'}
 
     /**
-     * if calling this method on model instance , return query builder for
-     * relational model.
-     */
-    if(this.attributes){
-      return staticHelpers.resolveHasMany(this.attributes,relationMetaData)
-    }
-
-    /**
      * relation scopes are nested queries on relationship models, they are
      * not required by model instance, but required when fetching 
      * relationships using with method.
      * @type {Object}
      */
     relationMetaData.relationsScope = this.constructor._relationsScope
+
+    /**
+     * here we attach nestedScope added by `scope` method, and to
+     * be used by relational methods
+     * @type {Object}
+     */
     relationMetaData.nestedScope = this.constructor._nestedScope
 
     /**
@@ -403,6 +437,22 @@ class Model {
      * relations
      */
     this.constructor._activeRelation = relationMetaData
+
+
+    /**
+     * if calling this method on model instance , setup query builder for
+     * relational model.
+     */
+    if(this.attributes){
+
+      /**
+       * this method also sets the foreign key and it's value to be utilized
+       * by relational model.
+       */
+      model._foreignKey[relationPrimaryKey] = this.attributes[targetPrimaryKey]
+      return staticHelpers.resolveHasMany(this.attributes,relationMetaData)
+    }
+
     return model
   }
 
@@ -449,14 +499,6 @@ class Model {
     const relationMetaData = { model, pivotTable, pivotPrimaryKey, pivotOtherKey, targetPrimaryKey, relationPrimaryKey, relation:'belongsToMany'}
 
     /**
-     * if calling this method on model instance , return query builder for
-     * relational model.
-     */
-    if(this.attributes){
-      return staticHelpers.resolveBelongsToMany(this.attributes,relationMetaData)
-    }
-
-    /**
      * relation scopes are nested queries on relationship models, they are
      * not required by model instance, but required when fetching 
      * relationships using with method.
@@ -465,11 +507,29 @@ class Model {
     relationMetaData.relationsScope = this.constructor._relationsScope
 
     /**
+     * here we attach nestedScope added by `scope` method, and to
+     * be used by relational methods
+     * @type {Object}
+     */
+    relationMetaData.nestedScope = this.constructor._nestedScope
+
+    /**
      * otherwise set relation meta data on model defination,
      * later it will be used by fetch method to resolve
      * relations
      */
     this.constructor._activeRelation = relationMetaData
+
+    /**
+     * if calling this method on model instance , return query builder for
+     * relational model.
+     */
+    if(this.attributes){
+      model._associationModel = this.constructor
+      model._pivotAttributes = this.attributes
+      return staticHelpers.resolveBelongsToMany(this.attributes,relationMetaData)
+    }
+
     return model
 
   }

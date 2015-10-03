@@ -241,6 +241,12 @@ helpers.fetchRelated = function (target, values, models) {
      */
     resolvedModel.key = model
 
+    /**
+     * nested models are relationships to be fetched
+     * on target model or on target models's model
+     * they can be infinite deep
+     * @type {String}
+     */
     resolvedModel.nestedModels = nestedModels
 
     /**
@@ -539,6 +545,19 @@ helpers.belongsToMany = function (values, model) {
    */
   if(model.nestedModels){
     builder.with(model.nestedModels)
+  }
+
+  /**
+   * if there is nestedScope set on the model object , 
+   * set it on builder object. 
+   * @note - We will keep on sending nested
+   * object until it is picked up by any
+   * model/or cleared by last model.
+   */
+  if(model.nestedScope){
+    _.each(model.nestedScope, function (callback, key){
+      builder.scope(key,callback)
+    })
   }
 
   return new Promise (function (resolve,reject) {

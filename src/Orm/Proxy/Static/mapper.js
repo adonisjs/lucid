@@ -103,14 +103,33 @@ mapper.get = function (target, name) {
   if (name === 'scope'){
     return function (key, callback) {
 
+      /**
+       * splitting scope key with comma
+       * @type {Array}
+       */
       key = key.split('.')
 
       if(key.length > 1){
+
+        /**
+         * if key array has length of more than 1, then it
+         * seems to be a nested relation and should be
+         * set as a nested relation. Which internally
+         * is passed on relation models until resolved
+         * or ignored
+         */
         const nestedScope = _.rest(key).join('.')
         target._nestedScope[nestedScope] = callback
+
       }else{
+
+        /**
+         * otherwise it is not a nested relation , and belongs to
+         * the existing model
+         */
         key = key[0]
         target._relationsScope[key] = callback
+
       }
       return this
     }
@@ -127,6 +146,74 @@ mapper.get = function (target, name) {
       return this
     }
   }
+
+  if(name === 'associate'){
+    return function (model) {
+
+      /**
+       * making sure that associate is called on belongsTo relation only.
+       */
+      if(!target._associationModel._activeRelation){
+        throw new Error('unable to call associate , make sure to call relationship method before associate')
+      }
+      if(target._associationModel._activeRelation.relation !== 'belongsTo'){
+        throw new Error(`Unable to call associate on ${target._associationModel._activeRelation.relation}`)
+      }
+      target._associationModel._associationAttributes = model.attributes
+      target.new()
+    }
+  }
+
+
+  if(name === 'dissociate'){
+    return function (model) {
+
+      /**
+       * making sure that dissociate is called on belongsTo relation only.
+       */
+      if(!target._associationModel._activeRelation){
+        throw new Error('unable to call dissociate , make sure to call relationship method before dissociate')
+      }
+      if(target._associationModel._activeRelation.relation !== 'belongsTo'){
+        throw new Error(`Unable to call dissociate on ${target._associationModel._activeRelation.relation}`)
+      }
+      target._associationModel._associationAttributes = {dissociate:true}
+      target.new()
+    }
+  }
+
+  if(name === 'attach'){
+    return function (relationValue){
+
+      return new Promise(function (resolve, reject) {
+        /**
+         * making sure that attach is called on belongsToMany relation only.
+         */
+        if(!target._associationModel._activeRelation || !target._pivotAttributes){
+          return reject('unable to call attach , make sure to call relationship method before dissociate')
+        }
+        if(target._associationModel._activeRelation.relation !== 'belongsToMany'){
+          return reject(`Unable to call attach on ${target._associationModel._activeRelation.relation}`)
+        }
+
+        const pivotTable = target._associationModel._activeRelation.pivotTable
+        const pivotPrimaryKey = target._associationModel._activeRelation.pivotPrimaryKey
+        const pivotOtherKey = target._associationModel._activeRelation.pivotOtherKey
+        const targetPrimaryKey = target._associationModel._activeRelation.targetPrimaryKey
+
+        const pivotValues = {}
+        pivotValues[pivotPrimaryKey] = target._pivotAttributes[targetPrimaryKey]
+        pivotValues[pivotOtherKey] = relationValue
+
+        target._associationModel.new()
+        target.new()
+
+        return target.database.table(pivotTable).insert(pivotValues).then(resolve).catch(reject)
+      })
+
+    }
+  }
+
 
   /**
    * check to see if method is one of the scoped

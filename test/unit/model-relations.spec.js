@@ -17,7 +17,6 @@
 |    models.
 | 5. should be able to fetch relations for model instances.
 |
-|
 */
 
 const path = require('path')
@@ -52,7 +51,7 @@ let Config = {
       connection: {
         filename: path.join(__dirname,'./storage/test.sqlite3')
       },
-      debug: false
+      debug: true
     }
   }
 }
@@ -69,25 +68,25 @@ const db = new Database(Env,Config)
  */
 describe('Model Relations', function () {
 
-  // before(function (done) {
+  before(function (done) {
 
-  //   blueprint
-  //   .setup(db)
-  //   .then (function () {
-  //     blueprint.seed(db)
-  //   }).then(function () {
-  //     done()
-  //   }).catch(done)
+    blueprint
+    .setup(db)
+    .then (function () {
+      blueprint.seed(db)
+    }).then(function () {
+      done()
+    }).catch(done)
 
-  // })
+  })
 
-  // after(function (done) {
-  //   blueprint
-  //   .tearDown(db)
-  //   .then (function () {
-  //     done()
-  //   }).catch(done)
-  // })
+  after(function (done) {
+    blueprint
+    .tearDown(db)
+    .then (function () {
+      done()
+    }).catch(done)
+  })
 
   context('Fetch', function () {
     context('hasOne', function () {
@@ -943,6 +942,103 @@ describe('Model Relations', function () {
         }).catch(done)      
 
       })
+      
+
+      it('should be able to fetch nested model using model instance', function (done) {
+
+        /**
+         * declaring phone model by
+         * extending base model
+         */
+        class Phone extends Model{
+
+        }
+
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Phone.database = db; Phone = Phone.extend()
+
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/Phone', function() {
+          return Phone
+        })
+
+        /**
+         * defining User model by extending 
+         * based model
+         */
+        class User extends Model{
+
+          /**
+           * defining hasOne relationship on 
+           * phoneModel via phone key
+           * @method phone
+           * @return {Object} 
+           */
+          phone(){
+            return this.hasOne('App/Model/Phone')
+          }
+
+        }
+
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        User.database = db; User = User.extend()
+
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/User', function() {
+          return User
+        })
+
+        /**
+         * declaring phone model by
+         * extending base model
+         */
+        class Article extends Model{
+          author(){
+            return this.belongsTo('App/Model/User')
+          }
+        }
+
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Article.database = db; Article = Article.extend()
+
+        co (function *() {
+
+          /**
+           * fetching all users and their associated 
+           * phones
+           */
+          const article = yield Article.find(1)
+          const author = yield article.author().with('phone').fetch();
+
+          /**
+           * test expectations
+           */
+          expect(author.toJSON()).to.be.an('object')
+          expect(author.get('phone')).to.be.an('object')
+          expect(author.get('phone.user_id')).to.equal(article.attributes.user_id)
+          expect(author.get('phone.user_id')).to.equal(author.get('id'))
+
+        }).then(function () {
+          done()
+        }).catch(done)      
+
+      })
+
     })
 
     context('belongsTo', function () {
@@ -2720,6 +2816,315 @@ describe('Model Relations', function () {
 
         co(function *() {
 
+          const user = yield User.find(1)
+          yield user.phone().create({'phone_number':'1234567899'})
+
+          const phone = yield Phone.where('phone_number','1234567899').first().fetch()
+          expect(phone.get('user_id')).to.equal(1)
+
+        }).then(function () {
+          done()
+        }).catch(done)
+
+      })
+
+      it('should throw an error when trying to associate on hasOne method', function (done) {
+
+        /**
+         * declaring phone model by
+         * extending base model
+         */
+        class Phone extends Model{
+        }
+
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Phone.database = db; Phone = Phone.extend()
+
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/Phone', function() {
+          return Phone
+        })
+
+        /**
+         * defining User model by extending 
+         * based model
+         */
+        class User extends Model{
+
+          /**
+           * defining hasOne relationship on 
+           * phoneModel via phone key
+           * @method phone
+           * @return {Object} 
+           */
+          phone(){
+            return this.hasOne('App/Model/Phone')
+          }
+
+        }
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        User.database = db; User = User.extend()
+
+        co(function *() {
+
+          const user = yield User.find(1)
+          const phone = yield Phone.find(1)
+
+          const fn = function () {
+            return user.phone().associate(phone)
+          }
+          expect(fn).to.throw(/unable to call/)
+
+        }).then(function () {
+          done()
+        }).catch(done)
+
+      })
+
+    })
+
+    context('belongsTo', function () {
+
+      it('should be able to insert related model under belongsTo relation', function (done) {
+
+        /**
+         * declaring phone model by
+         * extending base model
+         */
+        class Phone extends Model{
+
+          user () {
+            return this.belongsTo('App/Model/User')
+          }
+
+        }
+
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Phone.database = db; Phone = Phone.extend()
+
+        /**
+         * defining User model by extending 
+         * based model
+         */
+        class User extends Model{
+        }
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        User.database = db; User = User.extend()
+
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/User', function() {
+          return User
+        })
+
+
+        co(function *() {
+
+          const phone = new Phone({'phone_number': '9012910299'});
+          const user = yield User.find(1);
+          phone.user().associate(user)
+
+          yield phone.create();
+
+          const savedPhone = yield Phone.where('phone_number','9012910299').first().fetch()
+          expect(savedPhone.get('user_id')).to.equal(1)
+
+
+        }).then(function () {
+          done()
+        }).catch(done)
+
+      })
+
+      it('should be able to update existing belongsTo relation', function (done) {
+
+        /**
+         * declaring phone model by
+         * extending base model
+         */
+        class Phone extends Model{
+
+          user () {
+            return this.belongsTo('App/Model/User')
+          }
+
+        }
+
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Phone.database = db; Phone = Phone.extend()
+
+        /**
+         * defining User model by extending 
+         * based model
+         */
+        class User extends Model{
+        }
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        User.database = db; User = User.extend()
+
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/User', function() {
+          return User
+        })
+
+
+        co(function *() {
+
+          const phone = yield Phone.find(3)
+          const user = yield User.find(2)
+          phone.user().associate(user)
+
+          yield phone.update();
+
+          const savedPhone = yield Phone.where('phone_number',phone.attributes.phone_number).first().fetch()
+          expect(savedPhone.get('user_id')).to.equal(2)
+
+
+        }).then(function () {
+          done()
+        }).catch(done)
+
+      })
+
+
+      it('should be able to dissociate existing belongsTo relation', function (done) {
+
+        /**
+         * declaring phone model by
+         * extending base model
+         */
+        class Phone extends Model{
+
+          user () {
+            return this.belongsTo('App/Model/User')
+          }
+
+        }
+
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Phone.database = db; Phone = Phone.extend()
+
+        /**
+         * defining User model by extending 
+         * based model
+         */
+        class User extends Model{
+        }
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        User.database = db; User = User.extend()
+
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/User', function() {
+          return User
+        })
+
+
+        co(function *() {
+
+          const phone = yield Phone.find(3)
+          const user = yield User.find(2)
+          phone.user().dissociate()
+
+          yield phone.update()
+
+          const savedPhone = yield Phone.where('phone_number',phone.attributes.phone_number).first().fetch()
+          expect(savedPhone.get('user_id')).to.equal(null)
+
+
+        }).then(function () {
+          done()
+        }).catch(done)
+
+      })
+    })
+    
+    context('belongsToMany', function () {
+
+      it('should be able to insert related model under belongsToMany relation', function (done) {
+
+        /**
+         * declaring phone model by
+         * extending base model
+         */
+        class Book extends Model{
+        }
+
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Book.database = db; Book = Book.extend()
+
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/Book', function() {
+          return Book
+        })
+
+
+        /**
+         * defining User model by extending 
+         * based model
+         */
+        class Author extends Model{
+          books(){
+            return this.belongsToMany('App/Model/Book')
+          }
+        }
+        /**
+         * setting up model database, and 
+         * extending its static object
+         */
+        Author.database = db; Author = Author.extend()
+
+        co(function *() {
+
+          const book = new Book({book_title:'Node for noobs'})
+          yield book.create()
+
+          const author = yield Author.find(1)
+          yield author.books().attach(book.attributes.id)
+
+          const authorBooks = yield author.books().where('books.book_title','Node for noobs').fetch()
+          expect(authorBooks.toJSON()).to.be.an('array')
+          expect(authorBooks.first().book_title).to.equal('Node for noobs')
 
 
         }).then(function () {

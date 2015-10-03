@@ -4,6 +4,7 @@ const path = require('path')
 const chai = require('chai')
 const expect = chai.expect
 const co = require('co')
+const blueprint = require('./blueprints/model-blueprint')
 const Database = require('../../src/Database')
 const Model = require('../../src/Orm/Proxy/Model')
 const StaticProxy = require('../../src/Orm/Proxy/Static')
@@ -29,6 +30,27 @@ let Config = {
 const db = new Database(Env,Config)
 
 describe('Model', function () {
+
+
+  before(function (done) {
+
+    blueprint
+    .setup(db)
+    .then (function () {
+      blueprint.seed(db)
+    }).then(function () {
+      done()
+    }).catch(done)
+
+  })
+
+  after(function (done) {
+    blueprint
+    .tearDown(db)
+    .then (function () {
+      done()
+    }).catch(done)
+  })
 
   it('should be an instance of Model', function () {
 
@@ -310,9 +332,12 @@ describe('Model', function () {
 
   it('should mutate values for those whose getters are defined' , function (done) {
 
+    let oldUserName = null
+
     class User extends Model{
 
       getUsername(value){
+        oldUserName = value
         return value.toUpperCase()
       }
 
@@ -325,7 +350,7 @@ describe('Model', function () {
     .where('id',1)
     .fetch()
     .then (function (user) {
-      expect(user.first().username).to.equal('NIKK')
+      expect(user.first().username).to.equal(oldUserName.toUpperCase())
       done()
     }).catch(done)
 
@@ -333,8 +358,11 @@ describe('Model', function () {
 
   it('should mutate values when initiating model using find method', function (done) {
 
+    let oldUserName = null
+
     class User extends Model{
       getUsername(value){
+        oldUserName = value
         return value.toUpperCase()
       }
     }
@@ -345,7 +373,7 @@ describe('Model', function () {
     User
     .find(1)
     .then (function (user) {
-      expect(user.username).to.equal('NIKK')
+      expect(user.username).to.equal(oldUserName.toUpperCase())
       done()
     }).catch(done)
 
@@ -552,7 +580,7 @@ describe('Model', function () {
     User.database = db; User = User.extend()
 
     User
-    .where('id',10)
+    .where('id',1)
     .fetch()
     .then (function (result) {
       expect(result.first().deleted_at).to.equal(null)
@@ -627,10 +655,10 @@ describe('Model', function () {
     User.database = db; User = User.extend()
 
     User
-    .where('id',11)
+    .where('id',3)
     .fetch()
     .then (function (result) {
-      expect(result.first().id).to.equal(11)
+      expect(result.first().id).to.equal(3)
       done()
     }).catch(done)
 
@@ -655,10 +683,10 @@ describe('Model', function () {
 
     User
     .withTrashed()
-    .where('id',11)
+    .where('id',3)
     .fetch()
     .then (function (result) {
-      expect(result.first().id).to.equal(11)
+      expect(result.first().id).to.equal(3)
       done()
     }).catch(done)
 
@@ -708,7 +736,7 @@ describe('Model', function () {
     User.database = db; User = User.extend()
 
     User
-    .find(11)
+    .find(3)
     .then (function (user) {
       expect(user.isTrashed()).to.equal(true)
       done()

@@ -11,7 +11,8 @@ blueprint.tearDown = function(knex) {
     knex.schema.dropTable('authors'),
     knex.schema.dropTable('books'),
     knex.schema.dropTable('author_book'),
-    knex.schema.dropTable('articles')
+    knex.schema.dropTable('articles'),
+    knex.schema.dropTable('countries')
   ])
 }
 
@@ -54,6 +55,14 @@ blueprint.setup = function(knex) {
       table.timestamp('deleted_at')
 
     }),
+    knex.schema.createTable('countries', function (table) {
+
+      table.increments()
+      table.string('country_name')
+      table.timestamps()
+      table.timestamp('deleted_at')
+
+    }),
     knex.schema.createTable('author_book', function (table) {
 
       table.increments()
@@ -69,6 +78,7 @@ blueprint.setup = function(knex) {
       table.increments()
       table.string('article_title')
       table.integer('user_id').references('id').inTable('users').onDelete('CASCADE')
+      table.integer('country_id').references('id').inTable('countries').onDelete('CASCADE')
       table.timestamps()
       table.timestamp('deleted_at')
 
@@ -144,13 +154,21 @@ blueprint.seed = function(knex){
     }
   ]
 
+  const countries = [
+    {
+      country_name: 'India'
+    }
+  ]
+
   const articles = [
     {
       article_title: 'Hello World',
+      country_id: 1,
       user_id : 1
     },
     {
       article_title: 'Bye World',
+      country_id: 1,
       user_id : 2
     }
   ]
@@ -162,6 +180,7 @@ blueprint.seed = function(knex){
     knex.table('authors').insert(authors),
     knex.table('books').insert(books),
     knex.table('author_book').insert(author_book),
+    knex.table('countries').insert(countries),
     knex.table('articles').insert(articles)
   ])
 }

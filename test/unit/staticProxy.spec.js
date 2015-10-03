@@ -4,6 +4,7 @@ const path = require('path')
 const chai = require('chai')
 const expect = chai.expect
 const co = require('co')
+const blueprint = require('./blueprints/model-blueprint')
 const Database = require('../../src/Database')
 const StaticProxy = require('../../src/Orm/Proxy/Static')
 
@@ -28,6 +29,27 @@ let Config = {
 const db = new Database(Env,Config)
 
 describe('StaticProxy', function () {
+
+
+  before(function (done) {
+
+    blueprint
+    .setup(db)
+    .then (function () {
+      blueprint.seed(db)
+    }).then(function () {
+      done()
+    }).catch(done)
+
+  })
+
+  after(function (done) {
+    blueprint
+    .tearDown(db)
+    .then (function () {
+      done()
+    }).catch(done)
+  })
 
   it('should proxy class static methods', function () {
 
