@@ -13,7 +13,7 @@
 require('harmony-reflect')
 
 const proxy         = require('./proxy')
-const helper       = require('./helper')
+const helper        = require('./helper')
 const StaticProxy   = require('../Static')
 const Ioc           = require('adonis-fold').Ioc
 const relation      = require('./relation')
@@ -64,12 +64,14 @@ class Model {
    * @public
    */
   create (values) {
+    const self = this
+
     /**
      * here we consume the create method from model
      * constructor and set primaryKey value to
      * value returned by create method.
      */
-    return new Promise((resolve,reject) => {
+    return new Promise(function (resolve,reject) {
       /**
        * throw an error if trying to save multiple
        * rows via model instance.
@@ -79,14 +81,14 @@ class Model {
       }
 
       let isMutated = !values
-      values = values || this.attributes
+      values = values || self.attributes
 
-      this.constructor
-        .create(values, isMutated, this.connection)
-        .then ((response) => {
+      self.constructor
+        .create(values, isMutated, self.connection)
+        .then( function(response) {
           if(response[0]){
-            this.attributes = helper.mutateRow(this,values)
-            this.attributes[this.constructor.primaryKey] = response[0]
+            self.attributes = helper.mutateRow(self,values)
+            self.attributes[self.constructor.primaryKey] = response[0]
           }
           resolve(response)
         }).catch(reject)
@@ -139,6 +141,8 @@ class Model {
    * @public
    */
   forceDelete () {
+    const self = this
+
     /**
      * one can only delete existing model. Here we make 
      * sure this model is initiated after db fetch.
@@ -146,13 +150,13 @@ class Model {
     if (!helper.isFetched(this)) {
       throw new Error(`You cannot delete a fresh model instance , trying fetching one using find method`)
     }
-    return new Promise((resolve, reject) => {
-      this
+    return new Promise(function (resolve, reject) {
+      self
         .constructor
-        .forceDelete(this.connection)
-        .then((response) => {
-          this.attributes = {}
-          this.connection = this.constructor.database.table(this.constructor.table)
+        .forceDelete(self.connection)
+        .then(function (response) {
+          self.attributes = {}
+          self.connection = self.constructor.database.table(self.constructor.table)
           resolve(response)
         })
         .catch(reject)
