@@ -22,8 +22,8 @@ class StaticProxy {
     Model.activeConnection = Database.table(Model.table)
 
     /**
-     * here we store active relation as an object which 
-     * has useful information like 
+     * here we store active relation as an object which
+     * has useful information like
      * relational model
      * foreign key
      * other key
@@ -34,7 +34,7 @@ class StaticProxy {
     Model._activeRelation = {}
 
     /**
-     * here we store relation keys to be fetched when fetching 
+     * here we store relation keys to be fetched when fetching
      * host/target model. In short these are keys sent with
      * `with` method
      * @type {Array}
@@ -42,7 +42,7 @@ class StaticProxy {
     Model._relations = []
 
     /**
-     * here we store scope methods, which should be executed on 
+     * here we store scope methods, which should be executed on
      * relational query builder. We simply store these
      * and invoke them when running relational model
      * queries.
@@ -80,18 +80,20 @@ class StaticProxy {
     Model._pivotTable = null
 
     /**
-     * association model to set association attributes on this is required for 
+     * association model to set association attributes on this is required for
      * belongsTo method.
      * @type {Object}
      */
     Model._associationModel = {}
 
     /**
-     * association attributes to read foreign key value from while saving a 
-     * relation.
+     * association attributes to read foreign key value from while saving a
+     * relation. There can be multiple associationAttributes if
+     * associate of dissociate has been called multiple
+     * times.
      * @type {Object}
      */
-    Model._associationAttributes = {}
+    Model._associationAttributes = []
 
     /**
      * pivotAttributes are required to save belongsToMany relationship
@@ -107,29 +109,29 @@ class StaticProxy {
      */
     Model.create = function (values, isMutated, connection) {
 
+      const self = this
       /**
        * here we look for an active relation and if that relation is
-       * belongsTo then we grab associationAttributes set by 
+       * belongsTo then we grab associationAttributes set by
        * associate method and grab the value of foreign
        * key under relation
        */
-      if(this._activeRelation.relation === 'belongsTo' && Object.keys(this._associationAttributes).length > 0){
-        const targetPrimaryKey = this._activeRelation.targetPrimaryKey
-        const relationPrimaryKey = this._activeRelation.relationPrimaryKey
-        this._foreignKey[targetPrimaryKey] = this._associationAttributes[relationPrimaryKey]
+      if(this._associationAttributes.length > 0){
+        this._associationAttributes.forEach(function (item) {
+          self._foreignKey[item.targetPrimaryKey] = item.attributes[item.relationPrimaryKey]
+        })
       }
-      
+
       /**
        * here we set foreign key and it's value to be inserted
        * if create method is invoked via relational model.
       */
       if(this._foreignKey && Object.keys(this._foreignKey).length > 0){
-        const key = Object.keys(this._foreignKey)[0];
-        values[key] = this._foreignKey[key]
+        Object.keys(this._foreignKey).forEach(function (index) {
+          values[index] = self._foreignKey[index]
+        })
       }
-
       return query.create(this, values, isMutated, connection)
-
     }
 
     /**
@@ -139,38 +141,34 @@ class StaticProxy {
      */
     Model.update = function (values, isMutated, connection) {
 
+      const self = this
+
       /**
        * here we look for an active relation and if that relation is
-       * belongsTo then we grab associationAttributes set by 
+       * belongsTo then we grab associationAttributes set by
        * associate method and grab the value of foreign
        * key under relation
        */
-      if(this._activeRelation.relation === 'belongsTo' && Object.keys(this._associationAttributes).length > 0){
 
-        /**
-         * otherwise set foriegn key value to the value of primary key
-         * from relational model
-         */
-        const targetPrimaryKey = this._activeRelation.targetPrimaryKey
-        const relationPrimaryKey = this._activeRelation.relationPrimaryKey
-
-        /**
-         * if dissociate has been called, set foreign key value to null
-         */
-        if(this._associationAttributes.dissociate){
-          this._foreignKey[targetPrimaryKey] = null
-        }else{
-          this._foreignKey[targetPrimaryKey] = this._associationAttributes[relationPrimaryKey]
-        }
+      if(this._associationAttributes.length > 0){
+        this._associationAttributes.forEach(function (item) {
+          if(item.attributes.dissociate){
+            self._foreignKey[item.targetPrimaryKey] = null
+          }
+          else{
+            self._foreignKey[item.targetPrimaryKey] = item.attributes[item.relationPrimaryKey]
+          }
+        })
       }
-      
+
       /**
        * here we set foreign key and it's value to be inserted
        * if create method is invoked via relational model.
       */
       if(this._foreignKey && Object.keys(this._foreignKey).length > 0){
-        const key = Object.keys(this._foreignKey)[0];
-        values[key] = this._foreignKey[key]
+        Object.keys(this._foreignKey).forEach(function (index) {
+          values[index] = self._foreignKey[index]
+        })
       }
 
       return query.update(this, values, isMutated, connection)
@@ -216,7 +214,7 @@ class StaticProxy {
       this._withPivot = []
       this._pivotTable = null
       this._associationModel = {}
-      this._associationAttributes = {}
+      this._associationAttributes = []
       this._pivotAttributes = {}
       this.activeConnection = this.database.table(this.table)
 

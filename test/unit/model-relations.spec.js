@@ -6,9 +6,9 @@
 |--------------------------------------------------------------------------
 |
 | Through these tests we are testing following expectations.
-| 
+|
 | 1. should be able to use hasOne, belongsTo, hasMany, belongsToMany
-|    relationship keywords. 
+|    relationship keywords.
 | 2. should be define query methods while defining relations. These
 |    query methods will be ignored by insert/update/delete queries.
 | 3. should be able to define pivot columns to be pulled for
@@ -57,7 +57,7 @@ let Config = {
 }
 
 /**
- * setting up a new instance of Database provider , require by 
+ * setting up a new instance of Database provider , require by
  * Lucid to make queries.
  * @type {Database}
  */
@@ -101,7 +101,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -115,16 +115,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone')
@@ -133,7 +133,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -141,7 +141,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.with('phone').fetch()
@@ -158,7 +158,7 @@ describe('Model Relations', function () {
         }).catch(done)
 
       })
-      
+
       it('should be able to define query chain while defining relation', function (done) {
 
         /**
@@ -170,7 +170,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -184,16 +184,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone').where('is_mobile',0)
@@ -202,7 +202,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -210,7 +210,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.with('phone').fetch()
@@ -223,10 +223,10 @@ describe('Model Relations', function () {
 
         }).then(function () {
           done()
-        }).catch(done)      
+        }).catch(done)
 
       })
-    
+
       it('should be able to run queries on relational models', function (done) {
 
         /**
@@ -238,7 +238,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -252,16 +252,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone')
@@ -270,7 +270,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -278,7 +278,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.with('phone')
@@ -295,7 +295,7 @@ describe('Model Relations', function () {
 
         }).then(function () {
           done()
-        }).catch(done)      
+        }).catch(done)
 
       })
 
@@ -310,7 +310,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -324,16 +324,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone')
@@ -342,7 +342,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -362,7 +362,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Article.database = db; Article = Article.extend()
@@ -370,7 +370,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const articles = yield Article.with('author.phone').fetch()
@@ -401,7 +401,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -415,16 +415,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone')
@@ -433,7 +433,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -453,7 +453,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Article.database = db; Article = Article.extend()
@@ -473,7 +473,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Country.database = db; Country = Country.extend()
@@ -482,7 +482,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const countries = yield Country.with('articles.author.phone').fetch()
@@ -511,7 +511,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -525,16 +525,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone').where('is_mobile',1)
@@ -543,7 +543,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -563,7 +563,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Article.database = db; Article = Article.extend()
@@ -583,7 +583,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Country.database = db; Country = Country.extend()
@@ -592,7 +592,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const countries = yield Country.with('articles.author.phone').fetch()
@@ -623,7 +623,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -637,16 +637,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone')
@@ -655,7 +655,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -675,7 +675,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Article.database = db; Article = Article.extend()
@@ -695,7 +695,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Country.database = db; Country = Country.extend()
@@ -704,7 +704,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const countries = yield Country
@@ -746,7 +746,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -760,16 +760,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone')
@@ -778,7 +778,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -786,7 +786,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.find(1)
@@ -801,7 +801,7 @@ describe('Model Relations', function () {
 
         }).then(function () {
           done()
-        }).catch(done)      
+        }).catch(done)
 
       })
 
@@ -817,7 +817,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -831,16 +831,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone').where('is_mobile',0)
@@ -849,7 +849,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -857,7 +857,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.find(1)
@@ -870,7 +870,7 @@ describe('Model Relations', function () {
 
         }).then(function () {
           done()
-        }).catch(done)      
+        }).catch(done)
 
       })
 
@@ -886,7 +886,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -900,16 +900,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone')
@@ -918,7 +918,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -926,7 +926,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.find(1)
@@ -939,10 +939,10 @@ describe('Model Relations', function () {
 
         }).then(function () {
           done()
-        }).catch(done)      
+        }).catch(done)
 
       })
-      
+
 
       it('should be able to fetch nested model using model instance', function (done) {
 
@@ -955,7 +955,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -969,16 +969,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone')
@@ -987,7 +987,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1011,7 +1011,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Article.database = db; Article = Article.extend()
@@ -1019,7 +1019,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const article = yield Article.find(1)
@@ -1035,7 +1035,7 @@ describe('Model Relations', function () {
 
         }).then(function () {
           done()
-        }).catch(done)      
+        }).catch(done)
 
       })
 
@@ -1056,20 +1056,20 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1086,7 +1086,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const phone = yield Phone.with('user').fetch()
@@ -1117,20 +1117,20 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1147,7 +1147,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const phone = yield Phone.with('user').fetch()
@@ -1178,20 +1178,20 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1208,7 +1208,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const phone = yield Phone.with('user').scope('user', function (builder) {
@@ -1240,20 +1240,20 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1270,7 +1270,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const phone = yield Phone.find(1)
@@ -1302,20 +1302,20 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1332,7 +1332,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const phone = yield Phone.find(1)
@@ -1365,20 +1365,20 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1395,7 +1395,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const phone = yield Phone.find(1)
@@ -1429,7 +1429,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -1443,16 +1443,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasMany('App/Model/Phone')
@@ -1461,7 +1461,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1469,7 +1469,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.with('phone').fetch()
@@ -1498,7 +1498,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -1512,16 +1512,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasMany('App/Model/Phone').whereNotIn('is_mobile',[0,1])
@@ -1530,7 +1530,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1538,7 +1538,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.with('phone').fetch()
@@ -1566,7 +1566,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -1580,16 +1580,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasMany('App/Model/Phone')
@@ -1598,7 +1598,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1606,7 +1606,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.with('phone').scope('phone', function (builder) {
@@ -1636,7 +1636,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -1650,16 +1650,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasMany('App/Model/Phone')
@@ -1668,7 +1668,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1676,7 +1676,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.find(1)
@@ -1705,7 +1705,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -1719,16 +1719,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasMany('App/Model/Phone').whereNotIn('is_mobile',[0,1])
@@ -1737,7 +1737,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1745,7 +1745,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.find(1)
@@ -1774,7 +1774,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -1788,16 +1788,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasMany('App/Model/Phone')
@@ -1806,7 +1806,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1814,7 +1814,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.find(1)
@@ -1844,7 +1844,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -1858,16 +1858,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasMany('App/Model/Phone')
@@ -1876,7 +1876,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -1884,7 +1884,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.find(1)
@@ -1917,7 +1917,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -1942,7 +1942,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()
@@ -1951,7 +1951,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const author = yield Author.with('books').fetch()
@@ -1979,7 +1979,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -2004,7 +2004,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()
@@ -2013,7 +2013,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const author = yield Author.with('books').fetch()
@@ -2042,7 +2042,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -2067,7 +2067,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()
@@ -2076,7 +2076,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const author = yield Author.with('books').scope('books', function (builder) {
@@ -2108,7 +2108,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -2133,7 +2133,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()
@@ -2142,7 +2142,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const author = yield Author.with('books').fetch()
@@ -2170,7 +2170,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -2195,7 +2195,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()
@@ -2204,7 +2204,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const author = yield Author.find(1)
@@ -2235,7 +2235,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -2260,7 +2260,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()
@@ -2269,7 +2269,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const author = yield Author.find(1)
@@ -2300,7 +2300,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -2325,7 +2325,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()
@@ -2334,7 +2334,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const author = yield Author.find(1)
@@ -2365,7 +2365,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -2390,7 +2390,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()
@@ -2399,7 +2399,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const author = yield Author.find(1)
@@ -2427,7 +2427,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -2452,7 +2452,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()
@@ -2461,7 +2461,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const author = yield Author.find(1)
@@ -2494,7 +2494,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -2511,7 +2511,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()
@@ -2527,7 +2527,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const book = yield Book.find(1)
@@ -2562,7 +2562,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -2576,16 +2576,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone')
@@ -2594,7 +2594,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -2602,7 +2602,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.with('phone').fetch()
@@ -2632,7 +2632,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -2646,16 +2646,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone')
@@ -2664,7 +2664,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -2672,7 +2672,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.with('phone').fetch()
@@ -2705,7 +2705,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -2719,16 +2719,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone')
@@ -2737,7 +2737,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -2745,7 +2745,7 @@ describe('Model Relations', function () {
         co (function *() {
 
           /**
-           * fetching all users and their associated 
+           * fetching all users and their associated
            * phones
            */
           const user = yield User.with('phone').fetch()
@@ -2763,7 +2763,7 @@ describe('Model Relations', function () {
       })
     })
   })
-  
+
   context('Inserts', function () {
 
     context('hasOne', function () {
@@ -2778,7 +2778,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -2792,16 +2792,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone')
@@ -2809,7 +2809,7 @@ describe('Model Relations', function () {
 
         }
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -2828,7 +2828,7 @@ describe('Model Relations', function () {
 
       })
 
-      
+
 
       it('should throw an error when trying to associate on hasOne method', function (done) {
 
@@ -2840,7 +2840,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
@@ -2854,16 +2854,16 @@ describe('Model Relations', function () {
         })
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
 
           /**
-           * defining hasOne relationship on 
+           * defining hasOne relationship on
            * phoneModel via phone key
            * @method phone
-           * @return {Object} 
+           * @return {Object}
            */
           phone(){
             return this.hasOne('App/Model/Phone')
@@ -2871,7 +2871,7 @@ describe('Model Relations', function () {
 
         }
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -2911,19 +2911,19 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
         }
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -2970,19 +2970,19 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
         }
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -3029,19 +3029,19 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
         }
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -3088,19 +3088,19 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Phone.database = db; Phone = Phone.extend()
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class User extends Model{
         }
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         User.database = db; User = User.extend()
@@ -3132,9 +3132,155 @@ describe('Model Relations', function () {
 
       })
 
+      it('should be able to insert multiple related model under belongsTo relation', function (done) {
+
+        /**
+         * declaring phone model by
+         * extending base model
+         */
+        class Phone extends Model{
+          user () {
+            return this.belongsTo('App/Model/User')
+          }
+
+          agencies () {
+            return this.belongsTo('App/Model/Agency')
+          }
+
+        }
+
+        /**
+         * setting up model database, and
+         * extending its static object
+         */
+        Phone.database = db; Phone = Phone.extend()
+
+        /**
+         * defining User model by extending
+         * based model
+         */
+        class User extends Model{
+        }
+        /**
+         * setting up model database, and
+         * extending its static object
+         */
+        User.database = db; User = User.extend()
+
+        class Agency extends Model{
+        }
+
+        Agency.database = db; Agency = Agency.extend()
+
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/User', function() {
+          return User
+        })
+
+        Ioc.bind('App/Model/Agency', function() {
+          return Agency
+        })
+
+
+        co(function *() {
+
+          const phone = new Phone({'phone_number': '0898889190'})
+          const user = yield User.find(1);
+          const agency = yield Agency.find(1);
+          phone.user().associate(user)
+          phone.agencies().associate(agency)
+
+          yield phone.create();
+
+          const savedPhone = yield Phone.where('phone_number','0898889190').first().fetch()
+          expect(savedPhone.get('user_id')).to.equal(1)
+          expect(savedPhone.get('agency_id')).to.equal(1)
+
+        }).then(function () {
+          done()
+        }).catch(done)
+
+      })
+
+
+      it('should be able to call dissociate and associate together under single update', function (done) {
+
+        /**
+         * declaring phone model by
+         * extending base model
+         */
+        class Phone extends Model{
+          user () {
+            return this.belongsTo('App/Model/User')
+          }
+
+          agencies () {
+            return this.belongsTo('App/Model/Agency')
+          }
+
+        }
+
+        /**
+         * setting up model database, and
+         * extending its static object
+         */
+        Phone.database = db; Phone = Phone.extend()
+
+        /**
+         * defining User model by extending
+         * based model
+         */
+        class User extends Model{
+        }
+        /**
+         * setting up model database, and
+         * extending its static object
+         */
+        User.database = db; User = User.extend()
+
+        class Agency extends Model{
+        }
+
+        Agency.database = db; Agency = Agency.extend()
+
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/User', function() {
+          return User
+        })
+
+        Ioc.bind('App/Model/Agency', function() {
+          return Agency
+        })
+
+
+        co(function *() {
+
+          const phone = yield Phone.find(4)
+          const user = yield User.find(2)
+
+          phone.user().associate(user)
+          phone.agencies().dissociate()
+
+          yield phone.update();
+
+          const savedPhone = yield Phone.where('phone_number',phone.attributes.phone_number).first().fetch()
+          expect(savedPhone.get('user_id')).to.equal(2)
+          expect(savedPhone.get('agency_id')).to.equal(null)
+
+        }).then(function () {
+          done()
+        }).catch(done)
+
+      })
 
     })
-    
+
     context('belongsToMany', function () {
 
       it('should be able to insert related model under belongsToMany relation', function (done) {
@@ -3147,7 +3293,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -3162,7 +3308,7 @@ describe('Model Relations', function () {
 
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class Author extends Model{
@@ -3171,7 +3317,7 @@ describe('Model Relations', function () {
           }
         }
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()
@@ -3205,7 +3351,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -3220,7 +3366,7 @@ describe('Model Relations', function () {
 
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class Author extends Model{
@@ -3229,7 +3375,7 @@ describe('Model Relations', function () {
           }
         }
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()
@@ -3264,7 +3410,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -3279,7 +3425,7 @@ describe('Model Relations', function () {
 
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class Author extends Model{
@@ -3288,7 +3434,7 @@ describe('Model Relations', function () {
           }
         }
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()
@@ -3324,7 +3470,7 @@ describe('Model Relations', function () {
         }
 
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Book.database = db; Book = Book.extend()
@@ -3339,7 +3485,7 @@ describe('Model Relations', function () {
 
 
         /**
-         * defining User model by extending 
+         * defining User model by extending
          * based model
          */
         class Author extends Model{
@@ -3348,7 +3494,7 @@ describe('Model Relations', function () {
           }
         }
         /**
-         * setting up model database, and 
+         * setting up model database, and
          * extending its static object
          */
         Author.database = db; Author = Author.extend()

@@ -12,7 +12,8 @@ blueprint.tearDown = function(knex) {
     knex.schema.dropTable('books'),
     knex.schema.dropTable('author_book'),
     knex.schema.dropTable('articles'),
-    knex.schema.dropTable('countries')
+    knex.schema.dropTable('countries'),
+    knex.schema.dropTable('agencies')
   ])
 }
 
@@ -33,8 +34,17 @@ blueprint.setup = function(knex) {
 
       table.increments()
       table.integer('user_id').references('id').inTable('users').onDelete('CASCADE')
+      table.integer('agency_id').references('id').inTable('agencies').onDelete('CASCADE')
       table.string('phone_number')
       table.boolean('is_mobile').defaultsTo(0)
+      table.timestamps()
+      table.timestamp('deleted_at')
+
+    }),
+    knex.schema.createTable('agencies', function (table) {
+
+      table.increments()
+      table.string('agency_name')
       table.timestamps()
       table.timestamp('deleted_at')
 
@@ -82,8 +92,8 @@ blueprint.setup = function(knex) {
       table.timestamps()
       table.timestamp('deleted_at')
 
-    })    
-  ])  
+    })
+  ])
 }
 
 blueprint.seed = function(knex){
@@ -173,6 +183,12 @@ blueprint.seed = function(knex){
     }
   ]
 
+  const agencies = [
+    {
+      agency_name: 'VodaFone',
+    }
+  ]
+
 
   return Q.all([
     knex.table('users').insert(users),
@@ -181,6 +197,7 @@ blueprint.seed = function(knex){
     knex.table('books').insert(books),
     knex.table('author_book').insert(author_book),
     knex.table('countries').insert(countries),
-    knex.table('articles').insert(articles)
+    knex.table('articles').insert(articles),
+    knex.table('agencies').insert(agencies)
   ])
 }

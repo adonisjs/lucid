@@ -43,7 +43,7 @@ class Model {
     this.attributes = attributes ? helper.mutateRow(this, attributes) : {}
 
     /**
-     * here we create an isolated connection to 
+     * here we create an isolated connection to
      * the database, one per model instance.
      */
     this.connection = this.constructor.database.table(this.constructor.table)
@@ -104,7 +104,7 @@ class Model {
    */
   update () {
     /**
-     * one can only update existing model. Here we make 
+     * one can only update existing model. Here we make
      * sure this model is initiated after db fetch.
      */
     if (!helper.isFetched(this)) {
@@ -124,7 +124,7 @@ class Model {
    */
   delete () {
     /**
-     * one can only delete existing model. Here we make 
+     * one can only delete existing model. Here we make
      * sure this model is initiated after db fetch.
      */
     if (!helper.isFetched(this)) {
@@ -144,7 +144,7 @@ class Model {
     const self = this
 
     /**
-     * one can only delete existing model. Here we make 
+     * one can only delete existing model. Here we make
      * sure this model is initiated after db fetch.
      */
     if (!helper.isFetched(this)) {
@@ -302,7 +302,7 @@ class Model {
 
     /**
      * relation scopes are nested queries on relationship models, they are
-     * not required by model instance, but required when fetching 
+     * not required by model instance, but required when fetching
      * relationships using with method.
      * @type {Object}
      */
@@ -379,7 +379,7 @@ class Model {
 
     /**
      * relation scopes are nested queries on relationship models, they are
-     * not required by model instance, but required when fetching 
+     * not required by model instance, but required when fetching
      * relationships using with method.
      * @type {Object}
      */
@@ -448,7 +448,7 @@ class Model {
 
     /**
      * relation scopes are nested queries on relationship models, they are
-     * not required by model instance, but required when fetching 
+     * not required by model instance, but required when fetching
      * relationships using with method.
      * @type {Object}
      */
@@ -538,7 +538,7 @@ class Model {
 
     /**
      * relation scopes are nested queries on relationship models, they are
-     * not required by model instance, but required when fetching 
+     * not required by model instance, but required when fetching
      * relationships using with method.
      * @type {Object}
      */

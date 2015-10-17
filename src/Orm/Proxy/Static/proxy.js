@@ -169,7 +169,7 @@ proxy.get = function (target, name) {
   }
 
   /**
-   * attaching belongsToMany relationships on pivot tables. 
+   * attaching belongsToMany relationships on pivot tables.
    * this method read relation defination and make a
    * raw query using `database` property from model
    * constructor
@@ -182,7 +182,7 @@ proxy.get = function (target, name) {
 
 
   /**
-   * removing belongsToMany relationships on pivot tables. 
+   * removing belongsToMany relationships on pivot tables.
    * this method read relation defination and make a
    * raw query using `database` property from model
    * constructor

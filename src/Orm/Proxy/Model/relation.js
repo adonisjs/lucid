@@ -29,7 +29,7 @@ relation.associate = function (target,model) {
   if(target._associationModel._activeRelation.relation !== 'belongsTo'){
     throw new Error(`Unable to call associate on ${target._associationModel._activeRelation.relation}`)
   }
-  target._associationModel._associationAttributes = model.attributes
+  target._associationModel._associationAttributes.push({attributes:model.attributes,targetPrimaryKey:target._associationModel._activeRelation.targetPrimaryKey,relationPrimaryKey:target._associationModel._activeRelation.relationPrimaryKey})
   target.new()
 }
 
@@ -54,7 +54,7 @@ relation.dissociate = function (target){
   if(target._associationModel._activeRelation.relation !== 'belongsTo'){
     throw new Error(`Unable to call dissociate on ${target._associationModel._activeRelation.relation}`)
   }
-  target._associationModel._associationAttributes = {dissociate:true}
+  target._associationModel._associationAttributes.push({attributes:{dissociate:true},targetPrimaryKey:target._associationModel._activeRelation.targetPrimaryKey,relationPrimaryKey:target._associationModel._activeRelation.relationPrimaryKey})
   target.new()
 }
 
@@ -62,7 +62,7 @@ relation.dissociate = function (target){
  * @function attach
  * @description this method is only belongsToMany specific and will
  * attach primary values from 2 models into a pivot table.
- * @note this method does not touch host/relational model 
+ * @note this method does not touch host/relational model
  * tables. It only make neccessary entries inside
  * pivot table
  * @param  {Object} target        [description]
@@ -74,10 +74,10 @@ relation.attach = function (target, relationValue, extraFields) {
 
   /**
    * getting relationship meta data to be used while persisting
-   * values inside pivot table. 
+   * values inside pivot table.
    */
   const getPersistanceFields = relation.getFieldsForAD(target)
-  const pivotTable = getPersistanceFields.pivotTable 
+  const pivotTable = getPersistanceFields.pivotTable
   const pivotPrimaryKey = getPersistanceFields.pivotPrimaryKey
   const pivotOtherKey = getPersistanceFields.pivotOtherKey
   const targetPrimaryKey = getPersistanceFields.targetPrimaryKey
@@ -107,7 +107,7 @@ relation.attach = function (target, relationValue, extraFields) {
  * @function detach
  * @description this method is only belongsToMany specific and will
  * remove primary values of 2 models from pivot table.
- * @note this method does not touch host/relational model 
+ * @note this method does not touch host/relational model
  * tables. It only remove rows from pivot table.
  * @param  {Object} target        [description]
  * @param  {Number} relationValue [description]
@@ -117,10 +117,10 @@ relation.detach = function (target, relationValue) {
 
   /**
    * getting relationship meta data to be used while removing
-   * values inside pivot table. 
+   * values inside pivot table.
    */
   const getPersistanceFields = relation.getFieldsForAD(target)
-  const pivotTable = getPersistanceFields.pivotTable 
+  const pivotTable = getPersistanceFields.pivotTable
   const pivotPrimaryKey = getPersistanceFields.pivotPrimaryKey
   const pivotOtherKey = getPersistanceFields.pivotOtherKey
   const targetPrimaryKey = getPersistanceFields.targetPrimaryKey
@@ -153,7 +153,7 @@ relation.detach = function (target, relationValue) {
 
 /**
  * @description think of it as a real helper method to get values
- * required to attach belongsToMany models values inside a 
+ * required to attach belongsToMany models values inside a
  * pivot table.
  * @method getPersistanceFields
  * @param  {Object}             target [description]
@@ -267,8 +267,8 @@ relation.resolveHasMany = function (values, relationDefination) {
 
 /**
  * @function resolveBelongsToMany
- * @description setting up model with initial query params for 
- * belongsToMany. It returns query builder which can be 
+ * @description setting up model with initial query params for
+ * belongsToMany. It returns query builder which can be
  * chained further.
  * @param  {Object}             values             [description]
  * @param  {Object}             relationDefination [description]
@@ -337,7 +337,7 @@ relation.resolveBelongsToMany = function (values, relationDefination) {
   ]
 
   /**
-   * we set the pivot table here. This will be used by fetch 
+   * we set the pivot table here. This will be used by fetch
    * method to fetch extra pivot columns defined by user.
    * @type {String}
    */
