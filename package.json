@@ -1,6 +1,6 @@
 {
   "name": "adonis-lucid",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Database Orm for adonis framework",
   "main": "index.js",
   "scripts": {
