@@ -347,7 +347,7 @@ relation.resolveBelongsToMany = function (values, relationDefination) {
   .select.apply(model,selectionKeys)
   .where(`${pivotTable}.${pivotPrimaryKey}`,values[targetPrimaryKey])
   .innerJoin(pivotTable,function () {
-    this.on(`${table}.${targetPrimaryKey}`,`${pivotTable}.${pivotOtherKey}`)
+    this.on(`${table}.${relationPrimaryKey}`,`${pivotTable}.${pivotOtherKey}`)
   })
 
   return model

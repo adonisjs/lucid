@@ -22,7 +22,7 @@ let relation = exports = module.exports = {}
 relation.fetchRelated = function (target, values, models) {
 
   /**
-   * here we setup relation methods by fetching related models 
+   * here we setup relation methods by fetching related models
    * from Ioc container and make an array of promises to be
    * used with Q.all. Each relation method is responsible
    * for transforming the actual values object.
@@ -35,7 +35,7 @@ relation.fetchRelated = function (target, values, models) {
      * @example
      * given nested relation users.posts
      * we first resolve users relation and call it's with
-     * method by passing `posts`. Which will resolve 
+     * method by passing `posts`. Which will resolve
      * posts automatically on users.
      * Above cycle goes on until we reach the last relation.
      * @type {Array}
@@ -53,7 +53,7 @@ relation.fetchRelated = function (target, values, models) {
 
     /**
      * once relationship method has been called
-     * we fetch active relation meta data to 
+     * we fetch active relation meta data to
      * be used for dynamic queries on related
      * model
      * @type {Object}
@@ -108,7 +108,7 @@ relation.fetchRelated = function (target, values, models) {
 
 /**
  * @function hasOne
- * @description hasOne method is a relation method , who's job is 
+ * @description hasOne method is a relation method , who's job is
  * to fetch related values from a given model and
  * attach them to original values object.
  * @param  {Object}  values
@@ -137,8 +137,8 @@ relation.hasOne = function (values, model, limit) {
   limit = limit || internalLimit
 
   /**
-   * getting values to be used while making query on 
-   * related model. It is important to prepend 
+   * getting values to be used while making query on
+   * related model. It is important to prepend
    * table name when making queries as knex
    * will not throw an error when not
    * using table name on field name
@@ -150,7 +150,7 @@ relation.hasOne = function (values, model, limit) {
   const relationPrimaryKey = model.relationPrimaryKey
 
   /**
-   * this is key where we attach data for relational model. 
+   * this is key where we attach data for relational model.
    * @example
    * class User extends Model{
    *   profile(){
@@ -193,8 +193,8 @@ relation.hasOne = function (values, model, limit) {
   }
 
   /**
-   * if there is nestedScope set on the model object , 
-   * set it on builder object. 
+   * if there is nestedScope set on the model object ,
+   * set it on builder object.
    * @note - We will keep on sending nested
    * object until it is picked up by any
    * model/or cleared by last model.
@@ -207,13 +207,13 @@ relation.hasOne = function (values, model, limit) {
 
   return new Promise (function (resolve, reject) {
 
-    return builder    
+    return builder
     .fetch()
     .then (function (response) {
 
       /**
        * here we group values for relation model based on it's relationPrimaryKey
-       * so that we can attach the entire group to the target model values 
+       * so that we can attach the entire group to the target model values
        * instead of looping through them and doing manual checks.
        * @type {[type]}
       */
@@ -270,7 +270,7 @@ relation.hasOne = function (values, model, limit) {
        * values
        */
       relation.transformValues(values, relationGroup, isArray, targetPrimaryKey, keyToBindOn, _.isArray(response))
-      
+
       resolve(values)
     })
     .catch(function (err) {
@@ -309,7 +309,7 @@ relation.belongsTo = function (values, model) {
 
 /**
  * @function belongsToMany
- * @description returns transformed values for belongs to 
+ * @description returns transformed values for belongs to
  * many relationship
  * @param  {Object|Array} values
  * @param  {Object}       model
@@ -332,8 +332,8 @@ relation.belongsToMany = function (values, model) {
 
 
   /**
-   * getting values to be used while making query on 
-   * related model. It is important to prepend 
+   * getting values to be used while making query on
+   * related model. It is important to prepend
    * table name when making queries as knex
    * will not throw an error when not
    * using table name on field name
@@ -374,7 +374,7 @@ relation.belongsToMany = function (values, model) {
   ]
 
   /**
-   * we set the pivot table here. This will be used by fetch 
+   * we set the pivot table here. This will be used by fetch
    * method to fetch extra pivot columns defined by user.
    * @type {String}
    */
@@ -389,8 +389,8 @@ relation.belongsToMany = function (values, model) {
   }
 
   /**
-   * if there is nestedScope set on the model object , 
-   * set it on builder object. 
+   * if there is nestedScope set on the model object ,
+   * set it on builder object.
    * @note - We will keep on sending nested
    * object until it is picked up by any
    * model/or cleared by last model.
@@ -408,7 +408,7 @@ relation.belongsToMany = function (values, model) {
     .whereIn(`${pivotTable}.${pivotPrimaryKey}`,whereInValues)
     .innerJoin(pivotTable,function () {
 
-      this.on(`${table}.${targetPrimaryKey}`,`${pivotTable}.${pivotOtherKey}`)
+      this.on(`${table}.${relationPrimaryKey}`,`${pivotTable}.${pivotOtherKey}`)
 
     })
     .fetch()
@@ -416,7 +416,7 @@ relation.belongsToMany = function (values, model) {
 
       /**
        * here we group values for relation model based on it's relationPrimaryKey
-       * so that we can attach the entire group to the target model values 
+       * so that we can attach the entire group to the target model values
        * instead of looping through them and doing manual checks.
        * @type {[type]}
       */
@@ -450,8 +450,8 @@ relation.belongsToMany = function (values, model) {
        * values
        */
       relation.transformValues(values, relationGroup, isArray, targetPrimaryKey, model.key, true)
-      
-      resolve(values)      
+
+      resolve(values)
 
     })
     .catch(reject)
@@ -478,7 +478,7 @@ relation.transformValues = function (values, relationValues, isArray, primaryKey
   if(!isArray) {
 
     /**
-     * if target values are not array , then set and get values on 
+     * if target values are not array , then set and get values on
      * flat object using collection get/set methods.
     */
     const primaryKeyValue = values.get(primaryKey)
@@ -543,7 +543,7 @@ relation.transformSelectColumns = function (statementGroups, pivotColumns, pivot
   const pivotPrefix = '_pivot_'
 
   /**
-   * if user has asked for pivotColumns to be fetched , we 
+   * if user has asked for pivotColumns to be fetched , we
    * update query builder columns array by concatenating
    * extra columns
    */

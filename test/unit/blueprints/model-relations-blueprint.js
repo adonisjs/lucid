@@ -13,7 +13,10 @@ blueprint.tearDown = function(knex) {
     knex.schema.dropTable('author_book'),
     knex.schema.dropTable('articles'),
     knex.schema.dropTable('countries'),
-    knex.schema.dropTable('agencies')
+    knex.schema.dropTable('agencies'),
+    knex.schema.dropTable('chat_operators'),
+    knex.schema.dropTable('relation_table'),
+    knex.schema.dropTable('cbooks')
   ])
 }
 
@@ -91,6 +94,29 @@ blueprint.setup = function(knex) {
       table.integer('country_id').references('id').inTable('countries').onDelete('CASCADE')
       table.timestamps()
       table.timestamp('deleted_at')
+
+    }),
+    knex.schema.createTable('chat_operators', function (table) {
+
+     table.increments('co_id')
+     table.string('operator_name')
+     table.timestamps()
+     table.timestamp('deleted_at')
+
+    }),
+    knex.schema.createTable('cbooks', function (table) {
+
+     table.increments('book_id')
+     table.string('book_title')
+     table.timestamps()
+     table.timestamp('deleted_at')
+
+    }),
+    knex.schema.createTable('relation_table', function (table) {
+
+     table.increments()
+     table.integer('relation_book_id').references('book_id').inTable('cbooks').onDelete('CASCADE')
+     table.string('relation_user_id').references('co_id').inTable('chat_operators').onDelete('CASCADE')
 
     })
   ])
@@ -189,6 +215,25 @@ blueprint.seed = function(knex){
     }
   ]
 
+  const operators = [
+    {
+      operator_name:'virk'
+    }
+  ]
+
+  const cbooks = [
+    {
+      book_title:'virk reading node'
+    }
+  ]
+
+  const relational_values = [
+    {
+      relation_book_id:1,
+      relation_user_id:1
+    }
+  ]
+
 
   return Q.all([
     knex.table('users').insert(users),
@@ -198,6 +243,9 @@ blueprint.seed = function(knex){
     knex.table('author_book').insert(author_book),
     knex.table('countries').insert(countries),
     knex.table('articles').insert(articles),
-    knex.table('agencies').insert(agencies)
+    knex.table('agencies').insert(agencies),
+    knex.table('chat_operators').insert(operators),
+    knex.table('cbooks').insert(cbooks),
+    knex.table('relation_table').insert(relational_values)
   ])
 }

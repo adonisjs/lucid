@@ -2223,7 +2223,6 @@ describe('Model Relations', function () {
 
       })
 
-
       it('should be able to use query methods while defining relationship', function (done) {
 
         /**
@@ -2542,12 +2541,123 @@ describe('Model Relations', function () {
         }).then(function () {
           done()
         }).catch(done)
-
       })
+
+      it('should be able to fetch related values when primary keys on host model is different than id', function (done){
+
+        class Book extends Model{
+          users () {
+            return this.belongsToMany('App/Model/Operator', 'relation_table', 'relation_book_id', 'relation_user_id')
+          }
+          static get primaryKey() {
+            return 'book_id'
+          }
+          static get table () {
+            return 'cbooks'
+          }
+        }
+        /**
+         * setting up model database, and
+         * extending its static object
+         */
+        Book.database = db; Book = Book.extend()
+
+        class Operator extends Model{
+
+          static get primaryKey () {
+            return 'co_id'
+          }
+
+          static get table () {
+            return 'chat_operators'
+          }
+
+        }
+
+        /**
+         * setting up model database, and
+         * extending its static object
+         */
+        Operator.database = db; Operator = Operator.extend()
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/Operator', function() {
+          return Operator
+        })
+
+        co(function * () {
+          const book = yield Book.first().with('users').fetch()
+          const bookJson = book.toJSON()
+          expect(bookJson.users).to.be.an('array')
+          expect(bookJson.users[0]._pivot_relation_book_id).to.equal(bookJson.book_id)
+          expect(bookJson.users[0]._pivot_relation_user_id).to.equal('1')
+        }).then(function () {
+          done()
+        }).catch(done)
+      })
+
+      it('should be able to fetch related values when primary keys on host model is different than id using model instance', function (done){
+
+        class Book extends Model{
+          users () {
+            return this.belongsToMany('App/Model/Operator', 'relation_table', 'relation_book_id', 'relation_user_id')
+          }
+          static get primaryKey() {
+            return 'book_id'
+          }
+          static get table () {
+            return 'cbooks'
+          }
+        }
+        /**
+         * setting up model database, and
+         * extending its static object
+         */
+        Book.database = db; Book = Book.extend()
+
+        class Operator extends Model{
+
+          static get primaryKey () {
+            return 'co_id'
+          }
+
+          static get table () {
+            return 'chat_operators'
+          }
+
+        }
+
+        /**
+         * setting up model database, and
+         * extending its static object
+         */
+        Operator.database = db; Operator = Operator.extend()
+        /**
+         * binding model to the ioc container to be used
+         * by relationship methods
+         */
+        Ioc.bind('App/Model/Operator', function() {
+          return Operator
+        })
+
+        co(function * () {
+          const book = yield Book.find(1)
+          const bookUser = yield book.users().fetch()
+          const bookJson = bookUser.toJSON()
+          expect(bookJson).to.be.an('array')
+          expect(bookJson[0]._pivot_relation_book_id).to.equal(book.attributes.book_id)
+          expect(bookJson[0]._pivot_relation_user_id).to.equal('1')
+        }).then(function () {
+          done()
+        }).catch(done)
+      })
+
 
     })
 
-    context('Relational Expecations', function () {
+    context('Relational Expectations', function () {
 
       it('should not return values defined as hidden on relational model',function (done) {
 
