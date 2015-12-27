@@ -64,6 +64,18 @@ describe('Database', function () {
       .catch(done)
   })
 
+  it('should throw error when database connection is not defined', function () {
+    const Config = {
+      get: function () {
+        return undefined
+      }
+    }
+    const db = function () {
+      return new Database(Config)
+    }
+    expect(db).to.throw(/Specify connection under config\/database file/)
+  })
+
   it('should make connection with sqlite database', function () {
     const db = new Database(Config)
     expect(db.client.config.client).to.equal('sqlite3')

@@ -53,6 +53,7 @@ Make.handle = function (options) {
         reject(error)
       } else {
         Console.success(Console.icon('success') + ' created %s migration successfully', name)
+        resolve()
       }
     })
   })

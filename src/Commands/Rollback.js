@@ -35,14 +35,11 @@ Rollback.handle = function * (options, flags) {
   const migrationsFiles = autoLoader.load(migrations)
   const response = yield Runner.down(migrationsFiles)
 
-  if(response.status === 'completed') {
+  if (response.status === 'completed') {
     Console.success(Console.icon('success') + ' latest migrations batch has been rolled back')
-    return
   }
 
-  if(response.status === 'skipped') {
+  if (response.status === 'skipped') {
     Console.info(Console.icon('info') + ' already at the last batch')
-    return
   }
-
 }

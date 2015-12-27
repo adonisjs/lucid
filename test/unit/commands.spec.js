@@ -32,6 +32,21 @@ const Helpers = {
 Ioc.bind('Adonis/Src/Helpers', function () {
   return Helpers
 })
+
+Ioc.bind('Adonis/Src/Console', function () {
+  return {
+    icon: function () {
+      return ''
+    },
+    success: function () {
+    },
+    info: function () {
+
+    }
+  }
+})
+
+
 describe('Commands', function () {
   before(function (done) {
     GLOBAL.use = function () {
@@ -57,9 +72,34 @@ describe('Commands', function () {
   })
 
   context('Make', function () {
+
+    it('should handle error when unable to create migrations file', function (done) {
+      expect(Make.description).not.equal(undefined)
+      expect(Make.signature).not.equal(undefined)
+
+      Ioc.bind('Adonis/Src/Helpers', function () {
+        return {
+          migrationsPath: function (name) {
+            return path.join(__dirname, './mg', name)
+          }
+        }
+      })
+
+      Make
+        .handle({name: 'create_users_table'})
+        .catch(function (error) {
+          expect(error.code).to.equal('ENOENT')
+          done()
+        })
+    })
+
     it('should create a file inside migrations directory', function (done) {
       expect(Make.description).not.equal(undefined)
       expect(Make.signature).not.equal(undefined)
+
+      Ioc.bind('Adonis/Src/Helpers', function () {
+        return Helpers
+      })
 
       Make
         .handle({name: 'create_users_table'})
@@ -80,7 +120,9 @@ describe('Commands', function () {
     it('should throw error when running in production environment', function (done) {
       process.env.NODE_ENV = 'production'
       const Runner = {
-        up: function * (files) {}
+        up: function * (files) {
+          return {status:'completed'}
+        }
       }
       Ioc.bind('Adonis/Src/Runner', function () {
         return Runner
@@ -101,6 +143,7 @@ describe('Commands', function () {
       const Runner = {
         up: function * (files) {
           migrations = files
+          return {status:'completed'}
         }
       }
       Ioc.bind('Adonis/Src/Runner', function () {
@@ -119,13 +162,47 @@ describe('Commands', function () {
         })
         .catch(done)
     })
+
+    it('should pass handle skipped status', function (done) {
+      process.env.NODE_ENV = 'development'
+      let infoCalled = false
+      const Runner = {
+        up: function * (files) {
+          return {status:'skipped'}
+        }
+      }
+      Ioc.bind('Adonis/Src/Runner', function () {
+        return Runner
+      })
+      Ioc.bind('Adonis/Src/Console', function () {
+        return {
+          icon: function () {},
+          info: function () {
+            infoCalled = true
+          }
+        }
+      })
+      expect(Run.description).not.equal(undefined)
+      expect(Run.signature).not.equal(undefined)
+
+      co(function * () {
+        return yield Run.handle({}, {})
+      })
+      .then(function () {
+        expect(infoCalled).to.equal(true)
+        done()
+      })
+      .catch(done)
+    })
   })
 
   context('Rollback', function () {
     it('should throw error when running in production environment', function (done) {
       process.env.NODE_ENV = 'production'
       const Runner = {
-        up: function * (files) {}
+        up: function * (files) {
+          return {status:'completed'}
+        }
       }
       Ioc.bind('Adonis/Src/Runner', function () {
         return Runner
@@ -146,10 +223,18 @@ describe('Commands', function () {
       const Runner = {
         down: function * (files) {
           migrations = files
+          return {status:'completed'}
         }
       }
       Ioc.bind('Adonis/Src/Runner', function () {
         return Runner
+      })
+      Ioc.bind('Adonis/Src/Console', function () {
+        return {
+          icon: function () {},
+          info: function () {},
+          success: function () {}
+        }
       })
       expect(Rollback.description).not.equal(undefined)
       expect(Rollback.signature).not.equal(undefined)
@@ -160,6 +245,39 @@ describe('Commands', function () {
         .then(function () {
           const basename = path.basename(migName).replace('.js', '')
           expect(migrations).to.have.property(basename)
+          done()
+        })
+        .catch(done)
+    })
+
+    it('should handle skipped status', function (done) {
+      process.env.NODE_ENV = 'development'
+      let infoCalled = false
+      const Runner = {
+        down: function * (files) {
+          return {status:'skipped'}
+        }
+      }
+      Ioc.bind('Adonis/Src/Runner', function () {
+        return Runner
+      })
+      Ioc.bind('Adonis/Src/Console', function () {
+        return {
+          icon: function () {},
+          info: function () {
+            infoCalled = true
+          },
+          success: function () {}
+        }
+      })
+      expect(Rollback.description).not.equal(undefined)
+      expect(Rollback.signature).not.equal(undefined)
+
+      co(function * () {
+        return yield Rollback.handle({}, {})
+      })
+        .then(function () {
+          expect(infoCalled).to.equal(true)
           done()
         })
         .catch(done)

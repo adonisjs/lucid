@@ -35,13 +35,11 @@ Run.handle = function * (options, flags) {
   const migrationsFiles = autoLoader.load(migrations)
   const response = yield Runner.up(migrationsFiles)
 
-  if(response.status === 'completed') {
+  if (response.status === 'completed') {
     Console.success(Console.icon('success') + ' database migrated successfully')
-    return
   }
 
-  if(response.status === 'skipped') {
+  if (response.status === 'skipped') {
     Console.info(Console.icon('info') + ' already the latest version')
-    return
   }
 }
