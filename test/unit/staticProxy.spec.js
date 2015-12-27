@@ -9,35 +9,32 @@ const Database = require('../../src/Database')
 const StaticProxy = require('../../src/Orm/Proxy/Static')
 
 let Env = {
-  get: function(){
+  get: function () {
     return 'sqlite'
   }
 }
 
 let Config = {
-  get: function(name){
+  get: function (name) {
     return {
       client: 'sqlite3',
       connection: {
-        filename: path.join(__dirname,'./storage/test.sqlite3')
+        filename: path.join(__dirname, './storage/test.sqlite3')
       },
       debug: false
     }
   }
 }
 
-const db = new Database(Env,Config)
+const db = new Database(Env, Config)
 
 describe('StaticProxy', function () {
-
-
   before(function (done) {
-
     blueprint
-    .setup(db)
-    .then (function () {
-      blueprint.seed(db)
-    }).then(function () {
+      .setup(db)
+      .then(function () {
+        blueprint.seed(db)
+      }).then(function () {
       done()
     }).catch(done)
 
@@ -45,21 +42,20 @@ describe('StaticProxy', function () {
 
   after(function (done) {
     blueprint
-    .tearDown(db)
-    .then (function () {
-      done()
-    }).catch(done)
+      .tearDown(db)
+      .then(function () {
+        done()
+      }).catch(done)
   })
 
   it('should proxy class static methods', function () {
+    class User {
 
-    class User{
-
-      static extend(){
-        return new StaticProxy(this,db);
+      static extend() {
+        return new StaticProxy(this, db)
       }
 
-      static get table(){
+      static get table() {
         return 'users'
       }
 
@@ -70,15 +66,14 @@ describe('StaticProxy', function () {
 
   })
 
-  it('should call methods directly on query builder', function() {
+  it('should call methods directly on query builder', function () {
+    class User {
 
-    class User{
-
-      static extend(){
-        return new StaticProxy(this,db);
+      static extend() {
+        return new StaticProxy(this, db)
       }
 
-      static get table(){
+      static get table() {
         return 'users'
       }
 
@@ -89,31 +84,30 @@ describe('StaticProxy', function () {
 
   })
 
-  it('should return an instance of collection on values fetched from model queries', function(done) {
+  it('should return an instance of collection on values fetched from model queries', function (done) {
+    class User {
 
-      class User{
-
-        static extend(){
-          return new StaticProxy(this,db);
-        }
-
-        static get database(){
-          return this._database
-        }
-
-        static set database(value){
-          this._database = value
-        }
-
-        static get table(){
-          return 'users'
-        }
+      static extend() {
+        return new StaticProxy(this, db)
       }
 
-      User.database = db
-      User = User.extend()
+      static get database() {
+        return this._database
+      }
 
-      User
+      static set database( value) {
+        this._database = value
+      }
+
+      static get table() {
+        return 'users'
+      }
+    }
+
+    User.database = db
+    User = User.extend()
+
+    User
       .select('*')
       .first()
       .fetch()
@@ -124,28 +118,26 @@ describe('StaticProxy', function () {
   })
 
   it('should allow scoped methods on class', function () {
+    class User {
 
-    class User{
-
-      static extend(){
-        return new StaticProxy(this,db);
+      static extend() {
+        return new StaticProxy(this, db)
       }
-      static get table(){
+      static get table() {
         return 'users'
       }
 
-      scopeActive(query){
-        return query.where('status','active')
+      scopeActive( query) {
+        return query.where('status', 'active')
       }
 
     }
 
-    User = User.extend();
+    User = User.extend()
     User.active()
     expect(User.toSQL().sql).to.equal('select * from "users" where "status" = ?')
     expect(User.toSQL().bindings).deep.equal(['active'])
 
   })
-
 
 })
