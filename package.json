@@ -14,6 +14,7 @@
     "co": "^4.6.0",
     "coveralls": "^2.11.4",
     "cz-conventional-changelog": "^1.1.2",
+    "fs-extra": "^0.26.3",
     "istanbul": "^0.3.20",
     "loadtest": "^1.2.14",
     "mocha": "^2.3.0",
@@ -25,6 +26,8 @@
     "adonis-fold": "^1.0.0"
   },
   "dependencies": {
+    "auto-loader": "^0.2.0",
+    "cat-log": "^1.0.0",
     "change-case": "^2.3.0",
     "harmony-reflect": "^1.4.2",
     "i": "^0.3.3",
