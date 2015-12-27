@@ -48,11 +48,10 @@ describe('Commands', function () {
 
   context('Make', function () {
     it('should create a file inside migrations directory', function (done) {
-      const make = new Make()
       expect(Make.description).not.equal(undefined)
       expect(Make.signature).not.equal(undefined)
 
-      make
+      Make
         .handle({name: 'create_users_table'})
         .then(function () {
           fs.ensureFile(migName, function (err) {
@@ -76,10 +75,8 @@ describe('Commands', function () {
       Ioc.bind('Adonis/Src/Runner', function () {
         return Runner
       })
-      const run = new Run()
-
       co(function * () {
-        return yield run.handle({}, {})
+        return yield Run.handle({}, {})
       })
         .then(function () {})
         .catch(function (error) {
@@ -99,12 +96,11 @@ describe('Commands', function () {
       Ioc.bind('Adonis/Src/Runner', function () {
         return Runner
       })
-      const run = new Run()
       expect(Run.description).not.equal(undefined)
       expect(Run.signature).not.equal(undefined)
 
       co(function * () {
-        return yield run.handle({}, {})
+        return yield Run.handle({}, {})
       })
         .then(function () {
           const basename = path.basename(migName).replace('.js', '')
@@ -124,10 +120,8 @@ describe('Commands', function () {
       Ioc.bind('Adonis/Src/Runner', function () {
         return Runner
       })
-      const rollback = new Rollback()
-
       co(function * () {
-        return yield rollback.handle({}, {})
+        return yield Rollback.handle({}, {})
       })
         .then(function () {})
         .catch(function (error) {
@@ -147,12 +141,11 @@ describe('Commands', function () {
       Ioc.bind('Adonis/Src/Runner', function () {
         return Runner
       })
-      const rollback = new Rollback()
       expect(Rollback.description).not.equal(undefined)
       expect(Rollback.signature).not.equal(undefined)
 
       co(function * () {
-        return yield rollback.handle({}, {})
+        return yield Rollback.handle({}, {})
       })
         .then(function () {
           const basename = path.basename(migName).replace('.js', '')
