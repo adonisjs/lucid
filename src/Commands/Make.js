@@ -25,11 +25,12 @@ module.exports = NewSchema
 `
 
 const fs = require('fs')
+const Ioc = require('adonis-fold').Ioc
 
 class Make {
 
-  constructor (Helpers) {
-    this.helpers = Helpers
+  constructor () {
+    this.helpers = Ioc.make('Adonis/Src/Helpers')
   }
 
   /**
@@ -38,7 +39,7 @@ class Make {
    * @return {String}
    * @public
    */
-  description () {
+  static get description () {
     return 'Create a new migration file'
   }
 
@@ -49,7 +50,7 @@ class Make {
    * @return {String}
    * @public
    */
-  signature () {
+  static get signature () {
     return '{name}'
   }
 

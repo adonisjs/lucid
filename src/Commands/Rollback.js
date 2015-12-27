@@ -7,10 +7,13 @@
 */
 
 const autoLoader = require('auto-loader')
+const Ioc = require('adonis-fold').Ioc
 
 class Rollback {
 
-  constructor (Helpers, Runner) {
+  constructor () {
+    const Helpers = Ioc.make('Adonis/Src/Helpers')
+    const Runner = Ioc.make('Adonis/Src/Runner')
     this.migrations = Helpers.migrationsPath()
     this.runner = Runner
   }
@@ -21,7 +24,7 @@ class Rollback {
    * @return {String}
    * @public
    */
-  description () {
+  static get description () {
     return 'Rollback migrations executed in last batch'
   }
 
@@ -32,7 +35,7 @@ class Rollback {
    * @return {String}
    * @public
    */
-  signature () {
+  static get signature () {
     return '{--force?}'
   }
 

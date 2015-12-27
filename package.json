@@ -11,7 +11,7 @@
   "author": "adonisjs",
   "license": "MIT",
   "devDependencies": {
-    "adonis-fold": "^1.0.0",
+    "adonis-fold": "file:///Users/harmindervirk/workspace/v2Launch/fold",
     "chai": "^3.2.0",
     "co": "^4.6.0",
     "coveralls": "^2.11.4",
@@ -26,7 +26,7 @@
     "standard": "^5.4.1"
   },
   "peerDependencies": {
-    "adonis-fold": "^1.0.0"
+    "adonis-fold": "file:///Users/harmindervirk/workspace/v2Launch/fold"
   },
   "dependencies": {
     "auto-loader": "^0.2.0",
