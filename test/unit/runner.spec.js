@@ -10,6 +10,7 @@
 const Runner = require('../../src/Runner')
 const Schema = require('../../src/Schema')
 const chai = require('chai')
+const manageDb = require('./blueprints/manage')
 const blueprint = require('./blueprints/schema-blueprint')
 const path = require('path')
 const expect = chai.expect
@@ -17,6 +18,15 @@ const expect = chai.expect
 describe('Runner', function () {
   before(function (done) {
     blueprint()
+      .then(function () {
+        done()
+      })
+      .catch(done)
+  })
+
+  after(function (done) {
+    manageDb
+      .remove(path.join(__dirname, './storage/schema.sqlite3'))
       .then(function () {
         done()
       })

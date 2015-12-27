@@ -42,6 +42,8 @@ Make.signature = '{name}'
  */
 Make.handle = function (options) {
   const helpers = Ioc.make('Adonis/Src/Helpers')
+  const Console = Ioc.use('Adonis/Src/Console')
+
   return new Promise((resolve, reject) => {
     const name = `${new Date().getTime()}_${options.name}.js`
     const migrationPath = helpers.migrationsPath(name)
@@ -50,7 +52,8 @@ Make.handle = function (options) {
       if (error) {
         reject(error)
       } else {
-        resolve(`Created ${name} migration successfully`)
+        Console.success(Console.icon('success') + ' created %s migration successfully', name)
+        resolve()
       }
     })
   })

@@ -26,11 +26,20 @@ Run.signature = '{--force?}'
 Run.handle = function * (options, flags) {
   const Helpers = Ioc.make('Adonis/Src/Helpers')
   const Runner = Ioc.make('Adonis/Src/Runner')
+  const Console = Ioc.use('Adonis/Src/Console')
   const migrations = Helpers.migrationsPath()
 
   if (process.env.NODE_ENV === 'production' && !flags.force) {
     throw new Error('Cannot run migrations in production')
   }
   const migrationsFiles = autoLoader.load(migrations)
-  return yield Runner.up(migrationsFiles)
+  const response = yield Runner.up(migrationsFiles)
+
+  if (response.status === 'completed') {
+    Console.success(Console.icon('success') + ' database migrated successfully')
+  }
+
+  if (response.status === 'skipped') {
+    Console.info(Console.icon('info') + ' already the latest version')
+  }
 }

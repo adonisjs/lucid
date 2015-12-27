@@ -4,6 +4,7 @@ const path = require('path')
 const chai = require('chai')
 const expect = chai.expect
 const Database = require('../../src/Database')
+const manageDb = require('../unit/blueprints/manage')
 const blueprint = require('./blueprints/model-blueprint')
 const Model = require('../../src/Orm/Proxy/Model')
 
@@ -15,7 +16,7 @@ let Config = {
     return {
       client: 'sqlite3',
       connection: {
-        filename: path.join(__dirname,'./storage/blog.sqlite3')
+        filename: path.join(__dirname,'./storage/model.sqlite3')
       },
       debug: false
     }
@@ -49,19 +50,27 @@ let postId = null
 describe('Database Implementation', function () {
 
   before(function (done) {
-    blueprint
-    .setup(db)
-    .then (function () {
-      done()
-    }).catch(done)
+    manageDb
+      .make(path.join(__dirname, './storage/model.sqlite3'))
+      .then(function () {
+        return blueprint.setup(db)
+      })
+      .then (function () {
+        done()
+      })
+      .catch(done)
   })
 
   after(function (done) {
     blueprint
-    .tearDown(db)
-    .then (function () {
-      done()
-    }).catch(done)
+      .tearDown(db)
+      .then(function () {
+        return manageDb.remove(path.join(__dirname, './storage/model.sqlite3'))
+      })
+      .then (function () {
+        done()
+      })
+      .catch(done)
   })
 
 

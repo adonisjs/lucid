@@ -10,6 +10,7 @@
 const Database = require('../../src/Database')
 const path = require('path')
 const chai = require('chai')
+const manageDb = require('./blueprints/manage')
 const expect = chai.expect
 
 let alternateConnection = {
@@ -38,18 +39,51 @@ let Config = {
 }
 
 describe('Database', function () {
+
+  before(function (done) {
+    manageDb
+      .make(path.join(__dirname, './storage/test.sqlite3'))
+      .then(function () {
+        return manageDb.make(path.join(__dirname, './storage/connection.sqlite3'))
+      })
+      .then(function () {
+        done()
+      })
+      .catch(done)
+  })
+
+  after(function (done) {
+    manageDb
+      .remove(path.join(__dirname, './storage/test.sqlite3'))
+      .then(function () {
+        return manageDb.remove(path.join(__dirname, './storage/connection.sqlite3'))
+      })
+      .then(function () {
+        done()
+      })
+      .catch(done)
+  })
+
+  it('should throw error when database connection is not defined', function () {
+    const Config = {
+      get: function () {
+        return undefined
+      }
+    }
+    const db = function () {
+      return new Database(Config)
+    }
+    expect(db).to.throw(/Specify connection under config\/database file/)
+  })
+
   it('should make connection with sqlite database', function () {
     const db = new Database(Config)
     expect(db.client.config.client).to.equal('sqlite3')
   })
 
-  it('should be able to switch connections using connection method', function (done) {
+  it('should be able to switch connections using connection method', function () {
     const db = new Database(Config)
-    db.connection('new')
-      .table('accounts')
-      .then(function (accounts) {
-        expect(accounts).to.be.an('array')
-        done()
-      }).catch(done)
+    const newConnection = db.connection('new')
+    expect(newConnection.client.config.connection.filename).to.equal(path.join(__dirname, './storage/connection.sqlite3'))
   })
 })

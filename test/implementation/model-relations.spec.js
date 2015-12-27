@@ -5,6 +5,7 @@ const chai = require('chai')
 const expect = chai.expect
 const co = require('co')
 const Database = require('../../src/Database')
+const manageDb = require('../unit/blueprints/manage')
 const blueprint = require('./blueprints/model-blueprint')
 const Model = require('../../src/Orm/Proxy/Model')
 const Ioc = require('adonis-fold').Ioc
@@ -55,16 +56,23 @@ Ioc.bind('App/Model/User', function () {
 describe('Database Implementation', function () {
 
   before(function (done) {
-    blueprint
-    .setup(db)
-    .then (function () {
-      done()
-    }).catch(done)
+    manageDb
+      .make(path.join(__dirname, './storage/blog.sqlite3'))
+      .then(function () {
+        return blueprint.setup(db)
+      })
+      .then (function () {
+        done()
+      })
+      .catch(done)
   })
 
   after(function (done) {
     blueprint
     .tearDown(db)
+    .then(function () {
+      return manageDb.remove(path.join(__dirname, './storage/blog.sqlite3'))
+    })
     .then (function () {
       done()
     }).catch(done)
