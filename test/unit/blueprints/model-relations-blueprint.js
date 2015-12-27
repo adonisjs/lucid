@@ -5,7 +5,7 @@ const Q = require('q')
 let blueprint = exports = module.exports = {}
 
 blueprint.tearDown = function(knex) {
-  return Q.all([
+  const tablesToRemove = [
     knex.schema.dropTable('users'),
     knex.schema.dropTable('phones'),
     knex.schema.dropTable('authors'),
@@ -17,12 +17,19 @@ blueprint.tearDown = function(knex) {
     knex.schema.dropTable('chat_operators'),
     knex.schema.dropTable('relation_table'),
     knex.schema.dropTable('cbooks')
-  ])
+  ]
+  let result = Q()
+  tablesToRemove.forEach(function (item) {
+    result = result.then(function () {
+      return item
+    })
+  })
+  return result
 }
 
 blueprint.setup = function(knex) {
 
-  return Q.all([
+  const setupTables = [
     knex.schema.createTable('users', function (table) {
 
       table.increments()
@@ -119,7 +126,14 @@ blueprint.setup = function(knex) {
      table.string('relation_user_id').references('co_id').inTable('chat_operators').onDelete('CASCADE')
 
     })
-  ])
+  ]
+  let result = Q()
+  setupTables.forEach(function (item) {
+    result = result.then(function () {
+      return item
+    })
+  })
+  return result
 }
 
 blueprint.seed = function(knex){
@@ -235,7 +249,7 @@ blueprint.seed = function(knex){
   ]
 
 
-  return Q.all([
+  const seeds = [
     knex.table('users').insert(users),
     knex.table('phones').insert(phones),
     knex.table('authors').insert(authors),
@@ -247,5 +261,12 @@ blueprint.seed = function(knex){
     knex.table('chat_operators').insert(operators),
     knex.table('cbooks').insert(cbooks),
     knex.table('relation_table').insert(relational_values)
-  ])
+  ]
+  let result = Q()
+  seeds.forEach(function (item) {
+    result = result.then(function () {
+      return item
+    })
+  })
+  return result
 }

@@ -46,6 +46,16 @@ describe('Commands', function () {
     })
   })
 
+  after(function (done) {
+    fs.emptyDir(path.join(__dirname, './migrations'), function (error) {
+      if (error) {
+        done(error)
+      } else {
+        done()
+      }
+    })
+  })
+
   context('Make', function () {
     it('should create a file inside migrations directory', function (done) {
       expect(Make.description).not.equal(undefined)
