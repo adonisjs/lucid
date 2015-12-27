@@ -4,8 +4,9 @@
   "description": "Database Orm for adonis framework",
   "main": "index.js",
   "scripts": {
-    "test": "node --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec test/implementation test/unit && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
-    "coverage": "node --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/.bin/_mocha test/implementation test/unit --bail"
+    "test": "npm run standard && node --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec test/implementation test/unit && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
+    "coverage": "node --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/.bin/_mocha test/implementation test/unit --bail",
+    "standard": "standard src/**/*.js providers/*.js"
   },
   "author": "",
   "license": "ISC",
@@ -20,7 +21,8 @@
     "mocha": "^2.3.0",
     "mocha-lcov-reporter": "0.0.2",
     "mysql": "^2.9.0",
-    "sqlite3": "^3.1.0"
+    "sqlite3": "^3.1.0",
+    "standard": "^5.4.1"
   },
   "peerDependencies": {
     "adonis-fold": "^1.0.0"
