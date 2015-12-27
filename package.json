@@ -1,15 +1,15 @@
 {
   "name": "adonis-lucid",
-  "version": "1.0.5",
-  "description": "Database Orm for adonis framework",
+  "version": "2.0.0",
+  "description": "Beautifully crafted sql ORM for adonis framework",
   "main": "index.js",
   "scripts": {
     "test": "npm run standard && node --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec test/implementation test/unit && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
     "coverage": "node --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/.bin/_mocha test/implementation test/unit --bail",
     "standard": "standard src/**/*.js providers/*.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "adonisjs",
+  "license": "MIT",
   "devDependencies": {
     "adonis-fold": "^1.0.0",
     "chai": "^3.2.0",

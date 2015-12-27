@@ -15,7 +15,7 @@ const knex = require('knex')
 class Database {
 
   constructor (Config) {
-    const dbConnection = Config.get('config.connection')
+    const dbConnection = Config.get('database.connection')
     if (!dbConnection) {
       throw new Error(`Specify connection under config/database file`)
     }
