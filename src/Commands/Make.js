@@ -39,7 +39,7 @@ class Make {
    * @return {String}
    * @public
    */
-  description () {
+  static get description () {
     return 'Create a new migration file'
   }
 
@@ -50,7 +50,7 @@ class Make {
    * @return {String}
    * @public
    */
-  signature () {
+  static get signature () {
     return '{name}'
   }
 

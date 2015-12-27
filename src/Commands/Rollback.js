@@ -24,7 +24,7 @@ class Rollback {
    * @return {String}
    * @public
    */
-  description () {
+  static get description () {
     return 'Rollback migrations executed in last batch'
   }
 
@@ -35,7 +35,7 @@ class Rollback {
    * @return {String}
    * @public
    */
-  signature () {
+  static get signature () {
     return '{--force?}'
   }
 

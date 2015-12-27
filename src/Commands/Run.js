@@ -24,7 +24,7 @@ class Run {
    * @return {String}
    * @public
    */
-  description () {
+  static get description () {
     return 'Run latest migrations'
   }
 
@@ -35,7 +35,7 @@ class Run {
    * @return {String}
    * @public
    */
-  signature () {
+  static get signature () {
     return '{--force?}'
   }
 

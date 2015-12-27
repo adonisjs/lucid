@@ -49,8 +49,8 @@ describe('Commands', function () {
   context('Make', function () {
     it('should create a file inside migrations directory', function (done) {
       const make = new Make()
-      make.description()
-      make.signature()
+      expect(Make.description).not.equal(undefined)
+      expect(Make.signature).not.equal(undefined)
 
       make
         .handle({name: 'create_users_table'})
@@ -100,8 +100,8 @@ describe('Commands', function () {
         return Runner
       })
       const run = new Run()
-      run.description()
-      run.signature()
+      expect(Run.description).not.equal(undefined)
+      expect(Run.signature).not.equal(undefined)
 
       co(function * () {
         return yield run.handle({}, {})
@@ -148,8 +148,8 @@ describe('Commands', function () {
         return Runner
       })
       const rollback = new Rollback()
-      rollback.description()
-      rollback.signature()
+      expect(Rollback.description).not.equal(undefined)
+      expect(Rollback.signature).not.equal(undefined)
 
       co(function * () {
         return yield rollback.handle({}, {})
