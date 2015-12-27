@@ -9,53 +9,28 @@
 const autoLoader = require('auto-loader')
 const Ioc = require('adonis-fold').Ioc
 
-class Rollback {
+let Rollback = exports = module.exports = {}
 
-  constructor () {
-    const Helpers = Ioc.make('Adonis/Src/Helpers')
-    const Runner = Ioc.make('Adonis/Src/Runner')
-    this.migrations = Helpers.migrationsPath()
-    this.runner = Runner
+Rollback.description = 'Rollback migrations executed in last batch'
+Rollback.signature = '{--force?}'
+
+/**
+ * @description rollback all migrations using
+ * runner provider
+ * @method handle
+ * @param  {Object} options
+ * @param  {Object} flags
+ * @return {Object}
+ * @public
+ */
+Rollback.handle = function * (options, flags) {
+  const Helpers = Ioc.make('Adonis/Src/Helpers')
+  const Runner = Ioc.make('Adonis/Src/Runner')
+  const migrations = Helpers.migrationsPath()
+
+  if (process.env.NODE_ENV === 'production' && !flags.force) {
+    throw new Error('Cannot run migrations in production')
   }
-
-  /**
-   * @description returns command description
-   * @method description
-   * @return {String}
-   * @public
-   */
-  static get description () {
-    return 'Rollback migrations executed in last batch'
-  }
-
-  /**
-   * @description command signature to define expectation for
-   * a given command to ace
-   * @method signature
-   * @return {String}
-   * @public
-   */
-  static get signature () {
-    return '{--force?}'
-  }
-
-  /**
-   * @description rollback all migrations using
-   * runner provider
-   * @method handle
-   * @param  {Object} options
-   * @param  {Object} flags
-   * @return {Object}
-   * @public
-   */
-  * handle (options, flags) {
-    if (process.env.NODE_ENV === 'production' && !flags.force) {
-      throw new Error('Cannot run migrations in production')
-    }
-    const migrationsFiles = autoLoader.load(this.migrations)
-    return yield this.runner.down(migrationsFiles)
-  }
-
+  const migrationsFiles = autoLoader.load(migrations)
+  return yield Runner.down(migrationsFiles)
 }
-
-module.exports = Rollback
