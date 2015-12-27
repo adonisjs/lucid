@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "adonis-fold": "^1.0.0",
     "chai": "^3.2.0",
     "co": "^4.6.0",
     "coveralls": "^2.11.4",
