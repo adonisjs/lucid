@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 /**
  * adonis-lucid
@@ -8,16 +8,14 @@
 
 const ServiceProvider = require('adonis-fold').ServiceProvider
 
-class DatabaseProvider extends ServiceProvider{
+class DatabaseProvider extends ServiceProvider {
 
-  static get inject(){
-    return ["Adonis/Src/Env", "Adonis/Addons/Config"]
-  }
-
-  * register() {
-    this.app.singleton('Adonis/Src/Database', function (Env,Config) {
+  * register () {
+    this.app.singleton('Adonis/Src/Database', function (app) {
+      const Env = app.use('Adonis/Src/Env')
+      const Config = app.use('Adonis/Src/Config')
       const Database = require('../src/Database')
-      return new Database(Env,Config)
+      return new Database(Env, Config)
     })
   }
 

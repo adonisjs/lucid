@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 /**
  * adonis-lucid
@@ -8,9 +8,9 @@
 
 const ServiceProvider = require('adonis-fold').ServiceProvider
 
-class CollectionProvider extends ServiceProvider{
+class CollectionProvider extends ServiceProvider {
 
-  * register() {
+  * register () {
     this.app.bind('Adonis/Src/Collection', function () {
       return require('../src/Orm/Collection')
     })

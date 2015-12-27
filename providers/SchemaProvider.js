@@ -34,7 +34,6 @@ class SchemaProvider extends ServiceProvider {
       const Rollback = require('../src/Commands/Rollback')
       return new Rollback(Helpers, Runner)
     })
-
   }
 
 }
