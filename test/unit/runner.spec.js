@@ -59,7 +59,7 @@ describe('Runner', function () {
   })
 
   it('should return diff for migrations to be created', function (done) {
-    const migrations = autoLoader.load(path.join(__dirname, './migrations'))
+    const migrations = {'2015-12-26-create_users_table': function () {}}
     this.runner
       ._diff(migrations, 'up')
       .then((difference) => {
@@ -69,7 +69,7 @@ describe('Runner', function () {
   })
 
   it('should return diff for migrations to be rolled back', function (done) {
-    const migrations = autoLoader.load(path.join(__dirname, './migrations'))
+    const migrations = {'2015-12-26-create_users_table': function () {}}
     this.runner
       ._diff(migrations, 'down')
       .then((difference) => {
