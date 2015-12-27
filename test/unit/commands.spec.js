@@ -10,6 +10,7 @@
 
 const Make = require('../../src/Commands/Make')
 const Run = require('../../src/Commands/Run')
+const Ioc = require('adonis-fold').Ioc
 const Rollback = require('../../src/Commands/Rollback')
 const chai = require('chai')
 const path = require('path')
@@ -28,7 +29,9 @@ const Helpers = {
     }
   }
 }
-
+Ioc.bind('Adonis/Src/Helpers', function () {
+  return Helpers
+})
 describe('Commands', function () {
   before(function (done) {
     GLOBAL.use = function () {
@@ -45,7 +48,7 @@ describe('Commands', function () {
 
   context('Make', function () {
     it('should create a file inside migrations directory', function (done) {
-      const make = new Make(Helpers)
+      const make = new Make()
       make.description()
       make.signature()
 
@@ -70,7 +73,10 @@ describe('Commands', function () {
       const Runner = {
         up: function * (files) {}
       }
-      const run = new Run(Helpers, Runner)
+      Ioc.bind('Adonis/Src/Runner', function () {
+        return Runner
+      })
+      const run = new Run()
 
       co(function * () {
         return yield run.handle({}, {})
@@ -90,7 +96,10 @@ describe('Commands', function () {
           migrations = files
         }
       }
-      const run = new Run(Helpers, Runner)
+      Ioc.bind('Adonis/Src/Runner', function () {
+        return Runner
+      })
+      const run = new Run()
       run.description()
       run.signature()
 
@@ -112,7 +121,10 @@ describe('Commands', function () {
       const Runner = {
         up: function * (files) {}
       }
-      const rollback = new Rollback(Helpers, Runner)
+      Ioc.bind('Adonis/Src/Runner', function () {
+        return Runner
+      })
+      const rollback = new Rollback()
 
       co(function * () {
         return yield rollback.handle({}, {})
@@ -132,7 +144,10 @@ describe('Commands', function () {
           migrations = files
         }
       }
-      const rollback = new Rollback(Helpers, Runner)
+      Ioc.bind('Adonis/Src/Runner', function () {
+        return Runner
+      })
+      const rollback = new Rollback()
       rollback.description()
       rollback.signature()
 

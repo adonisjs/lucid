@@ -25,11 +25,12 @@ module.exports = NewSchema
 `
 
 const fs = require('fs')
+const Ioc = require('adonis-fold').Ioc
 
 class Make {
 
-  constructor (Helpers) {
-    this.helpers = Helpers
+  constructor () {
+    this.helpers = Ioc.make('Adonis/Src/Helpers')
   }
 
   /**

@@ -7,10 +7,13 @@
 */
 
 const autoLoader = require('auto-loader')
+const Ioc = require('adonis-fold').Ioc
 
 class Rollback {
 
-  constructor (Helpers, Runner) {
+  constructor () {
+    const Helpers = Ioc.make('Adonis/Src/Helpers')
+    const Runner = Ioc.make('Adonis/Src/Runner')
     this.migrations = Helpers.migrationsPath()
     this.runner = Runner
   }
