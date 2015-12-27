@@ -43,7 +43,6 @@ Make.signature = '{name}'
 Make.handle = function (options) {
   const helpers = Ioc.make('Adonis/Src/Helpers')
   return new Promise((resolve, reject) => {
-
     const name = `${new Date().getTime()}_${options.name}.js`
     const migrationPath = helpers.migrationsPath(name)
 

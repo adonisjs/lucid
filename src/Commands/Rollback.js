@@ -24,7 +24,6 @@ Rollback.signature = '{--force?}'
  * @public
  */
 Rollback.handle = function * (options, flags) {
-
   const Helpers = Ioc.make('Adonis/Src/Helpers')
   const Runner = Ioc.make('Adonis/Src/Runner')
   const migrations = Helpers.migrationsPath()
