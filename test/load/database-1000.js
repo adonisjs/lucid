@@ -5,12 +5,6 @@ const loadtest = require('loadtest')
 const http = require('http')
 const path = require('path')
 
-const Env = {
-  get: function(){
-    return 'sqlite'
-  }
-}
-
 const Config = {
   get: function(name){
     return {
@@ -22,7 +16,7 @@ const Config = {
   }
 }
 
-const db = new Database(Env,Config)
+const db = new Database(Config)
 
 var server = http.createServer(function (req,res) {
 

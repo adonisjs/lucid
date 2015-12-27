@@ -8,12 +8,6 @@ const blueprint = require('./blueprints/model-blueprint')
 const Database = require('../../src/Database')
 const StaticProxy = require('../../src/Orm/Proxy/Static')
 
-let Env = {
-  get: function () {
-    return 'sqlite'
-  }
-}
-
 let Config = {
   get: function (name) {
     return {
@@ -26,7 +20,7 @@ let Config = {
   }
 }
 
-const db = new Database(Env, Config)
+const db = new Database(Config)
 
 describe('StaticProxy', function () {
   before(function (done) {

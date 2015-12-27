@@ -15,12 +15,6 @@ const Database = require('../../src/Database')
 const Model = require('../../src/Orm/Proxy/Model')
 const StaticProxy = require('../../src/Orm/Proxy/Static')
 
-let Env = {
-  get: function () {
-    return 'sqlite'
-  }
-}
-
 let Config = {
   get: function (name) {
     return {
@@ -33,7 +27,7 @@ let Config = {
   }
 }
 
-const db = new Database(Env, Config)
+const db = new Database(Config)
 
 describe('Model', function () {
   before(function (done) {

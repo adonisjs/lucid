@@ -31,16 +31,6 @@ const Model = require('../../src/Orm/Proxy/Model')
 const _ = require('lodash')
 
 /**
- * mocking Env provider required by Database provider
- * @type {Object}
- */
-let Env = {
-  get: function () {
-    return 'sqlite'
-  }
-}
-
-/**
  * mocking config provider require by Database provider
  * @type {Object}
  */
@@ -61,7 +51,7 @@ let Config = {
  * Lucid to make queries.
  * @type {Database}
  */
-const db = new Database(Env, Config)
+const db = new Database(Config)
 
 /**
  * Tests begins here

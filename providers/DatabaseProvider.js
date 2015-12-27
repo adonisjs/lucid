@@ -12,10 +12,9 @@ class DatabaseProvider extends ServiceProvider {
 
   * register () {
     this.app.singleton('Adonis/Src/Database', function (app) {
-      const Env = app.use('Adonis/Src/Env')
       const Config = app.use('Adonis/Src/Config')
       const Database = require('../src/Database')
-      return new Database(Env, Config)
+      return new Database(Config)
     })
   }
 

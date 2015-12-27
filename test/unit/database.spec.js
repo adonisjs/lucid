@@ -12,12 +12,6 @@ const path = require('path')
 const chai = require('chai')
 const expect = chai.expect
 
-let Env = {
-  get: function () {
-    return 'sqlite'
-  }
-}
-
 let alternateConnection = {
   client: 'sqlite3',
   connection: {
@@ -29,7 +23,10 @@ let Config = {
   get: function (name) {
     if (name === 'database.new') {
       return alternateConnection
-    } else {
+    } else if(name === 'database.connection') {
+      return 'sqlite'
+    }
+    else {
       return {
         client: 'sqlite3',
         connection: {
@@ -42,12 +39,12 @@ let Config = {
 
 describe('Database', function () {
   it('should make connection with sqlite database', function () {
-    const db = new Database(Env, Config)
+    const db = new Database(Config)
     expect(db.client.config.client).to.equal('sqlite3')
   })
 
   it('should be able to switch connections using connection method', function (done) {
-    const db = new Database(Env, Config)
+    const db = new Database(Config)
     db.connection('new')
       .table('accounts')
       .then(function (accounts) {
