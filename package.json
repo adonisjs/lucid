@@ -1,30 +1,35 @@
 {
   "name": "adonis-lucid",
-  "version": "1.0.5",
-  "description": "Database Orm for adonis framework",
+  "version": "2.0.0",
+  "description": "Beautifully crafted sql ORM for adonis framework",
   "main": "index.js",
   "scripts": {
-    "test": "node --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec test/implementation test/unit && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
-    "coverage": "node --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/.bin/_mocha test/implementation test/unit --bail"
+    "test": "npm run standard && node --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec test/implementation test/unit && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
+    "coverage": "node --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/.bin/_mocha test/implementation test/unit --bail",
+    "standard": "standard src/**/*.js providers/*.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "adonisjs",
+  "license": "MIT",
   "devDependencies": {
     "chai": "^3.2.0",
     "co": "^4.6.0",
     "coveralls": "^2.11.4",
     "cz-conventional-changelog": "^1.1.2",
+    "fs-extra": "^0.26.3",
     "istanbul": "^0.3.20",
     "loadtest": "^1.2.14",
     "mocha": "^2.3.0",
     "mocha-lcov-reporter": "0.0.2",
     "mysql": "^2.9.0",
-    "sqlite3": "^3.1.0"
+    "sqlite3": "^3.1.0",
+    "standard": "^5.4.1"
   },
   "peerDependencies": {
     "adonis-fold": "^1.0.0"
   },
   "dependencies": {
+    "auto-loader": "^0.2.0",
+    "cat-log": "^1.0.0",
     "change-case": "^2.3.0",
     "harmony-reflect": "^1.4.2",
     "i": "^0.3.3",

@@ -8,16 +8,16 @@
 
 const ServiceProvider = require('adonis-fold').ServiceProvider
 
-class DatabaseProvider extends ServiceProvider {
+class RunnerProvider extends ServiceProvider {
 
   * register () {
-    this.app.singleton('Adonis/Src/Database', function (app) {
+    this.app.singleton('Adonis/Src/Runner', function (app) {
       const Config = app.use('Adonis/Src/Config')
-      const Database = require('../src/Database')
-      return new Database(Config)
+      const Runner = require('../src/Runner')
+      return new Runner(Config)
     })
   }
 
 }
 
-module.exports = DatabaseProvider
+module.exports = RunnerProvider

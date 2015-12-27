@@ -14,14 +14,10 @@ const knex = require('knex')
  */
 class Database {
 
-  constructor (Env, Config) {
-    /**
-     * grab default database connection from env file
-=   */
-    const dbConnection = Env.get('DB_CONNECTION')
-
+  constructor (Config) {
+    const dbConnection = Config.get('database.connection')
     if (!dbConnection) {
-      throw new Error(`Specify DB_CONNECTION under .env file`)
+      throw new Error(`Specify connection under config/database file`)
     }
 
     /**
@@ -38,9 +34,7 @@ class Database {
       const newConnectionSettings = Config.get(`database.${connection}`)
       return knex(newConnectionSettings)
     }
-
     return instance
-
   }
 
 }

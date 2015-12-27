@@ -9,14 +9,11 @@ const blueprint = require('./blueprints/model-blueprint')
 const Model = require('../../src/Orm/Proxy/Model')
 const Ioc = require('adonis-fold').Ioc
 
-let Env = {
-  get: function(){
-    return 'sqlite'
-  }
-}
-
 let Config = {
   get: function(name){
+    if(name === 'database.connection') {
+      return 'sqlite'
+    }
     return {
       client: 'sqlite3',
       connection: {
@@ -27,7 +24,7 @@ let Config = {
   }
 }
 
-const db = new Database(Env,Config)
+const db = new Database(Config)
 
 class User extends Model{
   posts(){

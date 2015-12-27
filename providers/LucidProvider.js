@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 /**
  * adonis-lucid
@@ -8,14 +8,11 @@
 
 const ServiceProvider = require('adonis-fold').ServiceProvider
 
-class LucidProvider extends ServiceProvider{
+class LucidProvider extends ServiceProvider {
 
-  static get inject(){
-    return ["Adonis/Src/Database"]
-  }
-
-  * register() {
-    this.app.bind('Adonis/Src/Lucid', function (Database) {
+  * register () {
+    this.app.bind('Adonis/Src/Lucid', function (app) {
+      const Database = app.use('Adonis/Src/Database')
       const Lucid = require('../src/Orm/Proxy/Model')
       Lucid.database = Database
       return Lucid
