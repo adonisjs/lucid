@@ -25,7 +25,11 @@
     "adonis-fold": "^1.0.0"
   },
   "dependencies": {
+    "auto-loader": "^0.2.0",
+    "cat-log": "^1.0.0",
     "change-case": "^2.3.0",
+    "co": "^4.6.0",
+    "co-parallel": "^1.0.0",
     "harmony-reflect": "^1.4.2",
     "i": "^0.3.3",
     "knex": "^0.8.6",
