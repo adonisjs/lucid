@@ -12,7 +12,7 @@ class RunnerProvider extends ServiceProvider {
 
   * register () {
     this.app.singleton('Adonis/Src/Runner', function (app) {
-      const Config = app.use('App/Src/Config')
+      const Config = app.use('Adonis/Src/Config')
       const Runner = require('../src/Runner')
       return new Runner(Config)
     })
