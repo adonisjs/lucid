@@ -101,17 +101,15 @@ proxy.get = function (target, name) {
    * if scope method is called , set relation
    * scope to be used by fetch method
    */
-  if (name === 'scope'){
+  if (name === 'scope') {
     return function (key, callback) {
-
       /**
        * splitting scope key with period
        * @type {Array}
        */
       key = key.split('.')
 
-      if(key.length > 1){
-
+      if (key.length > 1) {
         /**
          * if key array has length of more than 1, then it
          * seems to be a nested relation and should be
@@ -121,16 +119,13 @@ proxy.get = function (target, name) {
          */
         const nestedScope = _.rest(key).join('.')
         target._nestedScope[nestedScope] = callback
-
-      }else{
-
+      } else {
         /**
          * otherwise it is not a nested relation , and belongs to
          * the existing model
          */
         key = key[0]
         target._relationsScope[key] = callback
-
       }
       return this
     }
@@ -141,7 +136,7 @@ proxy.get = function (target, name) {
    * many to many relation. Make sure this value will
    * be set on relational model, not on host model.
    */
-  if(name === 'withPivot'){
+  if (name === 'withPivot') {
     return function () {
       target._withPivot = _.values(arguments)
       return this
@@ -152,9 +147,9 @@ proxy.get = function (target, name) {
    * associating foreign key via belongsTo
    * relationship
    */
-  if(name === 'associate'){
+  if (name === 'associate') {
     return function (model) {
-      return modelRelation.associate(target,model)
+      return modelRelation.associate(target, model)
     }
   }
 
@@ -162,7 +157,7 @@ proxy.get = function (target, name) {
    * dissociating foreign key via belongsTo
    * relationship
    */
-  if(name === 'dissociate'){
+  if (name === 'dissociate') {
     return function () {
       return modelRelation.dissociate(target)
     }
@@ -174,12 +169,11 @@ proxy.get = function (target, name) {
    * raw query using `database` property from model
    * constructor
    */
-  if(name === 'attach'){
-    return function (relationValue, extraFields){
+  if (name === 'attach') {
+    return function (relationValue, extraFields) {
       return modelRelation.attach(target, relationValue, extraFields)
     }
   }
-
 
   /**
    * removing belongsToMany relationships on pivot tables.
@@ -187,8 +181,8 @@ proxy.get = function (target, name) {
    * raw query using `database` property from model
    * constructor
    */
-  if(name === 'detach'){
-    return function (relationValue){
+  if (name === 'detach') {
+    return function (relationValue) {
       return modelRelation.detach(target, relationValue)
     }
   }
@@ -203,7 +197,7 @@ proxy.get = function (target, name) {
   if (scopeFunction) {
     return function () {
       const args = [this.activeConnection].concat(_.values(arguments))
-      scopeFunction.apply(target,args)
+      scopeFunction.apply(target, args)
       return this
     }
   }
@@ -213,7 +207,6 @@ proxy.get = function (target, name) {
    * method as a query builder method.
    */
   return target.activeConnection[name]
-
 }
 
 /**

@@ -116,7 +116,6 @@ helper.isFetched = function (target) {
   return _.size(target.connection._statements) > 0
 }
 
-
 /**
  * @function getTableName
  * @description makes table name based upon available properties
@@ -140,14 +139,13 @@ helper.getTableName = function (target) {
  * @public
  */
 helper.getPivotTableName = function (targetTable, relationTable) {
-  const tables = _.sortBy([targetTable,relationTable], function (name) { return name });
+  const tables = _.sortBy([targetTable, relationTable], function (name) { return name })
   return `${inflect.singularize(tables[0])}_${inflect.singularize(tables[1])}`
 }
 
-
 /**
  * @function getRelationKey
- * @description makes relation key for a model based on it's 
+ * @description makes relation key for a model based on it's
  * table name
  * @param  {Class} target
  * @param  {Boolean} isConstructor
@@ -155,7 +153,6 @@ helper.getPivotTableName = function (targetTable, relationTable) {
  * @public
  */
 helper.getRelationKey = function (target, isConstructor) {
-
   const table = isConstructor ? target.table : target.constructor.table
   const primaryKey = isConstructor ? target.primaryKey : target.constructor.primaryKey
 

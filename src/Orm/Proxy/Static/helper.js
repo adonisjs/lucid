@@ -96,7 +96,7 @@ helper.setVisibility = function (target, values) {
     values = _.map(values, function (value) {
       return helper.omitFields(target.hidden, value)
     })
-  }else if (target.visible) {
+  } else if (target.visible) {
     values = _.map(values, function (value) {
       return helper.pickFields(target.visible, value)
     })

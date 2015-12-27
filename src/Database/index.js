@@ -38,9 +38,7 @@ class Database {
       const newConnectionSettings = Config.get(`database.${connection}`)
       return knex(newConnectionSettings)
     }
-
     return instance
-
   }
 
 }

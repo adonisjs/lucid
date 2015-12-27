@@ -71,8 +71,7 @@ describe('Commands', function () {
     it('should throw error when running in production environment', function (done) {
       process.env.NODE_ENV = 'production'
       const Runner = {
-        up: function * (files) {
-        }
+        up: function * (files) {}
       }
       const run = new Run(Helpers, Runner)
 
@@ -114,8 +113,7 @@ describe('Commands', function () {
     it('should throw error when running in production environment', function (done) {
       process.env.NODE_ENV = 'production'
       const Runner = {
-        up: function * (files) {
-        }
+        up: function * (files) {}
       }
       const rollback = new Rollback(Helpers, Runner)
 

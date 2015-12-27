@@ -8,7 +8,6 @@
 
 let relation = exports = module.exports = {}
 
-
 /**
  * @function associate
  * @description associate method is belongsTo relation specific
@@ -19,17 +18,21 @@ let relation = exports = module.exports = {}
  * @return {void}
  * @public
  */
-relation.associate = function (target,model) {
+relation.associate = function (target, model) {
   /**
    * making sure that associate is called on belongsTo relation only.
    */
-  if(!target._associationModel._activeRelation){
+  if (!target._associationModel._activeRelation) {
     throw new Error('unable to call associate , make sure to call relationship method before associate')
   }
-  if(target._associationModel._activeRelation.relation !== 'belongsTo'){
+  if (target._associationModel._activeRelation.relation !== 'belongsTo') {
     throw new Error(`Unable to call associate on ${target._associationModel._activeRelation.relation}`)
   }
-  target._associationModel._associationAttributes.push({attributes:model.attributes,targetPrimaryKey:target._associationModel._activeRelation.targetPrimaryKey,relationPrimaryKey:target._associationModel._activeRelation.relationPrimaryKey})
+  target._associationModel._associationAttributes.push({
+    attributes: model.attributes,
+    targetPrimaryKey: target._associationModel._activeRelation.targetPrimaryKey,
+    relationPrimaryKey: target._associationModel._activeRelation.relationPrimaryKey
+  })
   target.new()
 }
 
@@ -44,17 +47,23 @@ relation.associate = function (target,model) {
  * @return {void}
  * @public
  */
-relation.dissociate = function (target){
+relation.dissociate = function (target) {
   /**
    * making sure that dissociate is called on belongsTo relation only.
    */
-  if(!target._associationModel._activeRelation){
+  if (!target._associationModel._activeRelation) {
     throw new Error('unable to call dissociate , make sure to call relationship method before dissociate')
   }
-  if(target._associationModel._activeRelation.relation !== 'belongsTo'){
+  if (target._associationModel._activeRelation.relation !== 'belongsTo') {
     throw new Error(`Unable to call dissociate on ${target._associationModel._activeRelation.relation}`)
   }
-  target._associationModel._associationAttributes.push({attributes:{dissociate:true},targetPrimaryKey:target._associationModel._activeRelation.targetPrimaryKey,relationPrimaryKey:target._associationModel._activeRelation.relationPrimaryKey})
+  target._associationModel._associationAttributes.push({
+    attributes: {
+      dissociate: true
+    },
+    targetPrimaryKey: target._associationModel._activeRelation.targetPrimaryKey,
+    relationPrimaryKey: target._associationModel._activeRelation.relationPrimaryKey
+  })
   target.new()
 }
 
@@ -71,7 +80,6 @@ relation.dissociate = function (target){
  * @return {Object}               [description]
  */
 relation.attach = function (target, relationValue, extraFields) {
-
   /**
    * getting relationship meta data to be used while persisting
    * values inside pivot table.
@@ -114,7 +122,6 @@ relation.attach = function (target, relationValue, extraFields) {
  * @return {Object}               [description]
  */
 relation.detach = function (target, relationValue) {
-
   /**
    * getting relationship meta data to be used while removing
    * values inside pivot table.
@@ -125,14 +132,13 @@ relation.detach = function (target, relationValue) {
   const pivotOtherKey = getPersistanceFields.pivotOtherKey
   const targetPrimaryKey = getPersistanceFields.targetPrimaryKey
 
-
   /**
    * values object to be inserted inside pivot table
    * @type {Object}
    */
   const whereClause = {}
   whereClause[pivotPrimaryKey] = target._pivotAttributes[targetPrimaryKey]
-  if(relationValue){
+  if (relationValue) {
     whereClause[pivotOtherKey] = relationValue
   }
 
@@ -160,15 +166,15 @@ relation.detach = function (target, relationValue) {
  * @return {Object}                    [description]
  * @throws {Error} If relation is not belongsToMany
  */
-relation.getFieldsForAD = function (target){
+relation.getFieldsForAD = function (target) {
   /**
    * making sure that attach is called on belongsToMany relation only.
    */
-  if(!target._associationModel._activeRelation || !target._pivotAttributes){
+  if (!target._associationModel._activeRelation || !target._pivotAttributes) {
     throw new Error('unable to call attach , make sure to call relationship method before dissociate')
   }
 
-  if(target._associationModel._activeRelation.relation !== 'belongsToMany'){
+  if (target._associationModel._activeRelation.relation !== 'belongsToMany') {
     throw new Error(`unable to call attach on ${target._associationModel._activeRelation.relation}`)
   }
 
@@ -195,7 +201,6 @@ relation.getFieldsForAD = function (target){
  * @public
  */
 relation.resolveHasOne = function (values, relationDefination, limit) {
-
   /**
    * getting relation model
    * @type {Class}
@@ -223,13 +228,13 @@ relation.resolveHasOne = function (values, relationDefination, limit) {
   /**
    * returning model instance with required where clause
    */
-  model.where(relationPrimaryKey,values[targetPrimaryKey])
+  model.where(relationPrimaryKey, values[targetPrimaryKey])
 
   /**
    * if there is a limit defined , set limit clause. It
    * is true byDefault for hasOne and belongsTo
    */
-  if(limit && limit !== 'noLimit'){
+  if (limit && limit !== 'noLimit') {
     model.limit(limit)
   }
 
@@ -237,7 +242,6 @@ relation.resolveHasOne = function (values, relationDefination, limit) {
    * returning model
    */
   return model
-
 }
 
 /**
@@ -262,7 +266,7 @@ relation.resolveBelongsTo = function (values, relationDefination) {
  * @return {Object}
  */
 relation.resolveHasMany = function (values, relationDefination) {
-  return relation.resolveHasOne(values,relationDefination, 'noLimit')
+  return relation.resolveHasOne(values, relationDefination, 'noLimit')
 }
 
 /**
@@ -276,7 +280,6 @@ relation.resolveHasMany = function (values, relationDefination) {
  * @public
  */
 relation.resolveBelongsToMany = function (values, relationDefination) {
-
   /**
    * prefix to be prepended before values of pivot table
    * @type {String}
@@ -305,7 +308,6 @@ relation.resolveBelongsToMany = function (values, relationDefination) {
    * @type {String}
    */
   const pivotTable = relationDefination.pivotTable
-
 
   /**
    * foriegn key to be referenced on relational model
@@ -344,12 +346,10 @@ relation.resolveBelongsToMany = function (values, relationDefination) {
   model._pivotTable = pivotTable
 
   model
-  .select.apply(model,selectionKeys)
-  .where(`${pivotTable}.${pivotPrimaryKey}`,values[targetPrimaryKey])
-  .innerJoin(pivotTable,function () {
-    this.on(`${table}.${relationPrimaryKey}`,`${pivotTable}.${pivotOtherKey}`)
-  })
-
+    .select.apply(model, selectionKeys)
+    .where(`${pivotTable}.${pivotPrimaryKey}`, values[targetPrimaryKey])
+    .innerJoin(pivotTable, function () {
+      this.on(`${table}.${relationPrimaryKey}`, `${pivotTable}.${pivotOtherKey}`)
+    })
   return model
-
 }

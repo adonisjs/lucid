@@ -12,7 +12,6 @@ const Schema = require('../../src/Schema')
 const chai = require('chai')
 const blueprint = require('./blueprints/schema-blueprint')
 const path = require('path')
-const autoLoader = require('auto-loader')
 const expect = chai.expect
 
 describe('Runner', function () {
@@ -44,7 +43,7 @@ describe('Runner', function () {
 
   it('should migrate a class using up method', function () {
     class Users extends Schema {
-      up () {
+      up() {
         this.create('users', function (table) {
           table.increments('id')
           table.string('username')
@@ -100,7 +99,7 @@ describe('Runner', function () {
 
   it('should up all the migrations defined in migrations files', function (done) {
     class Users extends Schema {
-      up () {
+      up() {
         this.create('users', function (table) {
           table.increments('id')
           table.string('username')
@@ -109,7 +108,7 @@ describe('Runner', function () {
     }
 
     class Accounts extends Schema {
-      up () {
+      up() {
         this.create('accounts', function (table) {
           table.increments('id')
           table.string('account_id')
@@ -130,7 +129,7 @@ describe('Runner', function () {
 
   it('should skip all the migrations migrated already', function (done) {
     class Users extends Schema {
-      up () {
+      up() {
         this.create('users', function (table) {
           table.increments('id')
           table.string('username')
@@ -139,7 +138,7 @@ describe('Runner', function () {
     }
 
     class Accounts extends Schema {
-      up () {
+      up() {
         this.create('accounts', function (table) {
           table.increments('id')
           table.string('account_id')
@@ -160,7 +159,7 @@ describe('Runner', function () {
 
   it('should return diff for files to be used for rollback', function (done) {
     class Users extends Schema {
-      up () {
+      up() {
         this.create('users', function (table) {
           table.increments('id')
           table.string('username')
@@ -169,7 +168,7 @@ describe('Runner', function () {
     }
 
     class Accounts extends Schema {
-      up () {
+      up() {
         this.create('accounts', function (table) {
           table.increments('id')
           table.string('account_id')
@@ -187,13 +186,13 @@ describe('Runner', function () {
 
   it('should rollback latest batch using down method and delete them from migrations table', function (done) {
     class Users extends Schema {
-      down () {
+      down() {
         this.drop('users')
       }
     }
 
     class Accounts extends Schema {
-      down () {
+      down() {
         this.drop('accounts')
       }
     }
@@ -210,13 +209,13 @@ describe('Runner', function () {
 
   it('should skip rollback when already at the lowest version', function (done) {
     class Users extends Schema {
-      down () {
+      down() {
         this.drop('users')
       }
     }
 
     class Accounts extends Schema {
-      down () {
+      down() {
         this.drop('accounts')
       }
     }
@@ -246,13 +245,13 @@ describe('Runner', function () {
 
   it('should not run migrations when migrations table is locked', function (done) {
     class Users extends Schema {
-      down () {
+      down() {
         this.drop('users')
       }
     }
 
     class Accounts extends Schema {
-      down () {
+      down() {
         this.drop('accounts')
       }
     }

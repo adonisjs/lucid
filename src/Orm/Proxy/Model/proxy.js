@@ -23,7 +23,6 @@ let mapper = exports = module.exports = {}
  * @public
  */
 mapper.get = function (target, name) {
-
   if (target[name]) {
     return target[name]
   }
@@ -31,7 +30,6 @@ mapper.get = function (target, name) {
   if (target.attributes[name]) {
     return target.attributes[name]
   }
-
 }
 
 /**
