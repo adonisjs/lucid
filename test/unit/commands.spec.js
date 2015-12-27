@@ -30,13 +30,10 @@ const Helpers = {
 }
 
 describe('Commands', function () {
-  before(function () {
+  before(function (done) {
     GLOBAL.use = function () {
       return function () {}
     }
-  })
-
-  after(function (done) {
     fs.emptyDir(path.join(__dirname, './migrations'), function (error) {
       if (error) {
         done(error)
