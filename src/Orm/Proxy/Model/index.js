@@ -12,13 +12,12 @@
  */
 require('harmony-reflect')
 
-const proxy         = require('./proxy')
-const helper        = require('./helper')
-const StaticProxy   = require('../Static')
-const Ioc           = require('adonis-fold').Ioc
-const relation      = require('./relation')
-const _             = require('lodash')
-const Collection    = require('../../Collection')
+const proxy = require('./proxy')
+const helper = require('./helper')
+const StaticProxy = require('../Static')
+const Ioc = require('adonis-fold').Ioc
+const relation = require('./relation')
+const _ = require('lodash')
 
 /**
  * @module Model
@@ -71,12 +70,12 @@ class Model {
      * constructor and set primaryKey value to
      * value returned by create method.
      */
-    return new Promise(function (resolve,reject) {
+    return new Promise(function (resolve, reject) {
       /**
        * throw an error if trying to save multiple
        * rows via model instance.
        */
-      if(values && _.isArray(values)){
+      if (values && _.isArray(values)) {
         return reject(new Error('cannot persist model with multiple rows'))
       }
 
@@ -85,15 +84,14 @@ class Model {
 
       self.constructor
         .create(values, isMutated, self.connection)
-        .then( function(response) {
-          if(response[0]){
-            self.attributes = helper.mutateRow(self,values)
+        .then(function (response) {
+          if (response[0]) {
+            self.attributes = helper.mutateRow(self, values)
             self.attributes[self.constructor.primaryKey] = response[0]
           }
           resolve(response)
         }).catch(reject)
     })
-
   }
 
   /**
@@ -273,8 +271,7 @@ class Model {
    * @return {Object}
    * @public
    */
-  hasOne(binding, targetPrimaryKey, relationPrimaryKey){
-
+  hasOne (binding, targetPrimaryKey, relationPrimaryKey) {
     /**
      * grab model from Ioc container
      * @type {Object}
@@ -298,7 +295,7 @@ class Model {
      * meta data for a given relation , required to make dynamic queries
      * @type {Object}
      */
-    const relationMetaData = {model, targetPrimaryKey, relationPrimaryKey, relation:'hasOne'}
+    const relationMetaData = {model, targetPrimaryKey, relationPrimaryKey, relation: 'hasOne'}
 
     /**
      * relation scopes are nested queries on relationship models, they are
@@ -325,19 +322,17 @@ class Model {
      * if calling this method on model instance , setup query builder for
      * relational model.
      */
-    if(this.attributes){
-
+    if (this.attributes) {
       /**
        * this method also sets the foreign key and it's value to be utilized by
        * relational model while creating a new record using create method.
        */
       model._foreignKey[relationPrimaryKey] = this.attributes[targetPrimaryKey]
-      return relation.resolveHasOne(this.attributes,relationMetaData)
+      return relation.resolveHasOne(this.attributes, relationMetaData)
     }
 
     return model
   }
-
 
   /**
    * @function belongsTo
@@ -350,13 +345,12 @@ class Model {
    * @return {Object}
    * @public
    */
-  belongsTo(binding, targetPrimaryKey, relationPrimaryKey) {
-
+  belongsTo (binding, targetPrimaryKey, relationPrimaryKey) {
     /**
      * grabs model from Ioc container
      * @type {Object}
     */
-    const model  = Ioc.use(binding)
+    const model = Ioc.use(binding)
 
     /**
      * relationship primary key to be used on relation model
@@ -369,13 +363,13 @@ class Model {
      * who has defined relationship
      * @type {String}
      */
-    targetPrimaryKey = targetPrimaryKey || helper.getRelationKey(model,true)
+    targetPrimaryKey = targetPrimaryKey || helper.getRelationKey(model, true)
 
     /**
      * meta data for a given relation , required to make dynamic queries
      * @type {Object}
      */
-    const relationMetaData = {model, targetPrimaryKey, relationPrimaryKey, relation:'belongsTo'}
+    const relationMetaData = {model, targetPrimaryKey, relationPrimaryKey, relation: 'belongsTo'}
 
     /**
      * relation scopes are nested queries on relationship models, they are
@@ -402,14 +396,13 @@ class Model {
      * if calling this method on model instance , return query builder for
      * relational model.
      */
-    if(this.attributes){
+    if (this.attributes) {
       model._associationModel = this.constructor
-      return relation.resolveBelongsTo(this.attributes,relationMetaData)
+      return relation.resolveBelongsTo(this.attributes, relationMetaData)
     }
 
     return model
   }
-
 
   /**
    * @function hasMany
@@ -419,8 +412,7 @@ class Model {
    * @param  {String}  relationPrimaryId
    * @return {Object}
    */
-  hasMany(binding, targetPrimaryKey, relationPrimaryKey){
-
+  hasMany (binding, targetPrimaryKey, relationPrimaryKey) {
     /**
      * grabs model from Ioc container
      * @type {Object}
@@ -444,7 +436,7 @@ class Model {
      * meta data for a given relation , required to make dynamic queries
      * @type {Object}
      */
-    const relationMetaData = {model, targetPrimaryKey, relationPrimaryKey, relation:'hasMany'}
+    const relationMetaData = {model, targetPrimaryKey, relationPrimaryKey, relation: 'hasMany'}
 
     /**
      * relation scopes are nested queries on relationship models, they are
@@ -467,19 +459,17 @@ class Model {
      */
     this.constructor._activeRelation = relationMetaData
 
-
     /**
      * if calling this method on model instance , setup query builder for
      * relational model.
      */
-    if(this.attributes){
-
+    if (this.attributes) {
       /**
        * this method also sets the foreign key and it's value to be utilized
        * by relational model.
        */
       model._foreignKey[relationPrimaryKey] = this.attributes[targetPrimaryKey]
-      return relation.resolveHasMany(this.attributes,relationMetaData)
+      return relation.resolveHasMany(this.attributes, relationMetaData)
     }
 
     return model
@@ -496,7 +486,6 @@ class Model {
    * @return {Object}                      [description]
    */
   belongsToMany (binding, pivotTable, pivotPrimaryKey, pivotOtherKey) {
-
     /**
      * grabs model from Ioc container
      * @type {Object}
@@ -508,7 +497,7 @@ class Model {
      * for relationship
      * @type {String}
      */
-    pivotTable = pivotTable || helper.getPivotTableName(this.constructor.table,model.table)
+    pivotTable = pivotTable || helper.getPivotTableName(this.constructor.table, model.table)
 
     /**
      * setting up primary key for target model
@@ -534,7 +523,7 @@ class Model {
      */
     const relationPrimaryKey = model.primaryKey
 
-    const relationMetaData = { model, pivotTable, pivotPrimaryKey, pivotOtherKey, targetPrimaryKey, relationPrimaryKey, relation:'belongsToMany'}
+    const relationMetaData = {model, pivotTable, pivotPrimaryKey, pivotOtherKey, targetPrimaryKey, relationPrimaryKey, relation: 'belongsToMany'}
 
     /**
      * relation scopes are nested queries on relationship models, they are
@@ -562,8 +551,7 @@ class Model {
      * if calling this method on model instance , return query builder for
      * relational model.
      */
-    if(this.attributes){
-
+    if (this.attributes) {
       /**
        * below is required to make attach/detach function work, as here we
        * setup all required data to be used for attaching pivot table
@@ -572,7 +560,7 @@ class Model {
       model._associationModel = this.constructor
       model._pivotAttributes = this.attributes
 
-      return relation.resolveBelongsToMany(this.attributes,relationMetaData)
+      return relation.resolveBelongsToMany(this.attributes, relationMetaData)
     }
     return model
   }

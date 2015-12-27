@@ -23,7 +23,6 @@ let query = exports = module.exports = {}
  * @public
  */
 query.fetch = function (target) {
-
   /**
    * checking if soft deletes are enabled and user has not called withTrashed
    * , if above true conditions we will not fetch deleted values
@@ -33,16 +32,14 @@ query.fetch = function (target) {
   }
 
   /**
-   * here we transform fields to be selected from table. This transformation 
+   * here we transform fields to be selected from table. This transformation
    * is required for relationships where pivot tables are in use.
   */
   relation.transformSelectColumns(target.activeConnection._statements, target._withPivot, target._pivotTable)
 
   return new Promise(function (resolve, reject) {
-
     target.activeConnection.then(function (values) {
-
-      if(target.activeConnection._single && target.activeConnection._single.limit && target.activeConnection._single.limit === 1){
+      if (target.activeConnection._single && target.activeConnection._single.limit && target.activeConnection._single.limit === 1) {
         values = values[0]
       }
 
@@ -59,25 +56,24 @@ query.fetch = function (target) {
       values = helper.mutateValues(target, values)
 
       /**
-       * if any relations have been defined using with method , simply fetch 
+       * if any relations have been defined using with method , simply fetch
        * them as attach them to final values
        */
-      if(target._relations && target._relations.length && values.size() > 0){
+      if (target._relations && target._relations.length && values.size() > 0) {
         return relation.fetchRelated(target, values, target._relations)
       }
 
       return values
-
-    }).then(function (response) {
-
+    })
+    .then(function (response) {
       /**
        * here we empty query chain after returning all data, it is required
        * otherwise old methods will be called while making a new query
       */
       target.new()
       resolve(response)
-
-    }).catch(reject)
+    })
+    .catch(reject)
   })
 }
 
@@ -91,16 +87,16 @@ query.fetch = function (target) {
  * @return {Object}
  * @public
  */
-query.find = function (target, id) {
+query.find = function (Target, id) {
   return new Promise(function (resolve, reject) {
-    target
+    Target
       .activeConnection
-      .where(target.primaryKey, id)
+      .where(Target.primaryKey, id)
       .first()
       .then(function (values) {
-        values = helper.mutateRow(target, values)
-        let instance = new target(values)
-        instance.connection.where(target.primaryKey, id)
+        values = helper.mutateRow(Target, values)
+        let instance = new Target(values)
+        instance.connection.where(Target.primaryKey, id)
         resolve(instance)
       })
       .catch(reject)
@@ -109,7 +105,7 @@ query.find = function (target, id) {
          * here we empty query chain after returning all data, it is required
          * otherwise old methods will be called while making a new query
          */
-        target.new()
+        Target.new()
       })
   })
 }

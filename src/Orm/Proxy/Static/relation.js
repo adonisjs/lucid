@@ -20,7 +20,6 @@ let relation = exports = module.exports = {}
  * @public
  */
 relation.fetchRelated = function (target, values, models) {
-
   /**
    * here we setup relation methods by fetching related models
    * from Ioc container and make an array of promises to be
@@ -28,7 +27,6 @@ relation.fetchRelated = function (target, values, models) {
    * for transforming the actual values object.
   */
   const relationPromises = _.map(models, function (model) {
-
     /**
      * here we take all the required steps to segregate nested models.
      * This is how it works.
@@ -90,7 +88,7 @@ relation.fetchRelated = function (target, values, models) {
      * here we call relation method for a given relation and pass values to be
      * transformed with model binding from Ioc container.
      */
-    return relation[resolvedModel.relation](values,resolvedModel)
+    return relation[resolvedModel.relation](values, resolvedModel)
   })
 
   /**
@@ -99,11 +97,10 @@ relation.fetchRelated = function (target, values, models) {
    */
   return new Promise(function (resolve, reject) {
     Q.all(relationPromises)
-    .then (function(){
-      resolve(values)
-    }).catch(reject)
+      .then(function () {
+        resolve(values)
+      }).catch(reject)
   })
-
 }
 
 /**
@@ -117,7 +114,6 @@ relation.fetchRelated = function (target, values, models) {
  * @public
  */
 relation.hasOne = function (values, model, limit) {
-
   /**
    * finding whether original values for the target model
    * is an array or not , for non-arrays we need to set
@@ -167,7 +163,7 @@ relation.hasOne = function (values, model, limit) {
    * method and by passing relational model
    */
 
-  if(model.relationsScope && model.relationsScope[keyToBindOn]) {
+  if (model.relationsScope && model.relationsScope[keyToBindOn]) {
     model.relationsScope[keyToBindOn](builder)
   }
 
@@ -178,9 +174,9 @@ relation.hasOne = function (values, model, limit) {
    */
   let whereInValues = relation.getWhereInArray(values, isArray, targetPrimaryKey)
 
-  builder = builder.whereIn(`${table}.${relationPrimaryKey}`,whereInValues)
+  builder = builder.whereIn(`${table}.${relationPrimaryKey}`, whereInValues)
 
-  if(limit && limit !== 'noLimit'){
+  if (limit && limit !== 'noLimit') {
     builder = builder.first()
   }
 
@@ -188,7 +184,7 @@ relation.hasOne = function (values, model, limit) {
    * if there are nested models to be fetched
    * set with clause with them
    */
-  if(model.nestedModels){
+  if (model.nestedModels) {
     builder.with(model.nestedModels)
   }
 
@@ -199,86 +195,80 @@ relation.hasOne = function (values, model, limit) {
    * object until it is picked up by any
    * model/or cleared by last model.
    */
-  if(model.nestedScope){
-    _.each(model.nestedScope, function (callback, key){
-      builder.scope(key,callback)
+  if (model.nestedScope) {
+    _.each(model.nestedScope, function (callback, key) {
+      builder.scope(key, callback)
     })
   }
 
-  return new Promise (function (resolve, reject) {
-
+  return new Promise(function (resolve, reject) {
     return builder
-    .fetch()
-    .then (function (response) {
-
-      /**
-       * here we group values for relation model based on it's relationPrimaryKey
-       * so that we can attach the entire group to the target model values
-       * instead of looping through them and doing manual checks.
-       * @type {[type]}
-      */
-      let relationGroup = []
-
-      if(response.isArray()){
+      .fetch()
+      .then(function (response) {
         /**
-         * if returned value is an array , we need to created group based on their
-         * relationPrimaryKey and then attach groups to actual values based on
-         * their targetPrimaryKey.
-         */
-        if(limit === 'noLimit'){
+         * here we group values for relation model based on it's relationPrimaryKey
+         * so that we can attach the entire group to the target model values
+         * instead of looping through them and doing manual checks.
+         * @type {[type]}
+        */
+        let relationGroup = []
 
+        if (response.isArray()) {
           /**
-           * here we make sure relational model has returned some values after
-           * query execution,it not we make relationGroup equals to an empty
-           * array.We can also stop execution of this method here but that
-           * will make results unstable as in situation of multiple results we
-           * have to set key/values to each row inside an array.So it is
-           * better to keep this empty here and let execution going on to keep
-           * results stable.
+           * if returned value is an array , we need to created group based on their
+           * relationPrimaryKey and then attach groups to actual values based on
+           * their targetPrimaryKey.
            */
-          relationGroup = response.size() ? response.groupBy(relationPrimaryKey).toJSON() : []
-          /**
-           * we set response to an empty array if response is empty, it is required so
-           * that while attaching values on host model , we can set empty array of
-           * relation where there are no values
-           * @type {Array}
-           */
-          response = []
-        }else{
-          response = response.first()
-          /**
-           * again here we make sure response.first() returns something, if not we let relationGroup
-           * to be an empty object as defined at first place
-           */
-          if(response){
-            relationGroup[response[relationPrimaryKey]] = response
+          if (limit === 'noLimit') {
+            /**
+             * here we make sure relational model has returned some values after
+             * query execution,it not we make relationGroup equals to an empty
+             * array.We can also stop execution of this method here but that
+             * will make results unstable as in situation of multiple results we
+             * have to set key/values to each row inside an array.So it is
+             * better to keep this empty here and let execution going on to keep
+             * results stable.
+             */
+            relationGroup = response.size() ? response.groupBy(relationPrimaryKey).toJSON() : []
+            /**
+             * we set response to an empty array if response is empty, it is required so
+             * that while attaching values on host model , we can set empty array of
+             * relation where there are no values
+             * @type {Array}
+             */
+            response = []
+          } else {
+            response = response.first()
+            /**
+             * again here we make sure response.first() returns something, if not we let relationGroup
+             * to be an empty object as defined at first place
+             */
+            if (response) {
+              relationGroup[response[relationPrimaryKey]] = response
+            }
           }
+        } else {
+          /**
+           * otherwise we need to fetch just the value from flat object
+           * and set key/value pair on array to be used by upcoming
+           * code.
+           */
+          response = response.toJSON()
+          relationGroup[response[relationPrimaryKey]] = response
         }
-      }else{
 
         /**
-         * otherwise we need to fetch just the value from flat object
-         * and set key/value pair on array to be used by upcoming
-         * code.
+         * finally we transform values and set key/value pair on target model
+         * values
          */
-        response = response.toJSON()
-        relationGroup[response[relationPrimaryKey]] = response
-      }
+        relation.transformValues(values, relationGroup, isArray, targetPrimaryKey, keyToBindOn, _.isArray(response))
 
-      /**
-       * finally we transform values and set key/value pair on target model
-       * values
-       */
-      relation.transformValues(values, relationGroup, isArray, targetPrimaryKey, keyToBindOn, _.isArray(response))
-
-      resolve(values)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-
+        resolve(values)
+      })
+      .catch(function (err) {
+        reject(err)
+      })
   })
-
 }
 
 /**
@@ -317,7 +307,6 @@ relation.belongsTo = function (values, model) {
  * @public
  */
 relation.belongsToMany = function (values, model) {
-
   const pivotPrefix = '_pivot_'
 
   /**
@@ -329,7 +318,6 @@ relation.belongsToMany = function (values, model) {
    * @type {Boolean}
    */
   const isArray = values.isArray()
-
 
   /**
    * getting values to be used while making query on
@@ -351,7 +339,7 @@ relation.belongsToMany = function (values, model) {
    * if relationsScope is defined on runtime, call scope
    * method and by passing relational model
    */
-  if(model.relationsScope && model.relationsScope[model.key]) {
+  if (model.relationsScope && model.relationsScope[model.key]) {
     model.relationsScope[model.key](builder)
   }
 
@@ -384,7 +372,7 @@ relation.belongsToMany = function (values, model) {
    * if there are nested models to be fetched
    * set with clause with them
    */
-  if(model.nestedModels){
+  if (model.nestedModels) {
     builder.with(model.nestedModels)
   }
 
@@ -395,69 +383,59 @@ relation.belongsToMany = function (values, model) {
    * object until it is picked up by any
    * model/or cleared by last model.
    */
-  if(model.nestedScope){
-    _.each(model.nestedScope, function (callback, key){
-      builder.scope(key,callback)
+  if (model.nestedScope) {
+    _.each(model.nestedScope, function (callback, key) {
+      builder.scope(key, callback)
     })
   }
 
-  return new Promise (function (resolve,reject) {
-
+  return new Promise(function (resolve, reject) {
     builder
-    .select.apply(builder,selectionKeys)
-    .whereIn(`${pivotTable}.${pivotPrimaryKey}`,whereInValues)
-    .innerJoin(pivotTable,function () {
+      .select.apply(builder, selectionKeys)
+      .whereIn(`${pivotTable}.${pivotPrimaryKey}`, whereInValues)
+      .innerJoin(pivotTable, function () {
+        this.on(`${table}.${relationPrimaryKey}`, `${pivotTable}.${pivotOtherKey}`)
+      })
+      .fetch()
+      .then(function (response) {
+        /**
+         * here we group values for relation model based on it's relationPrimaryKey
+         * so that we can attach the entire group to the target model values
+         * instead of looping through them and doing manual checks.
+         * @type {[type]}
+        */
+        let relationGroup = []
 
-      this.on(`${table}.${relationPrimaryKey}`,`${pivotTable}.${pivotOtherKey}`)
-
-    })
-    .fetch()
-    .then (function (response) {
-
-      /**
-       * here we group values for relation model based on it's relationPrimaryKey
-       * so that we can attach the entire group to the target model values
-       * instead of looping through them and doing manual checks.
-       * @type {[type]}
-      */
-      let relationGroup = []
-
-      if(response.isArray()){
+        if (response.isArray()) {
+          /**
+           * here we make sure relational model has returned some values after
+           * query execution,it not we make relationGroup equals to an empty
+           * array.We can also stop execution of this method here but that
+           * will make results unstable as in situation of multiple results we
+           * have to set key/values to each row inside an array.So it is
+           * better to keep this empty here and let execution going on to keep
+           * results stable.
+           */
+          relationGroup = response.size() ? response.groupBy(`${pivotPrefix}${pivotPrimaryKey}`).toJSON() : []
+        } else {
+          /**
+           * otherwise we need to fetch just the value from flat object
+           * and set key/value pair on array to be used by upcoming
+           * code.
+           */
+          response = response.toJSON()
+          relationGroup[response[`${pivotPrefix}${pivotPrimaryKey}`]] = response
+        }
 
         /**
-         * here we make sure relational model has returned some values after
-         * query execution,it not we make relationGroup equals to an empty
-         * array.We can also stop execution of this method here but that
-         * will make results unstable as in situation of multiple results we
-         * have to set key/values to each row inside an array.So it is
-         * better to keep this empty here and let execution going on to keep
-         * results stable.
+         * finally we transform values and set key/value pair on target model
+         * values
          */
-        relationGroup = response.size() ? response.groupBy(`${pivotPrefix}${pivotPrimaryKey}`).toJSON() : []
-      }else{
-
-        /**
-         * otherwise we need to fetch just the value from flat object
-         * and set key/value pair on array to be used by upcoming
-         * code.
-         */
-        response = response.toJSON()
-        relationGroup[response[`${pivotPrefix}${pivotPrimaryKey}`]] = response
-      }
-
-      /**
-       * finally we transform values and set key/value pair on target model
-       * values
-       */
-      relation.transformValues(values, relationGroup, isArray, targetPrimaryKey, model.key, true)
-
-      resolve(values)
-
-    })
-    .catch(reject)
-
+        relation.transformValues(values, relationGroup, isArray, targetPrimaryKey, model.key, true)
+        resolve(values)
+      })
+      .catch(reject)
   })
-
 }
 
 /**
@@ -474,9 +452,7 @@ relation.belongsToMany = function (values, model) {
  * @public
  */
 relation.transformValues = function (values, relationValues, isArray, primaryKey, objectKey, isRelationArray) {
-
-  if(!isArray) {
-
+  if (!isArray) {
     /**
      * if target values are not array , then set and get values on
      * flat object using collection get/set methods.
@@ -484,21 +460,17 @@ relation.transformValues = function (values, relationValues, isArray, primaryKey
     const primaryKeyValue = values.get(primaryKey)
     const relatedValues = relationValues[primaryKeyValue] || (isRelationArray ? [] : {})
     values.set(objectKey, relatedValues).value()
-
     return values
-
   }
 
   /**
    * otherwise loop through the collection values and set object keys
    * for each row
    */
-  values.each (function (item) {
+  values.each(function (item) {
     item[objectKey] = relationValues[item[primaryKey]] || (isRelationArray ? [] : {})
   }).value()
-
   return values
-
 }
 
 /**
@@ -515,7 +487,7 @@ relation.getWhereInArray = function (values, isArray, targetPrimaryKey) {
    * if values are not an array , simply fetch targetPrimaryKey
    * value.
    */
-  if(!isArray) {
+  if (!isArray) {
     return [values.get(targetPrimaryKey)]
   }
 
@@ -539,7 +511,6 @@ relation.getWhereInArray = function (values, isArray, targetPrimaryKey) {
  * @public
  */
 relation.transformSelectColumns = function (statementGroups, pivotColumns, pivotTable) {
-
   const pivotPrefix = '_pivot_'
 
   /**
@@ -547,8 +518,7 @@ relation.transformSelectColumns = function (statementGroups, pivotColumns, pivot
    * update query builder columns array by concatenating
    * extra columns
    */
-  if(pivotColumns.length){
-
+  if (pivotColumns.length) {
     /**
      * first we fetch columns defined on existing query chain, query chain
      * has multiple groups and anyone group will belong to the columns.
@@ -571,6 +541,5 @@ relation.transformSelectColumns = function (statementGroups, pivotColumns, pivot
      * @type {Array}
      */
     selectedColumns.value = selectedColumns.value ? selectedColumns.value.concat(pivotColumns) : []
-
   }
 }

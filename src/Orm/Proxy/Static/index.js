@@ -108,7 +108,6 @@ class StaticProxy {
      * @public
      */
     Model.create = function (values, isMutated, connection) {
-
       const self = this
       /**
        * here we look for an active relation and if that relation is
@@ -116,7 +115,7 @@ class StaticProxy {
        * associate method and grab the value of foreign
        * key under relation
        */
-      if(this._associationAttributes.length > 0){
+      if (this._associationAttributes.length > 0) {
         this._associationAttributes.forEach(function (item) {
           self._foreignKey[item.targetPrimaryKey] = item.attributes[item.relationPrimaryKey]
         })
@@ -126,7 +125,7 @@ class StaticProxy {
        * here we set foreign key and it's value to be inserted
        * if create method is invoked via relational model.
       */
-      if(this._foreignKey && Object.keys(this._foreignKey).length > 0){
+      if (this._foreignKey && Object.keys(this._foreignKey).length > 0) {
         Object.keys(this._foreignKey).forEach(function (index) {
           values[index] = self._foreignKey[index]
         })
@@ -140,7 +139,6 @@ class StaticProxy {
      * @public
      */
     Model.update = function (values, isMutated, connection) {
-
       const self = this
 
       /**
@@ -150,12 +148,11 @@ class StaticProxy {
        * key under relation
        */
 
-      if(this._associationAttributes.length > 0){
+      if (this._associationAttributes.length > 0) {
         this._associationAttributes.forEach(function (item) {
-          if(item.attributes.dissociate){
+          if (item.attributes.dissociate) {
             self._foreignKey[item.targetPrimaryKey] = null
-          }
-          else{
+          } else {
             self._foreignKey[item.targetPrimaryKey] = item.attributes[item.relationPrimaryKey]
           }
         })
@@ -165,7 +162,7 @@ class StaticProxy {
        * here we set foreign key and it's value to be inserted
        * if create method is invoked via relational model.
       */
-      if(this._foreignKey && Object.keys(this._foreignKey).length > 0){
+      if (this._foreignKey && Object.keys(this._foreignKey).length > 0) {
         Object.keys(this._foreignKey).forEach(function (index) {
           values[index] = self._foreignKey[index]
         })
@@ -201,7 +198,6 @@ class StaticProxy {
      * @public
      */
     Model.new = function () {
-
       /**
        * setting back to defaults
        */
