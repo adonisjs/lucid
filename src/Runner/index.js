@@ -14,9 +14,10 @@ const log = new CatLog('adonis:lucid')
 class Runner {
 
   constructor (Config) {
-    const config = Config.get('database.connection')
+    const connection = Config.get('database.connection')
+    const config = Config.get(`database.${connection}`)
     this.knex = require('knex')(config)
-    this.migrationsTable = Config.get('database.migrationsTable')
+    this.migrationsTable = Config.get('database.migrationsTable', 'adonis_schema')
     this.lockTable = `${this.migrationsTable}_lock`
     this.migrations = []
   }
@@ -322,6 +323,7 @@ class Runner {
           return ''
         })
         .then((response) => {
+          this.knex.destroy()
           const status = _.size(migrated) > 0 ? 'completed' : 'skipped'
           resolve({migrated, status})
         })
@@ -347,6 +349,7 @@ class Runner {
           }
         })
         .then((response) => {
+          this.knex.destroy()
           const status = _.size(migrated) > 0 ? 'completed' : 'skipped'
           resolve({migrated, status})
         })

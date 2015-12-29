@@ -26,6 +26,7 @@ const expect = chai.expect
 const blueprint = require('./blueprints/model-relations-blueprint')
 const co = require('co')
 const Ioc = require('adonis-fold').Ioc
+const manageDb = require('./blueprints/manage')
 const Database = require('../../src/Database')
 const Model = require('../../src/Orm/Proxy/Model')
 const _ = require('lodash')
@@ -39,7 +40,7 @@ let Config = {
     return {
       client: 'sqlite3',
       connection: {
-        filename: path.join(__dirname, './storage/test.sqlite3')
+        filename: path.join(__dirname, './storage/relation.sqlite3')
       },
       debug: false
     }
@@ -57,11 +58,15 @@ const db = new Database(Config)
  * Tests begins here
  */
 describe('Model Relations', function () {
+
   before(function (done) {
-    blueprint
-      .setup(db)
+    manageDb
+      .make(path.join(__dirname, './storage/relation.sqlite3'))
       .then(function () {
-        blueprint.seed(db)
+        return blueprint.setup(db)
+      })
+      .then(function () {
+        return blueprint.seed(db)
       })
       .then(function () {
         done()
@@ -72,6 +77,9 @@ describe('Model Relations', function () {
   after(function (done) {
     blueprint
       .tearDown(db)
+      .then(function () {
+        return manageDb.remove(path.join(__dirname, './storage/relation.sqlite3'))
+      })
       .then(function () {
         done()
       })

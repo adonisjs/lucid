@@ -7,52 +7,39 @@
 */
 
 const autoLoader = require('auto-loader')
+const Ioc = require('adonis-fold').Ioc
 
-class Run {
+let Run = exports = module.exports = {}
 
-  constructor (Helpers, Runner) {
-    this.migrations = Helpers.migrationsPath()
-    this.runner = Runner
+Run.description = 'Run latest migrations'
+Run.signature = '{--force?}'
+
+/**
+ * @description rollback all migrations using
+ * runner provider
+ * @method handle
+ * @param  {Object} options
+ * @param  {Object} flags
+ * @return {Object}
+ * @public
+ */
+Run.handle = function * (options, flags) {
+  const Helpers = Ioc.make('Adonis/Src/Helpers')
+  const Runner = Ioc.make('Adonis/Src/Runner')
+  const Console = Ioc.use('Adonis/Src/Console')
+  const migrations = Helpers.migrationsPath()
+
+  if (process.env.NODE_ENV === 'production' && !flags.force) {
+    throw new Error('Cannot run migrations in production')
+  }
+  const migrationsFiles = autoLoader.load(migrations)
+  const response = yield Runner.up(migrationsFiles)
+
+  if (response.status === 'completed') {
+    Console.success(Console.icon('success') + ' database migrated successfully')
   }
 
-  /**
-   * @description returns command description
-   * @method description
-   * @return {String}
-   * @public
-   */
-  description () {
-    return 'Run latest migrations'
+  if (response.status === 'skipped') {
+    Console.info(Console.icon('info') + ' already the latest version')
   }
-
-  /**
-   * @description command signature to define expectation for
-   * a given command to ace
-   * @method signature
-   * @return {String}
-   * @public
-   */
-  signature () {
-    return '{--force?}'
-  }
-
-  /**
-   * @description migrate all migrations using runner
-   * provider
-   * @method handle
-   * @param  {Object} options
-   * @param  {Object} flags
-   * @return {Object}
-   * @public
-   */
-  * handle (options, flags) {
-    if (process.env.NODE_ENV === 'production' && !flags.force) {
-      throw new Error('Cannot run migrations in production')
-    }
-    const migrationsFiles = autoLoader.load(this.migrations)
-    return yield this.runner.up(migrationsFiles)
-  }
-
 }
-
-module.exports = Run

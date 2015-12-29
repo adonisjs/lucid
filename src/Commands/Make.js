@@ -6,6 +6,9 @@
  * MIT Licensed
 */
 
+const fs = require('fs')
+const Ioc = require('adonis-fold').Ioc
+
 const migrationContent = `
 'use strict'
 
@@ -24,57 +27,45 @@ class NewSchema extends Schema {
 module.exports = NewSchema
 `
 
-const fs = require('fs')
+let Make = exports = module.exports = {}
 
-class Make {
+Make.description = 'Create a new migration file'
+Make.signature = '{name}'
 
-  constructor (Helpers) {
-    this.helpers = Helpers
-  }
-
-  /**
-   * @description returns command description
-   * @method description
-   * @return {String}
-   * @public
-   */
-  description () {
-    return 'Create a new migration file'
-  }
-
-  /**
-   * @description command signature to define expectation for
-   * a given command to ace
-   * @method signature
-   * @return {String}
-   * @public
-   */
-  signature () {
-    return '{name}'
-  }
-
-  /**
-   * @description creates a new migration file
-   * @method handle
-   * @param  {Object} options
-   * @param  {Object} flags
-   * @return {Object}
-   * @public
-   */
-  handle (options) {
-    return new Promise((resolve, reject) => {
-      const name = `${new Date().getTime()}_${options.name}.js`
-      const migrationPath = this.helpers.migrationsPath(name)
-
-      fs.writeFile(migrationPath, migrationContent, function (error) {
-        if (error) {
-          reject(error)
-        } else {
-          resolve(`Created ${name} migration successfully`)
-        }
-      })
+/**
+ * @description writes file with content to a given path
+ * @method writeFile
+ * @param  {String}  migrationPath
+ * @param  {String}  migrationContent
+ * @return {Object}
+ * @public
+ */
+Make.writeFile = function (migrationPath, migrationContent) {
+  return new Promise((resolve, reject) => {
+    fs.writeFile(migrationPath, migrationContent, function (error) {
+      if (error) {
+        return reject(error)
+      }
+      resolve()
     })
-  }
+  })
 }
 
-module.exports = Make
+/**
+ * @description creates a new migration file
+ * @method handle
+ * @param  {Object} options
+ * @param  {Object} flags
+ * @return {Object}
+ * @public
+ */
+Make.handle = function * (options) {
+  const helpers = Ioc.make('Adonis/Src/Helpers')
+  const Console = Ioc.use('Adonis/Src/Console')
+
+  const name = `${new Date().getTime()}_${options.name}.js`
+  const migrationPath = helpers.migrationsPath(name)
+
+  yield Make.writeFile(migrationPath, migrationContent)
+  Console.success(Console.icon('success') + ' created %s migration successfully', name)
+}

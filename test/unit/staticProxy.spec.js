@@ -4,6 +4,7 @@ const path = require('path')
 const chai = require('chai')
 const expect = chai.expect
 const co = require('co')
+const manageDb = require('./blueprints/manage')
 const blueprint = require('./blueprints/model-blueprint')
 const Database = require('../../src/Database')
 const StaticProxy = require('../../src/Orm/Proxy/Static')
@@ -13,7 +14,7 @@ let Config = {
     return {
       client: 'sqlite3',
       connection: {
-        filename: path.join(__dirname, './storage/test.sqlite3')
+        filename: path.join(__dirname, './storage/proxy.sqlite3')
       },
       debug: false
     }
@@ -24,19 +25,26 @@ const db = new Database(Config)
 
 describe('StaticProxy', function () {
   before(function (done) {
-    blueprint
-      .setup(db)
+    manageDb
+      .make(path.join(__dirname, './storage/proxy.sqlite3'))
+      .then(function () {
+        return blueprint.setup(db)
+      })
       .then(function () {
         blueprint.seed(db)
-      }).then(function () {
-      done()
-    }).catch(done)
-
+      })
+      .then(function () {
+        done()
+      })
+      .catch(done)
   })
 
   after(function (done) {
     blueprint
       .tearDown(db)
+      .then(function () {
+        return manageDb.remove(path.join(__dirname, './storage/proxy.sqlite3'))
+      })
       .then(function () {
         done()
       }).catch(done)
