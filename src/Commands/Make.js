@@ -33,6 +33,25 @@ Make.description = 'Create a new migration file'
 Make.signature = '{name}'
 
 /**
+ * @description writes file with content to a given path
+ * @method writeFile
+ * @param  {String}  migrationPath
+ * @param  {String}  migrationContent
+ * @return {Object}
+ * @public
+ */
+Make.writeFile = function (migrationPath, migrationContent) {
+  return new Promise((resolve, reject) => {
+    fs.writeFile(migrationPath, migrationContent, function (error) {
+      if (error) {
+        return reject(error)
+      }
+      resolve()
+    })
+  })
+}
+
+/**
  * @description creates a new migration file
  * @method handle
  * @param  {Object} options
@@ -40,21 +59,13 @@ Make.signature = '{name}'
  * @return {Object}
  * @public
  */
-Make.handle = function (options) {
+Make.handle = function * (options) {
   const helpers = Ioc.make('Adonis/Src/Helpers')
   const Console = Ioc.use('Adonis/Src/Console')
 
-  return new Promise((resolve, reject) => {
-    const name = `${new Date().getTime()}_${options.name}.js`
-    const migrationPath = helpers.migrationsPath(name)
+  const name = `${new Date().getTime()}_${options.name}.js`
+  const migrationPath = helpers.migrationsPath(name)
 
-    fs.writeFile(migrationPath, migrationContent, function (error) {
-      if (error) {
-        reject(error)
-      } else {
-        Console.success(Console.icon('success') + ' created %s migration successfully', name)
-        resolve()
-      }
-    })
-  })
+  yield Make.writeFile(migrationPath, migrationContent)
+  Console.success(Console.icon('success') + ' created %s migration successfully', name)
 }

@@ -85,12 +85,16 @@ describe('Commands', function () {
         }
       })
 
-      Make
-        .handle({name: 'create_users_table'})
-        .catch(function (error) {
-          expect(error.code).to.equal('ENOENT')
-          done()
-        })
+      co(function *() {
+        yield Make.handle({name: 'create_users_table'})
+      })
+      .then(function (){
+
+      })
+      .catch(function(error) {
+        expect(error.code).to.equal('ENOENT')
+        done()
+      })
     })
 
     it('should create a file inside migrations directory', function (done) {
@@ -101,18 +105,20 @@ describe('Commands', function () {
         return Helpers
       })
 
-      Make
-        .handle({name: 'create_users_table'})
-        .then(function () {
-          fs.ensureFile(migName, function (err) {
-            if (err) {
-              done(err)
-            } else {
-              done()
-            }
-          })
+      co(function * () {
+        yield Make.handle({name: 'create_users_table'})
+      })
+      .then(function () {
+        fs.ensureFile(migName, function (err) {
+          if (err) {
+            done(err)
+          } else {
+            done()
+          }
         })
-        .catch(done)
+      })
+      .catch(done)
+
     })
   })
 
