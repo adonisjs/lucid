@@ -323,6 +323,7 @@ class Runner {
           return ''
         })
         .then((response) => {
+          this.knex.destroy()
           const status = _.size(migrated) > 0 ? 'completed' : 'skipped'
           resolve({migrated, status})
         })
@@ -348,6 +349,7 @@ class Runner {
           }
         })
         .then((response) => {
+          this.knex.destroy()
           const status = _.size(migrated) > 0 ? 'completed' : 'skipped'
           resolve({migrated, status})
         })
