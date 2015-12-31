@@ -26,7 +26,7 @@ Rollback.signature = '{--force?}'
 Rollback.handle = function * (options, flags) {
   const Helpers = Ioc.make('Adonis/Src/Helpers')
   const Runner = Ioc.make('Adonis/Src/Runner')
-  const Console = Ioc.use('Adonis/Src/Console')
+  const Ansi = Ioc.use('Adonis/Src/Ansi')
   const migrations = Helpers.migrationsPath()
 
   if (process.env.NODE_ENV === 'production' && !flags.force) {
@@ -36,10 +36,10 @@ Rollback.handle = function * (options, flags) {
   const response = yield Runner.down(migrationsFiles)
 
   if (response.status === 'completed') {
-    Console.success(Console.icon('success') + ' latest migrations batch has been rolled back')
+    Ansi.success(Ansi.icon('success') + ' latest migrations batch has been rolled back')
   }
 
   if (response.status === 'skipped') {
-    Console.info(Console.icon('info') + ' already at the last batch')
+    Ansi.info(Ansi.icon('info') + ' already at the last batch')
   }
 }

@@ -61,11 +61,11 @@ Make.writeFile = function (migrationPath, migrationContent) {
  */
 Make.handle = function * (options) {
   const helpers = Ioc.make('Adonis/Src/Helpers')
-  const Console = Ioc.use('Adonis/Src/Console')
+  const Ansi = Ioc.use('Adonis/Src/Ansi')
 
   const name = `${new Date().getTime()}_${options.name}.js`
   const migrationPath = helpers.migrationsPath(name)
 
   yield Make.writeFile(migrationPath, migrationContent)
-  Console.success(Console.icon('success') + ' created %s migration successfully', name)
+  Ansi.success(Ansi.icon('success') + ' created %s migration successfully', name)
 }

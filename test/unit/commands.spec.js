@@ -33,7 +33,7 @@ Ioc.bind('Adonis/Src/Helpers', function () {
   return Helpers
 })
 
-Ioc.bind('Adonis/Src/Console', function () {
+Ioc.bind('Adonis/Src/Ansi', function () {
   return {
     icon: function () {
       return ''
@@ -180,7 +180,7 @@ describe('Commands', function () {
       Ioc.bind('Adonis/Src/Runner', function () {
         return Runner
       })
-      Ioc.bind('Adonis/Src/Console', function () {
+      Ioc.bind('Adonis/Src/Ansi', function () {
         return {
           icon: function () {},
           info: function () {
@@ -235,7 +235,7 @@ describe('Commands', function () {
       Ioc.bind('Adonis/Src/Runner', function () {
         return Runner
       })
-      Ioc.bind('Adonis/Src/Console', function () {
+      Ioc.bind('Adonis/Src/Ansi', function () {
         return {
           icon: function () {},
           info: function () {},
@@ -267,7 +267,7 @@ describe('Commands', function () {
       Ioc.bind('Adonis/Src/Runner', function () {
         return Runner
       })
-      Ioc.bind('Adonis/Src/Console', function () {
+      Ioc.bind('Adonis/Src/Ansi', function () {
         return {
           icon: function () {},
           info: function () {
