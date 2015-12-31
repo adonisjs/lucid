@@ -1,6 +1,6 @@
 {
   "name": "adonis-lucid",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Beautifully crafted sql ORM for adonis framework",
   "main": "index.js",
   "scripts": {
