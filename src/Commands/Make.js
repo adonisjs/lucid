@@ -36,7 +36,7 @@ module.exports = {{Schema}}
 
 let Make = exports = module.exports = {}
 Make.description = 'Create a new migration file'
-Make.signature = '{name} {--table:Name of the table you want to modify} {--create:Name of the table you want to create}'
+Make.signature = '{name} {--table?:Name of the table you want to modify} {--create?:Name of the table you want to create}'
 
 /**
  * @description returns code block for create or
@@ -56,7 +56,7 @@ Make._up = function (table, createTable) {
     })`
   }
   return `this.table('${table}', function (table) {
-  })`
+    })`
 }
 
 /**
