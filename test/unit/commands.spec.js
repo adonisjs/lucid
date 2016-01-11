@@ -11,6 +11,7 @@
 const Make = require('../../src/Commands/Make')
 const Run = require('../../src/Commands/Run')
 const Ioc = require('adonis-fold').Ioc
+const manageFiles = require('./blueprints/manage')
 const Rollback = require('../../src/Commands/Rollback')
 const chai = require('chai')
 const path = require('path')
@@ -49,9 +50,8 @@ Ioc.bind('Adonis/Src/Ansi', function () {
 
 describe('Commands', function () {
   before(function (done) {
-    GLOBAL.use = function () {
-      return function () {}
-    }
+    GLOBAL.use = Ioc.use
+
     fs.emptyDir(path.join(__dirname, './migrations'), function (error) {
       if (error) {
         done(error)
@@ -86,7 +86,7 @@ describe('Commands', function () {
       })
 
       co(function *() {
-        yield Make.handle({name: 'create_users_table'})
+        yield Make.handle({name: 'create_users_table'}, {})
       })
       .then(function (){
 
@@ -106,7 +106,7 @@ describe('Commands', function () {
       })
 
       co(function * () {
-        yield Make.handle({name: 'create_users_table'})
+        yield Make.handle({name: 'create_users_table'}, {})
       })
       .then(function () {
         fs.ensureFile(migName, function (err) {
@@ -118,7 +118,104 @@ describe('Commands', function () {
         })
       })
       .catch(done)
+    })
 
+    it('should create a file with create table markup when no flags have been passed', function (done) {
+      let createCalled = false
+      let dropCalled = false
+      Ioc.bind('Adonis/Src/Helpers', function () {
+        return Helpers
+      })
+
+      class Schema {
+        create () {
+          createCalled = true
+        }
+        drop () {
+          dropCalled = true
+        }
+      }
+
+      Ioc.bind('Schema', function () {
+        return Schema
+      })
+      co(function * () {
+        yield Make.handle({name: 'create_users_table'}, {})
+      })
+      .then(function () {
+        const Migration = require(migName)
+        const migration = new Migration()
+        migration.up()
+        migration.down()
+        expect(createCalled).to.equal(true)
+        expect(dropCalled).to.equal(true)
+        done()
+      })
+      .catch(done)
+    })
+
+    it('should create a file with create table markup when no create flag have been passed', function (done) {
+      let creatTable = null
+      let dropTable = null
+      Ioc.bind('Adonis/Src/Helpers', function () {
+        return Helpers
+      })
+
+      class Schema {
+        create (name) {
+          creatTable = name
+        }
+        drop (name) {
+          dropTable = name
+        }
+      }
+
+      Ioc.bind('Schema', function () {
+        return Schema
+      })
+      co(function * () {
+        yield Make.handle({name: 'create_users_table'}, {create:'accounts'})
+      })
+      .then(function () {
+        const Migration = require(migName)
+        expect(Migration.name).to.equal('Accounts')
+        const migration = new Migration()
+        migration.up()
+        migration.down()
+        expect(creatTable).to.equal('accounts')
+        expect(dropTable).to.equal('accounts')
+        done()
+      })
+      .catch(done)
+    })
+
+    it('should create a file with update table markup when no table flag has been passed', function (done) {
+      let selectedTable = null
+      Ioc.bind('Adonis/Src/Helpers', function () {
+        return Helpers
+      })
+
+      class Schema {
+        table (name) {
+          selectedTable = name
+        }
+      }
+
+      Ioc.bind('Schema', function () {
+        return Schema
+      })
+      co(function * () {
+        yield Make.handle({name: 'create_users_table'}, {table: 'users'})
+      })
+      .then(function () {
+        const Migration = require(migName)
+        expect(Migration.name).to.equal('Users')
+        const migration = new Migration()
+        migration.up()
+        expect(selectedTable).to.equal('users')
+        done()
+      })
+      .catch(done)
     })
   })
 
@@ -169,7 +266,35 @@ describe('Commands', function () {
         .catch(done)
     })
 
-    it('should pass handle skipped status', function (done) {
+    it('should ignore any other files apart from files ending in .js', function (done) {
+      process.env.NODE_ENV = 'development'
+      let migrations = []
+      const Runner = {
+        up: function * (files) {
+          migrations = files
+          return {status:'completed'}
+        }
+      }
+      Ioc.bind('Adonis/Src/Runner', function () {
+        return Runner
+      })
+      expect(Run.description).not.equal(undefined)
+      expect(Run.signature).not.equal(undefined)
+
+      manageFiles
+      .make(Helpers.migrationsPath('.gitkeep'))
+      .then(function () {
+        return Run.handle({}, {})
+      })
+      .then(function () {
+        const basename = path.basename(migName).replace('.js', '')
+        expect(migrations).not.have.property('.gitkeep')
+        done()
+      })
+      .catch(done)
+    })
+
+    it('should handle skipped status', function (done) {
       process.env.NODE_ENV = 'development'
       let infoCalled = false
       const Runner = {
@@ -250,7 +375,9 @@ describe('Commands', function () {
       })
         .then(function () {
           const basename = path.basename(migName).replace('.js', '')
-          expect(migrations).to.have.property(basename)
+          Object.keys(migrations).forEach(function (migration) {
+            expect(migration).not.equal('.gitkeep')
+          })
           done()
         })
         .catch(done)
