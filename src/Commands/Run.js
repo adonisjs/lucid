@@ -8,6 +8,7 @@
 
 const autoLoader = require('auto-loader')
 const Ioc = require('adonis-fold').Ioc
+const _ = require('lodash')
 
 let Run = exports = module.exports = {}
 
@@ -23,7 +24,7 @@ Run.signature = '{--force?}'
  * @return {Object}
  * @public
  */
-Run.handle = function * (options, flags) {
+Run.handle = function *(options, flags) {
   const Helpers = Ioc.make('Adonis/Src/Helpers')
   const Runner = Ioc.make('Adonis/Src/Runner')
   const Ansi = Ioc.use('Adonis/Src/Ansi')
@@ -32,9 +33,17 @@ Run.handle = function * (options, flags) {
   if (process.env.NODE_ENV === 'production' && !flags.force) {
     throw new Error('Cannot run migrations in production')
   }
-  const migrationsFiles = autoLoader.load(migrations)
-  const response = yield Runner.up(migrationsFiles)
 
+  /**
+   * filters only files ending with .js
+   */
+  const migrationsFiles = _.object(_.compact(_.map(autoLoader.load(migrations), function (file, name) {
+    if (name.endsWith('.js')) {
+      return [name.replace('.js', ''), file]
+    }
+  })))
+
+  const response = yield Runner.up(migrationsFiles)
   if (response.status === 'completed') {
     Ansi.success(Ansi.icon('success') + ' database migrated successfully')
   }

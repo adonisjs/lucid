@@ -1,6 +1,6 @@
 {
   "name": "adonis-lucid",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Beautifully crafted sql ORM for adonis framework",
   "main": "index.js",
   "scripts": {
@@ -28,7 +28,7 @@
     "adonis-fold": "^2.0.0"
   },
   "dependencies": {
-    "auto-loader": "^0.2.0",
+    "auto-loader": "git+https://github.com/thetutlage/node-auto-loader.git",
     "cat-log": "^1.0.0",
     "change-case": "^2.3.0",
     "harmony-reflect": "^1.4.2",
