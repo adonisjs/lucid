@@ -67,6 +67,29 @@ describe('Runner', function () {
     expect(this.runner.migrations).to.have.length(1)
   })
 
+  it('should migrate multiple actions defined inside up method', function () {
+    class Users extends Schema {
+      up() {
+        this.create('users', function (table) {
+          table.increments('id')
+          table.string('username')
+          table.string('email_address')
+          table.timestamps()
+        })
+
+        this.create('post', function (table) {
+          table.increments('id')
+          table.string('post_title')
+          table.string('post_description')
+          table.timestamps()
+        })
+      }
+    }
+    this.runner._migrateClass(new Users(), 'up')
+    expect(this.runner.migrations).to.be.an('array')
+    expect(this.runner.migrations).to.have.length(2)
+  })
+
   it('should return diff for migrations to be created', function (done) {
     const migrations = {'2015-12-26-create_users_table': function () {}}
     this.runner

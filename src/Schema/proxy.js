@@ -43,6 +43,10 @@ proxy.get = function (target, name) {
     if (Object.keys(proxiedNames).indexOf(name) > -1) {
       name = proxiedNames[name]
     }
-    target.store[name] = {key, callback}
+    if (target.store[name]) {
+      target.store[name].push({key, callback})
+    } else {
+      target.store[name] = [{key, callback}]
+    }
   }
 }

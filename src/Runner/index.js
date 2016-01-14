@@ -170,9 +170,11 @@ class Runner {
       return
     }
     schema[method]()
-    _.each(schema.store, (defination, name) => {
-      const migration = this.knex.schema[name](defination.key, defination.callback)
-      this.migrations.push(migration)
+    _.each(schema.store, (schemas, name) => {
+      _.each(schemas, (defination) => {
+        const migration = this.knex.schema[name](defination.key, defination.callback)
+        this.migrations.push(migration)
+      })
     })
   }
 
