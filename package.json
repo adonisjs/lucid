@@ -15,6 +15,7 @@
     "chai": "^3.2.0",
     "co": "^4.6.0",
     "coveralls": "^2.11.4",
+    "cz-conventional-changelog": "^1.1.5",
     "fs-extra": "^0.26.3",
     "istanbul": "^0.3.20",
     "loadtest": "^1.2.14",
@@ -36,5 +37,28 @@
     "knex": "^0.8.6",
     "lodash": "^3.10.1",
     "q": "^1.4.1"
-  }
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adonisjs/adonis-lucid.git"
+  },
+  "keywords": [
+    "adonisjs",
+    "adonis",
+    "sql-orm",
+    "orm",
+    "sql"
+  ],
+  "bugs": {
+    "url": "https://github.com/adonisjs/adonis-lucid/issues"
+  },
+  "homepage": "https://github.com/adonisjs/adonis-lucid#readme"
 }
