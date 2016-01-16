@@ -1,7 +1,7 @@
 {
   "name": "adonis-lucid",
-  "version": "2.0.2",
-  "description": "Beautifully crafted sql ORM for adonis framework",
+  "version": "2.0.3",
+  "description": "Lucid is a sql ORM for adonis framework",
   "main": "index.js",
   "scripts": {
     "test": "npm run standard && node --harmony_proxies node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec test/implementation test/unit && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
