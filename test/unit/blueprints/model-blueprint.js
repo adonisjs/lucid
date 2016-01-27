@@ -17,12 +17,14 @@ blueprint.setup = function(knex) {
 
       table.increments()
       table.string('username')
+      table.string('displayName')
       table.integer('age')
+      table.string('status')
       table.timestamps()
       table.timestamp('deleted_at')
 
     })
-  ])  
+  ])
 }
 
 blueprint.seed = function(knex){

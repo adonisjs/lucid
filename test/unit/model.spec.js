@@ -16,14 +16,31 @@ const Database = require('../../src/Database')
 const Model = require('../../src/Orm/Proxy/Model')
 const StaticProxy = require('../../src/Orm/Proxy/Static')
 
+process.env.TEST_PG = false
+const queryAppender = process.env.TEST_PG === 'true' ? ' returning "id"' : ''
+
 let Config = {
   get: function (name) {
-    return {
-      client: 'sqlite3',
-      connection: {
-        filename: path.join(__dirname, './storage/model.sqlite3')
-      },
-      debug: false
+    if (process.env.TEST_PG === 'true') {
+      return {
+        client: 'pg',
+        connection: {
+          host     : process.env.PG_HOST || 'localhost',
+          user     : process.env.PG_USER || 'postgres',
+          password : process.env.PG_PASSWORD || 'postgres',
+          database : process.env.PG_DB || 'db',
+          charset  : 'utf8'
+        }
+      }
+    }
+    else {
+      return {
+        client: 'sqlite3',
+        connection: {
+          filename: path.join(__dirname, './storage/model.sqlite3')
+        },
+        debug: false
+      }
     }
   }
 }
@@ -420,7 +437,7 @@ describe('Model', function () {
     })
   })
 
-  it('should insert mutated values inside database using static create method', function () {
+  it('should insert mutated values inside database using static create method', function (done) {
     class User extends Model {
 
       static get table() {
@@ -438,8 +455,16 @@ describe('Model', function () {
     }
 
     User.database = db; User = User.extend()
-    let create = User.create([{username: 'FOO'}, {username: 'BAR'}])
-    expect(create.toSQL().bindings).deep.equal(['foo', 'bar'])
+    User
+      .create([{username: 'UNICORN'}, {username: 'SPARK'}])
+      .then(function () {
+        return User.where('username', 'unicorn').orWhere('username', 'spark').fetch()
+      })
+      .then(function (users) {
+        expect(users.size()).to.equal(2)
+        done()
+      })
+      .catch(done)
   })
 
   it('should return instance of model , when using static find method' , function (done) {
@@ -475,23 +500,16 @@ describe('Model', function () {
       .find(1)
       .then(function (user) {
         user.username = 'amanvirk'
-        let bindings = user.update().toSQL().bindings
-        let hasMatched = false
-        bindings.forEach(function (binding) {
-          if (binding === 'amanvirk') {
-            hasMatched = true
-          }
-        })
-        if (!hasMatched) {
-          done(new Error('Unable to update name'))
-        } else {
-          done()
-        }
+        return user.update()
+      })
+      .then(function (response) {
+        expect(parseInt(response[0])).to.equal(1)
+        done()
       })
       .catch(done)
   })
 
-  it('should be able to update rows using static update method' , function () {
+  it('should return row primaryKey after update' , function (done) {
     class User extends Model {
 
       static get table() {
@@ -504,32 +522,13 @@ describe('Model', function () {
     }
 
     User.database = db; User = User.extend()
-    let update = User.update({displayName: 'foo'})
-    expect(update.toSQL().sql).to.equal('update "users" set "displayName" = ?')
-    expect(update.toSQL().bindings).deep.equal(['foo'])
-  })
-
-  it('should be able to bulk update rows using static update method and use setter method return value' , function () {
-    class User extends Model {
-
-      static get table() {
-        return 'users'
-      }
-
-      setDisplayName( value) {
-        return value.toUpperCase()
-      }
-
-      static get timestamps() {
-        return false
-      }
-
-    }
-
-    User.database = db; User = User.extend()
-    let update = User.update({displayName: 'foo'})
-    expect(update.toSQL().sql).to.equal('update "users" set "displayName" = ?')
-    expect(update.toSQL().bindings).deep.equal(['FOO'])
+    User
+      .update({username: 'foo'})
+      .then(function (user) {
+        expect(user).to.be.an('array')
+        done()
+      })
+      .catch(done)
   })
 
   it('should be able to update values when using model instance and should not re mutate values' , function (done) {
@@ -549,19 +548,13 @@ describe('Model', function () {
     User
       .find(2)
       .then(function (user) {
+        console.log(user.attributes)
         user.displayName = 'baz'
-        const bindings = user.update().toSQL().bindings
-        let hasMatched = false
-        bindings.forEach(function (binding) {
-          if (binding === 'bar-baz') {
-            hasMatched = true
-          }
-        })
-        if (!hasMatched) {
-          done(new Error('Unable to update value , mutation cycle took place for couple of times'))
-        } else {
-          done()
-        }
+        return user.update()
+      })
+      .then(function (response) {
+        expect(parseInt(response[0])).to.be.a('number')
+        done()
       }).catch(done)
   })
 
@@ -776,20 +769,6 @@ describe('Model', function () {
         expect(deleteQuery).to.equal('update "users" set "deleted_at" = ? where "id" = ?')
         done()
       }).catch(done)
-  })
-
-  it('should add created_at and updated_at timestamps when timestamps are enabled', function () {
-    class User extends Model {
-
-      static get table() {
-        return 'users'
-      }
-    }
-
-    User.database = db; User = User.extend()
-
-    const createQuery = User.create({username: 'foo'}).toSQL()
-    expect(createQuery.sql).to.equal('insert into "users" ("created_at", "updated_at", "username") values (?, ?, ?)')
   })
 
   it('should be able to make table name when not mentioned', function () {
