@@ -130,7 +130,17 @@ class StaticProxy {
           values[index] = self._foreignKey[index]
         })
       }
-      return query.create(this, values, isMutated, connection)
+      return new Promise((resolve, reject) => {
+        query
+          .create(this, values, isMutated, connection)
+          .returning(this.primaryKey)
+          .then(function (response) {
+            if (response && typeof(response.indexOf) !== 'function') {
+              response = [response]
+            }
+            resolve(response)
+          }).catch(reject)
+      })
     }
 
     /**
@@ -168,7 +178,17 @@ class StaticProxy {
         })
       }
 
-      return query.update(this, values, isMutated, connection)
+      return new Promise((resolve, reject) => {
+        query
+          .update(this, values, isMutated, connection)
+          .returning(this.primaryKey)
+          .then(function (response) {
+            if (response && typeof(response.indexOf) !== 'function') {
+              response = [response]
+            }
+            resolve(response)
+          }).catch(reject)
+      })
     }
 
     /**

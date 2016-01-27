@@ -14,8 +14,7 @@ const i = require('i')()
  * @description migration file startup code
  * @type {String}
  */
-const migrationContent = `
-'use strict'
+const migrationContent = `'use strict'
 
 const Schema = use('Schema')
 
