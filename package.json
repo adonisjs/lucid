@@ -11,7 +11,7 @@
   "author": "adonisjs",
   "license": "MIT",
   "devDependencies": {
-    "adonis-fold": "^2.0.0",
+    "adonis-fold": "^2.0.1",
     "chai": "^3.2.0",
     "co": "^4.6.0",
     "coveralls": "^2.11.4",
@@ -27,7 +27,7 @@
     "standard": "^5.4.1"
   },
   "peerDependencies": {
-    "adonis-fold": "^2.0.0"
+    "adonis-fold": "^2.0.1"
   },
   "dependencies": {
     "auto-loader": "git+https://github.com/thetutlage/node-auto-loader.git",
