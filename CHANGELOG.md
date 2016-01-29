@@ -1,3 +1,20 @@
+<a name="2.0.5"></a>
+## 2.0.5 (2016-01-29)
+
+
+### Bug Fixes
+
+* removed arrow functions ([45f4740](https://github.com/adonisjs/adonis-lucid/commit/45f4740))
+* **model-create:** fixed #16, where returning statement is required for postgres ([fe04529](https://github.com/adonisjs/adonis-lucid/commit/fe04529)), closes [#16](https://github.com/adonisjs/adonis-lucid/issues/16)
+* **schema:** Fixed #15 issue to define multiple schema actions ([610bb33](https://github.com/adonisjs/adonis-lucid/commit/610bb33)), closes [#15](https://github.com/adonisjs/adonis-lucid/issues/15)
+
+### Features
+
+* **Integerated commitizen:** package.json ([8c048e8](https://github.com/adonisjs/adonis-lucid/commit/8c048e8))
+* **relations:** Added support for multiple relations using lucid orm. ([91d046a](https://github.com/adonisjs/adonis-lucid/commit/91d046a))
+
+
+
 <a name="2.0.4"></a>
 ## 2.0.4 (2016-01-27)
 
