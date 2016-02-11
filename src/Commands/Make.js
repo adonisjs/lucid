@@ -51,7 +51,7 @@ Make._up = function (table, createTable) {
     return `this.create('${table}', function (table) {
       table.increments('id')
       table.timestamps()
-      table.timestamp('deleted_at')
+      table.dateTime('deleted_at')
     })`
   }
   return `this.table('${table}', function (table) {
