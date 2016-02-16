@@ -1,0 +1,40 @@
+{
+  "name": "adonis-lucid",
+  "version": "3.0.0",
+  "description": "[![Gitter](https://img.shields.io/badge/+%20GITTER-JOIN%20CHAT%20%E2%86%92-1DCE73.svg?style=flat-square)](https://gitter.im/adonisjs/adonis-framework) [![Trello](https://img.shields.io/badge/TRELLO-%E2%86%92-89609E.svg?style=flat-square)](https://trello.com/b/yzpqCgdl/adonis-for-humans) [![Version](https://img.shields.io/npm/v/adonis-framework.svg?style=flat-square)](https://www.npmjs.com/package/adonis-framework) [![Build Status](https://img.shields.io/travis/adonisjs/adonis-framework/master.svg?style=flat-square)](https://travis-ci.org/adonisjs/adonis-framework) [![Coverage Status](https://img.shields.io/coveralls/adonisjs/adonis-framework/master.svg?style=flat-square)](https://coveralls.io/github/adonisjs/adonis-framework?branch=master) [![Downloads](https://img.shields.io/npm/dt/adonis-framework.svg?style=flat-square)](https://www.npmjs.com/package/adonis-framework) [![License](https://img.shields.io/npm/l/adonis-framework.svg?style=flat-square)](https://opensource.org/licenses/MIT)",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "npm run standard && node --harmony_proxies ./node_modules/.bin/_mocha test --recursive",
+    "standard": "standard src/**/*.js lib/*.js test/**/*.js"
+  },
+  "author": "adonisjs",
+  "license": "MIT",
+  "devDependencies": {
+    "bluebird": "^3.3.1",
+    "chai": "^3.5.0",
+    "co-fs-extra": "^1.1.0",
+    "co-mocha": "^1.1.2",
+    "coveralls": "^2.11.6",
+    "cz-conventional-changelog": "^1.1.5",
+    "istanbul": "^0.4.2",
+    "mocha": "^2.4.5",
+    "mysql": "^2.10.2",
+    "sqlite3": "^3.1.1",
+    "standard": "^6.0.5"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "dependencies": {
+    "co": "^4.6.0",
+    "harmony-reflect": "^1.4.2",
+    "inflect": "^0.3.0",
+    "knex": "^0.10.0",
+    "lodash": "^4.3.0"
+  }
+}
