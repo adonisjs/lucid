@@ -1,25 +1,25 @@
-# AdonisJS Framework
+# AdonisJS Lucid
+
+> **NB - WORK IN PROGRESS**
 
 [![Gitter](https://img.shields.io/badge/+%20GITTER-JOIN%20CHAT%20%E2%86%92-1DCE73.svg?style=flat-square)](https://gitter.im/adonisjs/adonis-framework)
 [![Trello](https://img.shields.io/badge/TRELLO-%E2%86%92-89609E.svg?style=flat-square)](https://trello.com/b/yzpqCgdl/adonis-for-humans)
-[![Version](https://img.shields.io/npm/v/adonis-framework.svg?style=flat-square)](https://www.npmjs.com/package/adonis-framework)
-[![Build Status](https://img.shields.io/travis/adonisjs/adonis-framework/master.svg?style=flat-square)](https://travis-ci.org/adonisjs/adonis-framework)
-[![Coverage Status](https://img.shields.io/coveralls/adonisjs/adonis-framework/master.svg?style=flat-square)](https://coveralls.io/github/adonisjs/adonis-framework?branch=master)
-[![Downloads](https://img.shields.io/npm/dt/adonis-framework.svg?style=flat-square)](https://www.npmjs.com/package/adonis-framework)
-[![License](https://img.shields.io/npm/l/adonis-framework.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/npm/v/adonis-lucid.svg?style=flat-square)](https://www.npmjs.com/package/adonis-lucid)
+[![Build Status](https://img.shields.io/travis/adonisjs/adonis-lucid/master.svg?style=flat-square)](https://travis-ci.org/adonisjs/adonis-lucid)
+[![Coverage Status](https://img.shields.io/coveralls/adonisjs/adonis-lucid/master.svg?style=flat-square)](https://coveralls.io/github/adonisjs/adonis-lucid?branch=master)
+[![Downloads](https://img.shields.io/npm/dt/adonis-lucid.svg?style=flat-square)](https://www.npmjs.com/package/adonis-lucid)
+[![License](https://img.shields.io/npm/l/adonis-lucid.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-> :pray: This repository contains the core of the AdonisJS framework.
+> :pray: This repository is the official SQL ORM for adonis framework.
 
-Adonis is a MVC framework for NodeJS built on solid foundations.
-
-It is the first NodeJS framework with support for [Dependency Injection](http://adonisjs.com/docs/2.0/dependency-injection) and has a lean [IoC Container](http://adonisjs.com/docs/2.0/ioc-container) to resolve and mock dependencies. It borrows the concept of [Service Providers](http://adonisjs.com/docs/2.0/service-providers) from the popular [PHP framework Laravel](https://laravel.com) to write scalable applications.
+Adonis lucid is a database query builder and ORM for adonis framework. It also has support for database migrations.
 
 You can learn more about AdonisJS and all of its awesomeness on http://adonisjs.com :evergreen_tree:
 
 ## Table of Contents
 
 * [Team Members](#team-members)
-* [Requirements](#requirements)
+* [Database Supported](#database-supported)
 * [Getting Started](#getting-started)
 * [Contribution Guidelines](#contribution-guidelines)
 
@@ -27,24 +27,47 @@ You can learn more about AdonisJS and all of its awesomeness on http://adonisjs.
 
 * Harminder Virk ([Caffiene Blogging](http://amanvirk.me/)) <virk.officials@gmail.com>
 
-## <a name="requirements"></a>Requirements
+## <a name="database-supported"></a>Database Supported
 
-AdonisJS is build on the top of ES2015, which makes the code more enjoyable and cleaner to read. It doesn't make use of any transpiler and depends upon Core V8 implemented features.
+Below is the list of databases officially supported by Adonis Lucid.
 
-For these reasons, AdonisJS require you to use `node >= 4.0` and `npm >= 3.0`.
+- pg
+- sqlite3
+- mysql
+- mysql2
+- mariasql
+- strong-oracle
+- oracle
+
 
 ## <a name="getting-started"></a>Getting Started
 
-AdonisJS provide a [CLI tool](https://github.com/AdonisJs/adonis-cli) to scaffold and generate a project with all required dependencies.
+Lucid is included by default with every new adonis application, but here are the steps, if in case you want to set it up manually.
 
 ```bash
-$ npm install -g adonis-cli
+$ npm i --save adonis-lucid
 ```
 
-```bash
-$ adonis new awesome-project
-$ cd awesome-project
-$ npm run start
+and then register lucid providers inside the your `bootstrap/app.js` file.
+
+```javascript
+const providers = [
+  'adonis-lucid/providers/DatabaseProvider',
+  'adonis-lucid/providers/LucidProvider',
+  'adonis-lucid/providers/SchemaProvider',
+  'adonis-lucid/providers/MigrationsProvider',
+]
+```
+
+setting up aliases inside `bootstrap/app.js` file.
+
+```javascript
+const aliases = {
+  Database: 'Adonis/Src/Database',
+  Lucid: 'Adonis/Src/Lucid',
+  Schema: 'Adonis/Src/Schema'
+  Migrations: 'Adonis/Src/Migrations'
+}
 ```
 
 [Official Documentation](http://adonisjs.com/docs/2.0/installation)
@@ -53,4 +76,4 @@ $ npm run start
 
 In favor of active development we accept contributions for everyone. You can contribute by submitting a bug, creating pull requests or even improving documentation.
 
-You can find a complete guide to be followed strictly before submitting your pull requests in the [Official Documentation](http://adonisjs.com/docs/2.0/contributing).
+You can find a complete guide to be followed strictly before submitting your pull requests in the [Official Documentation](http://adonisjs.com/docs/contributing).
