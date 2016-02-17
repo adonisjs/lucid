@@ -31,8 +31,10 @@
     }
   },
   "dependencies": {
+    "cat-log": "^1.0.0",
     "co": "^4.6.0",
     "harmony-reflect": "^1.4.2",
+    "humanize-number": "0.0.2",
     "inflect": "^0.3.0",
     "knex": "^0.10.0",
     "lodash": "^4.3.0"
