@@ -20,10 +20,11 @@ const util = require('../../lib/util')
 const co = require('co')
 
 /**
- * here we store connection pools, created by database
- * provider. It is required as one can use multiple connections
- * using database provider.And spwaning a connection everytime
- * will blow up things.
+ * here we store connection pools, created by database provider. It is
+ * required to re-use old connections as database provider has support
+ * for using multiple connections on runtime, and spwaning a new
+ * connection everytime will blow up things.
+ *
  *
  * @type {Object}
  *
@@ -32,8 +33,8 @@ const co = require('co')
 let connectionPools = {}
 
 /**
- * reference to config provider, since
- * we do not require providers and instead get
+ * reference to config provider, since we do
+ * not require providers and instead get
  * them from IOC container.
  *
  * @type {Object}
@@ -43,10 +44,32 @@ let connectionPools = {}
 let ConfigProvider = {}
 
 /**
+ * emits sql event on query builder instance with
+ * formatted sql statement and time taken by a
+ * given query.
+ *
+ * @method emitSql
+ *
+ * @param  {Object} query
+ *
+ * @private
+ */
+const _emitSql = function (query) {
+  const hrstart = new Date()
+  const sql = this.client.SqlString.format(query.sql, query.bindings, query.tz)
+  this.once('start', (builder) => {
+    builder.once('end', () => {
+      this.emit('sql', `+ ${util.timeDiff(hrstart)} : ${sql}`)
+    })
+  })
+}
+
+/**
  * Database provider to build sql queries
  * @module Database
  */
 const Database = {}
+
 /**
  * sets the config provider for database module
  * @method _setConfigProvider. It is set while registering
@@ -100,6 +123,7 @@ Database._getConnection = function (connection) {
     const client = knex(config)
     const rawTransaction = client.transaction
     client.transaction = Database.transaction(rawTransaction)
+    client.on('query', _emitSql)
     client.beginTransaction = Database.beginTransaction(rawTransaction)
     client.client.QueryBuilder.prototype.forPage = Database.forPage
     client.client.QueryBuilder.prototype.paginate = Database.paginate
@@ -132,7 +156,7 @@ Database.connection = function (connection) {
 
 /**
  * returns list of connection pools created
- * so far
+ * so far.
  *
  * @method getConnectionPools
  *
@@ -170,8 +194,8 @@ Database.close = function (connection) {
 }
 
 /**
- * beginTransaction is used for doing manual commit
- * and rollbacks. Errors emitted from this method are voided.
+ * beginTransaction is used for doing manual commit and
+ * rollback. Errors emitted from this method are voided.
  *
  * @method beginTransaction
  *
