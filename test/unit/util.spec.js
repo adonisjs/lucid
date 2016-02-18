@@ -11,6 +11,7 @@
 
 /* global describe, it*/
 const util = require('../../lib/util')
+const _ = require('lodash')
 const chai = require('chai')
 const expect = chai.expect
 
@@ -111,5 +112,12 @@ describe('Utils', function () {
   it('should make paginate meta data when total results are more than zero', function () {
     const meta = util.makePaginateMeta(20, 1, 10)
     expect(meta).deep.equal({total: 20, perPage: 10, currentPage: 1, lastPage: 2, data: []})
+  })
+
+  it('should add a mixin to lodash isolated instance', function () {
+    const foo = function () {}
+    util.addMixin('foo', foo)
+    expect(_.isFunction(_.foo)).to.equal(false)
+    expect(_.isFunction(util.lodash().foo)).to.equal(true)
   })
 })
