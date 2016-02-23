@@ -26,7 +26,6 @@ const notToTouch = ['$primaryKeyValue', 'original', 'attributes']
  * @private
  */
 proxyHandler.get = function (target, name) {
-
   /**
    * if value exists on the model instance, we return
    * it right away.
