@@ -54,10 +54,10 @@ let ConfigProvider = {}
  *
  * @private
  */
-const _emitSql = function (query) {
-  const hrstart = new Date()
-  const sql = this.client.SqlString.format(query.sql, query.bindings, query.tz)
-  this.once('start', (builder) => {
+const _emitSql = function (builder) {
+  const hrstart = process.hrtime()
+  builder.once('query', (query) => {
+    const sql = this.client.SqlString.format(query.sql, query.bindings, query.tz)
     builder.once('end', () => {
       this.emit('sql', `+ ${util.timeDiff(hrstart)} : ${sql}`)
     })
@@ -123,7 +123,7 @@ Database._getConnection = function (connection) {
     const client = knex(config)
     const rawTransaction = client.transaction
     client.transaction = Database.transaction(rawTransaction)
-    client.on('query', _emitSql)
+    client.on('start', _emitSql)
     client.beginTransaction = Database.beginTransaction(rawTransaction)
     client.client.QueryBuilder.prototype.forPage = Database.forPage
     client.client.QueryBuilder.prototype.paginate = Database.paginate
