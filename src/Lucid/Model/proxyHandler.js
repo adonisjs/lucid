@@ -11,7 +11,7 @@
 
 const proxyHandler = exports = module.exports = {}
 const NE = require('node-exceptions')
-const notToTouch = ['$primaryKeyValue', 'original', 'attributes']
+const notToTouch = ['$primaryKeyValue', 'original', 'attributes', 'relations']
 
 /**
  * proxy handler for getting target properties.Here

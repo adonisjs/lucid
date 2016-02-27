@@ -23,6 +23,7 @@ const Persistance = require('./Mixins/Persistance')
 const Dates = require('./Mixins/Dates')
 const Hooks = require('./Mixins/Hooks')
 const moment = require('moment')
+const HasOne = require('../Relations/HasOne')
 
 class ModelNotFoundException extends NE.LogicalException {}
 
@@ -39,18 +40,14 @@ const validHookTypes = [
   'afterUpdate',
   'beforeDelete',
   'afterDelete',
-  'beforeBulkCreate',
-  'afterBulkCreate',
-  'beforeBulkUpdate',
-  'afterBulkUpdate',
-  'beforeBulkDelete',
-  'afterBulkDelete'
+  'beforeRestore',
+  'afterRestore'
 ]
 
 /**
  * model defines a single table inside sql database and
  * a model instance belongs to a single row inside
- * database table.
+ * database table. Simple!
  *
  * @class
  */
@@ -68,10 +65,13 @@ class Model {
    * initiates model instance parameters.
    *
    * @param  {Object} [values]
+   *
+   * @public
    */
   instantiate (values) {
     this.attributes = {}
     this.original = {}
+    this.relations = {}
     if (values) {
       this.setJSON(values)
     }
@@ -127,6 +127,8 @@ class Model {
    * booted or not
    *
    * @return {Boolean}
+   *
+   * @public
    */
   static get $booted () {
     return this._booted
@@ -136,6 +138,8 @@ class Model {
    * sets booted state for a model
    *
    * @param  {Boolean} value
+   *
+   * @public
    */
   static set $booted (value) {
     this._booted = value
@@ -144,6 +148,8 @@ class Model {
   /**
    * hook to be invoked by Ioc Container
    * when a model is required.
+   *
+   * @public
    */
   static bootIfNotBooted () {
     if (!this.$booted) {
@@ -157,16 +163,35 @@ class Model {
    * the first time. This is the place where anyone
    * can do required stuff before a model is
    * ready to be used.
+   *
+   * @public
    */
   static boot () {
     logger.verbose(`booting ${this.name} model`)
     this.$modelHooks = {}
+    this.$queryListeners = []
 
     this.addGlobalScope((builder) => {
       if (this.deleteTimestamp && !builder.avoidTrashed) {
         builder.where(`${this.table}.${this.deleteTimestamp}`, null)
       }
     })
+  }
+
+  /**
+   * adds a callback to queryListeners, which gets fired as soon
+   * as a query has been made on the given model. This is a
+   * nice way to listen to queries for a single model.
+   *
+   * @param  {Function} callback
+   *
+   * @public
+   */
+  static onQuery (callback) {
+    if (typeof (callback) !== 'function') {
+      throw new NE.InvalidArgumentException('onQuery only excepts a callback function')
+    }
+    this.$queryListeners.push(callback)
   }
 
   /**
@@ -191,6 +216,8 @@ class Model {
    * defined inside database config file.
    *
    * @return {String}
+   *
+   * @public
    */
   static get connection () {
     return 'default'
@@ -201,6 +228,8 @@ class Model {
    * model.
    *
    * @return {String}
+   *
+   * @public
    */
   static get table () {
     return util.makeTableName(this)
@@ -211,6 +240,8 @@ class Model {
    * associations. Defaults to id
    *
    * @return {String}
+   *
+   * @public
    */
   static get primaryKey () {
     return 'id'
@@ -225,6 +256,8 @@ class Model {
    * account_id for Account model
    *
    * @return {String}
+   *
+   * @public
    */
   static get foreignKey () {
     return util.makeForeignKey(this)
@@ -234,6 +267,8 @@ class Model {
    * computed properties to be attached to final result set.
    *
    * @return {Array}
+   *
+   * @public
    */
   static get computed () {
     return []
@@ -244,6 +279,8 @@ class Model {
    * dates will be manipulated with moment.
    *
    * @return {String}
+   *
+   * @public
    */
   static get dateFormat () {
     return 'YYYY-MM-DD HH:mm:ss'
@@ -255,6 +292,8 @@ class Model {
    * to avoid using postCreate timestamp
    *
    * @return {String}
+   *
+   * @public
    */
   static get createTimestamp () {
     return 'created_at'
@@ -266,6 +305,8 @@ class Model {
    * to avoid using postUpdate timestamp.
    *
    * @return {String}
+   *
+   * @public
    */
   static get updateTimestamp () {
     return 'updated_at'
@@ -276,6 +317,8 @@ class Model {
    * for a given model
    *
    * @return {String}
+   *
+   * @public
    */
   static get deleteTimestamp () {
     return null
@@ -316,7 +359,7 @@ class Model {
    * @public
    */
   getCreateTimestamp (date) {
-    return moment(date)
+    return moment(date).format(this.constructor.dateFormat)
   }
 
   /**
@@ -329,7 +372,7 @@ class Model {
    * @public
    */
   getUpdateTimestamp (date) {
-    return moment(date)
+    return moment(date).format(this.constructor.dateFormat)
   }
 
   /**
@@ -342,7 +385,7 @@ class Model {
    * @public
    */
   getDeleteTimestamp (date) {
-    return moment(date)
+    return moment(date).format(this.constructor.dateFormat)
   }
 
   /**
@@ -354,7 +397,11 @@ class Model {
    * @public
    */
   static query () {
-    return new QueryBuilder(this)
+    return new QueryBuilder(this).on('query', (query) => {
+      _.each(this.$queryListeners, function (listener) {
+        listener(query)
+      })
+    })
   }
 
   /**
@@ -544,6 +591,36 @@ class Model {
     return modelInstance
   }
 
+  /**
+   * returns hasOne instance for a given model. Later
+   * returned instance will be responsible for
+   * resolving relations
+   *
+   * @param  {Object}  toModel
+   * @param  {String}  [primaryKey]
+   * @param  {String}  [foreignKey]
+   * @return {Object}
+   *
+   * @public
+   */
+  hasOne (related, primaryKey, foreignKey) {
+    primaryKey = primaryKey || this.constructor.primaryKey
+    foreignKey = foreignKey || this.constructor.foreignKey
+    return new HasOne(this, related, primaryKey, foreignKey)
+  }
+
+  /**
+   * returns eagerly loaded relation for a given model
+   * instance
+   *
+   * @param  {String} key
+   * @return {Object}
+   *
+   * @public
+   */
+  get (key) {
+    return this.relations[key]
+  }
 }
 
 class ExtendedModel extends mixin(Model, AccessorMutator, Serializer, Persistance, Dates, Hooks) {

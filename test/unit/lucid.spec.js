@@ -1,7 +1,7 @@
 'use strict'
 
 /**
- * adonis-framework
+ * adonis-lucid
  *
  * (c) Harminder Virk <virk@adonisjs.com>
  *
@@ -477,19 +477,22 @@ describe('Lucid', function () {
 
     it('should update updated_at timestamp when model instance is updated', function * (done) {
       class User extends Model {
+        getUpdateTimestamp (date) {
+          return moment(date).format('x')
+        }
       }
       const user = new User()
       user.firstname = 'unicorn'
       user.lastname = 'eva'
       yield user.save()
-      const updatedTimestamp = user.updated_at.format('x')
+      const updatedTimestamp = user.updated_at
       user.firstname = 'dubba'
       setTimeout(function () {
         co(function * () {
           yield user.save()
         })
         .then(function () {
-          expect(user.updated_at.format('x')).to.be.above(updatedTimestamp)
+          expect(user.updated_at).to.be.above(updatedTimestamp)
           done()
         })
         .catch(done)
@@ -524,10 +527,9 @@ describe('Lucid', function () {
       expect(user.id).to.equal(1)
       yield user.delete()
       expect(user.isDeleted()).to.equal(true)
-      const fetchUser = yield User.query().where('id', 1)
-      expect(fetchUser[0].id).equal(1)
-      expect(user.deleted_at instanceof moment).to.equal(true)
-      expect(moment(fetchUser[0].deleted_at).format(User.dateFormat)).to.equal(user.deleted_at.format(User.dateFormat))
+      const fetchUser = yield User.query().where('id', 1).withTrashed().first()
+      expect(fetchUser.id).equal(1)
+      expect(fetchUser.deleted_at).to.equal(user.deleted_at)
     })
 
     it('should remove rows from database when soft deletes are not enabled', function * () {
@@ -802,8 +804,7 @@ describe('Lucid', function () {
       const trashedUsers = yield User.query().onlyTrashed().fetch()
       expect(trashedUsers.size()).to.be.above(0)
       trashedUsers.each(function (user) {
-        expect(user.deleted_at instanceof moment).to.equal(true)
-        expect(user.deleted_at.format()).to.be.a('string')
+        expect(user.deleted_at).to.be.a('string')
       })
     })
 
@@ -1164,6 +1165,44 @@ describe('Lucid', function () {
       yield user.save()
       yield user.delete()
       expect(hookCalled).to.equal(false)
+    })
+  })
+
+  context('Query Scopes', function () {
+    it('should be able to define query scopes on model', function () {
+      class User extends Model {
+        static scopeActive (builder) {
+          builder.where('status', 'active')
+        }
+      }
+      User.bootIfNotBooted()
+      const sql = User.query().active().toSQL()
+      expect(queryHelpers.formatQuery(sql.sql)).to.equal(queryHelpers.formatQuery('select * from "users" where "status" = ?'))
+      expect(sql.bindings).deep.equal(['active'])
+    })
+
+    it('should be able to pass values to scope methods', function () {
+      class User extends Model {
+        static scopeActive (builder, status) {
+          builder.where('status', status)
+        }
+      }
+      User.bootIfNotBooted()
+      const sql = User.query().active('inactive').toSQL()
+      expect(queryHelpers.formatQuery(sql.sql)).to.equal(queryHelpers.formatQuery('select * from "users" where "status" = ?'))
+      expect(sql.bindings).deep.equal(['inactive'])
+    })
+
+    it('should have reference to model inside scope methods', function () {
+      let Ref = null
+      class User extends Model {
+        static scopeActive () {
+          Ref = this
+        }
+      }
+      User.bootIfNotBooted()
+      User.query().active()
+      expect(new Ref() instanceof User).to.equal(true)
     })
   })
 })

@@ -5,6 +5,7 @@
   "directories": {
     "test": "test"
   },
+  "version": "3.0.0",
   "scripts": {
     "test": "npm run standard && node --harmony_proxies ./node_modules/.bin/_mocha test --recursive",
     "standard": "standard src/**/*.js src/**/**/*.js src/**/**/**/*.js lib/*.js test/**/*.js",
@@ -36,11 +37,12 @@
   "dependencies": {
     "cat-log": "^1.0.0",
     "co": "^4.6.0",
+    "co-functional": "^0.2.1",
     "es6-class-mixin": "^1.0.5",
     "harmony-reflect": "^1.4.2",
     "inflect": "^0.3.0",
     "knex": "^0.10.0",
-    "lodash": "^4.5.0",
+    "lodash": "^4.5.1",
     "moment": "^2.11.2",
     "node-exceptions": "^1.0.1",
     "pretty-hrtime": "^1.0.2"

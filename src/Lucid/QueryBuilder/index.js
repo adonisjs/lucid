@@ -25,6 +25,12 @@ class QueryBuilder {
     this.queryBuilder = Database.connection(this.HostModel.connection)
     this.modelQueryBuilder = this.queryBuilder(this.HostModel.table)
     this.avoidTrashed = false
+    this.eagerLoad = {
+      relations: [],
+      nestedRelations: {},
+      relationScopes: {},
+      nestedScopes: {}
+    }
     return new Proxy(this, proxyHandler)
   }
 }

@@ -26,6 +26,20 @@ module.exports = {
         table.timestamps()
         table.timestamp('deleted_at').nullable()
       }),
+      knex.schema.createTable('profiles', function (table) {
+        table.increments()
+        table.integer('account_id')
+        table.string('profile_name')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
+      knex.schema.createTable('head_offices', function (table) {
+        table.increments()
+        table.integer('supplier_id')
+        table.string('location')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
       knex.schema.createTable('all_suppliers', function (table) {
         table.increments()
         table.string('regid').unique()
@@ -54,6 +68,8 @@ module.exports = {
   dropTables: function (knex) {
     const tables = [
       knex.schema.dropTable('accounts'),
+      knex.schema.dropTable('head_offices'),
+      knex.schema.dropTable('profiles'),
       knex.schema.dropTable('suppliers'),
       knex.schema.dropTable('all_accounts'),
       knex.schema.dropTable('all_suppliers'),
@@ -62,7 +78,7 @@ module.exports = {
     return bluebird.all(tables)
   },
   createRecords: function * (knex, table, values) {
-    return yield knex.table(table).insert(values)
+    return yield knex.table(table).insert(values).returning('id')
   },
   truncate: function * (knex, table) {
     yield knex.table(table).truncate()

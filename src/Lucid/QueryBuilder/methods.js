@@ -1,7 +1,7 @@
 'use strict'
 
 /**
- * adonis-framework
+ * adonis-lucid
  *
  * (c) Harminder Virk <virk@adonisjs.com>
  *
@@ -10,6 +10,8 @@
 */
 
 const util = require('../../../lib/util')
+const _ = require('lodash')
+const helpers = require('./helpers')
 const methods = exports = module.exports = {}
 
 /**
@@ -54,13 +56,17 @@ methods.fetch = function (target) {
      * the query builder chain.
      */
     const globalScope = target.HostModel.globalScope
-    if (util.lodash().size(globalScope)) {
-      util.lodash().each(globalScope, (scopeMethod) => {
+    let eagerlyFetched = []
+    if (_.size(globalScope)) {
+      _.each(globalScope, (scopeMethod) => {
         scopeMethod(this)
       })
     }
 
     let results = yield target.modelQueryBuilder
+    if (_.size(target.eagerLoad.relations) && _.size(results)) {
+      eagerlyFetched = yield helpers.eagerLoadAndMap(results, target.eagerLoad, target.HostModel)
+    }
 
     /**
      * here we convert an array to a collection, and making sure each
@@ -69,7 +75,8 @@ methods.fetch = function (target) {
     return util.toCollection(results).transform((result, value, index) => {
       const modelInstance = new target.HostModel()
       modelInstance.attributes = value
-      modelInstance.original = util.lodash().clone(modelInstance.attributes)
+      modelInstance.original = _.clone(modelInstance.attributes)
+      helpers.populateRelationValues(modelInstance, eagerlyFetched, value)
       result[index] = modelInstance
     })
   }
@@ -185,6 +192,60 @@ methods.onlyTrashed = function (target) {
   return function () {
     this.avoidTrashed = true
     this.whereNot(target.HostModel.deleteTimestamp, null)
+    return this
+  }
+}
+
+/**
+ * sets up relations to be eager loaded when calling fetch method.
+ * From here it is fetch method job to entertain withRelations
+ * array.
+ *
+ *
+ * @method with
+ *
+ * @param  {Object} target
+ * @return {Object}        reference to this for chaining
+ *
+ * @public
+ */
+methods.with = function (target) {
+  return function () {
+    const relations = _.isArray(arguments[0]) ? arguments[0] : _.toArray(arguments)
+    _.each(relations, (relation) => {
+      relation = relation.split('.')
+      const rootRelation = relation[0]
+      target.eagerLoad.relations.push(rootRelation)
+      if (_.size(relation) > 1) {
+        target.eagerLoad.nestedRelations[rootRelation] = target.eagerLoad.nestedRelations[rootRelation] || []
+        target.eagerLoad.nestedRelations[rootRelation].push(_.tail(relation).join('.'))
+      }
+    })
+    return this
+  }
+}
+
+/**
+ * stores a callback for a given relation.
+ *
+ * @method scope
+ *
+ * @param  {Object} target
+ * @return {Object}        - reference to this for chaining
+ *
+ * @public
+ */
+methods.scope = function (target) {
+  return function (key, callback) {
+    key = key.split('.')
+    const rootScopeName = key[0]
+    if (_.size(key) > 1) {
+      const nestedScope = _.tail(key).join('.')
+      target.eagerLoad.nestedScopes[rootScopeName] = target.eagerLoad.nestedScopes[rootScopeName] || {}
+      target.eagerLoad.nestedScopes[rootScopeName][nestedScope] = callback
+    } else {
+      target.eagerLoad.relationScopes[rootScopeName] = callback
+    }
     return this
   }
 }
