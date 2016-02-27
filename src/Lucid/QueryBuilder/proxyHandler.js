@@ -11,6 +11,9 @@
 
 const proxyHandler = exports = module.exports = {}
 const methods = require('./methods')
+const helpers = require('./helpers')
+const _ = require('lodash')
+const notToTouch = ['avoidTrashed']
 
 /**
  * proxy handler for getting target properties.
@@ -30,6 +33,18 @@ proxyHandler.get = function (target, name) {
   if (methods[name]) {
     return methods[name](target)
   }
+  /**
+   * here we try to make a dynamic scope method on query
+   * builder and if found, we will return that method
+   */
+  const scopeMethod = helpers.getScopeMethod(target.HostModel, name)
+  if (scopeMethod) {
+    return function () {
+      const args = [target.modelQueryBuilder].concat(_.toArray(arguments))
+      scopeMethod.apply(target.HostModel, args)
+      return this
+    }
+  }
   return target.modelQueryBuilder[name]
 }
 
@@ -47,7 +62,7 @@ proxyHandler.get = function (target, name) {
  * @private
  */
 proxyHandler.set = function (target, name, value) {
-  if (name === 'avoidTrashed') {
+  if (notToTouch.indexOf(name) > -1) {
     target[name] = value
     return
   }

@@ -29,7 +29,23 @@ Serializer.toJSON = function () {
     result[key] = this[key]
   })
   .merge(this.initializeComputedProperties())
+  .merge(this.serializeRelations())
   .value()
+}
+
+/**
+ * here we call toJSON on all eagerly loaded relations.
+ *
+ * @method serializeRelations
+ *
+ * @return {Object}
+ *
+ * @public
+ */
+Serializer.serializeRelations = function () {
+  return _.transform(this.relations, function (result, value, index) {
+    result[index] = value && value.toJSON() ? value.toJSON() : value
+  })
 }
 
 /**
