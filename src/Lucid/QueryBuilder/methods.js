@@ -11,7 +11,6 @@
 
 const util = require('../../../lib/util')
 const _ = require('lodash')
-const helpers = require('./helpers')
 const methods = exports = module.exports = {}
 
 /**
@@ -64,8 +63,8 @@ methods.fetch = function (target) {
     }
 
     let results = yield target.modelQueryBuilder
-    if (_.size(target.eagerLoad.relations) && _.size(results)) {
-      eagerlyFetched = yield helpers.eagerLoadAndMap(results, target.eagerLoad, target.HostModel)
+    if (_.size(target.eagerLoad.withRelations) && _.size(results)) {
+      eagerlyFetched = yield target.eagerLoad.load(results, target.HostModel)
     }
 
     /**
@@ -76,7 +75,7 @@ methods.fetch = function (target) {
       const modelInstance = new target.HostModel()
       modelInstance.attributes = value
       modelInstance.original = _.clone(modelInstance.attributes)
-      helpers.populateRelationValues(modelInstance, eagerlyFetched, value)
+      target.eagerLoad.mapRelationsToRow(eagerlyFetched, modelInstance, value)
       result[index] = modelInstance
     })
   }
@@ -212,15 +211,7 @@ methods.onlyTrashed = function (target) {
 methods.with = function (target) {
   return function () {
     const relations = _.isArray(arguments[0]) ? arguments[0] : _.toArray(arguments)
-    _.each(relations, (relation) => {
-      relation = relation.split('.')
-      const rootRelation = relation[0]
-      target.eagerLoad.relations.push(rootRelation)
-      if (_.size(relation) > 1) {
-        target.eagerLoad.nestedRelations[rootRelation] = target.eagerLoad.nestedRelations[rootRelation] || []
-        target.eagerLoad.nestedRelations[rootRelation].push(_.tail(relation).join('.'))
-      }
-    })
+    target.eagerLoad.with(relations)
     return this
   }
 }
@@ -237,15 +228,7 @@ methods.with = function (target) {
  */
 methods.scope = function (target) {
   return function (key, callback) {
-    key = key.split('.')
-    const rootScopeName = key[0]
-    if (_.size(key) > 1) {
-      const nestedScope = _.tail(key).join('.')
-      target.eagerLoad.nestedScopes[rootScopeName] = target.eagerLoad.nestedScopes[rootScopeName] || {}
-      target.eagerLoad.nestedScopes[rootScopeName][nestedScope] = callback
-    } else {
-      target.eagerLoad.relationScopes[rootScopeName] = callback
-    }
+    target.eagerLoad.appendScope(key, callback)
     return this
   }
 }
