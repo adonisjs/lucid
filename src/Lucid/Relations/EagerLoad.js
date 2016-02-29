@@ -17,10 +17,18 @@ class ModelRelationNotFound extends NE.LogicalException {}
 class EagerLoad {
 
   constructor () {
+    this.instantiate()
+  }
+
+  instantiate () {
     this.withRelations = []
     this.withNestedRelations = {}
     this.relationsScope = {}
     this.nestedRelationsScope = {}
+  }
+
+  reset () {
+    this.instantiate()
   }
 
   /**

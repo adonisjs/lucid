@@ -659,7 +659,7 @@ class Model {
   * load () {
     const eagerLoadResult = yield this.eagerLoad.load(this.attributes, this, true)
     this.eagerLoad.mapRelationsToRow(eagerLoadResult, this, this.attributes)
-    this.eagerLoad = new EagerLoad()
+    this.eagerLoad.reset()
   }
 
 }
