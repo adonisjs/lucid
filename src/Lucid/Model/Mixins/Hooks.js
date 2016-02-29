@@ -79,7 +79,7 @@ Hooks.composeHooks = function (scope, hooks) {
 Hooks.executeInsertHooks = function * (scope, insertHandler) {
   let handlerResult = null
   const insertHandlerWrapper = function * (next) {
-    handlerResult = yield insertHandler.bind(this)
+    handlerResult = yield insertHandler.call(this)
     yield next
   }
   const hooksChain = this.getHooks('Create', insertHandlerWrapper)
@@ -102,7 +102,7 @@ Hooks.executeInsertHooks = function * (scope, insertHandler) {
 Hooks.executeUpdateHooks = function * (scope, updateHandler) {
   let handlerResult = null
   const updateHandlerWrapper = function * (next) {
-    handlerResult = yield updateHandler.bind(this)
+    handlerResult = yield updateHandler.call(this)
     yield next
   }
   const hooksChain = this.getHooks('Update', updateHandlerWrapper)
@@ -125,7 +125,7 @@ Hooks.executeUpdateHooks = function * (scope, updateHandler) {
 Hooks.executeDeleteHooks = function * (scope, deleteHandler) {
   let handlerResult = null
   const deleteHandlerWrapper = function * (next) {
-    handlerResult = yield deleteHandler.bind(this)
+    handlerResult = yield deleteHandler.call(this)
     yield next
   }
   const hooksChain = this.getHooks('Delete', deleteHandlerWrapper)
