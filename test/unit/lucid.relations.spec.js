@@ -565,30 +565,30 @@ describe('Relations', function () {
     it('should add eagerLoad relations to query builder instance when with is called', function () {
       class Account extends Model {}
       const accountQuery = Account.query().with('profile')
-      expect(accountQuery.eagerLoad).deep.equal({relations: ['profile'], nestedRelations: {}, relationScopes: {}, nestedScopes: {}})
+      expect(accountQuery.eagerLoad).deep.equal({withRelations: ['profile'], withNestedRelations: {}, relationsScope: {}, nestedRelationsScope: {}})
     })
 
     it('should add nested eagerLoad relations to query builder instance when with is called', function () {
       class Account extends Model {}
       const accountQuery = Account.query().with('profile', 'user.history.pages', 'room.keys')
       expect(accountQuery.eagerLoad).deep.equal({
-        relations: ['profile', 'user', 'room'],
-        nestedRelations: {
+        withRelations: ['profile', 'user', 'room'],
+        withNestedRelations: {
           user: ['history.pages'],
           room: ['keys']
         },
-        relationScopes: {},
-        nestedScopes: {}
+        relationsScope: {},
+        nestedRelationsScope: {}
       })
     })
 
     it('should add scopes to query builder instance when scope method is called', function () {
       class Account extends Model {}
       const accountQuery = Account.query().with('profile').scope('profile', function () {})
-      expect(accountQuery.eagerLoad.relations).deep.equal(['profile'])
-      expect(accountQuery.eagerLoad.nestedRelations).deep.equal({})
-      expect(accountQuery.eagerLoad.relationScopes.profile).to.be.a('function')
-      expect(accountQuery.eagerLoad.nestedScopes).deep.equal({})
+      expect(accountQuery.eagerLoad.withRelations).deep.equal(['profile'])
+      expect(accountQuery.eagerLoad.withNestedRelations).deep.equal({})
+      expect(accountQuery.eagerLoad.relationsScope.profile).to.be.a('function')
+      expect(accountQuery.eagerLoad.nestedRelationsScope).deep.equal({})
     })
 
     it('should add nested scopes to query builder instance when scope method is called', function () {
@@ -599,13 +599,13 @@ describe('Relations', function () {
         .scope('profile', function () {})
         .scope('user.history.pages', function () {})
         .scope('room.keys', function () {})
-      expect(accountQuery.eagerLoad.relations).deep.equal(['profile', 'user', 'room'])
-      expect(accountQuery.eagerLoad.nestedRelations).deep.equal({user: ['history.pages'], room: ['keys']})
-      expect(accountQuery.eagerLoad.relationScopes.profile).to.be.a('function')
-      expect(accountQuery.eagerLoad.relationScopes.user).to.equal(undefined)
-      expect(accountQuery.eagerLoad.relationScopes.room).to.equal(undefined)
-      expect(accountQuery.eagerLoad.nestedScopes.user['history.pages']).to.be.a('function')
-      expect(accountQuery.eagerLoad.nestedScopes.room['keys']).to.be.a('function')
+      expect(accountQuery.eagerLoad.withRelations).deep.equal(['profile', 'user', 'room'])
+      expect(accountQuery.eagerLoad.withNestedRelations).deep.equal({user: ['history.pages'], room: ['keys']})
+      expect(accountQuery.eagerLoad.relationsScope.profile).to.be.a('function')
+      expect(accountQuery.eagerLoad.relationsScope.user).to.equal(undefined)
+      expect(accountQuery.eagerLoad.relationsScope.room).to.equal(undefined)
+      expect(accountQuery.eagerLoad.nestedRelationsScope.user['history.pages']).to.be.a('function')
+      expect(accountQuery.eagerLoad.nestedRelationsScope.room['keys']).to.be.a('function')
     })
 
     it('should be able to add runtime constraints to relation defination', function * () {
@@ -780,6 +780,77 @@ describe('Relations', function () {
       expect(account instanceof Account)
       expect(account.supplier_id).to.equal(supplier.id)
 
+      yield relationFixtures.truncate(Database, 'suppliers')
+      yield relationFixtures.truncate(Database, 'accounts')
+    })
+
+    it('should be able to eagerLoad relations for a model instance', function * () {
+      const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
+      yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
+      let accountQuery = null
+
+      class Account extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            accountQuery = query
+          })
+        }
+      }
+
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+
+      Account.bootIfNotBooted()
+
+      const supplier = yield Supplier.find(savedSupplier[0])
+      yield supplier.related('account').load()
+      expect(queryHelpers.formatQuery(accountQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "accounts" where "supplier_id" = ? limit ?'))
+      expect(accountQuery.bindings).deep.equal([savedSupplier[0], 1])
+      expect(supplier.get('account') instanceof Account).to.equal(true)
+      yield relationFixtures.truncate(Database, 'suppliers')
+      yield relationFixtures.truncate(Database, 'accounts')
+    })
+
+    it('should clean the eagerLoad chain for a given model instance', function * () {
+      const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
+      yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
+
+      class Account extends Model {
+      }
+
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+      const supplier = yield Supplier.find(savedSupplier[0])
+      yield supplier.related('account').load()
+      expect(supplier.eagerLoad.withRelations).deep.equal([])
+      yield relationFixtures.truncate(Database, 'suppliers')
+      yield relationFixtures.truncate(Database, 'accounts')
+    })
+
+    it('should set relations to the final object when toJSON is called', function * () {
+      const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
+      yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
+
+      class Account extends Model {
+      }
+
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+      const supplier = yield Supplier.find(savedSupplier[0])
+      yield supplier.related('account').load()
+      const jsoned = supplier.toJSON()
+      expect(jsoned.account).to.be.an('object')
+      expect(jsoned.account.supplier_id).to.equal(jsoned.id)
       yield relationFixtures.truncate(Database, 'suppliers')
       yield relationFixtures.truncate(Database, 'accounts')
     })

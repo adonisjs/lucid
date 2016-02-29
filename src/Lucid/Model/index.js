@@ -24,6 +24,7 @@ const Dates = require('./Mixins/Dates')
 const Hooks = require('./Mixins/Hooks')
 const moment = require('moment')
 const HasOne = require('../Relations/HasOne')
+const EagerLoad = require('../Relations/EagerLoad')
 
 class ModelNotFoundException extends NE.LogicalException {}
 
@@ -72,6 +73,7 @@ class Model {
     this.attributes = {}
     this.original = {}
     this.relations = {}
+    this.eagerLoad = new EagerLoad()
     if (values) {
       this.setJSON(values)
     }
@@ -621,6 +623,45 @@ class Model {
   get (key) {
     return this.relations[key]
   }
+
+  /**
+   * this method will register relations to be eagerly loaded
+   * for a given model instance
+   *
+   * @return {Object} [description]
+   *
+   * @public
+   */
+  related () {
+    const relations = _.isArray(arguments[0]) ? arguments[0] : _.toArray(arguments)
+    this.eagerLoad.with(relations)
+    return this
+  }
+
+  /**
+   * this method will add scope to eagerly registered relations
+   * for a given model instance
+   *
+   * @return {Object} [description]
+   *
+   * @public
+   */
+  scope (key, callback) {
+    this.eagerLoad.appendScope(key, callback)
+    return this
+  }
+
+  /**
+   * here we load previously eagerly registered relations
+   *
+   * @public
+   */
+  * load () {
+    const eagerLoadResult = yield this.eagerLoad.load(this.attributes, this, true)
+    this.eagerLoad.mapRelationsToRow(eagerLoadResult, this, this.attributes)
+    this.eagerLoad = new EagerLoad()
+  }
+
 }
 
 class ExtendedModel extends mixin(Model, AccessorMutator, Serializer, Persistance, Dates, Hooks) {

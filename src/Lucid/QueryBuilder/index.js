@@ -1,7 +1,7 @@
 'use strict'
 
 /**
- * adonis-framework
+ * adonis-lucid
  *
  * (c) Harminder Virk <virk@adonisjs.com>
  *
@@ -10,6 +10,7 @@
 */
 
 const Database = require('../../Database')
+const EagerLoad = require('../Relations/EagerLoad')
 const proxyHandler = require('./proxyHandler')
 
 /**
@@ -25,12 +26,7 @@ class QueryBuilder {
     this.queryBuilder = Database.connection(this.HostModel.connection)
     this.modelQueryBuilder = this.queryBuilder(this.HostModel.table)
     this.avoidTrashed = false
-    this.eagerLoad = {
-      relations: [],
-      nestedRelations: {},
-      relationScopes: {},
-      nestedScopes: {}
-    }
+    this.eagerLoad = new EagerLoad()
     return new Proxy(this, proxyHandler)
   }
 }
