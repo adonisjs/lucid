@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
 */
 
+require('harmony-reflect')
 const mixin = require('es6-class-mixin')
 const NE = require('node-exceptions')
 const CatLog = require('cat-log')

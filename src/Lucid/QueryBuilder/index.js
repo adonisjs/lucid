@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
 */
 
+require('harmony-reflect')
 const Database = require('../../Database')
 const EagerLoad = require('../Relations/EagerLoad')
 const proxyHandler = require('./proxyHandler')

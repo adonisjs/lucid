@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
 */
 
+require('harmony-reflect')
 const proxyHandler = require('./proxyHandler')
 
 class Relation {
