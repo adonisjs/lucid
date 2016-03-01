@@ -1,7 +1,7 @@
 'use strict'
 
 /**
- * adonis-framework
+ * adonis-lucid
  *
  * (c) Harminder Virk <virk@adonisjs.com>
  *

@@ -9,33 +9,9 @@
  * file that was distributed with this source code.
 */
 
-const util = require('../../../lib/util')
+const helpers = require('./helpers')
 const _ = require('lodash')
 const methods = exports = module.exports = {}
-
-/**
- * this method override the original lodash toJSON method
- * as it will also call toJSON to child model instances
- * inside the final collection array.
- *
- * @method toJSON
- *
- * @param  {Object} values
- * @return {Object}
- *
- * @public
- */
-const toJSON = function (values) {
-  return util.lodash().transform(values, (result, value, index) => {
-    result[index] = value.toJSON()
-  })
-}
-
-/**
- * here we replace lodash toJSON with a custom implementation,
- * as we need to call to JSON to model instance too.
- */
-util.addMixin('toJSON', toJSON, {chain: false})
 
 /**
  * fetches query results and wrap it inside a collection
@@ -71,7 +47,7 @@ methods.fetch = function (target) {
      * here we convert an array to a collection, and making sure each
      * item inside an array is an instance of it's parent model.
      */
-    return util.toCollection(results).transform((result, value, index) => {
+    return helpers.toCollection(results).transform((result, value, index) => {
       const modelInstance = new target.HostModel()
       modelInstance.attributes = value
       modelInstance.original = _.clone(modelInstance.attributes)

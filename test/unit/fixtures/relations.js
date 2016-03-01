@@ -61,6 +61,20 @@ module.exports = {
         table.string('type')
         table.timestamps()
         table.timestamp('deleted_at').nullable()
+      }),
+      knex.schema.createTable('posts', function (table) {
+        table.increments()
+        table.string('title')
+        table.string('body')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
+      knex.schema.createTable('comments', function (table) {
+        table.increments()
+        table.integer('post_id')
+        table.string('body')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
       })
     ]
     return bluebird.all(tables)
@@ -73,7 +87,9 @@ module.exports = {
       knex.schema.dropTable('suppliers'),
       knex.schema.dropTable('all_accounts'),
       knex.schema.dropTable('all_suppliers'),
-      knex.schema.dropTable('users')
+      knex.schema.dropTable('users'),
+      knex.schema.dropTable('posts'),
+      knex.schema.dropTable('comments')
     ]
     return bluebird.all(tables)
   },

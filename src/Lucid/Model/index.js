@@ -25,6 +25,7 @@ const Dates = require('./Mixins/Dates')
 const Hooks = require('./Mixins/Hooks')
 const moment = require('moment')
 const HasOne = require('../Relations/HasOne')
+const HasMany = require('../Relations/HasMany')
 const EagerLoad = require('../Relations/EagerLoad')
 
 class ModelNotFoundException extends NE.LogicalException {}
@@ -610,6 +611,12 @@ class Model {
     primaryKey = primaryKey || this.constructor.primaryKey
     foreignKey = foreignKey || this.constructor.foreignKey
     return new HasOne(this, related, primaryKey, foreignKey)
+  }
+
+  hasMany (related, primaryKey, foreignKey) {
+    primaryKey = primaryKey || this.constructor.primaryKey
+    foreignKey = foreignKey || this.constructor.foreignKey
+    return new HasMany(this, related, primaryKey, foreignKey)
   }
 
   /**
