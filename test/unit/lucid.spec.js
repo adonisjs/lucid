@@ -542,7 +542,7 @@ describe('Lucid', function () {
       yield user.delete()
       expect(user.isDeleted()).to.equal(true)
       const fetchUser = yield User.query().where('id', 2)
-      expect(user.deleted_at).to.equal(undefined)
+      expect(user.deleted_at).to.equal(null)
       expect(fetchUser.length).to.equal(0)
     })
 
