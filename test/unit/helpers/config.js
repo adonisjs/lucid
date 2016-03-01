@@ -7,6 +7,7 @@
 */
 const path = require('path')
 const mysqlConnections = require('./mysqlConnections')
+const postgresConnection = require('./postgresConnection')
 const sqliteConnections = require('./sqliteConnections')
 
 module.exports = {
@@ -23,6 +24,10 @@ module.exports = {
       return mysqlConnections.default
     }
 
+    if (key === 'database.pg') {
+      return postgresConnection.default
+    }
+
     if (key === 'database.alternateConnection' && process.env.DB === 'sqlite3') {
       return sqliteConnections.alternateConnection
     }
@@ -30,5 +35,10 @@ module.exports = {
     if (key === 'database.alternateConnection' && process.env.DB === 'mysql') {
       return mysqlConnections.alternateConnection
     }
+
+    if (key === 'database.alternateConnection' && process.env.DB === 'pg') {
+      return postgresConnection.alternateConnection
+    }
+
   }
 }

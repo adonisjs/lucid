@@ -179,7 +179,7 @@ describe('Database provider', function () {
 
   it('should be able to commit transactions automatically', function * () {
     const response = yield Database.transaction(function * (trx) {
-      return yield trx.table('users').insert({username: 'auto-trx'})
+      return yield trx.table('users').insert({username: 'auto-trx'}).returning('id')
     })
     expect(response).to.be.an('array')
     expect(response.length).to.equal(1)

@@ -710,7 +710,7 @@ describe('Lucid', function () {
       }
       let users = yield User.all()
       const total = yield User.query().count('* as total')
-      expect(total[0].total).to.equal(users.size())
+      expect(parseInt(total[0].total)).to.equal(users.size())
     })
 
     it('should throw ModelNotFoundException when unable to find a record using findOrFail method', function * () {
