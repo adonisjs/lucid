@@ -26,6 +26,7 @@ const Hooks = require('./Mixins/Hooks')
 const moment = require('moment')
 const HasOne = require('../Relations/HasOne')
 const HasMany = require('../Relations/HasMany')
+const BelongsTo = require('../Relations/BelongsTo')
 const EagerLoad = require('../Relations/EagerLoad')
 
 class ModelNotFoundException extends NE.LogicalException {}
@@ -600,7 +601,7 @@ class Model {
    * returned instance will be responsible for
    * resolving relations
    *
-   * @param  {Object}  toModel
+   * @param  {Object}  related
    * @param  {String}  [primaryKey]
    * @param  {String}  [foreignKey]
    * @return {Object}
@@ -613,10 +614,40 @@ class Model {
     return new HasOne(this, related, primaryKey, foreignKey)
   }
 
+  /**
+   * returns hasMany instance for a given model. Later
+   * returned instance will be responsible for
+   * resolving relations
+   *
+   * @param  {Object}  related
+   * @param  {String}  [primaryKey]
+   * @param  {String}  [foreignKey]
+   * @return {Object}
+   *
+   * @public
+   */
   hasMany (related, primaryKey, foreignKey) {
     primaryKey = primaryKey || this.constructor.primaryKey
     foreignKey = foreignKey || this.constructor.foreignKey
     return new HasMany(this, related, primaryKey, foreignKey)
+  }
+
+  /**
+   * returns belongsTo instance for a given model. Later
+   * returned instance will be responsible for
+   * resolving relations
+   *
+   * @param  {Object}  related
+   * @param  {String}  [primaryKey]
+   * @param  {String}  [foreignKey]
+   * @return {Object}
+   *
+   * @public
+   */
+  belongsTo (related, primaryKey, foreignKey) {
+    primaryKey = primaryKey || related.primaryKey
+    foreignKey = foreignKey || related.foreignKey
+    return new BelongsTo(this, related, primaryKey, foreignKey)
   }
 
   /**
@@ -660,7 +691,7 @@ class Model {
   }
 
   /**
-   * here we load previously eagerly registered relations
+   * here we eagerly load previously registered relations
    *
    * @public
    */

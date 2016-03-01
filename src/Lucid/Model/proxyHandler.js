@@ -38,7 +38,7 @@ proxyHandler.get = function (target, name) {
    * otherwise we look into the attributes and return
    * value for a given attribute.
    */
-  if (target.attributes[name]) {
+  if (typeof(target.attributes[name]) !== 'undefined') {
     const timestampKey = target.getTimestampKey(name)
     if (timestampKey) {
       /**
