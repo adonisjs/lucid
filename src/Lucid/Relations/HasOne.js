@@ -177,29 +177,6 @@ class HasOne extends BaseRelation {
   saveMany () {
     throw CE.ModelRelationException.unSupportedMethod('saveMany', 'hasOne')
   }
-
-  /**
-   * will eager load the relation for multiple values on related
-   * model and returns an object with values grouped by foreign
-   * key. It is equivalent to eagerLoad but query defination
-   * is little different.
-   *
-   * @param  {Mixed} value
-   * @return {Object}
-   *
-   * @public
-   *
-   */
-  * eagerLoadSingle (value, scopeMethod) {
-    if (typeof (scopeMethod) === 'function') {
-      scopeMethod(this.relatedQuery)
-    }
-    const results = yield this.relatedQuery.where(this.toKey, value).first()
-    const response = {}
-    response[value] = results
-    return response
-  }
-
 }
 
 module.exports = HasOne

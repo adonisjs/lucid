@@ -18,6 +18,7 @@ const filesFixtures = require('./fixtures/files')
 const relationFixtures = require('./fixtures/relations')
 const config = require('./helpers/config')
 const HasOne = require('../../src/Lucid/Relations/HasOne')
+const HasMany = require('../../src/Lucid/Relations/HasMany')
 const queryHelpers = require('./helpers/query')
 require('co-mocha')
 
@@ -375,6 +376,36 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'all_accounts')
     })
 
+    it('should be able to resolve relations with different foriegnKey from model instance', function * () {
+      yield relationFixtures.createRecords(Database, 'suppliers', {name: 'redtape'})
+      yield relationFixtures.createRecords(Database, 'all_accounts', {name: 'redtape', supplier_regid: 1})
+      let relatedQuery = null
+      class Account extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            relatedQuery = query
+          })
+        }
+        static get table () {
+          return 'all_accounts'
+        }
+      }
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account, 'id', 'supplier_regid')
+        }
+      }
+      Account.bootIfNotBooted()
+      Supplier.bootIfNotBooted()
+      const supplier = yield Supplier.find(1)
+      const account = yield supplier.account().fetch()
+      expect(queryHelpers.formatQuery(relatedQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "all_accounts" where "supplier_regid" = ? limit ?'))
+      expect(relatedQuery.bindings).deep.equal([1, 1])
+      yield relationFixtures.truncate(Database, 'suppliers')
+      yield relationFixtures.truncate(Database, 'all_accounts')
+    })
+
     it('should be able to resolve relations with different primary and foriegnKey', function * () {
       yield relationFixtures.createRecords(Database, 'all_suppliers', {name: 'redtape', regid: 'rd'})
       yield relationFixtures.createRecords(Database, 'all_accounts', {name: 'redtape', supplier_regid: 'rd'})
@@ -412,6 +443,39 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(relatedQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "all_accounts" where "supplier_regid" in (?)'))
       expect(relatedQuery.bindings).deep.equal(['rd'])
       expect(supplier.regid).to.equal(supplier.get('account').supplier_regid)
+      yield relationFixtures.truncate(Database, 'all_suppliers')
+      yield relationFixtures.truncate(Database, 'all_accounts')
+    })
+
+    it('should be able to resolve relations with different primary and foriegnKey using model instance', function * () {
+      yield relationFixtures.createRecords(Database, 'all_suppliers', {name: 'redtape', regid: 'rd'})
+      yield relationFixtures.createRecords(Database, 'all_accounts', {name: 'redtape', supplier_regid: 'rd'})
+      let relatedQuery = null
+      class Account extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            relatedQuery = query
+          })
+        }
+        static get table () {
+          return 'all_accounts'
+        }
+      }
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account, 'regid', 'supplier_regid')
+        }
+        static get table () {
+          return 'all_suppliers'
+        }
+      }
+      Account.bootIfNotBooted()
+      Supplier.bootIfNotBooted()
+      const supplier = yield Supplier.find(1)
+      yield supplier.account().fetch()
+      expect(queryHelpers.formatQuery(relatedQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "all_accounts" where "supplier_regid" = ? limit ?'))
+      expect(relatedQuery.bindings).deep.equal(['rd', 1])
       yield relationFixtures.truncate(Database, 'all_suppliers')
       yield relationFixtures.truncate(Database, 'all_accounts')
     })
@@ -854,6 +918,150 @@ describe('Relations', function () {
       expect(jsoned.account.supplier_id).to.equal(jsoned.id)
       yield relationFixtures.truncate(Database, 'suppliers')
       yield relationFixtures.truncate(Database, 'accounts')
+    })
+  })
+
+  context('HasMany', function () {
+    it('should return an instance of HasMany when relation method has been called', function () {
+      class Comment extends Model {
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      const post = new Post()
+      expect(post.comments() instanceof HasMany).to.equal(true)
+    })
+
+    it('should be able to access query builder of related model', function () {
+      class Comment extends Model {
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      const post = new Post()
+      const relatedQuery = post.comments().where('is_draft', false).toSQL()
+      expect(queryHelpers.formatQuery(relatedQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "comments" where "is_draft" = ?'))
+      expect(relatedQuery.bindings).deep.equal([false])
+    })
+
+    it('should be able to fetch results from related model', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: `Let's learn Adonis`})
+      yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
+      let commentsQuery = null
+      class Comment extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            commentsQuery = query
+          })
+        }
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      Comment.bootIfNotBooted()
+      const post = yield Post.find(savedPost[0])
+      const comments = yield post.comments().fetch()
+      expect(queryHelpers.formatQuery(commentsQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "comments" where "post_id" = ?'))
+      expect(commentsQuery.bindings).deep.equal(savedPost)
+      expect(comments.toJSON()).to.be.an('array')
+      expect(comments.first() instanceof Comment).to.equal(true)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to eagerLoad results from related model', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: `Let's learn Adonis`})
+      yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
+      let commentsQuery = null
+      class Comment extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            commentsQuery = query
+          })
+        }
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      Comment.bootIfNotBooted()
+      const post = yield Post.query().with('comments').first()
+      expect(queryHelpers.formatQuery(commentsQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "comments" where "post_id" in (?)'))
+      expect(commentsQuery.bindings).deep.equal(savedPost)
+      expect(post.toJSON().comments).to.be.an('array')
+      expect(post.toJSON().comments[0].post_id).to.equal(post.toJSON().id)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to eagerLoad results from related model instance', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: `Let's learn Adonis`})
+      yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
+      let commentsQuery = null
+      class Comment extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            commentsQuery = query
+          })
+        }
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      Comment.bootIfNotBooted()
+      const post = yield Post.find(savedPost[0])
+      yield post.related('comments').load()
+      expect(queryHelpers.formatQuery(commentsQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "comments" where "post_id" = ?'))
+      expect(commentsQuery.bindings).deep.equal(savedPost)
+      const comments = post.get('comments')
+      expect(comments.toJSON()).to.be.an('array')
+      expect(comments.first() instanceof Comment).to.equal(true)
+      expect(comments.toJSON()[0].post_id).to.equal(post.id)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to eagerLoad multiple results for related model', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: `Let's learn Adonis`})
+      yield relationFixtures.createRecords(Database, 'comments', [{body: 'Nice article', post_id: savedPost[0]}, {body: 'Another article', post_id: savedPost[0]}])
+      let commentsQuery = null
+      class Comment extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            commentsQuery = query
+          })
+        }
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      Comment.bootIfNotBooted()
+      const post = yield Post.find(savedPost[0])
+      yield post.related('comments').load()
+      expect(queryHelpers.formatQuery(commentsQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "comments" where "post_id" = ?'))
+      expect(commentsQuery.bindings).deep.equal(savedPost)
+      const comments = post.get('comments')
+      expect(comments.toJSON()).to.be.an('array')
+      expect(comments.size()).to.equal(2)
+      expect(comments.value()[0] instanceof Comment).to.equal(true)
+      expect(comments.value()[1] instanceof Comment).to.equal(true)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
     })
   })
 })
