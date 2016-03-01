@@ -19,6 +19,7 @@ const relationFixtures = require('./fixtures/relations')
 const config = require('./helpers/config')
 const HasOne = require('../../src/Lucid/Relations/HasOne')
 const HasMany = require('../../src/Lucid/Relations/HasMany')
+const BelongsTo = require('../../src/Lucid/Relations/BelongsTo')
 const queryHelpers = require('./helpers/query')
 require('co-mocha')
 
@@ -785,6 +786,55 @@ describe('Relations', function () {
       done()
     })
 
+    it('should be able to save related model instance with different foriegnKey', function * () {
+      class Account extends Model {
+        static get table () {
+          return 'all_accounts'
+        }
+      }
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account, 'id', 'supplier_regid')
+        }
+      }
+      Supplier.bootIfNotBooted()
+      Account.bootIfNotBooted()
+      const supplier = new Supplier({name: 'redtape', id: 20})
+      yield supplier.save()
+      expect(supplier.id).not.to.equal(undefined)
+      const account = new Account({name: 'rdtp'})
+      yield supplier.account().save(account)
+      expect(account.supplier_regid).to.equal(supplier.id)
+      yield relationFixtures.truncate(Database, 'suppliers')
+      yield relationFixtures.truncate(Database, 'all_accounts')
+    })
+
+    it('should be able to save related model instance with different primary and foriegn key', function * () {
+      class Account extends Model {
+        static get table () {
+          return 'all_accounts'
+        }
+      }
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account, 'regid', 'supplier_regid')
+        }
+        static get table () {
+          return 'all_suppliers'
+        }
+      }
+      Supplier.bootIfNotBooted()
+      Account.bootIfNotBooted()
+      const supplier = new Supplier({name: 'redtape', regid: 102})
+      yield supplier.save()
+      expect(supplier.id).not.to.equal(undefined)
+      const account = new Account({name: 'rdtp'})
+      yield supplier.account().save(account)
+      expect(account.supplier_regid).to.equal(supplier.regid)
+      yield relationFixtures.truncate(Database, 'all_suppliers')
+      yield relationFixtures.truncate(Database, 'all_accounts')
+    })
+
     it('should throw an when save object is not an instance of related model', function * () {
       class Account extends Model {
       }
@@ -808,7 +858,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'suppliers')
     })
 
-    it('should throw an when actual model has not be saved', function * () {
+    it('should throw an error when actual model has not be saved', function * () {
       class Account extends Model {
       }
       class Supplier extends Model {
@@ -847,6 +897,31 @@ describe('Relations', function () {
 
       yield relationFixtures.truncate(Database, 'suppliers')
       yield relationFixtures.truncate(Database, 'accounts')
+    })
+
+    it('should be able to created related model using create method with different primary and foriegn key', function * () {
+      class Account extends Model {
+        static get table () {
+          return 'all_accounts'
+        }
+      }
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account, 'regid', 'supplier_regid')
+        }
+        static get table () {
+          return 'all_suppliers'
+        }
+      }
+      Supplier.bootIfNotBooted()
+      Account.bootIfNotBooted()
+      const supplier = new Supplier({name: 'reebok', regid: 190})
+      yield supplier.save()
+      expect(supplier.id).not.to.equal(undefined)
+      const account = yield supplier.account().create({name: 'bok'})
+      expect(account.supplier_regid).to.equal(supplier.regid)
+      yield relationFixtures.truncate(Database, 'all_suppliers')
+      yield relationFixtures.truncate(Database, 'all_accounts')
     })
 
     it('should be able to eagerLoad relations for a model instance', function * () {
@@ -1060,6 +1135,289 @@ describe('Relations', function () {
       expect(comments.size()).to.equal(2)
       expect(comments.value()[0] instanceof Comment).to.equal(true)
       expect(comments.value()[1] instanceof Comment).to.equal(true)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to save related model instance with proper foriegnKey', function * () {
+      class Comment extends Model {
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      const post = new Post()
+      post.title = 'Adonis 101'
+      post.body = 'A beginners guide to Adonis'
+      yield post.save()
+      expect(post.id).not.to.equal(undefined)
+      const comment = new Comment()
+      comment.body = 'Nice learning'
+      yield post.comments().save(comment)
+      expect(comment.post_id).to.equal(post.id)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+  })
+
+  context('BelongsTo', function () {
+    it('should return an instance of BelongsTo when relation method has been called', function () {
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const comment = new Comment()
+      expect(comment.post() instanceof BelongsTo).to.equal(true)
+    })
+
+    it('should have proper foriegn and primary keys from the related model', function () {
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const comment = new Comment()
+      expect(comment.post().toKey).to.equal('id')
+      expect(comment.post().fromKey).to.equal('post_id')
+    })
+
+    it('should be able to access query builder of related model', function () {
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const comment = new Comment()
+      const relatedQuery = comment.post().where('is_draft', false).toSQL()
+      expect(queryHelpers.formatQuery(relatedQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "posts" where "is_draft" = ?'))
+      expect(relatedQuery.bindings).deep.equal([false])
+    })
+
+    it('should be able to fetch results from related model', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis', id: 23})
+      const savedComment = yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
+      let postsQuery = null
+      class Post extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            postsQuery = query
+          })
+        }
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      Post.bootIfNotBooted()
+      const comment = yield Comment.find(savedComment[0])
+      const post = yield comment.post().fetch()
+      expect(queryHelpers.formatQuery(postsQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "posts" where "id" = ? limit ?'))
+      expect(postsQuery.bindings).deep.equal(savedPost.concat([1]))
+      expect(post instanceof Post).to.equal(true)
+      expect(comment.post_id).to.equal(post.id)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to eagerLoad results from related model', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis', id: 66})
+      const savedComment = yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
+      let postsQuery = null
+      class Post extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            postsQuery = query
+          })
+        }
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      Post.bootIfNotBooted()
+      const comment = yield Comment.query().where('id', savedComment[0]).with('post').first()
+      expect(queryHelpers.formatQuery(postsQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "posts" where "id" in (?)'))
+      expect(postsQuery.bindings).deep.equal(savedPost)
+      expect(comment instanceof Comment).to.equal(true)
+      expect(comment.get('post') instanceof Post).to.equal(true)
+      expect(comment.get('post').id).to.equal(comment.post_id).to.equal(66)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to eagerLoad multiple results from related model', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis', id: 24})
+      yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
+      yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      let comments = yield Comment.query().with('post').fetch()
+      comments = comments.toJSON()
+      expect(comments[0].post_id).to.equal(comments[0].post.id)
+      expect(comments[0].post_id).to.equal(comments[1].post_id)
+      expect(comments[1].post_id).to.equal(comments[1].post.id)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to eagerLoad multiple results with multiple parent model', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis', id: 24})
+      yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
+      const savedPost1 = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis', id: 66})
+      yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost1[0]})
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      let comments = yield Comment.query().with('post').fetch()
+      comments = comments.toJSON()
+      expect(comments[0].post_id).to.equal(comments[0].post.id)
+      expect(comments[0].post_id).not.to.equal(comments[1].post_id)
+      expect(comments[1].post_id).to.equal(comments[1].post.id)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to associate a related model', function * () {
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const post = new Post()
+      post.title = 'Adonis 101'
+      post.body = 'A nice post'
+      post.id = 66
+      yield post.save()
+      const comment = new Comment()
+      comment.body = 'I liked it'
+      comment.post().associate(post)
+      yield comment.save()
+      expect(comment.id).not.to.equal(undefined)
+      expect(comment.post_id).to.equal(post.id)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should throw an error when associate value is not an instance of related model', function * () {
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const post = {}
+      post.title = 'Adonis 101'
+      post.body = 'A nice post'
+      post.id = 66
+      const comment = new Comment()
+      comment.body = 'I liked it'
+      const fn = function () {
+        return comment.post().associate(post)
+      }
+      expect(fn).to.throw(/associate accepts an instance of related model/)
+    })
+
+    it('should throw an error when trying to associate a related model which is unsaved', function * () {
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const post = new Post()
+      post.title = 'Adonis 101'
+      post.body = 'A nice post'
+      const comment = new Comment()
+      comment.body = 'I liked it'
+      const fn = function () {
+        return comment.post().associate(post)
+      }
+      expect(fn).to.throw(/Cannot associate an unsaved related model/)
+    })
+
+    it('should throw an error when trying to call save method on a belongsTo relation', function * () {
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const post = new Post()
+      post.title = 'Adonis 101'
+      post.body = 'A nice post'
+      const comment = new Comment()
+      comment.body = 'I liked it'
+      try {
+        yield comment.post().save(post)
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationSaveException')
+        expect(e.message).to.match(/cannot call save method on a belongsTo relation/i)
+      }
+    })
+
+    it('should throw an error when trying to call create method on a belongsTo relation', function * () {
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const post = new Post()
+      post.title = 'Adonis 101'
+      post.body = 'A nice post'
+      const comment = new Comment()
+      comment.body = 'I liked it'
+      try {
+        yield comment.post().create(post)
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationSaveException')
+        expect(e.message).to.match(/cannot call create method on a belongsTo relation/i)
+      }
+    })
+
+    it('should be able to dissociate a related model', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis', id: 24})
+      const savedComment = yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const comment = yield Comment.find(savedComment[0])
+      comment.post().dissociate()
+      yield comment.save()
+      expect(comment.post_id).to.equal(null)
       yield relationFixtures.truncate(Database, 'posts')
       yield relationFixtures.truncate(Database, 'comments')
     })

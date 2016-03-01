@@ -79,22 +79,40 @@ class Relation {
     this.relatedQuery.scope(key, callback)
   }
 
+  /**
+   * saves a related model in reference to the parent model
+   * and sets up foriegn key automatically.
+   *
+   * @param  {Object} relatedInstance
+   * @return {Number}
+   *
+   * @public
+   */
   * save (relatedInstance) {
     if (relatedInstance instanceof this.related === false) {
       throw new ModelRelationSaveException('save accepts an instance of related model')
     }
-    if (!this.parent.$primaryKeyValue) {
+    if (!this.parent[this.fromKey]) {
       throw new ModelRelationSaveException('cannot save relation for an unsaved model instance')
     }
-    relatedInstance[this.toKey] = this.parent.$primaryKeyValue
+    relatedInstance[this.toKey] = this.parent[this.fromKey]
     return yield relatedInstance.save()
   }
 
+  /**
+   * initiates related model by passing values and saving them
+   * to the database
+   *
+   * @param  {Object} values
+   * @return {Object}
+   *
+   * @public
+   */
   * create (values) {
-    if (!this.parent.$primaryKeyValue) {
+    if (!this.parent[this.fromKey]) {
       throw new ModelRelationSaveException('cannot create relation for an unsaved model instance')
     }
-    values[this.toKey] = this.parent.$primaryKeyValue
+    values[this.toKey] = this.parent[this.fromKey]
     return yield this.related.create(values)
   }
 
