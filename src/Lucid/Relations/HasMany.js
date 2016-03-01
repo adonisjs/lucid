@@ -10,10 +10,7 @@
 */
 
 const Relation = require('./Relation')
-const NE = require('node-exceptions')
 const helpers = require('../QueryBuilder/helpers')
-class ModelRelationException extends NE.LogicalException {}
-class ModelRelationSaveException extends NE.LogicalException {}
 
 class HasMany extends Relation {
 

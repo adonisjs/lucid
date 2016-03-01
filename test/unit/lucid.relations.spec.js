@@ -399,7 +399,7 @@ describe('Relations', function () {
       Account.bootIfNotBooted()
       Supplier.bootIfNotBooted()
       const supplier = yield Supplier.find(1)
-      const account = yield supplier.account().fetch()
+      yield supplier.account().fetch()
       expect(queryHelpers.formatQuery(relatedQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "all_accounts" where "supplier_regid" = ? limit ?'))
       expect(relatedQuery.bindings).deep.equal([1, 1])
       yield relationFixtures.truncate(Database, 'suppliers')
@@ -949,7 +949,7 @@ describe('Relations', function () {
     })
 
     it('should be able to fetch results from related model', function * () {
-      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: `Let's learn Adonis`})
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
       yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
       let commentsQuery = null
       class Comment extends Model {
@@ -977,7 +977,7 @@ describe('Relations', function () {
     })
 
     it('should be able to eagerLoad results from related model', function * () {
-      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: `Let's learn Adonis`})
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
       yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
       let commentsQuery = null
       class Comment extends Model {
@@ -1004,7 +1004,7 @@ describe('Relations', function () {
     })
 
     it('should be able to eagerLoad results from related model instance', function * () {
-      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: `Let's learn Adonis`})
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
       yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
       let commentsQuery = null
       class Comment extends Model {
@@ -1034,7 +1034,7 @@ describe('Relations', function () {
     })
 
     it('should be able to eagerLoad multiple results for related model', function * () {
-      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: `Let's learn Adonis`})
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
       yield relationFixtures.createRecords(Database, 'comments', [{body: 'Nice article', post_id: savedPost[0]}, {body: 'Another article', post_id: savedPost[0]}])
       let commentsQuery = null
       class Comment extends Model {
@@ -1062,6 +1062,25 @@ describe('Relations', function () {
       expect(comments.value()[1] instanceof Comment).to.equal(true)
       yield relationFixtures.truncate(Database, 'posts')
       yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to save related model instance with proper foriegnKey', function * () {
+      class Comment extends Model {
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      const post = new Post()
+      post.title = 'Adonis 101'
+      post.body = 'A beginners guide to Adonis'
+      yield post.save()
+      expect(post.id).not.to.equal(undefined)
+      const comment = new Comment()
+      comment.body = 'Nice learning'
+      yield post.comments().save(comment)
+      expect(comment.post_id).to.equal(post.id)
     })
   })
 })

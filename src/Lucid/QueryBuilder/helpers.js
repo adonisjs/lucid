@@ -36,7 +36,6 @@ const toJSON = function (values) {
  */
 util.addMixin('toJSON', toJSON, {chain: false})
 
-
 /**
  * looks for dynamic scope method on model defination
  *

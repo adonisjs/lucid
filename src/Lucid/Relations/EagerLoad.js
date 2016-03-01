@@ -20,6 +20,11 @@ class EagerLoad {
     this.instantiate()
   }
 
+  /**
+   * instantiate instance by setting defaults for the class
+   *
+   * @method instantiate
+   */
   instantiate () {
     this.withRelations = []
     this.withNestedRelations = {}
@@ -27,6 +32,11 @@ class EagerLoad {
     this.nestedRelationsScope = {}
   }
 
+  /**
+   * reset the instance back to it's original state
+   *
+   * @method reset
+   */
   reset () {
     this.instantiate()
   }
@@ -69,6 +79,8 @@ class EagerLoad {
    * @param  {Object}             parent
    * @return {Object}
    *
+   * @throws {ModelRelationNotFound} If relationship is not defined on model
+   *
    * @private
    */
   _getRelationInstance (relationKey, parent) {
@@ -79,6 +91,20 @@ class EagerLoad {
     return relation.apply(parent)
   }
 
+  /**
+   * returns relationship instance of a relation when relation is called
+   * from a static method instance of model instance.
+   *
+   * @method _getRelationProtoInstance
+   *
+   * @param  {String}                  relationKey
+   * @param  {Object}                  parent
+   * @return {Object}
+   *
+   * @throws {ModelRelationNotFound} If relationship is not defined on model
+   *
+   * @public
+   */
   _getRelationProtoInstance (relationKey, parent) {
     const relation = parent.prototype[relationKey]
     if (typeof (relation) !== 'function') {
