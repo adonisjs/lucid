@@ -29,7 +29,7 @@ class Relation {
    * @public
    */
   first () {
-    if (!this.parent.$primaryKeyValue) {
+    if (!this.parent[this.fromKey]) {
       throw new ModelRelationException('cannot fetch related model from an unsaved model instance')
     }
     this.relatedQuery.where(this.toKey, this.parent[this.fromKey])
@@ -44,7 +44,7 @@ class Relation {
    * @public
    */
   fetch () {
-    if (!this.parent.$primaryKeyValue) {
+    if (!this.parent[this.fromKey]) {
       throw new ModelRelationException('cannot fetch related model from an unsaved model instance')
     }
     this.relatedQuery.where(this.toKey, this.parent[this.fromKey])
