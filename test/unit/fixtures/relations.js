@@ -75,6 +75,23 @@ module.exports = {
         table.string('body')
         table.timestamps()
         table.timestamp('deleted_at').nullable()
+      }),
+      knex.schema.createTable('students', function (table) {
+        table.increments()
+        table.string('name')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
+      knex.schema.createTable('courses', function (table) {
+        table.increments()
+        table.string('title')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
+      knex.schema.createTable('course_student', function (table) {
+        table.integer('student_id')
+        table.integer('course_id')
+        table.boolean('is_enrolled')
       })
     ]
     return bluebird.all(tables)
@@ -89,11 +106,17 @@ module.exports = {
       knex.schema.dropTable('all_suppliers'),
       knex.schema.dropTable('users'),
       knex.schema.dropTable('posts'),
-      knex.schema.dropTable('comments')
+      knex.schema.dropTable('comments'),
+      knex.schema.dropTable('courses'),
+      knex.schema.dropTable('students'),
+      knex.schema.dropTable('course_student')
     ]
     return bluebird.all(tables)
   },
   createRecords: function * (knex, table, values) {
+    if (table === 'course_student') {
+      return yield knex.table(table).insert(values)
+    }
     return yield knex.table(table).insert(values).returning('id')
   },
   truncate: function * (knex, table) {

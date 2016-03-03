@@ -27,6 +27,7 @@ const moment = require('moment')
 const HasOne = require('../Relations/HasOne')
 const HasMany = require('../Relations/HasMany')
 const BelongsTo = require('../Relations/BelongsTo')
+const BelongsToMany = require('../Relations/BelongsToMany')
 const EagerLoad = require('../Relations/EagerLoad')
 
 class ModelNotFoundException extends NE.LogicalException {}
@@ -651,6 +652,29 @@ class Model {
   }
 
   /**
+   * returns belongsTo instance for a given model. Later
+   * returned instance will be responsible for
+   * resolving relations
+   *
+   * @param  {Object}      related
+   * @param  {String}      [pivotTable]
+   * @param  {String}      [pivotLocalKey]
+   * @param  {String}      [pivotOtherKey]
+   * @param  {String}      [primaryKey]
+   * @return {Object}
+   *
+   * @public
+   */
+  belongsToMany (related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey) {
+    pivotTable = pivotTable || util.makePivotTableName(this.constructor, related)
+    pivotLocalKey = pivotLocalKey || util.makePivotModelKey(this.constructor)
+    pivotOtherKey = pivotOtherKey || util.makePivotModelKey(related)
+    primaryKey = primaryKey || this.constructor.primaryKey
+    relatedPrimaryKey = relatedPrimaryKey || related.primaryKey
+    return new BelongsToMany(this, related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey)
+  }
+
+  /**
    * returns eagerly loaded relation for a given model
    * instance
    *
@@ -667,7 +691,7 @@ class Model {
    * this method will register relations to be eagerly loaded
    * for a given model instance
    *
-   * @return {Object} [description]
+   * @return {Object}
    *
    * @public
    */
@@ -681,7 +705,7 @@ class Model {
    * this method will add scope to eagerly registered relations
    * for a given model instance
    *
-   * @return {Object} [description]
+   * @return {Object}
    *
    * @public
    */

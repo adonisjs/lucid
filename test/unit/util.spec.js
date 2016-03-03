@@ -120,4 +120,37 @@ describe('Utils', function () {
     expect(_.isFunction(_.foo)).to.equal(false)
     expect(_.isFunction(util.lodash().foo)).to.equal(true)
   })
+
+  it('should make a pivot table name for two models', function () {
+    class Student {}
+    class Course {}
+    const pivotTable = util.makePivotTableName(Student, Course)
+    expect(pivotTable).to.equal('course_student')
+  })
+
+  it('should make a pivot table name for two models when model names are plural', function () {
+    class Students {}
+    class Courses {}
+    const pivotTable = util.makePivotTableName(Students, Courses)
+    expect(pivotTable).to.equal('course_student')
+  })
+
+  it('should make a pivot table name for two models when model name is in pascal case', function () {
+    class AdminUsers {}
+    class Roles {}
+    const pivotTable = util.makePivotTableName(AdminUsers, Roles)
+    expect(pivotTable).to.equal('admin_user_role')
+  })
+
+  it('should make proper pivotTable key name for a given model', function () {
+    class AdminUser {}
+    const pivotKey = util.makePivotModelKey(AdminUser)
+    expect(pivotKey).to.equal('admin_user_id')
+  })
+
+  it('should make proper pivotTable key name for a given model when model name is plural', function () {
+    class AdminUsers {}
+    const pivotKey = util.makePivotModelKey(AdminUsers)
+    expect(pivotKey).to.equal('admin_user_id')
+  })
 })
