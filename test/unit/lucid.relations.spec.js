@@ -116,7 +116,7 @@ describe('Relations', function () {
         yield supplier.account().where('age', 22).fetch()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.message).to.match(/cannot fetch related model from an unsaved model instance/)
+        expect(e.message).to.match(/cannot fetch related model from an unsaved model instance/i)
       }
     })
 
@@ -1339,7 +1339,7 @@ describe('Relations', function () {
       const fn = function () {
         return comment.post().associate(post)
       }
-      expect(fn).to.throw(/associate accepts an instance of related model/)
+      expect(fn).to.throw(/associate accepts an instance of related model/i)
     })
 
     it('should throw an error when trying to associate a related model which is unsaved', function * () {
@@ -1358,7 +1358,7 @@ describe('Relations', function () {
       const fn = function () {
         return comment.post().associate(post)
       }
-      expect(fn).to.throw(/Cannot associate an unsaved related model/)
+      expect(fn).to.throw(/Cannot associate an unsaved related model/i)
     })
 
     it('should throw an error when trying to call save method on a belongsTo relation', function * () {
@@ -1675,6 +1675,29 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
+    it('should throw an error when not passing array of object to the attach method', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      expect(student instanceof Student).to.equal(true)
+      expect(student.id).to.equal(savedStudent[0])
+      try {
+        yield student.courses().attach('foo')
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationAttachException')
+        expect(e.message).to.match(/attach expects an array or an object of values to be attached/i)
+      }
+      yield relationFixtures.truncate(Database, 'students')
+    })
+
     it('should be able to attach related models with their ids', function * () {
       const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
       const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12})
@@ -1855,6 +1878,85 @@ describe('Relations', function () {
       yield student.courses().detach()
       const courses = yield student.courses().fetch()
       expect(courses.size()).to.equal(0)
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should be detach all mappings from pivot table and attach the given ones', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12})
+      const savedCourse1 = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 38})
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse[0]}])
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      expect(student instanceof Student).to.equal(true)
+      expect(student.id).to.equal(savedStudent[0])
+      const courses = yield student.courses().fetch()
+      expect(courses.size()).to.equal(1)
+      expect(courses.first()._pivot_course_id).to.equal(savedCourse[0])
+      expect(courses.first()._pivot_student_id).to.equal(savedStudent[0])
+      yield student.courses().sync(savedCourse1)
+
+      const newCourses = yield student.courses().fetch()
+      expect(newCourses.size()).to.equal(1)
+      expect(newCourses.first()._pivot_course_id).to.equal(savedCourse1[0])
+      expect(newCourses.first()._pivot_student_id).to.equal(savedStudent[0])
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should be able create a related model and put relation into pivot table', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      expect(student instanceof Student).to.equal(true)
+      expect(student.id).to.equal(savedStudent[0])
+      const course = yield student.courses().create({title: 'chemistry'})
+      expect(course.id).not.to.equal(undefined)
+      expect(course._pivot_student_id).to.equal(student.id)
+      expect(course._pivot_course_id).to.equal(course.id)
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should consider pivot properties as dirty properties', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      expect(student instanceof Student).to.equal(true)
+      expect(student.id).to.equal(savedStudent[0])
+      const course = yield student.courses().create({title: 'chemistry'})
+      expect(course.$dirty).deep.equal({})
+
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
       yield relationFixtures.truncate(Database, 'course_student')

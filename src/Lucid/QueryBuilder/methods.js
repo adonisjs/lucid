@@ -32,6 +32,12 @@ methods.fetch = function (target) {
      */
     const globalScope = target.HostModel.globalScope
     let eagerlyFetched = []
+
+    /**
+     * call all global scopes before executing the query
+     * chain. This is the last time someone can modify
+     * the existing query chain
+     */
     if (_.size(globalScope)) {
       _.each(globalScope, (scopeMethod) => {
         scopeMethod(this)
@@ -39,6 +45,11 @@ methods.fetch = function (target) {
     }
 
     let results = yield target.modelQueryBuilder
+
+    /**
+     * eagerly fetch all relations which are set for eagerLoad and
+     * also the previous query execution returned some results.
+     */
     if (_.size(target.eagerLoad.withRelations) && _.size(results)) {
       eagerlyFetched = yield target.eagerLoad.load(results, target.HostModel)
     }
