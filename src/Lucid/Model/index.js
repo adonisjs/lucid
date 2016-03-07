@@ -530,7 +530,7 @@ class Model {
    */
   get $dirty () {
     return _.pickBy(this.attributes, (value, key) => {
-      return typeof (this.original[key]) === 'undefined' || this.original[key] !== value
+      return (typeof (this.original[key]) === 'undefined' || this.original[key] !== value) && !key.startsWith('_pivot_')
     })
   }
 

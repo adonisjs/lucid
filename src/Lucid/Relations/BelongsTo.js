@@ -11,6 +11,8 @@
 
 const Relation = require('./Relation')
 const NE = require('node-exceptions')
+const CatLog = require('cat-log')
+const logger = new CatLog('adonis:lucid')
 class ModelRelationAssociateException extends NE.LogicalException {}
 class ModelRelationSaveException extends NE.LogicalException {}
 
@@ -67,10 +69,13 @@ class BelongsTo extends Relation {
    */
   associate (relatedInstance) {
     if (relatedInstance instanceof this.related === false) {
-      throw new ModelRelationAssociateException('associate accepts an instance of related model')
+      throw new ModelRelationAssociateException('Associate accepts an instance of related model')
+    }
+    if (relatedInstance.isNew()) {
+      throw new ModelRelationAssociateException('Cannot associate an unsaved related model')
     }
     if (!relatedInstance[this.toKey]) {
-      throw new ModelRelationAssociateException('Cannot associate an unsaved related model')
+      logger.warn(`Trying to associate relationship with ${this.toKey} as foriegnKey, whose value is falsy`)
     }
     this.parent[this.fromKey] = relatedInstance[this.toKey]
   }

@@ -16,9 +16,13 @@ const moment = require('moment')
  * sets create timestamp on an object of values only
  * if create timestamps are enabled by a given
  * model.
+ *
  * @method setCreateTimestamp
- * @param  {Obhect}           values
+ *
+ * @param  {Object}           values
  * @return {Object}
+ *
+ * @public
  */
 Dates.setCreateTimestamp = function (values) {
   if (this.constructor.createTimestamp) {
@@ -34,7 +38,7 @@ Dates.setCreateTimestamp = function (values) {
  *
  * @method setUpdateTimestamp
  *
- * @param  {Obhect}           values
+ * @param  {Object}           values
  * @return {Object}
  *
  * @public
@@ -53,7 +57,7 @@ Dates.setUpdateTimestamp = function (values) {
  *
  * @method setDeleteTimestamp
  *
- * @param  {Obhect}           values
+ * @param  {Object}           values
  * @return {Object}
  *
  * @public

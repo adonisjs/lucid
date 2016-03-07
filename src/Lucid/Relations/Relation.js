@@ -11,6 +11,8 @@
 
 require('harmony-reflect')
 const proxyHandler = require('./proxyHandler')
+const CatLog = require('cat-log')
+const logger = new CatLog('adonis:lucid')
 const NE = require('node-exceptions')
 class ModelRelationException extends NE.LogicalException {}
 class ModelRelationSaveException extends NE.LogicalException {}
@@ -29,8 +31,11 @@ class Relation {
    * @public
    */
   first () {
+    if (this.parent.isNew()) {
+      throw new ModelRelationException('Cannot fetch related model from an unsaved model instance')
+    }
     if (!this.parent[this.fromKey]) {
-      throw new ModelRelationException('cannot fetch related model from an unsaved model instance')
+      logger.warn(`Trying to fetch relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
     }
     this.relatedQuery.where(this.toKey, this.parent[this.fromKey])
     return this.relatedQuery.first()
@@ -44,8 +49,11 @@ class Relation {
    * @public
    */
   fetch () {
+    if (this.parent.isNew()) {
+      throw new ModelRelationException('Cannot fetch related model from an unsaved model instance')
+    }
     if (!this.parent[this.fromKey]) {
-      throw new ModelRelationException('cannot fetch related model from an unsaved model instance')
+      logger.warn(`Trying to fetch relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
     }
     this.relatedQuery.where(this.toKey, this.parent[this.fromKey])
     return this.relatedQuery.fetch()
@@ -90,10 +98,13 @@ class Relation {
    */
   * save (relatedInstance) {
     if (relatedInstance instanceof this.related === false) {
-      throw new ModelRelationSaveException('save accepts an instance of related model')
+      throw new ModelRelationSaveException('Save accepts an instance of related model')
+    }
+    if (this.parent.isNew()) {
+      throw new ModelRelationSaveException('Cannot save relation for an unsaved model instance')
     }
     if (!this.parent[this.fromKey]) {
-      throw new ModelRelationSaveException('cannot save relation for an unsaved model instance')
+      logger.warn(`Trying to save relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
     }
     relatedInstance[this.toKey] = this.parent[this.fromKey]
     return yield relatedInstance.save()
@@ -109,11 +120,10 @@ class Relation {
    * @public
    */
   * create (values) {
-    if (!this.parent[this.fromKey]) {
-      throw new ModelRelationSaveException('cannot create relation for an unsaved model instance')
-    }
-    values[this.toKey] = this.parent[this.fromKey]
-    return yield this.related.create(values)
+    const RelatedModel = this.related
+    const relatedInstance = new RelatedModel(values)
+    yield this.save(relatedInstance)
+    return relatedInstance
   }
 
 }

@@ -13,6 +13,8 @@ const Relation = require('./Relation')
 const NE = require('node-exceptions')
 const _ = require('lodash')
 const helpers = require('../QueryBuilder/helpers')
+const CatLog = require('cat-log')
+const logger = new CatLog('adonis:lucid')
 class ModelRelationException extends NE.LogicalException {}
 class ModelRelationSaveException extends NE.LogicalException {}
 class ModelRelationAttachException extends NE.LogicalException {}
@@ -25,13 +27,19 @@ class BelongsToMany extends Relation {
     this.parent = parent
     this.related = related
     this.relatedQuery = this.related.query()
-    this.pivotTable = pivotTable
-    this.toKey = relatedPrimaryKey
-    this.fromKey = primaryKey
-    this.pivotLocalKey = pivotLocalKey
-    this.pivotOtherKey = pivotOtherKey
+    this.pivotTable = pivotTable // post_comment
+    this.toKey = relatedPrimaryKey // comments -> id
+    this.fromKey = primaryKey // post -> id
+    this.pivotLocalKey = pivotLocalKey // post_id
+    this.pivotOtherKey = pivotOtherKey // comment_id
     this.pivotPrefix = '_pivot_'
     this.pivotItems = []
+
+    /**
+     * helper method to query the pivot table. One
+     * can also do it manually by prefixing the
+     * pivot table name.
+     */
     this.relatedQuery.wherePivot = function () {
       const args = _.toArray(arguments)
       args[0] = `${self.pivotTable}.${args[0]}`
@@ -39,6 +47,12 @@ class BelongsToMany extends Relation {
     }
   }
 
+  /**
+   * makes the join query to be used by other
+   * methods.
+   *
+   * @public
+   */
   _makeJoinQuery () {
     const self = this
     const selectionKeys = [
@@ -66,8 +80,11 @@ class BelongsToMany extends Relation {
    * @public
    */
   fetch () {
+    if (this.parent.isNew()) {
+      throw new ModelRelationException('Cannot fetch related model from an unsaved model instance')
+    }
     if (!this.parent[this.fromKey]) {
-      throw new ModelRelationException('cannot fetch related model from an unsaved model instance')
+      logger.warn(`Trying to fetch relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
     }
     this._makeJoinQuery()
     this.relatedQuery.where(`${this.pivotTable}.${this.pivotLocalKey}`, this.parent[this.fromKey])
@@ -84,8 +101,11 @@ class BelongsToMany extends Relation {
    * @public
    */
   first () {
+    if (this.parent.isNew()) {
+      throw new ModelRelationException('Cannot fetch related model from an unsaved model instance')
+    }
     if (!this.parent[this.fromKey]) {
-      throw new ModelRelationException('cannot fetch related model from an unsaved model instance')
+      logger.warn(`Trying to fetch relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
     }
     this._makeJoinQuery()
     this.relatedQuery.where(`${this.pivotTable}.${this.pivotLocalKey}`, this.parent[this.fromKey])
@@ -157,8 +177,17 @@ class BelongsToMany extends Relation {
    */
   * attach (references, pivotValues) {
     pivotValues = pivotValues || {}
+
+    if (!_.isArray(references) && !_.isObject(references)) {
+      throw new ModelRelationAttachException('attach expects an array or an object of values to be attached')
+    }
+
+    if (this.parent.isNew()) {
+      throw new ModelRelationAttachException('Cannot attach values for an unsaved model instance')
+    }
+
     if (!this.parent[this.fromKey]) {
-      throw new ModelRelationAttachException('cannot attach values for an unsaved model')
+      logger.warn(`Trying to attach values with ${this.fromKey} as primaryKey, whose value is falsy`)
     }
 
     if (_.isArray(references)) {
@@ -178,17 +207,57 @@ class BelongsToMany extends Relation {
     yield this.relatedQuery.queryBuilder.table(this.pivotTable).insert(values)
   }
 
+  /**
+   * removes the relationship stored inside a pivot table. If
+   * references are not defined all relationships will be
+   * deleted
+   * @method detach
+   * @param  {Array} [references]
+   * @return {Number}
+   *
+   * @public
+   */
   * detach (references) {
+    if (this.parent.isNew()) {
+      throw new ModelRelationException('Cannot detach values for an unsaved model instance')
+    }
     if (!this.parent[this.fromKey]) {
-      throw new ModelRelationAttachException('cannot detach values for an unsaved model')
+      logger.warn(`Trying to attach values with ${this.fromKey} as primaryKey, whose value is falsy`)
     }
     const query = this.relatedQuery.queryBuilder.table(this.pivotTable).where(`${this.pivotLocalKey}`, this.parent[this.fromKey])
+
+    /**
+     * if references have been passed, then only remove them
+     */
     if (_.isArray(references)) {
       query.whereIn(`${this.pivotOtherKey}`, references)
     }
     return yield query.delete()
   }
 
+  /**
+   * shorthand for detach and then attach
+   *
+   * @param  {Array} [references]
+   * @param  {Object} [pivotValues]
+   * @return {Number}
+   *
+   * @public
+   */
+  * sync (references, pivotValues) {
+    yield this.detach()
+    return yield this.attach(references, pivotValues)
+  }
+
+  /**
+   * saves the related model and creates the relationship
+   * inside the pivot table.
+   *
+   * @param  {Object} relatedInstance
+   * @return {Boolean}
+   *
+   * @public
+   */
   * save (relatedInstance) {
     if (relatedInstance instanceof this.related === false) {
       throw new ModelRelationSaveException('save accepts an instance of related model')
@@ -203,6 +272,21 @@ class BelongsToMany extends Relation {
     relatedInstance[`${this.pivotPrefix}${this.pivotLocalKey}`] = this.parent[this.fromKey]
     relatedInstance[`${this.pivotPrefix}${this.pivotOtherKey}`] = relatedInstance[this.toKey]
     return isSaved
+  }
+
+  /**
+   * creates the related model instance and calls save on it
+   *
+   * @param  {Object} values
+   * @return {Boolean}
+   *
+   * @public
+   */
+  * create (values) {
+    const RelatedModel = this.related
+    const relatedInstance = new RelatedModel(values)
+    yield this.save(relatedInstance)
+    return relatedInstance
   }
 
 }
