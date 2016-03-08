@@ -39,6 +39,5 @@ module.exports = {
     if (key === 'database.alternateConnection' && process.env.DB === 'pg') {
       return postgresConnection.alternateConnection
     }
-
   }
 }
