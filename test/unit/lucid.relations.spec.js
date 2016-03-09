@@ -13,6 +13,7 @@
 const Model = require('../../src/Lucid/Model')
 const Database = require('../../src/Database')
 const chai = require('chai')
+const Ioc = require('adonis-fold').Ioc
 const expect = chai.expect
 const filesFixtures = require('./fixtures/files')
 const relationFixtures = require('./fixtures/relations')
@@ -43,6 +44,21 @@ describe('Relations', function () {
       class Supplier extends Model {
         account () {
           return this.hasOne(Account)
+        }
+      }
+      const supplier = new Supplier()
+      expect(supplier.account() instanceof HasOne).to.equal(true)
+    })
+
+    it('should return an instance of HasOne when relation is a namespace', function () {
+      class Account extends Model {
+      }
+      Ioc.bind('App/Account', function () {
+        return Account
+      })
+      class Supplier extends Model {
+        account () {
+          return this.hasOne('App/Account')
         }
       }
       const supplier = new Supplier()

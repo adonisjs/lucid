@@ -14,11 +14,14 @@ const proxyHandler = require('./proxyHandler')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
 const NE = require('node-exceptions')
+const Ioc = require('adonis-fold').Ioc
 const CE = require('../Model/customExceptions')
 
 class Relation {
 
-  constructor () {
+  constructor (parent, related) {
+    this.parent = parent
+    this.related = typeof (related) === 'string' ? Ioc.use(related) : related
     return new Proxy(this, proxyHandler)
   }
 
