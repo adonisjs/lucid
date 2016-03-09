@@ -179,7 +179,7 @@ class Model {
 
     this.addGlobalScope((builder) => {
       if (this.deleteTimestamp && !builder.avoidTrashed) {
-        builder.where(`${this.table}.${this.deleteTimestamp}`, null)
+        builder.whereNull(`${this.table}.${this.deleteTimestamp}`)
       }
     })
   }
@@ -724,7 +724,6 @@ class Model {
     this.eagerLoad.mapRelationsToRow(eagerLoadResult, this, this.attributes)
     this.eagerLoad.reset()
   }
-
 }
 
 class ExtendedModel extends mixin(Model, AccessorMutator, Serializer, Persistance, Dates, Hooks) {

@@ -72,9 +72,11 @@ const Database = {}
 
 /**
  * sets the config provider for database module
- * @method _setConfigProvider. It is set while registering
- * it inside the IOC container. So no one will ever to
+ * It is set while registering it inside the
+ * IOC container. So no one will ever to
  * deal with it manaully.
+ *
+ * @method _setConfigProvider.
  *
  * @param  {Object}           Config
  *
@@ -88,6 +90,7 @@ Database._setConfigProvider = function (Config) {
  * returns configuration for a given connection name
  *
  * @method getConfig
+ *
  * @param  {String}  connection
  * @return {Object}
  *
@@ -104,11 +107,11 @@ Database._getConfig = function (connection) {
 }
 
 /**
- * returns knex instance for a given connection
- * if it exists it's fine, otherwise a pool is created and
- * returned
+ * returns knex instance for a given connection if it
+ * does not exists pool is created and returned.
  *
  * @method getConnection
+ *
  * @param  {String}      connection
  * @return {Object}
  *
@@ -122,6 +125,9 @@ Database._getConnection = function (connection) {
     }
     const client = knex(config)
     const rawTransaction = client.transaction
+    /**
+     * adding custom methods to the query builder
+     */
     client.transaction = Database.transaction(rawTransaction)
     client.on('start', _emitSql)
     client.beginTransaction = Database.beginTransaction(rawTransaction)
@@ -134,14 +140,11 @@ Database._getConnection = function (connection) {
 }
 
 /**
- * creates a connection pool for a given connection
- * if does not exists and returns the knex instance
- * for a given connection defined inside database
- * config file.
+ * Returns knex client for a given connection.
  *
  * @method connection
- * @param  {String}   connection Name of the connection to return pool
- *                               instance for
+ *
+ * @param  {String}   connection
  * @return {Object}
  *
  * @example
@@ -173,8 +176,8 @@ Database.getConnectionPools = function () {
  *
  * @method close
  *
- * @param {String} [connection] connection name to close, if not provided all
- *                              connections will get closed.
+ * @param {String} [connection] name of the connection to close, if not provided
+ *                               all connections will get closed.
  * @return {void}
  *
  * @public
@@ -350,7 +353,7 @@ Database.chunk = function * (limit, cb, page) {
  *
  * @private
  */
-const methodsNotToProxy = ['_getConfig', '_setConfigProvider', 'getConnectionPools', 'connection', 'close']
+const customImplementations = ['_getConfig', '_setConfigProvider', 'getConnectionPools', 'connection', 'close']
 
 /**
  * Proxy handler to proxy methods and send
@@ -361,11 +364,11 @@ const methodsNotToProxy = ['_getConfig', '_setConfigProvider', 'getConnectionPoo
  * @private
  */
 const DatabaseProxy = {
-  get: function (target, method) {
-    if (methodsNotToProxy.indexOf(method) > -1) {
-      return target[method]
+  get: function (target, name) {
+    if (customImplementations.indexOf(name) > -1) {
+      return target[name]
     }
-    return Database._getConnection('default')[method]
+    return Database._getConnection('default')[name]
   }
 }
 

@@ -106,8 +106,8 @@ methods.updateAttributes = function (target) {
 methods.update = methods.updateAttributes
 
 /**
- * deletes rows inside the database only. When soft deletes are
- * on it will rather update the model with delete timestamp.
+ * deletes rows inside the database only when soft deletes are enabled.
+ * Otherwise it will update the model with delete timestamp.
  * This methods does not run bulkDelete hooks.
  *
  * @method deleteAttributes
@@ -177,7 +177,7 @@ methods.withTrashed = function (target) {
 methods.onlyTrashed = function (target) {
   return function () {
     this.avoidTrashed = true
-    this.whereNot(target.HostModel.deleteTimestamp, null)
+    this.whereNotNull(target.HostModel.deleteTimestamp)
     return this
   }
 }
