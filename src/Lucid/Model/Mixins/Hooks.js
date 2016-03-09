@@ -11,6 +11,7 @@
 
 const Hooks = exports = module.exports = {}
 const _ = require('lodash')
+const Ioc = require('adonis-fold').Ioc
 
 /**
  * compose hooks for a given type by reading values
@@ -57,7 +58,11 @@ Hooks.composeHooks = function (scope, hooks) {
     next = next || noop()
     let i = hooks.length
     while (i--) {
-      const hook = hooks[i]
+      let hook = hooks[i]
+      if (typeof (hooks[i]) === 'string') {
+        const resolvedHook = Ioc.makeFunc(hooks[i])
+        hook = resolvedHook.instance[resolvedHook.method]
+      }
       next = hook.apply(scope, [next])
     }
     yield * next
