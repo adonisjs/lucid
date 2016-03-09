@@ -129,6 +129,16 @@ describe('Lucid', function () {
   })
 
   context('QueryBuilder', function () {
+    it('should throw an error when not binding a function to onQuery event listener', function () {
+      class User extends Model {
+      }
+      User.bootIfNotBooted()
+      const fn = function () {
+        User.onQuery('foo')
+      }
+      expect(fn).to.throw(/onQuery only excepts a callback function/)
+    })
+
     it('should return query builder instance when .query method is called', function () {
       class User extends Model {}
       const query = User.query()
@@ -550,6 +560,24 @@ describe('Lucid', function () {
       expect(user.status).to.equal('active')
       expect(user.deleted_at).to.equal(null)
       expect(user.isDeleted()).to.equal(false)
+    })
+
+    it('should throw an error when soft deletes are not enabled and trying to restore a model instance', function * () {
+      class User extends Model {
+      }
+      User.bootIfNotBooted()
+      yield User.query().insert({username: 'foo', id: 808})
+      const user = yield User.find(808)
+      expect(user instanceof User).to.equal(true)
+      expect(user.id).to.equal(808)
+      yield user.delete()
+      expect(user.isDeleted()).to.equal(true)
+      try {
+        yield user.restore()
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.message).to.match(/Restore can only be done when soft deletes are enabled/)
+      }
     })
 
     it('should remove rows from database when soft deletes are not enabled', function * () {
