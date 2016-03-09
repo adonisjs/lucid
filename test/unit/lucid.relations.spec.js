@@ -956,6 +956,70 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'accounts')
     })
 
+    it('should be able to eagerLoad relations for a model instance by passing an array of relations', function * () {
+      const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
+      yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
+      let accountQuery = null
+
+      class Account extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            accountQuery = query
+          })
+        }
+      }
+
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+
+      Account.bootIfNotBooted()
+
+      const supplier = yield Supplier.find(savedSupplier[0])
+      yield supplier.related(['account']).load()
+      expect(queryHelpers.formatQuery(accountQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "accounts" where "supplier_id" = ? limit ?'))
+      expect(accountQuery.bindings).deep.equal(queryHelpers.formatBindings(savedSupplier.concat([1])))
+      expect(supplier.get('account') instanceof Account).to.equal(true)
+      yield relationFixtures.truncate(Database, 'suppliers')
+      yield relationFixtures.truncate(Database, 'accounts')
+    })
+
+    it('should be able to define eagerLoad scope using model instance', function * () {
+      const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
+      yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
+      let accountQuery = null
+
+      class Account extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            accountQuery = query
+          })
+        }
+      }
+
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+
+      Account.bootIfNotBooted()
+
+      const supplier = yield Supplier.find(savedSupplier[0])
+      yield supplier.related('account').scope('account', function (builder) {
+        builder.whereNull('created_at')
+      }).load()
+      expect(queryHelpers.formatQuery(accountQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "accounts" where "created_at" is null and "supplier_id" = ? limit ?'))
+      expect(accountQuery.bindings).deep.equal(queryHelpers.formatBindings(savedSupplier.concat([1])))
+      expect(supplier.get('account') instanceof Account).to.equal(true)
+      yield relationFixtures.truncate(Database, 'suppliers')
+      yield relationFixtures.truncate(Database, 'accounts')
+    })
+
     it('should clean the eagerLoad chain for a given model instance', function * () {
       const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
       yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
