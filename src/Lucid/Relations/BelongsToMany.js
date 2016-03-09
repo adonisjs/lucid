@@ -262,8 +262,11 @@ class BelongsToMany extends Relation {
     if (relatedInstance instanceof this.related === false) {
       throw new ModelRelationSaveException('save accepts an instance of related model')
     }
-    if (!this.parent[this.fromKey]) {
+    if (this.parent.isNew()) {
       throw new ModelRelationSaveException('cannot save relation for an unsaved model instance')
+    }
+    if (!this.parent[this.fromKey]) {
+      logger.warn(`Trying to save relationship from ${this.parent.constructor.name} model with ${this.fromKey} as primaryKey, whose value is falsy`)
     }
     const isSaved = yield relatedInstance.save()
     if (isSaved) {

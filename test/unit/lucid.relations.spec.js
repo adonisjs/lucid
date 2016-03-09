@@ -1322,6 +1322,95 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'comments')
     })
 
+    it('should be able to eagerLoad results from related model instance', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis', id: 66})
+      const savedComment = yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
+      let postsQuery = null
+      class Post extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            postsQuery = query
+          })
+        }
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      Post.bootIfNotBooted()
+      const comment = yield Comment.find(savedComment[0])
+      expect(comment instanceof Comment).to.equal(true)
+      yield comment.related('post').load()
+      expect(queryHelpers.formatQuery(postsQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "posts" where "id" = ? limit ?'))
+      expect(postsQuery.bindings).deep.equal(queryHelpers.formatBindings(savedPost.concat([1])))
+      expect(comment.get('post') instanceof Post).to.equal(true)
+      expect(comment.get('post').id).to.equal(comment.post_id).to.equal(66)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to define query constraints when eagerLoading via model instance', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis', id: 66})
+      const savedComment = yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
+      let postsQuery = null
+      class Post extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            postsQuery = query
+          })
+        }
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      Post.bootIfNotBooted()
+      const comment = yield Comment.find(savedComment[0])
+      expect(comment instanceof Comment).to.equal(true)
+      yield comment.related('post').scope('post', function (builder) {
+        builder.whereNull('created_at')
+      }).load()
+      expect(queryHelpers.formatQuery(postsQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "posts" where "created_at" is null and "id" = ? limit ?'))
+      expect(postsQuery.bindings).deep.equal(queryHelpers.formatBindings(savedPost.concat([1])))
+      expect(comment.get('post') instanceof Post).to.equal(true)
+      expect(comment.get('post').id).to.equal(comment.post_id).to.equal(66)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should entertain query constraints defined with model relation defination', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis', id: 66})
+      const savedComment = yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
+      let postsQuery = null
+      class Post extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            postsQuery = query
+          })
+        }
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post).whereNull('created_at')
+        }
+      }
+      Post.bootIfNotBooted()
+      const comment = yield Comment.find(savedComment[0])
+      expect(comment instanceof Comment).to.equal(true)
+      const post = yield comment.post().fetch()
+      expect(queryHelpers.formatQuery(postsQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "posts" where "created_at" is null and "id" = ? limit ?'))
+      expect(postsQuery.bindings).deep.equal(queryHelpers.formatBindings(savedPost.concat([1])))
+      expect(post instanceof Post).to.equal(true)
+      expect(post.id).to.equal(comment.post_id).to.equal(66)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
     it('should be able to eagerLoad multiple results from related model', function * () {
       const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis', id: 24})
       yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
@@ -1566,6 +1655,32 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
+    it('should throw an error when trying to fetch related model from unsaved instance', function * () {
+      class Course extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            courseQuery = query
+          })
+        }
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+      Course.bootIfNotBooted()
+      const student = new Student()
+      expect(student instanceof Student).to.equal(true)
+      try {
+        yield student.courses().fetch()
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.match(/Cannot fetch related model from an unsaved model instance/)
+      }
+    })
+
     it('should be able to fetch first matching result for related model', function * () {
       const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky'})
       const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry'})
@@ -1598,6 +1713,32 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
       yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should throw an error when trying to fetch first row of related model from unsaved instance', function * () {
+      class Course extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            courseQuery = query
+          })
+        }
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+      Course.bootIfNotBooted()
+      const student = new Student()
+      expect(student instanceof Student).to.equal(true)
+      try {
+        yield student.courses().first()
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.match(/Cannot fetch related model from an unsaved model instance/)
+      }
     })
 
     it('should be able to eagerLoad matching result for related model', function * () {
@@ -1980,7 +2121,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
-    it('should be able create a related model and put relation into pivot table', function * () {
+    it('should be able to create a related model and put relation into pivot table', function * () {
       const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
       class Course extends Model {
       }
@@ -2002,6 +2143,53 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
       yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should throw an error when trying not passing related model instance to the save method', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky'})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      expect(student instanceof Student).to.equal(true)
+      expect(student.id).to.equal(savedStudent[0])
+      try {
+        yield student.courses().save({title: 'chemistry'})
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationSaveException')
+        expect(e.message).to.match(/save accepts an instance of related model/)
+      }
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should throw an error when trying not save related model instance from unsaved instance', function * () {
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = new Student()
+      expect(student instanceof Student).to.equal(true)
+      try {
+        yield student.courses().save(new Course())
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationSaveException')
+        expect(e.message).to.match(/cannot save relation for an unsaved model instance/)
+      }
     })
 
     it('should consider pivot properties as dirty properties', function * () {
