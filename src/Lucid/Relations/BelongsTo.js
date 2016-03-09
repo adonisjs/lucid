@@ -11,10 +11,9 @@
 
 const Relation = require('./Relation')
 const NE = require('node-exceptions')
+const CE = require('../Model/customExceptions')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
-class ModelRelationAssociateException extends NE.LogicalException {}
-class ModelRelationSaveException extends NE.LogicalException {}
 
 class BelongsTo extends Relation {
 
@@ -46,7 +45,7 @@ class BelongsTo extends Relation {
    * @public
    */
   * save () {
-    throw new ModelRelationSaveException('Cannot call save method on a belongsTo relation, use associate instead')
+    throw new CE.ModelRelationSaveException('Cannot call save method on a belongsTo relation, use associate instead')
   }
 
   /**
@@ -56,7 +55,7 @@ class BelongsTo extends Relation {
    * @public
    */
   * create () {
-    throw new ModelRelationSaveException('Cannot call create method on a belongsTo relation, use associate instead')
+    throw new CE.ModelRelationSaveException('Cannot call create method on a belongsTo relation, use associate instead')
   }
 
   /**
@@ -69,10 +68,10 @@ class BelongsTo extends Relation {
    */
   associate (relatedInstance) {
     if (relatedInstance instanceof this.related === false) {
-      throw new ModelRelationAssociateException('Associate accepts an instance of related model')
+      throw new CE.ModelRelationAssociateException('Associate accepts an instance of related model')
     }
     if (relatedInstance.isNew()) {
-      throw new ModelRelationAssociateException('Cannot associate an unsaved related model')
+      throw new CE.ModelRelationAssociateException('Cannot associate an unsaved related model')
     }
     if (!relatedInstance[this.toKey]) {
       logger.warn(`Trying to associate relationship with ${this.toKey} as foriegnKey, whose value is falsy`)

@@ -11,13 +11,11 @@
 
 const Relation = require('./Relation')
 const NE = require('node-exceptions')
+const CE = require('../Model/customExceptions')
 const _ = require('lodash')
 const helpers = require('../QueryBuilder/helpers')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
-class ModelRelationException extends NE.LogicalException {}
-class ModelRelationSaveException extends NE.LogicalException {}
-class ModelRelationAttachException extends NE.LogicalException {}
 
 class BelongsToMany extends Relation {
 
@@ -81,7 +79,7 @@ class BelongsToMany extends Relation {
    */
   fetch () {
     if (this.parent.isNew()) {
-      throw new ModelRelationException('Cannot fetch related model from an unsaved model instance')
+      throw new CE.ModelRelationException('Cannot fetch related model from an unsaved model instance')
     }
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to fetch relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
@@ -102,7 +100,7 @@ class BelongsToMany extends Relation {
    */
   first () {
     if (this.parent.isNew()) {
-      throw new ModelRelationException('Cannot fetch related model from an unsaved model instance')
+      throw new CE.ModelRelationException('Cannot fetch related model from an unsaved model instance')
     }
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to fetch relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
@@ -179,11 +177,11 @@ class BelongsToMany extends Relation {
     pivotValues = pivotValues || {}
 
     if (!_.isArray(references) && !_.isObject(references)) {
-      throw new ModelRelationAttachException('attach expects an array or an object of values to be attached')
+      throw new CE.ModelRelationAttachException('attach expects an array or an object of values to be attached')
     }
 
     if (this.parent.isNew()) {
-      throw new ModelRelationAttachException('Cannot attach values for an unsaved model instance')
+      throw new CE.ModelRelationAttachException('Cannot attach values for an unsaved model instance')
     }
 
     if (!this.parent[this.fromKey]) {
@@ -219,7 +217,7 @@ class BelongsToMany extends Relation {
    */
   * detach (references) {
     if (this.parent.isNew()) {
-      throw new ModelRelationException('Cannot detach values for an unsaved model instance')
+      throw new CE.ModelRelationDetachException('Cannot detach values for an unsaved model instance')
     }
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to attach values with ${this.fromKey} as primaryKey, whose value is falsy`)
@@ -260,10 +258,10 @@ class BelongsToMany extends Relation {
    */
   * save (relatedInstance) {
     if (relatedInstance instanceof this.related === false) {
-      throw new ModelRelationSaveException('save accepts an instance of related model')
+      throw new CE.ModelRelationSaveException('save accepts an instance of related model')
     }
     if (this.parent.isNew()) {
-      throw new ModelRelationSaveException('cannot save relation for an unsaved model instance')
+      throw new CE.ModelRelationSaveException('cannot save relation for an unsaved model instance')
     }
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to save relationship from ${this.parent.constructor.name} model with ${this.fromKey} as primaryKey, whose value is falsy`)

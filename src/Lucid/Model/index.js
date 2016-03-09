@@ -12,6 +12,7 @@
 require('harmony-reflect')
 const mixin = require('es6-class-mixin')
 const NE = require('node-exceptions')
+const CE = require('./customExceptions')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
 const _ = require('lodash')
@@ -29,8 +30,6 @@ const HasMany = require('../Relations/HasMany')
 const BelongsTo = require('../Relations/BelongsTo')
 const BelongsToMany = require('../Relations/BelongsToMany')
 const EagerLoad = require('../Relations/EagerLoad')
-
-class ModelNotFoundException extends NE.LogicalException {}
 
 /**
  * list of hooks allowed to be registered for a
@@ -528,7 +527,7 @@ class Model {
   static * findOrFail (value) {
     const result = yield this.find(value)
     if (!result) {
-      throw new ModelNotFoundException(`Unable to fetch results for ${this.primaryKey} ${value}`)
+      throw new CE.ModelNotFoundException(`Unable to fetch results for ${this.primaryKey} ${value}`)
     }
     return result
   }
