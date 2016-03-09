@@ -33,11 +33,10 @@ describe('Migrations', function () {
   })
 
   after(function * () {
-    yield filesFixtures.cleanStorage()
     yield Database.schema.dropTableIfExists('adonis_migrations')
     yield Database.schema.dropTableIfExists('users')
     yield Database.connection('alternateConnection').schema.dropTableIfExists('accounts')
-    Database.close()
+    yield filesFixtures.cleanStorage()
     Database.close()
   })
 
