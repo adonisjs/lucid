@@ -27,9 +27,10 @@ const notToTouch = ['avoidTrashed']
  * @private
  */
 proxyHandler.get = function (target, name) {
-  if (target[name]) {
+  if (target[name] !== undefined) {
     return target[name]
   }
+
   if (methods[name]) {
     return methods[name](target)
   }
