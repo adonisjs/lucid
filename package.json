@@ -16,6 +16,7 @@
   "author": "adonisjs",
   "license": "MIT",
   "devDependencies": {
+    "adonis-fold": "^2.0.1",
     "bluebird": "^3.3.1",
     "chai": "^3.5.0",
     "co-fs-extra": "^1.1.0",
@@ -30,6 +31,9 @@
     "sqlite3": "^3.1.1",
     "standard": "^6.0.5"
   },
+  "peerDependencies": {
+    "adonis-fold": "^2.0.1"
+  },
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
@@ -40,6 +44,7 @@
     "co": "^4.6.0",
     "co-functional": "^0.2.1",
     "es6-class-mixin": "^1.0.5",
+    "faker": "^3.0.1",
     "harmony-reflect": "^1.4.2",
     "inflect": "^0.3.0",
     "knex": "^0.10.0",

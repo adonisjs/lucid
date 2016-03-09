@@ -20,10 +20,8 @@ const logger = new CatLog('adonis:lucid')
 class BelongsToMany extends Relation {
 
   constructor (parent, related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey) {
-    super()
+    super(parent, related)
     const self = this
-    this.parent = parent
-    this.related = related
     this.relatedQuery = this.related.query()
     this.pivotTable = pivotTable // post_comment
     this.toKey = relatedPrimaryKey // comments -> id

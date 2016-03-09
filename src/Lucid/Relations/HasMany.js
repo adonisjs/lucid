@@ -15,9 +15,7 @@ const helpers = require('../QueryBuilder/helpers')
 class HasMany extends Relation {
 
   constructor (parent, related, primaryKey, foriegnKey) {
-    super()
-    this.parent = parent
-    this.related = related
+    super(parent, related)
     this.relatedQuery = this.related.query()
     this.fromKey = primaryKey
     this.toKey = foriegnKey

@@ -18,9 +18,7 @@ const logger = new CatLog('adonis:lucid')
 class BelongsTo extends Relation {
 
   constructor (parent, related, primaryKey, foriegnKey) {
-    super()
-    this.parent = parent
-    this.related = related
+    super(parent, related)
     this.relatedQuery = this.related.query()
     this.toKey = primaryKey
     this.fromKey = foriegnKey
