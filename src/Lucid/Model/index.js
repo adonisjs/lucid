@@ -77,6 +77,7 @@ class Model {
     this.attributes = {}
     this.original = {}
     this.relations = {}
+    this.frozen = false
     this.eagerLoad = new EagerLoad()
     if (values) {
       this.setJSON(values)
@@ -126,6 +127,53 @@ class Model {
 
     this.$modelHooks[type] = this.$modelHooks[type] || []
     this.$modelHooks[type].push({handler, name})
+  }
+
+  /**
+   * removes an array of named hooks from registered
+   * hooks
+   *
+   * @param {Array} names
+   *
+   * @public
+   */
+  static removeHooks () {
+    const names = _.isArray(arguments[0]) ? arguments[0] : _.toArray(arguments)
+    _.each(this.$modelHooks, (hooks, type) => {
+      this.$modelHooks[type] = _.filter(hooks, function (hook) {
+        return names.indexOf(hook.name) <= -1
+      })
+    })
+  }
+
+  /**
+   * alias of removeHooks
+   * @see removeHooks
+   *
+   * @param {String} name
+   *
+   * @public
+   */
+  static removeHook () {
+    this.removeHooks.apply(this, arguments)
+  }
+
+  /**
+   * defines an array of hooks in one go.
+   *
+   * @param {String} type
+   * @param {Array} hooks
+   *
+   * @public
+   */
+  static defineHooks () {
+    this.$modelHooks = {}
+    const args = _.toArray(arguments)
+    const type = args[0]
+    const hooks = _.tail(args)
+    _.each(hooks, (hook) => {
+      this.addHook(type, hook)
+    })
   }
 
   /**
@@ -365,7 +413,7 @@ class Model {
    * @public
    */
   getCreateTimestamp (date) {
-    return moment(date).format(this.constructor.dateFormat)
+    return this.formatDate(date)
   }
 
   /**
@@ -378,7 +426,7 @@ class Model {
    * @public
    */
   getUpdateTimestamp (date) {
-    return moment(date).format(this.constructor.dateFormat)
+    return this.formatDate(date)
   }
 
   /**
@@ -391,7 +439,7 @@ class Model {
    * @public
    */
   getDeleteTimestamp (date) {
-    return moment(date).format(this.constructor.dateFormat)
+    return this.formatDate(date)
   }
 
   /**
@@ -552,7 +600,11 @@ class Model {
    * @public
    */
   freeze () {
-    Object.freeze(this)
+    this.frozen = true
+  }
+
+  unfreeze () {
+    this.frozen = false
   }
 
   /**
@@ -563,7 +615,7 @@ class Model {
    * @public
    */
   isDeleted () {
-    return Object.isFrozen(this)
+    return this.frozen
   }
 
   /**

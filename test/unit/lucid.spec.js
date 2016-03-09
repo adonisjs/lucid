@@ -532,6 +532,26 @@ describe('Lucid', function () {
       expect(fetchUser.deleted_at).to.equal(user.deleted_at)
     })
 
+    it('should be able to restore the model instance using restore method', function * () {
+      class User extends Model {
+        static get deleteTimestamp () {
+          return 'deleted_at'
+        }
+      }
+      yield User.query().insert({username: 'foo', id: 908})
+      User.bootIfNotBooted()
+      const user = yield User.find(908)
+      expect(user instanceof User).to.equal(true)
+      expect(user.id).to.equal(908)
+      yield user.delete()
+      expect(user.isDeleted()).to.equal(true)
+      yield user.restore()
+      user.status = 'active'
+      expect(user.status).to.equal('active')
+      expect(user.deleted_at).to.equal(null)
+      expect(user.isDeleted()).to.equal(false)
+    })
+
     it('should remove rows from database when soft deletes are not enabled', function * () {
       class User extends Model {
       }
@@ -840,6 +860,24 @@ describe('Lucid', function () {
       expect(new Date(deleteUsers[1].deleted_at)).to.be.a('date')
     })
 
+    it('should be able to bulk restore deleted rows', function * () {
+      class User extends Model {
+        static get deleteTimestamp () {
+          return 'deleted_at'
+        }
+      }
+      User.bootIfNotBooted()
+      yield User.query().insert([{username: 'jamie', firstname: 'Jamie', lastname: 'Teak'}, {username: 'jamie', firstname: 'Jamie', lastname: 'Teak'}])
+      const deleted = yield User.query().where({username: 'jamie'}).delete()
+      expect(deleted).to.equal(2)
+      yield User.query().where('username', 'jamie').restore()
+      const restoredUsers = yield User.query().where('username', 'jamie')
+      expect(restoredUsers).to.be.an('array')
+      expect(restoredUsers.length).to.equal(2)
+      expect(restoredUsers[0].deleted_at).to.equal(null)
+      expect(restoredUsers[1].deleted_at).to.equal(null)
+    })
+
     it('should remove rows from database when soft deletes are not enabled', function * () {
       class User extends Model {
       }
@@ -878,6 +916,48 @@ describe('Lucid', function () {
       expect(User.$modelHooks['beforeCreate'].length).to.equal(1)
       expect(User.$modelHooks['beforeCreate'][0].name).to.equal(null)
       expect(User.$modelHooks['beforeCreate'][0].handler).to.be.a('function')
+    })
+
+    it('should add a named hook for a given type', function () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      User.addHook('beforeCreate', 'validateUser', function * () {})
+      expect(User.$modelHooks['beforeCreate']).to.be.an('array')
+      expect(User.$modelHooks['beforeCreate'].length).to.equal(1)
+      expect(User.$modelHooks['beforeCreate'][0].name).to.equal('validateUser')
+    })
+
+    it('should be able to remove a named hook', function () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      User.addHook('beforeCreate', function * () {})
+      User.addHook('beforeCreate', 'validateUser', function * () {})
+      expect(User.$modelHooks['beforeCreate']).to.be.an('array')
+      expect(User.$modelHooks['beforeCreate'].length).to.equal(2)
+      User.removeHook('validateUser')
+      expect(User.$modelHooks['beforeCreate'].length).to.equal(1)
+      expect(User.$modelHooks['beforeCreate'][0].name).to.equal(null)
+    })
+
+    it('should be able to define multiple hooks in a go', function () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      User.defineHooks('beforeCreate', 'UsersHook.validate', 'UsersHook.log')
+      expect(User.$modelHooks['beforeCreate']).to.be.an('array')
+      expect(User.$modelHooks['beforeCreate'].length).to.equal(2)
+      expect(User.$modelHooks['beforeCreate'][0].handler).to.equal('UsersHook.validate')
+      expect(User.$modelHooks['beforeCreate'][1].handler).to.equal('UsersHook.log')
+    })
+
+    it('should override existing hooks when calling defineHooks', function () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      User.addHook('beforeCreate', function * () {})
+      User.defineHooks('beforeCreate', 'UsersHook.validate', 'UsersHook.log')
+      expect(User.$modelHooks['beforeCreate']).to.be.an('array')
+      expect(User.$modelHooks['beforeCreate'].length).to.equal(2)
+      expect(User.$modelHooks['beforeCreate'][0].handler).to.equal('UsersHook.validate')
+      expect(User.$modelHooks['beforeCreate'][1].handler).to.equal('UsersHook.log')
     })
 
     it('should execute beforeCreate hook when a model is saved to the database', function * () {
@@ -1165,6 +1245,62 @@ describe('Lucid', function () {
       yield user.save()
       yield user.delete()
       expect(hookCalled).to.equal(false)
+    })
+
+    it('should call before restore hooks when restoring a model', function * () {
+      let hookCalled = false
+      class User extends Model {
+        static get deleteTimestamp () {
+          return 'deleted_at'
+        }
+      }
+      User.bootIfNotBooted()
+      User.addHook('beforeRestore', function * (next) {
+        hookCalled = true
+        yield next
+      })
+      const user = new User()
+      user.username = 'melody'
+      user.firstname = 'Melody'
+      user.lastname = 'Sunshine'
+      yield user.save()
+      yield user.delete()
+      expect(hookCalled).to.equal(false)
+      expect(user.isDeleted()).to.equal(true)
+      yield user.restore()
+      expect(hookCalled).to.equal(true)
+      expect(user.isDeleted()).to.equal(false)
+    })
+
+    it('should call before & after restore hooks when restoring a model', function * () {
+      let userId = null
+      let hookCalled = false
+      class User extends Model {
+        static get deleteTimestamp () {
+          return 'deleted_at'
+        }
+      }
+      User.bootIfNotBooted()
+      User.addHook('beforeRestore', function * (next) {
+        hookCalled = true
+        yield next
+      })
+      User.addHook('afterRestore', function * (next) {
+        userId = this.id
+        yield next
+      })
+      const user = new User()
+      user.username = 'melody'
+      user.firstname = 'Melody'
+      user.lastname = 'Sunshine'
+      yield user.save()
+      yield user.delete()
+      expect(hookCalled).to.equal(false)
+      expect(user.isDeleted()).to.equal(true)
+      yield user.restore()
+      expect(hookCalled).to.equal(true)
+      expect(user.isDeleted()).to.equal(false)
+      expect(user.id).to.equal(userId)
     })
   })
 

@@ -96,3 +96,25 @@ Peristance.delete = function * () {
   }
   return yield this.executeDeleteHooks(this, deleteHandler)
 }
+
+/**
+ * restores a soft deleted model instance
+ * @method *restore
+ *
+ * @return {Number} - Number of affected rows
+ *
+ * @public
+ */
+Peristance.restore = function * () {
+  const restoreHandler = function * () {
+    const query = this.constructor.query().where('id', this.$primaryKeyValue)
+    const values = {}
+    const affected = yield query.restoreAttributes(values)
+    if (affected > 0) {
+      this.unfreeze()
+      _.merge(this.attributes, values)
+    }
+    return affected
+  }
+  return yield this.executeRestoreHooks(this, restoreHandler)
+}

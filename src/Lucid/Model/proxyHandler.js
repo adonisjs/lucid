@@ -11,7 +11,7 @@
 
 const proxyHandler = exports = module.exports = {}
 const NE = require('node-exceptions')
-const targetProperties = ['$primaryKeyValue', 'original', 'attributes', 'relations', 'eagerLoad']
+const targetProperties = ['$primaryKeyValue', 'original', 'attributes', 'relations', 'eagerLoad', 'frozen']
 
 /**
  * proxy handler for getting target properties.Here
@@ -30,7 +30,7 @@ proxyHandler.get = function (target, name) {
    * if value exists on the model instance, we return
    * it right away.
    */
-  if (target[name]) {
+  if (target[name] !== undefined) {
     return target[name]
   }
 
@@ -65,7 +65,7 @@ proxyHandler.get = function (target, name) {
  * @private
  */
 proxyHandler.set = function (target, name, value) {
-  if (target.isDeleted()) {
+  if (target.isDeleted() && name !== 'frozen') {
     throw new NE.RuntimeException('Cannot edit a frozen model')
   }
   if (targetProperties.indexOf(name) > -1) {
