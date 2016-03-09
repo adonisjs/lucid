@@ -130,6 +130,28 @@ methods.deleteAttributes = function (target) {
 methods.delete = methods.deleteAttributes
 
 /**
+ * restores a soft deleted row
+ *
+ * @method restoreAttributes
+ *
+ * @param  {Object}          target
+ * @return {Promise}
+ *
+ * @public
+ */
+methods.restoreAttributes = function (target) {
+  return function (values) {
+    if (!target.HostModel.deleteTimestamp) {
+      throw new Error('Restore can only be done when soft deletes are enabled.')
+    }
+    values = values || {}
+    values = target.HostModel.prototype.setRestoreTimestamp(values)
+    return this.updateAttributes(values)
+  }
+}
+methods.restore = methods.restoreAttributes
+
+/**
  * returns the first record from data collection
  *
  * @method first

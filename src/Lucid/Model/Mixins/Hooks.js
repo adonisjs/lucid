@@ -132,3 +132,25 @@ Hooks.executeDeleteHooks = function * (scope, deleteHandler) {
   yield this.composeHooks(scope, hooksChain)
   return handlerResult
 }
+
+/**
+ * executes restore hooks on a given model instance.
+ *
+ * @method executeRestoreHooks
+ *
+ * @param  {Object}             scope
+ * @param  {Function}           restoreHandler
+ * @return {Number}
+ *
+ * @public
+ */
+Hooks.executeRestoreHooks = function * (scope, restoreHandler) {
+  let handlerResult = null
+  const restoreHandlerWrapper = function * (next) {
+    handlerResult = yield restoreHandler.call(this)
+    yield next
+  }
+  const hooksChain = this.getHooks('Restore', restoreHandlerWrapper)
+  yield this.composeHooks(scope, hooksChain)
+  return handlerResult
+}

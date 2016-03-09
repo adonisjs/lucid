@@ -70,6 +70,21 @@ Dates.setDeleteTimestamp = function (values) {
 }
 
 /**
+ * sets the delete timestamp to null
+ *
+ * @method setRestoreTimestamp
+ *
+ * @param  {Object}            values
+ * @return {Object}
+ *
+ * @public
+ */
+Dates.setRestoreTimestamp = function (values) {
+  values[this.constructor.deleteTimestamp] = null
+  return values
+}
+
+/**
  * returns getter method names for a given timestamp
  * field.
  *
@@ -94,4 +109,19 @@ Dates.getTimestampKey = function (fieldName) {
   if (fieldName === this.constructor.deleteTimestamp) {
     return 'deleteTimestamp'
   }
+}
+
+/**
+ * formats a given date with the defined dateFormat
+ * for a model instance.
+ *
+ * @method formatDate
+ *
+ * @param  {String}   date
+ * @return {String}
+ *
+ * @public
+ */
+Dates.formatDate = function (date) {
+  return moment(date, this.constructor.dateFormat).isValid() ? moment(date).format(this.constructor.dateFormat) : date
 }
