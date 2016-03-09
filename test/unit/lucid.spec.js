@@ -14,6 +14,8 @@ const Model = require('../../src/Lucid/Model')
 const Database = require('../../src/Database')
 const chai = require('chai')
 const moment = require('moment')
+const path = require('path')
+const Ioc = require('adonis-fold').Ioc
 const expect = chai.expect
 const NE = require('node-exceptions')
 const co = require('co')
@@ -29,6 +31,7 @@ describe('Lucid', function () {
     Database._setConfigProvider(config)
     yield filesFixtures.createDir()
     yield modelFixtures.up(Database)
+    Ioc.autoload('App', path.join(__dirname, './app'))
   })
 
   after(function * () {
@@ -1002,6 +1005,18 @@ describe('Lucid', function () {
       user.lastname = 'Erd'
       yield user.save()
       expect(hookCalled).to.equal(true)
+    })
+
+    it('should execute beforeCreate hook registered via namespace', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      User.addHook('beforeCreate', 'App/Model/Hooks/Users.validate')
+      const user = new User()
+      user.username = 'liz'
+      user.firstname = 'Liz'
+      user.lastname = 'Erd'
+      yield user.save()
+      expect(user.username).to.equal('viahook')
     })
 
     it('should call hooks sequentially', function * () {
