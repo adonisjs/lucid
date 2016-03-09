@@ -12,7 +12,7 @@
 const _ = require('lodash')
 const cf = require('co-functional')
 const NE = require('node-exceptions')
-class ModelRelationNotFound extends NE.LogicalException {}
+const CE = require('../Model/customExceptions')
 
 class EagerLoad {
 
@@ -74,7 +74,7 @@ class EagerLoad {
   _getRelationInstance (relationKey, parent) {
     const relation = parent[relationKey]
     if (typeof (relation) !== 'function') {
-      throw new ModelRelationNotFound(`cannot find ${relationKey} as a relation`)
+      throw new CE.ModelRelationNotFound(`cannot find ${relationKey} as a relation`)
     }
     return relation.apply(parent)
   }
@@ -82,7 +82,7 @@ class EagerLoad {
   _getRelationProtoInstance (relationKey, parent) {
     const relation = parent.prototype[relationKey]
     if (typeof (relation) !== 'function') {
-      throw new ModelRelationNotFound(`cannot find ${relationKey} as a relation`)
+      throw new CE.ModelRelationNotFound(`cannot find ${relationKey} as a relation`)
     }
     return relation.apply(parent.prototype)
   }

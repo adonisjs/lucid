@@ -14,8 +14,7 @@ const proxyHandler = require('./proxyHandler')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
 const NE = require('node-exceptions')
-class ModelRelationException extends NE.LogicalException {}
-class ModelRelationSaveException extends NE.LogicalException {}
+const CE = require('../Model/customExceptions')
 
 class Relation {
 
@@ -32,7 +31,7 @@ class Relation {
    */
   first () {
     if (this.parent.isNew()) {
-      throw new ModelRelationException('Cannot fetch related model from an unsaved model instance')
+      throw new CE.ModelRelationException('Cannot fetch related model from an unsaved model instance')
     }
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to fetch relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
@@ -50,7 +49,7 @@ class Relation {
    */
   fetch () {
     if (this.parent.isNew()) {
-      throw new ModelRelationException('Cannot fetch related model from an unsaved model instance')
+      throw new CE.ModelRelationException('Cannot fetch related model from an unsaved model instance')
     }
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to fetch relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
@@ -98,10 +97,10 @@ class Relation {
    */
   * save (relatedInstance) {
     if (relatedInstance instanceof this.related === false) {
-      throw new ModelRelationSaveException('Save accepts an instance of related model')
+      throw new CE.ModelRelationSaveException('Save accepts an instance of related model')
     }
     if (this.parent.isNew()) {
-      throw new ModelRelationSaveException('Cannot save relation for an unsaved model instance')
+      throw new CE.ModelRelationSaveException('Cannot save relation for an unsaved model instance')
     }
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to save relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
