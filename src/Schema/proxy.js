@@ -43,7 +43,7 @@ let proxy = exports = module.exports = {}
  * @public
  */
 proxy.get = function (target, name) {
-  if (target[name] || mustImplement.indexOf(name) > -1) {
+  if (target[name] !== undefined || mustImplement.indexOf(name) > -1) {
     return target[name]
   }
 

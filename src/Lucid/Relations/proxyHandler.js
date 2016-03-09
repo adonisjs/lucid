@@ -13,9 +13,14 @@ const proxyHandler = exports = module.exports = {}
 const _ = require('lodash')
 
 proxyHandler.get = function (target, name) {
-  if (target[name]) {
+  /**
+   * if value exists on the model instance, we return
+   * it right away.
+   */
+  if (target[name] !== undefined) {
     return target[name]
   }
+
   if (name === 'withPivot') {
     return function () {
       target.pivotItems.push(_.toArray(arguments))
