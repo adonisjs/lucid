@@ -396,4 +396,64 @@ describe('Migrations', function () {
     yield runner.database.schema.dropTable('users')
     yield runner.database.connection('alternateConnection').schema.dropTable('accounts')
   })
+
+  it('should have access to knex fn inside the schema class', function * () {
+    const runner = new Migrations(Database, Config)
+    let fn = null
+    class Users extends Schema {
+      up () {
+        this.table('users', (table) => {
+          fn = this.fn
+        })
+      }
+    }
+    const migrations = {'2015-01-20': Users}
+    yield runner.up(migrations)
+    expect(fn).to.be.an('object')
+    expect(fn.now).to.be.a('function')
+    yield runner.database.schema.dropTable('adonis_migrations')
+  })
+
+  it('should be able to define soft delete field inside migrations', function * () {
+    const runner = new Migrations(Database, Config)
+    class Users extends Schema {
+      up () {
+        this.create('users', (table) => {
+          table.increments()
+          table.softDeletes()
+        })
+      }
+    }
+    const migrations = {'2015-01-20': Users}
+    yield runner.up(migrations)
+    const usersInfo = yield runner.database.table('users').columnInfo()
+    expect(usersInfo.deleted_at).to.be.an('object')
+    expect(usersInfo.deleted_at.nullable).to.equal(true)
+    expect(usersInfo.deleted_at.type).to.equal('datetime')
+    yield runner.database.schema.dropTable('users')
+    yield runner.database.schema.dropTable('adonis_migrations')
+  })
+
+  it('should be able to define nullableTimestamps inside migrations', function * () {
+    const runner = new Migrations(Database, Config)
+    class Users extends Schema {
+      up () {
+        this.create('users', (table) => {
+          table.increments()
+          table.nullableTimestamps()
+        })
+      }
+    }
+    const migrations = {'2015-01-20': Users}
+    yield runner.up(migrations)
+    const usersInfo = yield runner.database.table('users').columnInfo()
+    expect(usersInfo.created_at).to.be.an('object')
+    expect(usersInfo.created_at.nullable).to.equal(true)
+    expect(usersInfo.created_at.type).to.equal('datetime')
+    expect(usersInfo.updated_at).to.be.an('object')
+    expect(usersInfo.updated_at.nullable).to.equal(true)
+    expect(usersInfo.updated_at.type).to.equal('datetime')
+    yield runner.database.schema.dropTable('users')
+    yield runner.database.schema.dropTable('adonis_migrations')
+  })
 })

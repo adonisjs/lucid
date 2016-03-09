@@ -119,10 +119,11 @@ Migrate._decorateSchema = function (schemaInstance) {
  */
 Migrate._decorateTable = function (table) {
   table.softDeletes = function () {
-    return table.timestamp('deleted_at').nullable()
+    table.dateTime('deleted_at').nullable()
   }
   table.nullableTimestamps = function () {
-    return table.timestamps().nullable()
+    table.dateTime('created_at').nullable()
+    table.dateTime('updated_at').nullable()
   }
 }
 
