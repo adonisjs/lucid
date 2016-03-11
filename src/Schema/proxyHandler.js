@@ -29,7 +29,7 @@ const aliases = {
   dropIfExists: 'dropTableIfExists'
 }
 
-let proxy = exports = module.exports = {}
+let proxyHandler = exports = module.exports = {}
 
 /**
  * proxies target get calls and returns custom
@@ -42,7 +42,7 @@ let proxy = exports = module.exports = {}
  *
  * @public
  */
-proxy.get = function (target, name) {
+proxyHandler.get = function (target, name) {
   if (target[name] !== undefined || mustImplement.indexOf(name) > -1) {
     return target[name]
   }

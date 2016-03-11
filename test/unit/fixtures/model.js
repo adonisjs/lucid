@@ -56,6 +56,17 @@ module.exports = {
     return bluebird.all(dropTables)
   },
 
+  truncate: function (knex) {
+    const truncateTables = [
+      knex.table('users').truncate(),
+      knex.table('accounts').truncate(),
+      knex.table('profiles').truncate(),
+      knex.table('cars').truncate(),
+      knex.table('keys').truncate()
+    ]
+    return bluebird.all(truncateTables)
+  },
+
   setupAccount: function (knex) {
     return knex.table('accounts').insert({account_name: 'sales', created_at: new Date(), updated_at: new Date()})
   },

@@ -40,6 +40,7 @@
     }
   },
   "dependencies": {
+    "auto-loader": "git+https://github.com/thetutlage/node-auto-loader.git",
     "cat-log": "^1.0.0",
     "co": "^4.6.0",
     "co-functional": "^0.2.1",

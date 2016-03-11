@@ -9,15 +9,22 @@
  * file that was distributed with this source code.
 */
 
-const proxy = require('./proxy')
+const proxyHandler = require('./proxyHandler')
 require('harmony-reflect')
 
 class Schema {
   constructor () {
     this.store = {}
-    return new Proxy(this, proxy)
+    return new Proxy(this, proxyHandler)
   }
 
+  /**
+   * connection to be used while creating schema
+   *
+   * @return {String}
+   *
+   * @public
+   */
   static get connection () {
     return 'default'
   }
