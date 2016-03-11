@@ -12,6 +12,9 @@ const sqliteConnections = require('./sqliteConnections')
 
 module.exports = {
   get: function (key) {
+    if (key === 'database.migrationsTable') {
+      return 'adonis_migrations'
+    }
     if (key === 'database.connection') {
       return process.env.DB
     }
