@@ -97,7 +97,7 @@ describe('Migrations', function () {
       yield runner.database.table('adonis_migrations_lock').where('is_locked', 1)
       expect(true).to.equal(false)
     } catch (e) {
-      expect(e.code).to.be.oneOf(['ER_NO_SUCH_TABLE', 'SQLITE_ERROR'])
+      expect(e.code).to.be.oneOf(['ER_NO_SUCH_TABLE', 'SQLITE_ERROR', '42P01'])
     }
   })
 
@@ -214,7 +214,7 @@ describe('Migrations', function () {
       yield runner.database.table('accounts')
       expect(true).to.equal(false)
     } catch (e) {
-      expect(e.code).to.be.oneOf(['ER_NO_SUCH_TABLE', 'SQLITE_ERROR'])
+      expect(e.code).to.be.oneOf(['ER_NO_SUCH_TABLE', 'SQLITE_ERROR', '42P01'])
       const accounts = yield runner.database.connection('alternateConnection').table('accounts').columnInfo()
       expect(accounts).to.be.an('object')
       expect(_.keys(accounts)).deep.equal(['id', 'account_name'])
@@ -428,7 +428,7 @@ describe('Migrations', function () {
     const usersInfo = yield runner.database.table('users').columnInfo()
     expect(usersInfo.deleted_at).to.be.an('object')
     expect(usersInfo.deleted_at.nullable).to.equal(true)
-    expect(usersInfo.deleted_at.type).to.equal('datetime')
+    expect(usersInfo.deleted_at.type).to.be.oneOf(['datetime', 'timestamp with time zone'])
     yield runner.database.schema.dropTable('users')
     yield runner.database.schema.dropTable('adonis_migrations')
   })
@@ -448,10 +448,10 @@ describe('Migrations', function () {
     const usersInfo = yield runner.database.table('users').columnInfo()
     expect(usersInfo.created_at).to.be.an('object')
     expect(usersInfo.created_at.nullable).to.equal(true)
-    expect(usersInfo.created_at.type).to.equal('datetime')
+    expect(usersInfo.created_at.type).to.be.oneOf(['datetime', 'timestamp with time zone'])
     expect(usersInfo.updated_at).to.be.an('object')
     expect(usersInfo.updated_at.nullable).to.equal(true)
-    expect(usersInfo.updated_at.type).to.equal('datetime')
+    expect(usersInfo.updated_at.type).to.be.oneOf(['datetime', 'timestamp with time zone'])
     yield runner.database.schema.dropTable('users')
     yield runner.database.schema.dropTable('adonis_migrations')
   })

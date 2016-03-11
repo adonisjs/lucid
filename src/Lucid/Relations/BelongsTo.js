@@ -10,7 +10,6 @@
 */
 
 const Relation = require('./Relation')
-const NE = require('node-exceptions')
 const CE = require('../Model/customExceptions')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')

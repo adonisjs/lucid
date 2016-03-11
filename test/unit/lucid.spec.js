@@ -528,7 +528,7 @@ describe('Lucid', function () {
       expect(user.updated_at).to.equal(updatedTimestamp).to.equal(undefined)
     })
 
-    it('should soft deletes rows when deleteTimestamp is configured', function * () {
+    it('should soft delete rows when deleteTimestamp is configured', function * () {
       class User extends Model {
         static get deleteTimestamp () {
           return 'deleted_at'
@@ -743,7 +743,7 @@ describe('Lucid', function () {
       }
       const newUser = yield User.query().returning('id').insert({username: 'audie', firstname: 'Audie', lastname: 'Yose'})
       const userId = newUser[0]
-      let user = yield User.find(userId)
+      const user = yield User.find(userId)
       expect(user instanceof User)
       expect(user.username).to.equal('audie')
       expect(user.id).to.equal(userId)
@@ -752,16 +752,38 @@ describe('Lucid', function () {
     it('should return null when unable to find a record using find method', function * () {
       class User extends Model {
       }
-      let user = yield User.find(1220)
+      const user = yield User.find(1220)
       expect(user).to.equal(null)
     })
 
     it('should return all rows inside a database when all method is called', function * () {
       class User extends Model {
       }
-      let users = yield User.all()
+      const users = yield User.all()
       const total = yield User.query().count('* as total')
       expect(parseInt(total[0].total)).to.equal(users.size())
+    })
+
+    it('should return all array of ids when using ids method', function * () {
+      class User extends Model {
+      }
+      const userIds = yield User.ids()
+      expect(userIds).to.be.an('array')
+      userIds.forEach(function (id) {
+        expect(id).to.be.a('number')
+      })
+    })
+
+    it('should a plain object with key/value pairs when using pair method', function * () {
+      class User extends Model {
+      }
+      const usersPair = yield User.pair('id', 'username')
+      const users = yield User.all()
+      let manualPair = users.map(function (user) {
+        return [user.id, user.username]
+      }).fromPairs().value()
+      expect(usersPair).to.be.an('object')
+      expect(usersPair).deep.equal(manualPair)
     })
 
     it('should throw ModelNotFoundException when unable to find a record using findOrFail method', function * () {

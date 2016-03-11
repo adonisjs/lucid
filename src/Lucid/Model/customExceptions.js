@@ -24,5 +24,6 @@ module.exports = {
   ModelRelationSaveException,
   ModelRelationAttachException,
   ModelRelationNotFound,
-  ModelRelationException
+  ModelRelationException,
+  ModelRelationDetachException
 }

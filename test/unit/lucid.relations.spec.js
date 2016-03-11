@@ -1673,12 +1673,6 @@ describe('Relations', function () {
 
     it('should throw an error when trying to fetch related model from unsaved instance', function * () {
       class Course extends Model {
-        static boot () {
-          super.boot()
-          this.onQuery(function (query) {
-            courseQuery = query
-          })
-        }
       }
       class Student extends Model {
         courses () {
@@ -1733,12 +1727,6 @@ describe('Relations', function () {
 
     it('should throw an error when trying to fetch first row of related model from unsaved instance', function * () {
       class Course extends Model {
-        static boot () {
-          super.boot()
-          this.onQuery(function (query) {
-            courseQuery = query
-          })
-        }
       }
       class Student extends Model {
         courses () {

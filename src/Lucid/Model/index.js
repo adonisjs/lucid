@@ -24,7 +24,6 @@ const Serializer = require('./Mixins/Serializer')
 const Persistance = require('./Mixins/Persistance')
 const Dates = require('./Mixins/Dates')
 const Hooks = require('./Mixins/Hooks')
-const moment = require('moment')
 const HasOne = require('../Relations/HasOne')
 const HasMany = require('../Relations/HasMany')
 const BelongsTo = require('../Relations/BelongsTo')
@@ -544,6 +543,35 @@ class Model {
   }
 
   /**
+   * returns all records for a given model
+   * with all primary keys in an array.
+   *
+   * @return {Array}
+   *
+   * @public
+   */
+  static * ids () {
+    return this.query().select(this.primaryKey).pluck(this.primaryKey)
+  }
+
+  /**
+   * returns a pair wit lhs and rhs fields for a given model.
+   * It is helpful in populating select boxes.
+   *
+   * @param  {String} lhs
+   * @param  {String} rhs
+   * @return {Object}
+   *
+   * @public
+   */
+  static * pair (lhs, rhs) {
+    return this.query().select(lhs, rhs).reduce(function (result, row) {
+      result[row[lhs]] = row[rhs]
+      return result
+    }, {})
+  }
+
+  /**
    * getter to return the primaryKey value for a given
    * instance.
    *
@@ -602,6 +630,12 @@ class Model {
     this.frozen = true
   }
 
+  /**
+   * unfreezes a given model, this usually happens
+   * after restore
+   *
+   * @public
+   */
   unfreeze () {
     this.frozen = false
   }

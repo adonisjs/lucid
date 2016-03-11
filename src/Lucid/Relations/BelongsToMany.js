@@ -10,7 +10,6 @@
 */
 
 const Relation = require('./Relation')
-const NE = require('node-exceptions')
 const CE = require('../Model/customExceptions')
 const _ = require('lodash')
 const helpers = require('../QueryBuilder/helpers')
