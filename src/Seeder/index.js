@@ -24,7 +24,7 @@ const Seeder = exports = module.exports = {}
  * @public
  */
 Seeder.exec = function (seeds) {
-  cf.forEach(function * (Seed) {
+  return cf.forEach(function * (Seed) {
     const seedInstance = typeof (Seed) === 'string' ? Ioc.make(Seed) : new Seed()
     yield seedInstance.run()
   }, seeds)
