@@ -11,6 +11,7 @@
 
 /* global describe, it*/
 const util = require('../../lib/util')
+const path = require('path')
 const _ = require('lodash')
 const chai = require('chai')
 const expect = chai.expect
@@ -152,5 +153,10 @@ describe('Utils', function () {
     class AdminUsers {}
     const pivotKey = util.makePivotModelKey(AdminUsers)
     expect(pivotKey).to.equal('admin_user_id')
+  })
+
+  it('should load all .js files from a given directory', function () {
+    const files = util.loadJsFiles(path.join(__dirname, './autoload'))
+    expect(Object.keys(files)).deep.equal(['foo', 'paths'])
   })
 })
