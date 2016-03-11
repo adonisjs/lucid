@@ -1582,18 +1582,8 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
-    it('should be able to fetch first matching result for related model', function * () {
-      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky'})
-      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry'})
-      yield relationFixtures.createRecords(Database, 'course_student', {student_id: savedStudent[0], course_id: savedCourse[0]})
-      let courseQuery = null
+    it('should throw an error when trying to fetch related model from unsaved instance', function * () {
       class Course extends Model {
-        static boot () {
-          super.boot()
-          this.onQuery(function (query) {
-            courseQuery = query
-          })
-        }
       }
       class Student extends Model {
         courses () {
@@ -1601,19 +1591,35 @@ describe('Relations', function () {
         }
       }
       Course.bootIfNotBooted()
-      const student = yield Student.find(savedStudent[0])
+      const student = new Student()
       expect(student instanceof Student).to.equal(true)
-      expect(student.id).not.to.equal(undefined)
-      const course = yield student.courses().first()
-      expect(queryHelpers.formatQuery(courseQuery.sql)).to.equal(queryHelpers.formatQuery('select "courses".*, "course_student"."student_id" as "_pivot_student_id", "course_student"."course_id" as "_pivot_course_id" from "courses" inner join "course_student" on "courses"."id" = "course_student"."course_id" where "course_student"."student_id" = ? limit ?'))
-      expect(courseQuery.bindings).deep.equal(queryHelpers.formatBindings(savedStudent.concat([1])))
-      expect(course instanceof Course).to.equal(true)
-      expect(course._pivot_student_id).to.equal(student.id)
-      expect(course._pivot_course_id).to.equal(course.id)
+      try {
+        yield student.courses().fetch()
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.match(/Cannot fetch related model from an unsaved model instance/)
+      }
+    })
 
-      yield relationFixtures.truncate(Database, 'students')
-      yield relationFixtures.truncate(Database, 'courses')
-      yield relationFixtures.truncate(Database, 'course_student')
+    it('should throw an error when trying to fetch first row of related model from unsaved instance', function * () {
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+      Course.bootIfNotBooted()
+      const student = new Student()
+      expect(student instanceof Student).to.equal(true)
+      try {
+        yield student.courses().first()
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.match(/Cannot fetch related model from an unsaved model instance/)
+      }
     })
 
     it('should be able to eagerLoad matching result for related model', function * () {

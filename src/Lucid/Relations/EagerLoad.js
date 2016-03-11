@@ -11,7 +11,6 @@
 
 const _ = require('lodash')
 const cf = require('co-functional')
-const NE = require('node-exceptions')
 const CE = require('../Model/customExceptions')
 
 class EagerLoad {

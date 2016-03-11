@@ -123,5 +123,5 @@ Dates.getTimestampKey = function (fieldName) {
  * @public
  */
 Dates.formatDate = function (date) {
-  return moment(date, this.constructor.dateFormat).isValid() ? moment(date).format(this.constructor.dateFormat) : date
+  return moment(date).isValid() ? moment(date).format(this.constructor.dateFormat) : date
 }

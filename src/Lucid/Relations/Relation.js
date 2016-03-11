@@ -13,7 +13,6 @@ require('harmony-reflect')
 const proxyHandler = require('./proxyHandler')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
-const NE = require('node-exceptions')
 const Ioc = require('adonis-fold').Ioc
 const CE = require('../Model/customExceptions')
 
