@@ -136,6 +136,40 @@ describe('Migrations', function () {
     yield runner.database.schema.dropTable('adonis_migrations')
   })
 
+  it('should return migration status', function * () {
+    const runner = new Migrations(Database, Config)
+    class Users extends Schema {
+      up () {
+        this.create('users', function (table) {
+          table.increments()
+          table.string('username')
+        })
+      }
+      down () {
+        this.drop('users')
+      }
+    }
+
+    class Accounts extends Schema {
+      up () {
+        this.create('accounts', function (table) {
+          table.increments()
+          table.string('account_name')
+        })
+      }
+    }
+
+    const batch1 = {'2015-01-20': Users}
+    const batch2 = {'2016-03-13': Accounts}
+    const all = {}
+    _.merge(all, batch1, batch2)
+    yield runner.up(batch1)
+    const status = yield runner.status(all)
+    expect(status).deep.equal({'2015-01-20': 'Y', '2016-03-13': 'N'})
+    yield runner.database.schema.dropTable('users')
+    yield runner.database.schema.dropTable('adonis_migrations')
+  })
+
   it('should migrate the database by calling the up method', function * () {
     const runner = new Migrations(Database, Config)
     class Users extends Schema {

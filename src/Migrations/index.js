@@ -145,6 +145,25 @@ class Migrations {
     this.database.close()
     return {migrated: migrate, status}
   }
+
+  /**
+   * returns current status of migrations
+   *
+   * @param  {Array} files
+   * @return {Object}
+   *
+   * @public
+   */
+  * status (files) {
+    const migrate = yield this._diff(files, 'up')
+    return _.transform(files, function (result, file, name) {
+      if (migrate.indexOf(name) > -1) {
+        result[name] = 'N'
+      } else {
+        result[name] = 'Y'
+      }
+    })
+  }
 }
 
 class ExtendedMigrations extends mixin(Migrations, Lock, Migrate, Batch) {}
