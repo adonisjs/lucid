@@ -11,10 +11,34 @@
 
 const fold = require('adonis-fold')
 const filesFixtures = require('../unit/fixtures/files')
+const ace = require('adonis-ace')
 const Ioc = fold.Ioc
 const Registrar = fold.Registrar
 const path = require('path')
 const config = require('../unit/helpers/config')
+
+const Helpers = {
+  databasePath: function (file) {
+    return file ? path.join(__dirname, './database', file) : path.join(__dirname, './database')
+  },
+  migrationsPath: function () {
+    return path.join(__dirname, './database/migrations')
+  },
+  seedsPath: function () {
+    return path.join(__dirname, './database/seeds')
+  }
+}
+
+const commands = {
+  'migration:run': 'Adonis/Commands/Run',
+  'migration:rollback': 'Adonis/Commands/Rollback',
+  'db:seed': 'Adonis/Commands/Seed'
+}
+
+Ioc.bind('Adonis/Src/Helpers', function () {
+  return Helpers
+})
+
 Ioc.bind('Adonis/Src/Config', function () {
   return config
 })
@@ -25,7 +49,9 @@ const providers = [
   path.join(__dirname, '../../providers/LucidProvider'),
   path.join(__dirname, '../../providers/MigrationsProvider'),
   path.join(__dirname, '../../providers/SchemaProvider'),
-  path.join(__dirname, '../../providers/SeedsProvider')
+  path.join(__dirname, '../../providers/SeederProvider'),
+  path.join(__dirname, '../../providers/CommandsProvider'),
+  'adonis-ace/providers/AnsiProvider'
 ]
 
 const setup = exports = module.exports = {}
@@ -36,6 +62,10 @@ setup.loadProviders = function () {
 
 setup.start = function * () {
   yield filesFixtures.createDir()
+}
+
+setup.registerCommands = function () {
+  ace.Store.register(commands)
 }
 
 setup.end = function * () {
@@ -53,3 +83,5 @@ setup.seed = function (seeds) {
   const Seeder = Ioc.use('Adonis/Src/Seeder')
   return Seeder.exec(seeds)
 }
+
+setup.runCommand = ace.Runner.run

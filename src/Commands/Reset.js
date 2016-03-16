@@ -9,44 +9,41 @@
  * file that was distributed with this source code.
 */
 
-const util = require('../../lib/util')
-const Ioc = require('adonis-fold').Ioc
+const Command = require('./Command')
 
-let Rollback = exports = module.exports = {}
+class Reset extends Command {
 
-Rollback.description = 'Reset all migrations to initial point'
-Rollback.signature = '{--force?}'
-
-/**
- * rollback all migrations using runner provider
- *
- * @method handle
- *
- * @param  {Object} options
- * @param  {Object} flags
- * @return {Object}
- *
- * @public
- */
-Rollback.handle = function * (options, flags) {
-  const Helpers = Ioc.make('Adonis/Src/Helpers')
-  const Migrations = Ioc.make('Adonis/Src/Migrations')
-  const Ansi = Ioc.use('Adonis/Src/Ansi')
-  const migrations = Helpers.migrationsPath()
-
-  if (process.env.NODE_ENV === 'production' && !flags.force) {
-    throw new Error('Cannot run migrations in production')
+  /**
+   * command description to be used by ace
+   *
+   * @return {String}
+   *
+   * @public
+   */
+  get description () {
+    return 'Rollback migrations to a given or last batch'
   }
 
-  const migrationsFiles = util.loadJsFiles(migrations)
-  const response = yield Migrations.down(migrationsFiles, 0)
+  /**
+   * this method will rollback all the migrations latest batch.
+   *
+   * @param  {Object} options
+   * @param  {Object} flags
+   *
+   * @public
+   */
+  * handle (options, flags) {
+    this.checkEnv(flags.force)
 
-  if (response.status === 'completed') {
-    const message = flags.batch ? `rolled back to ${flags.batch} batch` : 'rolled back from latest batch'
-    Ansi.success(`${Ansi.icon('success')} ${message}`)
-  }
+    const selectedFiles = flags.files ? flags.files.split(',') : null
+    const migrationsFiles = this.loadFiles(this.helpers.migrationsPath(), selectedFiles)
 
-  if (response.status === 'skipped') {
-    Ansi.info(`${Ansi.icon('info')} already at the last batch`)
+    const response = yield this.migrations.down(migrationsFiles, 0)
+
+    const successMessage = 'Rolled back to latest batch.'
+    const infoMessage = 'Already at the latest batch.'
+    this.log(response.status, successMessage, infoMessage)
   }
 }
+
+module.exports = Reset

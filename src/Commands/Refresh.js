@@ -9,45 +9,41 @@
  * file that was distributed with this source code.
 */
 
-const util = require('../../lib/util')
-const Ioc = require('adonis-fold').Ioc
+const Command = require('./Command')
 
-let Rollback = exports = module.exports = {}
+class Refresh extends Command {
 
-Rollback.description = 'Refresh migrations by dropping and re-running all migrations'
-Rollback.signature = '{--force?}'
-
-/**
- * rollback all migrations using runner provider
- *
- * @method handle
- *
- * @param  {Object} options
- * @param  {Object} flags
- * @return {Object}
- *
- * @public
- */
-Rollback.handle = function * (options, flags) {
-  const Helpers = Ioc.make('Adonis/Src/Helpers')
-  const Migrations = Ioc.make('Adonis/Src/Migrations')
-  const Ansi = Ioc.use('Adonis/Src/Ansi')
-  const migrations = Helpers.migrationsPath()
-
-  if (process.env.NODE_ENV === 'production' && !flags.force) {
-    throw new Error('Cannot run migrations in production')
+  /**
+   * command description to be used by ace
+   *
+   * @return {String}
+   *
+   * @public
+   */
+  get description () {
+    return 'Refresh migrations by dropping and re-running all migrations'
   }
 
-  const migrationsFiles = util.loadJsFiles(migrations)
-  yield Migrations.down(migrationsFiles, 0)
-  const response = yield Migrations.up(migrationsFiles)
+  /**
+   * this method will rollback all the migrations and
+   * re-run them again from start.
+   *
+   * @param  {Object} options
+   * @param  {Object} flags
+   *
+   * @public
+   */
+  * handle (options, flags) {
+    this.checkEnv(flags.force)
 
-  if (response.status === 'completed') {
-    const message = flags.batch ? `rolled back to ${flags.batch} batch` : 'rolled back from latest batch'
-    Ansi.success(`${Ansi.icon('success')} ${message}`)
-  }
+    const migrationsFiles = this.loadFiles(this.helpers.migrationsPath())
+    yield this.migrations.down(migrationsFiles, 0)
+    const response = yield this.migrations.up(migrationsFiles)
 
-  if (response.status === 'skipped') {
-    Ansi.info(`${Ansi.icon('info')} already at the last batch`)
+    const successMessage = 'Migrations successfully refreshed.'
+    const infoMessage = 'Already at the latest batch.'
+    this.log(response.status, successMessage, infoMessage)
   }
 }
+
+module.exports = Refresh
