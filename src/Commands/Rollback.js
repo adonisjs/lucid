@@ -9,43 +9,53 @@
  * file that was distributed with this source code.
 */
 
-const util = require('../../lib/util')
-const Ioc = require('adonis-fold').Ioc
+const Command = require('./Command')
 
-let Rollback = exports = module.exports = {}
+class Rollback extends Command {
 
-Rollback.description = 'Rollback migrations for a given or last batch'
-Rollback.signature = '{--force?}'
-
-/**
- * rollback all migrations using runner provider
- *
- * @method handle
- *
- * @param  {Object} options
- * @param  {Object} flags
- * @return {Object}
- *
- * @public
- */
-Rollback.handle = function * (options, flags) {
-  const Helpers = Ioc.make('Adonis/Src/Helpers')
-  const Migrations = Ioc.make('Adonis/Src/Migrations')
-  const Ansi = Ioc.use('Adonis/Src/Ansi')
-  const migrations = Helpers.migrationsPath()
-
-  if (process.env.NODE_ENV === 'production' && !flags.force) {
-    throw new Error('Cannot run migrations in production')
+  /**
+   * signature to be used by ace
+   *
+   * @return {String}
+   *
+   * @public
+   */
+  get signature () {
+    return '{--force?} {--batch?}'
   }
 
-  const migrationsFiles = util.loadJsFiles(migrations)
-  const response = yield Migrations.down(migrationsFiles, flags.batch)
-
-  if (response.status === 'completed') {
-    Ansi.success(`${Ansi.icon('success')} database migrated successfully`)
+  /**
+   * command description to be used by ace
+   *
+   * @return {String}
+   *
+   * @public
+   */
+  get description () {
+    return 'Rollback migrations to a given or last batch'
   }
 
-  if (response.status === 'skipped') {
-    Ansi.info(`${Ansi.icon('info')} nothing to migrate`)
+  /**
+   * this method will rollback all the migrations to last
+   * or a given batch.
+   *
+   * @param  {Object} options
+   * @param  {Object} flags
+   *
+   * @public
+   */
+  * handle (options, flags) {
+    this.checkEnv(flags.force)
+
+    const selectedFiles = flags.files ? flags.files.split(',') : null
+    const migrationsFiles = this.loadFiles(this.helpers.migrationsPath(), selectedFiles)
+
+    const response = yield this.migrations.down(migrationsFiles, flags.batch)
+
+    const successMessage = flags.batch ? `Rolled back to ${flags.batch} batch.` : 'Rolled back to previous batch.'
+    const infoMessage = 'Already at the latest batch.'
+    this.log(response.status, successMessage, infoMessage)
   }
 }
+
+module.exports = Rollback

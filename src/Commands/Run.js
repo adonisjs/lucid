@@ -9,43 +9,52 @@
  * file that was distributed with this source code.
 */
 
-const util = require('../../lib/util')
-const Ioc = require('adonis-fold').Ioc
+const Command = require('./Command')
 
-let Run = exports = module.exports = {}
+class Run extends Command {
 
-Run.description = 'Run all pending migrations'
-Run.signature = '{--force?}'
-
-/**
- * run all pending migrations
- *
- * @method handle
- *
- * @param  {Object} options
- * @param  {Object} flags
- * @return {Object}
- *
- * @public
- */
-Run.handle = function * (options, flags) {
-  const Helpers = Ioc.make('Adonis/Src/Helpers')
-  const Migrations = Ioc.make('Adonis/Src/Migrations')
-  const Ansi = Ioc.use('Adonis/Src/Ansi')
-  const migrations = Helpers.migrationsPath()
-
-  if (process.env.NODE_ENV === 'production' && !flags.force) {
-    throw new Error('Cannot run migrations in production')
+  /**
+   * signature to be used by ace
+   *
+   * @return {String}
+   *
+   * @public
+   */
+  get signature () {
+    return '{--force?} {--files?}'
   }
 
-  const migrationsFiles = util.loadJsFiles(migrations)
-  const response = yield Migrations.up(migrationsFiles)
-
-  if (response.status === 'completed') {
-    Ansi.success(`${Ansi.icon('success')} database migrated successfully`)
+  /**
+   * command description to be used by ace
+   *
+   * @return {String}
+   *
+   * @public
+   */
+  get description () {
+    return 'Run all pending migrations'
   }
 
-  if (response.status === 'skipped') {
-    Ansi.info(`${Ansi.icon('info')} nothing to migrate`)
+  /**
+   * this method will run all pending migrations
+   *
+   * @param  {Object} options
+   * @param  {Object} flags
+   *
+   * @public
+   */
+  * handle (options, flags) {
+    this.checkEnv(flags.force)
+
+    const selectedFiles = flags.files ? flags.files.split(',') : null
+    const migrationsFiles = this.loadFiles(this.helpers.migrationsPath(), selectedFiles)
+
+    const response = yield this.migrations.up(migrationsFiles)
+
+    const successMessage = 'Database migrated successfully.'
+    const infoMessage = 'Nothing to migrate.'
+    this.log(response.status, successMessage, infoMessage)
   }
 }
+
+module.exports = Run

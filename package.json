@@ -7,8 +7,8 @@
   },
   "version": "3.0.0",
   "scripts": {
-    "test": "npm run standard && node --harmony_proxies ./node_modules/.bin/_mocha test --recursive",
-    "standard": "standard src/**/*.js src/**/**/*.js src/**/**/**/*.js lib/*.js test/**/*.js",
+    "test": "npm run standard && node --harmony_proxies ./node_modules/.bin/_mocha test/unit test/acceptance",
+    "standard": "standard src/**/*.js src/**/**/*.js src/**/**/**/*.js lib/*.js test/**/*.js providers/*.js",
     "test:all": "DB=sqlite3 npm run test && DB=mysql npm run test && DB=pg npm run test",
     "coverage": "node --harmony_proxies ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test/unit",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
@@ -16,6 +16,7 @@
   "author": "adonisjs",
   "license": "MIT",
   "devDependencies": {
+    "adonis-ace": "^2.0.7",
     "adonis-fold": "^2.0.1",
     "bluebird": "^3.3.1",
     "chai": "^3.5.0",
