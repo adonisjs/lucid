@@ -12,7 +12,7 @@
 
 > :pray: This repository is the official SQL ORM for adonis framework.
 
-Adonis lucid is a database query builder and ORM for adonis framework. It also has support for database migrations.
+Adonis lucid is a database query builder and ORM for Adonis framework. It also has support for database migrations, seeds and factories.
 
 You can learn more about AdonisJS and all of its awesomeness on http://adonisjs.com :evergreen_tree:
 
@@ -56,6 +56,9 @@ const providers = [
   'adonis-lucid/providers/LucidProvider',
   'adonis-lucid/providers/SchemaProvider',
   'adonis-lucid/providers/MigrationsProvider',
+  'adonis-lucid/providers/CommandsProvider',
+  'adonis-lucid/providers/FactoryProvider',
+  'adonis-lucid/providers/SeederProvider',  
 ]
 ```
 
@@ -66,7 +69,8 @@ const aliases = {
   Database: 'Adonis/Src/Database',
   Lucid: 'Adonis/Src/Lucid',
   Schema: 'Adonis/Src/Schema'
-  Migrations: 'Adonis/Src/Migrations'
+  Migrations: 'Adonis/Src/Migrations',
+  Factory: 'Adonis/Src/Factory'
 }
 ```
 
