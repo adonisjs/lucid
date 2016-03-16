@@ -159,4 +159,9 @@ describe('Utils', function () {
     const files = util.loadJsFiles(path.join(__dirname, './autoload'))
     expect(Object.keys(files)).deep.equal(['foo', 'paths'])
   })
+
+  it('should load only selected .js files from a given directory', function () {
+    const files = util.loadJsFiles(path.join(__dirname, './autoload'), ['foo.js'])
+    expect(Object.keys(files)).deep.equal(['foo'])
+  })
 })
