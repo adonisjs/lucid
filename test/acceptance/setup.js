@@ -35,14 +35,6 @@ const commands = {
   'db:seed': 'Adonis/Commands/Seed'
 }
 
-Ioc.bind('Adonis/Src/Helpers', function () {
-  return Helpers
-})
-
-Ioc.bind('Adonis/Src/Config', function () {
-  return config
-})
-
 const providers = [
   path.join(__dirname, '../../providers/DatabaseProvider'),
   path.join(__dirname, '../../providers/FactoryProvider'),
@@ -57,6 +49,13 @@ const providers = [
 const setup = exports = module.exports = {}
 
 setup.loadProviders = function () {
+  Ioc.bind('Adonis/Src/Helpers', function () {
+    return Helpers
+  })
+
+  Ioc.bind('Adonis/Src/Config', function () {
+    return config
+  })
   return Registrar.register(providers)
 }
 

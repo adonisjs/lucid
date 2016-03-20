@@ -53,6 +53,9 @@ Hooks.getHooks = function (type, handler) {
  * @public
  */
 Hooks.composeHooks = function (scope, hooks) {
+  const Helpers = Ioc.use('Adonis/Src/Helpers')
+  const hookNameSpace = 'Model/Hooks'
+
   function * noop () {}
   return function * (next) {
     next = next || noop()
@@ -60,7 +63,7 @@ Hooks.composeHooks = function (scope, hooks) {
     while (i--) {
       let hook = hooks[i]
       if (typeof (hooks[i]) === 'string') {
-        const resolvedHook = Ioc.makeFunc(hooks[i])
+        const resolvedHook = Ioc.makeFunc(`${Helpers.makeNameSpace(hookNameSpace, hooks[i])}`)
         hook = resolvedHook.instance[resolvedHook.method]
       }
       next = hook.apply(scope, [next])

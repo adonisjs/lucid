@@ -31,6 +31,13 @@ describe('Relations', function () {
     Ioc.bind('Adonis/Src/Database', function () {
       return Database
     })
+    Ioc.bind('Adonis/Src/Helpers', function () {
+      return {
+        makeNameSpace: function (hook) {
+          return `App/${hook}`
+        }
+      }
+    })
     yield filesFixtures.createDir()
     yield relationFixtures.up(Database)
   })

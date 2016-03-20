@@ -1033,9 +1033,16 @@ describe('Lucid', function () {
     })
 
     it('should execute beforeCreate hook registered via namespace', function * () {
+      Ioc.bind('Adonis/Src/Helpers', function () {
+        return {
+          makeNameSpace: function (base, hook) {
+            return `App/${base}/${hook}`
+          }
+        }
+      })
       class User extends Model {}
       User.bootIfNotBooted()
-      User.addHook('beforeCreate', 'App/Model/Hooks/Users.validate')
+      User.addHook('beforeCreate', 'Users.validate')
       const user = new User()
       user.username = 'liz'
       user.firstname = 'Liz'

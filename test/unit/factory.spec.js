@@ -30,6 +30,13 @@ describe('Factory', function () {
     Ioc.bind('Adonis/Src/Database', function () {
       return Database
     })
+    Ioc.bind('Adonis/Src/Helpers', function () {
+      return {
+        makeNameSpace: function (hook) {
+          return `App/${hook}`
+        }
+      }
+    })
     Factory.clear()
   })
 
