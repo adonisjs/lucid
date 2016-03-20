@@ -27,6 +27,9 @@ describe('Factory', function () {
     Database._setConfigProvider(config)
     yield filesFixtures.createDir()
     yield modelFixtures.up(Database)
+    Ioc.bind('Adonis/Src/Database', function () {
+      return Database
+    })
     Factory.clear()
   })
 
@@ -177,5 +180,41 @@ describe('Factory', function () {
     yield userModelFactory.reset()
     const afterReset = yield User.all()
     expect(afterReset.size()).to.equal(0)
+  })
+
+  it('should be able to create records using the database factory', function * () {
+    Factory.blueprint('users', function (faker) {
+      return {
+        username: faker.internet.userName(),
+        firstname: faker.name.firstName()
+      }
+    })
+    const ids = yield Factory.get('users').create(10)
+    expect(ids).to.be.an('array')
+    expect(ids.length).to.equal(10)
+  })
+
+  it('should be able to define different table name when using database factory', function * () {
+    Factory.blueprint('forUsers', function (faker) {
+      return {
+        username: faker.internet.userName(),
+        firstname: faker.name.firstName()
+      }
+    })
+    const ids = yield Factory.get('forUsers').table('users').create(10)
+    expect(ids).to.be.an('array')
+    expect(ids.length).to.equal(10)
+  })
+
+  it('should be able to define different returning field when using database factory', function * () {
+    Factory.blueprint('forUsers', function (faker) {
+      return {
+        username: faker.internet.userName(),
+        firstname: faker.name.firstName()
+      }
+    })
+    const dbFactory = Factory.get('forUsers').table('users').returning('username')
+    yield dbFactory.create(10)
+    expect(dbFactory.returningField).to.equal('username')
   })
 })

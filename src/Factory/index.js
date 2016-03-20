@@ -11,6 +11,7 @@
 
 const Factory = exports = module.exports = {}
 const ModelFactory = require('./ModelFactory')
+const DatabaseFactory = require('./DatabaseFactory')
 const NE = require('node-exceptions')
 let blueprints = {}
 
@@ -70,4 +71,20 @@ Factory.clear = function () {
 Factory.model = function (key) {
   const callback = blueprints[key]
   return new ModelFactory(key, callback)
+}
+
+/**
+ * returns instance of database factory and pass it
+ * the blueprint defination.
+ *
+ * @method get
+ *
+ * @param  {String} key
+ * @return {Object}
+ *
+ * @public
+ */
+Factory.get = function (key) {
+  const callback = blueprints[key]
+  return new DatabaseFactory(key, callback)
 }

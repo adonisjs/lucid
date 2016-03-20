@@ -71,6 +71,7 @@ class ModelFactory {
    * @public
    */
   * create (rows) {
+    rows = rows || 1
     const self = this
     const range = _.range(rows)
     this.instances = yield cf.mapSerial(function * () {
