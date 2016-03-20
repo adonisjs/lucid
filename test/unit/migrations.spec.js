@@ -14,6 +14,7 @@ const Migrations = require('../../src/Migrations')
 const Database = require('../../src/Database')
 const Schema = require('../../src/Schema')
 const _ = require('lodash')
+const Ioc = require('adonis-fold').Ioc
 const chai = require('chai')
 const filesFixtures = require('./fixtures/files')
 const config = require('./helpers/config')
@@ -29,6 +30,9 @@ const Config = {
 describe('Migrations', function () {
   before(function * () {
     Database._setConfigProvider(config)
+    Ioc.bind('Adonis/Src/Database', function () {
+      return Database
+    })
     yield filesFixtures.createDir()
   })
 
