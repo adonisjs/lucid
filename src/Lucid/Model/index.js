@@ -813,6 +813,19 @@ class Model {
   }
 
   /**
+   * here we tell the IoC container to return the
+   * actual model instead of it's instance when
+   * trying to inject/make it.
+   *
+   * @return {Boolean}
+   *
+   * @private
+   */
+  static get makePlain () {
+    return true
+  }
+
+  /**
    * here we eagerly load previously registered relations
    *
    * @public
