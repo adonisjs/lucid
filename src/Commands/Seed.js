@@ -13,14 +13,37 @@ const Command = require('./Command')
 
 class Seed extends Command {
 
+  /**
+   * signature to be used by ace
+   *
+   * @return {String}
+   *
+   * @public
+   */
   get signature () {
     return '{--force?} {--files?}'
   }
 
+  /**
+   * command description to be used by ace
+   *
+   * @return {String}
+   *
+   * @public
+   */
   get description () {
     return 'Seeds database by running all or a given seed file'
   }
 
+  /**
+   * this method will seed the database by calling
+   * all/specific seed files
+   *
+   * @param  {Object} options
+   * @param  {Object} flags
+   *
+   * @public
+   */
   * handle (options, flags) {
     this.checkEnv(flags.force)
     const seedsPath = this.helpers.seedsPath()
