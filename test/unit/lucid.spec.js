@@ -29,6 +29,9 @@ require('co-mocha')
 describe('Lucid', function () {
   before(function * () {
     Database._setConfigProvider(config)
+    Ioc.bind('Adonis/Src/Database', function () {
+      return Database
+    })
     yield filesFixtures.createDir()
     yield modelFixtures.up(Database)
     Ioc.autoload('App', path.join(__dirname, './app'))

@@ -28,6 +28,9 @@ require('co-mocha')
 describe('Relations', function () {
   before(function * () {
     Database._setConfigProvider(config)
+    Ioc.bind('Adonis/Src/Database', function () {
+      return Database
+    })
     yield filesFixtures.createDir()
     yield relationFixtures.up(Database)
   })

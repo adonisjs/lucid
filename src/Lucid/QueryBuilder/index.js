@@ -10,7 +10,7 @@
 */
 
 require('harmony-reflect')
-const Database = require('../../Database')
+const Ioc = require('adonis-fold').Ioc
 const EagerLoad = require('../Relations/EagerLoad')
 const proxyHandler = require('./proxyHandler')
 
@@ -23,6 +23,7 @@ const proxyHandler = require('./proxyHandler')
  */
 class QueryBuilder {
   constructor (HostModel) {
+    const Database = Ioc.use('Adonis/Src/Database')
     this.HostModel = HostModel
     this.queryBuilder = Database.connection(this.HostModel.connection)
     this.modelQueryBuilder = this.queryBuilder(this.HostModel.table)
