@@ -800,6 +800,19 @@ class Model {
   }
 
   /**
+   * returned hooks will be called by IoC
+   * container everytime a give model
+   * is used.
+   *
+   * @method IocHooks
+   *
+   * @private
+   */
+  static IocHooks () {
+    return ['bootIfNotBooted']
+  }
+
+  /**
    * here we eagerly load previously registered relations
    *
    * @public
