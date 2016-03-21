@@ -16,11 +16,10 @@ const logger = new CatLog('adonis:lucid')
 
 class BelongsTo extends Relation {
 
-  constructor (parent, related, primaryKey, foriegnKey) {
+  constructor (parent, related, primaryKey, foreignKey) {
     super(parent, related)
-    this.relatedQuery = this.related.query()
-    this.toKey = primaryKey
-    this.fromKey = foriegnKey
+    this.toKey = primaryKey || this.related.primaryKey
+    this.fromKey = foreignKey || this.related.foreignKey
   }
 
   /**

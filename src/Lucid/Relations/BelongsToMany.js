@@ -14,32 +14,62 @@ const CE = require('../Model/customExceptions')
 const _ = require('lodash')
 const helpers = require('../QueryBuilder/helpers')
 const CatLog = require('cat-log')
+const util = require('../../../lib/util')
 const logger = new CatLog('adonis:lucid')
 
 class BelongsToMany extends Relation {
 
   constructor (parent, related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey) {
     super(parent, related)
-    const self = this
-    this.relatedQuery = this.related.query()
-    this.pivotTable = pivotTable // post_comment
-    this.toKey = relatedPrimaryKey // comments -> id
-    this.fromKey = primaryKey // post -> id
-    this.pivotLocalKey = pivotLocalKey // post_id
-    this.pivotOtherKey = pivotOtherKey // comment_id
     this.pivotPrefix = '_pivot_'
     this.pivotItems = []
+    this._setUpPivotTable(pivotTable)
+    this._setUpKeys(primaryKey, relatedPrimaryKey, pivotLocalKey, pivotOtherKey)
+    this._decorateQueryBuilder()
+  }
 
-    /**
-     * helper method to query the pivot table. One
-     * can also do it manually by prefixing the
-     * pivot table name.
-     */
+  /**
+   * helper method to query the pivot table. One
+   * can also do it manually by prefixing the
+   * pivot table name.
+   *
+   * @private
+   */
+  _decorateQueryBuilder () {
+    const self = this
     this.relatedQuery.wherePivot = function () {
       const args = _.toArray(arguments)
       args[0] = `${self.pivotTable}.${args[0]}`
       this.where.apply(this, args)
     }
+  }
+
+  /**
+   * defines pivot table
+   *
+   * @param  {String}         pivotTable
+   *
+   * @private
+   */
+  _setUpPivotTable (pivotTable) {
+    this.pivotTable = pivotTable || util.makePivotTableName(this.parent.constructor, this.related)
+  }
+
+  /**
+   * defines keys to be used for resolving relationships
+   *
+   * @param  {String}   primaryKey
+   * @param  {String}   relatedPrimaryKey
+   * @param  {String}   pivotLocalKey
+   * @param  {String}   pivotOtherKey
+   *
+   * @private
+   */
+  _setUpKeys (primaryKey, relatedPrimaryKey, pivotLocalKey, pivotOtherKey) {
+    this.toKey = relatedPrimaryKey || this.related.primaryKey // comments -> id
+    this.fromKey = primaryKey || this.parent.constructor.primaryKey // post -> id
+    this.pivotLocalKey = pivotLocalKey || util.makePivotModelKey(this.parent.constructor) // post_id
+    this.pivotOtherKey = pivotOtherKey || util.makePivotModelKey(this.related) // comment_id
   }
 
   /**

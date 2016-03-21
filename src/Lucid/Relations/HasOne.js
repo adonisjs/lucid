@@ -12,11 +12,10 @@
 const Relation = require('./Relation')
 class HasOne extends Relation {
 
-  constructor (parent, related, primaryKey, foriegnKey) {
+  constructor (parent, related, primaryKey, foreignKey) {
     super(parent, related)
-    this.relatedQuery = this.related.query()
-    this.fromKey = primaryKey
-    this.toKey = foriegnKey
+    this.fromKey = primaryKey || this.parent.constructor.primaryKey
+    this.toKey = foreignKey || this.parent.constructor.foreignKey
   }
 
   /**

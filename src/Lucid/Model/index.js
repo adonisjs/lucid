@@ -695,8 +695,6 @@ class Model {
    * @public
    */
   hasOne (related, primaryKey, foreignKey) {
-    primaryKey = primaryKey || this.constructor.primaryKey
-    foreignKey = foreignKey || this.constructor.foreignKey
     return new HasOne(this, related, primaryKey, foreignKey)
   }
 
@@ -713,8 +711,6 @@ class Model {
    * @public
    */
   hasMany (related, primaryKey, foreignKey) {
-    primaryKey = primaryKey || this.constructor.primaryKey
-    foreignKey = foreignKey || this.constructor.foreignKey
     return new HasMany(this, related, primaryKey, foreignKey)
   }
 
@@ -731,8 +727,6 @@ class Model {
    * @public
    */
   belongsTo (related, primaryKey, foreignKey) {
-    primaryKey = primaryKey || related.primaryKey
-    foreignKey = foreignKey || related.foreignKey
     return new BelongsTo(this, related, primaryKey, foreignKey)
   }
 
@@ -751,11 +745,6 @@ class Model {
    * @public
    */
   belongsToMany (related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey) {
-    pivotTable = pivotTable || util.makePivotTableName(this.constructor, related)
-    pivotLocalKey = pivotLocalKey || util.makePivotModelKey(this.constructor)
-    pivotOtherKey = pivotOtherKey || util.makePivotModelKey(related)
-    primaryKey = primaryKey || this.constructor.primaryKey
-    relatedPrimaryKey = relatedPrimaryKey || related.primaryKey
     return new BelongsToMany(this, related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey)
   }
 
