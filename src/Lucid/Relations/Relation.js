@@ -21,6 +21,7 @@ class Relation {
   constructor (parent, related) {
     this.parent = parent
     this.related = typeof (related) === 'string' ? Ioc.use(related) : related
+    this.relatedQuery = this.related.query()
     return new Proxy(this, proxyHandler)
   }
 
