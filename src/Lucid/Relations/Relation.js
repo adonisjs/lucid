@@ -20,9 +20,23 @@ class Relation {
 
   constructor (parent, related) {
     this.parent = parent
-    this.related = typeof (related) === 'string' ? Ioc.use(related) : related
+    this.related = this._resolveModel(related)
     this.relatedQuery = this.related.query()
     return new Proxy(this, proxyHandler)
+  }
+
+  /**
+   * returns the model from IoC container or returns
+   * the actual binding if model representation is
+   * not a string.
+   *
+   * @param  {String|Object}      model
+   * @return {Object}
+   *
+   * @private
+   */
+  _resolveModel (model) {
+    return typeof (model) === 'string' ? Ioc.use(model) : model
   }
 
   /**

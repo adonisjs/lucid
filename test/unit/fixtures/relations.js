@@ -92,6 +92,28 @@ module.exports = {
         table.integer('student_id')
         table.integer('course_id')
         table.boolean('is_enrolled')
+      }),
+      knex.schema.createTable('authors', function (table) {
+        table.increments()
+        table.integer('country_id')
+        table.string('name')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
+      knex.schema.createTable('publications', function (table) {
+        table.increments()
+        table.integer('author_id')
+        table.string('title')
+        table.string('body')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
+      knex.schema.createTable('countries', function (table) {
+        table.increments()
+        table.string('name')
+        table.string('locale')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
       })
     ]
     return bluebird.all(tables)
@@ -109,7 +131,10 @@ module.exports = {
       knex.schema.dropTable('comments'),
       knex.schema.dropTable('courses'),
       knex.schema.dropTable('students'),
-      knex.schema.dropTable('course_student')
+      knex.schema.dropTable('course_student'),
+      knex.schema.dropTable('authors'),
+      knex.schema.dropTable('publications'),
+      knex.schema.dropTable('countries')
     ]
     return bluebird.all(tables)
   },

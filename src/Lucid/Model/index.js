@@ -28,6 +28,7 @@ const HasOne = require('../Relations/HasOne')
 const HasMany = require('../Relations/HasMany')
 const BelongsTo = require('../Relations/BelongsTo')
 const BelongsToMany = require('../Relations/BelongsToMany')
+const HasManyThrough = require('../Relations/HasManyThrough')
 const EagerLoad = require('../Relations/EagerLoad')
 
 /**
@@ -572,6 +573,19 @@ class Model {
   }
 
   /**
+   * shorthand to get access to the with method on
+   * query builder chain.
+   *
+   * @return {Object}
+   *
+   * @public
+   */
+  static with () {
+    const args = _.toArray(arguments)
+    return this.query().with(args)
+  }
+
+  /**
    * getter to return the primaryKey value for a given
    * instance.
    *
@@ -731,21 +745,40 @@ class Model {
   }
 
   /**
-   * returns belongsTo instance for a given model. Later
-   * returned instance will be responsible for
-   * resolving relations
+   * returns belongsToMany instance for a given model. Later
+   * returned instance will be responsible for resolving
+   * relations.
    *
    * @param  {Object}      related
    * @param  {String}      [pivotTable]
    * @param  {String}      [pivotLocalKey]
    * @param  {String}      [pivotOtherKey]
    * @param  {String}      [primaryKey]
+   * @param  {String}      [relatedPrimaryKey]
    * @return {Object}
    *
    * @public
    */
   belongsToMany (related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey) {
     return new BelongsToMany(this, related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey)
+  }
+
+  /**
+   * returns HasManyThrough instance for a given model. Later
+   * returned instance will be responsible for resolving relations.
+   *
+   * @param  {Object}      related
+   * @param  {String}      through
+   * @param  {String}      [primaryKey]
+   * @param  {String}      [foreignKey]
+   * @param  {String}      [throughPrimaryKey]
+   * @param  {String}      [throughForeignKey]
+   * @return {Object}
+   *
+   * @public
+   */
+  hasManyThrough (related, through, primaryKey, foreignKey, throughPrimaryKey, throughForeignKey) {
+    return new HasManyThrough(this, related, through, primaryKey, foreignKey, throughPrimaryKey, throughForeignKey)
   }
 
   /**
