@@ -21,7 +21,7 @@ class Reset extends Command {
    * @public
    */
   get description () {
-    return 'Rollback migrations to a given or last batch'
+    return 'Reset migrations to lastest batch'
   }
 
   /**
@@ -35,9 +35,7 @@ class Reset extends Command {
   * handle (options, flags) {
     this.checkEnv(flags.force)
 
-    const selectedFiles = flags.files ? flags.files.split(',') : null
-    const migrationsFiles = this.loadFiles(this.helpers.migrationsPath(), selectedFiles)
-
+    const migrationsFiles = this.loadFiles(this.helpers.migrationsPath())
     const response = yield this.migrations.down(migrationsFiles, 0)
 
     const successMessage = 'Rolled back to latest batch.'

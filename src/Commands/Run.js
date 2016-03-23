@@ -21,7 +21,7 @@ class Run extends Command {
    * @public
    */
   get signature () {
-    return '{--force?} {--files?}'
+    return '{--f|force?} {--files?}'
   }
 
   /**
