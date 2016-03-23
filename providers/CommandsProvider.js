@@ -17,6 +17,7 @@ class CommandsProvider extends ServiceProvider {
     this.bindRollback()
     this.bindRefresh()
     this.bindReset()
+    this.bindStatus()
     this.bindSeed()
   }
 
@@ -57,6 +58,16 @@ class CommandsProvider extends ServiceProvider {
       const Migrations = app.use('Adonis/Src/Migrations')
       const Ansi = app.use('Adonis/Src/Ansi')
       return new Reset(Helpers, Migrations, {}, Ansi)
+    })
+  }
+
+  bindStatus () {
+    this.app.bind('Adonis/Commands/Status', function (app) {
+      const Status = require('../src/Commands/Status')
+      const Helpers = app.use('Adonis/Src/Helpers')
+      const Migrations = app.use('Adonis/Src/Migrations')
+      const Ansi = app.use('Adonis/Src/Ansi')
+      return new Status(Helpers, Migrations, {}, Ansi)
     })
   }
 
