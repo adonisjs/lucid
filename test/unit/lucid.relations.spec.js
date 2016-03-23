@@ -22,6 +22,7 @@ const HasOne = require('../../src/Lucid/Relations/HasOne')
 const HasMany = require('../../src/Lucid/Relations/HasMany')
 const BelongsTo = require('../../src/Lucid/Relations/BelongsTo')
 const BelongsToMany = require('../../src/Lucid/Relations/BelongsToMany')
+const HasManyThrough = require('../../src/Lucid/Relations/HasManyThrough')
 const queryHelpers = require('./helpers/query')
 require('co-mocha')
 
@@ -2056,6 +2057,198 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
       yield relationFixtures.truncate(Database, 'course_student')
+    })
+  })
+
+  context('HasManyThrough', function () {
+    it('should return an instance of HasManyThrough when relation method has been called', function () {
+      class Author extends Model {
+      }
+      class Publication extends Model {
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      const country = new Country()
+      expect(country.publications() instanceof HasManyThrough).to.equal(true)
+    })
+
+    it('should setup proper relation keys for a given relation', function () {
+      class Author extends Model {
+      }
+      class Publication extends Model {
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      const country = new Country()
+      const countryPublications = country.publications()
+      expect(countryPublications.toKey).to.equal('country_id')
+      expect(countryPublications.fromKey).to.equal('id')
+      expect(countryPublications.viaKey).to.equal('id')
+    })
+
+    it('should be able to get all rows using the model instance relational method', function * () {
+      const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND'})
+      const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0]})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0]})
+      let publicationQuery = null
+      class Author extends Model {
+      }
+      class Publication extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            publicationQuery = query
+          })
+        }
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      Publication.bootIfNotBooted()
+      const country = yield Country.find(savedCountry[0])
+      const publications = yield country.publications().fetch()
+      expect(queryHelpers.formatQuery(publicationQuery.sql)).to.equal(queryHelpers.formatQuery('select "publications".*, "authors"."country_id" from "publications" inner join "authors" on "authors"."id" = "publications"."author_id" where "authors"."country_id" = ?'))
+      expect(publicationQuery.bindings).deep.equal(queryHelpers.formatBindings(savedCountry))
+      expect(publications.size()).to.equal(1)
+      expect(publications.first() instanceof Publication).to.equal(true)
+      expect(publications.first().author_id).to.equal(savedAuthor[0])
+
+      yield relationFixtures.truncate(Database, 'countries')
+      yield relationFixtures.truncate(Database, 'authors')
+      yield relationFixtures.truncate(Database, 'publications')
+    })
+
+    it('should be able to get first row using the model instance relational method', function * () {
+      const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND'})
+      const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0]})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0]})
+      let publicationQuery = null
+      class Author extends Model {
+      }
+      class Publication extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            publicationQuery = query
+          })
+        }
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      Publication.bootIfNotBooted()
+      const country = yield Country.find(savedCountry[0])
+      const publication = yield country.publications().first()
+      expect(queryHelpers.formatQuery(publicationQuery.sql)).to.equal(queryHelpers.formatQuery('select "publications".*, "authors"."country_id" from "publications" inner join "authors" on "authors"."id" = "publications"."author_id" where "authors"."country_id" = ? limit ?'))
+      expect(publicationQuery.bindings).deep.equal(queryHelpers.formatBindings(savedCountry.concat([1])))
+      expect(publication instanceof Publication).to.equal(true)
+      expect(publication.author_id).to.equal(savedAuthor[0])
+
+      yield relationFixtures.truncate(Database, 'countries')
+      yield relationFixtures.truncate(Database, 'authors')
+      yield relationFixtures.truncate(Database, 'publications')
+    })
+
+    it('should be able to eagerLoad using static with method', function * () {
+      const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND', id: 10})
+      const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0], id: 23})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0]})
+      class Author extends Model {
+      }
+      class Publication extends Model {
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      Publication.bootIfNotBooted()
+      const countries = yield Country.with('publications').fetch()
+      expect(countries.size()).to.equal(1)
+      const country = countries.first()
+      expect(country instanceof Country).to.equal(true)
+      expect(country.id).to.equal(savedCountry[0])
+      expect(country.get('publications').first() instanceof Publication).to.equal(true)
+      expect(country.get('publications').first().author_id).to.equal(savedAuthor[0])
+
+      yield relationFixtures.truncate(Database, 'countries')
+      yield relationFixtures.truncate(Database, 'authors')
+      yield relationFixtures.truncate(Database, 'publications')
+    })
+
+    it('should be able to eagerLoad through model instance', function * () {
+      const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND', id: 11})
+      const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0], id: 23})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0]})
+      class Author extends Model {
+      }
+      class Publication extends Model {
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      Publication.bootIfNotBooted()
+      const country = yield Country.find(savedCountry[0])
+      yield country.related('publications').load()
+      const publications = country.get('publications')
+      expect(publications.first() instanceof Publication).to.equal(true)
+      expect(country.get('publications').first().author_id).to.equal(savedAuthor[0]).to.equal(23)
+
+      yield relationFixtures.truncate(Database, 'countries')
+      yield relationFixtures.truncate(Database, 'authors')
+      yield relationFixtures.truncate(Database, 'publications')
+    })
+
+    it('should throw an error when trying to save the related model', function * () {
+      class Author extends Model {
+      }
+      class Publication extends Model {
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      const country = new Country()
+      try {
+        yield country.publications().save()
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationSaveException')
+        expect(e.message).to.match(/Cannot call save/)
+      }
+    })
+
+    it('should throw an error when trying to create the related model', function * () {
+      class Author extends Model {
+      }
+      class Publication extends Model {
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      const country = new Country()
+      try {
+        yield country.publications().create()
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationSaveException')
+        expect(e.message).to.match(/Cannot call create/)
+      }
     })
   })
 })
