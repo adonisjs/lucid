@@ -21,7 +21,7 @@ class Seed extends Command {
    * @public
    */
   get signature () {
-    return '{--force?} {--files?}'
+    return '{--f|force?} {--files?}'
   }
 
   /**
@@ -48,7 +48,6 @@ class Seed extends Command {
     this.checkEnv(flags.force)
     const seedsPath = this.helpers.seedsPath()
     const selectedFiles = flags.files ? flags.files.split(',') : null
-    require(this.helpers.databasePath('factory.js'))
     const seedsFiles = this.loadFiles(seedsPath, selectedFiles)
 
     yield this.seeder.exec(seedsFiles)

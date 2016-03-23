@@ -21,7 +21,7 @@ class Rollback extends Command {
    * @public
    */
   get signature () {
-    return '{--force?} {--batch?}'
+    return '{--f|force?} {--batch?}'
   }
 
   /**
@@ -47,9 +47,7 @@ class Rollback extends Command {
   * handle (options, flags) {
     this.checkEnv(flags.force)
 
-    const selectedFiles = flags.files ? flags.files.split(',') : null
-    const migrationsFiles = this.loadFiles(this.helpers.migrationsPath(), selectedFiles)
-
+    const migrationsFiles = this.loadFiles(this.helpers.migrationsPath())
     const response = yield this.migrations.down(migrationsFiles, flags.batch)
 
     const successMessage = flags.batch ? `Rolled back to ${flags.batch} batch.` : 'Rolled back to previous batch.'
