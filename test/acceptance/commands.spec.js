@@ -62,4 +62,8 @@ describe('Commands', function () {
     const usersInfo = yield this.database.table('users').columnInfo()
     expect(usersInfo).deep.equal({})
   })
+
+  it('should show migrations status', function * () {
+    yield setup.runCommand('migration:status', {}, {})
+  })
 })

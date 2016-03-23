@@ -18,9 +18,6 @@ const path = require('path')
 const config = require('../unit/helpers/config')
 
 const Helpers = {
-  databasePath: function (file) {
-    return file ? path.join(__dirname, './database', file) : path.join(__dirname, './database')
-  },
   migrationsPath: function () {
     return path.join(__dirname, './database/migrations')
   },
@@ -32,7 +29,8 @@ const Helpers = {
 const commands = {
   'migration:run': 'Adonis/Commands/Run',
   'migration:rollback': 'Adonis/Commands/Rollback',
-  'db:seed': 'Adonis/Commands/Seed'
+  'db:seed': 'Adonis/Commands/Seed',
+  'migration:status': 'Adonis/Commands/Status'
 }
 
 const providers = [
