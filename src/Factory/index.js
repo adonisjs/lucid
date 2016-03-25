@@ -58,6 +58,24 @@ Factory.clear = function () {
 }
 
 /**
+ * resolves callback for a given key.
+ *
+ * @method _resolve
+ *
+ * @param  {String} key
+ * @return {Function}
+ *
+ * @private
+ */
+Factory._resolve = function (key) {
+  const callback = blueprints[key]
+  if (!callback) {
+    throw new NE.RuntimeException(`Cannot find ${key} factory`)
+  }
+  return callback
+}
+
+/**
  * returns instance of model factory and pass it
  * the blueprint defination.
  *
@@ -69,8 +87,7 @@ Factory.clear = function () {
  * @public
  */
 Factory.model = function (key) {
-  const callback = blueprints[key]
-  return new ModelFactory(key, callback)
+  return new ModelFactory(key, Factory._resolve(key))
 }
 
 /**
@@ -85,6 +102,5 @@ Factory.model = function (key) {
  * @public
  */
 Factory.get = function (key) {
-  const callback = blueprints[key]
-  return new DatabaseFactory(key, callback)
+  return new DatabaseFactory(key, Factory._resolve(key))
 }

@@ -52,6 +52,20 @@ describe('Factory', function () {
     expect(fn).to.throw(/callback should be a function while define a factory blueprint/)
   })
 
+  it('should throw an error when unable to resolve model factory', function () {
+    const fn = function () {
+      Factory.model('App/Model/User')
+    }
+    expect(fn).to.throw('RuntimeException', /Cannot find App\/Model\/User factory/)
+  })
+
+  it('should throw an error when unable to resolve database factory', function () {
+    const fn = function () {
+      Factory.get('users')
+    }
+    expect(fn).to.throw('RuntimeException', /Cannot find users factory/)
+  })
+
   it('should be able to define a factory blueprint', function () {
     Factory.blueprint('App/Model/User', function (faker) {
       return {
