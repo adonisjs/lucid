@@ -35,7 +35,7 @@ class Status extends Command {
   * handle (options, flags) {
     const migrationsFiles = this.loadFiles(this.helpers.migrationsPath())
     const response = yield this.migrations.status(migrationsFiles)
-    this.ansi.table(['File', 'Status'], response)
+    this.ansi.table(['File', 'Status'], [response])
   }
 }
 

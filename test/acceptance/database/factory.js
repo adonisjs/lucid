@@ -9,7 +9,8 @@
  * file that was distributed with this source code.
 */
 
-const Factory = use('Adonis/Src/Factory')
+const Ioc = require('adonis-fold').Ioc
+const Factory = Ioc.use('Adonis/Src/Factory')
 
 Factory.blueprint('App/Model/User', function (faker) {
   return {

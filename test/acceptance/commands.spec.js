@@ -30,6 +30,7 @@ describe('Commands', function () {
   before(function * () {
     setup.loadProviders()
     setup.registerCommands()
+    require('./database/factory.js')
     const Lucid = Ioc.use('Adonis/Src/Lucid')
     class User extends Lucid {}
     Ioc.bind('App/Model/User', function () {
