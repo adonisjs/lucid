@@ -830,7 +830,7 @@ class Model {
    *
    * @private
    */
-  static IocHooks () {
+  static get IocHooks () {
     return ['bootIfNotBooted']
   }
 
