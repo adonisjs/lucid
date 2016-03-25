@@ -81,4 +81,4 @@ setup.seed = function (seeds) {
   return Seeder.exec(seeds)
 }
 
-setup.runCommand = ace.Runner.run
+setup.runCommand = ace.Runner.execute
