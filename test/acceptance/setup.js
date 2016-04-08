@@ -23,6 +23,9 @@ const Helpers = {
   },
   seedsPath: function () {
     return path.join(__dirname, './database/seeds')
+  },
+  databasePath: function (file) {
+    return path.join(__dirname, './database', file)
   }
 }
 
