@@ -14,6 +14,17 @@ const Command = require('./Command')
 class Status extends Command {
 
   /**
+   * signature to be used by ace
+   *
+   * @return {String}
+   *
+   * @public
+   */
+  get signature () {
+    return 'migration:status'
+  }
+
+  /**
    * command description to be used by ace
    *
    * @return {String}
@@ -35,7 +46,7 @@ class Status extends Command {
   * handle (options, flags) {
     const migrationsFiles = this.loadFiles(this.helpers.migrationsPath())
     const response = yield this.migrations.status(migrationsFiles)
-    this.ansi.table(['File', 'Status'], [response])
+    this.table(['Migration', 'Status'], response)
   }
 }
 

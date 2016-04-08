@@ -10,6 +10,10 @@
 */
 
 /* global describe, it, after, before, context */
+const Ioc = require('adonis-fold').Ioc
+Ioc.bind('Adonis/Src/Command', function () {
+  return require('adonis-ace/src/Command')
+})
 const Refresh = require('../../src/Commands/Refresh')
 const Run = require('../../src/Commands/Run')
 const Rollback = require('../../src/Commands/Rollback')
@@ -23,22 +27,11 @@ const config = require('./helpers/config')
 const chai = require('chai')
 const path = require('path')
 const expect = chai.expect
-let ansiSuccess = null
 require('co-mocha')
 
 const Helpers = {
   migrationsPath: function () {
     return path.join(__dirname, './migrations')
-  }
-}
-
-const Ansi = {
-  success: function (message) {
-    ansiSuccess = message
-  },
-  info: function () {},
-  icon: function () {
-    return ''
   }
 }
 
@@ -65,7 +58,7 @@ describe('Commands', function () {
   context('Refresh', function () {
     before(function () {
       const migrations = new Migrations(Database, Config)
-      this.refresh = new Refresh(Helpers, migrations, Seeder, Ansi)
+      this.refresh = new Refresh(Helpers, migrations, Seeder)
     })
 
     it('should rollback and re-run all the migrations when the handle method is called', function * () {
@@ -84,7 +77,6 @@ describe('Commands', function () {
       }
 
       yield this.refresh.handle({}, {})
-      expect(ansiSuccess.trim()).to.equal('Migrations successfully refreshed.')
       const users = yield Database.table('users').columnInfo()
       expect(users).to.be.an('object')
       expect(Object.keys(users)).deep.equal(['id', 'created_at', 'updated_at'])
@@ -96,7 +88,7 @@ describe('Commands', function () {
   context('Run', function () {
     before(function () {
       const migrations = new Migrations(Database, Config)
-      this.run = new Run(Helpers, migrations, Seeder, Ansi)
+      this.run = new Run(Helpers, migrations, Seeder)
     })
 
     it('should migrate all pending migrations', function * () {
@@ -115,7 +107,6 @@ describe('Commands', function () {
       }
 
       yield this.run.handle({}, {})
-      expect(ansiSuccess.trim()).to.equal('Database migrated successfully.')
       const users = yield Database.table('users').columnInfo()
       expect(users).to.be.an('object')
       expect(Object.keys(users)).deep.equal(['id', 'created_at', 'updated_at'])
@@ -128,8 +119,8 @@ describe('Commands', function () {
     before(function () {
       const migrations = new Migrations(Database, Config)
       const rollbackMigrations = new Migrations(Database, Config)
-      this.run = new Run(Helpers, migrations, Seeder, Ansi)
-      this.rollback = new Rollback(Helpers, rollbackMigrations, Seeder, Ansi)
+      this.run = new Run(Helpers, migrations, Seeder)
+      this.rollback = new Rollback(Helpers, rollbackMigrations, Seeder)
     })
 
     it('should rollback migrations to the previous batch', function * () {
@@ -155,7 +146,6 @@ describe('Commands', function () {
 
       yield this.run.handle({}, {})
       yield this.rollback.handle({}, {})
-      expect(ansiSuccess.trim()).to.equal('Rolled back to previous batch.')
       const users = yield Database.table('users').columnInfo()
       expect(users).deep.equal({})
       yield Database.schema.dropTable('adonis_schema')
@@ -167,9 +157,9 @@ describe('Commands', function () {
       const migrations = new Migrations(Database, Config)
       const resetMigrations = new Migrations(Database, Config)
       const reMigrations = new Migrations(Database, Config)
-      this.run = new Run(Helpers, migrations, Seeder, Ansi)
-      this.reRun = new Run(Helpers, reMigrations, Seeder, Ansi)
-      this.reset = new Reset(Helpers, resetMigrations, Seeder, Ansi)
+      this.run = new Run(Helpers, migrations, Seeder)
+      this.reRun = new Run(Helpers, reMigrations, Seeder)
+      this.reset = new Reset(Helpers, resetMigrations, Seeder)
     })
 
     it('should rollback migrations to the latest batch', function * () {
@@ -221,7 +211,6 @@ describe('Commands', function () {
       expect(Object.keys(accounts)).deep.equal(['id'])
 
       yield this.reset.handle({}, {})
-      expect(ansiSuccess.trim()).to.equal('Rolled back to latest batch.')
       const usersInfo = yield Database.table('users').columnInfo()
       const accountsInfo = yield Database.table('accounts').columnInfo()
       expect(usersInfo).deep.equal({})

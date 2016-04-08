@@ -10,14 +10,16 @@
 */
 
 const util = require('../../lib/util')
+const Ioc = require('adonis-fold').Ioc
+const BaseCommand = Ioc.use('Adonis/Src/Command')
 
-class Command {
+class Command extends BaseCommand {
 
-  constructor (Helpers, Migrations, Seeder, Ansi) {
+  constructor (Helpers, Migrations, Seeder) {
+    super()
     this.helpers = Helpers
     this.migrations = Migrations
     this.seeder = Seeder
-    this.ansi = Ansi
   }
 
   /**
@@ -30,18 +32,6 @@ class Command {
    */
   static get inject () {
     return ['Adonis/Src/Helpers', 'Adonis/Src/Migrations', 'Adonis/Src/Ansi']
-  }
-
-  /**
-   * command signature, should be override by
-   * the child class
-   *
-   * @return {String}
-   *
-   * @public
-   */
-  get signature () {
-    return '{--f|force?}'
   }
 
   /**
@@ -96,11 +86,11 @@ class Command {
    */
   log (status, successMessage, infoMessage) {
     if (status === 'completed') {
-      this.ansi.success(`${this.ansi.icon('success')} ${successMessage}`)
+      this.success(`${this.icon('success')} ${successMessage}`)
       return
     }
     if (status === 'skipped') {
-      this.ansi.info(`${this.ansi.icon('info')} ${infoMessage}`)
+      this.info(`${this.icon('info')} ${infoMessage}`)
     }
   }
 }

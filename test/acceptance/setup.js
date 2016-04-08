@@ -26,12 +26,12 @@ const Helpers = {
   }
 }
 
-const commands = {
-  'migration:run': 'Adonis/Commands/Run',
-  'migration:rollback': 'Adonis/Commands/Rollback',
-  'db:seed': 'Adonis/Commands/Seed',
-  'migration:status': 'Adonis/Commands/Status'
-}
+const commands = [
+  'Adonis/Commands/Run',
+  'Adonis/Commands/Rollback',
+  'Adonis/Commands/Seed',
+  'Adonis/Commands/Status'
+]
 
 const providers = [
   path.join(__dirname, '../../providers/DatabaseProvider'),
@@ -41,7 +41,7 @@ const providers = [
   path.join(__dirname, '../../providers/SchemaProvider'),
   path.join(__dirname, '../../providers/SeederProvider'),
   path.join(__dirname, '../../providers/CommandsProvider'),
-  'adonis-ace/providers/AnsiProvider'
+  'adonis-ace/providers/CommandProvider'
 ]
 
 const setup = exports = module.exports = {}
@@ -62,7 +62,7 @@ setup.start = function * () {
 }
 
 setup.registerCommands = function () {
-  ace.Store.register(commands)
+  ace.register(commands)
 }
 
 setup.end = function * () {
@@ -81,4 +81,6 @@ setup.seed = function (seeds) {
   return Seeder.exec(seeds)
 }
 
-setup.runCommand = ace.Runner.execute
+setup.runCommand = function () {
+  return ace.call.apply(ace, arguments)
+}

@@ -21,7 +21,7 @@ class Rollback extends Command {
    * @public
    */
   get signature () {
-    return '{--f|force?} {--batch?}'
+    return 'migration:rollback {-f,--force?} {-b,--batch?=@value}'
   }
 
   /**

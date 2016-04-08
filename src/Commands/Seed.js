@@ -21,7 +21,7 @@ class Seed extends Command {
    * @public
    */
   get signature () {
-    return '{--f|force?} {--files?}'
+    return 'db:seed {-f,--force?} {--files?}'
   }
 
   /**
@@ -51,7 +51,7 @@ class Seed extends Command {
     const seedsFiles = this.loadFiles(seedsPath, selectedFiles)
 
     yield this.seeder.exec(seedsFiles)
-    this.ansi.success(`${this.ansi.icon('success')} seeded database successfully`)
+    this.success(`${this.icon('success')} seeded database successfully`)
   }
 }
 

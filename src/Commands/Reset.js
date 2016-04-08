@@ -14,6 +14,17 @@ const Command = require('./Command')
 class Reset extends Command {
 
   /**
+   * signature to be used by ace
+   *
+   * @return {String}
+   *
+   * @public
+   */
+  get signature () {
+    return 'migration:reset {-f,--force?}'
+  }
+
+  /**
    * command description to be used by ace
    *
    * @return {String}

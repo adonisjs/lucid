@@ -12,72 +12,21 @@
 const ServiceProvider = require('adonis-fold').ServiceProvider
 
 class CommandsProvider extends ServiceProvider {
+
+  constructor () {
+    super()
+    this.commands = ['Run', 'Rollback', 'Refresh', 'Reset', 'Seed', 'Status']
+  }
+
   * register () {
-    this.bindRun()
-    this.bindRollback()
-    this.bindRefresh()
-    this.bindReset()
-    this.bindStatus()
-    this.bindSeed()
-  }
-
-  bindRun () {
-    this.app.bind('Adonis/Commands/Run', function (app) {
-      const Run = require('../src/Commands/Run')
-      const Helpers = app.use('Adonis/Src/Helpers')
-      const Migrations = app.use('Adonis/Src/Migrations')
-      const Ansi = app.use('Adonis/Src/Ansi')
-      return new Run(Helpers, Migrations, {}, Ansi)
-    })
-  }
-
-  bindRollback () {
-    this.app.bind('Adonis/Commands/Rollback', function (app) {
-      const Rollback = require('../src/Commands/Rollback')
-      const Helpers = app.use('Adonis/Src/Helpers')
-      const Migrations = app.use('Adonis/Src/Migrations')
-      const Ansi = app.use('Adonis/Src/Ansi')
-      return new Rollback(Helpers, Migrations, {}, Ansi)
-    })
-  }
-
-  bindRefresh () {
-    this.app.bind('Adonis/Commands/Refresh', function (app) {
-      const Refresh = require('../src/Commands/Refresh')
-      const Helpers = app.use('Adonis/Src/Helpers')
-      const Migrations = app.use('Adonis/Src/Migrations')
-      const Ansi = app.use('Adonis/Src/Ansi')
-      return new Refresh(Helpers, Migrations, {}, Ansi)
-    })
-  }
-
-  bindReset () {
-    this.app.bind('Adonis/Commands/Reset', function (app) {
-      const Reset = require('../src/Commands/Reset')
-      const Helpers = app.use('Adonis/Src/Helpers')
-      const Migrations = app.use('Adonis/Src/Migrations')
-      const Ansi = app.use('Adonis/Src/Ansi')
-      return new Reset(Helpers, Migrations, {}, Ansi)
-    })
-  }
-
-  bindStatus () {
-    this.app.bind('Adonis/Commands/Status', function (app) {
-      const Status = require('../src/Commands/Status')
-      const Helpers = app.use('Adonis/Src/Helpers')
-      const Migrations = app.use('Adonis/Src/Migrations')
-      const Ansi = app.use('Adonis/Src/Ansi')
-      return new Status(Helpers, Migrations, {}, Ansi)
-    })
-  }
-
-  bindSeed () {
-    this.app.bind('Adonis/Commands/Seed', function (app) {
-      const Seed = require('../src/Commands/Seed')
-      const Helpers = app.use('Adonis/Src/Helpers')
-      const Seeder = app.use('Adonis/Src/Seeder')
-      const Ansi = app.use('Adonis/Src/Ansi')
-      return new Seed(Helpers, {}, Seeder, Ansi)
+    this.commands.forEach((command) => {
+      this.app.bind(`Adonis/Commands/${command}`, function (app) {
+        const CommandFile = require(`../src/Commands/${command}`)
+        const Migrations = app.use('Adonis/Src/Migrations')
+        const Helpers = app.use('Adonis/Src/Helpers')
+        const Seeder = app.use('Adonis/Src/Seeder')
+        return new CommandFile(Helpers, Migrations, Seeder)
+      })
     })
   }
 }
