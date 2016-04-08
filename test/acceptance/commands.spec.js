@@ -28,7 +28,7 @@ require('co-mocha')
 
 describe('Commands', function () {
   before(function * () {
-    setup.loadProviders()
+    yield setup.loadProviders()
     setup.registerCommands()
     require('./database/factory.js')
     const Lucid = Ioc.use('Adonis/Src/Lucid')
@@ -46,7 +46,7 @@ describe('Commands', function () {
   })
 
   it('should create the users table using migrations', function * () {
-    yield setup.runCommand('migration:run', {}, {})
+    yield setup.runCommand('migration:run', [], {})
     const usersTable = yield this.database.table('users').columnInfo()
     expect(usersTable).to.be.an('object')
     expect(Object.keys(usersTable)).deep.equal(['id', 'username', 'email', 'firstname', 'lastname', 'password', 'created_at', 'updated_at'])

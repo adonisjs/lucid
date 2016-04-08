@@ -21,7 +21,7 @@ class Run extends Command {
    * @public
    */
   get signature () {
-    return '{--f|force?} {--files?}'
+    return 'migration:run {-f,--force?} {--files?}'
   }
 
   /**
