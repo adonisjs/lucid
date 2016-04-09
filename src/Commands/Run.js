@@ -57,6 +57,8 @@ class Run extends Command {
       this.log(response.status, successMessage, infoMessage)
     } catch (e) {
       this.error(e)
+    } finally {
+      this.migrations.database.close()
     }
   }
 }
