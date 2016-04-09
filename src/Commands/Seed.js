@@ -45,14 +45,18 @@ class Seed extends Command {
    * @public
    */
   * handle (options, flags) {
-    this.checkEnv(flags.force)
-    const seedsPath = this.helpers.seedsPath()
-    const selectedFiles = flags.files ? flags.files.split(',') : null
-    const seedsFiles = this.loadFiles(seedsPath, selectedFiles)
-    require(this.helpers.databasePath('factory'))
+    try {
+      this.checkEnv(flags.force)
+      const seedsPath = this.helpers.seedsPath()
+      const selectedFiles = flags.files ? flags.files.split(',') : null
+      const seedsFiles = this.loadFiles(seedsPath, selectedFiles)
+      require(this.helpers.databasePath('factory'))
 
-    yield this.seeder.exec(seedsFiles)
-    this.success(`${this.icon('success')} seeded database successfully`)
+      yield this.seeder.exec(seedsFiles)
+      this.success(`${this.icon('success')} seeded database successfully`)
+    } catch (e) {
+      this.error(e)
+    }
   }
 }
 

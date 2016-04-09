@@ -44,16 +44,20 @@ class Run extends Command {
    * @public
    */
   * handle (options, flags) {
-    this.checkEnv(flags.force)
+    try {
+      this.checkEnv(flags.force)
 
-    const selectedFiles = flags.files ? flags.files.split(',') : null
-    const migrationsFiles = this.loadFiles(this.helpers.migrationsPath(), selectedFiles)
+      const selectedFiles = flags.files ? flags.files.split(',') : null
+      const migrationsFiles = this.loadFiles(this.helpers.migrationsPath(), selectedFiles)
 
-    const response = yield this.migrations.up(migrationsFiles)
+      const response = yield this.migrations.up(migrationsFiles)
 
-    const successMessage = 'Database migrated successfully.'
-    const infoMessage = 'Nothing to migrate.'
-    this.log(response.status, successMessage, infoMessage)
+      const successMessage = 'Database migrated successfully.'
+      const infoMessage = 'Nothing to migrate.'
+      this.log(response.status, successMessage, infoMessage)
+    } catch (e) {
+      this.error(e)
+    }
   }
 }
 
