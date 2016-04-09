@@ -30,10 +30,10 @@ const Helpers = {
 }
 
 const commands = [
-  'Adonis/Commands/Run',
-  'Adonis/Commands/Rollback',
-  'Adonis/Commands/Seed',
-  'Adonis/Commands/Status'
+  'Adonis/Commands/Migration:Run',
+  'Adonis/Commands/Migration:Rollback',
+  'Adonis/Commands/DB:Seed',
+  'Adonis/Commands/Migration:Status'
 ]
 
 const providers = [
