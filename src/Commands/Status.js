@@ -44,9 +44,13 @@ class Status extends Command {
    * @public
    */
   * handle (options, flags) {
-    const migrationsFiles = this.loadFiles(this.helpers.migrationsPath())
-    const response = yield this.migrations.status(migrationsFiles)
-    this.table(['Migration', 'Status'], response)
+    try {
+      const migrationsFiles = this.loadFiles(this.helpers.migrationsPath())
+      const response = yield this.migrations.status(migrationsFiles)
+      this.table(['Migration', 'Status'], response)
+    } catch (e) {
+      this.error(e)
+    }
   }
 }
 
