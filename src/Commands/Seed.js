@@ -56,6 +56,8 @@ class Seed extends Command {
       this.success(`${this.icon('success')} seeded database successfully`)
     } catch (e) {
       this.error(e)
+    } finally {
+      this.migrations.database.close()
     }
   }
 }
