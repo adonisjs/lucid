@@ -51,12 +51,22 @@ class ModelFactory {
    * returns a model instace by calling the blueprint
    * and setting values on model instance
    *
+   * @param  {Number} [count=1] - Number of instances to return
    * @return {Object}
    *
    * @public
    */
-  make () {
-    return this._makeInstance(this._callBlueprint())
+  make (count) {
+    if (!count || count === 1) {
+      return this._makeInstance(this._callBlueprint())
+    }
+
+    return _(count)
+    .range()
+    .map(() => {
+      return this._makeInstance(this._callBlueprint())
+    })
+    .value()
   }
 
   /**

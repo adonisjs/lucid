@@ -113,6 +113,52 @@ describe('Factory', function () {
     expect(user.attributes.email).to.be.a('string')
   })
 
+  it('should return an array of model instances from ModelFactory make method is called with a count', function () {
+    class User {
+      constructor (values) {
+        this.attributes = values
+      }
+    }
+    Ioc.bind('App/Model/User', function () {
+      return User
+    })
+    Factory.blueprint('App/Model/User', function (faker) {
+      return {
+        username: faker.internet.userName(),
+        email: faker.internet.email()
+      }
+    })
+    const users = Factory.model('App/Model/User').make(4)
+    expect(users).is.an('array')
+    expect(users.length).to.equal(4)
+    users.forEach(function (user) {
+      expect(user instanceof User).to.equal(true)
+      expect(user.attributes.username).to.be.a('string')
+      expect(user.attributes.email).to.be.a('string')
+    })
+  })
+
+  it('should return the model instance from ModelFactory make method is asked to return 1 instance', function () {
+    class User {
+      constructor (values) {
+        this.attributes = values
+      }
+    }
+    Ioc.bind('App/Model/User', function () {
+      return User
+    })
+    Factory.blueprint('App/Model/User', function (faker) {
+      return {
+        username: faker.internet.userName(),
+        email: faker.internet.email()
+      }
+    })
+    const user = Factory.model('App/Model/User').make(1)
+    expect(user instanceof User).to.equal(true)
+    expect(user.attributes.username).to.be.a('string')
+    expect(user.attributes.email).to.be.a('string')
+  })
+
   it('should call user model create method to create given rows inside the database', function * () {
     class User {
       constructor (values) {
