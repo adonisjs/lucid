@@ -44,26 +44,24 @@ class BaseSerializer {
   }
 
   /**
-   * executes query chain and eager load previously
-   * defined relations using `with` method.
+   * eagerly fetches relations for a given query builder
+   * instance.
    *
-   * @return {Object}
+   * @param  {Array} values [description]
+   * @return {Array}        [description]
    *
    * @private
    */
-  * _executeQueryChain () {
+  * _fetchEager (values) {
     let eagerlyFetched = []
-    this._decorateQuery()
-    const values = yield this.queryBuilder.modelQueryBuilder
-
     /**
      * eagerly fetch all relations which are set for eagerLoad and
      * also the previous query execution returned some results.
      */
     if (_.size(this.queryBuilder.eagerLoad.withRelations) && _.size(values)) {
-      eagerlyFetched = yield this.queryBuilder.eagerLoad.load(values, this.queryBuilder.HostModel)
+      return yield this.queryBuilder.eagerLoad.load(values, this.queryBuilder.HostModel)
     }
-    return {eagerlyFetched, values}
+    return eagerlyFetched
   }
 
   /**
@@ -98,9 +96,44 @@ class BaseSerializer {
    * @public
    */
   * fetch () {
-    const queryResult = yield this._executeQueryChain()
-    return this._toCollection(queryResult.values, queryResult.eagerlyFetched)
+    this._decorateQuery()
+    const values = yield this.queryBuilder.modelQueryBuilder
+    const eagerlyFetched = yield this._fetchEager(values)
+    return this._toCollection(values, eagerlyFetched)
   }
+
+  /**
+   * fetch query results as paginated data and wrap
+   * them inside a custom collection.
+   *
+   * @return {Collection}
+   *
+   * @public
+   */
+  * paginate (page, perPage) {
+    this._decorateQuery()
+    const values = yield this.queryBuilder.modelQueryBuilder.paginate(page, perPage)
+    const eagerlyFetched = yield this._fetchEager(values.data)
+    const collection = this._toCollection(values.data, eagerlyFetched)
+    /**
+     * here we override the collection toJSON method to return the
+     * pagination meta data along with actual collection object.
+     */
+    collection.meta = {
+      total: values.total,
+      perPage: values.perPage,
+      currentPage: values.currentPage,
+      lastPage: values.lastPage
+    }
+    const collectionToJSON = collection.toJSON
+    collection.toJSON = function () {
+      const meta = collection.meta
+      meta.data = collectionToJSON.bind(collection)()
+      return meta
+    }
+    return collection
+  }
+
 }
 
 module.exports = BaseSerializer

@@ -367,6 +367,50 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'accounts')
     })
 
+    it('should be able to paginate when eagerLoading relations', function * () {
+      yield relationFixtures.createRecords(Database, 'suppliers', [{name: 'redtape'}, {name: 'nike'}, {name: 'bata'}])
+      yield relationFixtures.createRecords(Database, 'accounts', [{name: 'redtape', supplier_id: 1}, {name: 'nike', supplier_id: 2}, {name: 'bata', supplier_id: 3}])
+      let relatedQuery = null
+      let parentQuery = null
+      class Account extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            relatedQuery = query
+          })
+        }
+      }
+      class Supplier extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            parentQuery = query
+          })
+        }
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+      Account.bootIfNotBooted()
+      Supplier.bootIfNotBooted()
+      const suppliers = yield Supplier.query().with('account').paginate(1, 3)
+      const suppliersJSON = suppliers.toJSON()
+      expect(queryHelpers.formatQuery(parentQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "suppliers" limit ?'))
+      expect(queryHelpers.formatQuery(relatedQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "accounts" where "supplier_id" in (?, ?, ?)'))
+      expect(parentQuery.bindings).deep.equal(queryHelpers.formatBindings([3]))
+      expect(relatedQuery.bindings).deep.equal(queryHelpers.formatBindings([1, 2, 3]))
+      suppliers.each(function (supplier) {
+        expect(supplier.id).to.equal(supplier.get('account').supplier_id)
+      })
+      expect(suppliersJSON.data).to.have.length.below(4)
+      expect(suppliersJSON).has.property('total')
+      expect(suppliersJSON).has.property('perPage')
+      expect(suppliersJSON).has.property('lastPage')
+      expect(suppliersJSON).has.property('currentPage')
+      yield relationFixtures.truncate(Database, 'suppliers')
+      yield relationFixtures.truncate(Database, 'accounts')
+    })
+
     it('should be able to resolve relations with different foriegnKey', function * () {
       yield relationFixtures.createRecords(Database, 'suppliers', {name: 'redtape'})
       yield relationFixtures.createRecords(Database, 'all_accounts', {name: 'redtape', supplier_regid: 1})
@@ -1143,6 +1187,35 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'comments')
     })
 
+    it('should be able to paginate results from related model', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
+      yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
+      let commentsQuery = null
+      class Comment extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            commentsQuery = query
+          })
+        }
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      Comment.bootIfNotBooted()
+      const post = yield Post.find(savedPost[0])
+      const comments = yield post.comments().paginate(1)
+      expect(queryHelpers.formatQuery(commentsQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "comments" where "post_id" = ? limit ?'))
+      expect(commentsQuery.bindings).deep.equal(queryHelpers.formatBindings(savedPost.concat([20])))
+      expect(comments.toJSON().data).to.be.an('array')
+      expect(comments.toJSON()).to.contain.any.keys('total', 'perPage', 'currentPage', 'lastPage')
+      expect(comments.first() instanceof Comment).to.equal(true)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
     it('should be able to eagerLoad results from related model', function * () {
       const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: `Let's learn Adonis`})
       yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
@@ -1585,6 +1658,41 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(courseQuery.sql)).to.equal(queryHelpers.formatQuery('select "courses".*, "course_student"."student_id" as "_pivot_student_id", "course_student"."course_id" as "_pivot_course_id" from "courses" inner join "course_student" on "courses"."id" = "course_student"."course_id" where "course_student"."student_id" = ?'))
       expect(courseQuery.bindings).deep.equal(queryHelpers.formatBindings(savedStudent))
       expect(courses.value()).to.be.an('array')
+      expect(courses.first()._pivot_student_id).to.equal(student.id)
+      expect(courses.first()._pivot_course_id).to.equal(courses.first().id)
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should be able to paginate results for related model', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky'})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry'})
+      yield relationFixtures.createRecords(Database, 'course_student', {student_id: savedStudent[0], course_id: savedCourse[0]})
+      let courseQuery = null
+      class Course extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            courseQuery = query
+          })
+        }
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      expect(student instanceof Student).to.equal(true)
+      expect(student.id).not.to.equal(undefined)
+      const courses = yield student.courses().paginate(1, 2)
+      expect(queryHelpers.formatQuery(courseQuery.sql)).to.equal(queryHelpers.formatQuery('select "courses".*, "course_student"."student_id" as "_pivot_student_id", "course_student"."course_id" as "_pivot_course_id" from "courses" inner join "course_student" on "courses"."id" = "course_student"."course_id" where "course_student"."student_id" = ? limit ?'))
+      expect(courseQuery.bindings).deep.equal(queryHelpers.formatBindings(savedStudent.concat([2])))
+      expect(courses.toJSON().data).to.be.an('array')
+      expect(courses.toJSON()).to.contain.any.keys('total', 'perPage', 'currentPage', 'lastPage')
       expect(courses.first()._pivot_student_id).to.equal(student.id)
       expect(courses.first()._pivot_course_id).to.equal(courses.first().id)
 
@@ -2118,6 +2226,41 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(publicationQuery.sql)).to.equal(queryHelpers.formatQuery('select "publications".*, "authors"."country_id" from "publications" inner join "authors" on "authors"."id" = "publications"."author_id" where "authors"."country_id" = ?'))
       expect(publicationQuery.bindings).deep.equal(queryHelpers.formatBindings(savedCountry))
       expect(publications.size()).to.equal(1)
+      expect(publications.first() instanceof Publication).to.equal(true)
+      expect(publications.first().author_id).to.equal(savedAuthor[0])
+
+      yield relationFixtures.truncate(Database, 'countries')
+      yield relationFixtures.truncate(Database, 'authors')
+      yield relationFixtures.truncate(Database, 'publications')
+    })
+
+    it('should be able to paginate model instance relational method', function * () {
+      const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND'})
+      const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0]})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0]})
+      let publicationQuery = null
+      class Author extends Model {
+      }
+      class Publication extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery(function (query) {
+            publicationQuery = query
+          })
+        }
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      Publication.bootIfNotBooted()
+      const country = yield Country.find(savedCountry[0])
+      const publications = yield country.publications().paginate(1, 3)
+      expect(queryHelpers.formatQuery(publicationQuery.sql)).to.equal(queryHelpers.formatQuery('select "publications".*, "authors"."country_id" from "publications" inner join "authors" on "authors"."id" = "publications"."author_id" where "authors"."country_id" = ? limit ?'))
+      expect(publicationQuery.bindings).deep.equal(queryHelpers.formatBindings(savedCountry.concat([3])))
+      expect(publications.toJSON().data).to.be.an('array')
+      expect(publications.toJSON()).to.contain.any.keys('total', 'perPage', 'currentPage', 'lastPage')
       expect(publications.first() instanceof Publication).to.equal(true)
       expect(publications.first().author_id).to.equal(savedAuthor[0])
 
