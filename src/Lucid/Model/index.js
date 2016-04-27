@@ -30,6 +30,7 @@ const BelongsTo = require('../Relations/BelongsTo')
 const BelongsToMany = require('../Relations/BelongsToMany')
 const HasManyThrough = require('../Relations/HasManyThrough')
 const EagerLoad = require('../Relations/EagerLoad')
+const BaseSerializer = require('../QueryBuilder/Serializers/Base')
 
 /**
  * list of hooks allowed to be registered for a
@@ -126,6 +127,14 @@ class Model {
 
     this.$modelHooks[type] = this.$modelHooks[type] || []
     this.$modelHooks[type].push({handler, name})
+  }
+
+  /**
+   * a reference to queryBuilder serializer. It
+   * contains fetch and paginate methods.
+   */
+  static get QuerySerializer () {
+    return BaseSerializer
   }
 
   /**
