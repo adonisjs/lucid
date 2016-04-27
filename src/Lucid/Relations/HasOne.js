@@ -10,6 +10,8 @@
 */
 
 const Relation = require('./Relation')
+const CE = require('../Model/customExceptions')
+
 class HasOne extends Relation {
 
   constructor (parent, related, primaryKey, foreignKey) {
@@ -28,6 +30,18 @@ class HasOne extends Relation {
    */
   fetch () {
     return this.first()
+  }
+
+  /**
+   * hasOne cannot have paginate, since it
+   * maps one to one relationship
+   *
+   * @public
+   *
+   * @throws CE.ModelRelationException
+   */
+  paginate () {
+    throw new CE.ModelRelationException('Cannot call paginate on a hasOne relation')
   }
 
   /**

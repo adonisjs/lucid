@@ -945,6 +945,18 @@ describe('Lucid', function () {
       expect(deleteUsers).to.be.an('array')
       expect(deleteUsers.length).to.equal(0)
     })
+
+    it('should be able to paginate results using model query builder', function * () {
+      class User extends Model {
+      }
+      const users = yield User.query().paginate(1, 10)
+      const paginatedUsers = users.toJSON()
+      expect(paginatedUsers).to.have.property('total')
+      expect(paginatedUsers).to.have.property('lastPage')
+      expect(paginatedUsers).to.have.property('perPage')
+      expect(paginatedUsers).to.have.property('data')
+      expect(paginatedUsers.perPage).to.equal(paginatedUsers.data.length)
+    })
   })
 
   context('Model Hooks', function () {

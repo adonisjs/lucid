@@ -12,8 +12,6 @@
 const Relation = require('./Relation')
 const CE = require('../Model/customExceptions')
 const helpers = require('../QueryBuilder/helpers')
-const CatLog = require('cat-log')
-const logger = new CatLog('adonis:lucid')
 
 class HasManyThrough extends Relation {
 
@@ -41,45 +39,9 @@ class HasManyThrough extends Relation {
     })
   }
 
-  /**
-   * fetches values from for a given related model.
-   * Returned values will be an array collection.
-   *
-   * @return {Array}
-   *
-   * @public
-   */
-  fetch () {
-    if (this.parent.isNew()) {
-      throw new CE.ModelRelationException('Cannot fetch related model from an unsaved model instance')
-    }
-    if (!this.parent[this.fromKey]) {
-      logger.warn(`Trying to fetch relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
-    }
+  _decorateRead () {
     this._makeJoinQuery()
     this.relatedQuery.where(`${this.through.table}.${this.toKey}`, this.parent[this.fromKey])
-    return this.relatedQuery.fetch()
-  }
-
-  /**
-   * fetches value from for a given related model.
-   * Returned value will be an instance of
-   * related model.
-   *
-   * @return {Object}
-   *
-   * @public
-   */
-  first () {
-    if (this.parent.isNew()) {
-      throw new CE.ModelRelationException('Cannot fetch related model from an unsaved model instance')
-    }
-    if (!this.parent[this.fromKey]) {
-      logger.warn(`Trying to fetch relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
-    }
-    this._makeJoinQuery()
-    this.relatedQuery.where(`${this.through.table}.${this.toKey}`, this.parent[this.fromKey])
-    return this.relatedQuery.first()
   }
 
   /**

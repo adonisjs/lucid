@@ -25,8 +25,26 @@ const methods = exports = module.exports = {}
  */
 methods.fetch = function (target) {
   return function * () {
-    const baseSerializer = new target.HostModel.QuerySerializer(target, this)
-    return yield baseSerializer.fetch()
+    const serializer = new target.HostModel.QuerySerializer(target, this)
+    return yield serializer.fetch()
+  }
+}
+
+/**
+ * fetches query results as paginated data and wrap
+ *  it inside a collection of model instances.
+ *
+ * @method paginate
+ *
+ * @param  {Object} target
+ * @return {Function}
+ *
+ * @public
+ */
+methods.paginate = function (target) {
+  return function * (page, perPage) {
+    const serializer = new target.HostModel.QuerySerializer(target, this)
+    return yield serializer.paginate(page, perPage)
   }
 }
 

@@ -39,22 +39,17 @@ class Relation {
     return typeof (model) === 'string' ? Ioc.use(model) : model
   }
 
-  /**
-   * returns the first match item for related model
-   *
-   * @return {Object}
-   *
-   * @public
-   */
-  first () {
+  _validateRead () {
     if (this.parent.isNew()) {
       throw new CE.ModelRelationException('Cannot fetch related model from an unsaved model instance')
     }
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to fetch relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
     }
+  }
+
+  _decorateRead () {
     this.relatedQuery.where(this.toKey, this.parent[this.fromKey])
-    return this.relatedQuery.first()
   }
 
   /**
@@ -64,15 +59,36 @@ class Relation {
    *
    * @public
    */
+  first () {
+    this._validateRead()
+    this._decorateRead()
+    return this.relatedQuery.first()
+  }
+
+  /**
+   * calls the fetch method on the related query builder
+   *
+   * @return {Object}
+   *
+   * @public
+   */
   fetch () {
-    if (this.parent.isNew()) {
-      throw new CE.ModelRelationException('Cannot fetch related model from an unsaved model instance')
-    }
-    if (!this.parent[this.fromKey]) {
-      logger.warn(`Trying to fetch relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
-    }
-    this.relatedQuery.where(this.toKey, this.parent[this.fromKey])
+    this._validateRead()
+    this._decorateRead()
     return this.relatedQuery.fetch()
+  }
+
+  /**
+   * calls the paginate method on the related query builder
+   *
+   * @return {Object}
+   *
+   * @public
+   */
+  paginate (page, perPage) {
+    this._validateRead()
+    this._decorateRead()
+    return this.relatedQuery.paginate(page, perPage)
   }
 
   /**

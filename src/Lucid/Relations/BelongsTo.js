@@ -35,6 +35,18 @@ class BelongsTo extends Relation {
   }
 
   /**
+   * belongsTo cannot have paginate, since it
+   * maps one to one relationship
+   *
+   * @public
+   *
+   * @throws CE.ModelRelationException
+   */
+  paginate () {
+    throw new CE.ModelRelationException('Cannot call paginate on a belongsTo relation')
+  }
+
+  /**
    * overrides base save method to throw an error, as
    * belongsTo does not support save method
    *
