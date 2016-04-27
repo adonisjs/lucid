@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
 */
 
-const helpers = require('./helpers')
 const _ = require('lodash')
 const methods = exports = module.exports = {}
 
@@ -26,45 +25,8 @@ const methods = exports = module.exports = {}
  */
 methods.fetch = function (target) {
   return function * () {
-    /**
-     * call all global scope methods before executing
-     * the query builder chain.
-     */
-    const globalScope = target.HostModel.globalScope
-    let eagerlyFetched = []
-
-    /**
-     * call all global scopes before executing the query
-     * chain. This is the last time someone can modify
-     * the existing query chain
-     */
-    if (_.size(globalScope)) {
-      _.each(globalScope, (scopeMethod) => {
-        scopeMethod(this)
-      })
-    }
-
-    let results = yield target.modelQueryBuilder
-
-    /**
-     * eagerly fetch all relations which are set for eagerLoad and
-     * also the previous query execution returned some results.
-     */
-    if (_.size(target.eagerLoad.withRelations) && _.size(results)) {
-      eagerlyFetched = yield target.eagerLoad.load(results, target.HostModel)
-    }
-
-    /**
-     * here we convert an array to a collection, and making sure each
-     * item inside an array is an instance of it's parent model.
-     */
-    return helpers.toCollection(results).transform((result, value, index) => {
-      const modelInstance = new target.HostModel()
-      modelInstance.attributes = value
-      modelInstance.original = _.clone(modelInstance.attributes)
-      target.eagerLoad.mapRelationsToRow(eagerlyFetched, modelInstance, value)
-      result[index] = modelInstance
-    })
+    const baseSerializer = new target.HostModel.QuerySerializer(target, this)
+    return yield baseSerializer.fetch()
   }
 }
 
