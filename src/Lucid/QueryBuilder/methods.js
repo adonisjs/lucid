@@ -31,6 +31,21 @@ methods.fetch = function (target) {
 }
 
 /**
+ * overrides the clone method of query builder
+ * to make sure it includes the right parent.
+ *
+ * @param  {Object} target
+ * @return {Function}
+ *
+ * @public
+ */
+methods.clone = function (target) {
+  return function () {
+    return target.modelQueryBuilder.clone()
+  }
+}
+
+/**
  * fetches query results as paginated data and wrap
  *  it inside a collection of model instances.
  *
@@ -42,9 +57,9 @@ methods.fetch = function (target) {
  * @public
  */
 methods.paginate = function (target) {
-  return function * (page, perPage) {
+  return function * (page, perPage, countByQuery) {
     const serializer = new target.HostModel.QuerySerializer(target, this)
-    return yield serializer.paginate(page, perPage)
+    return yield serializer.paginate(page, perPage, countByQuery)
   }
 }
 
