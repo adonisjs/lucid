@@ -14,6 +14,7 @@ const mixin = require('es6-class-mixin')
 const NE = require('node-exceptions')
 const CE = require('./customExceptions')
 const CatLog = require('cat-log')
+const cf = require('co-functional')
 const logger = new CatLog('adonis:lucid')
 const _ = require('lodash')
 const util = require('../../../lib/util')
@@ -703,6 +704,25 @@ class Model {
     const modelInstance = new this(values)
     yield modelInstance.save()
     return modelInstance
+  }
+
+  /**
+   * creates many model instances by persiting them to the
+   * database. All of it happens parallely.
+   *
+   * @param  {Array} arrayOfValues [description]
+   * @return {Array}               [description]
+   *
+   * @public
+   */
+  static * createMany (arrayOfValues) {
+    if (arrayOfValues instanceof Array === false) {
+      throw new NE.InvalidArgumentException('createMany requires an array of values')
+    }
+    const self = this
+    return cf.map(function * (values) {
+      return yield self.create(values)
+    }, arrayOfValues)
   }
 
   /**
