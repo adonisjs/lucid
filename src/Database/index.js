@@ -287,6 +287,7 @@ Database.forPage = function (page, perPage) {
  *
  * @param  {Number} page
  * @param  {Number} [perPage=20]
+ * @param  {Object} [countByQuery]
  * @return {Array}
  *
  * @example
@@ -295,15 +296,15 @@ Database.forPage = function (page, perPage) {
  *
  * @public
  */
-Database.paginate = function * (page, perPage) {
+Database.paginate = function * (page, perPage, countByQuery) {
   perPage = perPage || 20
   util.validatePage(page)
   /**
    * first we count the total rows before making the actual
    * actual for getting results
    */
-  const queryClone = this.clone()
-  const count = yield queryClone.count('* as total')
+  countByQuery = countByQuery || this.clone().count('* as total')
+  const count = yield countByQuery
   if (!count[0] || parseInt(count[0].total, 10) === 0) {
     return util.makePaginateMeta(0, page, perPage)
   }
