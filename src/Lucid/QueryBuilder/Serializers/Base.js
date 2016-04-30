@@ -106,13 +106,17 @@ class BaseSerializer {
    * fetch query results as paginated data and wrap
    * them inside a custom collection.
    *
+   * @param {Number} page
+   * @param {Number} [perPage=20]
+   * @param {Object} [countByQuery]
+   *
    * @return {Collection}
    *
    * @public
    */
-  * paginate (page, perPage) {
+  * paginate (page, perPage, countByQuery) {
     this._decorateQuery()
-    const values = yield this.queryBuilder.modelQueryBuilder.paginate(page, perPage)
+    const values = yield this.queryBuilder.modelQueryBuilder.paginate(page, perPage, countByQuery)
     const eagerlyFetched = yield this._fetchEager(values.data)
     const collection = this._toCollection(values.data, eagerlyFetched)
     /**
