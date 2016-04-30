@@ -858,6 +858,56 @@ describe('Relations', function () {
       done()
     })
 
+    it('should throw error when trying to saveMany model instances', function * () {
+      class Account extends Model {
+      }
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+      Supplier.bootIfNotBooted()
+      Account.bootIfNotBooted()
+      const supplier = new Supplier({name: 'reebok'})
+      yield supplier.save()
+      expect(supplier.id).not.to.equal(undefined)
+      const account = new Account({name: 'ree'})
+      try {
+        yield supplier.account().saveMany([account])
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationSaveException')
+        expect(e.message).to.match(/Cannot call saveMany method with hasOne relation/)
+      } finally {
+        yield relationFixtures.truncate(Database, 'suppliers')
+      }
+    })
+
+    it('should throw error when trying to createMany model instances', function * () {
+      class Account extends Model {
+      }
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+      Supplier.bootIfNotBooted()
+      Account.bootIfNotBooted()
+      const supplier = new Supplier({name: 'reebok'})
+      yield supplier.save()
+      expect(supplier.id).not.to.equal(undefined)
+      const account = new Account({name: 'ree'})
+      try {
+        yield supplier.account().createMany([account])
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationSaveException')
+        expect(e.message).to.match(/Cannot call createMany method with hasOne relation/)
+      } finally {
+        yield relationFixtures.truncate(Database, 'suppliers')
+      }
+    })
+
     it('should be able to save related model instance with different foriegnKey', function * () {
       class Account extends Model {
         static get table () {
@@ -1324,6 +1374,73 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'posts')
       yield relationFixtures.truncate(Database, 'comments')
     })
+
+    it('should be able to create related model instance with proper foriegnKey', function * () {
+      class Comment extends Model {
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      const post = new Post()
+      post.title = 'Adonis 101'
+      post.body = 'A beginners guide to Adonis'
+      yield post.save()
+      expect(post.id).not.to.equal(undefined)
+      const comment = yield post.comments().create({body: 'Nice learning'})
+      expect(comment.post_id).to.equal(post.id)
+      expect(comment.body).to.equal('Nice learning')
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to create many related model instances with createMany', function * () {
+      class Comment extends Model {
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      const post = new Post()
+      post.title = 'Adonis 101'
+      post.body = 'A beginners guide to Adonis'
+      yield post.save()
+      expect(post.id).not.to.equal(undefined)
+      const comments = yield post.comments().createMany([{body: 'Nice learning'}, {body: 'Foo bar'}])
+      expect(comments).to.be.an('array')
+      expect(comments.length).to.equal(2)
+      comments.forEach(function (comment) {
+        expect(comment.post_id).to.equal(post.id)
+      })
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to save many related model instances with saveMany', function * () {
+      class Comment extends Model {
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      const post = new Post()
+      post.title = 'Adonis 101'
+      post.body = 'A beginners guide to Adonis'
+      yield post.save()
+      expect(post.id).not.to.equal(undefined)
+      const comment1 = new Comment()
+      comment1.body = 'Nice learning'
+      const comment2 = new Comment()
+      comment1.body = 'Foo bar'
+      yield post.comments().saveMany([comment1, comment2])
+      expect(comment1.post_id).to.equal(post.id)
+      expect(comment2.post_id).to.equal(post.id)
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
   })
 
   context('BelongsTo', function () {
@@ -1547,6 +1664,28 @@ describe('Relations', function () {
       }
     })
 
+    it('should throw an error when trying to call saveMany method on a belongsTo relation', function * () {
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const post = new Post()
+      post.title = 'Adonis 101'
+      post.body = 'A nice post'
+      const comment = new Comment()
+      comment.body = 'I liked it'
+      try {
+        yield comment.post().saveMany([post])
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationSaveException')
+        expect(e.message).to.match(/cannot call saveMany method on a belongsTo relation/i)
+      }
+    })
+
     it('should throw an error when trying to call create method on a belongsTo relation', function * () {
       class Post extends Model {
       }
@@ -1566,6 +1705,28 @@ describe('Relations', function () {
       } catch (e) {
         expect(e.name).to.equal('ModelRelationSaveException')
         expect(e.message).to.match(/cannot call create method on a belongsTo relation/i)
+      }
+    })
+
+    it('should throw an error when trying to call createMany method on a belongsTo relation', function * () {
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const post = new Post()
+      post.title = 'Adonis 101'
+      post.body = 'A nice post'
+      const comment = new Comment()
+      comment.body = 'I liked it'
+      try {
+        yield comment.post().createMany([post])
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationSaveException')
+        expect(e.message).to.match(/cannot call createMany method on a belongsTo relation/i)
       }
     })
 
@@ -1669,7 +1830,8 @@ describe('Relations', function () {
     it('should be able to paginate results for related model', function * () {
       const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky'})
       const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry'})
-      yield relationFixtures.createRecords(Database, 'course_student', {student_id: savedStudent[0], course_id: savedCourse[0]})
+      const savedCourse1 = yield relationFixtures.createRecords(Database, 'courses', {title: 'maths'})
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse[0]}, {student_id: savedStudent[0], course_id: savedCourse1[0]}])
       let courseQuery = null
       class Course extends Model {
         static boot () {
@@ -2038,6 +2200,35 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
+    it('should be able save many instances of related model and put relation into pivot table', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      expect(student instanceof Student).to.equal(true)
+      expect(student.id).to.equal(savedStudent[0])
+      const course1 = new Course({title: 'chemistry'})
+      const course2 = new Course({title: 'english'})
+      yield student.courses().saveMany([course1, course2])
+      expect(course1.id).not.to.equal(undefined)
+      expect(course1._pivot_student_id).to.equal(student.id)
+      expect(course1._pivot_course_id).to.equal(course1.id)
+      expect(course2.id).not.to.equal(undefined)
+      expect(course2._pivot_student_id).to.equal(student.id)
+      expect(course2._pivot_course_id).to.equal(course2.id)
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
     it('should be able to detach mappings from pivot table', function * () {
       const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
       const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12})
@@ -2145,6 +2336,80 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
+    it('should be able to create many related models and put relation into pivot table', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      expect(student instanceof Student).to.equal(true)
+      expect(student.id).to.equal(savedStudent[0])
+      const courses = yield student.courses().createMany([{title: 'chemistry'}, {title: 'english'}])
+      expect(courses).to.be.an('array')
+      expect(courses.length).to.equal(2)
+      courses.forEach(function (course) {
+        expect(course.id).not.to.equal(undefined)
+        expect(course._pivot_student_id).to.equal(student.id)
+        expect(course._pivot_course_id).to.equal(course.id)
+      })
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should throw an error when trying not passing related model instance to the save method', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky'})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      expect(student instanceof Student).to.equal(true)
+      expect(student.id).to.equal(savedStudent[0])
+      try {
+        yield student.courses().save({title: 'chemistry'})
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationSaveException')
+        expect(e.message).to.match(/save accepts an instance of related model/)
+      }
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should throw an error when trying not save related model instance from unsaved instance', function * () {
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = new Student()
+      expect(student instanceof Student).to.equal(true)
+      try {
+        yield student.courses().save(new Course())
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationSaveException')
+        expect(e.message).to.match(/cannot save relation for an unsaved model instance/)
+      }
+    })
+
     it('should consider pivot properties as dirty properties', function * () {
       const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
       class Course extends Model {
@@ -2237,7 +2502,8 @@ describe('Relations', function () {
     it('should be able to paginate model instance relational method', function * () {
       const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND'})
       const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0]})
-      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0]})
+      const savedAuthor1 = yield relationFixtures.createRecords(Database, 'authors', {name: 'White', country_id: savedCountry[0]})
+      yield relationFixtures.createRecords(Database, 'publications', [{title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0]}, {title: 'Routing 101', body: 'Time to learn', author_id: savedAuthor1[0]}])
       let publicationQuery = null
       class Author extends Model {
       }
@@ -2374,7 +2640,7 @@ describe('Relations', function () {
       }
     })
 
-    it('should throw an error when trying to create the related model', function * () {
+    it('should throw an error when trying to saveMany the related model', function * () {
       class Author extends Model {
       }
       class Publication extends Model {
@@ -2386,11 +2652,31 @@ describe('Relations', function () {
       }
       const country = new Country()
       try {
-        yield country.publications().create()
+        yield country.publications().saveMany()
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/Cannot call create/)
+        expect(e.message).to.match(/Cannot call saveMany/)
+      }
+    })
+
+    it('should throw an error when trying to createMany the related model', function * () {
+      class Author extends Model {
+      }
+      class Publication extends Model {
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      const country = new Country()
+      try {
+        yield country.publications().createMany()
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelRelationSaveException')
+        expect(e.message).to.match(/Cannot call createMany/)
       }
     })
   })
