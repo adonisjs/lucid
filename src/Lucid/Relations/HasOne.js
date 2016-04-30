@@ -87,6 +87,14 @@ class HasOne extends Relation {
     return response
   }
 
+  * createMany () {
+    throw new CE.ModelRelationSaveException('Cannot call createMany method with hasOne relation')
+  }
+
+  * saveMany () {
+    throw new CE.ModelRelationSaveException('Cannot call saveMany method with hasOne relation')
+  }
+
 }
 
 module.exports = HasOne

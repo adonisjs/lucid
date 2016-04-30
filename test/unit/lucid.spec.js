@@ -610,6 +610,33 @@ describe('Lucid', function () {
       expect(user.isNew()).to.equal(false)
     })
 
+    it('should createMany records and return model instances as an array', function * () {
+      class User extends Model {
+      }
+      User.bootIfNotBooted()
+      const users = yield User.createMany([{username: 'lupe', firstname: 'Lupe', lastname: 'Lamora'}, {username: 'jim', firstname: 'Jim', lastname: 'Joe'}])
+      expect(users).to.be.an('array')
+      expect(users.length).to.equal(2)
+      users.forEach(function (user) {
+        expect(user instanceof User).to.equal(true)
+        expect(user.id).to.be.a('number')
+        expect(user.isNew()).to.equal(false)
+      })
+    })
+
+    it('should throw an error when createMany does not receives an array', function * () {
+      class User extends Model {
+      }
+      User.bootIfNotBooted()
+      try {
+        yield User.createMany({username: 'lupe', firstname: 'Lupe', lastname: 'Lamora'})
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('InvalidArgumentException')
+        expect(e.message).to.match(/createMany requires an array of values/)
+      }
+    })
+
     it('should throw an error when trying to pass an array of values to create method', function * () {
       class User extends Model {
       }

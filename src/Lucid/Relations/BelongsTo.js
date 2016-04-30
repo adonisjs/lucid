@@ -67,6 +67,26 @@ class BelongsTo extends Relation {
   }
 
   /**
+   * overrides base createMany method to throw an error, as
+   * belongsTo does not support createMany method
+   *
+   * @public
+   */
+  * createMany () {
+    throw new CE.ModelRelationSaveException('Cannot call createMany method on a belongsTo relation, use associate instead')
+  }
+
+  /**
+   * overrides base saveMany method to throw an error, as
+   * belongsTo does not support saveMany method
+   *
+   * @public
+   */
+  * saveMany () {
+    throw new CE.ModelRelationSaveException('Cannot call saveMany method on a belongsTo relation, use associate instead')
+  }
+
+  /**
    * associates a related model to the parent model by setting
    * up foreignKey value
    *

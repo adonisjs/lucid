@@ -96,9 +96,43 @@ class BelongsToMany extends Relation {
     })
   }
 
+  /**
+   * decorates the current query chain before execution
+   */
   _decorateRead () {
     this._makeJoinQuery()
     this.relatedQuery.where(`${this.pivotTable}.${this.pivotLocalKey}`, this.parent[this.fromKey])
+  }
+
+  paginate (page, perPage) {
+    const self = this
+    this._validateRead()
+    /**
+     * creating the query clone to be used as countByQuery,
+     * since selecting fields in countby requires unwanted
+     * groupBy clauses.
+     */
+    const countByQuery = this.relatedQuery.clone()
+    this._decorateRead()
+
+    /**
+     * duplicating the innerJoin and where clause. Doing
+     * it inline here as it is not required by any other
+     * method and over seperating concerns is hard to
+     * understand later.
+     */
+    countByQuery
+      .innerJoin(this.pivotTable, function () {
+        this.on(`${self.related.table}.${self.toKey}`, `${self.pivotTable}.${self.pivotOtherKey}`)
+      })
+      .where(`${this.pivotTable}.${this.pivotLocalKey}`, this.parent[this.fromKey])
+      .count(`${this.pivotTable}.${this.pivotLocalKey} as total`)
+
+    /**
+     * calling the paginate method on proxies query builder
+     * which optionally accepts a countByQuery
+     */
+    return this.relatedQuery.paginate(page, perPage, countByQuery)
   }
 
   /**

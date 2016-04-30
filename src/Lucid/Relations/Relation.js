@@ -13,6 +13,7 @@ require('harmony-reflect')
 const proxyHandler = require('./proxyHandler')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
+const cf = require('co-functional')
 const Ioc = require('adonis-fold').Ioc
 const CE = require('../Model/customExceptions')
 
@@ -39,6 +40,10 @@ class Relation {
     return typeof (model) === 'string' ? Ioc.use(model) : model
   }
 
+  /**
+   * validates the data on instance to make sure
+   * read is possible
+   */
   _validateRead () {
     if (this.parent.isNew()) {
       throw new CE.ModelRelationException('Cannot fetch related model from an unsaved model instance')
@@ -48,6 +53,9 @@ class Relation {
     }
   }
 
+  /**
+   * decorates the current query chain before execution
+   */
   _decorateRead () {
     this.relatedQuery.where(this.toKey, this.parent[this.fromKey])
   }
@@ -156,6 +164,20 @@ class Relation {
     const relatedInstance = new RelatedModel(values)
     yield this.save(relatedInstance)
     return relatedInstance
+  }
+
+  * createMany (arrayOfValues) {
+    const self = this
+    return cf.map(function * (values) {
+      return yield self.create(values)
+    }, arrayOfValues)
+  }
+
+  * saveMany (arrayOfInstances) {
+    const self = this
+    return cf.map(function * (relatedInstance) {
+      return yield self.save(relatedInstance)
+    }, arrayOfInstances)
   }
 
 }
