@@ -65,7 +65,8 @@ proxyHandler.get = function (target, name) {
 proxyHandler.set = function (target, name, value) {
   if (notToTouch.indexOf(name) > -1) {
     target[name] = value
-    return
+    return true
   }
   target.modelQueryBuilder[name] = value
+  return true
 }

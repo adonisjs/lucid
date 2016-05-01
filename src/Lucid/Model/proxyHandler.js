@@ -70,7 +70,8 @@ proxyHandler.set = function (target, name, value) {
   }
   if (targetProperties.indexOf(name) > -1) {
     target[name] = value
-    return
+    return true
   }
   target.attributes[name] = target.mutateProperty(name, value)
+  return true
 }

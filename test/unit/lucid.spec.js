@@ -318,6 +318,13 @@ describe('Lucid', function () {
     })
 
     it('should persist values to the table when save is called for the first time', function * () {
+      Ioc.bind('Adonis/Src/Helpers', function () {
+        return {
+          makeNameSpace: function (base, hook) {
+            return `App/${base}/${hook}`
+          }
+        }
+      })
       class User extends Model {}
       const user = new User()
       user.username = 'virk'
@@ -1010,7 +1017,7 @@ describe('Lucid', function () {
       expect(User.$modelHooks['beforeCreate']).to.be.an('array')
       expect(User.$modelHooks['beforeCreate'].length).to.equal(1)
       expect(User.$modelHooks['beforeCreate'][0].name).to.equal(null)
-      expect(User.$modelHooks['beforeCreate'][0].handler).to.be.a('function')
+      expect(typeof (User.$modelHooks['beforeCreate'][0].handler)).to.equal('function')
     })
 
     it('should add a named hook for a given type', function () {
