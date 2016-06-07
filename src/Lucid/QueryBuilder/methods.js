@@ -236,3 +236,34 @@ methods.scope = function (target) {
     return this
   }
 }
+
+/**
+ * pluck primary keys from the SQL query and return
+ * them as an array.
+ *
+ * @param  {Object} target
+ *
+ * @return {Function}
+ */
+methods.ids = function (target) {
+  return function () {
+    return target.modelQueryBuilder.select(target.HostModel.primaryKey).pluck(target.HostModel.primaryKey)
+  }
+}
+
+/**
+ * pluck two fields from SQL table and return them as a
+ * key/value pair.
+ *
+ * @param  {Object} target
+ *
+ * @return {Function}
+ */
+methods.pair = function (target) {
+  return function (lhs, rhs) {
+    return target.modelQueryBuilder.select(lhs, rhs).reduce(function (result, row) {
+      result[row[lhs]] = row[rhs]
+      return result
+    }, {})
+  }
+}
