@@ -267,3 +267,16 @@ methods.pair = function (target) {
     }, {})
   }
 }
+
+methods.pluckFirst = function (target) {
+  return function * (field) {
+    const firstRow = yield target.modelQueryBuilder.select(field).first()
+    return firstRow ? firstRow[field] : null
+  }
+}
+
+methods.pluckId = function (target) {
+  return function () {
+    return this.pluckFirst(target.HostModel.primaryKey)
+  }
+}
