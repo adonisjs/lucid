@@ -873,6 +873,29 @@ describe('Lucid', function () {
       expect(usersPair).deep.equal(manualPair)
     })
 
+    it('should pluck the first matching column field and return as a plain value', function * () {
+      class User extends Model {
+      }
+      yield User.create({username: 'unique-user'})
+      const username = yield User.query().where('username', 'unique-user').pluckFirst('username')
+      expect(username).to.equal('unique-user')
+    })
+
+    it('should return null when pluckFirst has nothing found any rows', function * () {
+      class User extends Model {
+      }
+      const username = yield User.query().where('username', 'non-existing-user').pluckFirst('username')
+      expect(username).to.equal(null)
+    })
+
+    it('should pluck the first matching column id and return as a plain value', function * () {
+      class User extends Model {
+      }
+      const user = yield User.create({username: 'unique-user-for-id'})
+      const userId = yield User.query().where('username', 'unique-user-for-id').pluckId()
+      expect(userId).to.equal(user.id)
+    })
+
     it('should throw ModelNotFoundException when unable to find a record using findOrFail method', function * () {
       class User extends Model {
       }
