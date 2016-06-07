@@ -828,7 +828,7 @@ describe('Lucid', function () {
       expect(parseInt(total[0].total)).to.equal(users.size())
     })
 
-    it('should return all array of ids when using ids method', function * () {
+    it('should return an array of ids when using ids method', function * () {
       class User extends Model {
       }
       const userIds = yield User.ids()
@@ -838,10 +838,33 @@ describe('Lucid', function () {
       })
     })
 
-    it('should a plain object with key/value pairs when using pair method', function * () {
+    it('should be able to fetch ids of the query builder', function * () {
+      class User extends Model {
+      }
+      const userIds = yield User.query().where('id', '>', 5).ids()
+      expect(userIds).to.be.an('array')
+      userIds.forEach(function (id) {
+        expect(id).to.be.a('number')
+        expect(id).to.be.above(5)
+      })
+    })
+
+    it('should return a plain object with key/value pairs when using pair method', function * () {
       class User extends Model {
       }
       const usersPair = yield User.pair('id', 'username')
+      const users = yield User.all()
+      let manualPair = users.map(function (user) {
+        return [user.id, user.username]
+      }).fromPairs().value()
+      expect(usersPair).to.be.an('object')
+      expect(usersPair).deep.equal(manualPair)
+    })
+
+    it('should be able to use pairs of the query builder chain', function * () {
+      class User extends Model {
+      }
+      const usersPair = yield User.query().pair('id', 'username')
       const users = yield User.all()
       let manualPair = users.map(function (user) {
         return [user.id, user.username]

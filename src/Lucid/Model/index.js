@@ -562,7 +562,7 @@ class Model {
    * @public
    */
   static * ids () {
-    return this.query().select(this.primaryKey).pluck(this.primaryKey)
+    return yield this.query().ids()
   }
 
   /**
@@ -576,10 +576,7 @@ class Model {
    * @public
    */
   static * pair (lhs, rhs) {
-    return this.query().select(lhs, rhs).reduce(function (result, row) {
-      result[row[lhs]] = row[rhs]
-      return result
-    }, {})
+    return yield this.query().pair(lhs, rhs)
   }
 
   /**
