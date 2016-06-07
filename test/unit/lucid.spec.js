@@ -617,6 +617,33 @@ describe('Lucid', function () {
       expect(user.isNew()).to.equal(false)
     })
 
+    it('should try to find first and create model instance using static findOrCreate method', function * () {
+      class User extends Model {
+      }
+      User.bootIfNotBooted()
+      const isJoana = yield User.query().where('username', 'joana').first()
+      expect(isJoana).to.equal(null)
+      const user = yield User.findOrCreate({username: 'joana'}, {username: 'joana', firstname: 'Joana', lastname: 'Jade'})
+      expect(user instanceof User).to.equal(true)
+      expect(user.id).to.be.a('number')
+      expect(user.username).to.equal('joana')
+    })
+
+    it('should return the existing user and should not try to create it using findOrCreate method', function * () {
+      class User extends Model {
+      }
+      User.bootIfNotBooted()
+      yield User.create({username: 'frolla', firstname: 'Frolla', lastname: 'Editor'})
+      const frolla = yield User.query().where('username', 'frolla').first()
+      expect(frolla instanceof User).to.equal(true)
+      const user = yield User.findOrCreate({username: 'frolla'}, {username: 'frolla', firstname: 'Frolla', lastname: 'Editor'})
+      const frollaCounts = yield User.query().where('username', 'frolla').fetch()
+      expect(frollaCounts.size()).to.equal(1)
+      expect(user instanceof User).to.equal(true)
+      expect(user.id).to.be.a('number')
+      expect(user.username).to.equal('frolla')
+    })
+
     it('should createMany records and return model instances as an array', function * () {
       class User extends Model {
       }

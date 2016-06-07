@@ -707,6 +707,26 @@ class Model {
   }
 
   /**
+   * try to find a record with given attributes or create
+   * a new record if nothing found.
+   *
+   * @param  {Object} attributes
+   * @param  {Object} values
+   *
+   * @return {Object}
+   */
+  static * findOrCreate (attributes, values) {
+    if (!attributes || !values) {
+      throw new NE.InvalidArgumentException('findOrCreate requires search attributes and create values both')
+    }
+    const firstRecord = yield this.query().where(attributes).first()
+    if (firstRecord) {
+      return firstRecord
+    }
+    return yield this.create(values)
+  }
+
+  /**
    * creates many model instances by persiting them to the
    * database. All of it happens parallely.
    *
