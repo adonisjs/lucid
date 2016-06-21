@@ -12,7 +12,7 @@
 const cf = require('co-functional')
 const _ = require('lodash')
 const Ioc = require('adonis-fold').Ioc
-const faker = require('faker')
+const fake = require('./fake')
 
 class ModelFactory {
 
@@ -36,7 +36,7 @@ class ModelFactory {
   }
 
   /**
-   * calls blueprint and passed faker library
+   * calls blueprint and passed fake instance
    * to it.
    *
    * @return {Object}
@@ -44,7 +44,7 @@ class ModelFactory {
    * @private
    */
   _callBlueprint () {
-    return this.callback(faker)
+    return this.callback(fake)
   }
 
   /**

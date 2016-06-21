@@ -73,13 +73,13 @@ describe('Crud', function () {
       }
     }
 
-    Factory.blueprint('App/Model/User', function (faker) {
+    Factory.blueprint('App/Model/User', function (fake) {
       return {
-        username: faker.internet.userName(),
-        email_address: faker.internet.email(),
-        firstname: faker.name.firstName(),
-        lastname: faker.name.lastName(),
-        password: faker.internet.password()
+        username: fake.username(),
+        email_address: fake.email(),
+        firstname: fake.first(),
+        lastname: fake.last(),
+        password: fake.password()
       }
     })
 

@@ -67,10 +67,10 @@ describe('Factory', function () {
   })
 
   it('should be able to define a factory blueprint', function () {
-    Factory.blueprint('App/Model/User', function (faker) {
+    Factory.blueprint('App/Model/User', function (fake) {
       return {
-        username: faker.internet.userName(),
-        email: faker.internet.email()
+        username: fake.username(),
+        email: fake.email()
       }
     })
     const blueprints = Factory.blueprints()
@@ -82,10 +82,10 @@ describe('Factory', function () {
     Ioc.bind('App/Model/User', function () {
       return {}
     })
-    Factory.blueprint('App/Model/User', function (faker) {
+    Factory.blueprint('App/Model/User', function (fake) {
       return {
-        username: faker.internet.userName(),
-        email: faker.internet.email()
+        username: fake.username(),
+        email: fake.email()
       }
     })
     const userModelFactory = Factory.model('App/Model/User')
@@ -101,10 +101,10 @@ describe('Factory', function () {
     Ioc.bind('App/Model/User', function () {
       return User
     })
-    Factory.blueprint('App/Model/User', function (faker) {
+    Factory.blueprint('App/Model/User', function (fake) {
       return {
-        username: faker.internet.userName(),
-        email: faker.internet.email()
+        username: fake.username(),
+        email: fake.email()
       }
     })
     const user = Factory.model('App/Model/User').make()
@@ -122,10 +122,10 @@ describe('Factory', function () {
     Ioc.bind('App/Model/User', function () {
       return User
     })
-    Factory.blueprint('App/Model/User', function (faker) {
+    Factory.blueprint('App/Model/User', function (fake) {
       return {
-        username: faker.internet.userName(),
-        email: faker.internet.email()
+        username: fake.username(),
+        email: fake.email()
       }
     })
     const users = Factory.model('App/Model/User').make(4)
@@ -147,10 +147,10 @@ describe('Factory', function () {
     Ioc.bind('App/Model/User', function () {
       return User
     })
-    Factory.blueprint('App/Model/User', function (faker) {
+    Factory.blueprint('App/Model/User', function (fake) {
       return {
-        username: faker.internet.userName(),
-        email: faker.internet.email()
+        username: fake.username(),
+        email: fake.email()
       }
     })
     const user = Factory.model('App/Model/User').make(1)
@@ -172,10 +172,10 @@ describe('Factory', function () {
     Ioc.bind('App/Model/User', function () {
       return User
     })
-    Factory.blueprint('App/Model/User', function (faker) {
+    Factory.blueprint('App/Model/User', function (fake) {
       return {
-        username: faker.internet.userName(),
-        email: faker.internet.email()
+        username: fake.username(),
+        email: fake.email()
       }
     })
     const userModelFactory = yield Factory.model('App/Model/User').create(10)
@@ -198,10 +198,10 @@ describe('Factory', function () {
     Ioc.bind('App/Model/User', function () {
       return User
     })
-    Factory.blueprint('App/Model/User', function (faker) {
+    Factory.blueprint('App/Model/User', function (fake) {
       return {
-        username: faker.internet.userName(),
-        email: faker.internet.email()
+        username: fake.username(),
+        email: fake.email()
       }
     })
     const userModelFactory = yield Factory.model('App/Model/User').create(10)
@@ -218,10 +218,10 @@ describe('Factory', function () {
     Ioc.bind('App/Model/User', function () {
       return User
     })
-    Factory.blueprint('App/Model/User', function (faker) {
+    Factory.blueprint('App/Model/User', function (fake) {
       return {
-        username: faker.internet.userName(),
-        firstname: faker.name.firstName()
+        username: fake.username(),
+        firstname: fake.first()
       }
     })
     yield Factory.model('App/Model/User').create(10)
@@ -235,10 +235,10 @@ describe('Factory', function () {
     Ioc.bind('App/Model/User', function () {
       return User
     })
-    Factory.blueprint('App/Model/User', function (faker) {
+    Factory.blueprint('App/Model/User', function (fake) {
       return {
-        username: faker.internet.userName(),
-        firstname: faker.name.firstName()
+        username: fake.username(),
+        firstname: fake.first()
       }
     })
     const userModelFactory = yield Factory.model('App/Model/User').create(10)
@@ -250,10 +250,10 @@ describe('Factory', function () {
   })
 
   it('should be able to create records using the database factory', function * () {
-    Factory.blueprint('users', function (faker) {
+    Factory.blueprint('users', function (fake) {
       return {
-        username: faker.internet.userName(),
-        firstname: faker.name.firstName()
+        username: fake.username(),
+        firstname: fake.first()
       }
     })
     const ids = yield Factory.get('users').create(10)
@@ -262,10 +262,10 @@ describe('Factory', function () {
   })
 
   it('should be able to define different table name when using database factory', function * () {
-    Factory.blueprint('forUsers', function (faker) {
+    Factory.blueprint('forUsers', function (fake) {
       return {
-        username: faker.internet.userName(),
-        firstname: faker.name.firstName()
+        username: fake.username(),
+        firstname: fake.first()
       }
     })
     const ids = yield Factory.get('forUsers').table('users').create(10)
@@ -274,10 +274,10 @@ describe('Factory', function () {
   })
 
   it('should be able to define different returning field when using database factory', function * () {
-    Factory.blueprint('forUsers', function (faker) {
+    Factory.blueprint('forUsers', function (fake) {
       return {
-        username: faker.internet.userName(),
-        firstname: faker.name.firstName()
+        username: fake.username(),
+        firstname: fake.first()
       }
     })
     const dbFactory = Factory.get('forUsers').table('users').returning('username')

@@ -12,12 +12,12 @@
 const Ioc = require('adonis-fold').Ioc
 const Factory = Ioc.use('Adonis/Src/Factory')
 
-Factory.blueprint('App/Model/User', function (faker) {
+Factory.blueprint('App/Model/User', function (fake) {
   return {
-    username: faker.internet.userName(),
-    email: faker.internet.email(),
-    firstname: faker.name.firstName(),
-    lastname: faker.name.lastName(),
-    password: faker.internet.password()
+    username: fake.username(),
+    email: fake.email(),
+    firstname: fake.first(),
+    lastname: fake.last(),
+    password: fake.password()
   }
 })
