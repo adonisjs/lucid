@@ -93,17 +93,17 @@ describe('Relationships', function () {
        * seeds & factories
        */
       const Factory = Ioc.use('Adonis/Src/Factory')
-      Factory.blueprint('App/Model/User', function (faker) {
+      Factory.blueprint('App/Model/User', function (fake) {
         return {
-          username: faker.internet.userName(),
-          email: faker.internet.email(),
-          password: faker.internet.password()
+          username: fake.username(),
+          email: fake.email(),
+          password: fake.password()
         }
       })
-      Factory.blueprint('App/Model/Profile', function (faker) {
+      Factory.blueprint('App/Model/Profile', function (fake) {
         return {
-          name: faker.internet.userName(),
-          avatar: faker.image.avatar()
+          name: fake.username(),
+          avatar: fake.avatar({protocol: 'http'})
         }
       })
 
