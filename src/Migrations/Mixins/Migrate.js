@@ -52,8 +52,7 @@ Migrate._migrateClass = function (schemaInstance, method) {
 Migrate._executeSchema = function (schemaInstance, direction) {
   schemaInstance[direction]()
   _.each(schemaInstance.store, (schemas, method) => {
-    const connection = this.database.connection(schemaInstance.constructor.connection)
-    this._callSchemaActions(schemas, connection.schema, method)
+    this._callSchemaActions(schemas, schemaInstance.constructor.connection, method)
   })
 }
 
@@ -64,13 +63,14 @@ Migrate._executeSchema = function (schemaInstance, direction) {
  * @method _callSchemaActions
  *
  * @param  {Array}           actions
- * @param  {Object}          builder
+ * @param  {Object}          connection
  * @param  {String}          method
  *
  * @private
  */
-Migrate._callSchemaActions = function (actions, builder, method) {
+Migrate._callSchemaActions = function (actions, connection, method) {
   _.each(actions, (defination) => {
+    const builder = this.database.connection(connection).schema
     const migration = builder[method](defination.key, this._schemaCallback(defination.callback))
     this.migrations.push(migration)
   })
