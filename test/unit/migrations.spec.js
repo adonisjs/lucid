@@ -493,4 +493,61 @@ describe('Migrations', function () {
     yield runner.database.schema.dropTable('users')
     yield runner.database.schema.dropTable('adonis_migrations')
   })
+
+  it('should be able to run multiple commands inside a single up method', function * () {
+    const runner = new Migrations(Database, Config)
+    class Users extends Schema {
+      up () {
+        this.create('users', (table) => {
+          table.increments()
+        })
+
+        this.create('accounts', (table) => {
+          table.increments()
+        })
+      }
+    }
+    const migrations = {'2015-01-20': Users}
+    yield runner.up(migrations)
+    const usersInfo = yield runner.database.table('users').columnInfo()
+    const accountsInfo = yield runner.database.table('accounts').columnInfo()
+    expect(usersInfo.id).to.be.an('object')
+    expect(accountsInfo.id).to.be.an('object')
+    yield runner.database.schema.dropTable('users')
+    yield runner.database.schema.dropTable('accounts')
+    yield runner.database.schema.dropTable('adonis_migrations')
+  })
+
+  it('should be able to run multiple commands inside a single down method', function * () {
+    const runner = new Migrations(Database, Config)
+    class Users extends Schema {
+      up () {
+        this.create('users', (table) => {
+          table.increments()
+        })
+
+        this.create('accounts', (table) => {
+          table.increments()
+        })
+      }
+
+      down () {
+        this.drop('users')
+        this.drop('accounts')
+      }
+    }
+    const migrations = {'2015-01-20': Users}
+    yield runner.up(migrations)
+    const usersInfo = yield runner.database.table('users').columnInfo()
+    const accountsInfo = yield runner.database.table('accounts').columnInfo()
+    expect(usersInfo.id).to.be.an('object')
+    expect(accountsInfo.id).to.be.an('object')
+    const runner1 = new Migrations(Database, Config)
+    yield runner1.down(migrations)
+    const usersTable = yield runner1.database.table('users').columnInfo()
+    const accountsTable = yield runner1.database.table('accounts').columnInfo()
+    expect(usersTable).deep.equal({})
+    expect(accountsTable).deep.equal({})
+    yield runner.database.schema.dropTable('adonis_migrations')
+  })
 })
