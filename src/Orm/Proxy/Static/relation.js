@@ -129,7 +129,7 @@ relation.hasOne = function (values, model, limit) {
    * dependent upon isArray property
    * @type {[type]}
    */
-  const internalLimit = isArray ? null : 1
+  const internalLimit = isArray ? 'noLimit' : 1
   limit = limit || internalLimit
 
   /**
