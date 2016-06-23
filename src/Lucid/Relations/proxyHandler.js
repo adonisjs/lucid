@@ -23,7 +23,9 @@ proxyHandler.get = function (target, name) {
 
   if (name === 'withPivot') {
     return function () {
-      target.pivotItems.push(_.toArray(arguments))
+      _.each(_.toArray(arguments), (item) => {
+        target.pivotItems.push(item)
+      })
       return this
     }
   }
