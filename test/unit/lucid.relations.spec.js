@@ -2256,6 +2256,33 @@ describe('Relations', function () {
       const student = yield Student.find(savedStudent[0])
       expect(student instanceof Student).to.equal(true)
       expect(student.id).to.equal(savedStudent[0])
+      yield student.courses().attach(savedCourse, {is_enrolled: 1})
+      const courses = yield student.courses().withPivot('is_enrolled').fetch()
+      expect(courses.size()).to.equal(1)
+      expect(courses.isArray()).to.equal(true)
+      expect(courses.first()._pivot_course_id).to.equal(savedCourse[0]).to.equal(12)
+      expect(courses.first()._pivot_student_id).to.equal(savedStudent[0]).to.equal(29)
+      expect(courses.first()._pivot_is_enrolled).to.be.ok
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should be able to query multiple extra values from pivot table', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      expect(student instanceof Student).to.equal(true)
+      expect(student.id).to.equal(savedStudent[0])
       yield student.courses().attach(savedCourse, {is_enrolled: 1, lessons_done: 2})
       const courses = yield student.courses().withPivot('is_enrolled', 'lessons_done').fetch()
       expect(courses.size()).to.equal(1)
