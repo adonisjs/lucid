@@ -48,15 +48,14 @@ class Refresh extends Command {
     try {
       this.checkEnv(flags.force)
       const migrationsFiles = this.loadFiles(this.helpers.migrationsPath())
-      yield this.migrations.down(migrationsFiles, 0)
-      const response = yield this.migrations.up(migrationsFiles)
+      const MigrationsRunner = this.migrations
+      yield new MigrationsRunner().down(migrationsFiles, 0)
+      const response = yield new MigrationsRunner().up(migrationsFiles)
       const successMessage = 'Migrations successfully refreshed.'
       const infoMessage = 'Already at the latest batch.'
       this.log(response.status, successMessage, infoMessage)
     } catch (e) {
       this.error(e)
-    } finally {
-      this.migrations.database.close()
     }
   }
 }

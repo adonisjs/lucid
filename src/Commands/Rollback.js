@@ -49,15 +49,14 @@ class Rollback extends Command {
       this.checkEnv(flags.force)
 
       const migrationsFiles = this.loadFiles(this.helpers.migrationsPath())
-      const response = yield this.migrations.down(migrationsFiles, flags.batch)
+      const MigrationsRunner = this.migrations
+      const response = yield new MigrationsRunner().down(migrationsFiles, flags.batch)
 
       const successMessage = flags.batch ? `Rolled back to ${flags.batch} batch.` : 'Rolled back to previous batch.'
       const infoMessage = 'Already at the latest batch.'
       this.log(response.status, successMessage, infoMessage)
     } catch (e) {
       this.error(e)
-    } finally {
-      this.migrations.database.close()
     }
   }
 }
