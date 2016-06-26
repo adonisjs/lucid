@@ -45,7 +45,8 @@ describe('Migrations', function () {
   })
 
   it('should make migrations table', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     yield runner._makeMigrationsTable()
     const columns = yield runner.database.table('adonis_migrations').columnInfo()
     expect(columns).to.be.an('object')
@@ -54,7 +55,8 @@ describe('Migrations', function () {
   })
 
   it('should make lock table', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     yield runner._makeLockTable()
     const columns = yield runner.database.table('adonis_migrations_lock').columnInfo()
     expect(columns).to.be.an('object')
@@ -63,7 +65,8 @@ describe('Migrations', function () {
   })
 
   it('should return false when there is no lock', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     yield runner._makeLockTable()
     const isLocked = yield runner._checkLock()
     expect(isLocked).to.equal(false)
@@ -71,7 +74,8 @@ describe('Migrations', function () {
   })
 
   it('should add a lock to the lock table', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     yield runner._makeLockTable()
     yield runner._addLock()
     const lock = yield runner.database.table('adonis_migrations_lock').where('is_locked', 1)
@@ -80,7 +84,8 @@ describe('Migrations', function () {
   })
 
   it('should throw an error when a table has been locked', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     yield runner._makeLockTable()
     yield runner._addLock()
     try {
@@ -93,7 +98,8 @@ describe('Migrations', function () {
   })
 
   it('should free an added lock by deleting the lock table', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     yield runner._makeLockTable()
     yield runner._addLock()
     yield runner._freeLock()
@@ -106,7 +112,8 @@ describe('Migrations', function () {
   })
 
   it('should return diff of migrations to be executed', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     class Users extends Schema {
       up () {
         this.table('users', function (table) {
@@ -122,7 +129,8 @@ describe('Migrations', function () {
   })
 
   it('should return diff of migrations to be rollback', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     class Users extends Schema {
       up () {
         this.table('users', function (table) {
@@ -141,7 +149,8 @@ describe('Migrations', function () {
   })
 
   it('should return migration status', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     class Users extends Schema {
       up () {
         this.create('users', function (table) {
@@ -175,7 +184,8 @@ describe('Migrations', function () {
   })
 
   it('should migrate the database by calling the up method', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     class Users extends Schema {
       up () {
         this.create('users', function (table) {
@@ -196,8 +206,9 @@ describe('Migrations', function () {
   })
 
   it('should rollback the recently executed migrations', function * () {
-    const runner = new Migrations(Database, Config)
-    const rollbackRunner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
+    const rollbackRunner = new Runner()
     class Users extends Schema {
       up () {
         this.create('users', function (table) {
@@ -230,7 +241,8 @@ describe('Migrations', function () {
   })
 
   it('should be able to use a different connection for a given schema', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     class Accounts extends Schema {
       static get connection () {
         return 'alternateConnection'
@@ -262,8 +274,9 @@ describe('Migrations', function () {
   })
 
   it('should be able to rollback migrations when schema is using a different connection', function * () {
-    const runner = new Migrations(Database, Config)
-    const rollbackRunner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
+    const rollbackRunner = new Runner()
     class Accounts extends Schema {
       static get connection () {
         return 'alternateConnection'
@@ -341,19 +354,20 @@ describe('Migrations', function () {
     const migrationsB2 = {'2016-01-30_create_accouts_table': Account}
     let allMigs = {}
     _.merge(allMigs, migrationsB1, migrationsB2)
-    let runner, result, rollback
+    const Runner = new Migrations(Database, Config)
 
-    runner = new Migrations(Database, Config)
+    let runner, result, rollback
+    runner = new Runner()
     result = yield runner.up(migrationsB1)
     expect(result.status).to.equal('completed')
     expect(result.migrated).deep.equal(_.keys(migrationsB1))
 
-    runner = new Migrations(Database, Config)
+    runner = new Runner()
     result = yield runner.up(migrationsB2)
     expect(result.status).to.equal('completed')
     expect(result.migrated).deep.equal(_.keys(migrationsB2))
 
-    runner = new Migrations(Database, Config)
+    runner = new Runner()
     rollback = yield runner.down(allMigs)
     expect(rollback.status).to.equal('completed')
     expect(rollback.migrated).deep.equal(_.keys(migrationsB2))
@@ -407,19 +421,20 @@ describe('Migrations', function () {
     const migrationsB2 = {'2016-01-30_create_accouts_table': Account}
     let allMigs = {}
     _.merge(allMigs, migrationsB1, migrationsB2)
+    const Runner = new Migrations(Database, Config)
     let runner, result, rollback
 
-    runner = new Migrations(Database, Config)
+    runner = new Runner()
     result = yield runner.up(migrationsB1)
     expect(result.status).to.equal('completed')
     expect(result.migrated).deep.equal(_.keys(migrationsB1))
 
-    runner = new Migrations(Database, Config)
+    runner = new Runner()
     result = yield runner.up(migrationsB2)
     expect(result.status).to.equal('completed')
     expect(result.migrated).deep.equal(_.keys(migrationsB2))
 
-    runner = new Migrations(Database, Config)
+    runner = new Runner()
     rollback = yield runner.down(allMigs, 0)
     expect(rollback.status).to.equal('completed')
     expect(rollback.migrated).deep.equal(_.reverse(_.keys(allMigs)))
@@ -435,7 +450,8 @@ describe('Migrations', function () {
   })
 
   it('should have access to knex fn inside the schema class', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     let fn = null
     class Users extends Schema {
       up () {
@@ -452,7 +468,8 @@ describe('Migrations', function () {
   })
 
   it('should be able to define soft delete field inside migrations', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     class Users extends Schema {
       up () {
         this.create('users', (table) => {
@@ -472,7 +489,8 @@ describe('Migrations', function () {
   })
 
   it('should be able to define nullableTimestamps inside migrations', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     class Users extends Schema {
       up () {
         this.create('users', (table) => {
@@ -495,7 +513,8 @@ describe('Migrations', function () {
   })
 
   it('should be able to run multiple commands inside a single up method', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     class Users extends Schema {
       up () {
         this.create('users', (table) => {
@@ -519,7 +538,8 @@ describe('Migrations', function () {
   })
 
   it('should be able to run multiple commands inside a single down method', function * () {
-    const runner = new Migrations(Database, Config)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
     class Users extends Schema {
       up () {
         this.create('users', (table) => {
@@ -542,7 +562,7 @@ describe('Migrations', function () {
     const accountsInfo = yield runner.database.table('accounts').columnInfo()
     expect(usersInfo.id).to.be.an('object')
     expect(accountsInfo.id).to.be.an('object')
-    const runner1 = new Migrations(Database, Config)
+    const runner1 = new Runner()
     yield runner1.down(migrations)
     const usersTable = yield runner1.database.table('users').columnInfo()
     const accountsTable = yield runner1.database.table('accounts').columnInfo()

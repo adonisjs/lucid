@@ -48,15 +48,14 @@ class Reset extends Command {
       this.checkEnv(flags.force)
 
       const migrationsFiles = this.loadFiles(this.helpers.migrationsPath())
-      const response = yield this.migrations.down(migrationsFiles, 0)
+      const MigrationsRunner = this.migrations
+      const response = yield new MigrationsRunner().down(migrationsFiles, 0)
 
       const successMessage = 'Rolled back to latest batch.'
       const infoMessage = 'Already at the latest batch.'
       this.log(response.status, successMessage, infoMessage)
     } catch (e) {
       this.error(e)
-    } finally {
-      this.migrations.database.close()
     }
   }
 }

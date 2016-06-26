@@ -14,12 +14,14 @@ const mixin = require('es6-class-mixin')
 const Lock = require('./Mixins/Lock')
 const Migrate = require('./Mixins/Migrate')
 const Batch = require('./Mixins/Batch')
+let ConfigReference = null
+let DatabaseReference = null
 
 class Migrations {
 
-  constructor (Database, Config) {
-    this.database = Database
-    this.migrationsTable = Config.get('database.migrationsTable', 'adonis_schema')
+  constructor () {
+    this.database = DatabaseReference
+    this.migrationsTable = ConfigReference.get('database.migrationsTable', 'adonis_schema')
     this.lockTable = `${this.migrationsTable}_lock`
     this.migrations = []
   }
@@ -168,4 +170,12 @@ class Migrations {
 
 class ExtendedMigrations extends mixin(Migrations, Lock, Migrate, Batch) {}
 
-module.exports = ExtendedMigrations
+class MigrationsManager {
+  constructor (Database, Config) {
+    DatabaseReference = Database
+    ConfigReference = Config
+    return ExtendedMigrations
+  }
+}
+
+module.exports = MigrationsManager
