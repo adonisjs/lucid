@@ -1,0 +1,62 @@
+{
+  "name": "adonis-lucid",
+  "description": "AdonisJs official SQL ORM",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "version": "3.0.0",
+  "scripts": {
+    "test": "npm run lint && node --harmony_proxies ./node_modules/.bin/_mocha test/unit test/acceptance",
+    "lint": "standard src/**/*.js src/**/**/*.js src/**/**/**/*.js lib/*.js test/**/*.js providers/*.js",
+    "test:all": "DB=sqlite3 npm run test && DB=mysql npm run test && DB=pg npm run test",
+    "coverage": "node --harmony_proxies ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test/unit",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
+  },
+  "author": "adonisjs",
+  "license": "MIT",
+  "devDependencies": {
+    "adonis-ace": "git+https://github.com/adonisjs/ace.git#develop",
+    "adonis-fold": "^3.0.2",
+    "bluebird": "^3.3.1",
+    "chai": "^3.5.0",
+    "co-fs-extra": "^1.1.0",
+    "co-mocha": "^1.1.2",
+    "coveralls": "^2.11.6",
+    "cz-conventional-changelog": "^1.1.5",
+    "istanbul": "^0.4.2",
+    "mocha": "^2.4.5",
+    "mysql": "^2.10.2",
+    "pg": "^4.5.1",
+    "semantic-release": "^4.3.5",
+    "sqlite3": "^3.1.1",
+    "standard": "^6.0.5"
+  },
+  "peerDependencies": {
+    "adonis-fold": "^3.0.2"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "dependencies": {
+    "auto-loader": "git+https://github.com/thetutlage/node-auto-loader.git",
+    "cat-log": "^1.0.0",
+    "chance": "^1.0.3",
+    "co": "^4.6.0",
+    "co-functional": "^0.2.1",
+    "es6-class-mixin": "^1.0.5",
+    "harmony-reflect": "^1.4.2",
+    "inflect": "^0.3.0",
+    "knex": "^0.10.0",
+    "lodash": "^4.5.1",
+    "moment": "^2.11.2",
+    "node-exceptions": "^1.0.1",
+    "pretty-hrtime": "^1.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adonisjs/adonis-lucid.git"
+  }
+}
