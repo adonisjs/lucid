@@ -1,3 +1,13 @@
+<a name="3.0.1"></a>
+## [3.0.1](https://github.com/adonisjs/adonis-lucid/compare/v3.0.0...v3.0.1) (2016-06-26)
+
+
+### Bug Fixes
+
+* **migrations:** return migrations class body instead of instance([358aeb6](https://github.com/adonisjs/adonis-lucid/commit/358aeb6))
+
+
+
 <a name="3.0.0"></a>
 # 3.0.0 (2016-06-26)
 
