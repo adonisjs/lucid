@@ -49,16 +49,14 @@ class Run extends Command {
 
       const selectedFiles = flags.files ? flags.files.split(',') : null
       const migrationsFiles = this.loadFiles(this.helpers.migrationsPath(), selectedFiles)
-
-      const response = yield this.migrations.up(migrationsFiles)
+      const MigrationsRunner = this.migrations
+      const response = yield new MigrationsRunner().up(migrationsFiles)
 
       const successMessage = 'Database migrated successfully.'
       const infoMessage = 'Nothing to migrate.'
       this.log(response.status, successMessage, infoMessage)
     } catch (e) {
       this.error(e)
-    } finally {
-      this.migrations.database.close()
     }
   }
 }
