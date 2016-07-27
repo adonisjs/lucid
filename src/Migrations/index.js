@@ -158,6 +158,7 @@ class Migrations {
    */
   * status (files) {
     const migrate = yield this._diff(files, 'up')
+    this.database.close()
     return _.transform(files, function (result, file, name) {
       if (migrate.indexOf(name) > -1) {
         result[name] = 'N'
