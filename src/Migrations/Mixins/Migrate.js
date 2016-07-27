@@ -105,6 +105,7 @@ Migrate._schemaCallback = function (callback) {
  */
 Migrate._decorateSchema = function (schemaInstance) {
   schemaInstance.fn = this.database.fn
+  schemaInstance.schema = this.database.schema
 }
 
 /**

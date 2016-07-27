@@ -570,4 +570,22 @@ describe('Migrations', function () {
     expect(accountsTable).deep.equal({})
     yield runner.database.schema.dropTable('adonis_migrations')
   })
+
+  it('should have access to knex schema inside the schema class', function * () {
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
+    let schema = null
+    class Users extends Schema {
+      up () {
+        this.table('users', (table) => {
+          schema = this.schema
+        })
+      }
+    }
+    const migrations = {'2015-01-20': Users}
+    yield runner.up(migrations)
+    expect(schema).to.be.an('object')
+    expect(schema.raw).to.be.a('function')
+    yield runner.database.schema.dropTable('adonis_migrations')
+  })
 })
