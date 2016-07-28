@@ -21,7 +21,7 @@ class Refresh extends Command {
    * @public
    */
   get signature () {
-    return 'migration:refresh {-f,--force?} {--log?:Log SQL queries that will run}'
+    return 'migration:refresh {-f,--force?}'
   }
 
   /**
@@ -49,13 +49,8 @@ class Refresh extends Command {
       this.checkEnv(flags.force)
       const migrationsFiles = this.loadFiles(this.helpers.migrationsPath())
       const MigrationsRunner = this.migrations
-      const rollbackResponse = yield new MigrationsRunner().down(migrationsFiles, 0, flags.log)
+      yield new MigrationsRunner().down(migrationsFiles, 0, flags.log)
       const response = yield new MigrationsRunner().up(migrationsFiles, flags.log)
-      if (flags.log) {
-        this._logQueries(rollbackResponse)
-        this._logQueries(response)
-        return
-      }
       const successMessage = 'Migrations successfully refreshed.'
       const infoMessage = 'Already at the latest batch.'
       this._log(response.status, successMessage, infoMessage)
