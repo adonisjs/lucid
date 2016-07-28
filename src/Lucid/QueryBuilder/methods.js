@@ -10,6 +10,7 @@
 */
 
 const _ = require('lodash')
+const CE = require('../Model/customExceptions')
 const methods = exports = module.exports = {}
 
 /**
@@ -161,6 +162,27 @@ methods.first = function (target) {
     target.modelQueryBuilder.limit(1)
     const results = yield this.fetch()
     return results.first() || null
+  }
+}
+
+/**
+ * returns the first record from data collection
+ * or fails by throwing an exception
+ *
+ * @method firstOrFail
+ *
+ * @param  {Object} target
+ * @return {Object}
+ *
+ * @public
+ */
+methods.firstOrFail = function (target) {
+  return function * () {
+    const row = yield this.first()
+    if (!row) {
+      throw new CE.ModelNotFoundException('Unable to find given row')
+    }
+    return row
   }
 }
 

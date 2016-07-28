@@ -926,6 +926,18 @@ describe('Lucid', function () {
       }
     })
 
+    it('should throw ModelNotFoundException when unable to find a record using firstOfFail method', function * () {
+      class User extends Model {
+      }
+      try {
+        yield User.query().where('id', 1220).firstOrFail()
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelNotFoundException')
+        expect(e.message).to.match(/unable to find given row/i)
+      }
+    })
+
     it('should return model instance using findOrFail method', function * () {
       class User extends Model {
       }
