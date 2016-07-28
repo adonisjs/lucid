@@ -219,7 +219,7 @@ describe('Database provider', function () {
       yield Database.table('users').paginate()
       expect(true).to.equal(false)
     } catch (e) {
-      expect(e.message).to.match(/page parameter is required/)
+      expect(e.message).to.match(/cannot paginate results for page less than 1/)
     }
   })
 
