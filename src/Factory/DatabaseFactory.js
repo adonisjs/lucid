@@ -17,31 +17,30 @@ const { ioc } = require('../../lib/iocResolver')
  * Model factory to seed database using Lucid
  * models
  *
- * @class DatabaseFactory
+ * @class ModelFactory
  * @constructor
  */
-class DatabaseFactory {
-  constructor (tableName, dataCallback) {
-    this.tableName = tableName
+class ModelFactory {
+  constructor (Model, dataCallback) {
+    this.Model = Model
     this.dataCallback = dataCallback
-    this._returningColumn = null
-    this._connection = null
   }
 
   /**
-   * Returns the query builder instance for
-   * a given connection
+   * New up a model with attributes
    *
-   * @method _getQueryBuilder
+   * @method _newup
+   *
+   * @param  {Object} attributes
    *
    * @return {Object}
    *
    * @private
    */
-  _getQueryBuilder () {
-    return (this._connection
-    ? ioc.use('Adonis/Src/Database').connection(this._connection)
-    : ioc.use('Adonis/Src/Database')).table(this.tableName)
+  _newup (attributes) {
+    const modelInstance = new (ioc.use(this.Model))()
+    modelInstance.fill(attributes)
+    return modelInstance
   }
 
   /**
@@ -80,51 +79,6 @@ class DatabaseFactory {
   }
 
   /**
-   * Set table to used for the database
-   * operations
-   *
-   * @method table
-   *
-   * @param  {String} tableName
-   *
-   * @chainable
-   */
-  table (tableName) {
-    this.tableName = tableName
-    return this
-  }
-
-  /**
-   * Specify the returning column from the insert
-   * query
-   *
-   * @method returning
-   *
-   * @param  {String}  column
-   *
-   * @chainable
-   */
-  returning (column) {
-    this._returningColumn = column
-    return this
-  }
-
-  /**
-   * Specify the connection to be used on
-   * the query builder
-   *
-   * @method connection
-   *
-   * @param  {String}   connection
-   *
-   * @chainable
-   */
-  connection (connection) {
-    this._connection = connection
-    return this
-  }
-
-  /**
    * Make a single model instance with attributes
    * from blueprint fake values
    *
@@ -137,7 +91,8 @@ class DatabaseFactory {
    * @return {Object}
    */
   async make (data = {}, index = 0) {
-    return this._makeOne(index, data)
+    const attributes = await this._makeOne(index, data)
+    return this._newup(attributes)
   }
 
   /**
@@ -168,14 +123,9 @@ class DatabaseFactory {
    * @return {Object}
    */
   async create (data = {}) {
-    const attributes = await this.make(data)
-    const query = this._getQueryBuilder()
-
-    if (this._returningColumn) {
-      query.returning(this._returningColumn)
-    }
-
-    return query.insert(attributes)
+    const modelInstance = await this.make(data)
+    await modelInstance.save()
+    return modelInstance
   }
 
   /**
@@ -203,8 +153,8 @@ class DatabaseFactory {
    * @return {Number}
    */
   async reset () {
-    return this._getQueryBuilder().truncate()
+    return ioc.use(this.Model).query().truncate()
   }
 }
 
-module.exports = DatabaseFactory
+module.exports = ModelFactory
