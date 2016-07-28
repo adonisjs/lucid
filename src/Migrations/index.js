@@ -27,90 +27,6 @@ class Migrations {
   }
 
   /**
-   * returns difference of migrations to be
-   * used for creation or rollback.
-   *
-   * @param  {Array}        files
-   * @param  {Array}        values
-   * @param  {String}       direction
-   * @return {Array}
-   *
-   * @private
-   */
-  _getDifference (files, values, direction) {
-    let difference = _.difference(_.keys(files), values)
-    if (direction === 'down') {
-      difference = _.reverse(_.intersection(values, _.keys(files)))
-    }
-    _.each(difference, (file) => {
-      if (typeof (files[file]) !== 'function') {
-        throw new Error(`Make sure you are exporting a class from ${file}`)
-      }
-      this._migrateClass(new files[file](), direction)
-    })
-    return difference
-  }
-
-  /**
-   * returns difference of files to be used for migrations
-   * also auto sets migrations on runner instance
-   *
-   * @param  {Array} files
-   * @param  {Sring} direction
-   * @param  {Number} batch
-   * @return {Array}
-   *
-   * @private
-   */
-  * _diff (files, direction, batch) {
-    /**
-     * pull all migrations from migrations table when direction
-     * is up
-     */
-    let query = this.database.select('name').from(this.migrationsTable).pluck('name')
-
-    if (direction === 'down') {
-      const subquery = this.database.from(this.migrationsTable).max('batch as batch')
-      query = this.database
-        .select('name')
-        .from(this.migrationsTable)
-        .modify(this._dynamicBatchQuery, subquery, batch)
-        .pluck('name')
-    }
-    yield this._makeMigrationsTable()
-    const values = yield query
-    const result = this._getDifference(files, values, direction)
-    return result
-  }
-
-  /**
-   * runs all migrations in a given direction
-   *
-   * @param  {Array} difference
-   * @param  {String} direction
-   * @return {Object}
-   *
-   * @private
-   */
-  * _run (difference, direction) {
-    yield this._makeLockTable()
-    yield this._checkLock()
-    yield this._addLock()
-    try {
-      yield this._executeMigrations()
-      if (direction === 'down') {
-        yield this._deleteBatch()
-      } else {
-        yield this._incrementBatch(difference)
-      }
-      yield this._freeLock()
-    } catch (e) {
-      yield this._freeLock()
-      throw e
-    }
-  }
-
-  /**
    * runs up on all new migrations
    *
    * @param  {Array} files
@@ -119,14 +35,31 @@ class Migrations {
    * @public
    */
   * up (files) {
-    const migrate = yield this._diff(files, 'up')
-    let status = 'skipped'
-    if (_.size(migrate) > 0) {
-      yield this._run(migrate, 'up')
-      status = 'completed'
+    yield this._makeMigrationsTable()
+    const migratedFiles = yield this._getMigratedFiles()
+    const migrations = this._getMigrationsList(files, migratedFiles, 'up')
+
+    /**
+     * return if nothing to migrate
+     */
+    if (_.size(migrations) <= 0) {
+      this.database.close()
+      return {migrated: [], status: 'skipped'}
     }
-    this.database.close()
-    return {migrated: migrate, status}
+
+    const migrationActions = this._mapMigrationsToActions(migrations, 'up')
+    const nextBatch = yield this._getNextBatchNumber()
+    yield this._makeLockTable()
+    yield this._checkLock()
+    yield this._addLock()
+    try {
+      yield this._executeMigrations(migrationActions, 'up', nextBatch)
+      yield this._deleteLock()
+      return {migrated: _.keys(migrations), status: 'completed'}
+    } catch (e) {
+      yield this._deleteLock()
+      throw e
+    }
   }
 
   /**
@@ -138,14 +71,33 @@ class Migrations {
    * @public
    */
   * down (files, batch) {
-    const migrate = yield this._diff(files, 'down', batch)
-    let status = 'skipped'
-    if (_.size(migrate) > 0) {
-      yield this._run(migrate, 'down')
-      status = 'completed'
+    yield this._makeMigrationsTable()
+    if (!batch && batch !== 0) {
+      batch = yield this._getRecentBatchNumber()
     }
-    this.database.close()
-    return {migrated: migrate, status}
+    const migratedFiles = yield this._getFilesTillBatch(batch)
+    const migrations = this._getMigrationsList(files, migratedFiles, 'down')
+
+    /**
+     * return if nothing to rollback
+     */
+    if (_.size(migrations) <= 0) {
+      this.database.close()
+      return {migrated: [], status: 'skipped'}
+    }
+
+    const migrationActions = this._mapMigrationsToActions(migrations, 'down')
+    yield this._makeLockTable()
+    yield this._checkLock()
+    yield this._addLock()
+    try {
+      yield this._executeMigrations(migrationActions, 'down')
+      yield this._deleteLock()
+      return {migrated: _.keys(migrations), status: 'completed'}
+    } catch (e) {
+      yield this._deleteLock()
+      throw e
+    }
   }
 
   /**
@@ -157,13 +109,14 @@ class Migrations {
    * @public
    */
   * status (files) {
-    const migrate = yield this._diff(files, 'up')
+    yield this._makeMigrationsTable()
+    const migratedFiles = yield this._getMigratedFiles()
     this.database.close()
     return _.transform(files, function (result, file, name) {
-      if (migrate.indexOf(name) > -1) {
-        result[name] = 'N'
-      } else {
+      if (migratedFiles.indexOf(name) > -1) {
         result[name] = 'Y'
+      } else {
+        result[name] = 'N'
       }
     })
   }
