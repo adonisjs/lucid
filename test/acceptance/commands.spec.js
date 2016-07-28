@@ -66,4 +66,20 @@ describe('Commands', function () {
   it('should show migrations status', function * () {
     yield setup.runCommand('migration:status', {}, {})
   })
+
+  it('should output run command sql queries', function * () {
+    yield setup.runCommand('migration:run', {}, {log: true})
+  })
+
+  it('should output refresh command sql queries', function * () {
+    yield setup.runCommand('migration:refresh', {}, {log: true})
+  })
+
+  it('should output rollback command sql queries', function * () {
+    yield setup.runCommand('migration:rollback', {}, {log: true})
+  })
+
+  it('should output reset command sql queries', function * () {
+    yield setup.runCommand('migration:reset', {}, {log: true})
+  })
 })

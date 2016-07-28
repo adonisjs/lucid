@@ -21,7 +21,7 @@ class Reset extends Command {
    * @public
    */
   get signature () {
-    return 'migration:reset {-f,--force?}'
+    return 'migration:reset {-f,--force?} {--log?:Log SQL queries that will run}'
   }
 
   /**
@@ -49,11 +49,16 @@ class Reset extends Command {
 
       const migrationsFiles = this.loadFiles(this.helpers.migrationsPath())
       const MigrationsRunner = this.migrations
-      const response = yield new MigrationsRunner().down(migrationsFiles, 0)
+      const response = yield new MigrationsRunner().down(migrationsFiles, 0, flags.log)
+
+      if (flags.log) {
+        this._logQueries(response)
+        return
+      }
 
       const successMessage = 'Rolled back to latest batch.'
       const infoMessage = 'Already at the latest batch.'
-      this.log(response.status, successMessage, infoMessage)
+      this._log(response.status, successMessage, infoMessage)
     } catch (e) {
       this.error(e)
     }

@@ -30,14 +30,23 @@ class Migrations {
    * runs up on all new migrations
    *
    * @param  {Array} files
+   * @param  {Boolean} toSql
    * @return {Object}
    *
    * @public
    */
-  * up (files) {
+  * up (files, toSql) {
     yield this._makeMigrationsTable()
     const migratedFiles = yield this._getMigratedFiles()
     const migrations = this._getMigrationsList(files, migratedFiles, 'up')
+    const migrationActions = this._mapMigrationsToActions(migrations, 'up')
+
+    /**
+     * if SQL required return SQL
+     */
+    if (toSql) {
+      return this._toSql(migrationActions)
+    }
 
     /**
      * return if nothing to migrate
@@ -47,7 +56,6 @@ class Migrations {
       return {migrated: [], status: 'skipped'}
     }
 
-    const migrationActions = this._mapMigrationsToActions(migrations, 'up')
     const nextBatch = yield this._getNextBatchNumber()
     yield this._makeLockTable()
     yield this._checkLock()
@@ -66,17 +74,27 @@ class Migrations {
    * runs down on all latest batch migrations
    *
    * @param  {Array} files
+   * @param  {Number} [batch={latest}]
+   * @param  {Boolean} [toSql=false]
    * @return {Object}
    *
    * @public
    */
-  * down (files, batch) {
+  * down (files, batch, toSql) {
     yield this._makeMigrationsTable()
     if (!batch && batch !== 0) {
       batch = yield this._getRecentBatchNumber()
     }
     const migratedFiles = yield this._getFilesTillBatch(batch)
     const migrations = this._getMigrationsList(files, migratedFiles, 'down')
+    const migrationActions = this._mapMigrationsToActions(migrations, 'down')
+
+    /**
+     * if sql required return SQL
+     */
+    if (toSql) {
+      return this._toSql(migrationActions)
+    }
 
     /**
      * return if nothing to rollback
@@ -86,7 +104,6 @@ class Migrations {
       return {migrated: [], status: 'skipped'}
     }
 
-    const migrationActions = this._mapMigrationsToActions(migrations, 'down')
     yield this._makeLockTable()
     yield this._checkLock()
     yield this._addLock()
