@@ -19,6 +19,7 @@ const filesFixtures = require('./fixtures/files')
 const modelFixtures = require('./fixtures/model')
 const ModelFactory = require('../../src/Factory/ModelFactory')
 const config = require('./helpers/config')
+const _ = require('lodash')
 const Ioc = require('adonis-fold').Ioc
 require('co-mocha')
 
@@ -259,6 +260,7 @@ describe('Factory', function () {
     const ids = yield Factory.get('users').create(10)
     expect(ids).to.be.an('array')
     expect(ids.length).to.equal(10)
+    yield modelFixtures.truncate(Database)
   })
 
   it('should be able to define different table name when using database factory', function * () {
@@ -271,6 +273,7 @@ describe('Factory', function () {
     const ids = yield Factory.get('forUsers').table('users').create(10)
     expect(ids).to.be.an('array')
     expect(ids.length).to.equal(10)
+    yield modelFixtures.truncate(Database)
   })
 
   it('should be able to define different returning field when using database factory', function * () {
@@ -283,5 +286,90 @@ describe('Factory', function () {
     const dbFactory = Factory.get('forUsers').table('users').returning('username')
     yield dbFactory.create(10)
     expect(dbFactory.returningField).to.equal('username')
+    yield modelFixtures.truncate(Database)
+  })
+
+  it('should get the iteration count when making multiple instances', function * () {
+    class User extends Model {}
+    Ioc.bind('App/Model/User', function () {
+      return User
+    })
+    Factory.blueprint('App/Model/User', function (fake, i) {
+      return {
+        username: fake.username(),
+        firstname: fake.first(),
+        custom_id: i
+      }
+    })
+    const users = Factory.model('App/Model/User').make(5)
+    expect(_.map(users, 'custom_id')).deep.equal([1, 2, 3, 4, 5])
+  })
+
+  it('should get the iteration count when creating multiple instances', function * () {
+    class User extends Model {}
+    Ioc.bind('App/Model/User', function () {
+      return User
+    })
+    Factory.blueprint('App/Model/User', function (fake, i) {
+      return {
+        username: i,
+        firstname: fake.first()
+      }
+    })
+    yield Factory.model('App/Model/User').create(5)
+    const users = yield User.all()
+    expect(users.size()).to.equal(5)
+    expect(users.map('username').value()).deep.equal(['1', '2', '3', '4', '5'])
+    yield modelFixtures.truncate(Database)
+  })
+
+  it('should able to pass custom data to the factory blueprint via make method', function * () {
+    class User extends Model {}
+    Ioc.bind('App/Model/User', function () {
+      return User
+    })
+    Factory.blueprint('App/Model/User', function (fake, i, user) {
+      return {
+        username: user.username,
+        firstname: user.firstname
+      }
+    })
+    const user = Factory.model('App/Model/User').make(1, {username: 'foo', firstname: 'bar'})
+    expect(user.username).to.equal('foo')
+    expect(user.firstname).to.equal('bar')
+  })
+
+  it('should able to pass custom data to the factory blueprint via create method', function * () {
+    class User extends Model {}
+    Ioc.bind('App/Model/User', function () {
+      return User
+    })
+    Factory.blueprint('App/Model/User', function (fake, i, user) {
+      return {
+        username: user.username,
+        firstname: user.firstname
+      }
+    })
+    yield Factory.model('App/Model/User').create(1, {username: 'foo', firstname: 'bar'})
+    const users = yield User.all()
+    expect(users.size()).to.equal(1)
+    expect(users.first().username).to.equal('foo')
+    expect(users.first().firstname).to.equal('bar')
+    yield modelFixtures.truncate(Database)
+  })
+
+  it('should be able to pass custom values when using database factory', function * () {
+    Factory.blueprint('forUsers', function (fake, i, user) {
+      return {
+        username: user.username,
+        firstname: user.firstname
+      }
+    })
+    const dbFactory = Factory.get('forUsers').table('users')
+    yield dbFactory.create(1, {username: 'foo', firstname: 'bar'})
+    const users = yield Database.table('users')
+    expect(users[0].username).to.equal('foo')
+    expect(users[0].firstname).to.equal('bar')
+    yield modelFixtures.truncate(Database)
   })
 })
