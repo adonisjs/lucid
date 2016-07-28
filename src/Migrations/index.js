@@ -45,7 +45,9 @@ class Migrations {
      * if SQL required return SQL
      */
     if (toSql) {
-      return this._toSql(migrationActions)
+      const sqlQueries = this._toSql(migrationActions)
+      this.database.close()
+      return sqlQueries
     }
 
     /**
@@ -93,7 +95,9 @@ class Migrations {
      * if sql required return SQL
      */
     if (toSql) {
-      return this._toSql(migrationActions)
+      const sqlQueries = this._toSql(migrationActions)
+      this.database.close()
+      return sqlQueries
     }
 
     /**
