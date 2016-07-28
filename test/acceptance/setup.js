@@ -32,6 +32,8 @@ const Helpers = {
 const commands = [
   'Adonis/Commands/Migration:Run',
   'Adonis/Commands/Migration:Rollback',
+  'Adonis/Commands/Migration:Refresh',
+  'Adonis/Commands/Migration:Reset',
   'Adonis/Commands/DB:Seed',
   'Adonis/Commands/Migration:Status'
 ]

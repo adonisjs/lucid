@@ -21,7 +21,7 @@ class Run extends Command {
    * @public
    */
   get signature () {
-    return 'migration:run {-f,--force?} {--files?}'
+    return 'migration:run {-f,--force?} {--files?} {--log?:Log SQL queries that will run}'
   }
 
   /**
@@ -50,11 +50,16 @@ class Run extends Command {
       const selectedFiles = flags.files ? flags.files.split(',') : null
       const migrationsFiles = this.loadFiles(this.helpers.migrationsPath(), selectedFiles)
       const MigrationsRunner = this.migrations
-      const response = yield new MigrationsRunner().up(migrationsFiles)
+      const response = yield new MigrationsRunner().up(migrationsFiles, flags.log)
+
+      if (flags.log) {
+        this._logQueries(response)
+        return
+      }
 
       const successMessage = 'Database migrated successfully.'
       const infoMessage = 'Nothing to migrate.'
-      this.log(response.status, successMessage, infoMessage)
+      this._log(response.status, successMessage, infoMessage)
     } catch (e) {
       this.error(e)
     }

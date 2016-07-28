@@ -663,16 +663,16 @@ describe('Migrations', function () {
     const migrations = {'2015-01-20': Users, '2016-07-28': Accounts}
     const sqlCommands = []
     Database.on('query', (output) => {
-      if (output.sql.match(/create table "users"|create table "accounts"|insert into "adonis_migrations"/)) {
+      if (output.sql.match(/create table [`"]users[`"]|create table [`"]accounts[`"]|insert into [`"]adonis_migrations[`"]/)) {
         sqlCommands.push(output.sql)
       }
     })
     yield runner.up(migrations)
     expect(sqlCommands.length).to.equal(4)
-    expect(sqlCommands[0]).to.match(/create table "users"/)
-    expect(sqlCommands[1]).to.match(/insert into "adonis_migrations"/)
-    expect(sqlCommands[2]).to.match(/create table "accounts"/)
-    expect(sqlCommands[3]).to.match(/insert into "adonis_migrations"/)
+    expect(sqlCommands[0]).to.match(/create table [`"]users[`"]/)
+    expect(sqlCommands[1]).to.match(/insert into [`"]adonis_migrations[`"]/)
+    expect(sqlCommands[2]).to.match(/create table [`"]accounts[`"]/)
+    expect(sqlCommands[3]).to.match(/insert into [`"]adonis_migrations[`"]/)
     yield runner.database.schema.dropTable('users')
     yield runner.database.schema.dropTable('accounts')
     yield runner.database.schema.dropTable('adonis_migrations')
@@ -691,9 +691,7 @@ describe('Migrations', function () {
 
     class Accounts extends Schema {
       up () {
-        this.table('accounts', (table) => {
-          table.dropColumn('id')
-        })
+        this.drop('accounts')
       }
     }
 
@@ -702,7 +700,6 @@ describe('Migrations', function () {
       yield runner.up(migrations)
       expect(true).to.equal(false)
     } catch (e) {
-      expect(e.message).to.match(/The column id is not in the accounts table/)
       const migrations = yield runner.database.table('adonis_migrations')
       expect(migrations).to.be.an('array')
       expect(migrations.length).to.equal(1)
@@ -710,5 +707,52 @@ describe('Migrations', function () {
       yield runner.database.schema.dropTable('users')
       yield runner.database.schema.dropTable('adonis_migrations')
     }
+  })
+
+  it('should return the sql output for run', function * () {
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
+    class Users extends Schema {
+      up () {
+        this.create('users', (table) => {
+          table.increments()
+        })
+      }
+    }
+
+    const migrations = {'2015-01-20': Users}
+    const response = yield runner.up(migrations, true)
+
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(1)
+    expect(response[0].file).to.equal('2015-01-20')
+    expect(response[0].queries).to.be.an('array')
+    const migrationsCompleted = yield runner.database.table('adonis_migrations')
+    expect(migrationsCompleted).to.be.an('array')
+    expect(migrationsCompleted).to.have.length(0)
+  })
+
+  it('should return the sql output for rollback', function * () {
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
+    class Users extends Schema {
+      up () {
+        this.create('users', (table) => {
+          table.increments()
+        })
+      }
+
+      down () {
+        this.drop('users')
+      }
+    }
+
+    const migrations = {'2015-01-20': Users}
+    yield runner.up(migrations)
+    const response = yield runner.down(migrations, 0, true)
+    expect(response).to.be.an('array')
+    expect(response).to.have.length(1)
+    expect(response[0].file).to.equal('2015-01-20')
+    expect(response[0].queries).to.be.an('array')
   })
 })

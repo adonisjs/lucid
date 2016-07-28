@@ -241,3 +241,23 @@ Migrate._getFilesTillBatch = function (batch) {
     .where('batch', '>', batch)
     .pluck('name')
 }
+
+/**
+ * returns an array of queries sql output next and
+ * file name.
+ *
+ * @param   {Array} migrations
+ *
+ * @return  {Array}
+ *
+ * @private
+ */
+Migrate._toSql = function (migrations) {
+  return _.transform(migrations, (result, migration) => {
+    const queries = _.map(migration.actions, (action) => {
+      return action.toString()
+    })
+    result.push({file: migration.file, queries})
+    return result
+  }, [])
+}

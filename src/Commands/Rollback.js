@@ -21,7 +21,7 @@ class Rollback extends Command {
    * @public
    */
   get signature () {
-    return 'migration:rollback {-f,--force?} {-b,--batch?=@value}'
+    return 'migration:rollback {-f,--force?} {-b,--batch?=@value} {--log?:Log SQL queries that will run}'
   }
 
   /**
@@ -50,11 +50,16 @@ class Rollback extends Command {
 
       const migrationsFiles = this.loadFiles(this.helpers.migrationsPath())
       const MigrationsRunner = this.migrations
-      const response = yield new MigrationsRunner().down(migrationsFiles, flags.batch)
+      const response = yield new MigrationsRunner().down(migrationsFiles, flags.batch, flags.log)
+
+      if (flags.log) {
+        this._logQueries(response)
+        return
+      }
 
       const successMessage = flags.batch ? `Rolled back to ${flags.batch} batch.` : 'Rolled back to previous batch.'
       const infoMessage = 'Already at the latest batch.'
-      this.log(response.status, successMessage, infoMessage)
+      this._log(response.status, successMessage, infoMessage)
     } catch (e) {
       this.error(e)
     }
