@@ -24,10 +24,10 @@ describe('Schema', function () {
 
     const user = new User()
     user.up()
-    expect(user.store).to.be.an('object')
-    expect(user.store.createTable).to.be.an('array')
-    expect(user.store.createTable[0].key).to.equal('users')
-    expect(user.store.createTable[0].callback).to.be.a('function')
+    expect(user.actions).to.be.an('array')
+    expect(user.actions[0].key).to.equal('users')
+    expect(user.actions[0].callback).to.be.a('function')
+    expect(user.actions[0].action).to.equal('createTable')
   })
 
   it('should be able to define multiple actions inside up method', function () {
@@ -40,9 +40,10 @@ describe('Schema', function () {
 
     const user = new User()
     user.up()
-    expect(user.store).to.be.an('object')
-    expect(user.store.createTable).to.be.an('array')
-    expect(user.store.table).to.be.an('array')
+    expect(user.actions).to.be.an('array')
+    expect(user.actions).to.have.length(2)
+    expect(user.actions[0].action).to.equal('createTable')
+    expect(user.actions[1].action).to.equal('table')
   })
 
   it('should be able to define actions inside down method', function () {
@@ -54,24 +55,25 @@ describe('Schema', function () {
 
     const user = new User()
     user.down()
-    expect(user.store).to.be.an('object')
-    expect(user.store.dropTable).to.be.an('array')
-    expect(user.store.dropTable[0].key).to.equal('users')
-    expect(user.store.dropTable[0].callback).to.be.a('function')
+    expect(user.actions).to.be.an('array')
+    expect(user.actions[0].key).to.equal('users')
+    expect(user.actions[0].callback).to.be.a('function')
+    expect(user.actions[0].action).to.equal('dropTable')
   })
 
-  it('should be able to define multiple actions inside up method', function () {
+  it('should be able to define multiple actions inside down method', function () {
     class User extends Schema {
-      up () {
-        this.create('users', function () {})
-        this.create('accounts', function () {})
+      down () {
+        this.drop('users', function () {})
+        this.table('accounts', function () {})
       }
     }
     const user = new User()
-    user.up()
-    expect(user.store).to.be.an('object')
-    expect(user.store.createTable).to.be.an('array')
-    expect(user.store.createTable[0].key).to.equal('users')
-    expect(user.store.createTable[1].key).to.equal('accounts')
+    user.down()
+    expect(user.actions).to.be.an('array')
+    expect(user.actions[0].key).to.equal('users')
+    expect(user.actions[1].key).to.equal('accounts')
+    expect(user.actions[0].action).to.equal('dropTable')
+    expect(user.actions[1].action).to.equal('table')
   })
 })

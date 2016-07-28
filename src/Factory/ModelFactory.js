@@ -39,12 +39,15 @@ class ModelFactory {
    * calls blueprint and passed fake instance
    * to it.
    *
+   * @param {Number} iterator
+   * @param {Mixed} values
+   *
    * @return {Object}
    *
    * @private
    */
-  _callBlueprint () {
-    return this.callback(fake)
+  _callBlueprint (iterator, values) {
+    return this.callback(fake, iterator, values)
   }
 
   /**
@@ -52,19 +55,21 @@ class ModelFactory {
    * and setting values on model instance
    *
    * @param  {Number} [count=1] - Number of instances to return
+   * @param {Mixed} values
+   *
    * @return {Object}
    *
    * @public
    */
-  make (count) {
-    if (!count || count === 1) {
-      return this._makeInstance(this._callBlueprint())
+  make (rows, values) {
+    if (!rows || rows === 1) {
+      return this._makeInstance(this._callBlueprint(1, values))
     }
 
-    return _(count)
+    return _(rows)
     .range()
-    .map(() => {
-      return this._makeInstance(this._callBlueprint())
+    .map((iterator) => {
+      return this._makeInstance(this._callBlueprint(iterator + 1, values))
     })
     .value()
   }
@@ -76,16 +81,18 @@ class ModelFactory {
    * @method create
    *
    * @param  {Number} rows
+   * @param {Mixed} values
+   *
    * @return {Object}      reference to this
    *
    * @public
    */
-  * create (rows) {
+  * create (rows, values) {
     rows = rows || 1
     const self = this
     const range = _.range(rows)
-    this.instances = yield cf.mapSerial(function * () {
-      return yield self.binding.create(self._callBlueprint())
+    this.instances = yield cf.mapSerial(function * (iterator) {
+      return yield self.binding.create(self._callBlueprint(iterator + 1, values))
     }, range)
     return this
   }

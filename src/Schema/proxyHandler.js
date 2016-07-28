@@ -43,7 +43,7 @@ let proxyHandler = exports = module.exports = {}
  * @public
  */
 proxyHandler.get = function (target, name) {
-  if (target[name] !== undefined || mustImplement.indexOf(name) > -1) {
+  if (target[name] || mustImplement.indexOf(name) > -1) {
     return target[name]
   }
 
@@ -51,7 +51,6 @@ proxyHandler.get = function (target, name) {
     if (Object.keys(aliases).indexOf(name) > -1) {
       name = aliases[name]
     }
-    target.store[name] = target.store[name] || []
-    target.store[name].push({key, callback})
+    target.actions.push({key, callback, action: name})
   }
 }

@@ -52,8 +52,6 @@ class Status extends Command {
       this.table(['Migration', 'Status'], response)
     } catch (e) {
       this.error(e)
-    } finally {
-      migrationsRunner.database.close()
     }
   }
 }

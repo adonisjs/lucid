@@ -765,6 +765,15 @@ describe('Lucid', function () {
       expect(users.length).to.equal(2)
     })
 
+    it('should pick a given number of rows from database using query builder pick method', function * () {
+      class User extends Model {
+      }
+      let users = yield User.query().where('username', 'virk').pick(2)
+      users = users.toJSON()
+      expect(users).to.be.an('array')
+      expect(users.length).to.equal(1)
+    })
+
     it('should pick only one row when limit argument is not passed to pick method', function * () {
       class User extends Model {
       }
@@ -782,6 +791,15 @@ describe('Lucid', function () {
       expect(users).to.be.an('array')
       expect(users[0].id).to.be.above(users[1].id)
       expect(users.length).to.equal(2)
+    })
+
+    it('should pick a given number of rows in reverse order from database using query builder pickInverse method', function * () {
+      class User extends Model {
+      }
+      let users = yield User.query().where('username', 'virk').pickInverse(2)
+      users = users.toJSON()
+      expect(users).to.be.an('array')
+      expect(users.length).to.equal(1)
     })
 
     it('should pick only one row when limit argument is not passed to pickInverse method', function * () {
@@ -905,6 +923,18 @@ describe('Lucid', function () {
       } catch (e) {
         expect(e.name).to.equal('ModelNotFoundException')
         expect(e.message).to.match(/unable to fetch results for id 1220/i)
+      }
+    })
+
+    it('should throw ModelNotFoundException when unable to find a record using firstOfFail method', function * () {
+      class User extends Model {
+      }
+      try {
+        yield User.query().where('id', 1220).firstOrFail()
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelNotFoundException')
+        expect(e.message).to.match(/unable to find given row/i)
       }
     })
 
@@ -1064,8 +1094,19 @@ describe('Lucid', function () {
       expect(paginatedUsers).to.have.property('data')
       expect(paginatedUsers.perPage).to.equal(paginatedUsers.data.length)
     })
-  })
 
+    it('should be able to paginate results using model static method', function * () {
+      class User extends Model {
+      }
+      const users = yield User.paginate(1, 10)
+      const paginatedUsers = users.toJSON()
+      expect(paginatedUsers).to.have.property('total')
+      expect(paginatedUsers).to.have.property('lastPage')
+      expect(paginatedUsers).to.have.property('perPage')
+      expect(paginatedUsers).to.have.property('data')
+      expect(paginatedUsers.perPage).to.equal(paginatedUsers.data.length)
+    })
+  })
   context('Model Hooks', function () {
     it('should throw an error when trying to add a hook with wrong type', function () {
       class User extends Model {}

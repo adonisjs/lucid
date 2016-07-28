@@ -84,7 +84,7 @@ class Command extends BaseCommand {
    *
    * @public
    */
-  log (status, successMessage, infoMessage) {
+  _log (status, successMessage, infoMessage) {
     if (status === 'completed') {
       this.success(`${this.icon('success')} ${successMessage}`)
       return
@@ -93,6 +93,21 @@ class Command extends BaseCommand {
       this.info(`${this.icon('info')} ${infoMessage}`)
     }
   }
+
+  /**
+   * logs queries to the stdout using console.log
+   *
+   * @param   {Array} output
+   *
+   * @private
+   */
+  _logQueries (output) {
+    output.forEach((item) => {
+      this.success(`\n${item.file}`)
+      item.queries.forEach((query) => this.log(`>SQL: ${query}`))
+    })
+  }
+
 }
 
 module.exports = Command

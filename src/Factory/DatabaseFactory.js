@@ -27,12 +27,15 @@ class DatabaseFactory {
    * calls blueprint and passed fake instance
    * to it.
    *
+   * @param {Number} iterator
+   * @param {Mixed} values
+   *
    * @return {Object}
    *
    * @private
    */
-  _callBlueprint () {
-    return this.callback(fake)
+  _callBlueprint (iterator, values) {
+    return this.callback(fake, iterator, values)
   }
 
   /**
@@ -70,17 +73,19 @@ class DatabaseFactory {
    * @method create
    *
    * @param  {Number} rows
+   * @param {Mixed} values
+   *
    * @return {Arrays}      Array of inserted ids
    *
    * @public
    */
-  * create (rows) {
+  * create (rows, values) {
     const self = this
     this.binding = this.binding.table(this.dbTable)
     rows = rows || 1
     const range = _.range(rows)
-    const ids = yield cf.mapSerial(function * () {
-      return yield self.binding.insert(self._callBlueprint()).returning(self.returningField)
+    const ids = yield cf.mapSerial(function * (iterator) {
+      return yield self.binding.insert(self._callBlueprint(iterator + 1, values)).returning(self.returningField)
     }, range)
     return _.flatten(ids)
   }

@@ -477,8 +477,7 @@ class Model {
    * @public
    */
   static * pick (limit) {
-    limit = limit || 1
-    return yield this.query().limit(limit).orderBy(this.primaryKey, 'asc').fetch()
+    return yield this.query().pick(limit)
   }
 
   /**
@@ -491,8 +490,7 @@ class Model {
    * @public
    */
   static * pickInverse (limit) {
-    limit = limit || 1
-    return yield this.query().limit(limit).orderBy(this.primaryKey, 'desc').fetch()
+    return yield this.query().pickInverse(limit)
   }
 
   /**
@@ -520,6 +518,20 @@ class Model {
    */
   static * find (value) {
     return yield this.findBy(this.primaryKey, value)
+  }
+
+  /**
+   * paginates over a result set
+   *
+   * @param  {Number} page
+   * @param  {Number} [perPage=20]
+   *
+   * @return {Array}
+   *
+   * @public
+   */
+  static * paginate (page, perPage) {
+    return yield this.query().paginate(page, perPage)
   }
 
   /**

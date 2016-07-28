@@ -10,6 +10,7 @@
 */
 
 const _ = require('lodash')
+const CE = require('../Model/customExceptions')
 const methods = exports = module.exports = {}
 
 /**
@@ -165,6 +166,27 @@ methods.first = function (target) {
 }
 
 /**
+ * returns the first record from data collection
+ * or fails by throwing an exception
+ *
+ * @method firstOrFail
+ *
+ * @param  {Object} target
+ * @return {Object}
+ *
+ * @public
+ */
+methods.firstOrFail = function (target) {
+  return function * () {
+    const row = yield this.first()
+    if (!row) {
+      throw new CE.ModelNotFoundException('Unable to find given row')
+    }
+    return row
+  }
+}
+
+/**
  * with trashed will set a flag on query builder instance to
  * include trashed results.
  *
@@ -268,6 +290,15 @@ methods.pair = function (target) {
   }
 }
 
+/**
+ * plucks first given field as original data type.
+ *
+ * @param  {Object} target
+ *
+ * @return {Function}
+ *
+ * @public
+ */
 methods.pluckFirst = function (target) {
   return function * (field) {
     const firstRow = yield target.modelQueryBuilder.select(field).first()
@@ -275,8 +306,53 @@ methods.pluckFirst = function (target) {
   }
 }
 
+/**
+ * plucks first primary key as original datatype.
+ *
+ * @param  {Object} target
+ *
+ * @return {Function}
+ *
+ * @public
+ */
 methods.pluckId = function (target) {
   return function () {
     return this.pluckFirst(target.HostModel.primaryKey)
+  }
+}
+
+/**
+ * picks given number of rows with orderBy asc
+ * on primary key
+ *
+ * @param  {Object} target
+ *
+ * @return {Function}
+ *
+ * @public
+ */
+methods.pick = function (target) {
+  return function (limit) {
+    limit = limit || 1
+    target.modelQueryBuilder.limit(limit).orderBy(target.HostModel.primaryKey, 'asc')
+    return this.fetch()
+  }
+}
+
+/**
+ * picks given number of rows with orderBy desc
+ * on primary key
+ *
+ * @param  {Object} target
+ *
+ * @return {Function}
+ *
+ * @public
+ */
+methods.pickInverse = function (target) {
+  return function (limit) {
+    limit = limit || 1
+    target.modelQueryBuilder.limit(limit).orderBy(target.HostModel.primaryKey, 'desc')
+    return this.fetch()
   }
 }

@@ -14,7 +14,7 @@ require('harmony-reflect')
 
 class Schema {
   constructor () {
-    this.store = {}
+    this.actions = []
     return new Proxy(this, proxyHandler)
   }
 

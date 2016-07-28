@@ -18,6 +18,7 @@ require('harmony-reflect')
 const knex = require('knex')
 const util = require('../../lib/util')
 const co = require('co')
+const _ = require('lodash')
 
 /**
  * here we store connection pools, created by database provider. It is
@@ -297,24 +298,25 @@ Database.forPage = function (page, perPage) {
  * @public
  */
 Database.paginate = function * (page, perPage, countByQuery) {
-  perPage = perPage || 20
-  util.validatePage(page)
+  const parsedPerPage = _.toSafeInteger(perPage) || 20
+  const parsedPage = _.toSafeInteger(page)
+  util.validatePage(parsedPage)
   /**
    * first we count the total rows before making the actual
-   * actual for getting results
+   * query for getting results
    */
   countByQuery = countByQuery || this.clone().count('* as total')
   const count = yield countByQuery
   if (!count[0] || parseInt(count[0].total, 10) === 0) {
-    return util.makePaginateMeta(0, page, perPage)
+    return util.makePaginateMeta(0, parsedPage, parsedPerPage)
   }
 
   /**
    * here we fetch results and set meta data for paginated
    * results
    */
-  const results = yield this.forPage(page, perPage)
-  const resultSet = util.makePaginateMeta(parseInt(count[0].total, 10), page, perPage)
+  const results = yield this.forPage(parsedPage, parsedPerPage)
+  const resultSet = util.makePaginateMeta(parseInt(count[0].total, 10), parsedPage, parsedPerPage)
   resultSet.data = results
   return resultSet
 }

@@ -1,3 +1,25 @@
+<a name="3.0.2"></a>
+## [3.0.2](https://github.com/adonisjs/adonis-lucid/compare/v3.0.0...v3.0.2) (2016-07-28)
+
+
+### Bug Fixes
+
+* **commands:** close database connection after commands([8087f10](https://github.com/adonisjs/adonis-lucid/commit/8087f10))
+* **migrations:** expose knex.schema via this.schema([4b2828e](https://github.com/adonisjs/adonis-lucid/commit/4b2828e))
+* **migrations:** return migrations class body instead of instance([358aeb6](https://github.com/adonisjs/adonis-lucid/commit/358aeb6))
+* **pagination:** convert pagination params to safe int([ec7db37](https://github.com/adonisjs/adonis-lucid/commit/ec7db37))
+* **postgres:** fix postgres behavior testing for bindings([738db0c](https://github.com/adonisjs/adonis-lucid/commit/738db0c))
+
+
+### Features
+
+* **factory:** factory blueprint to accept iteration count and custom values([20d5644](https://github.com/adonisjs/adonis-lucid/commit/20d5644))
+* **lucid:** add support for firstOrFail([f06e5c1](https://github.com/adonisjs/adonis-lucid/commit/f06e5c1))
+* **lucid:** add support for pick,pickInverse and paginate([ef29649](https://github.com/adonisjs/adonis-lucid/commit/ef29649))
+* **migrations:** add support for --log flag to log queries to console([f0dfdcb](https://github.com/adonisjs/adonis-lucid/commit/f0dfdcb))
+
+
+
 <a name="3.0.1"></a>
 ## [3.0.1](https://github.com/adonisjs/adonis-lucid/compare/v3.0.0...v3.0.1) (2016-06-26)
 
