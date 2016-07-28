@@ -52,7 +52,7 @@ class Rollback extends Command {
       const MigrationsRunner = this.migrations
       const response = yield new MigrationsRunner().down(migrationsFiles, flags.batch, flags.log)
 
-      if (flags.log) {
+      if (flags.log && !response.status) {
         this._logQueries(response)
         return
       }

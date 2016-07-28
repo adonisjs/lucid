@@ -39,16 +39,6 @@ class Migrations {
     yield this._makeMigrationsTable()
     const migratedFiles = yield this._getMigratedFiles()
     const migrations = this._getMigrationsList(files, migratedFiles, 'up')
-    const migrationActions = this._mapMigrationsToActions(migrations, 'up')
-
-    /**
-     * if SQL required return SQL
-     */
-    if (toSql) {
-      const sqlQueries = this._toSql(migrationActions)
-      this.database.close()
-      return sqlQueries
-    }
 
     /**
      * return if nothing to migrate
@@ -56,6 +46,16 @@ class Migrations {
     if (_.size(migrations) <= 0) {
       this.database.close()
       return {migrated: [], status: 'skipped'}
+    }
+
+    const migrationActions = this._mapMigrationsToActions(migrations, 'up')
+    /**
+     * if SQL required return SQL
+     */
+    if (toSql) {
+      const sqlQueries = this._toSql(migrationActions)
+      this.database.close()
+      return sqlQueries
     }
 
     const nextBatch = yield this._getNextBatchNumber()
@@ -69,6 +69,8 @@ class Migrations {
     } catch (e) {
       yield this._deleteLock()
       throw e
+    } finally {
+      this.database.close()
     }
   }
 
@@ -89,6 +91,15 @@ class Migrations {
     }
     const migratedFiles = yield this._getFilesTillBatch(batch)
     const migrations = this._getMigrationsList(files, migratedFiles, 'down')
+
+    /**
+     * return if nothing to rollback
+     */
+    if (_.size(migrations) <= 0) {
+      this.database.close()
+      return {migrated: [], status: 'skipped'}
+    }
+
     const migrationActions = this._mapMigrationsToActions(migrations, 'down')
 
     /**
@@ -98,14 +109,6 @@ class Migrations {
       const sqlQueries = this._toSql(migrationActions)
       this.database.close()
       return sqlQueries
-    }
-
-    /**
-     * return if nothing to rollback
-     */
-    if (_.size(migrations) <= 0) {
-      this.database.close()
-      return {migrated: [], status: 'skipped'}
     }
 
     yield this._makeLockTable()
@@ -118,6 +121,8 @@ class Migrations {
     } catch (e) {
       yield this._deleteLock()
       throw e
+    } finally {
+      this.database.close()
     }
   }
 

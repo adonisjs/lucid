@@ -71,10 +71,6 @@ describe('Commands', function () {
     yield setup.runCommand('migration:run', {}, {log: true})
   })
 
-  it('should output refresh command sql queries', function * () {
-    yield setup.runCommand('migration:refresh', {}, {log: true})
-  })
-
   it('should output rollback command sql queries', function * () {
     yield setup.runCommand('migration:rollback', {}, {log: true})
   })
