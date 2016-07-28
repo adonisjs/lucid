@@ -20,39 +20,23 @@ const Migrate = exports = module.exports = {}
  * migrates a class by calling up or down
  * method on it.
  *
- * @method _migrateClass
+ * @method _translateActions
  *
  * @param  {Object}      schema
- * @param  {String}      method
+ * @param  {String}      direction
  * @return {void}
  *
  * @private
  */
-Migrate._migrateClass = function (schemaInstance, method) {
+Migrate._translateActions = function (schemaInstance, direction) {
   this._decorateSchema(schemaInstance)
-  if (!schemaInstance[method]) {
-    logger.warn('skipping migration as %s is not defined', method)
+  if (!schemaInstance[direction]) {
+    logger.warn('skipping migration as %s is not defined', direction)
     return
   }
-  this._executeSchema(schemaInstance, method)
-}
-
-/**
- * this method will call the up or down method on schema instance
- * and will register schema definations to be executed with
- * the migrations store.
- *
- * @method _executeSchema
- *
- * @param  {Object}       schemaInstance
- * @param  {String}       direction
- *
- * @private
- */
-Migrate._executeSchema = function (schemaInstance, direction) {
   schemaInstance[direction]()
-  _.each(schemaInstance.store, (schemas, method) => {
-    this._callSchemaActions(schemas, schemaInstance.constructor.connection, method)
+  return _.map(schemaInstance.actions, (props) => {
+    return this._callSchemaActions(props, schemaInstance.constructor.connection)
   })
 }
 
@@ -62,31 +46,28 @@ Migrate._executeSchema = function (schemaInstance, direction) {
  *
  * @method _callSchemaActions
  *
- * @param  {Array}           actions
+ * @param  {Array}           props
  * @param  {Object}          connection
- * @param  {String}          method
+ * @param  {String}          action
  *
  * @private
  */
-Migrate._callSchemaActions = function (actions, connection, method) {
-  _.each(actions, (defination) => {
-    const builder = this.database.connection(connection).schema
-    const migration = builder[method](defination.key, this._schemaCallback(defination.callback))
-    this.migrations.push(migration)
-  })
+Migrate._callSchemaActions = function (defination, connection) {
+  const builder = this.database.connection(connection).schema
+  return builder[defination.action](defination.key, this._wrapSchemaCallback(defination.callback))
 }
 
 /**
  * calls the schema methods callback, while executing the callback
  * it will decorate the table object passed to the callback.
  *
- * @method _schemaCallback
+ * @method _wrapSchemaCallback
  *
  * @param  {Function}      callback
  *
  * @private
  */
-Migrate._schemaCallback = function (callback) {
+Migrate._wrapSchemaCallback = function (callback) {
   const self = this
   return function (table) {
     self._decorateTable(table)
@@ -159,8 +140,104 @@ Migrate._makeMigrationsTable = function () {
  *
  * @private
  */
-Migrate._executeMigrations = function * () {
-  return cf.forEachSerial(function * (item) {
-    return yield item
-  }, this.migrations)
+Migrate._executeMigrations = function * (migrations, direction, batchNumber) {
+  const self = this
+  yield cf.forEachSerial(function * (migration) {
+    return yield self._executeActions(_.flatten(migration.actions), migration.file, direction, batchNumber)
+  }, migrations)
+}
+
+/**
+ * executes an array of actions defined in a single file in sequence
+ *
+ * @param {Arrau} actions
+ * @param {String} file
+ * @param {String} direction
+ * @param {Number} batchNumber
+ *
+ * @private
+ */
+Migrate._executeActions = function * (actions, file, direction, batchNumber) {
+  yield cf.forEachSerial(function * (action) {
+    return yield action
+  }, _.flatten(actions))
+
+  /**
+   * updating batch number after running all actions
+   */
+  direction === 'down' ? yield this._revertProgress(file) : yield this._updateProgress(file, batchNumber)
+}
+
+/**
+ * returns difference of migrations to be used for
+ * creation or rollback based upon the direction.
+ *
+ * @param  {Object}        files
+ * @param  {Array}         values
+ * @param  {String}        direction
+ * @return {Object}
+ *
+ * @example
+ *   input>> {'2015-10-20_users': Users, ['2015-10-20_users'], 'up'}
+ *   output>> {}
+ *
+ * @private
+ */
+Migrate._getMigrationsList = function (files, values, direction) {
+  const diff = direction === 'down' ? _.reverse(_.intersection(values, _.keys(files))) : _.difference(_.keys(files), values)
+
+  return _.reduce(diff, (result, name) => {
+    result[name] = files[name]
+    return result
+  }, {})
+}
+
+/**
+ * map list of migrations to an array of actions.
+ *
+ * @param      {Object}  migrationsList
+ * @return     {Array}
+ *
+ * @example
+ * input >>> {'2015-10-30': Users}
+ * output >>> [{file: '2015-10-30', actions: [knex actions]}]
+ *
+ * @private
+ */
+Migrate._mapMigrationsToActions = function (migrationsList, direction) {
+  return _.map(migrationsList, (File, fileName) => {
+    if (typeof (File) !== 'function') {
+      throw new Error(`Make sure you are exporting a class from ${fileName}`)
+    }
+    return {file: fileName, actions: this._translateActions(new File(), direction)}
+  })
+}
+
+/**
+ * return list of migrated files saved inside migrations
+ * table.
+ *
+ * @return     {Array}  The migrated files.
+ *
+ * @private
+ */
+Migrate._getMigratedFiles = function () {
+  return this.database.select('name').from(this.migrationsTable).pluck('name')
+}
+
+/**
+ * returns list of migration files till a give batch number
+ * this is used to rollback migrations till a given batch
+ *
+ * @param      {Number}  batch   The batch
+ * @return     {Array}
+ *
+ * @private
+ */
+Migrate._getFilesTillBatch = function (batch) {
+  return this.database
+    .select('name')
+    .from(this.migrationsTable)
+    .where('batch', '>', batch)
+    .pluck('name')
 }

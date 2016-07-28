@@ -65,6 +65,6 @@ Lock._checkLock = function * () {
  *
  * @private
  */
-Lock._freeLock = function * () {
+Lock._deleteLock = function * () {
   return this.database.schema.dropTable(this.lockTable)
 }
