@@ -21,6 +21,19 @@ class HasOne extends Relation {
   }
 
   /**
+   * empty placeholder to be used when unable to eagerload
+   * relations. It needs to be an array of many to many
+   * relationships.
+   *
+   * @method eagerLoadFallbackValue
+   *
+   * @return {Null}
+   */
+  get eagerLoadFallbackValue () {
+    return null
+  }
+
+  /**
    * returns result of this.first
    *
    * @see this.first()

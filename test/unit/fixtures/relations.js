@@ -88,6 +88,13 @@ module.exports = {
         table.timestamps()
         table.timestamp('deleted_at').nullable()
       }),
+      knex.schema.createTable('subjects', function (table) {
+        table.increments()
+        table.string('title')
+        table.integer('course_id')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
       knex.schema.createTable('course_student', function (table) {
         table.integer('student_id')
         table.integer('course_id')
@@ -132,6 +139,7 @@ module.exports = {
       knex.schema.dropTable('comments'),
       knex.schema.dropTable('courses'),
       knex.schema.dropTable('students'),
+      knex.schema.dropTable('subjects'),
       knex.schema.dropTable('course_student'),
       knex.schema.dropTable('authors'),
       knex.schema.dropTable('publications'),

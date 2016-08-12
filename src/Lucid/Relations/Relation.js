@@ -27,6 +27,19 @@ class Relation {
   }
 
   /**
+   * empty placeholder to be used when unable to eagerload
+   * relations. It needs to be an array of many to many
+   * relationships.
+   *
+   * @method eagerLoadFallbackValue
+   *
+   * @return {Array}
+   */
+  get eagerLoadFallbackValue () {
+    return []
+  }
+
+  /**
    * returns the model from IoC container or returns
    * the actual binding if model representation is
    * not a string.
