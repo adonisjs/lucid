@@ -623,6 +623,17 @@ class Model {
   }
 
   /**
+   * truncate model database table
+   *
+   * @method truncate
+   *
+   * @return {Boolean}
+   */
+  static * truncate () {
+    return yield this.query().truncate()
+  }
+
+  /**
    * shorthand to get access to the with method on
    * query builder chain.
    *

@@ -731,6 +731,15 @@ describe('Lucid', function () {
         expect(e.message).to.match(/cannot save an empty model/i)
       }
     })
+
+    it('should be able to truncate database table using static truncate method', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      yield User.create({username: 'foo', lastname: 'bar'})
+      yield User.truncate()
+      const users = yield User.query().count('* as total')
+      expect(users[0].total).to.equal(0)
+    })
   })
 
   context('QueryBuilder', function () {
@@ -1659,7 +1668,9 @@ describe('Lucid', function () {
       User.query().active()
       expect(new Ref() instanceof User).to.equal(true)
     })
+  })
 
+  context('Regression', function () {
     it('should consider attributes chaned inside before update as dirty values when updating', function * () {
       class User extends Model {}
       User.bootIfNotBooted()
