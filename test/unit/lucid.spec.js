@@ -1303,4 +1303,152 @@ test.group('Model', (group) => {
     const fn = () => User.addGlobalScope('foo')
     assert.throw(fn, 'E_INVALID_PARAMETER: Model.addGlobalScope expects a closure as first parameter')
   })
+
+  context('Model Transactions', function () {
+    it('should be able to rollback save operation', function * () {
+      const trx = yield Database.beginTransaction()
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      user.useTransaction(trx)
+      yield user.save()
+      trx.rollback()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(0)
+    })
+
+    it('should be able to commit save operation', function * () {
+      const trx = yield Database.beginTransaction()
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      user.useTransaction(trx)
+      yield user.save()
+      trx.commit()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(1)
+    })
+
+    it('should be able to rollback update operation', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      yield user.save()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(1)
+      const trx = yield Database.beginTransaction()
+      user.lastname = 'Baz'
+      user.useTransaction(trx)
+      yield user.save()
+      trx.rollback()
+      const freshUser = yield user.fresh()
+      expect(freshUser.lastname).to.equal(null)
+    })
+
+    it('should be able to commit update operation', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      yield user.save()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(1)
+      const trx = yield Database.beginTransaction()
+      user.lastname = 'Baz'
+      user.useTransaction(trx)
+      yield user.save()
+      trx.commit()
+      const freshUser = yield user.fresh()
+      expect(freshUser.lastname).to.equal('Baz')
+    })
+
+    it('should not make use of same transaction after resetTransaction method', function * () {
+      const trx = yield Database.beginTransaction()
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      user.useTransaction(trx)
+      yield user.save()
+      trx.commit()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(1)
+      user.lastname = 'Baz'
+      user.resetTransaction()
+      yield user.save()
+      const freshUser = yield user.fresh()
+      expect(freshUser.lastname).to.equal('Baz')
+    })
+
+    it('should be able to rollback delete operation', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      yield user.save()
+      const trx = yield Database.beginTransaction()
+      user.useTransaction(trx)
+      yield user.delete()
+      trx.rollback()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(1)
+    })
+
+    it('should be able to commit delete operation', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      yield user.save()
+      const trx = yield Database.beginTransaction()
+      user.useTransaction(trx)
+      yield user.delete()
+      trx.commit()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(0)
+    })
+
+    it('should be able to rollback restore operation', function * () {
+      class User extends Model {
+        static get deleteTimestamp () {
+          return 'deleted_at'
+        }
+      }
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      yield user.save()
+      yield user.delete()
+      const freshUser = yield User.query().withTrashed().first()
+      const trx = yield Database.beginTransaction()
+      freshUser.useTransaction(trx)
+      yield freshUser.restore()
+      trx.rollback()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(0)
+    })
+
+    it('should be able to commit restore operation', function * () {
+      class User extends Model {
+        static get deleteTimestamp () {
+          return 'deleted_at'
+        }
+      }
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      yield user.save()
+      yield user.delete()
+      const freshUser = yield User.query().withTrashed().first()
+      const trx = yield Database.beginTransaction()
+      freshUser.useTransaction(trx)
+      yield freshUser.restore()
+      trx.commit()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(1)
+    })
+  })
 })
