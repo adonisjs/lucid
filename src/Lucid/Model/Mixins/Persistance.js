@@ -53,13 +53,14 @@ Peristance.insert = function * () {
  *
  * @public
  */
-Peristance.update = function * (dirtyValues) {
+Peristance.update = function * () {
   /**
    * update handler is sent to hooks execution method
    * and will be called there itself.
    */
   const updateHandler = function * () {
     const query = this.constructor.query()
+    const dirtyValues = this.$dirty
     if (!_.size(dirtyValues)) {
       return 0
     }
