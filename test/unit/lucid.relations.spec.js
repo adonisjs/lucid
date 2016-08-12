@@ -293,7 +293,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'accounts')
     })
 
-    it('should return null when unable to fetch related results', function * () {
+    it('should return null when unable to fetch related results via eager loading', function * () {
       yield relationFixtures.createRecords(Database, 'suppliers', {name: 'redtape'})
       class Account extends Model {
       }
@@ -2706,6 +2706,218 @@ describe('Relations', function () {
         expect(e.name).to.equal('ModelRelationSaveException')
         expect(e.message).to.match(/Cannot call createMany/)
       }
+    })
+  })
+
+  context('Regression:HasOne', function () {
+    it('should return null when unable to fetch related results via eager loading', function * () {
+      yield relationFixtures.createRecords(Database, 'suppliers', {name: 'redtape'})
+      class Account extends Model {
+      }
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+      const supplier = yield Supplier.query().with('account').first()
+      expect(supplier.toJSON().account).to.equal(null)
+      yield relationFixtures.truncate(Database, 'suppliers')
+    })
+
+    it('should return null when unable to fetch related results of the model instance', function * () {
+      yield relationFixtures.createRecords(Database, 'suppliers', {name: 'redtape'})
+      class Account extends Model {
+      }
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+      const supplier = yield Supplier.find(1)
+      const account = yield supplier.account().first()
+      expect(account).to.equal(null)
+      yield relationFixtures.truncate(Database, 'suppliers')
+    })
+
+    it('should return null when unable to fetch related results via lazy eager loading', function * () {
+      yield relationFixtures.createRecords(Database, 'suppliers', {name: 'redtape'})
+      class Account extends Model {
+      }
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+      const supplier = yield Supplier.find(1)
+      yield supplier.related('account').load()
+      expect(supplier.toJSON().account).to.equal(null)
+      yield relationFixtures.truncate(Database, 'suppliers')
+    })
+  })
+
+  context('Regression:BelongsTo', function () {
+    it('should return null when unable to fetch related results via eager loading', function * () {
+      yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: 1})
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const comment = yield Comment.query().with('post').first()
+      expect(comment.toJSON().post).to.equal(null)
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should return null when unable to fetch related results of model instance', function * () {
+      yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: 1})
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const comment = yield Comment.query().first()
+      const post = yield comment.post().first()
+      expect(post).to.equal(null)
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should return null when unable to fetch related results via lazy eager loading', function * () {
+      yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: 1})
+      class Post extends Model {
+      }
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+      const comment = yield Comment.query().first()
+      yield comment.related('post').load()
+      expect(comment.toJSON().post).to.equal(null)
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+  })
+
+  context('Regression:HasMany', function () {
+    it('should return an empty array when unable to fetch related results via eager loading', function * () {
+      yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
+      class Comment extends Model {
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      const post = yield Post.query().with('comments').first()
+      expect(post.toJSON().comments).deep.equal([])
+      yield relationFixtures.truncate(Database, 'posts')
+    })
+
+    it('should return an empty array when unable to fetch related results of model instance', function * () {
+      yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
+      class Comment extends Model {
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      const post = yield Post.query().first()
+      const comments = yield post.comments().fetch()
+      expect(comments.toJSON()).deep.equal([])
+      yield relationFixtures.truncate(Database, 'posts')
+    })
+
+    it('should return an empty array when unable to fetch related results via lazy eager loading', function * () {
+      yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
+      class Comment extends Model {
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      const post = yield Post.query().first()
+      yield post.related('comments').load()
+      expect(post.toJSON().comments).deep.equal([])
+      yield relationFixtures.truncate(Database, 'posts')
+    })
+  })
+
+  context('Regression:BelongsToMany', function () {
+    it('should return an empty array when unable to fetch related results via eager loading', function * () {
+      yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+      const student = yield Student.query().with('courses').first()
+      expect(student.toJSON().courses).deep.equal([])
+      yield relationFixtures.truncate(Database, 'students')
+    })
+
+    it('should return an empty array when unable to fetch related results of model instance', function * () {
+      yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+      const student = yield Student.query().first()
+      const courses = yield student.courses().fetch()
+      expect(courses.toJSON()).deep.equal([])
+      yield relationFixtures.truncate(Database, 'students')
+    })
+
+    it('should return an empty array when unable to fetch related results via lazy eager loading', function * () {
+      yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+      const student = yield Student.query().first()
+      yield student.related('courses').load()
+      expect(student.toJSON().courses).deep.equal([])
+      yield relationFixtures.truncate(Database, 'students')
+    })
+
+    it('should return expected output with nested relations', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry'})
+      yield relationFixtures.createRecords(Database, 'course_student', {student_id: savedStudent[0], course_id: savedCourse[0]})
+
+      class Subject extends Model {
+      }
+
+      class Course extends Model {
+        subject () {
+          return this.hasOne(Subject) // situational for testing only
+        }
+      }
+
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      const student = yield Student.query().with('courses.subject').first()
+      expect(student.toJSON().courses).to.be.an('array')
+      expect(student.toJSON().courses[0].subject).to.equal(null)
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
     })
   })
 })
