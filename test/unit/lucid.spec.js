@@ -400,6 +400,43 @@ describe('Lucid', function () {
       expect(affected).to.equal(0)
     })
 
+    it('should fill json values to the model instance attributes', function * () {
+      class User extends Model {}
+      const user = new User()
+      user.fill({username: 'bana'})
+      yield user.save()
+      expect(user.isNew()).to.equal(false)
+      expect(user.id).to.exist
+    })
+
+    it('should call setters when making use of fill method', function * () {
+      class User extends Model {
+        setUsername (value) {
+          return value.toUpperCase()
+        }
+      }
+      const user = new User()
+      user.fill({username: 'dukki'})
+      yield user.save()
+      expect(user.isNew()).to.equal(false)
+      expect(user.username).to.equal('DUKKI')
+    })
+
+    it('should update attributes on fill', function * () {
+      class User extends Model {
+        setFirstname (value) {
+          return value.toUpperCase()
+        }
+      }
+      const user = yield User.create({username: 'jgwhite'})
+      expect(user.created_at).to.exist
+      user.fill({firstname: 'foo', lastname: 'bar'})
+      yield user.save()
+      const reFetchUser = yield User.find(user.id)
+      expect(reFetchUser.firstname).to.equal('FOO')
+      expect(reFetchUser.lastname).to.equal('bar')
+    })
+
     it('should not re-mutate the values on insert', function * () {
       class User extends Model {
         setFirstname (value) {

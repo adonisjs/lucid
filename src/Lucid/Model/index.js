@@ -86,6 +86,18 @@ class Model {
   }
 
   /**
+   * fill bulk values to the model instance
+   * attributes
+   *
+   * @method fill
+   *
+   * @param  {Object} values
+   */
+  fill (values) {
+    this.setJSON(values)
+  }
+
+  /**
    * adds a new hook for a given type for a model. Note
    * this method has no way of checking duplicate
    * hooks.
