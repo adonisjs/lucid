@@ -696,7 +696,7 @@ class Model {
     if (this.isNew()) {
       return yield this.insert()
     }
-    return yield this.update(this.$dirty)
+    return yield this.update()
   }
 
   /**

@@ -1575,5 +1575,19 @@ describe('Lucid', function () {
       User.query().active()
       expect(new Ref() instanceof User).to.equal(true)
     })
+
+    it('should consider attributes chaned inside before update as dirty values when updating', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      User.addHook('beforeUpdate', function * (next) {
+        this.lastname = 'foo'
+        yield next
+      })
+      const user = yield User.find(3)
+      expect(user instanceof User).to.equal(true)
+      yield user.save()
+      const reFetchUser = yield User.find(3)
+      expect(reFetchUser.lastname).to.equal('foo')
+    })
   })
 })

@@ -1,3 +1,13 @@
+<a name="3.0.3"></a>
+## [3.0.3](https://github.com/adonisjs/adonis-lucid/compare/v3.0.2...v3.0.3) (2016-08-12)
+
+
+### Bug Fixes
+
+* **lucid:** consider dirty values after beforeHooks ([b22d904](https://github.com/adonisjs/adonis-lucid/commit/b22d904)), closes [#44](https://github.com/adonisjs/adonis-lucid/issues/44)
+
+
+
 <a name="3.0.2"></a>
 ## [3.0.2](https://github.com/adonisjs/adonis-lucid/compare/v3.0.0...v3.0.2) (2016-07-28)
 

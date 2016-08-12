@@ -5,7 +5,7 @@
   "directories": {
     "test": "test"
   },
-  "version": "3.0.2",
+  "version": "3.0.3",
   "scripts": {
     "test": "npm run lint && node --harmony_proxies ./node_modules/.bin/istanbul cover _mocha --report lcovonly -- -R spec test/unit test/acceptance && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "lint": "standard src/**/*.js src/**/**/*.js src/**/**/**/*.js lib/*.js test/**/*.js providers/*.js",
@@ -16,7 +16,7 @@
   "author": "adonisjs",
   "license": "MIT",
   "devDependencies": {
-    "adonis-ace": "git+https://github.com/adonisjs/ace.git#develop",
+    "adonis-ace": "^3.0.1",
     "adonis-fold": "^3.0.2",
     "bluebird": "^3.3.1",
     "chai": "^3.5.0",
