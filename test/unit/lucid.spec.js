@@ -738,7 +738,26 @@ describe('Lucid', function () {
       yield User.create({username: 'foo', lastname: 'bar'})
       yield User.truncate()
       const users = yield User.query().count('* as total')
-      expect(users[0].total).to.equal(0)
+      expect(parseInt(users[0].total)).to.equal(0)
+    })
+
+    it('should return a fresh model instance after save', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = yield User.create({username: 'foo', lastname: 'bar'})
+      expect(user.status).to.equal(undefined)
+      const freshUser = yield user.fresh()
+      expect(freshUser.status).to.equal('active')
+    })
+
+    it('should not hit database when model instance isNew', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.firstname = 'foo'
+      expect(user.status).to.equal(undefined)
+      const freshUser = yield user.fresh()
+      expect(freshUser.status).to.equal(undefined)
     })
   })
 

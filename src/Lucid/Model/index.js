@@ -742,6 +742,22 @@ class Model {
   }
 
   /**
+   * returns a fresh model instance, it is
+   * useful when database has defaults
+   * set.
+   *
+   * @method fresh
+   *
+   * @return {Object}
+   */
+  * fresh () {
+    if (this.isNew()) {
+      return this
+    }
+    return yield this.constructor.find(this.$primaryKeyValue)
+  }
+
+  /**
    * initiates and save a model instance with given
    * values. Create is a short to new Model and
    * then save.
