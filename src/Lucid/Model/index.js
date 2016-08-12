@@ -77,6 +77,7 @@ class Model {
   instantiate (values) {
     this.attributes = {}
     this.original = {}
+    this.transaction = null // will be added via useTransaction
     this.relations = {}
     this.frozen = false
     this.eagerLoad = new EagerLoad()
@@ -755,6 +756,27 @@ class Model {
       return this
     }
     return yield this.constructor.find(this.$primaryKeyValue)
+  }
+
+  /**
+   * uses a transaction for all upcoming
+   * operations
+   *
+   * @method useTransaction
+   *
+   * @param  {Object}       trx
+   */
+  useTransaction (trx) {
+    this.transaction = trx
+  }
+
+  /**
+   * resets transaction of the model instance
+   *
+   * @method resetTransaction
+   */
+  resetTransaction () {
+    this.transaction = null
   }
 
   /**

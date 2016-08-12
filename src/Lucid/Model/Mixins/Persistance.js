@@ -34,6 +34,9 @@ Peristance.insert = function * () {
       throw new NE.RuntimeException('cannot save an empty model')
     }
     const query = this.constructor.query()
+    if (this.transaction) {
+      query.transacting(this.transaction)
+    }
     const save = yield query.insertAttributes(values).returning(this.constructor.primaryKey)
     if (save[0]) {
       this.$primaryKeyValue = save[0]
@@ -64,6 +67,9 @@ Peristance.update = function * () {
     if (!_.size(dirtyValues)) {
       return 0
     }
+    if (this.transaction) {
+      query.transacting(this.transaction)
+    }
     const affected = yield query.where('id', this.$primaryKeyValue).updateAttributes(dirtyValues)
     if (affected > 0) {
       _.merge(this.attributes, dirtyValues)
@@ -87,6 +93,9 @@ Peristance.update = function * () {
 Peristance.delete = function * () {
   const deleteHandler = function * () {
     const query = this.constructor.query().where('id', this.$primaryKeyValue)
+    if (this.transaction) {
+      query.transacting(this.transaction)
+    }
     const values = {}
     const affected = yield query.deleteAttributes(values)
     if (affected > 0) {
@@ -109,6 +118,9 @@ Peristance.delete = function * () {
 Peristance.restore = function * () {
   const restoreHandler = function * () {
     const query = this.constructor.query().where('id', this.$primaryKeyValue)
+    if (this.transaction) {
+      query.transacting(this.transaction)
+    }
     const values = {}
     const affected = yield query.restoreAttributes(values)
     if (affected > 0) {
