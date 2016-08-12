@@ -820,6 +820,27 @@ describe('Lucid', function () {
       expect(user.username).to.equal('bea')
     })
 
+    it('should throw exception when unable to find a row using key/value pair', function * () {
+      class User extends Model {
+      }
+      try {
+        yield User.findByOrFail('username', 'koka')
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelNotFoundException')
+        expect(e.message).to.equal('Unable to fetch results for username koka')
+      }
+    })
+
+    it('should be able to find a given record using findByOrFail method', function * () {
+      class User extends Model {
+      }
+      yield User.query().insert({username: 'bea', firstname: 'Bea', lastname: 'Mine'})
+      let user = yield User.findByOrFail('username', 'bea')
+      expect(user instanceof User)
+      expect(user.username).to.equal('bea')
+    })
+
     it('should be able to find a given record using primary key', function * () {
       class User extends Model {
       }

@@ -555,6 +555,25 @@ class Model {
   }
 
   /**
+   * find for a row using key/value pairs
+   * or fail by throwing an exception.
+   *
+   * @method findByOrFail
+   *
+   * @param  {String}     key
+   * @param  {Mixed}     value
+   *
+   * @return {Object}
+   */
+  static * findByOrFail (key, value) {
+    const result = yield this.findBy(key, value)
+    if (!result) {
+      throw new CE.ModelNotFoundException(`Unable to fetch results for ${key} ${value}`)
+    }
+    return result
+  }
+
+  /**
    * returns all records for a given model
    *
    * @return {Array}
