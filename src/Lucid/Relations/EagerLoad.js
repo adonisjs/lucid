@@ -155,9 +155,10 @@ class EagerLoad {
    *
    * @private
    */
-  _getJoinKeyValues (mappedKeys, mappedKeysValues, relation, relationInstance, values) {
+  _getJoinKeyValues (mappedKeys, mappedKeysValues, fallbackValues, relation, relationInstance, values) {
     if (!mappedKeys[relation]) {
       mappedKeys[relation] = relationInstance.fromKey
+      fallbackValues[relation] = relationInstance.eagerLoadFallbackValue
       if (_.isArray(values)) {
         mappedKeysValues[relation] = values.map((value) => value[relationInstance.fromKey])
       } else {
@@ -221,6 +222,7 @@ class EagerLoad {
   load (result, parent, isSingle) {
     const self = this
     const mappedKeys = {}
+    const fallbackValues = {}
     const mappedKeysValues = {}
 
     /**
@@ -230,7 +232,7 @@ class EagerLoad {
     const response = cf.map(function * (relation) {
       const relationScope = self.relationsScope[relation]
       const relationInstance = isSingle ? self._getRelationInstance(relation, parent) : self._getRelationProtoInstance(relation, parent)
-      const values = self._getJoinKeyValues(mappedKeys, mappedKeysValues, relation, relationInstance, result)
+      const values = self._getJoinKeyValues(mappedKeys, mappedKeysValues, fallbackValues, relation, relationInstance, result)
 
       /**
        * here we pass nested relations and scopes to the relationInstance
@@ -245,7 +247,7 @@ class EagerLoad {
       return yield relationInstance.eagerLoad(values, relationScope)
     }, this.withRelations)
 
-    return {values: response, keys: mappedKeys}
+    return {values: response, keys: mappedKeys, fallbackValues}
   }
 
   /**
@@ -262,12 +264,13 @@ class EagerLoad {
     if (_.size(eagerLoadResult)) {
       const keys = eagerLoadResult.keys
       const values = eagerLoadResult.values
+      const fallbackValues = eagerLoadResult.fallbackValues
       const relationsArray = Object.keys(keys)
 
       _.each(values, (value, index) => {
         const relationKey = relationsArray[index]
         const fromKey = keys[relationKey]
-        parent.relations[relationKey] = value[row[fromKey]] || null
+        parent.relations[relationKey] = value[row[fromKey]] || fallbackValues[relationKey]
       })
     }
   }

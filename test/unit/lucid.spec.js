@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
 */
 
-/* global describe, it, after, before, context */
+/* global describe, it, after, before, context, afterEach */
 const Model = require('../../src/Lucid/Model')
 const Database = require('../../src/Database')
 const chai = require('chai')
@@ -24,6 +24,7 @@ const modelFixtures = require('./fixtures/model')
 const QueryBuilder = require('../../src/Lucid/QueryBuilder')
 const config = require('./helpers/config')
 const queryHelpers = require('./helpers/query')
+const _ = require('lodash')
 require('co-mocha')
 
 describe('Lucid', function () {
@@ -40,6 +41,10 @@ describe('Lucid', function () {
   after(function * () {
     yield modelFixtures.down(Database)
     Database.close()
+  })
+
+  afterEach(function * () {
+    yield Database.table('users').truncate()
   })
 
   context('Model', function () {
@@ -104,19 +109,6 @@ describe('Lucid', function () {
       expect(User.globalScope[0]).to.be.a('function')
     })
 
-    it('should be able to add global scopes to the model instance inside boot method', function () {
-      class User extends Model {
-        static boot () {
-          super.boot()
-          this.addGlobalScope(function () {})
-        }
-      }
-      User.bootIfNotBooted()
-      expect(User.globalScope).to.be.an('array')
-      expect(User.globalScope.length).to.equal(2)
-      expect(User.globalScope[0]).to.be.a('function')
-    })
-
     it('should make no effect on sibling models when adding global scopes', function () {
       class User extends Model {
         static boot () {
@@ -163,7 +155,7 @@ describe('Lucid', function () {
   })
 
   context('Model Instance', function () {
-    it('should throw an error when trying to initiate a model with an array of values', function () {
+    it('should throw an error when trying to instantiate a model with an array of values', function () {
       class User extends Model {}
       const fn = function () {
         return new User([{name: 'foo'}, {name: 'bar'}])
@@ -171,7 +163,7 @@ describe('Lucid', function () {
       expect(fn).to.throw(NE.InvalidArgumentException, /cannot initiate a model with multiple rows./)
     })
 
-    it('should be able to initiate a model with an object of values', function () {
+    it('should be able to instantiate a model with an object of values', function () {
       class User extends Model {}
       const user = new User({name: 'foo', age: 22})
       expect(user.attributes.name).to.equal('foo')
@@ -400,6 +392,43 @@ describe('Lucid', function () {
       expect(affected).to.equal(0)
     })
 
+    it('should fill json values to the model instance attributes', function * () {
+      class User extends Model {}
+      const user = new User()
+      user.fill({username: 'bana'})
+      yield user.save()
+      expect(user.isNew()).to.equal(false)
+      expect(user.id).to.exist
+    })
+
+    it('should call setters when making use of fill method', function * () {
+      class User extends Model {
+        setUsername (value) {
+          return value.toUpperCase()
+        }
+      }
+      const user = new User()
+      user.fill({username: 'dukki'})
+      yield user.save()
+      expect(user.isNew()).to.equal(false)
+      expect(user.username).to.equal('DUKKI')
+    })
+
+    it('should update attributes on fill', function * () {
+      class User extends Model {
+        setFirstname (value) {
+          return value.toUpperCase()
+        }
+      }
+      const user = yield User.create({username: 'dukki'})
+      expect(user.created_at).to.exist
+      user.fill({firstname: 'foo', lastname: 'bar'})
+      yield user.save()
+      const reFetchUser = yield User.find(user.id)
+      expect(reFetchUser.firstname).to.equal('FOO')
+      expect(reFetchUser.lastname).to.equal('bar')
+    })
+
     it('should not re-mutate the values on insert', function * () {
       class User extends Model {
         setFirstname (value) {
@@ -422,8 +451,8 @@ describe('Lucid', function () {
           return `${value}_first`
         }
       }
-      const user = yield User.query().fetch()
-      const firstUser = user.first()
+      yield User.create({username: 'dukki'})
+      const firstUser = yield User.query().first()
       const userId = firstUser.id
       firstUser.firstname = 'new_name'
       yield firstUser.save()
@@ -516,6 +545,9 @@ describe('Lucid', function () {
         })
         .then(function () {
           expect(user.updated_at).to.be.above(updatedTimestamp)
+          return User.query().truncate()
+        })
+        .then(function () {
           done()
         })
         .catch(done)
@@ -545,6 +577,7 @@ describe('Lucid', function () {
         }
       }
       User.bootIfNotBooted()
+      yield User.create({username: 'bana'})
       const user = yield User.find(1)
       expect(user instanceof User).to.equal(true)
       expect(user.id).to.equal(1)
@@ -590,6 +623,7 @@ describe('Lucid', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.message).to.match(/Restore can only be done when soft deletes are enabled/)
+      } finally {
       }
     })
 
@@ -597,12 +631,13 @@ describe('Lucid', function () {
       class User extends Model {
       }
       User.bootIfNotBooted()
-      const user = yield User.find(2)
+      yield User.create({username: 'foo'})
+      const user = yield User.find(1)
       expect(user instanceof User).to.equal(true)
-      expect(user.id).to.equal(2)
+      expect(user.id).to.equal(1)
       yield user.delete()
       expect(user.isDeleted()).to.equal(true)
-      const fetchUser = yield User.query().where('id', 2)
+      const fetchUser = yield User.query().where('id', 1)
       expect(user.deleted_at).to.equal(null)
       expect(fetchUser.length).to.equal(0)
     })
@@ -617,7 +652,7 @@ describe('Lucid', function () {
       expect(user.isNew()).to.equal(false)
     })
 
-    it('should try to find first and create model instance using static findOrCreate method', function * () {
+    it('should try to find first or create model instance using static findOrCreate method', function * () {
       class User extends Model {
       }
       User.bootIfNotBooted()
@@ -696,11 +731,40 @@ describe('Lucid', function () {
         expect(e.message).to.match(/cannot save an empty model/i)
       }
     })
+
+    it('should be able to truncate database table using static truncate method', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      yield User.create({username: 'foo', lastname: 'bar'})
+      yield User.truncate()
+      const users = yield User.query().count('* as total')
+      expect(parseInt(users[0].total)).to.equal(0)
+    })
+
+    it('should return a fresh model instance after save', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = yield User.create({username: 'foo', lastname: 'bar'})
+      expect(user.status).to.equal(undefined)
+      const freshUser = yield user.fresh()
+      expect(freshUser.status).to.equal('active')
+    })
+
+    it('should not hit database when model instance isNew', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.firstname = 'foo'
+      expect(user.status).to.equal(undefined)
+      const freshUser = yield user.fresh()
+      expect(freshUser.status).to.equal(undefined)
+    })
   })
 
   context('QueryBuilder', function () {
     it('should return an array of models instance when used fetch method', function * () {
       class User extends Model {}
+      yield User.create({username: 'foo'})
       const users = yield User.query().fetch()
       expect(users.first() instanceof User).to.equal(true)
     })
@@ -724,6 +788,7 @@ describe('Lucid', function () {
           return super.toJSON()
         }
       }
+      yield User.create({username: 'foo'})
       const users = yield User.query().fetch()
       expect(users.last() instanceof User).to.equal(true)
     })
@@ -736,6 +801,7 @@ describe('Lucid', function () {
           return super.toJSON()
         }
       }
+      yield User.createMany([{username: 'virk'}, {username: 'foo'}])
       const users = yield User.query().fetch()
       const jsoned = users.filter(function (user) {
         return user.username === 'virk'
@@ -749,6 +815,7 @@ describe('Lucid', function () {
           return value.toUpperCase()
         }
       }
+      yield User.create({username: 'foo'})
       const users = yield User.query().fetch()
       const user = users.first()
       expect(user.username).to.equal(user.attributes.username.toUpperCase())
@@ -758,6 +825,7 @@ describe('Lucid', function () {
     it('should pick a given number of rows from database using pick method', function * () {
       class User extends Model {
       }
+      yield User.createMany([{username: 'foo'}, {username: 'bar'}, {username: 'baz'}])
       let users = yield User.pick(2)
       users = users.toJSON()
       expect(users).to.be.an('array')
@@ -768,6 +836,7 @@ describe('Lucid', function () {
     it('should pick a given number of rows from database using query builder pick method', function * () {
       class User extends Model {
       }
+      yield User.createMany([{username: 'foo'}, {username: 'virk'}, {username: 'baz'}])
       let users = yield User.query().where('username', 'virk').pick(2)
       users = users.toJSON()
       expect(users).to.be.an('array')
@@ -777,6 +846,7 @@ describe('Lucid', function () {
     it('should pick only one row when limit argument is not passed to pick method', function * () {
       class User extends Model {
       }
+      yield User.createMany([{username: 'foo'}, {username: 'virk'}])
       let users = yield User.pick()
       users = users.toJSON()
       expect(users).to.be.an('array')
@@ -786,6 +856,7 @@ describe('Lucid', function () {
     it('should pick a given number of rows in reverse order from database using pickInverse method', function * () {
       class User extends Model {
       }
+      yield User.createMany([{username: 'foo'}, {username: 'bar'}, {username: 'baz'}])
       let users = yield User.pickInverse(2)
       users = users.toJSON()
       expect(users).to.be.an('array')
@@ -796,6 +867,7 @@ describe('Lucid', function () {
     it('should pick a given number of rows in reverse order from database using query builder pickInverse method', function * () {
       class User extends Model {
       }
+      yield User.createMany([{username: 'foo'}, {username: 'virk'}])
       let users = yield User.query().where('username', 'virk').pickInverse(2)
       users = users.toJSON()
       expect(users).to.be.an('array')
@@ -805,6 +877,7 @@ describe('Lucid', function () {
     it('should pick only one row when limit argument is not passed to pickInverse method', function * () {
       class User extends Model {
       }
+      yield User.createMany([{username: 'foo'}, {username: 'virk'}])
       let users = yield User.pickInverse()
       users = users.toJSON()
       expect(users).to.be.an('array')
@@ -816,6 +889,27 @@ describe('Lucid', function () {
       }
       yield User.query().insert({username: 'bea', firstname: 'Bea', lastname: 'Mine'})
       let user = yield User.findBy('username', 'bea')
+      expect(user instanceof User)
+      expect(user.username).to.equal('bea')
+    })
+
+    it('should throw exception when unable to find a row using key/value pair', function * () {
+      class User extends Model {
+      }
+      try {
+        yield User.findByOrFail('username', 'koka')
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('ModelNotFoundException')
+        expect(e.message).to.equal('Unable to fetch results for username koka')
+      }
+    })
+
+    it('should be able to find a given record using findByOrFail method', function * () {
+      class User extends Model {
+      }
+      yield User.query().insert({username: 'bea', firstname: 'Bea', lastname: 'Mine'})
+      let user = yield User.findByOrFail('username', 'bea')
       expect(user instanceof User)
       expect(user.username).to.equal('bea')
     })
@@ -841,6 +935,7 @@ describe('Lucid', function () {
     it('should return all rows inside a database when all method is called', function * () {
       class User extends Model {
       }
+      yield User.createMany([{username: 'foo'}, {username: 'bar'}])
       const users = yield User.all()
       const total = yield User.query().count('* as total')
       expect(parseInt(total[0].total)).to.equal(users.size())
@@ -849,6 +944,7 @@ describe('Lucid', function () {
     it('should return an array of ids when using ids method', function * () {
       class User extends Model {
       }
+      yield User.createMany([{username: 'foo'}, {username: 'bar'}])
       const userIds = yield User.ids()
       expect(userIds).to.be.an('array')
       userIds.forEach(function (id) {
@@ -859,17 +955,19 @@ describe('Lucid', function () {
     it('should be able to fetch ids of the query builder', function * () {
       class User extends Model {
       }
-      const userIds = yield User.query().where('id', '>', 5).ids()
+      yield User.createMany([{username: 'foo'}, {username: 'bar'}])
+      const userIds = yield User.query().where('id', '>', 1).ids()
       expect(userIds).to.be.an('array')
       userIds.forEach(function (id) {
         expect(id).to.be.a('number')
-        expect(id).to.be.above(5)
+        expect(id).to.be.above(1)
       })
     })
 
     it('should return a plain object with key/value pairs when using pair method', function * () {
       class User extends Model {
       }
+      yield User.createMany([{username: 'foo'}, {username: 'bar'}])
       const usersPair = yield User.pair('id', 'username')
       const users = yield User.all()
       let manualPair = users.map(function (user) {
@@ -882,12 +980,14 @@ describe('Lucid', function () {
     it('should be able to use pairs of the query builder chain', function * () {
       class User extends Model {
       }
+      yield User.createMany([{username: 'foo'}, {username: 'bar'}])
       const usersPair = yield User.query().pair('id', 'username')
       const users = yield User.all()
       let manualPair = users.map(function (user) {
         return [user.id, user.username]
       }).fromPairs().value()
       expect(usersPair).to.be.an('object')
+      expect(Object.keys(usersPair)).to.have.length.above(1)
       expect(usersPair).deep.equal(manualPair)
     })
 
@@ -899,7 +999,7 @@ describe('Lucid', function () {
       expect(username).to.equal('unique-user')
     })
 
-    it('should return null when pluckFirst has nothing found any rows', function * () {
+    it('should return null when pluckFirst has not found any rows', function * () {
       class User extends Model {
       }
       const username = yield User.query().where('username', 'non-existing-user').pluckFirst('username')
@@ -926,7 +1026,7 @@ describe('Lucid', function () {
       }
     })
 
-    it('should throw ModelNotFoundException when unable to find a record using firstOfFail method', function * () {
+    it('should throw ModelNotFoundException when unable to find a record using query builder firstOfFail', function * () {
       class User extends Model {
       }
       try {
@@ -941,9 +1041,11 @@ describe('Lucid', function () {
     it('should return model instance using findOrFail method', function * () {
       class User extends Model {
       }
-      const user = yield User.findOrFail(3)
+      yield User.create({username: 'foo'})
+      const user = yield User.findOrFail(1)
       expect(user instanceof User).to.equal(true)
-      expect(user.id).to.equal(3)
+      expect(user.id).to.equal(1)
+      expect(user.username).to.equal('foo')
     })
 
     it('should not fetch soft deleted rows when soft deletes are on', function * () {
@@ -1014,11 +1116,11 @@ describe('Lucid', function () {
         }
       }
       User.bootIfNotBooted()
+      const user = yield User.create({username: 'foo'})
+      yield user.delete()
       const trashedUsers = yield User.query().onlyTrashed().fetch()
-      expect(trashedUsers.size()).to.be.above(0)
-      trashedUsers.each(function (user) {
-        expect(user.deleted_at).to.be.a('string')
-      })
+      expect(trashedUsers.size()).to.equal(1)
+      expect(trashedUsers.first().deleted_at).to.be.a('string')
     })
 
     it('should call all global scopes when fetch method is called', function * () {
@@ -1086,6 +1188,10 @@ describe('Lucid', function () {
     it('should be able to paginate results using model query builder', function * () {
       class User extends Model {
       }
+      const newUsers = _.range(10).map((i) => {
+        return {username: `foo_${i}`}
+      })
+      yield User.query().insert(newUsers)
       const users = yield User.query().paginate(1, 10)
       const paginatedUsers = users.toJSON()
       expect(paginatedUsers).to.have.property('total')
@@ -1098,6 +1204,10 @@ describe('Lucid', function () {
     it('should be able to paginate results using model static method', function * () {
       class User extends Model {
       }
+      const newUsers = _.range(10).map((i) => {
+        return {username: `foo_${i}`}
+      })
+      yield User.query().insert(newUsers)
       const users = yield User.paginate(1, 10)
       const paginatedUsers = users.toJSON()
       expect(paginatedUsers).to.have.property('total')
@@ -1375,7 +1485,8 @@ describe('Lucid', function () {
         hookCalled = true
         yield next
       })
-      const user = yield User.find(3)
+      yield User.create({username: 'foo'})
+      const user = yield User.findBy('username', 'foo')
       expect(user instanceof User).to.equal(true)
       user.firstname = 'new name'
       yield user.save()
@@ -1399,6 +1510,7 @@ describe('Lucid', function () {
         expect(user.id).to.be.a('number')
         expect(user.isNew()).to.equal(false)
         expect(e.message).to.equal('should not have created it')
+      } finally {
       }
     })
 
@@ -1575,7 +1687,9 @@ describe('Lucid', function () {
       User.query().active()
       expect(new Ref() instanceof User).to.equal(true)
     })
+  })
 
+  context('Regression', function () {
     it('should consider attributes chaned inside before update as dirty values when updating', function * () {
       class User extends Model {}
       User.bootIfNotBooted()
@@ -1583,11 +1697,160 @@ describe('Lucid', function () {
         this.lastname = 'foo'
         yield next
       })
-      const user = yield User.find(3)
+      yield User.create({username: 'foo', lastname: 'bar'})
+      const user = yield User.findBy('username', 'foo')
       expect(user instanceof User).to.equal(true)
       yield user.save()
-      const reFetchUser = yield User.find(3)
+      const reFetchUser = yield User.findBy('username', 'foo')
       expect(reFetchUser.lastname).to.equal('foo')
+    })
+  })
+
+  context('Model Transactions', function () {
+    it('should be able to rollback save operation', function * () {
+      const trx = yield Database.beginTransaction()
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      user.useTransaction(trx)
+      yield user.save()
+      trx.rollback()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(0)
+    })
+
+    it('should be able to commit save operation', function * () {
+      const trx = yield Database.beginTransaction()
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      user.useTransaction(trx)
+      yield user.save()
+      trx.commit()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(1)
+    })
+
+    it('should be able to rollback update operation', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      yield user.save()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(1)
+      const trx = yield Database.beginTransaction()
+      user.lastname = 'Baz'
+      user.useTransaction(trx)
+      yield user.save()
+      trx.rollback()
+      const freshUser = yield user.fresh()
+      expect(freshUser.lastname).to.equal(null)
+    })
+
+    it('should be able to commit update operation', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      yield user.save()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(1)
+      const trx = yield Database.beginTransaction()
+      user.lastname = 'Baz'
+      user.useTransaction(trx)
+      yield user.save()
+      trx.commit()
+      const freshUser = yield user.fresh()
+      expect(freshUser.lastname).to.equal('Baz')
+    })
+
+    it('should not make use of same transaction after resetTransaction method', function * () {
+      const trx = yield Database.beginTransaction()
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      user.useTransaction(trx)
+      yield user.save()
+      trx.commit()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(1)
+      user.lastname = 'Baz'
+      user.resetTransaction()
+      yield user.save()
+      const freshUser = yield user.fresh()
+      expect(freshUser.lastname).to.equal('Baz')
+    })
+
+    it('should be able to rollback delete operation', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      yield user.save()
+      const trx = yield Database.beginTransaction()
+      user.useTransaction(trx)
+      yield user.delete()
+      trx.rollback()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(1)
+    })
+
+    it('should be able to commit delete operation', function * () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      yield user.save()
+      const trx = yield Database.beginTransaction()
+      user.useTransaction(trx)
+      yield user.delete()
+      trx.commit()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(0)
+    })
+
+    it('should be able to rollback restore operation', function * () {
+      class User extends Model {
+        static get deleteTimestamp () {
+          return 'deleted_at'
+        }
+      }
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      yield user.save()
+      yield user.delete()
+      const freshUser = yield User.query().withTrashed().first()
+      const trx = yield Database.beginTransaction()
+      freshUser.useTransaction(trx)
+      yield freshUser.restore()
+      trx.rollback()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(0)
+    })
+
+    it('should be able to commit restore operation', function * () {
+      class User extends Model {
+        static get deleteTimestamp () {
+          return 'deleted_at'
+        }
+      }
+      User.bootIfNotBooted()
+      const user = new User()
+      user.fill({username: 'foo', firstname: 'Mr.Foo'})
+      yield user.save()
+      yield user.delete()
+      const freshUser = yield User.query().withTrashed().first()
+      const trx = yield Database.beginTransaction()
+      freshUser.useTransaction(trx)
+      yield freshUser.restore()
+      trx.commit()
+      const getUsers = yield User.all()
+      expect(getUsers.size()).to.equal(1)
     })
   })
 })

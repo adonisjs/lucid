@@ -44,7 +44,7 @@ Serializer.toJSON = function () {
  */
 Serializer.serializeRelations = function () {
   return _.transform(this.relations, function (result, value, index) {
-    result[index] = value && value.toJSON() ? value.toJSON() : value
+    result[index] = _.size(value) && value.toJSON() ? value.toJSON() : value
   })
 }
 

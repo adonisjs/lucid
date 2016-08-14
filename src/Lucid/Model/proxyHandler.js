@@ -11,7 +11,7 @@
 
 const proxyHandler = exports = module.exports = {}
 const NE = require('node-exceptions')
-const targetProperties = ['$primaryKeyValue', 'original', 'attributes', 'relations', 'eagerLoad', 'frozen']
+const targetProperties = ['$primaryKeyValue', 'original', 'attributes', 'relations', 'eagerLoad', 'frozen', 'transaction']
 
 /**
  * proxy handler for getting target properties.Here

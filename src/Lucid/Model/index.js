@@ -77,12 +77,25 @@ class Model {
   instantiate (values) {
     this.attributes = {}
     this.original = {}
+    this.transaction = null // will be added via useTransaction
     this.relations = {}
     this.frozen = false
     this.eagerLoad = new EagerLoad()
     if (values) {
       this.setJSON(values)
     }
+  }
+
+  /**
+   * fill bulk values to the model instance
+   * attributes
+   *
+   * @method fill
+   *
+   * @param  {Object} values
+   */
+  fill (values) {
+    this.setJSON(values)
   }
 
   /**
@@ -555,6 +568,25 @@ class Model {
   }
 
   /**
+   * find for a row using key/value pairs
+   * or fail by throwing an exception.
+   *
+   * @method findByOrFail
+   *
+   * @param  {String}     key
+   * @param  {Mixed}     value
+   *
+   * @return {Object}
+   */
+  static * findByOrFail (key, value) {
+    const result = yield this.findBy(key, value)
+    if (!result) {
+      throw new CE.ModelNotFoundException(`Unable to fetch results for ${key} ${value}`)
+    }
+    return result
+  }
+
+  /**
    * returns all records for a given model
    *
    * @return {Array}
@@ -589,6 +621,17 @@ class Model {
    */
   static * pair (lhs, rhs) {
     return yield this.query().pair(lhs, rhs)
+  }
+
+  /**
+   * truncate model database table
+   *
+   * @method truncate
+   *
+   * @return {Boolean}
+   */
+  static * truncate () {
+    return yield this.query().truncate()
   }
 
   /**
@@ -697,6 +740,43 @@ class Model {
       return yield this.insert()
     }
     return yield this.update()
+  }
+
+  /**
+   * returns a fresh model instance, it is
+   * useful when database has defaults
+   * set.
+   *
+   * @method fresh
+   *
+   * @return {Object}
+   */
+  * fresh () {
+    if (this.isNew()) {
+      return this
+    }
+    return yield this.constructor.find(this.$primaryKeyValue)
+  }
+
+  /**
+   * uses a transaction for all upcoming
+   * operations
+   *
+   * @method useTransaction
+   *
+   * @param  {Object}       trx
+   */
+  useTransaction (trx) {
+    this.transaction = trx
+  }
+
+  /**
+   * resets transaction of the model instance
+   *
+   * @method resetTransaction
+   */
+  resetTransaction () {
+    this.transaction = null
   }
 
   /**

@@ -1,3 +1,22 @@
+<a name="3.0.4"></a>
+## [3.0.4](https://github.com/adonisjs/adonis-lucid/compare/v3.0.3...v3.0.4) (2016-08-14)
+
+
+### Bug Fixes
+
+* **lucid:relations:** keep relation output consistent ([c74e081](https://github.com/adonisjs/adonis-lucid/commit/c74e081)), closes [#45](https://github.com/adonisjs/adonis-lucid/issues/45)
+
+
+### Features
+
+* **lucid:** add fresh method to grab fresh instance ([4d72794](https://github.com/adonisjs/adonis-lucid/commit/4d72794))
+* **lucid:** add static truncate ([87f16a2](https://github.com/adonisjs/adonis-lucid/commit/87f16a2))
+* **lucid:** add support for fill method ([fee8e31](https://github.com/adonisjs/adonis-lucid/commit/fee8e31))
+* **lucid:** add support for findByOrFail ([2ec6a52](https://github.com/adonisjs/adonis-lucid/commit/2ec6a52))
+* **lucid:** add support for transactions ([59cfa02](https://github.com/adonisjs/adonis-lucid/commit/59cfa02)), closes [#43](https://github.com/adonisjs/adonis-lucid/issues/43)
+
+
+
 <a name="3.0.3"></a>
 ## [3.0.3](https://github.com/adonisjs/adonis-lucid/compare/v3.0.2...v3.0.3) (2016-08-12)
 

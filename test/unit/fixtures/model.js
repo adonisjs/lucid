@@ -10,7 +10,7 @@ module.exports = {
         table.string('username')
         table.string('firstname')
         table.string('lastname')
-        table.string('status')
+        table.enum('status', ['active', 'suspended']).defaultTo('active')
         table.timestamps()
         table.timestamp('deleted_at').nullable()
       }),
