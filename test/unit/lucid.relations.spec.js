@@ -837,7 +837,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'profiles')
     })
 
-    it('should be able to save related model instance', function * (done) {
+    it('should be able to save related model instance', function * () {
       class Account extends Model {
       }
       class Supplier extends Model {
@@ -855,7 +855,6 @@ describe('Relations', function () {
       expect(account.supplier_id).to.equal(supplier.id)
       yield relationFixtures.truncate(Database, 'suppliers')
       yield relationFixtures.truncate(Database, 'accounts')
-      done()
     })
 
     it('should throw error when trying to saveMany model instances', function * () {
