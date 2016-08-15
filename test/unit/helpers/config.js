@@ -5,7 +5,6 @@
  * Copyright(c) 2016-2016 Harminder Virk
  * MIT Licensed
 */
-const path = require('path')
 const mysqlConnections = require('./mysqlConnections')
 const postgresConnection = require('./postgresConnection')
 const sqliteConnections = require('./sqliteConnections')

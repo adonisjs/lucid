@@ -10,7 +10,7 @@
 */
 
 const _ = require('lodash')
-const NE = require('node-exceptions')
+const CE = require('../../../Exceptions')
 const Peristance = exports = module.exports = {}
 
 /**
@@ -31,7 +31,7 @@ Peristance.insert = function * () {
   const insertHandler = function * () {
     const values = this.attributes
     if (!values || _.size(values) < 1) {
-      throw new NE.RuntimeException('cannot save an empty model')
+      throw CE.ModelException.invalidState(`Cannot save empty ${this.constructor.name} model`)
     }
     const query = this.constructor.query()
     if (this.transaction) {

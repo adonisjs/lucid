@@ -143,7 +143,8 @@ describe('Relations', function () {
         yield supplier.account().where('age', 22).fetch()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.message).to.match(/cannot fetch related model from an unsaved model instance/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_UNSAVED_MODEL_INSTANCE: Cannot perform fetch on Account model since Supplier instance is unsaved')
       }
     })
 
@@ -315,8 +316,8 @@ describe('Relations', function () {
       try {
         yield Supplier.query().with('profiles').first()
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationNotFound')
-        expect(e.message).to.match(/cannot find profiles as a relation/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_MISSING_DATABASE_RELATION: profiles is not defined on Supplier model as a relationship')
       }
       yield relationFixtures.truncate(Database, 'suppliers')
     })
@@ -875,8 +876,8 @@ describe('Relations', function () {
         yield supplier.account().saveMany([account])
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/Cannot call saveMany method with hasOne relation/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: saveMany is not supported by HasOne relationship')
       } finally {
         yield relationFixtures.truncate(Database, 'suppliers')
       }
@@ -900,8 +901,8 @@ describe('Relations', function () {
         yield supplier.account().createMany([account])
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/Cannot call createMany method with hasOne relation/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: createMany is not supported by HasOne relationship')
       } finally {
         yield relationFixtures.truncate(Database, 'suppliers')
       }
@@ -973,8 +974,8 @@ describe('Relations', function () {
         yield supplier.account().save({name: 're'})
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/save accepts an instance of related model/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_INSTANCE: save accepts an instance of related model')
       }
       yield relationFixtures.truncate(Database, 'suppliers')
     })
@@ -995,8 +996,8 @@ describe('Relations', function () {
         yield supplier.account().save(account)
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/cannot save relation for an unsaved model instance/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_UNSAVED_MODEL_INSTANCE: Cannot perform save on Account model since Supplier instance is unsaved')
       }
     })
 
@@ -1619,7 +1620,7 @@ describe('Relations', function () {
       const fn = function () {
         return comment.post().associate(post)
       }
-      expect(fn).to.throw(/associate accepts an instance of related model/i)
+      expect(fn).to.throw('ModelRelationException: E_INVALID_RELATION_INSTANCE: associate accepts an instance of related model')
     })
 
     it('should throw an error when trying to associate a related model which is unsaved', function * () {
@@ -1638,7 +1639,7 @@ describe('Relations', function () {
       const fn = function () {
         return comment.post().associate(post)
       }
-      expect(fn).to.throw(/Cannot associate an unsaved related model/i)
+      expect(fn).to.throw('ModelRelationException: E_UNSAVED_MODEL_INSTANCE: Cannot perform associate on Post model since Comment instance is unsaved')
     })
 
     it('should throw an error when trying to call save method on a belongsTo relation', function * () {
@@ -1658,8 +1659,8 @@ describe('Relations', function () {
         yield comment.post().save(post)
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/cannot call save method on a belongsTo relation/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: save is not supported by BelongsTo relationship')
       }
     })
 
@@ -1680,8 +1681,8 @@ describe('Relations', function () {
         yield comment.post().saveMany([post])
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/cannot call saveMany method on a belongsTo relation/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: saveMany is not supported by BelongsTo relationship')
       }
     })
 
@@ -1702,8 +1703,8 @@ describe('Relations', function () {
         yield comment.post().create(post)
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/cannot call create method on a belongsTo relation/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: create is not supported by BelongsTo relationship')
       }
     })
 
@@ -1724,8 +1725,8 @@ describe('Relations', function () {
         yield comment.post().createMany([post])
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/cannot call createMany method on a belongsTo relation/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: createMany is not supported by BelongsTo relationship')
       }
     })
 
@@ -1878,7 +1879,7 @@ describe('Relations', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('ModelRelationException')
-        expect(e.message).to.match(/Cannot fetch related model from an unsaved model instance/)
+        expect(e.message).to.equal('E_UNSAVED_MODEL_INSTANCE: Cannot perform fetch on Course model since Student instance is unsaved')
       }
     })
 
@@ -1898,7 +1899,7 @@ describe('Relations', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('ModelRelationException')
-        expect(e.message).to.match(/Cannot fetch related model from an unsaved model instance/)
+        expect(e.message).to.equal('E_UNSAVED_MODEL_INSTANCE: Cannot perform fetch on Course model since Student instance is unsaved')
       }
     })
 
@@ -2058,8 +2059,8 @@ describe('Relations', function () {
         yield student.courses().attach('foo')
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationAttachException')
-        expect(e.message).to.match(/attach expects an array or an object of values to be attached/i)
+        expect(e.name).to.equal('InvalidArgumentException')
+        expect(e.message).to.equal('E_INVALID_PARAMETER: attach expects an array of values or a plain object')
       }
       yield relationFixtures.truncate(Database, 'students')
     })
@@ -2408,8 +2409,8 @@ describe('Relations', function () {
         yield student.courses().save({title: 'chemistry'})
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/save accepts an instance of related model/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_INSTANCE: save expects an instance of related model')
       }
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
@@ -2432,8 +2433,8 @@ describe('Relations', function () {
         yield student.courses().save(new Course())
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/cannot save relation for an unsaved model instance/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_UNSAVED_MODEL_INSTANCE: Cannot perform save on Course model since Student instance is unsaved')
       }
     })
 
@@ -2662,8 +2663,8 @@ describe('Relations', function () {
         yield country.publications().save()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/Cannot call save/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: save is not supported by HasManyThrough relationship')
       }
     })
 
@@ -2682,8 +2683,8 @@ describe('Relations', function () {
         yield country.publications().saveMany()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/Cannot call saveMany/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: saveMany is not supported by HasManyThrough relationship')
       }
     })
 
@@ -2702,8 +2703,8 @@ describe('Relations', function () {
         yield country.publications().createMany()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/Cannot call createMany/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: createMany is not supported by HasManyThrough relationship')
       }
     })
   })

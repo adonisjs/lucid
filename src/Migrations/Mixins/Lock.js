@@ -10,6 +10,7 @@
 */
 
 const _ = require('lodash')
+const CE = require('../../Exceptions')
 const Lock = exports = module.exports = {}
 
 /**
@@ -52,7 +53,7 @@ Lock._checkLock = function * () {
     .limit(1)
 
   if (_.size(result)) {
-    throw new Error(`Migrations are locked, make sure you are not running multiple migration process or delete ${this.lockTable} table from database`)
+    throw CE.RuntimeException.migrationsAreLocked(this.lockTable)
   }
   return false
 }

@@ -11,7 +11,7 @@
 
 const _ = require('lodash')
 const cf = require('co-functional')
-const CE = require('../Model/customExceptions')
+const CE = require('../../Exceptions')
 
 class EagerLoad {
 
@@ -73,15 +73,29 @@ class EagerLoad {
   _getRelationInstance (relationKey, parent) {
     const relation = parent[relationKey]
     if (typeof (relation) !== 'function') {
-      throw new CE.ModelRelationNotFound(`cannot find ${relationKey} as a relation`)
+      throw CE.ModelRelationException.undefinedRelation(relation, parent.name)
     }
     return relation.apply(parent)
   }
 
+  /**
+   * returns relationship instance of a relation when relation is called
+   * from a static method instance of model instance.
+   *
+   * @method _getRelationProtoInstance
+   *
+   * @param  {String}                  relationKey
+   * @param  {Object}                  parent
+   * @return {Object}
+   *
+   * @throws {ModelRelationException:undefinedRelation} If relationship is not defined on model
+   *
+   * @public
+   */
   _getRelationProtoInstance (relationKey, parent) {
     const relation = parent.prototype[relationKey]
     if (typeof (relation) !== 'function') {
-      throw new CE.ModelRelationNotFound(`cannot find ${relationKey} as a relation`)
+      throw CE.ModelRelationException.undefinedRelation(relationKey, parent.name)
     }
     return relation.apply(parent.prototype)
   }
