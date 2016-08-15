@@ -20,17 +20,8 @@ const _ = require('lodash')
 const util = require('../../../lib/util')
 const QueryBuilder = require('../QueryBuilder')
 const proxyHandler = require('./proxyHandler')
-const AccessorMutator = require('./Mixins/AccessorMutator')
-const Serializer = require('./Mixins/Serializer')
-const Persistance = require('./Mixins/Persistance')
-const Dates = require('./Mixins/Dates')
-const Hooks = require('./Mixins/Hooks')
-const HasOne = require('../Relations/HasOne')
-const HasMany = require('../Relations/HasMany')
-const BelongsTo = require('../Relations/BelongsTo')
-const BelongsToMany = require('../Relations/BelongsToMany')
-const HasManyThrough = require('../Relations/HasManyThrough')
-const EagerLoad = require('../Relations/EagerLoad')
+const Mixins = require('./Mixins')
+const Relations = require('../Relations')
 const BaseSerializer = require('../QueryBuilder/Serializers/Base')
 
 /**
@@ -80,7 +71,7 @@ class Model {
     this.transaction = null // will be added via useTransaction
     this.relations = {}
     this.frozen = false
-    this.eagerLoad = new EagerLoad()
+    this.eagerLoad = new Relations.EagerLoad()
     if (values) {
       this.setJSON(values)
     }
@@ -847,7 +838,7 @@ class Model {
    * @public
    */
   hasOne (related, primaryKey, foreignKey) {
-    return new HasOne(this, related, primaryKey, foreignKey)
+    return new Relations.HasOne(this, related, primaryKey, foreignKey)
   }
 
   /**
@@ -863,7 +854,7 @@ class Model {
    * @public
    */
   hasMany (related, primaryKey, foreignKey) {
-    return new HasMany(this, related, primaryKey, foreignKey)
+    return new Relations.HasMany(this, related, primaryKey, foreignKey)
   }
 
   /**
@@ -879,7 +870,7 @@ class Model {
    * @public
    */
   belongsTo (related, primaryKey, foreignKey) {
-    return new BelongsTo(this, related, primaryKey, foreignKey)
+    return new Relations.BelongsTo(this, related, primaryKey, foreignKey)
   }
 
   /**
@@ -898,7 +889,7 @@ class Model {
    * @public
    */
   belongsToMany (related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey) {
-    return new BelongsToMany(this, related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey)
+    return new Relations.BelongsToMany(this, related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey)
   }
 
   /**
@@ -916,7 +907,7 @@ class Model {
    * @public
    */
   hasManyThrough (related, through, primaryKey, foreignKey, throughPrimaryKey, throughForeignKey) {
-    return new HasManyThrough(this, related, through, primaryKey, foreignKey, throughPrimaryKey, throughForeignKey)
+    return new Relations.HasManyThrough(this, related, through, primaryKey, foreignKey, throughPrimaryKey, throughForeignKey)
   }
 
   /**
@@ -997,7 +988,13 @@ class Model {
   }
 }
 
-class ExtendedModel extends mixin(Model, AccessorMutator, Serializer, Persistance, Dates, Hooks) {
-}
+class ExtendedModel extends mixin(
+  Model,
+  Mixins.AccessorMutator,
+  Mixins.Serializer,
+  Mixins.Persistance,
+  Mixins.Dates,
+  Mixins.Hooks
+) {}
 
 module.exports = ExtendedModel
