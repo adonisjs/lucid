@@ -10,7 +10,7 @@
 */
 
 const Relation = require('./Relation')
-const CE = require('../Model/customExceptions')
+const CE = require('../../Exceptions')
 
 class HasOne extends Relation {
 
@@ -54,7 +54,7 @@ class HasOne extends Relation {
    * @throws CE.ModelRelationException
    */
   paginate () {
-    throw new CE.ModelRelationException('Cannot call paginate on a hasOne relation')
+    throw CE.ModelRelationException.unSupportedMethod('paginate', this.constructor.name)
   }
 
   /**
@@ -100,12 +100,28 @@ class HasOne extends Relation {
     return response
   }
 
+  /**
+   * hasOne cannot have createMany, since it
+   * maps one to one relationship
+   *
+   * @public
+   *
+   * @throws CE.ModelRelationException
+   */
   * createMany () {
-    throw new CE.ModelRelationSaveException('Cannot call createMany method with hasOne relation')
+    throw CE.ModelRelationException.unSupportedMethod('createMany', this.constructor.name)
   }
 
+  /**
+   * hasOne cannot have saveMany, since it
+   * maps one to one relationship
+   *
+   * @public
+   *
+   * @throws CE.ModelRelationException
+   */
   * saveMany () {
-    throw new CE.ModelRelationSaveException('Cannot call saveMany method with hasOne relation')
+    throw CE.ModelRelationException.unSupportedMethod('saveMany', this.constructor.name)
   }
 
 }

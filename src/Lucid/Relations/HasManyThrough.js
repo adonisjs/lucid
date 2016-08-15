@@ -10,7 +10,7 @@
 */
 
 const Relation = require('./Relation')
-const CE = require('../Model/customExceptions')
+const CE = require('../../Exceptions')
 const helpers = require('../QueryBuilder/helpers')
 
 class HasManyThrough extends Relation {
@@ -125,19 +125,19 @@ class HasManyThrough extends Relation {
   }
 
   * save () {
-    throw new CE.ModelRelationSaveException('Cannot call save method with hasManyThrough relation')
+    throw CE.ModelRelationException.unSupportedMethod('save', this.constructor.name)
   }
 
   * create () {
-    throw new CE.ModelRelationSaveException('Cannot call create method with hasManyThrough relation')
+    throw CE.ModelRelationException.unSupportedMethod('create', this.constructor.name)
   }
 
   * createMany () {
-    throw new CE.ModelRelationSaveException('Cannot call createMany method with hasManyThrough relation')
+    throw CE.ModelRelationException.unSupportedMethod('createMany', this.constructor.name)
   }
 
   * saveMany () {
-    throw new CE.ModelRelationSaveException('Cannot call saveMany method with hasManyThrough relation')
+    throw CE.ModelRelationException.unSupportedMethod('saveMany', this.constructor.name)
   }
 
 }

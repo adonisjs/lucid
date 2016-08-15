@@ -10,7 +10,7 @@
 */
 
 const Relation = require('./Relation')
-const CE = require('../Model/customExceptions')
+const CE = require('../../Exceptions')
 const _ = require('lodash')
 const helpers = require('../QueryBuilder/helpers')
 const CatLog = require('cat-log')
@@ -104,6 +104,17 @@ class BelongsToMany extends Relation {
     this.relatedQuery.where(`${this.pivotTable}.${this.pivotLocalKey}`, this.parent[this.fromKey])
   }
 
+  /**
+   * paginates over a set of results based upon current page
+   * and values to be fetched per page.
+   *
+   * @method paginate
+   *
+   * @param  {Number} page
+   * @param  {Number} perPage
+   *
+   * @return {Array}
+   */
   paginate (page, perPage) {
     const self = this
     this._validateRead()
@@ -202,11 +213,11 @@ class BelongsToMany extends Relation {
     pivotValues = pivotValues || {}
 
     if (!_.isArray(references) && !_.isObject(references)) {
-      throw new CE.ModelRelationAttachException('attach expects an array or an object of values to be attached')
+      throw CE.InvalidArgumentException.invalidParameter('attach expects an array of values or a plain object')
     }
 
     if (this.parent.isNew()) {
-      throw new CE.ModelRelationAttachException('Cannot attach values for an unsaved model instance')
+      throw CE.ModelRelationException.unSavedTarget('attach', this.parent.constructor.name, this.related.name)
     }
 
     if (!this.parent[this.fromKey]) {
@@ -242,7 +253,7 @@ class BelongsToMany extends Relation {
    */
   * detach (references) {
     if (this.parent.isNew()) {
-      throw new CE.ModelRelationDetachException('Cannot detach values for an unsaved model instance')
+      throw CE.ModelRelationException.unSavedTarget('detach', this.parent.constructor.name, this.related.name)
     }
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to attach values with ${this.fromKey} as primaryKey, whose value is falsy`)
@@ -283,14 +294,15 @@ class BelongsToMany extends Relation {
    */
   * save (relatedInstance) {
     if (relatedInstance instanceof this.related === false) {
-      throw new CE.ModelRelationSaveException('save accepts an instance of related model')
+      throw CE.ModelRelationException.relationMisMatch('save expects an instance of related model')
     }
     if (this.parent.isNew()) {
-      throw new CE.ModelRelationSaveException('cannot save relation for an unsaved model instance')
+      throw CE.ModelRelationException.unSavedTarget('save', this.parent.constructor.name, this.related.name)
     }
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to save relationship from ${this.parent.constructor.name} model with ${this.fromKey} as primaryKey, whose value is falsy`)
     }
+
     const isSaved = yield relatedInstance.save()
     if (isSaved) {
       yield this.attach([relatedInstance[this.toKey]])

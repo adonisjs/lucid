@@ -17,7 +17,6 @@ const moment = require('moment')
 const path = require('path')
 const Ioc = require('adonis-fold').Ioc
 const expect = chai.expect
-const NE = require('node-exceptions')
 const co = require('co')
 const filesFixtures = require('./fixtures/files')
 const modelFixtures = require('./fixtures/model')
@@ -85,7 +84,7 @@ describe('Lucid', function () {
       const fn = function () {
         User.addGlobalScope('hello')
       }
-      expect(fn).to.throw(NE.InvalidArgumentException, /global scope callback must be a function/i)
+      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: global scope callback must be a function')
     })
 
     it('should be able to add global scopes to the model instance', function () {
@@ -134,7 +133,7 @@ describe('Lucid', function () {
       const fn = function () {
         User.onQuery('foo')
       }
-      expect(fn).to.throw(/onQuery only excepts a callback function/)
+      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: onQuery callback must be a function')
     })
 
     it('should return query builder instance when .query method is called', function () {
@@ -160,7 +159,7 @@ describe('Lucid', function () {
       const fn = function () {
         return new User([{name: 'foo'}, {name: 'bar'}])
       }
-      expect(fn).to.throw(NE.InvalidArgumentException, /cannot initiate a model with multiple rows./)
+      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: Cannot instantiate User model with multiple rows, using createMany instead')
     })
 
     it('should be able to instantiate a model with an object of values', function () {
@@ -187,7 +186,8 @@ describe('Lucid', function () {
         user.name = 'foo'
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.message).to.match(/Cannot edit a frozen model/)
+        expect(e.name).to.equal('ModelException')
+        expect(e.message).to.equal('E_INVALID_MODEL_STATE: Cannot edit a frozen model')
       }
     })
 
@@ -347,8 +347,8 @@ describe('Lucid', function () {
         yield user.save()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('RuntimeException')
-        expect(e.message).to.match(/cannot save an empty model/i)
+        expect(e.name).to.equal('ModelException')
+        expect(e.message).to.equal('E_INVALID_MODEL_STATE: Cannot save empty User model')
       }
     })
 
@@ -607,7 +607,7 @@ describe('Lucid', function () {
       expect(user.isDeleted()).to.equal(false)
     })
 
-    it('should throw an error when soft deletes are not enabled and trying to restore a model instance', function * () {
+    it('should throw an exception when soft deletes are not enabled and trying to restore a model instance', function * () {
       class User extends Model {
       }
       User.bootIfNotBooted()
@@ -621,8 +621,8 @@ describe('Lucid', function () {
         yield user.restore()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.message).to.match(/Restore can only be done when soft deletes are enabled/)
-      } finally {
+        expect(e.name).to.equal('ModelException')
+        expect(e.message).to.equal('E_INVALID_MODEL_STATE: Cannot restore User model since soft deletes are not enabled')
       }
     })
 
@@ -649,6 +649,32 @@ describe('Lucid', function () {
       expect(user instanceof User).to.equal(true)
       expect(user.id).to.be.a('number')
       expect(user.isNew()).to.equal(false)
+    })
+
+    it('should throw an exception when findOrCreate does not receives the search attributes', function * () {
+      class User extends Model {
+      }
+      User.bootIfNotBooted()
+      try {
+        yield User.findOrCreate()
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('InvalidArgumentException')
+        expect(e.message).to.equal('E_MISSING_PARAMETER: findOrCreate expects both search attributes and values to persist')
+      }
+    })
+
+    it('should throw an exception when findOrCreate does not receives the values to be used for creating a model instance', function * () {
+      class User extends Model {
+      }
+      User.bootIfNotBooted()
+      try {
+        yield User.findOrCreate({username: 'foo'})
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('InvalidArgumentException')
+        expect(e.message).to.equal('E_MISSING_PARAMETER: findOrCreate expects both search attributes and values to persist')
+      }
     })
 
     it('should try to find first or create model instance using static findOrCreate method', function * () {
@@ -701,7 +727,7 @@ describe('Lucid', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('InvalidArgumentException')
-        expect(e.message).to.match(/createMany requires an array of values/)
+        expect(e.message).to.equal('E_INVALID_PARAMETER: createMany expects an array of values')
       }
     })
 
@@ -714,7 +740,7 @@ describe('Lucid', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('InvalidArgumentException')
-        expect(e.message).to.match(/cannot initiate a model with multiple rows/i)
+        expect(e.message).to.equal('E_INVALID_PARAMETER: Cannot instantiate User model with multiple rows, using createMany instead')
       }
     })
 
@@ -726,8 +752,8 @@ describe('Lucid', function () {
         yield User.create()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('RuntimeException')
-        expect(e.message).to.match(/cannot save an empty model/i)
+        expect(e.name).to.equal('ModelException')
+        expect(e.message).to.equal('E_INVALID_MODEL_STATE: Cannot save empty User model')
       }
     })
 
@@ -900,7 +926,7 @@ describe('Lucid', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('ModelNotFoundException')
-        expect(e.message).to.equal('Unable to fetch results for username koka')
+        expect(e.message).to.equal('E_MISSING_DATABASE_ROW: Unable to fetch results for username koka')
       }
     })
 
@@ -1021,7 +1047,7 @@ describe('Lucid', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('ModelNotFoundException')
-        expect(e.message).to.match(/unable to fetch results for id 1220/i)
+        expect(e.message).to.equal('E_MISSING_DATABASE_ROW: Unable to fetch results for id 1220')
       }
     })
 
@@ -1033,7 +1059,7 @@ describe('Lucid', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('ModelNotFoundException')
-        expect(e.message).to.match(/unable to find given row/i)
+        expect(e.message).to.equal('E_MISSING_DATABASE_ROW: Unable to fetch database results')
       }
     })
 
@@ -1222,7 +1248,7 @@ describe('Lucid', function () {
       const fn = function () {
         User.addHook('anytime', function () {})
       }
-      expect(fn).to.throw(NE.InvalidArgumentException, /anytime is not a valid hook type/)
+      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: anytime is not a valid hook type')
     })
 
     it('should throw an error when hook handler is defined', function () {
@@ -1230,7 +1256,7 @@ describe('Lucid', function () {
       const fn = function () {
         User.addHook('beforeCreate')
       }
-      expect(fn).to.throw(NE.InvalidArgumentException, /hook handler must point to a valid generator method/)
+      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: hook handler must point to a valid generator method')
     })
 
     it('should add a hook for a given type', function () {

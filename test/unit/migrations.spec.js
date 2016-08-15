@@ -181,7 +181,8 @@ describe('Migrations', function () {
       yield runner._checkLock()
       expect(true).to.equal(false)
     } catch (e) {
-      expect(e.message).to.match(/Migrations are locked/i)
+      expect(e.name).to.equal('RuntimeException')
+      expect(e.message).to.equal('E_LOCK_ON_MIGRATIONS: Migrations are currently locked. Make sure to run single migration process at a given time or delete adonis_migrations_lock table from database')
     }
     yield runner.database.schema.dropTable('adonis_migrations_lock')
   })

@@ -18,6 +18,7 @@ require('harmony-reflect')
 const knex = require('knex')
 const util = require('../../lib/util')
 const co = require('co')
+const CE = require('../Exceptions')
 const _ = require('lodash')
 
 /**
@@ -88,41 +89,48 @@ Database._setConfigProvider = function (Config) {
 }
 
 /**
- * returns configuration for a given connection name
+ * Resolves a connection key to be used for fetching database
+ * connection config. If key is defined to default, it
+ * will make use the value defined next to
+ * database.connection key.
  *
- * @method getConfig
+ * @method _resolveConnectionKey
  *
  * @param  {String}  connection
  * @return {Object}
  *
  * @private
  */
-Database._getConfig = function (connection) {
+Database._resolveConnectionKey = function (connection) {
   if (connection === 'default') {
     connection = ConfigProvider.get('database.connection')
     if (!connection) {
-      throw new Error('connection is not defined inside database config file')
+      throw CE.InvalidArgumentException.missingConfig('Make sure to define a connection inside the database config file')
     }
   }
-  return ConfigProvider.get(`database.${connection}`)
+  return connection
 }
 
 /**
  * returns knex instance for a given connection if it
- * does not exists pool is created and returned.
+ * does not exists, a pool is created and returned.
  *
- * @method getConnection
+ * @method connection
  *
  * @param  {String}      connection
  * @return {Object}
  *
- * @private
+ * @example
+ * Database.connection('mysql')
+ * Database.connection('sqlite')
  */
-Database._getConnection = function (connection) {
+Database.connection = function (connection) {
+  connection = Database._resolveConnectionKey(connection)
+
   if (!connectionPools[connection]) {
-    const config = Database._getConfig(connection)
+    const config = ConfigProvider.get(`database.${connection}`)
     if (!config) {
-      throw new Error(`Unable to get database client configuration using ${connection} key`)
+      throw CE.InvalidArgumentException.missingConfig(`Unable to get database client configuration for ${connection}`)
     }
     const client = knex(config)
     const rawTransaction = client.transaction
@@ -137,25 +145,8 @@ Database._getConnection = function (connection) {
     client.client.QueryBuilder.prototype.chunk = Database.chunk
     connectionPools[connection] = client
   }
-  return connectionPools[connection]
-}
 
-/**
- * Returns knex client for a given connection.
- *
- * @method connection
- *
- * @param  {String}   connection
- * @return {Object}
- *
- * @example
- * Database.connection('mysql')
- * Database.connection('sqlite')
- *
- * @public
- */
-Database.connection = function (connection) {
-  return Database._getConnection(connection)
+  return connectionPools[connection]
 }
 
 /**
@@ -184,15 +175,15 @@ Database.getConnectionPools = function () {
  * @public
  */
 Database.close = function (connection) {
+  connection = connection ? Database._resolveConnectionKey(connection) : null
   if (connection && connectionPools[connection]) {
     connectionPools[connection].client.destroy()
     delete connectionPools[connection]
     return
   }
 
-  const poolKeys = Object.keys(connectionPools)
-  poolKeys.forEach(function (key) {
-    connectionPools[key].client.destroy()
+  _.each(connectionPools, (pool) => {
+    pool.client.destroy()
   })
   connectionPools = {}
 }
@@ -356,7 +347,7 @@ Database.chunk = function * (limit, cb, page) {
  *
  * @private
  */
-const customImplementations = ['_getConfig', '_setConfigProvider', 'getConnectionPools', 'connection', 'close']
+const customImplementations = ['_resolveConnectionKey', '_setConfigProvider', 'getConnectionPools', 'connection', 'close']
 
 /**
  * Proxy handler to proxy methods and send
@@ -371,7 +362,7 @@ const DatabaseProxy = {
     if (customImplementations.indexOf(name) > -1) {
       return target[name]
     }
-    return Database._getConnection('default')[name]
+    return Database.connection('default')[name]
   }
 }
 

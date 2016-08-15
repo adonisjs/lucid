@@ -11,8 +11,7 @@
 
 require('harmony-reflect')
 const mixin = require('es6-class-mixin')
-const NE = require('node-exceptions')
-const CE = require('./customExceptions')
+const CE = require('../../Exceptions')
 const CatLog = require('cat-log')
 const cf = require('co-functional')
 const logger = new CatLog('adonis:lucid')
@@ -52,7 +51,7 @@ class Model {
 
   constructor (values) {
     if (_.isArray(values)) {
-      throw new NE.InvalidArgumentException('cannot initiate a model with multiple rows. Make sure to pass a flat object')
+      throw CE.InvalidArgumentException.bulkInstantiate(this.constructor.name)
     }
     this.instantiate(values)
     return new Proxy(this, proxyHandler)
@@ -109,7 +108,7 @@ class Model {
    */
   static addHook (type, name, handler) {
     if (validHookTypes.indexOf(type) <= -1) {
-      throw new NE.InvalidArgumentException(`${type} is not a valid hook type`)
+      throw CE.InvalidArgumentException.invalidParameter(`${type} is not a valid hook type`)
     }
 
     /**
@@ -127,7 +126,7 @@ class Model {
      * error will be thrown when calling hook
      */
     if (typeof (handler) !== 'function' && typeof (handler) !== 'string') {
-      throw new NE.InvalidArgumentException('hook handler must point to a valid generator method')
+      throw CE.InvalidArgumentException.invalidParameter('hook handler must point to a valid generator method')
     }
 
     this.$modelHooks[type] = this.$modelHooks[type] || []
@@ -256,7 +255,7 @@ class Model {
    */
   static onQuery (callback) {
     if (typeof (callback) !== 'function') {
-      throw new NE.InvalidArgumentException('onQuery only excepts a callback function')
+      throw CE.InvalidArgumentException.invalidParameter('onQuery callback must be a function')
     }
     this.$queryListeners.push(callback)
   }
@@ -272,7 +271,7 @@ class Model {
   static addGlobalScope (callback) {
     this.globalScope = this.globalScope || []
     if (typeof (callback) !== 'function') {
-      throw new NE.InvalidArgumentException('global scope callback must be a function')
+      throw CE.InvalidArgumentException.invalidParameter('global scope callback must be a function')
     }
     this.globalScope.push(callback)
   }
@@ -553,7 +552,7 @@ class Model {
   static * findOrFail (value) {
     const result = yield this.find(value)
     if (!result) {
-      throw new CE.ModelNotFoundException(`Unable to fetch results for ${this.primaryKey} ${value}`)
+      throw CE.ModelNotFoundException.raise(`Unable to fetch results for ${this.primaryKey} ${value}`)
     }
     return result
   }
@@ -572,7 +571,7 @@ class Model {
   static * findByOrFail (key, value) {
     const result = yield this.findBy(key, value)
     if (!result) {
-      throw new CE.ModelNotFoundException(`Unable to fetch results for ${key} ${value}`)
+      throw CE.ModelNotFoundException.raise(`Unable to fetch results for ${key} ${value}`)
     }
     return result
   }
@@ -797,7 +796,7 @@ class Model {
    */
   static * findOrCreate (attributes, values) {
     if (!attributes || !values) {
-      throw new NE.InvalidArgumentException('findOrCreate requires search attributes and create values both')
+      throw CE.InvalidArgumentException.missingParameter('findOrCreate expects both search attributes and values to persist')
     }
     const firstRecord = yield this.query().where(attributes).first()
     if (firstRecord) {
@@ -817,7 +816,7 @@ class Model {
    */
   static * createMany (arrayOfValues) {
     if (arrayOfValues instanceof Array === false) {
-      throw new NE.InvalidArgumentException('createMany requires an array of values')
+      throw CE.InvalidArgumentException.invalidParameter('createMany expects an array of values')
     }
     const self = this
     return cf.map(function * (values) {

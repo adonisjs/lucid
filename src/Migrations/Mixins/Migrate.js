@@ -12,6 +12,7 @@
 const _ = require('lodash')
 const CatLog = require('cat-log')
 const cf = require('co-functional')
+const CE = require('../../Exceptions')
 const logger = new CatLog('adonis:lucid')
 
 const Migrate = exports = module.exports = {}
@@ -207,7 +208,7 @@ Migrate._getMigrationsList = function (files, values, direction) {
 Migrate._mapMigrationsToActions = function (migrationsList, direction) {
   return _.map(migrationsList, (File, fileName) => {
     if (typeof (File) !== 'function') {
-      throw new Error(`Make sure you are exporting a class from ${fileName}`)
+      throw CE.DomainException.invalidSchemaFile(fileName)
     }
     return {file: fileName, actions: this._translateActions(new File(), direction)}
   })
