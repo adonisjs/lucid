@@ -527,7 +527,7 @@ describe('Lucid', function () {
       expect(user.created_at).to.equal(undefined)
     })
 
-    it('should update updated_at timestamp when model instance is updated', function * (done) {
+    it('should update updated_at timestamp when model instance is updated', function * () {
       class User extends Model {
         getUpdateTimestamp (date) {
           return moment(date).format('x')
@@ -539,19 +539,18 @@ describe('Lucid', function () {
       yield user.save()
       const updatedTimestamp = user.updated_at
       user.firstname = 'dubba'
-      setTimeout(function () {
-        co(function * () {
-          yield user.save()
+      const delayedFn = function () {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            co(function * () {
+              yield user.save()
+            }).then(resolve).catch(reject)
+          }, 1000)
         })
-        .then(function () {
-          expect(user.updated_at).to.be.above(updatedTimestamp)
-          return User.query().truncate()
-        })
-        .then(function () {
-          done()
-        })
-        .catch(done)
-      }, 1000)
+      }
+      yield delayedFn()
+      expect(user.updated_at).to.be.above(updatedTimestamp)
+      yield User.query().truncate()
     })
 
     it('should not update updated_at timestamp when updateTimestamp is set to null', function * () {
@@ -1514,14 +1513,13 @@ describe('Lucid', function () {
       }
     })
 
-    it('should continue save if beforeCreate has a setTimeout after yield next', function * (done) {
+    it('should continue save if beforeCreate has a setTimeout after yield next', function * () {
       class User extends Model {}
       User.bootIfNotBooted()
       User.addHook('beforeCreate', function * (next) {
         yield next
         setTimeout(() => {
           expect(this.id).to.be.a('number')
-          done()
         })
       })
       const user = new User()
