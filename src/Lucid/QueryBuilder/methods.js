@@ -177,10 +177,13 @@ methods.first = function (target) {
  * @public
  */
 methods.firstOrFail = function (target) {
-  return function * () {
+  return function * (onErrorCallback) {
     const row = yield this.first()
     if (!row) {
-      throw CE.ModelNotFoundException.raise('Unable to fetch database results')
+      onErrorCallback = typeof (onErrorCallback) === 'function' ? onErrorCallback : function () {
+        throw CE.ModelNotFoundException.raise('Unable to fetch database results')
+      }
+      return onErrorCallback()
     }
     return row
   }
