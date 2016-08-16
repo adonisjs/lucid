@@ -262,6 +262,7 @@ class Model {
     logger.verbose(`booting ${this.name} model`)
     this.$modelHooks = {}
     this.$queryListeners = []
+    this.traits.forEach(this.use.bind(this))
 
     this.addGlobalScope((builder) => {
       if (this.deleteTimestamp && !builder.avoidTrashed) {
@@ -313,6 +314,33 @@ class Model {
    */
   static get connection () {
     return 'default'
+  }
+
+  /**
+   * traits to be used on the model. These
+   * are loaded once a model is booted.
+   *
+   * @method traits
+   *
+   * @return {Array}
+   */
+  static get traits () {
+    return []
+  }
+
+  /**
+   * this method assigns a trait to the model.
+   *
+   * @method use
+   *
+   * @param  {String} trait
+   */
+  static use (trait) {
+    let resolvedTrait = Ioc.make(trait)
+    if (!resolvedTrait.register) {
+      throw CE.InvalidArgumentException.invalidTrait()
+    }
+    resolvedTrait.register(this)
   }
 
   /**

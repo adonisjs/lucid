@@ -137,6 +137,20 @@ class InvalidArgumentException extends NE.InvalidArgumentException {
     return this.invalidParameter(`Cannot instantiate ${model} model with multiple rows, using createMany instead`, code)
   }
 
+  /**
+   * this exception is raised when trait does not
+   * have register method.
+   *
+   * @method invalidTrait
+   *
+   * @param  {Number}     [code=500]
+   *
+   * @return {Object}
+   */
+  static invalidTrait (code) {
+    return new this('Make sure you have defined register method on model', code || this.defaultErrorCode, 'E_INVALID_MODEL_TRAIT')
+  }
+
 }
 
 class ModelNotFoundException extends NE.LogicalException {
