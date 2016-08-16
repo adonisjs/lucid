@@ -11,7 +11,6 @@
 
 const Hooks = exports = module.exports = {}
 const _ = require('lodash')
-const Ioc = require('adonis-fold').Ioc
 
 /**
  * compose hooks for a given type by reading values
@@ -25,18 +24,9 @@ const Ioc = require('adonis-fold').Ioc
  * @public
  */
 Hooks.getHooks = function (type, handler) {
-  let beforeHooks = []
-  let afterHooks = []
-  const modelHooks = this.constructor.$modelHooks
-  if (!modelHooks) {
-    return [handler]
-  }
-  if (modelHooks[`before${type}`]) {
-    beforeHooks = _.map(modelHooks[`before${type}`], function (hook) { return hook.handler })
-  }
-  if (modelHooks[`after${type}`]) {
-    afterHooks = _.map(modelHooks[`after${type}`], function (hook) { return hook.handler })
-  }
+  const modelHooks = this.constructor.$modelHooks || {}
+  const beforeHooks = _.map(modelHooks[`before${type}`], 'handler') || []
+  const afterHooks = _.map(modelHooks[`after${type}`], 'handler') || []
   return beforeHooks.concat([handler]).concat(afterHooks)
 }
 
@@ -53,21 +43,17 @@ Hooks.getHooks = function (type, handler) {
  * @public
  */
 Hooks.composeHooks = function (scope, hooks) {
-  const Helpers = Ioc.use('Adonis/Src/Helpers')
-  const hookNameSpace = 'Model/Hooks'
-
   function * noop () {}
+
   return function * (next) {
     next = next || noop()
-    let i = hooks.length
-    while (i--) {
-      let hook = hooks[i]
-      if (typeof (hooks[i]) === 'string') {
-        const resolvedHook = Ioc.makeFunc(`${Helpers.makeNameSpace(hookNameSpace, hooks[i])}`)
-        hook = resolvedHook.instance[resolvedHook.method]
+    _.forEachRight(hooks, (hook) => {
+      if (typeof (hook) === 'function') {
+        next = hook.apply(scope, [next])
+      } else if (hook.instance && hook.method) {
+        next = hook.instance[hook.method].apply(scope, [next])
       }
-      next = hook.apply(scope, [next])
-    }
+    })
     yield * next
   }
 }

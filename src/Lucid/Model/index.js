@@ -22,6 +22,11 @@ const proxyHandler = require('./proxyHandler')
 const Mixins = require('./Mixins')
 const Relations = require('../Relations')
 const BaseSerializer = require('../QueryBuilder/Serializers/Base')
+const Ioc = require('adonis-fold').Ioc
+const Resolver = require('adonis-binding-resolver')
+const resolver = new Resolver(Ioc)
+
+const hookNameSpace = 'Model/Hooks'
 
 /**
  * returns a function that be executed with a key/value
@@ -105,6 +110,22 @@ class Model {
   }
 
   /**
+   * validates whether hooks is of valid type
+   * or not
+   *
+   * @method  _validateIsValidHookType
+   *
+   * @param   {String}                 type
+   *
+   * @private
+   */
+  static _validateIsValidHookType (type) {
+    if (validHookTypes.indexOf(type) <= -1) {
+      throw CE.InvalidArgumentException.invalidParameter(`${type} is not a valid hook type`)
+    }
+  }
+
+  /**
    * adds a new hook for a given type for a model. Note
    * this method has no way of checking duplicate
    * hooks.
@@ -123,30 +144,19 @@ class Model {
    * @public
    */
   static addHook (type, name, handler) {
-    if (validHookTypes.indexOf(type) <= -1) {
-      throw CE.InvalidArgumentException.invalidParameter(`${type} is not a valid hook type`)
-    }
+    this._validateIsValidHookType(type)
+    const Helpers = Ioc.use('Adonis/Src/Helpers')
 
-    /**
-     * if handler is not defined, set name as handler. It is required coz
-     * we have 2nd parameter optional.
-     */
     if (!handler) {
       handler = name
       name = null
     }
 
-    /**
-     * handler should be a reference to a string or a valid function. Strings are
-     * assumed to be a reference to hook namespace and if autoloading fails an
-     * error will be thrown when calling hook
-     */
-    if (typeof (handler) !== 'function' && typeof (handler) !== 'string') {
-      throw CE.InvalidArgumentException.invalidParameter('hook handler must point to a valid generator method')
-    }
+    const resolvedHandler = typeof (handler) === 'string' ? Helpers.makeNameSpace(hookNameSpace, handler) : handler
+    resolver.validateBinding(resolvedHandler)
 
     this.$modelHooks[type] = this.$modelHooks[type] || []
-    this.$modelHooks[type].push({handler, name})
+    this.$modelHooks[type].push({handler: resolver.resolveBinding(resolvedHandler), name})
   }
 
   /**

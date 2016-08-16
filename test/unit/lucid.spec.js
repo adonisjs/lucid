@@ -1306,7 +1306,7 @@ describe('Lucid', function () {
       const fn = function () {
         User.addHook('beforeCreate')
       }
-      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: hook handler must point to a valid generator method')
+      expect(fn).to.throw('InvalidArgumentException: E_INVALID_IOC_BINDING: Handler must point to a valid namespace or a closure')
     })
 
     it('should add a hook for a given type', function () {
@@ -1356,22 +1356,26 @@ describe('Lucid', function () {
     it('should be able to define multiple hooks in a go', function () {
       class User extends Model {}
       User.bootIfNotBooted()
-      User.defineHooks('beforeCreate', 'UsersHook.validate', 'UsersHook.log')
+      User.defineHooks('beforeCreate', 'Users.validate', 'Users.log')
       expect(User.$modelHooks['beforeCreate']).to.be.an('array')
       expect(User.$modelHooks['beforeCreate'].length).to.equal(2)
-      expect(User.$modelHooks['beforeCreate'][0].handler).to.equal('UsersHook.validate')
-      expect(User.$modelHooks['beforeCreate'][1].handler).to.equal('UsersHook.log')
+      expect(User.$modelHooks['beforeCreate'][0].handler).to.have.property('instance')
+      expect(User.$modelHooks['beforeCreate'][0].handler).to.have.property('method')
+      expect(User.$modelHooks['beforeCreate'][1].handler).to.have.property('instance')
+      expect(User.$modelHooks['beforeCreate'][1].handler).to.have.property('method')
     })
 
     it('should override existing hooks when calling defineHooks', function () {
       class User extends Model {}
       User.bootIfNotBooted()
       User.addHook('beforeCreate', function * () {})
-      User.defineHooks('beforeCreate', 'UsersHook.validate', 'UsersHook.log')
+      User.defineHooks('beforeCreate', 'Users.validate', 'Users.log')
       expect(User.$modelHooks['beforeCreate']).to.be.an('array')
       expect(User.$modelHooks['beforeCreate'].length).to.equal(2)
-      expect(User.$modelHooks['beforeCreate'][0].handler).to.equal('UsersHook.validate')
-      expect(User.$modelHooks['beforeCreate'][1].handler).to.equal('UsersHook.log')
+      expect(User.$modelHooks['beforeCreate'][0].handler).to.have.property('instance')
+      expect(User.$modelHooks['beforeCreate'][0].handler).to.have.property('method')
+      expect(User.$modelHooks['beforeCreate'][1].handler).to.have.property('instance')
+      expect(User.$modelHooks['beforeCreate'][1].handler).to.have.property('method')
     })
 
     it('should execute beforeCreate hook when a model is saved to the database', function * () {
