@@ -24,6 +24,22 @@ const Relations = require('../Relations')
 const BaseSerializer = require('../QueryBuilder/Serializers/Base')
 
 /**
+ * returns a function that be executed with a key/value
+ * pair. Default closure will throw an exception.
+ *
+ * @method
+ *
+ * @param  {Function} [userClosure]
+ *
+ * @return {Function}
+ */
+const getFailException = (userClosure) => {
+  return typeof (userClosure) === 'function' ? userClosure : function (key, value) {
+    throw CE.ModelNotFoundException.raise(`Unable to fetch results for ${key} ${value}`)
+  }
+}
+
+/**
  * list of hooks allowed to be registered for a
  * given model
  *
@@ -543,16 +559,17 @@ class Model {
    * found.
    *
    * @param  {Number}   value
+   * @param  {Function} [onErrorCallback]
    * @return {Object}
    *
    * @throws {ModelNotFoundException} If there are zero rows found.
    *
    * @public
    */
-  static * findOrFail (value) {
+  static * findOrFail (value, onErrorCallback) {
     const result = yield this.find(value)
     if (!result) {
-      throw CE.ModelNotFoundException.raise(`Unable to fetch results for ${this.primaryKey} ${value}`)
+      return getFailException(onErrorCallback)(this.primaryKey, value)
     }
     return result
   }
@@ -565,13 +582,14 @@ class Model {
    *
    * @param  {String}     key
    * @param  {Mixed}     value
+   * @param  {Function}  [onErrorCallback]
    *
    * @return {Object}
    */
-  static * findByOrFail (key, value) {
+  static * findByOrFail (key, value, onErrorCallback) {
     const result = yield this.findBy(key, value)
     if (!result) {
-      throw CE.ModelNotFoundException.raise(`Unable to fetch results for ${key} ${value}`)
+      return getFailException(onErrorCallback)(key, value)
     }
     return result
   }

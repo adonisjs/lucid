@@ -10,7 +10,7 @@
     "test": "npm run lint && node --harmony_proxies ./node_modules/.bin/istanbul cover _mocha --report lcovonly -- -R spec test/unit test/acceptance && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "lint": "standard src/**/*.js src/**/**/*.js src/**/**/**/*.js lib/*.js test/**/*.js providers/*.js",
     "test:all": "DB=sqlite3 npm run test && DB=mysql npm run test && DB=pg npm run test",
-    "coverage": "node --harmony_proxies ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test/unit",
+    "coverage": "node --harmony_proxies ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test/unit test/acceptance",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "author": "adonisjs",

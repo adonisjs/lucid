@@ -930,6 +930,20 @@ describe('Lucid', function () {
       }
     })
 
+    it('should be able to throw custom exception when findByOrFail fails', function * () {
+      class User extends Model {
+      }
+      try {
+        yield User.findByOrFail('username', 'koka', function (key, value) {
+          throw new Error(`${value} is a weird ${key}`)
+        })
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('Error')
+        expect(e.message).to.equal('koka is a weird username')
+      }
+    })
+
     it('should be able to find a given record using findByOrFail method', function * () {
       class User extends Model {
       }
@@ -1051,6 +1065,20 @@ describe('Lucid', function () {
       }
     })
 
+    it('should be able to throw custom exception when findOrFail fails', function * () {
+      class User extends Model {
+      }
+      try {
+        yield User.findOrFail(1220, function () {
+          throw new Error('My own exception')
+        })
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('Error')
+        expect(e.message).to.equal('My own exception')
+      }
+    })
+
     it('should throw ModelNotFoundException when unable to find a record using query builder firstOfFail', function * () {
       class User extends Model {
       }
@@ -1061,6 +1089,28 @@ describe('Lucid', function () {
         expect(e.name).to.equal('ModelNotFoundException')
         expect(e.message).to.equal('E_MISSING_DATABASE_ROW: Unable to fetch database results')
       }
+    })
+
+    it('should be able to throw custom exception when firstOfFail fails', function * () {
+      class User extends Model {
+      }
+      try {
+        yield User.query().where('id', 1220).firstOrFail(function () {
+          throw new Error('Cannot find results')
+        })
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('Error')
+        expect(e.message).to.equal('Cannot find results')
+      }
+    })
+
+    it('should return first row when able to find the row using firstOrFail method', function * () {
+      class User extends Model {
+      }
+      yield User.create({username: 'foo'})
+      const user = yield User.query().where('username', 'foo').firstOrFail()
+      expect(user.username).to.equal('foo')
     })
 
     it('should return model instance using findOrFail method', function * () {
@@ -1286,6 +1336,19 @@ describe('Lucid', function () {
       expect(User.$modelHooks['beforeCreate']).to.be.an('array')
       expect(User.$modelHooks['beforeCreate'].length).to.equal(2)
       User.removeHook('validateUser')
+      expect(User.$modelHooks['beforeCreate'].length).to.equal(1)
+      expect(User.$modelHooks['beforeCreate'][0].name).to.equal(null)
+    })
+
+    it('should be able to remove an array of named hook', function () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      User.addHook('beforeCreate', function * () {})
+      User.addHook('beforeCreate', 'validateUser', function * () {})
+      User.addHook('beforeCreate', 'sanitizeUser', function * () {})
+      expect(User.$modelHooks['beforeCreate']).to.be.an('array')
+      expect(User.$modelHooks['beforeCreate'].length).to.equal(3)
+      User.removeHook(['validateUser', 'sanitizeUser'])
       expect(User.$modelHooks['beforeCreate'].length).to.equal(1)
       expect(User.$modelHooks['beforeCreate'][0].name).to.equal(null)
     })
