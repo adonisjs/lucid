@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
 */
 
-/* global describe, it, after, before*/
+/* global describe, it, after, before */
 const chai = require('chai')
 const expect = chai.expect
 const Model = require('../../src/Lucid/Model')
