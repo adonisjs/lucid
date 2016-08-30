@@ -7,10 +7,11 @@
   },
   "version": "3.0.4",
   "scripts": {
-    "test": "npm run lint && node --harmony_proxies ./node_modules/.bin/istanbul cover _mocha --report lcovonly -- -R spec test/unit test/acceptance && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
+    "test:safe": "npm run lint && node $PROXY_FLAG ./node_modules/.bin/istanbul cover _mocha --report lcovonly -- -R spec test/unit test/acceptance && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "lint": "standard src/**/*.js src/**/**/*.js src/**/**/**/*.js lib/*.js test/**/*.js providers/*.js",
     "test:all": "DB=sqlite3 npm run test && DB=mysql npm run test && DB=pg npm run test",
-    "coverage": "node --harmony_proxies ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test/unit test/acceptance",
+    "coverage": "node $PROXY_FLAG ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test/unit test/acceptance",
+    "test": "if [[ `node --version` < \"v6.5.0\" ]]; then PROXY_FLAG=--harmony_proxies npm run test:safe; else npm run test:safe; fi",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "author": "adonisjs",
@@ -36,7 +37,8 @@
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
-    }
+    },
+    "flags": "--harmony_proxies"
   },
   "dependencies": {
     "adonis-binding-resolver": "^1.0.1",
