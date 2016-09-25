@@ -105,6 +105,27 @@ class BelongsToMany extends Relation {
   }
 
   /**
+   * Returns a cloned query with the join statement to be
+   * used for fetching aggregates or paginate results.
+   *
+   * @param   {String} expression
+   *
+   * @return  {Object}
+   *
+   * @private
+   */
+  _getAlternateQuery (expression) {
+    const self = this
+    const countByQuery = this.relatedQuery.clone()
+
+    countByQuery.innerJoin(this.pivotTable, function () {
+      this.on(`${self.related.table}.${self.toKey}`, `${self.pivotTable}.${self.pivotOtherKey}`)
+    }).where(`${this.pivotTable}.${this.pivotLocalKey}`, this.parent[this.fromKey])
+
+    return countByQuery
+  }
+
+  /**
    * paginates over a set of results based upon current page
    * and values to be fetched per page.
    *
@@ -116,34 +137,91 @@ class BelongsToMany extends Relation {
    * @return {Array}
    */
   paginate (page, perPage) {
-    const self = this
     this._validateRead()
     /**
      * creating the query clone to be used as countByQuery,
      * since selecting fields in countby requires unwanted
      * groupBy clauses.
      */
-    const countByQuery = this.relatedQuery.clone()
-    this._decorateRead()
+    const countByQuery = this._getAlternateQuery().count(`${this.pivotTable}.${this.pivotLocalKey} as total`)
 
     /**
-     * duplicating the innerJoin and where clause. Doing
-     * it inline here as it is not required by any other
-     * method and over seperating concerns is hard to
-     * understand later.
+     * It is important to decorate the actual query
+     * builder after fetching the alternate query
+     * since fresh query builder is required
+     * to return alternate query
      */
-    countByQuery
-      .innerJoin(this.pivotTable, function () {
-        this.on(`${self.related.table}.${self.toKey}`, `${self.pivotTable}.${self.pivotOtherKey}`)
-      })
-      .where(`${this.pivotTable}.${this.pivotLocalKey}`, this.parent[this.fromKey])
-      .count(`${this.pivotTable}.${this.pivotLocalKey} as total`)
+    this._decorateRead()
 
     /**
      * calling the paginate method on proxies query builder
      * which optionally accepts a countByQuery
      */
     return this.relatedQuery.paginate(page, perPage, countByQuery)
+  }
+
+  /**
+   * Returns count of rows for the related row
+   *
+   * @param  {String} expression
+   *
+   * @return {Array}
+   */
+  count (expression) {
+    this._validateRead()
+    return this._getAlternateQuery().count(expression)
+  }
+
+  /**
+   * Returns avg for a given column
+   *
+   * @param  {String} column
+   *
+   * @return {Array}
+   */
+  avg (column) {
+    this._validateRead()
+    return this._getAlternateQuery().avg(column)
+  }
+
+  /**
+   * Return min value for a column
+   *
+   * @param  {String} column
+   *
+   * @return {Array}
+   */
+  min (column) {
+    this._validateRead()
+    return this._getAlternateQuery().min(column)
+  }
+
+  /**
+   * Return max value for a column
+   *
+   * @param  {String} column
+   *
+   * @return {Array}
+   */
+  max (column) {
+    this._validateRead()
+    return this._getAlternateQuery().max(column)
+  }
+
+  /**
+   * Throws exception since update should be
+   * done after getting the instance.
+   */
+  increment () {
+    throw CE.ModelRelationException.unSupportedMethod('increment', 'BelongsToMany')
+  }
+
+  /**
+   * Throws exception since update should be
+   * done after getting the instance.
+   */
+  decrement () {
+    throw CE.ModelRelationException.unSupportedMethod('decrement', 'BelongsToMany')
   }
 
   /**
