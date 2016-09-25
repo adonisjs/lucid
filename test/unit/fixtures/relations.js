@@ -22,6 +22,7 @@ module.exports = {
       knex.schema.createTable('accounts', function (table) {
         table.increments()
         table.integer('supplier_id')
+        table.integer('points').defaultTo(0)
         table.string('name')
         table.timestamps()
         table.timestamp('deleted_at').nullable()
@@ -73,6 +74,7 @@ module.exports = {
         table.increments()
         table.integer('post_id')
         table.string('body')
+        table.integer('likes').defaultTo(0)
         table.timestamps()
         table.timestamp('deleted_at').nullable()
       }),
@@ -85,6 +87,7 @@ module.exports = {
       knex.schema.createTable('courses', function (table) {
         table.increments()
         table.string('title')
+        table.integer('weightage')
         table.timestamps()
         table.timestamp('deleted_at').nullable()
       }),
@@ -113,6 +116,7 @@ module.exports = {
         table.integer('author_id')
         table.string('title')
         table.string('body')
+        table.integer('amount')
         table.timestamps()
         table.timestamp('deleted_at').nullable()
       }),
