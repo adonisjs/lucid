@@ -11,7 +11,7 @@
 
 require('harmony-reflect')
 const Ioc = require('adonis-fold').Ioc
-const EagerLoad = require('../Relations/EagerLoad')
+const EagerLoad = require('../Relations').EagerLoad
 const proxyHandler = require('./proxyHandler')
 
 /**

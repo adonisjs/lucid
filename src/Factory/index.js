@@ -12,7 +12,7 @@
 const Factory = exports = module.exports = {}
 const ModelFactory = require('./ModelFactory')
 const DatabaseFactory = require('./DatabaseFactory')
-const NE = require('node-exceptions')
+const CE = require('../Exceptions')
 let blueprints = {}
 
 /**
@@ -29,7 +29,7 @@ let blueprints = {}
  */
 Factory.blueprint = function (key, callback) {
   if (typeof (callback) !== 'function') {
-    throw new NE.InvalidArgumentException('callback should be a function while define a factory blueprint')
+    throw CE.InvalidArgumentException.invalidParameter('Factory blueprint expects callback to be a function')
   }
   blueprints[key] = callback
 }
@@ -63,16 +63,19 @@ Factory.clear = function () {
  * @method _resolve
  *
  * @param  {String} key
+ * @param {Function} callback
+ *
  * @return {Function}
  *
  * @private
  */
-Factory._resolve = function (key) {
-  const callback = blueprints[key]
-  if (!callback) {
-    throw new NE.RuntimeException(`Cannot find ${key} factory`)
+Factory._resolve = function (key, callback) {
+  const factoryClosure = blueprints[key]
+  if (!factoryClosure) {
+    callback()
+    return
   }
-  return callback
+  return factoryClosure
 }
 
 /**
@@ -87,7 +90,10 @@ Factory._resolve = function (key) {
  * @public
  */
 Factory.model = function (key) {
-  return new ModelFactory(key, Factory._resolve(key))
+  const factoryClosure = Factory._resolve(key, () => {
+    throw CE.RuntimeException.modelFactoryNotFound(key)
+  })
+  return new ModelFactory(key, factoryClosure)
 }
 
 /**
@@ -102,5 +108,8 @@ Factory.model = function (key) {
  * @public
  */
 Factory.get = function (key) {
-  return new DatabaseFactory(key, Factory._resolve(key))
+  const factoryClosure = Factory._resolve(key, () => {
+    throw CE.RuntimeException.databaseFactoryNotFound(key)
+  })
+  return new DatabaseFactory(key, factoryClosure)
 }

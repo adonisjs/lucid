@@ -11,6 +11,21 @@
 
 const proxyHandler = exports = module.exports = {}
 const _ = require('lodash')
+const queryExecMethods = [
+  'increment',
+  'decrement',
+  'avg',
+  'min',
+  'max',
+  'count',
+  'truncate',
+  'ids',
+  'pair',
+  'pluckFirst',
+  'pluckId',
+  'pick',
+  'pickInverse'
+]
 
 proxyHandler.get = function (target, name) {
   /**
@@ -27,5 +42,16 @@ proxyHandler.get = function (target, name) {
       return this
     }
   }
+
+  /**
+   * Here we called methods on the relationships
+   * to decorate the query chain by chain required
+   * methods.
+   */
+  if (queryExecMethods.indexOf(name) > -1) {
+    target._validateRead()
+    target._decorateRead()
+  }
+
   return target.relatedQuery[name]
 }

@@ -10,7 +10,7 @@
 */
 
 const Relation = require('./Relation')
-const CE = require('../Model/customExceptions')
+const CE = require('../../Exceptions')
 const _ = require('lodash')
 const helpers = require('../QueryBuilder/helpers')
 const CatLog = require('cat-log')
@@ -104,35 +104,124 @@ class BelongsToMany extends Relation {
     this.relatedQuery.where(`${this.pivotTable}.${this.pivotLocalKey}`, this.parent[this.fromKey])
   }
 
-  paginate (page, perPage) {
+  /**
+   * Returns a cloned query with the join statement to be
+   * used for fetching aggregates or paginate results.
+   *
+   * @param   {String} expression
+   *
+   * @return  {Object}
+   *
+   * @private
+   */
+  _getAlternateQuery (expression) {
     const self = this
+    const countByQuery = this.relatedQuery.clone()
+
+    countByQuery.innerJoin(this.pivotTable, function () {
+      this.on(`${self.related.table}.${self.toKey}`, `${self.pivotTable}.${self.pivotOtherKey}`)
+    }).where(`${this.pivotTable}.${this.pivotLocalKey}`, this.parent[this.fromKey])
+
+    return countByQuery
+  }
+
+  /**
+   * paginates over a set of results based upon current page
+   * and values to be fetched per page.
+   *
+   * @method paginate
+   *
+   * @param  {Number} page
+   * @param  {Number} perPage
+   *
+   * @return {Array}
+   */
+  paginate (page, perPage) {
     this._validateRead()
     /**
      * creating the query clone to be used as countByQuery,
      * since selecting fields in countby requires unwanted
      * groupBy clauses.
      */
-    const countByQuery = this.relatedQuery.clone()
-    this._decorateRead()
+    const countByQuery = this._getAlternateQuery().count(`${this.pivotTable}.${this.pivotLocalKey} as total`)
 
     /**
-     * duplicating the innerJoin and where clause. Doing
-     * it inline here as it is not required by any other
-     * method and over seperating concerns is hard to
-     * understand later.
+     * It is important to decorate the actual query
+     * builder after fetching the alternate query
+     * since fresh query builder is required
+     * to return alternate query
      */
-    countByQuery
-      .innerJoin(this.pivotTable, function () {
-        this.on(`${self.related.table}.${self.toKey}`, `${self.pivotTable}.${self.pivotOtherKey}`)
-      })
-      .where(`${this.pivotTable}.${this.pivotLocalKey}`, this.parent[this.fromKey])
-      .count(`${this.pivotTable}.${this.pivotLocalKey} as total`)
+    this._decorateRead()
 
     /**
      * calling the paginate method on proxies query builder
      * which optionally accepts a countByQuery
      */
     return this.relatedQuery.paginate(page, perPage, countByQuery)
+  }
+
+  /**
+   * Returns count of rows for the related row
+   *
+   * @param  {String} expression
+   *
+   * @return {Array}
+   */
+  count (expression) {
+    this._validateRead()
+    return this._getAlternateQuery().count(expression)
+  }
+
+  /**
+   * Returns avg for a given column
+   *
+   * @param  {String} column
+   *
+   * @return {Array}
+   */
+  avg (column) {
+    this._validateRead()
+    return this._getAlternateQuery().avg(column)
+  }
+
+  /**
+   * Return min value for a column
+   *
+   * @param  {String} column
+   *
+   * @return {Array}
+   */
+  min (column) {
+    this._validateRead()
+    return this._getAlternateQuery().min(column)
+  }
+
+  /**
+   * Return max value for a column
+   *
+   * @param  {String} column
+   *
+   * @return {Array}
+   */
+  max (column) {
+    this._validateRead()
+    return this._getAlternateQuery().max(column)
+  }
+
+  /**
+   * Throws exception since update should be
+   * done after getting the instance.
+   */
+  increment () {
+    throw CE.ModelRelationException.unSupportedMethod('increment', 'BelongsToMany')
+  }
+
+  /**
+   * Throws exception since update should be
+   * done after getting the instance.
+   */
+  decrement () {
+    throw CE.ModelRelationException.unSupportedMethod('decrement', 'BelongsToMany')
   }
 
   /**
@@ -202,11 +291,11 @@ class BelongsToMany extends Relation {
     pivotValues = pivotValues || {}
 
     if (!_.isArray(references) && !_.isObject(references)) {
-      throw new CE.ModelRelationAttachException('attach expects an array or an object of values to be attached')
+      throw CE.InvalidArgumentException.invalidParameter('attach expects an array of values or a plain object')
     }
 
     if (this.parent.isNew()) {
-      throw new CE.ModelRelationAttachException('Cannot attach values for an unsaved model instance')
+      throw CE.ModelRelationException.unSavedTarget('attach', this.parent.constructor.name, this.related.name)
     }
 
     if (!this.parent[this.fromKey]) {
@@ -242,7 +331,7 @@ class BelongsToMany extends Relation {
    */
   * detach (references) {
     if (this.parent.isNew()) {
-      throw new CE.ModelRelationDetachException('Cannot detach values for an unsaved model instance')
+      throw CE.ModelRelationException.unSavedTarget('detach', this.parent.constructor.name, this.related.name)
     }
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to attach values with ${this.fromKey} as primaryKey, whose value is falsy`)
@@ -283,14 +372,15 @@ class BelongsToMany extends Relation {
    */
   * save (relatedInstance) {
     if (relatedInstance instanceof this.related === false) {
-      throw new CE.ModelRelationSaveException('save accepts an instance of related model')
+      throw CE.ModelRelationException.relationMisMatch('save expects an instance of related model')
     }
     if (this.parent.isNew()) {
-      throw new CE.ModelRelationSaveException('cannot save relation for an unsaved model instance')
+      throw CE.ModelRelationException.unSavedTarget('save', this.parent.constructor.name, this.related.name)
     }
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to save relationship from ${this.parent.constructor.name} model with ${this.fromKey} as primaryKey, whose value is falsy`)
     }
+
     const isSaved = yield relatedInstance.save()
     if (isSaved) {
       yield this.attach([relatedInstance[this.toKey]])

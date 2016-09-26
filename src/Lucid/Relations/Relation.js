@@ -15,7 +15,7 @@ const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
 const cf = require('co-functional')
 const Ioc = require('adonis-fold').Ioc
-const CE = require('../Model/customExceptions')
+const CE = require('../../Exceptions')
 
 class Relation {
 
@@ -59,8 +59,9 @@ class Relation {
    */
   _validateRead () {
     if (this.parent.isNew()) {
-      throw new CE.ModelRelationException('Cannot fetch related model from an unsaved model instance')
+      throw CE.ModelRelationException.unSavedTarget('fetch', this.parent.constructor.name, this.related.name)
     }
+
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to fetch relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
     }
@@ -102,7 +103,7 @@ class Relation {
   /**
    * calls the paginate method on the related query builder
    *
-   * @return {Object}
+   * @return {Array}
    *
    * @public
    */
@@ -151,10 +152,10 @@ class Relation {
    */
   * save (relatedInstance) {
     if (relatedInstance instanceof this.related === false) {
-      throw new CE.ModelRelationSaveException('Save accepts an instance of related model')
+      throw CE.ModelRelationException.relationMisMatch('save accepts an instance of related model')
     }
     if (this.parent.isNew()) {
-      throw new CE.ModelRelationSaveException('Cannot save relation for an unsaved model instance')
+      throw CE.ModelRelationException.unSavedTarget('save', this.parent.constructor.name, this.related.name)
     }
     if (!this.parent[this.fromKey]) {
       logger.warn(`Trying to save relationship with ${this.fromKey} as primaryKey, whose value is falsy`)
@@ -179,6 +180,15 @@ class Relation {
     return relatedInstance
   }
 
+  /**
+   * create many related instances
+   *
+   * @method createMany
+   *
+   * @param  {Array}   arrayOfValues an array of saved instance
+   *
+   * @return {Array}
+   */
   * createMany (arrayOfValues) {
     const self = this
     return cf.map(function * (values) {
@@ -186,6 +196,15 @@ class Relation {
     }, arrayOfValues)
   }
 
+  /**
+   * saved many related instances
+   *
+   * @method saveMany
+   *
+   * @param  {Array}   arrayOfValues an array of booleans
+   *
+   * @return {Array}
+   */
   * saveMany (arrayOfInstances) {
     const self = this
     return cf.map(function * (relatedInstance) {

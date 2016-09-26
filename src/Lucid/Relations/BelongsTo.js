@@ -10,7 +10,7 @@
 */
 
 const Relation = require('./Relation')
-const CE = require('../Model/customExceptions')
+const CE = require('../../Exceptions')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
 
@@ -56,7 +56,7 @@ class BelongsTo extends Relation {
    * @throws CE.ModelRelationException
    */
   paginate () {
-    throw new CE.ModelRelationException('Cannot call paginate on a belongsTo relation')
+    throw CE.ModelRelationException.unSupportedMethod('paginate', this.constructor.name)
   }
 
   /**
@@ -66,7 +66,7 @@ class BelongsTo extends Relation {
    * @public
    */
   * save () {
-    throw new CE.ModelRelationSaveException('Cannot call save method on a belongsTo relation, use associate instead')
+    throw CE.ModelRelationException.unSupportedMethod('save', this.constructor.name)
   }
 
   /**
@@ -76,27 +76,31 @@ class BelongsTo extends Relation {
    * @public
    */
   * create () {
-    throw new CE.ModelRelationSaveException('Cannot call create method on a belongsTo relation, use associate instead')
+    throw CE.ModelRelationException.unSupportedMethod('create', this.constructor.name)
   }
 
   /**
-   * overrides base createMany method to throw an error, as
-   * belongsTo does not support createMany method
+   * belongsTo cannot have createMany, since it
+   * maps one to one relationship
    *
    * @public
+   *
+   * @throws CE.ModelRelationException
    */
   * createMany () {
-    throw new CE.ModelRelationSaveException('Cannot call createMany method on a belongsTo relation, use associate instead')
+    throw CE.ModelRelationException.unSupportedMethod('createMany', this.constructor.name)
   }
 
   /**
-   * overrides base saveMany method to throw an error, as
-   * belongsTo does not support saveMany method
+   * belongsTo cannot have saveMany, since it
+   * maps one to one relationship
    *
    * @public
+   *
+   * @throws CE.ModelRelationException
    */
   * saveMany () {
-    throw new CE.ModelRelationSaveException('Cannot call saveMany method on a belongsTo relation, use associate instead')
+    throw CE.ModelRelationException.unSupportedMethod('saveMany', this.constructor.name)
   }
 
   /**
@@ -109,10 +113,10 @@ class BelongsTo extends Relation {
    */
   associate (relatedInstance) {
     if (relatedInstance instanceof this.related === false) {
-      throw new CE.ModelRelationAssociateException('Associate accepts an instance of related model')
+      throw CE.ModelRelationException.relationMisMatch('associate accepts an instance of related model')
     }
     if (relatedInstance.isNew()) {
-      throw new CE.ModelRelationAssociateException('Cannot associate an unsaved related model')
+      throw CE.ModelRelationException.unSavedTarget('associate', this.parent.constructor.name, this.related.name)
     }
     if (!relatedInstance[this.toKey]) {
       logger.warn(`Trying to associate relationship with ${this.toKey} as foriegnKey, whose value is falsy`)

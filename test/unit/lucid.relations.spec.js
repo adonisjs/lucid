@@ -127,7 +127,7 @@ describe('Relations', function () {
       const supplier = new Supplier()
       const sql = supplier.account().where('age', 22).toSQL()
       expect(queryHelpers.formatQuery(sql.sql)).to.equal(queryHelpers.formatQuery('select * from "accounts" where "name" = ? and "age" = ?'))
-      expect(sql.bindings).deep.equal(['joana', 22])
+      expect(sql.bindings).deep.equal(queryHelpers.formatBindings(['joana', 22]))
     })
 
     it('should throw an error when target model has not been saved and calling fetch on related model', function * () {
@@ -143,7 +143,8 @@ describe('Relations', function () {
         yield supplier.account().where('age', 22).fetch()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.message).to.match(/cannot fetch related model from an unsaved model instance/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_UNSAVED_MODEL_INSTANCE: Cannot perform fetch on Account model since Supplier instance is unsaved')
       }
     })
 
@@ -315,8 +316,8 @@ describe('Relations', function () {
       try {
         yield Supplier.query().with('profiles').first()
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationNotFound')
-        expect(e.message).to.match(/cannot find profiles as a relation/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_MISSING_DATABASE_RELATION: profiles is not defined on Supplier model as a relationship')
       }
       yield relationFixtures.truncate(Database, 'suppliers')
     })
@@ -837,7 +838,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'profiles')
     })
 
-    it('should be able to save related model instance', function * (done) {
+    it('should be able to save related model instance', function * () {
       class Account extends Model {
       }
       class Supplier extends Model {
@@ -855,7 +856,6 @@ describe('Relations', function () {
       expect(account.supplier_id).to.equal(supplier.id)
       yield relationFixtures.truncate(Database, 'suppliers')
       yield relationFixtures.truncate(Database, 'accounts')
-      done()
     })
 
     it('should throw error when trying to saveMany model instances', function * () {
@@ -876,8 +876,8 @@ describe('Relations', function () {
         yield supplier.account().saveMany([account])
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/Cannot call saveMany method with hasOne relation/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: saveMany is not supported by HasOne relationship')
       } finally {
         yield relationFixtures.truncate(Database, 'suppliers')
       }
@@ -901,8 +901,8 @@ describe('Relations', function () {
         yield supplier.account().createMany([account])
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/Cannot call createMany method with hasOne relation/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: createMany is not supported by HasOne relationship')
       } finally {
         yield relationFixtures.truncate(Database, 'suppliers')
       }
@@ -974,8 +974,8 @@ describe('Relations', function () {
         yield supplier.account().save({name: 're'})
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/save accepts an instance of related model/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_INSTANCE: save accepts an instance of related model')
       }
       yield relationFixtures.truncate(Database, 'suppliers')
     })
@@ -996,8 +996,8 @@ describe('Relations', function () {
         yield supplier.account().save(account)
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/cannot save relation for an unsaved model instance/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_UNSAVED_MODEL_INSTANCE: Cannot perform save on Account model since Supplier instance is unsaved')
       }
     })
 
@@ -1180,6 +1180,48 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'suppliers')
       yield relationFixtures.truncate(Database, 'accounts')
     })
+
+    it('should be able increment the values on the relationship', function * () {
+      const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
+      yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
+
+      class Account extends Model {
+      }
+
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+
+      const supplier = yield Supplier.find(savedSupplier[0])
+      const query = supplier.account().increment('points').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('update "accounts" set "points" = "points" + 1 where "supplier_id" = ?'))
+      expect(query.bindings).deep.equal(queryHelpers.formatBindings([savedSupplier[0]]))
+      yield relationFixtures.truncate(Database, 'suppliers')
+      yield relationFixtures.truncate(Database, 'accounts')
+    })
+
+    it('should be able decrement the values on the relationship', function * () {
+      const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
+      yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
+
+      class Account extends Model {
+      }
+
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+
+      const supplier = yield Supplier.find(savedSupplier[0])
+      const query = supplier.account().decrement('points').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('update "accounts" set "points" = "points" - 1 where "supplier_id" = ?'))
+      expect(query.bindings).deep.equal(queryHelpers.formatBindings([savedSupplier[0]]))
+      yield relationFixtures.truncate(Database, 'suppliers')
+      yield relationFixtures.truncate(Database, 'accounts')
+    })
   })
 
   context('HasMany', function () {
@@ -1206,7 +1248,7 @@ describe('Relations', function () {
       const post = new Post()
       const relatedQuery = post.comments().where('is_draft', false).toSQL()
       expect(queryHelpers.formatQuery(relatedQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "comments" where "is_draft" = ?'))
-      expect(relatedQuery.bindings).deep.equal([false])
+      expect(relatedQuery.bindings).deep.equal(queryHelpers.formatBindings([false]))
     })
 
     it('should be able to fetch results from related model', function * () {
@@ -1441,6 +1483,141 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'posts')
       yield relationFixtures.truncate(Database, 'comments')
     })
+
+    it('should be able to increment the values on the relationship', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
+      yield relationFixtures.createRecords(Database, 'comments', [{body: 'Nice article', post_id: savedPost[0]}, {body: 'Another article', post_id: savedPost[0]}])
+
+      class Comment extends Model {
+      }
+
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+
+      const post = yield Post.find(savedPost[0])
+      const query = yield post.comments().increment('likes').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('update "comments" set "likes" = "likes" + 1 where "post_id" = ?'))
+      expect(query.bindings).deep.equal(queryHelpers.formatBindings([savedPost[0]]))
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to decrement the values on the relationship', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
+      yield relationFixtures.createRecords(Database, 'comments', [{body: 'Nice article', post_id: savedPost[0]}, {body: 'Another article', post_id: savedPost[0]}])
+
+      class Comment extends Model {
+      }
+
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+
+      const post = yield Post.find(savedPost[0])
+      const query = yield post.comments().decrement('likes').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('update "comments" set "likes" = "likes" - 1 where "post_id" = ?'))
+      expect(query.bindings).deep.equal(queryHelpers.formatBindings([savedPost[0]]))
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to count the number of related rows', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
+      yield relationFixtures.createRecords(Database, 'comments', [{body: 'Nice article', post_id: savedPost[0]}, {body: 'Another article', post_id: savedPost[0]}])
+
+      class Comment extends Model {
+      }
+
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+
+      const post = yield Post.find(savedPost[0])
+      const query = yield post.comments().count('* as total').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select count(*) as "total" from "comments" where "post_id" = ?'))
+      expect(query.bindings).deep.equal(queryHelpers.formatBindings([savedPost[0]]))
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to fetch ids from the relationship', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
+      yield relationFixtures.createRecords(Database, 'comments', [{body: 'Nice article', post_id: savedPost[0]}, {body: 'Another article', post_id: savedPost[0]}])
+
+      class Comment extends Model {
+      }
+
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+
+      const post = yield Post.find(savedPost[0])
+      const query = yield post.comments().ids().toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select "id", "id" from "comments" where "post_id" = ?'))
+      expect(query.bindings).deep.equal(queryHelpers.formatBindings([savedPost[0]]))
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to fetch ids from the relationship', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
+      yield relationFixtures.createRecords(Database, 'comments', [{body: 'Nice article', post_id: savedPost[0]}, {body: 'Another article', post_id: savedPost[0]}])
+
+      class Comment extends Model {
+      }
+
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+
+      const post = yield Post.find(savedPost[0])
+      const query = yield post.comments().ids().toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select "id", "id" from "comments" where "post_id" = ?'))
+      expect(query.bindings).deep.equal(queryHelpers.formatBindings([savedPost[0]]))
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
+
+    it('should be able to fetch key/value pair of two fields from the relationship', function * () {
+      const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
+      yield relationFixtures.createRecords(Database, 'comments', [{body: 'Nice article', post_id: savedPost[0]}, {body: 'Another article', post_id: savedPost[0]}])
+      let commentsQuery = null
+
+      class Comment extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery((query) => {
+            commentsQuery = query
+          })
+        }
+      }
+
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+
+      Comment.bootIfNotBooted()
+      const post = yield Post.find(savedPost[0])
+      const comments = yield post.comments().pair('id', 'body')
+      expect(comments).deep.equal({'1': 'Nice article', 2: 'Another article'})
+      expect(queryHelpers.formatQuery(commentsQuery.sql)).to.equal(queryHelpers.formatQuery('select "id", "body" from "comments" where "post_id" = ?'))
+      expect(commentsQuery.bindings).deep.equal(queryHelpers.formatBindings([savedPost[0]]))
+      yield relationFixtures.truncate(Database, 'posts')
+      yield relationFixtures.truncate(Database, 'comments')
+    })
   })
 
   context('BelongsTo', function () {
@@ -1480,7 +1657,7 @@ describe('Relations', function () {
       const comment = new Comment()
       const relatedQuery = comment.post().where('is_draft', false).toSQL()
       expect(queryHelpers.formatQuery(relatedQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "posts" where "is_draft" = ?'))
-      expect(relatedQuery.bindings).deep.equal([false])
+      expect(relatedQuery.bindings).deep.equal(queryHelpers.formatBindings([false]))
     })
 
     it('should be able to fetch results from related model', function * () {
@@ -1709,7 +1886,7 @@ describe('Relations', function () {
       const fn = function () {
         return comment.post().associate(post)
       }
-      expect(fn).to.throw(/associate accepts an instance of related model/i)
+      expect(fn).to.throw('ModelRelationException: E_INVALID_RELATION_INSTANCE: associate accepts an instance of related model')
     })
 
     it('should throw an error when trying to associate a related model which is unsaved', function * () {
@@ -1728,7 +1905,7 @@ describe('Relations', function () {
       const fn = function () {
         return comment.post().associate(post)
       }
-      expect(fn).to.throw(/Cannot associate an unsaved related model/i)
+      expect(fn).to.throw('ModelRelationException: E_UNSAVED_MODEL_INSTANCE: Cannot perform associate on Post model since Comment instance is unsaved')
     })
 
     it('should throw an error when trying to call save method on a belongsTo relation', function * () {
@@ -1748,8 +1925,8 @@ describe('Relations', function () {
         yield comment.post().save(post)
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/cannot call save method on a belongsTo relation/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: save is not supported by BelongsTo relationship')
       }
     })
 
@@ -1770,8 +1947,8 @@ describe('Relations', function () {
         yield comment.post().saveMany([post])
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/cannot call saveMany method on a belongsTo relation/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: saveMany is not supported by BelongsTo relationship')
       }
     })
 
@@ -1792,8 +1969,8 @@ describe('Relations', function () {
         yield comment.post().create(post)
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/cannot call create method on a belongsTo relation/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: create is not supported by BelongsTo relationship')
       }
     })
 
@@ -1814,8 +1991,8 @@ describe('Relations', function () {
         yield comment.post().createMany([post])
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/cannot call createMany method on a belongsTo relation/i)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: createMany is not supported by BelongsTo relationship')
       }
     })
 
@@ -1879,7 +2056,7 @@ describe('Relations', function () {
       const student = new Student()
       const relatedQuery = student.courses().where('is_draft', false).toSQL()
       expect(queryHelpers.formatQuery(relatedQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "courses" where "is_draft" = ?'))
-      expect(relatedQuery.bindings).deep.equal([false])
+      expect(relatedQuery.bindings).deep.equal(queryHelpers.formatBindings([false]))
     })
 
     it('should be able to fetch results for related model', function * () {
@@ -1968,7 +2145,7 @@ describe('Relations', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('ModelRelationException')
-        expect(e.message).to.match(/Cannot fetch related model from an unsaved model instance/)
+        expect(e.message).to.equal('E_UNSAVED_MODEL_INSTANCE: Cannot perform fetch on Course model since Student instance is unsaved')
       }
     })
 
@@ -2022,7 +2199,7 @@ describe('Relations', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('ModelRelationException')
-        expect(e.message).to.match(/Cannot fetch related model from an unsaved model instance/)
+        expect(e.message).to.equal('E_UNSAVED_MODEL_INSTANCE: Cannot perform fetch on Course model since Student instance is unsaved')
       }
     })
 
@@ -2182,8 +2359,8 @@ describe('Relations', function () {
         yield student.courses().attach('foo')
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationAttachException')
-        expect(e.message).to.match(/attach expects an array or an object of values to be attached/i)
+        expect(e.name).to.equal('InvalidArgumentException')
+        expect(e.message).to.equal('E_INVALID_PARAMETER: attach expects an array of values or a plain object')
       }
       yield relationFixtures.truncate(Database, 'students')
     })
@@ -2532,8 +2709,8 @@ describe('Relations', function () {
         yield student.courses().save({title: 'chemistry'})
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/save accepts an instance of related model/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_INSTANCE: save expects an instance of related model')
       }
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
@@ -2556,8 +2733,8 @@ describe('Relations', function () {
         yield student.courses().save(new Course())
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/cannot save relation for an unsaved model instance/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_UNSAVED_MODEL_INSTANCE: Cannot perform save on Course model since Student instance is unsaved')
       }
     })
 
@@ -2577,6 +2754,217 @@ describe('Relations', function () {
       expect(student.id).to.equal(savedStudent[0])
       const course = yield student.courses().create({title: 'chemistry'})
       expect(course.$dirty).deep.equal({})
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should be able to count rows of related model', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12})
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse[0]}])
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: null, course_id: savedCourse[0]}])
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      const query = student.courses().count('* as total').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select count(*) as "total" from "courses" inner join "course_student" on "courses"."id" = "course_student"."course_id" where "course_student"."student_id" = ?'))
+      const courses = yield student.courses().count('* as total')
+      expect(Number(courses[0].total)).to.equal(1)
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should be able to find avg of a column on related model', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12, weightage: 8})
+      const savedCourse1 = yield relationFixtures.createRecords(Database, 'courses', {title: 'maths', id: 14, weightage: 6})
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse[0]}])
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse1[0]}])
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: null, course_id: savedCourse1[0]}])
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      const query = student.courses().avg('weightage').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select avg("weightage") from "courses" inner join "course_student" on "courses"."id" = "course_student"."course_id" where "course_student"."student_id" = ?'))
+      const coursesWeightage = yield student.courses().avg('weightage as weightage')
+      expect(Number(coursesWeightage[0].weightage)).to.equal(7)
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should be able to find max value of a column on related model', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12, weightage: 8})
+      const savedCourse1 = yield relationFixtures.createRecords(Database, 'courses', {title: 'maths', id: 14, weightage: 6})
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse[0]}])
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse1[0]}])
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: null, course_id: savedCourse1[0]}])
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      const query = student.courses().min('weightage').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select min("weightage") from "courses" inner join "course_student" on "courses"."id" = "course_student"."course_id" where "course_student"."student_id" = ?'))
+      const coursesWeightage = yield student.courses().min('weightage as weightage')
+      expect(coursesWeightage[0].weightage).to.equal(6)
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should be able to find min value of a column on related model', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12, weightage: 8})
+      const savedCourse1 = yield relationFixtures.createRecords(Database, 'courses', {title: 'maths', id: 14, weightage: 6})
+      const savedCourse2 = yield relationFixtures.createRecords(Database, 'courses', {title: 'science', weightage: 20})
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse[0]}])
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse1[0]}])
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: null, course_id: savedCourse2[0]}])
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      const query = student.courses().max('weightage').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select max("weightage") from "courses" inner join "course_student" on "courses"."id" = "course_student"."course_id" where "course_student"."student_id" = ?'))
+      const coursesWeightage = yield student.courses().max('weightage as weightage')
+      expect(coursesWeightage[0].weightage).to.equal(8)
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should throw exception when increment is called on relationship', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12, weightage: 8})
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse[0]}])
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      try {
+        const weightage = yield student.courses().increment('weightage')
+        expect(weightage).to.not.exist
+      } catch (e) {
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: increment is not supported by BelongsToMany relationship')
+      } finally {
+        yield relationFixtures.truncate(Database, 'students')
+        yield relationFixtures.truncate(Database, 'courses')
+        yield relationFixtures.truncate(Database, 'course_student')
+      }
+    })
+
+    it('should throw exception when decrement is called on relationship', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12, weightage: 8})
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse[0]}])
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      try {
+        const weightage = yield student.courses().decrement('weightage')
+        expect(weightage).to.not.exist
+      } catch (e) {
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: decrement is not supported by BelongsToMany relationship')
+      } finally {
+        yield relationFixtures.truncate(Database, 'students')
+        yield relationFixtures.truncate(Database, 'courses')
+        yield relationFixtures.truncate(Database, 'course_student')
+      }
+    })
+
+    it('should be able to pick ids for the related table', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12, weightage: 8})
+      const savedCourse1 = yield relationFixtures.createRecords(Database, 'courses', {title: 'maths', id: 14, weightage: 6})
+      const savedCourse2 = yield relationFixtures.createRecords(Database, 'courses', {title: 'science', weightage: 20})
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse[0]}])
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse1[0]}])
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: null, course_id: savedCourse2[0]}])
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      const coursesIds = yield student.courses().ids()
+      expect(coursesIds).deep.equal([12, 14])
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should be able to pick key/value pair for the related table', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12, weightage: 8})
+      const savedCourse1 = yield relationFixtures.createRecords(Database, 'courses', {title: 'maths', id: 14, weightage: 6})
+      const savedCourse2 = yield relationFixtures.createRecords(Database, 'courses', {title: 'science', weightage: 20})
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse[0]}])
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse1[0]}])
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: null, course_id: savedCourse2[0]}])
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      const courses = yield student.courses().pair('id', 'title')
+      expect(courses).deep.equal({'12': 'geometry', '14': 'maths'})
 
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
@@ -2786,8 +3174,8 @@ describe('Relations', function () {
         yield country.publications().save()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/Cannot call save/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: save is not supported by HasManyThrough relationship')
       }
     })
 
@@ -2806,8 +3194,8 @@ describe('Relations', function () {
         yield country.publications().saveMany()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/Cannot call saveMany/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: saveMany is not supported by HasManyThrough relationship')
       }
     })
 
@@ -2826,9 +3214,109 @@ describe('Relations', function () {
         yield country.publications().createMany()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('ModelRelationSaveException')
-        expect(e.message).to.match(/Cannot call createMany/)
+        expect(e.name).to.equal('ModelRelationException')
+        expect(e.message).to.equal('E_INVALID_RELATION_METHOD: createMany is not supported by HasManyThrough relationship')
       }
+    })
+
+    it('should be able to count rows of related model', function * () {
+      const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND', id: 11})
+      const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0], id: 23})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0], amount: 20})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn part 2', author_id: savedAuthor[0], amount: 10})
+      class Author extends Model {
+      }
+      class Publication extends Model {
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      Publication.bootIfNotBooted()
+      const country = yield Country.find(savedCountry[0])
+      const query = country.publications().count('publications.id as total').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select count("publications"."id") as "total" from "publications" inner join "authors" on "authors"."id" = "publications"."author_id" where "authors"."country_id" = ?'))
+      const publicationsCount = yield country.publications().count('publications.id as total')
+      expect(Number(publicationsCount[0].total)).deep.equal(2)
+      yield relationFixtures.truncate(Database, 'countries')
+      yield relationFixtures.truncate(Database, 'authors')
+      yield relationFixtures.truncate(Database, 'publications')
+    })
+
+    it('should be able to find avg on related model', function * () {
+      const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND', id: 11})
+      const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0], id: 23})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0], amount: 20})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn part 2', author_id: savedAuthor[0], amount: 10})
+      class Author extends Model {
+      }
+      class Publication extends Model {
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      Publication.bootIfNotBooted()
+      const country = yield Country.find(savedCountry[0])
+      const query = country.publications().avg('amount as amount').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select avg("amount") as "amount" from "publications" inner join "authors" on "authors"."id" = "publications"."author_id" where "authors"."country_id" = ?'))
+      const publicationsCount = yield country.publications().avg('amount as amount')
+      expect(Number(publicationsCount[0].amount)).deep.equal(15)
+      yield relationFixtures.truncate(Database, 'countries')
+      yield relationFixtures.truncate(Database, 'authors')
+      yield relationFixtures.truncate(Database, 'publications')
+    })
+
+    it('should be able to find min on related model', function * () {
+      const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND', id: 11})
+      const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0], id: 23})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0], amount: 20})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn part 2', author_id: savedAuthor[0], amount: 10})
+      class Author extends Model {
+      }
+      class Publication extends Model {
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      Publication.bootIfNotBooted()
+      const country = yield Country.find(savedCountry[0])
+      const query = country.publications().min('amount as amount').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select min("amount") as "amount" from "publications" inner join "authors" on "authors"."id" = "publications"."author_id" where "authors"."country_id" = ?'))
+      const publicationsCount = yield country.publications().min('amount as amount')
+      expect(Number(publicationsCount[0].amount)).deep.equal(10)
+      yield relationFixtures.truncate(Database, 'countries')
+      yield relationFixtures.truncate(Database, 'authors')
+      yield relationFixtures.truncate(Database, 'publications')
+    })
+
+    it('should be able to find max on related model', function * () {
+      const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND', id: 11})
+      const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0], id: 23})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0], amount: 20})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn part 2', author_id: savedAuthor[0], amount: 10})
+      class Author extends Model {
+      }
+      class Publication extends Model {
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      Publication.bootIfNotBooted()
+      const country = yield Country.find(savedCountry[0])
+      const query = country.publications().max('amount as amount').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select max("amount") as "amount" from "publications" inner join "authors" on "authors"."id" = "publications"."author_id" where "authors"."country_id" = ?'))
+      const publicationsCount = yield country.publications().max('amount as amount')
+      expect(Number(publicationsCount[0].amount)).deep.equal(20)
+      yield relationFixtures.truncate(Database, 'countries')
+      yield relationFixtures.truncate(Database, 'authors')
+      yield relationFixtures.truncate(Database, 'publications')
     })
   })
 

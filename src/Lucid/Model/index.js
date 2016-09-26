@@ -11,8 +11,7 @@
 
 require('harmony-reflect')
 const mixin = require('es6-class-mixin')
-const NE = require('node-exceptions')
-const CE = require('./customExceptions')
+const CE = require('../../Exceptions')
 const CatLog = require('cat-log')
 const cf = require('co-functional')
 const logger = new CatLog('adonis:lucid')
@@ -20,18 +19,30 @@ const _ = require('lodash')
 const util = require('../../../lib/util')
 const QueryBuilder = require('../QueryBuilder')
 const proxyHandler = require('./proxyHandler')
-const AccessorMutator = require('./Mixins/AccessorMutator')
-const Serializer = require('./Mixins/Serializer')
-const Persistance = require('./Mixins/Persistance')
-const Dates = require('./Mixins/Dates')
-const Hooks = require('./Mixins/Hooks')
-const HasOne = require('../Relations/HasOne')
-const HasMany = require('../Relations/HasMany')
-const BelongsTo = require('../Relations/BelongsTo')
-const BelongsToMany = require('../Relations/BelongsToMany')
-const HasManyThrough = require('../Relations/HasManyThrough')
-const EagerLoad = require('../Relations/EagerLoad')
+const Mixins = require('./Mixins')
+const Relations = require('../Relations')
 const BaseSerializer = require('../QueryBuilder/Serializers/Base')
+const Ioc = require('adonis-fold').Ioc
+const Resolver = require('adonis-binding-resolver')
+const resolver = new Resolver(Ioc)
+
+const hookNameSpace = 'Model/Hooks'
+
+/**
+ * returns a function that be executed with a key/value
+ * pair. Default closure will throw an exception.
+ *
+ * @method
+ *
+ * @param  {Function} [userClosure]
+ *
+ * @return {Function}
+ */
+const getFailException = (userClosure) => {
+  return typeof (userClosure) === 'function' ? userClosure : function (key, value) {
+    throw CE.ModelNotFoundException.raise(`Unable to fetch results for ${key} ${value}`)
+  }
+}
 
 /**
  * list of hooks allowed to be registered for a
@@ -61,7 +72,7 @@ class Model {
 
   constructor (values) {
     if (_.isArray(values)) {
-      throw new NE.InvalidArgumentException('cannot initiate a model with multiple rows. Make sure to pass a flat object')
+      throw CE.InvalidArgumentException.bulkInstantiate(this.constructor.name)
     }
     this.instantiate(values)
     return new Proxy(this, proxyHandler)
@@ -80,7 +91,7 @@ class Model {
     this.transaction = null // will be added via useTransaction
     this.relations = {}
     this.frozen = false
-    this.eagerLoad = new EagerLoad()
+    this.eagerLoad = new Relations.EagerLoad()
     if (values) {
       this.setJSON(values)
     }
@@ -96,6 +107,22 @@ class Model {
    */
   fill (values) {
     this.setJSON(values)
+  }
+
+  /**
+   * validates whether hooks is of valid type
+   * or not
+   *
+   * @method  _validateIsValidHookType
+   *
+   * @param   {String}                 type
+   *
+   * @private
+   */
+  static _validateIsValidHookType (type) {
+    if (validHookTypes.indexOf(type) <= -1) {
+      throw CE.InvalidArgumentException.invalidParameter(`${type} is not a valid hook type`)
+    }
   }
 
   /**
@@ -117,30 +144,19 @@ class Model {
    * @public
    */
   static addHook (type, name, handler) {
-    if (validHookTypes.indexOf(type) <= -1) {
-      throw new NE.InvalidArgumentException(`${type} is not a valid hook type`)
-    }
+    this._validateIsValidHookType(type)
+    const Helpers = Ioc.use('Adonis/Src/Helpers')
 
-    /**
-     * if handler is not defined, set name as handler. It is required coz
-     * we have 2nd parameter optional.
-     */
     if (!handler) {
       handler = name
       name = null
     }
 
-    /**
-     * handler should be a reference to a string or a valid function. Strings are
-     * assumed to be a reference to hook namespace and if autoloading fails an
-     * error will be thrown when calling hook
-     */
-    if (typeof (handler) !== 'function' && typeof (handler) !== 'string') {
-      throw new NE.InvalidArgumentException('hook handler must point to a valid generator method')
-    }
+    const resolvedHandler = typeof (handler) === 'string' ? Helpers.makeNameSpace(hookNameSpace, handler) : handler
+    resolver.validateBinding(resolvedHandler)
 
     this.$modelHooks[type] = this.$modelHooks[type] || []
-    this.$modelHooks[type].push({handler, name})
+    this.$modelHooks[type].push({handler: resolver.resolveBinding(resolvedHandler), name})
   }
 
   /**
@@ -246,6 +262,7 @@ class Model {
     logger.verbose(`booting ${this.name} model`)
     this.$modelHooks = {}
     this.$queryListeners = []
+    this.traits.forEach(this.use.bind(this))
 
     this.addGlobalScope((builder) => {
       if (this.deleteTimestamp && !builder.avoidTrashed) {
@@ -265,7 +282,7 @@ class Model {
    */
   static onQuery (callback) {
     if (typeof (callback) !== 'function') {
-      throw new NE.InvalidArgumentException('onQuery only excepts a callback function')
+      throw CE.InvalidArgumentException.invalidParameter('onQuery callback must be a function')
     }
     this.$queryListeners.push(callback)
   }
@@ -281,7 +298,7 @@ class Model {
   static addGlobalScope (callback) {
     this.globalScope = this.globalScope || []
     if (typeof (callback) !== 'function') {
-      throw new NE.InvalidArgumentException('global scope callback must be a function')
+      throw CE.InvalidArgumentException.invalidParameter('global scope callback must be a function')
     }
     this.globalScope.push(callback)
   }
@@ -297,6 +314,33 @@ class Model {
    */
   static get connection () {
     return 'default'
+  }
+
+  /**
+   * traits to be used on the model. These
+   * are loaded once a model is booted.
+   *
+   * @method traits
+   *
+   * @return {Array}
+   */
+  static get traits () {
+    return []
+  }
+
+  /**
+   * this method assigns a trait to the model.
+   *
+   * @method use
+   *
+   * @param  {String} trait
+   */
+  static use (trait) {
+    let resolvedTrait = Ioc.make(trait)
+    if (!resolvedTrait.register) {
+      throw CE.InvalidArgumentException.invalidTrait()
+    }
+    resolvedTrait.register(this)
   }
 
   /**
@@ -553,16 +597,17 @@ class Model {
    * found.
    *
    * @param  {Number}   value
+   * @param  {Function} [onErrorCallback]
    * @return {Object}
    *
    * @throws {ModelNotFoundException} If there are zero rows found.
    *
    * @public
    */
-  static * findOrFail (value) {
+  static * findOrFail (value, onErrorCallback) {
     const result = yield this.find(value)
     if (!result) {
-      throw new CE.ModelNotFoundException(`Unable to fetch results for ${this.primaryKey} ${value}`)
+      return getFailException(onErrorCallback)(this.primaryKey, value)
     }
     return result
   }
@@ -575,13 +620,14 @@ class Model {
    *
    * @param  {String}     key
    * @param  {Mixed}     value
+   * @param  {Function}  [onErrorCallback]
    *
    * @return {Object}
    */
-  static * findByOrFail (key, value) {
+  static * findByOrFail (key, value, onErrorCallback) {
     const result = yield this.findBy(key, value)
     if (!result) {
-      throw new CE.ModelNotFoundException(`Unable to fetch results for ${key} ${value}`)
+      return getFailException(onErrorCallback)(key, value)
     }
     return result
   }
@@ -806,7 +852,7 @@ class Model {
    */
   static * findOrCreate (attributes, values) {
     if (!attributes || !values) {
-      throw new NE.InvalidArgumentException('findOrCreate requires search attributes and create values both')
+      throw CE.InvalidArgumentException.missingParameter('findOrCreate expects both search attributes and values to persist')
     }
     const firstRecord = yield this.query().where(attributes).first()
     if (firstRecord) {
@@ -826,7 +872,7 @@ class Model {
    */
   static * createMany (arrayOfValues) {
     if (arrayOfValues instanceof Array === false) {
-      throw new NE.InvalidArgumentException('createMany requires an array of values')
+      throw CE.InvalidArgumentException.invalidParameter('createMany expects an array of values')
     }
     const self = this
     return cf.map(function * (values) {
@@ -847,7 +893,7 @@ class Model {
    * @public
    */
   hasOne (related, primaryKey, foreignKey) {
-    return new HasOne(this, related, primaryKey, foreignKey)
+    return new Relations.HasOne(this, related, primaryKey, foreignKey)
   }
 
   /**
@@ -863,7 +909,7 @@ class Model {
    * @public
    */
   hasMany (related, primaryKey, foreignKey) {
-    return new HasMany(this, related, primaryKey, foreignKey)
+    return new Relations.HasMany(this, related, primaryKey, foreignKey)
   }
 
   /**
@@ -879,7 +925,7 @@ class Model {
    * @public
    */
   belongsTo (related, primaryKey, foreignKey) {
-    return new BelongsTo(this, related, primaryKey, foreignKey)
+    return new Relations.BelongsTo(this, related, primaryKey, foreignKey)
   }
 
   /**
@@ -898,7 +944,7 @@ class Model {
    * @public
    */
   belongsToMany (related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey) {
-    return new BelongsToMany(this, related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey)
+    return new Relations.BelongsToMany(this, related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey)
   }
 
   /**
@@ -916,7 +962,7 @@ class Model {
    * @public
    */
   hasManyThrough (related, through, primaryKey, foreignKey, throughPrimaryKey, throughForeignKey) {
-    return new HasManyThrough(this, related, through, primaryKey, foreignKey, throughPrimaryKey, throughForeignKey)
+    return new Relations.HasManyThrough(this, related, through, primaryKey, foreignKey, throughPrimaryKey, throughForeignKey)
   }
 
   /**
@@ -997,7 +1043,13 @@ class Model {
   }
 }
 
-class ExtendedModel extends mixin(Model, AccessorMutator, Serializer, Persistance, Dates, Hooks) {
-}
+class ExtendedModel extends mixin(
+  Model,
+  Mixins.AccessorMutator,
+  Mixins.Serializer,
+  Mixins.Persistance,
+  Mixins.Dates,
+  Mixins.Hooks
+) {}
 
 module.exports = ExtendedModel

@@ -10,7 +10,7 @@
 */
 
 const Relation = require('./Relation')
-const CE = require('../Model/customExceptions')
+const CE = require('../../Exceptions')
 const helpers = require('../QueryBuilder/helpers')
 
 class HasManyThrough extends Relation {
@@ -47,31 +47,102 @@ class HasManyThrough extends Relation {
     this.relatedQuery.where(`${this.through.table}.${this.toKey}`, this.parent[this.fromKey])
   }
 
-  paginate (page, perPage) {
+  _getAlternateQuery () {
     const self = this
+    const queryClone = this.relatedQuery.clone()
+
+    queryClone
+    .innerJoin(`${this.through.table}`, function () {
+      this.on(`${self.through.table}.${self.viaKey}`, `${self.related.table}.${self.viaForeignKey}`)
+    })
+    .where(`${this.through.table}.${this.toKey}`, this.parent[this.fromKey])
+
+    return queryClone
+  }
+
+  /**
+   * Paginates over the related rows
+   *
+   * @param  {Number} page
+   * @param  {Number} [perPage=20]
+   *
+   * @return {Object}
+   */
+  paginate (page, perPage) {
     this._validateRead()
     /**
      * creating the query clone to be used as countByQuery,
      * since selecting fields in countby requires unwanted
      * groupBy clauses.
      */
-    const countByQuery = this.relatedQuery.clone()
+    const countByQuery = this._getAlternateQuery().count(`${this.through.table}.${this.toKey} as total`)
+
     this._decorateRead()
-
-    /**
-     * duplicating the innerJoin and where clause. Doing
-     * it inline here as it is not required by any other
-     * method and over seperating concerns is hard to
-     * understand later.
-     */
-    countByQuery
-    .innerJoin(`${this.through.table}`, function () {
-      this.on(`${self.through.table}.${self.viaKey}`, `${self.related.table}.${self.viaForeignKey}`)
-    })
-    .where(`${this.through.table}.${this.toKey}`, this.parent[this.fromKey])
-    .count(`${this.through.table}.${this.toKey} as total`)
-
     return this.relatedQuery.paginate(page, perPage, countByQuery)
+  }
+
+  /**
+   * Returns count of rows for the related row
+   *
+   * @param  {String} expression
+   *
+   * @return {Array}
+   */
+  count (expression) {
+    this._validateRead()
+    return this._getAlternateQuery().count(expression)
+  }
+
+  /**
+   * Returns avg for a given column
+   *
+   * @param  {String} column
+   *
+   * @return {Array}
+   */
+  avg (column) {
+    this._validateRead()
+    return this._getAlternateQuery().avg(column)
+  }
+
+  /**
+   * Return min value for a column
+   *
+   * @param  {String} column
+   *
+   * @return {Array}
+   */
+  min (column) {
+    this._validateRead()
+    return this._getAlternateQuery().min(column)
+  }
+
+  /**
+   * Return max value for a column
+   *
+   * @param  {String} column
+   *
+   * @return {Array}
+   */
+  max (column) {
+    this._validateRead()
+    return this._getAlternateQuery().max(column)
+  }
+
+  /**
+   * Throws exception since update should be
+   * done after getting the instance.
+   */
+  increment () {
+    throw CE.ModelRelationException.unSupportedMethod('increment', 'HasManyThrough')
+  }
+
+  /**
+   * Throws exception since update should be
+   * done after getting the instance.
+   */
+  decrement () {
+    throw CE.ModelRelationException.unSupportedMethod('decrement', 'HasManyThrough')
   }
 
   /**
@@ -124,20 +195,36 @@ class HasManyThrough extends Relation {
     return response
   }
 
+  /**
+   * Throws exception since save should be
+   * done after getting the instance.
+   */
   * save () {
-    throw new CE.ModelRelationSaveException('Cannot call save method with hasManyThrough relation')
+    throw CE.ModelRelationException.unSupportedMethod('save', this.constructor.name)
   }
 
+  /**
+   * Throws exception since create should be
+   * done after getting the instance.
+   */
   * create () {
-    throw new CE.ModelRelationSaveException('Cannot call create method with hasManyThrough relation')
+    throw CE.ModelRelationException.unSupportedMethod('create', this.constructor.name)
   }
 
+  /**
+   * Throws exception since createMany should be
+   * done after getting the instance.
+   */
   * createMany () {
-    throw new CE.ModelRelationSaveException('Cannot call createMany method with hasManyThrough relation')
+    throw CE.ModelRelationException.unSupportedMethod('createMany', this.constructor.name)
   }
 
+  /**
+   * Throws exception since saveMany should be
+   * done after getting the instance.
+   */
   * saveMany () {
-    throw new CE.ModelRelationSaveException('Cannot call saveMany method with hasManyThrough relation')
+    throw CE.ModelRelationException.unSupportedMethod('saveMany', this.constructor.name)
   }
 
 }

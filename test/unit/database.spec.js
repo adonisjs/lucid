@@ -38,8 +38,8 @@ describe('Database provider', function () {
 
   it('should set config provider', function () {
     Database._setConfigProvider(config)
-    const settings = Database._getConfig('sqlite3')
-    expect(settings.client).to.equal('sqlite3')
+    const settings = Database._resolveConnectionKey('sqlite3')
+    expect(settings).to.equal('sqlite3')
   })
 
   it('should setup a knex instance of default connection', function () {
@@ -58,7 +58,7 @@ describe('Database provider', function () {
     const fn = function () {
       Database.where()
     }
-    expect(fn).to.throw(/connection is not defined inside database config file/)
+    expect(fn).to.throw('InvalidArgumentException: E_MISSING_CONFIG: Make sure to define a connection inside the database config file')
   })
 
   it('should throw an error when unable to find connection settings using connection key', function () {
@@ -74,13 +74,21 @@ describe('Database provider', function () {
     const fn = function () {
       Database.where()
     }
-    expect(fn).to.throw(/Unable to get database client configuration using default key/)
+    expect(fn).to.throw('InvalidArgumentException: E_MISSING_CONFIG: Unable to get database client configuration for sqlite')
   })
 
   it('should reuse the old pool if exists', function () {
     Database._setConfigProvider(config)
     Database.table('users')
     Database.table('accounts')
+    const pools = Database.getConnectionPools()
+    expect(Object.keys(pools).length).to.equal(1)
+  })
+
+  it('should reuse the same connection when default connection is same as the named connection', function () {
+    Database._setConfigProvider(config)
+    Database.table('users')
+    Database.connection(process.env.DB).table('accounts')
     const pools = Database.getConnectionPools()
     expect(Object.keys(pools).length).to.equal(1)
   })

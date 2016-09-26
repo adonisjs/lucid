@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
 */
 
-/* global describe, it*/
+/* global describe, it */
 const util = require('../../lib/util')
 const path = require('path')
 const _ = require('lodash')

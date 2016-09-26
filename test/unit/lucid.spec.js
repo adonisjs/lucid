@@ -17,7 +17,6 @@ const moment = require('moment')
 const path = require('path')
 const Ioc = require('adonis-fold').Ioc
 const expect = chai.expect
-const NE = require('node-exceptions')
 const co = require('co')
 const filesFixtures = require('./fixtures/files')
 const modelFixtures = require('./fixtures/model')
@@ -85,7 +84,7 @@ describe('Lucid', function () {
       const fn = function () {
         User.addGlobalScope('hello')
       }
-      expect(fn).to.throw(NE.InvalidArgumentException, /global scope callback must be a function/i)
+      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: global scope callback must be a function')
     })
 
     it('should be able to add global scopes to the model instance', function () {
@@ -134,7 +133,7 @@ describe('Lucid', function () {
       const fn = function () {
         User.onQuery('foo')
       }
-      expect(fn).to.throw(/onQuery only excepts a callback function/)
+      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: onQuery callback must be a function')
     })
 
     it('should return query builder instance when .query method is called', function () {
@@ -160,7 +159,7 @@ describe('Lucid', function () {
       const fn = function () {
         return new User([{name: 'foo'}, {name: 'bar'}])
       }
-      expect(fn).to.throw(NE.InvalidArgumentException, /cannot initiate a model with multiple rows./)
+      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: Cannot instantiate User model with multiple rows, using createMany instead')
     })
 
     it('should be able to instantiate a model with an object of values', function () {
@@ -187,7 +186,8 @@ describe('Lucid', function () {
         user.name = 'foo'
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.message).to.match(/Cannot edit a frozen model/)
+        expect(e.name).to.equal('ModelException')
+        expect(e.message).to.equal('E_INVALID_MODEL_STATE: Cannot edit a frozen model')
       }
     })
 
@@ -347,8 +347,8 @@ describe('Lucid', function () {
         yield user.save()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('RuntimeException')
-        expect(e.message).to.match(/cannot save an empty model/i)
+        expect(e.name).to.equal('ModelException')
+        expect(e.message).to.equal('E_INVALID_MODEL_STATE: Cannot save empty User model')
       }
     })
 
@@ -527,7 +527,7 @@ describe('Lucid', function () {
       expect(user.created_at).to.equal(undefined)
     })
 
-    it('should update updated_at timestamp when model instance is updated', function * (done) {
+    it('should update updated_at timestamp when model instance is updated', function * () {
       class User extends Model {
         getUpdateTimestamp (date) {
           return moment(date).format('x')
@@ -539,19 +539,18 @@ describe('Lucid', function () {
       yield user.save()
       const updatedTimestamp = user.updated_at
       user.firstname = 'dubba'
-      setTimeout(function () {
-        co(function * () {
-          yield user.save()
+      const delayedFn = function () {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            co(function * () {
+              yield user.save()
+            }).then(resolve).catch(reject)
+          }, 1000)
         })
-        .then(function () {
-          expect(user.updated_at).to.be.above(updatedTimestamp)
-          return User.query().truncate()
-        })
-        .then(function () {
-          done()
-        })
-        .catch(done)
-      }, 1000)
+      }
+      yield delayedFn()
+      expect(user.updated_at).to.be.above(updatedTimestamp)
+      yield User.query().truncate()
     })
 
     it('should not update updated_at timestamp when updateTimestamp is set to null', function * () {
@@ -608,7 +607,7 @@ describe('Lucid', function () {
       expect(user.isDeleted()).to.equal(false)
     })
 
-    it('should throw an error when soft deletes are not enabled and trying to restore a model instance', function * () {
+    it('should throw an exception when soft deletes are not enabled and trying to restore a model instance', function * () {
       class User extends Model {
       }
       User.bootIfNotBooted()
@@ -622,8 +621,8 @@ describe('Lucid', function () {
         yield user.restore()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.message).to.match(/Restore can only be done when soft deletes are enabled/)
-      } finally {
+        expect(e.name).to.equal('ModelException')
+        expect(e.message).to.equal('E_INVALID_MODEL_STATE: Cannot restore User model since soft deletes are not enabled')
       }
     })
 
@@ -650,6 +649,32 @@ describe('Lucid', function () {
       expect(user instanceof User).to.equal(true)
       expect(user.id).to.be.a('number')
       expect(user.isNew()).to.equal(false)
+    })
+
+    it('should throw an exception when findOrCreate does not receives the search attributes', function * () {
+      class User extends Model {
+      }
+      User.bootIfNotBooted()
+      try {
+        yield User.findOrCreate()
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('InvalidArgumentException')
+        expect(e.message).to.equal('E_MISSING_PARAMETER: findOrCreate expects both search attributes and values to persist')
+      }
+    })
+
+    it('should throw an exception when findOrCreate does not receives the values to be used for creating a model instance', function * () {
+      class User extends Model {
+      }
+      User.bootIfNotBooted()
+      try {
+        yield User.findOrCreate({username: 'foo'})
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('InvalidArgumentException')
+        expect(e.message).to.equal('E_MISSING_PARAMETER: findOrCreate expects both search attributes and values to persist')
+      }
     })
 
     it('should try to find first or create model instance using static findOrCreate method', function * () {
@@ -702,7 +727,7 @@ describe('Lucid', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('InvalidArgumentException')
-        expect(e.message).to.match(/createMany requires an array of values/)
+        expect(e.message).to.equal('E_INVALID_PARAMETER: createMany expects an array of values')
       }
     })
 
@@ -715,7 +740,7 @@ describe('Lucid', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('InvalidArgumentException')
-        expect(e.message).to.match(/cannot initiate a model with multiple rows/i)
+        expect(e.message).to.equal('E_INVALID_PARAMETER: Cannot instantiate User model with multiple rows, using createMany instead')
       }
     })
 
@@ -727,8 +752,8 @@ describe('Lucid', function () {
         yield User.create()
         expect(true).to.equal(false)
       } catch (e) {
-        expect(e.name).to.equal('RuntimeException')
-        expect(e.message).to.match(/cannot save an empty model/i)
+        expect(e.name).to.equal('ModelException')
+        expect(e.message).to.equal('E_INVALID_MODEL_STATE: Cannot save empty User model')
       }
     })
 
@@ -901,7 +926,21 @@ describe('Lucid', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('ModelNotFoundException')
-        expect(e.message).to.equal('Unable to fetch results for username koka')
+        expect(e.message).to.equal('E_MISSING_DATABASE_ROW: Unable to fetch results for username koka')
+      }
+    })
+
+    it('should be able to throw custom exception when findByOrFail fails', function * () {
+      class User extends Model {
+      }
+      try {
+        yield User.findByOrFail('username', 'koka', function (key, value) {
+          throw new Error(`${value} is a weird ${key}`)
+        })
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('Error')
+        expect(e.message).to.equal('koka is a weird username')
       }
     })
 
@@ -1022,7 +1061,21 @@ describe('Lucid', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('ModelNotFoundException')
-        expect(e.message).to.match(/unable to fetch results for id 1220/i)
+        expect(e.message).to.equal('E_MISSING_DATABASE_ROW: Unable to fetch results for id 1220')
+      }
+    })
+
+    it('should be able to throw custom exception when findOrFail fails', function * () {
+      class User extends Model {
+      }
+      try {
+        yield User.findOrFail(1220, function () {
+          throw new Error('My own exception')
+        })
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('Error')
+        expect(e.message).to.equal('My own exception')
       }
     })
 
@@ -1034,8 +1087,30 @@ describe('Lucid', function () {
         expect(true).to.equal(false)
       } catch (e) {
         expect(e.name).to.equal('ModelNotFoundException')
-        expect(e.message).to.match(/unable to find given row/i)
+        expect(e.message).to.equal('E_MISSING_DATABASE_ROW: Unable to fetch database results')
       }
+    })
+
+    it('should be able to throw custom exception when firstOfFail fails', function * () {
+      class User extends Model {
+      }
+      try {
+        yield User.query().where('id', 1220).firstOrFail(function () {
+          throw new Error('Cannot find results')
+        })
+        expect(true).to.equal(false)
+      } catch (e) {
+        expect(e.name).to.equal('Error')
+        expect(e.message).to.equal('Cannot find results')
+      }
+    })
+
+    it('should return first row when able to find the row using firstOrFail method', function * () {
+      class User extends Model {
+      }
+      yield User.create({username: 'foo'})
+      const user = yield User.query().where('username', 'foo').firstOrFail()
+      expect(user.username).to.equal('foo')
     })
 
     it('should return model instance using findOrFail method', function * () {
@@ -1223,7 +1298,7 @@ describe('Lucid', function () {
       const fn = function () {
         User.addHook('anytime', function () {})
       }
-      expect(fn).to.throw(NE.InvalidArgumentException, /anytime is not a valid hook type/)
+      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: anytime is not a valid hook type')
     })
 
     it('should throw an error when hook handler is defined', function () {
@@ -1231,7 +1306,7 @@ describe('Lucid', function () {
       const fn = function () {
         User.addHook('beforeCreate')
       }
-      expect(fn).to.throw(NE.InvalidArgumentException, /hook handler must point to a valid generator method/)
+      expect(fn).to.throw('InvalidArgumentException: E_INVALID_IOC_BINDING: Handler must point to a valid namespace or a closure')
     })
 
     it('should add a hook for a given type', function () {
@@ -1265,25 +1340,42 @@ describe('Lucid', function () {
       expect(User.$modelHooks['beforeCreate'][0].name).to.equal(null)
     })
 
+    it('should be able to remove an array of named hook', function () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      User.addHook('beforeCreate', function * () {})
+      User.addHook('beforeCreate', 'validateUser', function * () {})
+      User.addHook('beforeCreate', 'sanitizeUser', function * () {})
+      expect(User.$modelHooks['beforeCreate']).to.be.an('array')
+      expect(User.$modelHooks['beforeCreate'].length).to.equal(3)
+      User.removeHook(['validateUser', 'sanitizeUser'])
+      expect(User.$modelHooks['beforeCreate'].length).to.equal(1)
+      expect(User.$modelHooks['beforeCreate'][0].name).to.equal(null)
+    })
+
     it('should be able to define multiple hooks in a go', function () {
       class User extends Model {}
       User.bootIfNotBooted()
-      User.defineHooks('beforeCreate', 'UsersHook.validate', 'UsersHook.log')
+      User.defineHooks('beforeCreate', 'Users.validate', 'Users.log')
       expect(User.$modelHooks['beforeCreate']).to.be.an('array')
       expect(User.$modelHooks['beforeCreate'].length).to.equal(2)
-      expect(User.$modelHooks['beforeCreate'][0].handler).to.equal('UsersHook.validate')
-      expect(User.$modelHooks['beforeCreate'][1].handler).to.equal('UsersHook.log')
+      expect(User.$modelHooks['beforeCreate'][0].handler).to.have.property('instance')
+      expect(User.$modelHooks['beforeCreate'][0].handler).to.have.property('method')
+      expect(User.$modelHooks['beforeCreate'][1].handler).to.have.property('instance')
+      expect(User.$modelHooks['beforeCreate'][1].handler).to.have.property('method')
     })
 
     it('should override existing hooks when calling defineHooks', function () {
       class User extends Model {}
       User.bootIfNotBooted()
       User.addHook('beforeCreate', function * () {})
-      User.defineHooks('beforeCreate', 'UsersHook.validate', 'UsersHook.log')
+      User.defineHooks('beforeCreate', 'Users.validate', 'Users.log')
       expect(User.$modelHooks['beforeCreate']).to.be.an('array')
       expect(User.$modelHooks['beforeCreate'].length).to.equal(2)
-      expect(User.$modelHooks['beforeCreate'][0].handler).to.equal('UsersHook.validate')
-      expect(User.$modelHooks['beforeCreate'][1].handler).to.equal('UsersHook.log')
+      expect(User.$modelHooks['beforeCreate'][0].handler).to.have.property('instance')
+      expect(User.$modelHooks['beforeCreate'][0].handler).to.have.property('method')
+      expect(User.$modelHooks['beforeCreate'][1].handler).to.have.property('instance')
+      expect(User.$modelHooks['beforeCreate'][1].handler).to.have.property('method')
     })
 
     it('should execute beforeCreate hook when a model is saved to the database', function * () {
@@ -1514,14 +1606,13 @@ describe('Lucid', function () {
       }
     })
 
-    it('should continue save if beforeCreate has a setTimeout after yield next', function * (done) {
+    it('should continue save if beforeCreate has a setTimeout after yield next', function * () {
       class User extends Model {}
       User.bootIfNotBooted()
       User.addHook('beforeCreate', function * (next) {
         yield next
         setTimeout(() => {
           expect(this.id).to.be.a('number')
-          done()
         })
       })
       const user = new User()
@@ -1851,6 +1942,81 @@ describe('Lucid', function () {
       trx.commit()
       const getUsers = yield User.all()
       expect(getUsers.size()).to.equal(1)
+    })
+  })
+
+  context('Traits', function () {
+    it('should throw an exception when trait does not have register method', function () {
+      const MyTrait = {
+      }
+      class User extends Model {
+        static boot () {
+          super.boot()
+          this.use(MyTrait)
+        }
+      }
+      const fn = () => User.bootIfNotBooted()
+      expect(fn).to.throw('InvalidArgumentException: E_INVALID_MODEL_TRAIT: Make sure you have defined register method on model')
+    })
+
+    it('should be able to assign trait to the model', function () {
+      const MyTrait = {
+        register (Model) {
+          Model.findByTrait = function () {}
+        }
+      }
+      class User extends Model {
+        static boot () {
+          super.boot()
+          this.use(MyTrait)
+        }
+      }
+      User.bootIfNotBooted()
+      expect(User.findByTrait).to.be.a('function')
+    })
+
+    it('should be able to assign trait class to the model', function () {
+      class MyTrait {
+        get name () {
+          return 'foo'
+        }
+
+        register (Model) {
+          const name = this.name
+          Model.findByTrait = function () {
+            return name
+          }
+        }
+      }
+
+      class User extends Model {
+        static boot () {
+          super.boot()
+          this.use(MyTrait)
+        }
+      }
+
+      User.bootIfNotBooted()
+      expect(User.findByTrait).to.be.a('function')
+      expect(User.findByTrait()).to.equal('foo')
+    })
+
+    it('should be able to assign trait using static traits getters', function () {
+      const MyTrait = {
+        register (Model) {
+          Model.findByTrait = function () {}
+        }
+      }
+      class User extends Model {
+        static get traits () {
+          return [MyTrait]
+        }
+        static boot () {
+          super.boot()
+        }
+      }
+      User.bootIfNotBooted()
+      expect(User.findByTrait).to.be.a('function')
     })
   })
 })

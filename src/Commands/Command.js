@@ -11,6 +11,7 @@
 
 const util = require('../../lib/util')
 const Ioc = require('adonis-fold').Ioc
+const CE = require('../Exceptions')
 const BaseCommand = Ioc.use('Adonis/Src/Command')
 
 class Command extends BaseCommand {
@@ -70,7 +71,7 @@ class Command extends BaseCommand {
    */
   checkEnv (force) {
     if (process.env.NODE_ENV === 'production' && !force) {
-      throw new Error('Cannot run migrations in production. Use --force flag to continue')
+      throw CE.DomainException.unsafeEnv('Cannot run migrations in production. Use --force flag to continue')
     }
   }
 

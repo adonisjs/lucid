@@ -10,7 +10,7 @@
 */
 
 const _ = require('lodash')
-const CE = require('../Model/customExceptions')
+const CE = require('../../Exceptions')
 const methods = exports = module.exports = {}
 
 /**
@@ -138,7 +138,7 @@ methods.delete = methods.deleteAttributes
 methods.restoreAttributes = function (target) {
   return function (values) {
     if (!target.HostModel.deleteTimestamp) {
-      throw new Error('Restore can only be done when soft deletes are enabled.')
+      throw CE.ModelException.cannotRestore(target.HostModel.name)
     }
     values = values || {}
     values = target.HostModel.prototype.setRestoreTimestamp(values)
@@ -177,10 +177,13 @@ methods.first = function (target) {
  * @public
  */
 methods.firstOrFail = function (target) {
-  return function * () {
+  return function * (onErrorCallback) {
     const row = yield this.first()
     if (!row) {
-      throw new CE.ModelNotFoundException('Unable to find given row')
+      onErrorCallback = typeof (onErrorCallback) === 'function' ? onErrorCallback : function () {
+        throw CE.ModelNotFoundException.raise('Unable to fetch database results')
+      }
+      return onErrorCallback()
     }
     return row
   }

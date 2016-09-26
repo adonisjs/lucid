@@ -11,9 +11,7 @@
 
 const _ = require('lodash')
 const mixin = require('es6-class-mixin')
-const Lock = require('./Mixins/Lock')
-const Migrate = require('./Mixins/Migrate')
-const Batch = require('./Mixins/Batch')
+const Mixins = require('./Mixins')
 let ConfigReference = null
 let DatabaseReference = null
 
@@ -148,7 +146,7 @@ class Migrations {
   }
 }
 
-class ExtendedMigrations extends mixin(Migrations, Lock, Migrate, Batch) {}
+class ExtendedMigrations extends mixin(Migrations, Mixins.Lock, Mixins.Migrate, Mixins.Batch) {}
 
 class MigrationsManager {
   constructor (Database, Config) {
