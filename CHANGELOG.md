@@ -1,3 +1,20 @@
+<a name="3.0.5"></a>
+## [3.0.5](https://github.com/adonisjs/adonis-lucid/compare/v3.0.4...v3.0.5) (2016-09-26)
+
+
+### Features
+
+* add support for named exceptions ([7e05830](https://github.com/adonisjs/adonis-lucid/commit/7e05830))
+* **lucid:** add aggregates on relationship ([584de74](https://github.com/adonisjs/adonis-lucid/commit/584de74)), closes [#48](https://github.com/adonisjs/adonis-lucid/issues/48)
+* **lucid:traits:** add support for assigning traits ([46773d8](https://github.com/adonisjs/adonis-lucid/commit/46773d8))
+
+
+### Performance Improvements
+
+* **lucid:hooks:** resolve hooks when adding ([17588c5](https://github.com/adonisjs/adonis-lucid/commit/17588c5))
+
+
+
 <a name="3.0.4"></a>
 ## [3.0.4](https://github.com/adonisjs/adonis-lucid/compare/v3.0.3...v3.0.4) (2016-08-14)
 
