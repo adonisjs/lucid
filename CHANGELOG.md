@@ -1,3 +1,13 @@
+<a name="3.0.6"></a>
+## [3.0.6](https://github.com/adonisjs/adonis-lucid/compare/v3.0.5...v3.0.6) (2016-09-27)
+
+
+### Bug Fixes
+
+* **lucid:** use primary key instead of id ([f85da85](https://github.com/adonisjs/adonis-lucid/commit/f85da85)), closes [#51](https://github.com/adonisjs/adonis-lucid/issues/51)
+
+
+
 <a name="3.0.5"></a>
 ## [3.0.5](https://github.com/adonisjs/adonis-lucid/compare/v3.0.4...v3.0.5) (2016-09-26)
 
