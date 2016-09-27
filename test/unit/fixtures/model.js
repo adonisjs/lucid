@@ -14,6 +14,14 @@ module.exports = {
         table.timestamps()
         table.timestamp('deleted_at').nullable()
       }),
+      knex.schema.createTable('zombies', function (table) {
+        table.increments('zombie_id')
+        table.string('username')
+        table.string('firstname')
+        table.string('lastname')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
       knex.schema.createTable('accounts', function (table) {
         table.increments()
         table.string('account_name')
@@ -48,6 +56,7 @@ module.exports = {
   down: function (knex) {
     const dropTables = [
       knex.schema.dropTable('users'),
+      knex.schema.dropTable('zombies'),
       knex.schema.dropTable('accounts'),
       knex.schema.dropTable('profiles'),
       knex.schema.dropTable('cars'),
@@ -59,6 +68,7 @@ module.exports = {
   truncate: function (knex) {
     const truncateTables = [
       knex.table('users').truncate(),
+      knex.table('zombies').truncate(),
       knex.table('accounts').truncate(),
       knex.table('profiles').truncate(),
       knex.table('cars').truncate(),

@@ -70,7 +70,7 @@ Peristance.update = function * () {
     if (this.transaction) {
       query.transacting(this.transaction)
     }
-    const affected = yield query.where('id', this.$primaryKeyValue).updateAttributes(dirtyValues)
+    const affected = yield query.where(this.constructor.primaryKey, this.$primaryKeyValue).updateAttributes(dirtyValues)
     if (affected > 0) {
       _.merge(this.attributes, dirtyValues)
       this.original = _.clone(this.attributes)
@@ -92,7 +92,7 @@ Peristance.update = function * () {
  */
 Peristance.delete = function * () {
   const deleteHandler = function * () {
-    const query = this.constructor.query().where('id', this.$primaryKeyValue)
+    const query = this.constructor.query().where(this.constructor.primaryKey, this.$primaryKeyValue)
     if (this.transaction) {
       query.transacting(this.transaction)
     }
@@ -117,7 +117,7 @@ Peristance.delete = function * () {
  */
 Peristance.restore = function * () {
   const restoreHandler = function * () {
-    const query = this.constructor.query().where('id', this.$primaryKeyValue)
+    const query = this.constructor.query().where(this.constructor.primaryKey, this.$primaryKeyValue)
     if (this.transaction) {
       query.transacting(this.transaction)
     }

@@ -44,6 +44,7 @@ describe('Lucid', function () {
 
   afterEach(function * () {
     yield Database.table('users').truncate()
+    yield Database.table('zombies').truncate()
   })
 
   context('Model', function () {
@@ -1794,6 +1795,77 @@ describe('Lucid', function () {
       yield user.save()
       const reFetchUser = yield User.findBy('username', 'foo')
       expect(reFetchUser.lastname).to.equal('foo')
+    })
+
+    it('should perform the update query on the model primary key instead of id', function * () {
+      let updateQuery = null
+      class Zombie extends Model {
+        static get primaryKey () {
+          return 'zombie_id'
+        }
+        static boot () {
+          super.boot()
+          this.onQuery((query) => {
+            updateQuery = query
+          })
+        }
+      }
+
+      Zombie.bootIfNotBooted()
+      const zombie = yield Zombie.create({username: 'foo', lastname: 'bar'})
+      expect(zombie.zombie_id).to.equal(1)
+      zombie.lastname = 'baz'
+      yield zombie.save()
+      expect(queryHelpers.formatQuery(updateQuery.sql)).to.equal(queryHelpers.formatQuery('update "zombies" set "lastname" = ?, "updated_at" = ? where "zombie_id" = ?'))
+      yield Zombie.findByOrFail('lastname', 'baz')
+    })
+
+    it('should perform the delete query on the model primary key instead of id', function * () {
+      let deleteQuery = null
+      class Zombie extends Model {
+        static get primaryKey () {
+          return 'zombie_id'
+        }
+        static boot () {
+          super.boot()
+          this.onQuery((query) => {
+            deleteQuery = query
+          })
+        }
+      }
+
+      Zombie.bootIfNotBooted()
+      const zombie = yield Zombie.create({username: 'foo', lastname: 'bar'})
+      expect(zombie.zombie_id).to.equal(1)
+      yield zombie.delete()
+      expect(queryHelpers.formatQuery(deleteQuery.sql)).to.equal(queryHelpers.formatQuery('delete from "zombies" where "zombie_id" = ?'))
+    })
+
+    it('should perform the restore query on the model primary key instead of id', function * () {
+      let restoreQuery = null
+      class Zombie extends Model {
+        static get primaryKey () {
+          return 'zombie_id'
+        }
+
+        static get deleteTimestamp () {
+          return 'deleted_at'
+        }
+
+        static boot () {
+          super.boot()
+          this.onQuery((query) => {
+            restoreQuery = query
+          })
+        }
+      }
+
+      Zombie.bootIfNotBooted()
+      const zombie = yield Zombie.create({username: 'foo', lastname: 'bar'})
+      expect(zombie.zombie_id).to.equal(1)
+      yield zombie.delete()
+      yield zombie.restore()
+      expect(queryHelpers.formatQuery(restoreQuery.sql)).to.equal(queryHelpers.formatQuery('update "zombies" set "deleted_at" = ?, "updated_at" = ? where "zombie_id" = ?'))
     })
   })
 
