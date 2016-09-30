@@ -10,12 +10,13 @@
 */
 
 /* global describe, it, before,after */
-const Migrations = require('../../src/Migrations')
-const Database = require('../../src/Database')
-const Schema = require('../../src/Schema')
 const _ = require('lodash')
 const Ioc = require('adonis-fold').Ioc
 const chai = require('chai')
+const cf = require('co-functional')
+const Migrations = require('../../src/Migrations')
+const Database = require('../../src/Database')
+const Schema = require('../../src/Schema')
 const filesFixtures = require('./fixtures/files')
 const config = require('./helpers/config')
 const expect = chai.expect
@@ -731,6 +732,7 @@ describe('Migrations', function () {
     const migrationsCompleted = yield runner.database.table('adonis_migrations')
     expect(migrationsCompleted).to.be.an('array')
     expect(migrationsCompleted).to.have.length(0)
+    yield runner.database.schema.dropTable('adonis_migrations')
   })
 
   it('should return the sql output for rollback', function * () {
@@ -755,5 +757,67 @@ describe('Migrations', function () {
     expect(response).to.have.length(1)
     expect(response[0].file).to.equal('2015-01-20')
     expect(response[0].queries).to.be.an('array')
+    yield runner.database.schema.dropTable('users')
+    yield runner.database.schema.dropTable('adonis_migrations')
+  })
+
+  it('should be able to access the database provider using this.db', function * () {
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
+    let db = null
+    class Users extends Schema {
+      up () {
+        this.db(function * (database) {
+          db = database
+        })
+      }
+    }
+    const migrations = {'2016-04-20': Users}
+    yield runner.up(migrations)
+    expect(db.table).to.be.a('function')
+    yield runner.database.schema.dropTable('adonis_migrations')
+  })
+
+  it('should be able to migrate a table data to a different column @fun', function * () {
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
+    class Users extends Schema {
+      up () {
+        this.create('users', (table) => {
+          table.increments()
+          table.string('username')
+        })
+
+        this.db(function * (database) {
+          yield database.table('users').insert([{username: 'foo'}, {username: 'bar'}])
+        })
+      }
+    }
+
+    class UsersMigrate extends Schema {
+      up () {
+        this.table('users', (table) => {
+          table.string('uname')
+        })
+
+        this.db(function * (database) {
+          const usernames = yield database.table('users').pluck('username')
+          yield cf.forEach(function * (username) {
+            yield database.table('users').where('username', username).update('uname', username)
+          }, usernames)
+        })
+
+        this.table('users', (table) => {
+          table.dropColumn('username')
+        })
+      }
+    }
+
+    const migrations = {'2016-04-20': Users, '2016-10-30': UsersMigrate}
+    yield runner.up(migrations)
+    const users = yield Database.table('users').pluck('uname')
+    expect(users).deep.equal(['foo', 'bar'])
+    yield runner.database.schema.dropTable('users')
+    yield runner.database.schema.dropTable('adonis_migrations')
   })
 })
