@@ -51,6 +51,26 @@ proxyHandler.get = function (target, name) {
     if (Object.keys(aliases).indexOf(name) > -1) {
       name = aliases[name]
     }
+
+    /**
+     * Trying to be more explicit here by adding the if clause
+     * on the name instead of checking the existence on
+     * callback and when key is a function but that will not
+     * be clear that this custom behaviour is required for
+     * this.db only.
+     *
+     * @example
+     * this.db(function () {})
+     *
+     * @alternate-check
+     * if (!callback && typeof (key) === 'function') {
+     *   // not explicit
+     * }
+     */
+    if (name === 'db') {
+      callback = key
+      key = null
+    }
     target.actions.push({key, callback, action: name})
   }
 }
