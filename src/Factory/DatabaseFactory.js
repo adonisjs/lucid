@@ -99,7 +99,7 @@ class DatabaseFactory {
    * @public
    */
   reset () {
-    return this.binding.truncate()
+    return this.binding.table(this.dbTable).truncate()
   }
 }
 
