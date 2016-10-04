@@ -1,3 +1,14 @@
+<a name="3.0.7"></a>
+## [3.0.7](https://github.com/adonisjs/adonis-lucid/compare/v3.0.6...v3.0.7) (2016-10-04)
+
+
+### Features
+
+* **database:** add support for table prefixing ([22399a0](https://github.com/adonisjs/adonis-lucid/commit/22399a0)), closes [#58](https://github.com/adonisjs/adonis-lucid/issues/58)
+* **migrations:** add support for making db actions ([073daa7](https://github.com/adonisjs/adonis-lucid/commit/073daa7)), closes [#53](https://github.com/adonisjs/adonis-lucid/issues/53)
+
+
+
 <a name="3.0.6"></a>
 ## [3.0.6](https://github.com/adonisjs/adonis-lucid/compare/v3.0.5...v3.0.6) (2016-09-27)
 
