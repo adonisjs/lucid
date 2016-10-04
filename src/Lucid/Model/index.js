@@ -356,6 +356,28 @@ class Model {
   }
 
   /**
+   * Returns a custom prefix to be used for selecting the database
+   * table for a given model
+   *
+   * @return {String}
+   *
+   * @public
+   */
+  static get prefix () {
+    return null
+  }
+
+  /**
+   * A getter defining whether or not to skip
+   * table prefixing for this model.
+   *
+   * @return {Boolean}
+   */
+  static get skipPrefix () {
+    return false
+  }
+
+  /**
    * primary key to be used for given table. Same key is used for fetching
    * associations. Defaults to id
    *

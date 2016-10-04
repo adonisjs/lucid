@@ -143,6 +143,24 @@ Database.connection = function (connection) {
     client.client.QueryBuilder.prototype.forPage = Database.forPage
     client.client.QueryBuilder.prototype.paginate = Database.paginate
     client.client.QueryBuilder.prototype.chunk = Database.chunk
+    client.client.QueryBuilder.prototype._originalTable = client.client.QueryBuilder.prototype.table
+    client.client.QueryBuilder.prototype.table = Database.table
+    client.client.QueryBuilder.prototype.from = Database.table
+    client.client.QueryBuilder.prototype.into = Database.table
+    client.client.QueryBuilder.prototype.withPrefix = Database.withPrefix
+    client.client.QueryBuilder.prototype.withoutPrefix = Database.withoutPrefix
+
+    /**
+     * Adding methods on the client if withoutPrefix or withPrefix
+     * is called directly it will return the query builder.
+     */
+    client.withoutPrefix = function () {
+      return new this.client.QueryBuilder(this.client).withoutPrefix()
+    }
+    client.withPrefix = function (prefix) {
+      return new this.client.QueryBuilder(this.client).withPrefix(prefix)
+    }
+
     connectionPools[connection] = client
   }
 
@@ -338,6 +356,45 @@ Database.chunk = function * (limit, cb, page) {
     yield this.chunk(limit, cb, page)
   }
 }
+
+/**
+ * Overriding the orginal knex.table method to prefix
+ * the table name based upon the prefix option
+ * defined in the config
+ *
+ * @param  {String} tableName
+ *
+ * @return {Object}
+ */
+Database.table = function (tableName) {
+  const prefix = this._instancePrefix || this.client.config.prefix
+  const prefixedTableName = (prefix && !this._skipPrefix) ? `${prefix}${tableName}`: tableName
+  this._originalTable(prefixedTableName)
+  return this
+}
+
+/**
+ * Skipping the prefix for a single query
+ *
+ * @return {Object}
+ */
+Database.withoutPrefix = function () {
+  this._skipPrefix = true
+  return this
+}
+
+/**
+ * Changing the prefix for a given query
+ *
+ * @param  {String} prefix
+ *
+ * @return {Object}
+ */
+Database.withPrefix = function (prefix) {
+  this._instancePrefix = prefix
+  return this
+}
+
 
 /**
  * these methods are not proxied and instead actual implementations

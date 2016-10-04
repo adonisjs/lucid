@@ -38,11 +38,19 @@ describe('Lucid', function () {
   })
 
   after(function * () {
+    Database.close()
+    Database._setConfigProvider(config)
     yield modelFixtures.down(Database)
     Database.close()
   })
 
+  beforeEach(function () {
+    Database.close()
+  })
+
   afterEach(function * () {
+    Database.close()
+    Database._setConfigProvider(config)
     yield Database.table('users').truncate()
     yield Database.table('zombies').truncate()
   })
@@ -123,6 +131,51 @@ describe('Lucid', function () {
       expect(User.globalScope.length).to.equal(2)
       expect(User.globalScope[0]).to.be.a('function')
       expect(Post.globalScope.length).to.equal(1)
+    })
+
+    it('should make use of the prefix when selecting the table @prefix', function () {
+      Database._setConfigProvider(config.withPrefix)
+      class User extends Model {
+      }
+      const query = User.query().toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users"'))
+    })
+
+    it('should be able to change the prefix for a single model when prefix getter is used', function () {
+      Database._setConfigProvider(config.withPrefix)
+      class User extends Model {
+        static get prefix () {
+          return 'k_'
+        }
+      }
+      const query = User.query().toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "k_users"'))
+    })
+
+    it('should be skip the prefix for a single model when skipPrefix getter is used', function () {
+      Database._setConfigProvider(config.withPrefix)
+      class User extends Model {
+        static get skipPrefix () {
+          return true
+        }
+      }
+      const query = User.query().toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "users"'))
+    })
+
+    it('should be skip the prefix for a single model when skipPrefix and prefix getter both are used', function () {
+      Database._setConfigProvider(config.withPrefix)
+      class User extends Model {
+        static get prefix () {
+          return 'k_'
+        }
+
+        static get skipPrefix () {
+          return true
+        }
+      }
+      const query = User.query().toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "users"'))
     })
   })
 
