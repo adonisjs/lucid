@@ -5,7 +5,7 @@
   "directories": {
     "test": "test"
   },
-  "version": "3.0.6",
+  "version": "3.0.7",
   "scripts": {
     "lint": "standard src/**/*.js src/**/**/*.js src/**/**/**/*.js lib/*.js test/**/*.js providers/*.js",
     "test:all": "DB=sqlite3 npm run test && DB=mysql npm run test && DB=pg npm run test",

@@ -26,7 +26,16 @@ class QueryBuilder {
     const Database = Ioc.use('Adonis/Src/Database')
     this.HostModel = HostModel
     this.queryBuilder = Database.connection(this.HostModel.connection)
-    this.modelQueryBuilder = this.queryBuilder(this.HostModel.table)
+    this.modelQueryBuilder = null
+
+    if (HostModel.prefix && !HostModel.skipPrefix) {
+      this.modelQueryBuilder = this.queryBuilder.withPrefix(HostModel.prefix).table(this.HostModel.table)
+    } else if (HostModel.skipPrefix) {
+      this.modelQueryBuilder = this.queryBuilder.withoutPrefix().table(this.HostModel.table)
+    } else {
+      this.modelQueryBuilder = this.queryBuilder.table(this.HostModel.table)
+    }
+
     this.avoidTrashed = false
     this.eagerLoad = new EagerLoad()
     return new Proxy(this, proxyHandler)

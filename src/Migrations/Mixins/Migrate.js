@@ -12,6 +12,7 @@
 const _ = require('lodash')
 const CatLog = require('cat-log')
 const cf = require('co-functional')
+const co = require('co')
 const CE = require('../../Exceptions')
 const logger = new CatLog('adonis:lucid')
 
@@ -55,7 +56,24 @@ Migrate._translateActions = function (schemaInstance, direction) {
  */
 Migrate._callSchemaActions = function (defination, connection) {
   const builder = this.database.connection(connection).schema
-  return builder[defination.action](defination.key, this._wrapSchemaCallback(defination.callback))
+  /**
+   * Custom check to allow access the database provider and
+   * do custom stuff with support for co-routines.
+   */
+  if (defination.action === 'db') {
+    return co.wrap(function * () {
+      return yield defination.callback(this.database)
+    }.bind(this))
+  }
+
+  /**
+   * co.wrap returns a function which returns a promise, so we
+   * need to wrap schema method inside a function to keep
+   * the API stable.
+   */
+  return (function () {
+    return builder[defination.action](defination.key, this._wrapSchemaCallback(defination.callback))
+  }.bind(this))
 }
 
 /**
@@ -160,7 +178,7 @@ Migrate._executeMigrations = function * (migrations, direction, batchNumber) {
  */
 Migrate._executeActions = function * (actions, file, direction, batchNumber) {
   yield cf.forEachSerial(function * (action) {
-    return yield action
+    return yield action()
   }, _.flatten(actions))
 
   /**

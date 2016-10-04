@@ -23,5 +23,15 @@ module.exports = {
       password : '',
       database : 'alternate'
     }
+  },
+
+  defaultPrefix : {
+    client: 'mysql',
+    connection: {
+      user     : 'root',
+      password : '',
+      database : 'default'
+    },
+    prefix: 'ad_'
   }
 }

@@ -261,4 +261,69 @@ describe('Database provider', function () {
     })
     expect(callbackCalledForTimes).to.equal(allUsers.length)
   })
+
+  it('should be able to prefix the database table using a configuration option', function * () {
+    Database._setConfigProvider(config.withPrefix)
+    const query = Database.table('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users"'))
+  })
+
+  it('should be able to prefix the database table when table method is called after other methods', function * () {
+    const query = Database.where('username', 'foo').table('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users" where "username" = ?'))
+  })
+
+  it('should be able to prefix the database table when from method is used', function * () {
+    const query = Database.from('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users"'))
+  })
+
+  it('should be able to prefix the database table when from method is called after other methods', function * () {
+    const query = Database.where('username', 'foo').from('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users" where "username" = ?'))
+  })
+
+  it('should be able to prefix the database table when into method is used', function * () {
+    const query = Database.into('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users"'))
+  })
+
+  it('should be able to prefix the database table when into method is called after other methods', function * () {
+    const query = Database.where('username', 'foo').into('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users" where "username" = ?'))
+  })
+
+  it('should be able to remove the prefix using the withoutPrefix method', function * () {
+    const query = Database.withoutPrefix().table('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "users"'))
+  })
+
+  it('should be able to remove the prefix when withoutPrefix method is called after other methods', function * () {
+    const query = Database.where('username', 'foo').withoutPrefix().table('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "users" where "username" = ?'))
+  })
+
+  it('should be able to change the prefix using the withPrefix method', function * () {
+    const query = Database.withPrefix('k_').table('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "k_users"'))
+  })
+
+  it('should be able to remove the prefix when withPrefix method is called after other methods', function * () {
+    const query = Database.where('username', 'foo').withPrefix('k_').table('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "k_users" where "username" = ?'))
+  })
+
+  it('should not mess the query builder instance when withPrefix is called on multiple queries at same time', function * () {
+    const query = Database.where('username', 'foo').withPrefix('k_').table('users')
+    const query1 = Database.where('username', 'foo').table('users')
+    expect(queryHelpers.formatQuery(query.toSQL().sql)).to.equal(queryHelpers.formatQuery('select * from "k_users" where "username" = ?'))
+    expect(queryHelpers.formatQuery(query1.toSQL().sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users" where "username" = ?'))
+  })
+
+  it('should not mess the query builder instance when withoutPrefix is called on multiple queries at same time', function * () {
+    const query = Database.where('username', 'foo').withoutPrefix().table('users')
+    const query1 = Database.where('username', 'foo').table('users')
+    expect(queryHelpers.formatQuery(query.toSQL().sql)).to.equal(queryHelpers.formatQuery('select * from "users" where "username" = ?'))
+    expect(queryHelpers.formatQuery(query1.toSQL().sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users" where "username" = ?'))
+  })
 })

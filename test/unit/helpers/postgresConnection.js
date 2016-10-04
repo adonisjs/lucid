@@ -23,5 +23,15 @@ module.exports = {
       password : '',
       database : 'alternate'
     }
+  },
+
+  defaultPrefix : {
+    client: 'pg',
+    connection: {
+      user: '',
+      password : '',
+      database : 'default'
+    },
+    prefix: 'ad_'
   }
 }
