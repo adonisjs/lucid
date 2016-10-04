@@ -115,6 +115,7 @@ class HasOne extends BaseRelation {
     if (count) {
       this.relatedQuery.count('*')
     }
+<<<<<<< fe3e68828ae1074c2b1dc620b2133e67c706257e
     return this.relatedQuery.query
   }
 
@@ -180,3 +181,130 @@ class HasOne extends BaseRelation {
 }
 
 module.exports = HasOne
+=======
+  })
+
+  it('should be able to run transactions on different connection', function * () {
+    yield Database.connection('alternateConnection').transaction(function * (trx) {
+      return yield trx.table('users').insert({username: 'different-trx'})
+    })
+    const user = yield Database.connection('alternateConnection').table('users').where('username', 'different-trx')
+    expect(user).to.be.an('array')
+    expect(user[0].username).to.equal('different-trx')
+  })
+
+  it('should be able to paginate results', function * () {
+    const paginatedUsers = yield Database.table('users').paginate(1)
+    expect(paginatedUsers).to.have.property('total')
+    expect(paginatedUsers).to.have.property('lastPage')
+    expect(paginatedUsers).to.have.property('perPage')
+    expect(paginatedUsers).to.have.property('data')
+    expect(paginatedUsers.total).to.equal(paginatedUsers.data.length)
+  })
+
+  it('should throw an error when page is not passed', function * () {
+    try {
+      yield Database.table('users').paginate()
+      expect(true).to.equal(false)
+    } catch (e) {
+      expect(e.message).to.match(/cannot paginate results for page less than 1/)
+    }
+  })
+
+  it('should throw an error when page equals 0', function * () {
+    try {
+      yield Database.table('users').paginate(0)
+      expect(true).to.equal(false)
+    } catch (e) {
+      expect(e.message).to.match(/cannot paginate results for page less than 1/)
+    }
+  })
+
+  it('should return proper meta data when paginate returns zero results', function * () {
+    const paginatedUsers = yield Database.table('users').where('status', 'published').paginate(1)
+    expect(paginatedUsers.total).to.equal(0)
+    expect(paginatedUsers.lastPage).to.equal(0)
+  })
+
+  it('should return proper meta data when there are results but page is over the last page', function * () {
+    const paginatedUsers = yield Database.table('users').paginate(10)
+    expect(paginatedUsers.total).to.equal(3)
+    expect(paginatedUsers.lastPage).to.equal(1)
+  })
+
+  it('should be able to get results in chunks', function * () {
+    let callbackCalledForTimes = 0
+    const allUsers = yield Database.table('users')
+    yield Database.table('users').chunk(1, function (user) {
+      expect(user[0].id).to.equal(allUsers[callbackCalledForTimes].id)
+      callbackCalledForTimes++
+    })
+    expect(callbackCalledForTimes).to.equal(allUsers.length)
+  })
+
+  it('should be able to prefix the database table using a configuration option', function * () {
+    Database._setConfigProvider(config.withPrefix)
+    const query = Database.table('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users"'))
+  })
+
+  it('should be able to prefix the database table when table method is called after other methods', function * () {
+    const query = Database.where('username', 'foo').table('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users" where "username" = ?'))
+  })
+
+  it('should be able to prefix the database table when from method is used', function * () {
+    const query = Database.from('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users"'))
+  })
+
+  it('should be able to prefix the database table when from method is called after other methods', function * () {
+    const query = Database.where('username', 'foo').from('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users" where "username" = ?'))
+  })
+
+  it('should be able to prefix the database table when into method is used', function * () {
+    const query = Database.into('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users"'))
+  })
+
+  it('should be able to prefix the database table when into method is called after other methods', function * () {
+    const query = Database.where('username', 'foo').into('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users" where "username" = ?'))
+  })
+
+  it('should be able to remove the prefix using the withoutPrefix method', function * () {
+    const query = Database.withoutPrefix().table('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "users"'))
+  })
+
+  it('should be able to remove the prefix when withoutPrefix method is called after other methods', function * () {
+    const query = Database.where('username', 'foo').withoutPrefix().table('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "users" where "username" = ?'))
+  })
+
+  it('should be able to change the prefix using the withPrefix method', function * () {
+    const query = Database.withPrefix('k_').table('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "k_users"'))
+  })
+
+  it('should be able to remove the prefix when withPrefix method is called after other methods', function * () {
+    const query = Database.where('username', 'foo').withPrefix('k_').table('users').toSQL()
+    expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "k_users" where "username" = ?'))
+  })
+
+  it('should not mess the query builder instance when withPrefix is called on multiple queries at same time', function * () {
+    const query = Database.where('username', 'foo').withPrefix('k_').table('users')
+    const query1 = Database.where('username', 'foo').table('users')
+    expect(queryHelpers.formatQuery(query.toSQL().sql)).to.equal(queryHelpers.formatQuery('select * from "k_users" where "username" = ?'))
+    expect(queryHelpers.formatQuery(query1.toSQL().sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users" where "username" = ?'))
+  })
+
+  it('should not mess the query builder instance when withoutPrefix is called on multiple queries at same time', function * () {
+    const query = Database.where('username', 'foo').withoutPrefix().table('users')
+    const query1 = Database.where('username', 'foo').table('users')
+    expect(queryHelpers.formatQuery(query.toSQL().sql)).to.equal(queryHelpers.formatQuery('select * from "users" where "username" = ?'))
+    expect(queryHelpers.formatQuery(query1.toSQL().sql)).to.equal(queryHelpers.formatQuery('select * from "ad_users" where "username" = ?'))
+  })
+})
+>>>>>>> feat(database): add support for table prefixing
