@@ -81,11 +81,11 @@ class DatabaseFactory {
    */
   * create (rows, values) {
     const self = this
-    this.binding = this.binding.table(this.dbTable)
+    const binding = this.binding.table(this.dbTable)
     rows = rows || 1
     const range = _.range(rows)
     const ids = yield cf.mapSerial(function * (iterator) {
-      return yield self.binding.insert(self._callBlueprint(iterator + 1, values)).returning(self.returningField)
+      return yield binding.insert(self._callBlueprint(iterator + 1, values)).returning(self.returningField)
     }, range)
     return _.flatten(ids)
   }
@@ -99,7 +99,7 @@ class DatabaseFactory {
    * @public
    */
   reset () {
-    return this.binding.truncate()
+    return this.binding.table(this.dbTable).truncate()
   }
 }
 
