@@ -1,3 +1,8 @@
+<a name="3.0.8"></a>
+## [3.0.8](https://github.com/adonisjs/adonis-lucid/compare/v3.0.7...v3.0.8) (2016-10-11)
+
+* **factory** select table before factory.reset ([56e149e](https://github.com/adonisjs/adonis-lucid/pull/55/commits/56e149e2f838d2b79d309460f53be26963186639)), closes [#56](https://github.com/adonisjs/adonis-lucid/issues/56)
+
 <a name="3.0.7"></a>
 ## [3.0.7](https://github.com/adonisjs/adonis-lucid/compare/v3.0.6...v3.0.7) (2016-10-04)
 

@@ -289,6 +289,20 @@ describe('Factory', function () {
     yield modelFixtures.truncate(Database)
   })
 
+  it('should be able to truncat the database table using the reset method', function * () {
+    Factory.blueprint('users', function (fake) {
+      return {
+        username: fake.username(),
+        firstname: fake.first()
+      }
+    })
+    yield Factory.get('users').create(10)
+    yield Factory.get('users').reset()
+    const ids = yield Database.table('users').pluck('ids')
+    expect(ids).to.be.an('array')
+    expect(ids.length).to.equal(0)
+  })
+
   it('should get the iteration count when making multiple instances', function * () {
     class User extends Model {}
     Ioc.bind('App/Model/User', function () {
