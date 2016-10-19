@@ -10,6 +10,7 @@
 */
 
 const Command = require('./Command')
+const prettyHrTime = require('pretty-hrtime')
 
 class Run extends Command {
 
@@ -45,6 +46,7 @@ class Run extends Command {
    */
   * handle (options, flags) {
     try {
+      const startTime = process.hrtime()
       this.checkEnv(flags.force)
 
       const selectedFiles = flags.files ? flags.files.split(',') : null
@@ -57,7 +59,8 @@ class Run extends Command {
         return
       }
 
-      const successMessage = 'Database migrated successfully.'
+      const endTime = process.hrtime(startTime)
+      const successMessage = `Database migrated successfully in ${prettyHrTime(endTime)}`
       const infoMessage = 'Nothing to migrate.'
       this._log(response.status, successMessage, infoMessage)
     } catch (e) {

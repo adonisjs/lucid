@@ -87,6 +87,9 @@ Migrate._callSchemaActions = function (defination, connection) {
  * @private
  */
 Migrate._wrapSchemaCallback = function (callback) {
+  if (typeof (callback) !== 'function') {
+    return callback
+  }
   const self = this
   return function (table) {
     self._decorateTable(table)
