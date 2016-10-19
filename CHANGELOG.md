@@ -1,3 +1,18 @@
+<a name="3.0.9"></a>
+## [3.0.9](https://github.com/adonisjs/adonis-lucid/compare/v3.0.8...v3.0.9) (2016-10-19)
+
+
+### Bug Fixes
+
+* **migrations:** make sure schema callback is function before executing ([444b2d6](https://github.com/adonisjs/adonis-lucid/commit/444b2d6)), closes [#60](https://github.com/adonisjs/adonis-lucid/issues/60)
+
+
+### Features
+
+* **migrations:** add migrations time in the console output ([1fca2d5](https://github.com/adonisjs/adonis-lucid/commit/1fca2d5)), closes [#57](https://github.com/adonisjs/adonis-lucid/issues/57)
+
+
+
 <a name="3.0.8"></a>
 ## [3.0.8](https://github.com/adonisjs/adonis-lucid/compare/v3.0.7...v3.0.8) (2016-10-11)
 
