@@ -820,4 +820,28 @@ describe('Migrations', function () {
     yield runner.database.schema.dropTable('users')
     yield runner.database.schema.dropTable('adonis_migrations')
   })
+
+  it('should be able to rename the database table', function * () {
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
+    let db = null
+    class Users extends Schema {
+      up () {
+        this.create('users', (table) => {
+          table.increments()
+        })
+      }
+    }
+    class MyUsers extends Schema {
+      up () {
+        this.rename('users', 'my_users')
+      }
+    }
+    const migrations = {'2016-04-20': Users, '2016-10-19': MyUsers}
+    yield runner.up(migrations)
+    const myUsersInfo = yield runner.database.table('my_users').columnInfo()
+    expect(myUsersInfo.id).be.an('object')
+    yield runner.database.schema.dropTable('adonis_migrations')
+    yield runner.database.schema.dropTable('my_users')
+  })
 })
