@@ -8,7 +8,7 @@
 const path = require('path')
 
 module.exports = {
-  default : {
+  default: {
     client: 'sqlite3',
     connection: {
       filename: path.join(__dirname, '../storage/test.sqlite3')

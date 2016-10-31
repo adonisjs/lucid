@@ -7,30 +7,30 @@
 */
 
 module.exports = {
-  default : {
+  default: {
     client: 'mysql',
     connection: {
-      user     : 'root',
-      password : '',
-      database : 'default'
+      user: 'root',
+      password: '',
+      database: 'default'
     }
   },
 
   alternateConnection: {
     client: 'mysql',
     connection: {
-      user     : 'root',
-      password : '',
-      database : 'alternate'
+      user: 'root',
+      password: '',
+      database: 'alternate'
     }
   },
 
-  defaultPrefix : {
+  defaultPrefix: {
     client: 'mysql',
     connection: {
-      user     : 'root',
-      password : '',
-      database : 'default'
+      user: 'root',
+      password: '',
+      database: 'default'
     },
     prefix: 'ad_'
   }

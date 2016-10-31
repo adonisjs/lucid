@@ -383,7 +383,7 @@ Database.chunk = function * (limit, cb, page) {
  */
 Database.table = function (tableName) {
   const prefix = this._instancePrefix || this.client.config.prefix
-  const prefixedTableName = (prefix && !this._skipPrefix) ? `${prefix}${tableName}`: tableName
+  const prefixedTableName = (prefix && !this._skipPrefix) ? `${prefix}${tableName}` : tableName
   this._originalTable(prefixedTableName)
   return this
 }
@@ -409,7 +409,6 @@ Database.withPrefix = function (prefix) {
   this._instancePrefix = prefix
   return this
 }
-
 
 /**
  * these methods are not proxied and instead actual implementations

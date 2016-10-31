@@ -6,7 +6,6 @@
  * MIT Licensed
 */
 
-const path = require('path')
 const bluebird = require('bluebird')
 const files = require('./files')
 

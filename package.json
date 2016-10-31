@@ -7,10 +7,13 @@
   },
   "version": "3.0.9",
   "scripts": {
-    "lint": "standard src/**/*.js src/**/**/*.js src/**/**/**/*.js lib/*.js test/**/*.js providers/*.js",
+    "lint": "standard",
     "test:all": "DB=sqlite3 npm run test && DB=mysql npm run test && DB=pg npm run test",
-    "coverage": "node --harmony_proxies ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test/unit test/acceptance",
-    "test": "node --harmony_proxies ./node_modules/.bin/istanbul cover _mocha --report lcovonly -- -R spec test/unit test/acceptance && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage"
+    "coverage": "npm run lint && node --harmony_proxies ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test/unit test/acceptance",
+    "test": "npm run lint && node --harmony_proxies ./node_modules/.bin/istanbul cover _mocha --report lcovonly -- -R spec test/unit test/acceptance && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage"
+  },
+  "standard": {
+    "global": ["use", "describe", "it", "after", "before", "context", "make", "beforeEach"]
   },
   "author": "adonisjs",
   "license": "MIT",
