@@ -289,7 +289,7 @@ describe('Factory', function () {
     yield modelFixtures.truncate(Database)
   })
 
-  it('should be able to truncat the database table using the reset method', function * () {
+  it('should be able to truncate the database table using the reset method', function * () {
     Factory.blueprint('users', function (fake) {
       return {
         username: fake.username(),
@@ -298,7 +298,7 @@ describe('Factory', function () {
     })
     yield Factory.get('users').create(10)
     yield Factory.get('users').reset()
-    const ids = yield Database.table('users').pluck('ids')
+    const ids = yield Database.table('users').pluck('id')
     expect(ids).to.be.an('array')
     expect(ids.length).to.equal(0)
   })
