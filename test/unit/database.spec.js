@@ -232,6 +232,15 @@ module.exports = HasOne
     expect(paginatedUsers.lastPage).to.equal(1)
   })
 
+  it('should be able paginate results using order by on the original query', function * () {
+    const paginatedUsers = yield Database.table('users').orderBy('id', 'desc').paginate(1)
+    expect(paginatedUsers).to.have.property('total')
+    expect(paginatedUsers).to.have.property('lastPage')
+    expect(paginatedUsers).to.have.property('perPage')
+    expect(paginatedUsers).to.have.property('data')
+    expect(paginatedUsers.total).to.equal(paginatedUsers.data.length)
+  })
+
   it('should be able to get results in chunks', function * () {
     let callbackCalledForTimes = 0
     const allUsers = yield Database.table('users')
