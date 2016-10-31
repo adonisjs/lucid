@@ -32,7 +32,7 @@ class Reset extends Command {
    * @public
    */
   get description () {
-    return 'Reset migrations to lastest batch'
+    return 'Reset migrations to latest batch'
   }
 
   /**
