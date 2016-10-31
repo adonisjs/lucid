@@ -824,7 +824,6 @@ describe('Migrations', function () {
   it('should be able to rename the database table', function * () {
     const Runner = new Migrations(Database, Config)
     const runner = new Runner()
-    let db = null
     class Users extends Schema {
       up () {
         this.create('users', (table) => {

@@ -7,30 +7,30 @@
 */
 
 module.exports = {
-  default : {
+  default: {
     client: 'pg',
     connection: {
       user: '',
-      password : '',
-      database : 'default'
+      password: '',
+      database: 'default'
     }
   },
 
   alternateConnection: {
     client: 'pg',
     connection: {
-      user     : '',
-      password : '',
-      database : 'alternate'
+      user: '',
+      password: '',
+      database: 'alternate'
     }
   },
 
-  defaultPrefix : {
+  defaultPrefix: {
     client: 'pg',
     connection: {
       user: '',
-      password : '',
-      database : 'default'
+      password: '',
+      database: 'default'
     },
     prefix: 'ad_'
   }

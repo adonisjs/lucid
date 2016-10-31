@@ -11,10 +11,10 @@ const path = require('path')
 
 module.exports = {
   cleanStorage: function * () {
-    return yield fs.emptyDir(path.join(__dirname,'../storage'))
+    return yield fs.emptyDir(path.join(__dirname, '../storage'))
   },
   createDir: function * () {
-    return yield fs.ensureDir(path.join(__dirname,'../storage'))
+    return yield fs.ensureDir(path.join(__dirname, '../storage'))
   }
 }
 
