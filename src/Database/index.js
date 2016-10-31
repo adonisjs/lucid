@@ -67,6 +67,15 @@ const _emitSql = function (builder) {
 }
 
 /**
+ * Following attributes should be removed from the
+ * paginate count query since things like orderBy
+ * is not required when fetching the count.
+ *
+ * @type {Array}
+ */
+const excludeAttrFromCount = ['order']
+
+/**
  * Database provider to build sql queries
  * @module Database
  */
@@ -315,6 +324,12 @@ Database.paginate = function * (page, perPage, countByQuery) {
    * query for getting results
    */
   countByQuery = countByQuery || this.clone().count('* as total')
+
+  /**
+   * Filter unnecessary statements from the cloned query
+   */
+  countByQuery._statements = _.filter(countByQuery._statements, (statement) => excludeAttrFromCount.indexOf(statement.grouping) < 0)
+
   const count = yield countByQuery
   if (!count[0] || parseInt(count[0].total, 10) === 0) {
     return util.makePaginateMeta(0, parsedPage, parsedPerPage)
