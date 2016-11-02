@@ -5,12 +5,24 @@
   "directories": {
     "test": "test"
   },
-  "version": "3.0.9",
+  "version": "3.0.10",
   "scripts": {
-    "lint": "standard src/**/*.js src/**/**/*.js src/**/**/**/*.js lib/*.js test/**/*.js providers/*.js",
+    "lint": "standard",
     "test:all": "DB=sqlite3 npm run test && DB=mysql npm run test && DB=pg npm run test",
-    "coverage": "node --harmony_proxies ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha test/unit test/acceptance",
-    "test": "node --harmony_proxies ./node_modules/.bin/istanbul cover _mocha --report lcovonly -- -R spec test/unit test/acceptance && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage"
+    "coverage": "npm run lint && node ./bin/coverage",
+    "test": "npm run lint && node ./bin/test"
+  },
+  "standard": {
+    "global": [
+      "use",
+      "describe",
+      "it",
+      "after",
+      "before",
+      "context",
+      "make",
+      "beforeEach"
+    ]
   },
   "author": "adonisjs",
   "license": "MIT",
@@ -29,6 +41,7 @@
     "mysql": "^2.10.2",
     "pg": "^4.5.1",
     "semantic-release": "^4.3.5",
+    "semver": "^5.3.0",
     "shelljs": "^0.7.4",
     "sqlite3": "^3.1.1",
     "standard": "^8.0.0"

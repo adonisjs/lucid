@@ -405,6 +405,15 @@ class BelongsToMany extends Relation {
     return relatedInstance
   }
 
+  /**
+   * Throws an exception since deleting the related model
+   * should be done via relation and detach should be
+   * used instead.
+   */
+  * delete () {
+    throw new CE.ModelRelationException('delete is not supported by BelongsToMany, use detach instead')
+  }
+
 }
 
 module.exports = BelongsToMany
