@@ -1,3 +1,14 @@
+<a name="3.0.10"></a>
+## [3.0.10](https://github.com/adonisjs/adonis-lucid/compare/v3.0.9...v3.0.10) (2016-11-02)
+
+
+### Bug Fixes
+
+* **database:** paginate count query to ignore order by ([ac16baa](https://github.com/adonisjs/adonis-lucid/commit/ac16baa)), closes [#64](https://github.com/adonisjs/adonis-lucid/issues/64)
+* **lucid:relations:** implement delete method to delete relations ([0067bca](https://github.com/adonisjs/adonis-lucid/commit/0067bca)), closes [#63](https://github.com/adonisjs/adonis-lucid/issues/63)
+
+
+
 <a name="3.0.9"></a>
 ## [3.0.9](https://github.com/adonisjs/adonis-lucid/compare/v3.0.8...v3.0.9) (2016-10-19)
 
