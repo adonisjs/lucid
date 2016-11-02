@@ -3241,6 +3241,22 @@ describe('Relations', function () {
       expect(supplier.toJSON().account).to.equal(null)
       yield relationFixtures.truncate(Database, 'suppliers')
     })
+
+    it('should be able to delete related records', function * () {
+      const supplierId = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'redtape'})
+      class Account extends Model {
+      }
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+      const supplier = yield Supplier.find(1)
+      const query = supplier.account().delete().toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('delete from "accounts" where "supplier_id" = ?'))
+      expect(queryHelpers.formatBindings(query.bindings)).deep.equal(queryHelpers.formatBindings(supplierId))
+      yield relationFixtures.truncate(Database, 'suppliers')
+    })
   })
 
   context('Regression:BelongsTo', function () {
@@ -3287,6 +3303,25 @@ describe('Relations', function () {
       expect(comment.toJSON().post).to.equal(null)
       yield relationFixtures.truncate(Database, 'comments')
     })
+
+    it('should be able to delete related records', function * () {
+      const commentId = yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: 1})
+
+      class Post extends Model {
+      }
+
+      class Comment extends Model {
+        post () {
+          return this.belongsTo(Post)
+        }
+      }
+
+      const comment = yield Comment.find(commentId[0])
+      const query = comment.post().delete().toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('delete from "posts" where "id" = ?'))
+      expect(queryHelpers.formatBindings(query.bindings)).deep.equal(commentId)
+      yield relationFixtures.truncate(Database, 'comments')
+    })
   })
 
   context('Regression:HasMany', function () {
@@ -3331,6 +3366,22 @@ describe('Relations', function () {
       const post = yield Post.query().first()
       yield post.related('comments').load()
       expect(post.toJSON().comments).deep.equal([])
+      yield relationFixtures.truncate(Database, 'posts')
+    })
+
+    it('should be able to delete the related records', function * () {
+      const postId = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
+      class Comment extends Model {
+      }
+      class Post extends Model {
+        comments () {
+          return this.hasMany(Comment)
+        }
+      }
+      const post = yield Post.find(postId[0])
+      const query = post.comments().delete().toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('delete from "comments" where "post_id" = ?'))
+      expect(queryHelpers.formatBindings(query.bindings)).deep.equal(postId)
       yield relationFixtures.truncate(Database, 'posts')
     })
   })
@@ -3406,6 +3457,32 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
       yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should throw an exception when trying to delete related records', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry'})
+      yield relationFixtures.createRecords(Database, 'course_student', {student_id: savedStudent[0], course_id: savedCourse[0]})
+
+      class Course extends Model {
+      }
+
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      const student = yield Student.find(savedStudent[0])
+      try {
+        const isDeleted = yield student.courses().delete()
+        expect(isDeleted).not.to.exist
+      } catch (e) {
+        expect(e.message).to.equal('delete is not supported by BelongsToMany, use detach instead')
+        yield relationFixtures.truncate(Database, 'students')
+        yield relationFixtures.truncate(Database, 'courses')
+        yield relationFixtures.truncate(Database, 'course_student')
+      }
     })
   })
 })
