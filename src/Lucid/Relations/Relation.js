@@ -88,6 +88,17 @@ class Relation {
   }
 
   /**
+   * Removes the related record for the given relationship
+   *
+   * @return {Object}
+   */
+  delete () {
+    this._validateRead()
+    this._decorateRead()
+    return this.relatedQuery.delete()
+  }
+
+  /**
    * calls the fetch method on the related query builder
    *
    * @return {Object}

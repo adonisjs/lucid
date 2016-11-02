@@ -227,6 +227,15 @@ class HasManyThrough extends Relation {
     throw CE.ModelRelationException.unSupportedMethod('saveMany', this.constructor.name)
   }
 
+  /**
+   * Throws an exception since deleting the related model
+   * should be done via relation and detach should be
+   * used instead.
+   */
+  * delete () {
+    throw CE.ModelRelationException.unSupportedMethod('delete', this.constructor.name)
+  }
+
 }
 
 module.exports = HasManyThrough
