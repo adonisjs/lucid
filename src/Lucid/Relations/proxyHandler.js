@@ -10,7 +10,7 @@
 */
 
 const proxyHandler = exports = module.exports = {}
-const _ = require('lodash')
+
 const queryExecMethods = [
   'increment',
   'decrement',
@@ -34,13 +34,6 @@ proxyHandler.get = function (target, name) {
    */
   if (target[name] !== undefined) {
     return target[name]
-  }
-
-  if (name === 'withPivot') {
-    return function () {
-      target.pivotItems = _.concat(target.pivotItems, _.toArray(arguments))
-      return this
-    }
   }
 
   /**
