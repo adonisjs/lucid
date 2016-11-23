@@ -15,11 +15,6 @@ module.exports = {
   },
 
   formatBindings: function (bindings) {
-    if (process.env.DB === 'pg') {
-      return bindings.map((binding) => {
-        return String(binding)
-      })
-    }
     return bindings
   }
 }
