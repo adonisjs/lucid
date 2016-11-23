@@ -15,6 +15,7 @@ Ioc.bind('Adonis/Src/Command', function () {
   return require('adonis-ace/src/Command')
 })
 const Refresh = require('../../src/Commands/Refresh')
+const Seed = require('../../src/Commands/Seed')
 const Run = require('../../src/Commands/Run')
 const Rollback = require('../../src/Commands/Rollback')
 const Reset = require('../../src/Commands/Reset')
@@ -217,6 +218,16 @@ describe('Commands', function () {
       expect(accountsInfo).deep.equal({})
 
       yield Database.schema.dropTable('adonis_schema')
+    })
+  })
+
+  context('Seed', function () {
+    it('should accept values for the files argument', function () {
+      const seed = new Seed()
+      seed.initialize()
+      expect(seed.options[1].name).to.equal('--files')
+      expect(seed.options[1].required).to.equal(false)
+      expect(seed.options[1].acceptsValue).to.equal(true)
     })
   })
 })
