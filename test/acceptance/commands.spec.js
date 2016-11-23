@@ -23,6 +23,7 @@ const chai = require('chai')
 const expect = chai.expect
 const fold = require('adonis-fold')
 const Ioc = fold.Ioc
+const stdout = require('test-console').stdout
 const setup = require('./setup')
 require('co-mocha')
 
@@ -68,7 +69,10 @@ describe('Commands', function () {
   })
 
   it('should output run command sql queries', function * () {
+    const inspect = stdout.inspect()
     yield setup.runCommand('migration:run', {}, {log: true})
+    inspect.restore()
+    expect(inspect.output[1]).to.match(/^>SQL:\screate table ["`]?users[`"]?/)
   })
 
   it('should output rollback command sql queries', function * () {

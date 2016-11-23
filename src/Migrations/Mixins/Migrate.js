@@ -277,7 +277,7 @@ Migrate._getFilesTillBatch = function (batch) {
 Migrate._toSql = function (migrations) {
   return _.transform(migrations, (result, migration) => {
     const queries = _.map(migration.actions, (action) => {
-      return action.toString()
+      return action()
     })
     result.push({file: migration.file, queries})
     return result
