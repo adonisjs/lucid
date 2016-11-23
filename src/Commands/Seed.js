@@ -21,7 +21,7 @@ class Seed extends Command {
    * @public
    */
   get signature () {
-    return 'db:seed {-f,--force?} {--files?}'
+    return 'db:seed {-f,--force?} {--files?=@value}'
   }
 
   /**
