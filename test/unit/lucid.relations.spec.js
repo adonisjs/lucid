@@ -2847,6 +2847,117 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'courses')
       yield relationFixtures.truncate(Database, 'course_student')
     })
+
+    it('should be able to select pivot table fields when eagerloading', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12, weightage: 8})
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse[0], is_enrolled: 1}])
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course).withPivot('is_enrolled')
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const students = yield Student.query().where('id', savedStudent[0]).with('courses').fetch()
+      expect(students.first().get('courses').first()._pivot_is_enrolled).to.be.ok
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should be able to update the existing pivot table record', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course).withPivot('is_enrolled')
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      const query = student.courses().updatePivot({is_enrolled: 0}, 12).toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('update "course_student" set "is_enrolled" = ? where "student_id" = ? and "course_id" in (?)'))
+      expect(queryHelpers.formatBindings(query.bindings)).deep.equal(queryHelpers.formatBindings([0, savedStudent[0], 12]))
+
+      yield relationFixtures.truncate(Database, 'students')
+    })
+
+    it('should be able to update all existing pivot records for a given model instance', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course).withPivot('is_enrolled')
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      const query = student.courses().updatePivot({is_enrolled: 0}).toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('update "course_student" set "is_enrolled" = ? where "student_id" = ?'))
+      expect(queryHelpers.formatBindings(query.bindings)).deep.equal(queryHelpers.formatBindings([0, savedStudent[0]]))
+
+      yield relationFixtures.truncate(Database, 'students')
+    })
+
+    it('should be able to update selected pivot records for a given model instance', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course).withPivot('is_enrolled')
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      const query = student.courses().updatePivot({is_enrolled: 0}, [12, 2]).toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('update "course_student" set "is_enrolled" = ? where "student_id" = ? and "course_id" in (?, ?)'))
+      expect(queryHelpers.formatBindings(query.bindings)).deep.equal(queryHelpers.formatBindings([0, savedStudent[0], 12, 2]))
+
+      yield relationFixtures.truncate(Database, 'students')
+    })
+
+    it('should be able to update the pivot table when executing updatePivot method', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12, weightage: 8})
+      const savedCourse1 = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 14, weightage: 8})
+      yield relationFixtures.createRecords(Database, 'course_student', [
+        {student_id: savedStudent[0], course_id: savedCourse[0], is_enrolled: 1},
+        {student_id: savedStudent[0], course_id: savedCourse1[0], is_enrolled: 1}
+      ])
+
+      class Course extends Model {
+      }
+
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course).withPivot('is_enrolled')
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      yield student.courses().updatePivot({is_enrolled: 0}, savedCourse[0])
+
+      const studentCourses = yield student.courses().withPivot('is_enrolled').fetch()
+      const isEnrolled = studentCourses.map((course) => {
+        return { is_enrolled: !!course._pivot_is_enrolled, id: course.id }
+      }).value()
+      expect(isEnrolled).deep.equal([{is_enrolled: false, id: savedCourse[0]}, {is_enrolled: true, id: savedCourse1[0]}])
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
   })
 
   context('HasManyThrough', function () {
