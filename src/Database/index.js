@@ -16,10 +16,17 @@
 require('harmony-reflect')
 
 const knex = require('knex')
+const QueryBuilder = require('knex/lib/query/builder')
 const util = require('../../lib/util')
 const co = require('co')
 const CE = require('../Exceptions')
 const _ = require('lodash')
+
+/**
+ * Database provider to build sql queries
+ * @module Database
+ */
+const Database = {}
 
 /**
  * here we store connection pools, created by database provider. It is
@@ -59,7 +66,7 @@ let ConfigProvider = {}
 const _emitSql = function (builder) {
   const hrstart = process.hrtime()
   builder.once('query', (query) => {
-    const sql = this.client.SqlString.format(query.sql, query.bindings, query.tz)
+    const sql = this.client._formatQuery(query.sql, query.bindings, query.tz)
     builder.once('end', () => {
       this.emit('sql', `+ ${util.timeDiff(hrstart)} : ${sql}`)
     })
@@ -74,12 +81,6 @@ const _emitSql = function (builder) {
  * @type {Array}
  */
 const excludeAttrFromCount = ['order']
-
-/**
- * Database provider to build sql queries
- * @module Database
- */
-const Database = {}
 
 /**
  * sets the config provider for database module
@@ -146,30 +147,23 @@ Database.connection = function (connection) {
     /**
      * adding custom methods to the query builder
      */
-    client.transaction = Database.transaction(rawTransaction)
+    if (!QueryBuilder.prototype.transaction) {
+      QueryBuilder.prototype.transaction = Database.transaction(rawTransaction)
+    }
     client.on('start', _emitSql)
-    client.beginTransaction = Database.beginTransaction(rawTransaction)
-    client.client.QueryBuilder.prototype.forPage = Database.forPage
-    client.client.QueryBuilder.prototype.paginate = Database.paginate
-    client.client.QueryBuilder.prototype.chunk = Database.chunk
-    client.client.QueryBuilder.prototype._originalTable = client.client.QueryBuilder.prototype.table
-    client.client.QueryBuilder.prototype.table = Database.table
-    client.client.QueryBuilder.prototype.from = Database.table
-    client.client.QueryBuilder.prototype.into = Database.table
-    client.client.QueryBuilder.prototype.withPrefix = Database.withPrefix
-    client.client.QueryBuilder.prototype.withoutPrefix = Database.withoutPrefix
 
     /**
      * Adding methods on the client if withoutPrefix or withPrefix
      * is called directly it will return the query builder.
      */
     client.withoutPrefix = function () {
-      return new this.client.QueryBuilder(this.client).withoutPrefix()
+      return new QueryBuilder(this.client).withoutPrefix()
     }
     client.withPrefix = function (prefix) {
-      return new this.client.QueryBuilder(this.client).withPrefix(prefix)
+      return new QueryBuilder(this.client).withPrefix(prefix)
     }
-
+    client.transaction = Database.transaction(rawTransaction)
+    client.beginTransaction = Database.beginTransaction(rawTransaction)
     connectionPools[connection] = client
   }
 
@@ -419,6 +413,16 @@ Database.withPrefix = function (prefix) {
  * @private
  */
 const customImplementations = ['_resolveConnectionKey', '_setConfigProvider', 'getConnectionPools', 'connection', 'close']
+
+QueryBuilder.prototype.forPage = Database.forPage
+QueryBuilder.prototype.paginate = Database.paginate
+QueryBuilder.prototype.chunk = Database.chunk
+QueryBuilder.prototype._originalTable = QueryBuilder.prototype.table
+QueryBuilder.prototype.table = Database.table
+QueryBuilder.prototype.from = Database.table
+QueryBuilder.prototype.into = Database.table
+QueryBuilder.prototype.withPrefix = Database.withPrefix
+QueryBuilder.prototype.withoutPrefix = Database.withoutPrefix
 
 /**
  * Proxy handler to proxy methods and send
