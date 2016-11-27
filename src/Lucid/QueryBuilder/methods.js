@@ -166,6 +166,22 @@ methods.first = function (target) {
 }
 
 /**
+ * Returns the last record from the data collection
+ *
+ * @param  {Object} target
+ * @return {Object}
+ *
+ * @public
+ */
+methods.last = function (target) {
+  return function * () {
+    target.modelQueryBuilder.orderBy(target.HostModel.primaryKey, 'desc').limit(1)
+    const results = yield this.fetch()
+    return results.first() || null
+  }
+}
+
+/**
  * returns the first record from data collection
  * or fails by throwing an exception
  *

@@ -692,6 +692,24 @@ class Model {
   }
 
   /**
+   * Return the first row from the database
+   *
+   * @returns {Object}
+   */
+  static first () {
+    return this.query().first()
+  }
+
+  /**
+   * Return the last row from the database
+   *
+   * @returns {Object}
+   */
+  static last () {
+    return this.query().last()
+  }
+
+  /**
    * truncate model database table
    *
    * @method truncate
