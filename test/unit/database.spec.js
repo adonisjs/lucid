@@ -251,6 +251,12 @@ module.exports = HasOne
     expect(callbackCalledForTimes).to.equal(allUsers.length)
   })
 
+  it('should be able to pluck multiple fields using the pluck method', function * () {
+    const users = yield Database.table('users').withoutPrefix().pluck('id', 'username')
+    expect(users[0]).to.have.property('id')
+    expect(users[0]).to.have.property('username')
+  })
+
   it('should be able to prefix the database table using a configuration option', function * () {
     Database._setConfigProvider(config.withPrefix)
     const query = Database.table('users').toSQL()
