@@ -21,7 +21,7 @@ class Refresh extends Command {
    * @public
    */
   get signature () {
-    return 'migration:refresh {-f,--force?}'
+    return 'migration:refresh {-f,--force?} {--seed?}'
   }
 
   /**
@@ -54,6 +54,15 @@ class Refresh extends Command {
       const successMessage = 'Migrations successfully refreshed.'
       const infoMessage = 'Already at the latest batch.'
       this._log(response.status, successMessage, infoMessage)
+
+      /**
+       * Seed database when seed flag has been
+       * passed and log flag has not been passed
+       */  
+      if (!flags.log && flags.seed) {
+       this.run('db:seed', {}, {}) 
+      }
+
     } catch (e) {
       this.error(e)
     }
