@@ -22,7 +22,7 @@ class Run extends Command {
    * @public
    */
   get signature () {
-    return 'migration:run {-f,--force?} {--files?} {--log?:Log SQL queries that will run}'
+    return 'migration:run {-f,--force?} {--files?} {--log?:Log SQL queries that will run} {--seed?}'
   }
 
   /**
@@ -33,7 +33,7 @@ class Run extends Command {
    * @public
    */
   get description () {
-    return 'Run all pending migrations'
+    return 'Run all pending migrations and optionally seed database'
   }
 
   /**
@@ -63,6 +63,11 @@ class Run extends Command {
       const successMessage = `Database migrated successfully in ${prettyHrTime(endTime)}`
       const infoMessage = 'Nothing to migrate.'
       this._log(response.status, successMessage, infoMessage)
+      
+      // Run db seed when --seed flag has been passed
+      if (flags.seed) {
+        this.run('db:seed', {}, {})
+      }
     } catch (e) {
       this.error(e)
     }
