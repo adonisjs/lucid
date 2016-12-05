@@ -63,7 +63,7 @@ class Run extends Command {
       const successMessage = `Database migrated successfully in ${prettyHrTime(endTime)}`
       const infoMessage = 'Nothing to migrate.'
       this._log(response.status, successMessage, infoMessage)
-      
+
       // Run db seed when --seed flag has been passed
       if (flags.seed) {
         this.run('db:seed', {}, {})

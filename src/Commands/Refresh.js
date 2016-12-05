@@ -58,11 +58,10 @@ class Refresh extends Command {
       /**
        * Seed database when seed flag has been
        * passed and log flag has not been passed
-       */  
+       */
       if (!flags.log && flags.seed) {
-       this.run('db:seed', {}, {}) 
+        this.run('db:seed', {}, {})
       }
-
     } catch (e) {
       this.error(e)
     }
