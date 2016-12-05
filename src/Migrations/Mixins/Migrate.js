@@ -244,7 +244,7 @@ Migrate._mapMigrationsToActions = function (migrationsList, direction) {
  * @private
  */
 Migrate._getMigratedFiles = function () {
-  return this.database.select('name').from(this.migrationsTable).pluck('name')
+  return this.database.select('name').from(this.migrationsTable).orderBy('name').pluck('name')
 }
 
 /**
@@ -261,6 +261,7 @@ Migrate._getFilesTillBatch = function (batch) {
     .select('name')
     .from(this.migrationsTable)
     .where('batch', '>', batch)
+    .orderBy('name')
     .pluck('name')
 }
 
