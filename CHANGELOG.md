@@ -1,3 +1,23 @@
+<a name="3.0.11"></a>
+## [3.0.11](https://github.com/adonisjs/adonis-lucid/compare/v3.0.10...v3.0.11) (2016-12-12)
+
+
+### Bug Fixes
+
+* **db:seed:** make sure --files accept value ([0edd6cc](https://github.com/adonisjs/adonis-lucid/commit/0edd6cc))
+* **migrations:** add order by clause ([0d1b9de](https://github.com/adonisjs/adonis-lucid/commit/0d1b9de))
+* **migrations:** fix migrations log output ([758ef01](https://github.com/adonisjs/adonis-lucid/commit/758ef01))
+
+
+### Features
+
+* **commands:** seed db inside run and refresh command ([8e367fd](https://github.com/adonisjs/adonis-lucid/commit/8e367fd))
+* **model:** implement static first and last ([2a74d6e](https://github.com/adonisjs/adonis-lucid/commit/2a74d6e))
+* **pluck:** make pluck method to select multiple fields ([d8603d1](https://github.com/adonisjs/adonis-lucid/commit/d8603d1))
+* **relations:** add support for managing pivot table ([1d00425](https://github.com/adonisjs/adonis-lucid/commit/1d00425)), closes [#69](https://github.com/adonisjs/adonis-lucid/issues/69)
+
+
+
 <a name="3.0.10"></a>
 ## [3.0.10](https://github.com/adonisjs/adonis-lucid/compare/v3.0.9...v3.0.10) (2016-11-02)
 
