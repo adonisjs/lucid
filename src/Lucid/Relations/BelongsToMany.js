@@ -414,6 +414,32 @@ class BelongsToMany extends Relation {
     throw new CE.ModelRelationException('delete is not supported by BelongsToMany, use detach instead')
   }
 
+  /**
+   * Pick selected fields from the pivot table.
+   *
+   * @return {Object} this for chaining
+   */
+  withPivot () {
+    this.pivotItems = _.concat(this.pivotItems, _.toArray(arguments))
+    return this
+  }
+
+  updatePivot (values, otherKeyValue) {
+    if (otherKeyValue && !_.isArray(otherKeyValue)) {
+      otherKeyValue = [otherKeyValue]
+    }
+
+    const query = this.relatedQuery.queryBuilder
+      .table(this.pivotTable)
+      .where(`${this.pivotLocalKey}`, this.parent[this.fromKey])
+
+    if (_.size(otherKeyValue)) {
+      query.whereIn(`${this.pivotOtherKey}`, otherKeyValue)
+    }
+
+    return query.update(values)
+  }
+
 }
 
 module.exports = BelongsToMany

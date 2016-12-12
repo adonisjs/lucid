@@ -2143,5 +2143,33 @@ describe('Lucid', function () {
       User.bootIfNotBooted()
       expect(User.findByTrait).to.be.a('function')
     })
+
+    it('should return the first row from the database as model instance', function * () {
+      let query = null
+      class User extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery((q) => { query = q })
+        }
+      }
+      User.bootIfNotBooted()
+      yield User.first()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "users" limit ?'))
+      expect(queryHelpers.formatBindings(query.bindings)).deep.equal(queryHelpers.formatBindings([1]))
+    })
+
+    it('should return the last row from the database as model instance', function * () {
+      let query = null
+      class User extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery((q) => { query = q })
+        }
+      }
+      User.bootIfNotBooted()
+      yield User.last()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "users" order by "id" desc limit ?'))
+      expect(queryHelpers.formatBindings(query.bindings)).deep.equal(queryHelpers.formatBindings([1]))
+    })
   })
 })
