@@ -271,8 +271,8 @@ describe('Database provider', function () {
     expect(callbackCalledForTimes).to.equal(allUsers.length)
   })
 
-  it('should be able to pluck multiple fields using the pluck method', function * () {
-    const users = yield Database.table('users').withoutPrefix().pluck('id', 'username')
+  it('should be able to pluck multiple fields using the pluckAll method', function * () {
+    const users = yield Database.table('users').withoutPrefix().pluckAll('id', 'username')
     expect(users[0]).to.have.property('id')
     expect(users[0]).to.have.property('username')
   })
