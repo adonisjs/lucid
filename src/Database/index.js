@@ -404,7 +404,7 @@ Database.withPrefix = function (prefix) {
   return this
 }
 
-Database.pluck = function (fields) {
+Database.pluckAll = function (fields) {
   const args = _.isArray(fields) ? fields : _.toArray(arguments)
   return this.select.apply(this, args)
 }
@@ -428,7 +428,7 @@ QueryBuilder.prototype.from = Database.table
 QueryBuilder.prototype.into = Database.table
 QueryBuilder.prototype.withPrefix = Database.withPrefix
 QueryBuilder.prototype.withoutPrefix = Database.withoutPrefix
-QueryBuilder.prototype.pluck = Database.pluck
+QueryBuilder.prototype.pluckAll = Database.pluckAll
 
 /**
  * Proxy handler to proxy methods and send

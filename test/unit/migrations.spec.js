@@ -471,8 +471,8 @@ describe('Migrations', function () {
       }
     }
 
-    const migrationsB1 = {'2016-01-30_create_users_table': User}
-    const migrationsB2 = {'2016-01-30_create_accouts_table': Account}
+    const migrationsB1 = {'2016-01-30_create_accounts_table': Account}
+    const migrationsB2 = {'2016-01-30_create_users_table': User}
     let allMigs = {}
     _.merge(allMigs, migrationsB1, migrationsB2)
     const Runner = new Migrations(Database, Config)

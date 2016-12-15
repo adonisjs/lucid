@@ -1,3 +1,13 @@
+<a name="3.0.12"></a>
+## [3.0.12](https://github.com/adonisjs/adonis-lucid/compare/v3.0.11...v3.0.12) (2016-12-15)
+
+
+### Bug Fixes
+
+* **database:** rename pluck to pluckAll ([410f700](https://github.com/adonisjs/adonis-lucid/commit/410f700)), closes [#81](https://github.com/adonisjs/adonis-lucid/issues/81)
+
+
+
 <a name="3.0.11"></a>
 ## [3.0.11](https://github.com/adonisjs/adonis-lucid/compare/v3.0.10...v3.0.11) (2016-12-12)
 
