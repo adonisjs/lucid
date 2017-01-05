@@ -3023,7 +3023,51 @@ describe('Relations', function () {
       const courses = yield student.courses().fetch()
       expect(moment(courses.first()._pivot_created_at).isValid()).to.equal(true)
       expect(moment(courses.first()._pivot_updated_at).isValid()).to.equal(true)
-      expect(moment(courses.first()._pivot_course_id)).to.be.ok
+      expect(courses.first()._pivot_is_enrolled).to.equal(null)
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should be able to save pivot table values when creating a record', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course).withPivot('is_enrolled')
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      yield student.courses().create({title: 'geometry'}, {is_enrolled: true})
+      const courses = yield student.courses().fetch()
+      expect(courses.first()._pivot_is_enrolled).to.be.ok
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should be able to save pivot table values when creating a record via save method', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course).withPivot('is_enrolled')
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const course = new Course({
+        title: 'geometry'
+      })
+      const student = yield Student.find(savedStudent[0])
+      yield student.courses().save(course, {is_enrolled: true})
+      const courses = yield student.courses().fetch()
+      expect(courses.first()._pivot_is_enrolled).to.be.ok
+      expect(course._pivot_is_enrolled).to.be.ok
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
       yield relationFixtures.truncate(Database, 'course_student')
