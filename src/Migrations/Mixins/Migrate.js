@@ -244,7 +244,7 @@ Migrate._mapMigrationsToActions = function (migrationsList, direction) {
  * @private
  */
 Migrate._getMigratedFiles = function () {
-  return this.database.select('name').from(this.migrationsTable).orderBy('name').pluck('name')
+  return this.database.select('name as name').from(this.migrationsTable).orderBy('name').pluck('name')
 }
 
 /**
