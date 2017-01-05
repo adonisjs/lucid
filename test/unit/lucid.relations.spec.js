@@ -15,6 +15,7 @@ const Database = require('../../src/Database')
 const chai = require('chai')
 const Ioc = require('adonis-fold').Ioc
 const expect = chai.expect
+const moment = require('moment')
 const filesFixtures = require('./fixtures/files')
 const relationFixtures = require('./fixtures/relations')
 const config = require('./helpers/config')
@@ -2954,6 +2955,75 @@ describe('Relations', function () {
       }).value()
       expect(isEnrolled).deep.equal([{is_enrolled: false, id: savedCourse[0]}, {is_enrolled: true, id: savedCourse1[0]}])
 
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should be return timestamps from the pivot table model withTimestamps method is used', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course).withTimestamps()
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      expect(student instanceof Student).to.equal(true)
+      expect(student.id).to.equal(savedStudent[0])
+      yield student.courses().attach(savedCourse, {is_enrolled: 1})
+      const courses = yield student.courses().fetch()
+      expect(courses.size()).to.equal(1)
+      expect(courses.isArray()).to.equal(true)
+      expect(courses.first()._pivot_created_at).to.equal(null)
+      expect(courses.first()._pivot_updated_at).to.equal(null)
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should set timestamps on the pivot table when withTimestamps is set to true', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course).withTimestamps()
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      yield student.courses().create({title: 'geometry'})
+      const courses = yield student.courses().fetch()
+      expect(moment(courses.first()._pivot_created_at).isValid()).to.equal(true)
+      expect(moment(courses.first()._pivot_updated_at).isValid()).to.equal(true)
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should work fine when withTimestamps and withPivot is used together', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course).withTimestamps().withPivot('is_enrolled')
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      yield student.courses().create({title: 'geometry'})
+      const courses = yield student.courses().fetch()
+      expect(moment(courses.first()._pivot_created_at).isValid()).to.equal(true)
+      expect(moment(courses.first()._pivot_updated_at).isValid()).to.equal(true)
+      expect(moment(courses.first()._pivot_course_id)).to.be.ok
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
       yield relationFixtures.truncate(Database, 'course_student')
