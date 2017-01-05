@@ -386,11 +386,12 @@ class BelongsToMany extends Relation {
    * inside the pivot table.
    *
    * @param  {Object} relatedInstance
+   * @param  {Object} [pivotValues]
    * @return {Boolean}
    *
    * @public
    */
-  * save (relatedInstance) {
+  * save (relatedInstance, pivotValues) {
     if (relatedInstance instanceof this.related === false) {
       throw CE.ModelRelationException.relationMisMatch('save expects an instance of related model')
     }
@@ -403,7 +404,11 @@ class BelongsToMany extends Relation {
 
     const isSaved = yield relatedInstance.save()
     if (isSaved) {
-      yield this.attach([relatedInstance[this.toKey]], this._getTimestampsForPivotTable())
+      const pivotValuesToSave = _.merge({}, this._getTimestampsForPivotTable(), pivotValues)
+      yield this.attach([relatedInstance[this.toKey]], pivotValuesToSave)
+      _.each(pivotValuesToSave, (value, key) => {
+        relatedInstance[`${this.pivotPrefix}${key}`] = value
+      })
     }
     relatedInstance[`${this.pivotPrefix}${this.pivotLocalKey}`] = this.parent[this.fromKey]
     relatedInstance[`${this.pivotPrefix}${this.pivotOtherKey}`] = relatedInstance[this.toKey]
@@ -414,14 +419,15 @@ class BelongsToMany extends Relation {
    * creates the related model instance and calls save on it
    *
    * @param  {Object} values
+   * @param  {Object} [pivotValues]
    * @return {Boolean}
    *
    * @public
    */
-  * create (values) {
+  * create (values, pivotValues) {
     const RelatedModel = this.related
     const relatedInstance = new RelatedModel(values)
-    yield this.save(relatedInstance)
+    yield this.save(relatedInstance, pivotValues)
     return relatedInstance
   }
 
