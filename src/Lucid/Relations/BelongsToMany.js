@@ -23,6 +23,7 @@ class BelongsToMany extends Relation {
     super(parent, related)
     this.pivotPrefix = '_pivot_'
     this.pivotItems = []
+    this.pivotTimestamps = false
     this._setUpPivotTable(pivotTable)
     this._setUpKeys(primaryKey, relatedPrimaryKey, pivotLocalKey, pivotOtherKey)
     this._decorateQueryBuilder()
@@ -102,6 +103,25 @@ class BelongsToMany extends Relation {
   _decorateRead () {
     this._makeJoinQuery()
     this.relatedQuery.where(`${this.pivotTable}.${this.pivotLocalKey}`, this.parent[this.fromKey])
+  }
+
+  /**
+   * Returns an object of keys and values of timestamps to be
+   * set on pivot table. All values/keys are derived from
+   * the parent model. Also if parent model disables
+   * timestamps, the withTimestamps function will
+   * have no effect.
+   *
+   * @return  {Object}
+   * @private
+   */
+  _getTimestampsForPivotTable () {
+    const timestamps = {}
+    if (this.pivotTimestamps) {
+      this.parent.setCreateTimestamp(timestamps)
+      this.parent.setUpdateTimestamp(timestamps)
+    }
+    return timestamps
   }
 
   /**
@@ -383,7 +403,7 @@ class BelongsToMany extends Relation {
 
     const isSaved = yield relatedInstance.save()
     if (isSaved) {
-      yield this.attach([relatedInstance[this.toKey]])
+      yield this.attach([relatedInstance[this.toKey]], this._getTimestampsForPivotTable())
     }
     relatedInstance[`${this.pivotPrefix}${this.pivotLocalKey}`] = this.parent[this.fromKey]
     relatedInstance[`${this.pivotPrefix}${this.pivotOtherKey}`] = relatedInstance[this.toKey]
@@ -424,6 +444,14 @@ class BelongsToMany extends Relation {
     return this
   }
 
+  /**
+   * Updates pivot table with an object of values. Optionally
+   * you can define the foriegn keys to be updated.
+   *
+   * @param  {Object} values
+   * @param  {Array} otherKeyValue
+   * @return {Promise}
+   */
   updatePivot (values, otherKeyValue) {
     if (otherKeyValue && !_.isArray(otherKeyValue)) {
       otherKeyValue = [otherKeyValue]
@@ -438,6 +466,17 @@ class BelongsToMany extends Relation {
     }
 
     return query.update(values)
+  }
+
+  /**
+   * Makes sure to respect the timestamps on pivot table. Also timestamps fields
+   * and values are derived by the parent model. Disabling timestamps on parent
+   * model results in no impact even after using pivotTimestamps.
+   */
+  withTimestamps () {
+    this.pivotTimestamps = true
+    this.withPivot(this.parent.constructor.createTimestamp, this.parent.constructor.updateTimestamp)
+    return this
   }
 
 }

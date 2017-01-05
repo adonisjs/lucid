@@ -102,6 +102,7 @@ module.exports = {
         table.integer('course_id')
         table.boolean('is_enrolled')
         table.integer('lessons_done')
+        table.timestamps()
       }),
       knex.schema.createTable('authors', function (table) {
         table.increments()
