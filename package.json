@@ -45,7 +45,8 @@
     "shelljs": "^0.7.5",
     "sqlite3": "^3.1.8",
     "standard": "^8.5.0",
-    "test-console": "^1.0.0"
+    "test-console": "^1.0.0",
+    "uuid": "^3.0.1"
   },
   "config": {
     "commitizen": {

@@ -13,6 +13,7 @@
 const Model = require('../../src/Lucid/Model')
 const Database = require('../../src/Database')
 const chai = require('chai')
+const uuid = require('uuid')
 const moment = require('moment')
 const path = require('path')
 const Ioc = require('adonis-fold').Ioc
@@ -1919,6 +1920,43 @@ describe('Lucid', function () {
       yield zombie.delete()
       yield zombie.restore()
       expect(queryHelpers.formatQuery(restoreQuery.sql)).to.equal(queryHelpers.formatQuery('update "zombies" set "deleted_at" = ?, "updated_at" = ? where "zombie_id" = ?'))
+    })
+
+    it('should consider model as new even when primary key is provided in advance', function () {
+      class User extends Model {}
+      const user = new User()
+      expect(user.isNew()).to.be.true
+      user.id = 10
+      expect(user.isNew()).to.be.true
+    })
+
+    it('should make use of existing primary key when primary key defined when saving model', function * () {
+      class User extends Model {}
+      const user = new User()
+      user.id = 109
+      yield user.save()
+      const getUser = yield User.find(109)
+      expect(user.id).to.equal(109).to.equal(getUser.id)
+      yield user.delete()
+    })
+
+    it('should make use of primary key which is not auto incrementing', function * () {
+      class User extends Model {
+        static get primaryKey () {
+          return 'uuid'
+        }
+
+        static get incrementing () {
+          return false
+        }
+      }
+      const user = new User()
+      const v4 = uuid.v4()
+      user.uuid = v4
+      yield user.save()
+      const getUser = yield User.find(v4)
+      expect(user.$primaryKeyValue).to.equal(v4).to.equal(getUser.uuid)
+      yield user.delete()
     })
   })
 

@@ -90,6 +90,7 @@ class Model {
     this.original = {}
     this.transaction = null // will be added via useTransaction
     this.relations = {}
+    this.exists = false
     this.frozen = false
     this.eagerLoad = new Relations.EagerLoad()
     if (values) {
@@ -353,6 +354,16 @@ class Model {
    */
   static get table () {
     return util.makeTableName(this)
+  }
+
+  /**
+   * Defines whether the primary key is supposed
+   * to be incrementing or not.
+   *
+   * @return {Boolean}
+   */
+  static get incrementing () {
+    return true
   }
 
   /**
@@ -780,7 +791,7 @@ class Model {
    * @public
    */
   isNew () {
-    return !this.$primaryKeyValue
+    return !this.exists
   }
 
   /**

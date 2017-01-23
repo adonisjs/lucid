@@ -7,6 +7,7 @@ module.exports = {
     const tables = [
       knex.schema.createTable('users', function (table) {
         table.increments()
+        table.string('uuid').defaultTo(null)
         table.string('username')
         table.string('firstname')
         table.string('lastname')
