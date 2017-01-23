@@ -65,7 +65,9 @@ class BaseSerializer {
   }
 
   /**
-   * converts the final result set into a custom collection
+   * converts the final result set into a custom collection. This method
+   * should never be called on newly instantiated models, whereas is
+   * only used when fetching models from Database.
    *
    * @param  {Array} values      [description]
    * @param  {Array} eagerValues [description]
@@ -81,6 +83,7 @@ class BaseSerializer {
     return helpers.toCollection(values).transform((result, value, index) => {
       const modelInstance = new this.queryBuilder.HostModel()
       modelInstance.attributes = value
+      modelInstance.exists = true
       modelInstance.original = _.clone(modelInstance.attributes)
       this.queryBuilder.eagerLoad.mapRelationsToRow(eagerValues, modelInstance, value)
       result[index] = modelInstance

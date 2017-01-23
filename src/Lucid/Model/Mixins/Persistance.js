@@ -39,7 +39,13 @@ Peristance.insert = function * () {
     }
     const save = yield query.insertAttributes(values).returning(this.constructor.primaryKey)
     if (save[0]) {
-      this.$primaryKeyValue = save[0]
+      /**
+       * Since {returning} statement does not work for Sqlite3, we need to
+       * make use of the returning value only when {incrementing} is set
+       * to true.
+       */
+      this.$primaryKeyValue = this.constructor.incrementing ? save[0] : values[this.constructor.primaryKey]
+      this.exists = true
       this.original = _.clone(this.attributes)
     }
     return !!save
@@ -100,6 +106,7 @@ Peristance.delete = function * () {
     const affected = yield query.deleteAttributes(values)
     if (affected > 0) {
       _.merge(this.attributes, values)
+      this.exists = false
       this.freeze()
     }
     return affected
