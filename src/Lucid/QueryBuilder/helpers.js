@@ -37,6 +37,24 @@ const toJSON = function (values) {
 util.addMixin('toJSON', toJSON, {chain: false})
 
 /**
+ * async version of serializer
+ *
+ * @method toJSONAsync
+ *
+ * @param  {Object} values
+ * @return Promise
+ *
+ * @public
+ */
+const toJSONAsync = function (values) {
+  return Promise.all(util.lodash().map(values, (value) => {
+    return value.toJSONAsync()
+  }))
+}
+
+util.addMixin('toJSONAsync', toJSONAsync, {chain: false})
+
+/**
  * looks for dynamic scope method on model defination
  *
  * @method getScopeMethod

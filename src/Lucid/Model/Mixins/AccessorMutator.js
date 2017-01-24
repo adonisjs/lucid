@@ -12,6 +12,7 @@
 const util = require('../../../../lib/util')
 const CatLog = require('cat-log')
 const _ = require('lodash')
+const co = require('co')
 const logger = new CatLog('adonis:lucid')
 const AccessortMutator = exports = module.exports = {}
 
@@ -55,6 +56,30 @@ AccessortMutator.initializeComputedProperties = function () {
     logger.warn(`You have defined ${property} as a computed property, but there is not equivalent getter method defined for same.`)
     return []
   }))
+}
+
+/**
+ * Async version of initializeComputedProperties
+ *
+ * @method initializeComputedPropertiesAsync
+ *
+ * @return Promise
+ *
+ * @public
+ */
+AccessortMutator.initializeComputedPropertiesAsync = function () {
+  return new Promise((resolve) => {
+    Promise.all(_.map(this.constructor.computed, (property) => {
+      const getter = util.makeGetterName(property)
+      if (typeof (this[getter]) === 'function') {
+        return Promise.all([property, co(this[getter])])
+      }
+      logger.warn(`You have defined ${property} as a computed property, but there is not equivalent getter method defined for same.`)
+      return []
+    })).then((values) => {
+      resolve(_.fromPairs(values))
+    })
+  })
 }
 
 /**
