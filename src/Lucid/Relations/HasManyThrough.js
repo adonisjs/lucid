@@ -29,12 +29,15 @@ class HasManyThrough extends Relation {
    *
    * @private
    */
-  _makeJoinQuery () {
+  _makeJoinQuery (ignoreSelections) {
     var self = this
     const selectionKeys = [`${this.related.table}.*`, `${this.through.table}.${this.toKey}`]
-    this.relatedQuery
-    .select.apply(this.relatedQuery, selectionKeys)
-    .innerJoin(`${this.through.table}`, function () {
+
+    if (!ignoreSelections) {
+      this.relatedQuery.select.apply(this.relatedQuery, selectionKeys)
+    }
+
+    this.relatedQuery.innerJoin(`${this.through.table}`, function () {
       this.on(`${self.through.table}.${self.viaKey}`, `${self.related.table}.${self.viaForeignKey}`)
     })
   }
@@ -47,6 +50,13 @@ class HasManyThrough extends Relation {
     this.relatedQuery.where(`${this.through.table}.${this.toKey}`, this.parent[this.fromKey])
   }
 
+  /**
+   * Returns a clone of related query by removing
+   * the selections from the join. It is mainly
+   * used by the pagination methods.
+   *
+   * @return {Object}
+   */
   _getAlternateQuery () {
     const self = this
     const queryClone = this.relatedQuery.clone()
@@ -79,6 +89,38 @@ class HasManyThrough extends Relation {
 
     this._decorateRead()
     return this.relatedQuery.paginate(page, perPage, countByQuery)
+  }
+
+  /**
+   * Returns the existence query to be used when main
+   * query is dependent upon childs.
+   *
+   * @param  {Function} [callback]
+   * @return {Object}
+   */
+  exists (callback) {
+    this._makeJoinQuery(true)
+    this.relatedQuery.whereRaw(`${this.through.table}.${this.toKey} = ${this.parent.constructor.table}.${this.fromKey}`)
+    if (typeof (callback) === 'function') {
+      callback(this.relatedQuery)
+    }
+    return this.relatedQuery.modelQueryBuilder
+  }
+
+  /**
+   * Returns the existence query to be used when main
+   * query is dependent upon childs.
+   *
+   * @param  {Function} [callback]
+   * @return {Object}
+   */
+  counts (callback) {
+    this._makeJoinQuery(true)
+    this.relatedQuery.count('*').whereRaw(`${this.through.table}.${this.toKey} = ${this.parent.constructor.table}.${this.fromKey}`)
+    if (typeof (callback) === 'function') {
+      callback(this.relatedQuery)
+    }
+    return this.relatedQuery.modelQueryBuilder
   }
 
   /**

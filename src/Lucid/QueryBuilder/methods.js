@@ -10,6 +10,7 @@
 */
 
 const _ = require('lodash')
+const util = require('../../../lib/util')
 const CE = require('../../Exceptions')
 const methods = exports = module.exports = {}
 
@@ -257,6 +258,168 @@ methods.with = function (target) {
   return function () {
     const relations = _.isArray(arguments[0]) ? arguments[0] : _.toArray(arguments)
     target.eagerLoad.with(relations)
+    return this
+  }
+}
+
+/**
+ * Filters the top level results by checking the existence
+ * of related rows.
+ *
+ * @param  {Object}  target
+ * @return {Object}        reference to this for chaining
+ *
+ * @private
+ */
+methods._has = function (target) {
+  return function (key, method, expression, value) {
+    if (!value && expression) {
+      value = expression
+      expression = '='
+    }
+
+    const relations = util.parseNestedRelations(key)
+    const relationInstance = target.HostModel.prototype[relations.root]()
+
+    /**
+     * Call the has method on nested relations if any
+     */
+    if (relations.nested) {
+      relationInstance.getRelatedQuery().has(relations.nested, expression, value)
+      this[method](relationInstance.exists())
+    } else if (value && expression) {
+      this.whereRaw(`(${relationInstance.counts().toSQL().sql}) ${expression} ?`, [value])
+    } else {
+      this[method](relationInstance.exists())
+    }
+
+    return this
+  }
+}
+
+/**
+ * Filters the top level results by checking the existence
+ * of related rows with additional checks via callback.
+ *
+ * @param  {Object}  target
+ * @return {Object}        reference to this for chaining
+ *
+ * @public
+ */
+methods._whereHas = function (target) {
+  return function (key, method, callback, expression, value) {
+    if (!value && expression) {
+      value = expression
+      expression = '='
+    }
+
+    const relations = util.parseNestedRelations(key)
+    const relationInstance = target.HostModel.prototype[relations.root]()
+
+    /**
+     * Call the has method on nested relations if any
+     */
+    if (relations.nested) {
+      relationInstance.getRelatedQuery().whereHas(relations.nested, callback, expression, value)
+      this[method](relationInstance.exists())
+    } else if (value && expression) {
+      const countsQuery = relationInstance.counts(callback).toSQL()
+      this.whereRaw(`(${countsQuery.sql}) ${expression} ?`, countsQuery.bindings.concat([value]))
+    } else {
+      this[method](relationInstance.exists(callback))
+    }
+
+    return this
+  }
+}
+
+/**
+ * Filters the top level rows via checking the existence
+ * of related rows defined as relationships.
+ *
+ * @param {String} key
+ * @param {String} [expression]
+ * @param {Mixed} [value]
+ *
+ * @chainable
+ */
+methods.has = function () {
+  return function (key, expression, value) {
+    return this._has(key, 'whereExists', expression, value)
+  }
+}
+
+/**
+ * Filters the top level rows via checking the non-existence
+ * of related rows defined as relationships.
+ *
+ * @param {String} key
+ *
+ * @chainable
+ */
+methods.doesntHave = function () {
+  return function (key) {
+    return this._has(key, 'whereNotExists')
+  }
+}
+
+/**
+ * Filters the top level rows via checking the existence
+ * of related rows defined as relationships and allows
+ * a conditional callback to add more clauses
+ *
+ * @param {String} key
+ * @param {Function} callback
+ * @param {String} [expression]
+ * @param {Mixed} [value]
+ *
+ * @chainable
+ */
+methods.whereHas = function () {
+  return function (key, callback, value, expression) {
+    return this._whereHas(key, 'whereExists', callback, value, expression)
+  }
+}
+
+/**
+ * Filters the top level rows via checking the non-existence
+ * of related rows defined as relationships and allows
+ * a conditional callback to add more clauses
+ *
+ * @param {String} key
+ * @param {Function} callback
+ *
+ * @chainable
+ */
+methods.whereDoesntHave = function () {
+  return function (key, callback) {
+    return this._whereHas(key, 'whereNotExists', callback)
+  }
+}
+
+methods.withCount = function (target) {
+  return function (relation, callback) {
+    const relationInstance = target.HostModel.prototype[relation]()
+    const selectedColumns = _.find(target.modelQueryBuilder._statements, (statement) => statement.grouping === 'columns')
+
+    /**
+     * Select all columns from the table when none have
+     * been selected already.
+     */
+    if (!selectedColumns) {
+      target.modelQueryBuilder.column(`${this.HostModel.table}.*`)
+    }
+
+    /**
+     * The count query to fetch the related counts
+     * from relation instance.
+     */
+    const countsQuery = relationInstance.counts(callback).toSQL()
+    target
+    .modelQueryBuilder
+    .column(
+      target.queryBuilder.raw(countsQuery.sql, countsQuery.bindings).wrap('(', `) as ${relation}_count`)
+    )
     return this
   }
 }
