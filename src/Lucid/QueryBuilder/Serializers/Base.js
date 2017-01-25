@@ -132,7 +132,9 @@ class BaseSerializer {
       currentPage: values.currentPage,
       lastPage: values.lastPage
     }
+
     const collectionToJSON = collection.toJSON
+
     collection.toJSON = function () {
       const meta = collection.meta
       meta.data = collectionToJSON.bind(collection)()

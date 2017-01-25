@@ -125,6 +125,44 @@ class Relation {
   }
 
   /**
+   * Returns the existence query to be used when main
+   * query is dependent upon childs.
+   *
+   * @param  {Function} [callback]
+   * @return {Object}
+   */
+  exists (callback) {
+    const relatedQuery = this.relatedQuery.whereRaw(`${this.related.table}.${this.toKey} = ${this.parent.constructor.table}.${this.fromKey}`)
+    if (typeof (callback) === 'function') {
+      callback(relatedQuery)
+    }
+    return relatedQuery.modelQueryBuilder
+  }
+
+  /**
+   * Returns the counts query for a given relation
+   *
+   * @param  {Function} [callback]
+   * @return {Object}
+   */
+  counts (callback) {
+    const relatedQuery = this.relatedQuery.count('*').whereRaw(`${this.related.table}.${this.toKey} = ${this.parent.constructor.table}.${this.fromKey}`)
+    if (typeof (callback) === 'function') {
+      callback(relatedQuery)
+    }
+    return relatedQuery.modelQueryBuilder
+  }
+
+  /**
+   * Returns the query builder instance for related model.
+   *
+   * @return {Object}
+   */
+  getRelatedQuery () {
+    return this.relatedQuery
+  }
+
+  /**
    * adds with clause to related query, it almost becomes a recursive
    * loop until we get all nested relations
    *
