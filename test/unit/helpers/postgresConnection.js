@@ -10,7 +10,7 @@ module.exports = {
   default: {
     client: 'pg',
     connection: {
-      user: '',
+      user: 'harmindervirk',
       password: '',
       database: 'default'
     }
@@ -19,7 +19,7 @@ module.exports = {
   alternateConnection: {
     client: 'pg',
     connection: {
-      user: '',
+      user: 'harmindervirk',
       password: '',
       database: 'alternate'
     }
@@ -28,7 +28,7 @@ module.exports = {
   defaultPrefix: {
     client: 'pg',
     connection: {
-      user: '',
+      user: 'harmindervirk',
       password: '',
       database: 'default'
     },

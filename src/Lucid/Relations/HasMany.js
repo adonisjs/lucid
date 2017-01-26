@@ -65,7 +65,6 @@ class HasMany extends Relation {
     response[value] = results
     return response
   }
-
 }
 
 module.exports = HasMany

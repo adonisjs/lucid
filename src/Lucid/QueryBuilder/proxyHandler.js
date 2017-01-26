@@ -38,12 +38,14 @@ proxyHandler.get = function (target, name) {
    * here we try to make a dynamic scope method on query
    * builder and if found, we will return that method
    */
-  const scopeMethod = helpers.getScopeMethod(target.HostModel, name)
-  if (scopeMethod) {
-    return function () {
-      const args = [target.modelQueryBuilder].concat(_.toArray(arguments))
-      scopeMethod.apply(target.HostModel, args)
-      return this
+  if (typeof (name) === 'string') {
+    const scopeMethod = helpers.getScopeMethod(target.HostModel, name)
+    if (scopeMethod) {
+      return function () {
+        const args = [target.modelQueryBuilder].concat(_.toArray(arguments))
+        scopeMethod.apply(target.HostModel, args)
+        return this
+      }
     }
   }
   return target.modelQueryBuilder[name]

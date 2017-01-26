@@ -23,6 +23,7 @@ class BelongsToMany extends Relation {
     super(parent, related)
     this.pivotPrefix = '_pivot_'
     this.pivotItems = []
+    this.pivotTimestamps = false
     this._setUpPivotTable(pivotTable)
     this._setUpKeys(primaryKey, relatedPrimaryKey, pivotLocalKey, pivotOtherKey)
     this._decorateQueryBuilder()
@@ -41,6 +42,7 @@ class BelongsToMany extends Relation {
       const args = _.toArray(arguments)
       args[0] = `${self.pivotTable}.${args[0]}`
       this.where.apply(this, args)
+      return this
     }
   }
 
@@ -76,9 +78,11 @@ class BelongsToMany extends Relation {
    * makes the join query to be used by other
    * methods.
    *
+   * @param {Boolean} ignoreSelect
+   *
    * @public
    */
-  _makeJoinQuery () {
+  _makeJoinQuery (ignoreSelect) {
     const self = this
     const selectionKeys = [
       `${this.related.table}.*`,
@@ -89,9 +93,11 @@ class BelongsToMany extends Relation {
       selectionKeys.push(`${this.pivotTable}.${item} as ${this.pivotPrefix}${item}`)
     })
 
-    this.relatedQuery
-    .select.apply(this.relatedQuery, selectionKeys)
-    .innerJoin(this.pivotTable, function () {
+    if (!ignoreSelect) {
+      this.relatedQuery.select.apply(this.relatedQuery, selectionKeys)
+    }
+
+    this.relatedQuery.innerJoin(this.pivotTable, function () {
       this.on(`${self.related.table}.${self.toKey}`, `${self.pivotTable}.${self.pivotOtherKey}`)
     })
   }
@@ -102,6 +108,25 @@ class BelongsToMany extends Relation {
   _decorateRead () {
     this._makeJoinQuery()
     this.relatedQuery.where(`${this.pivotTable}.${this.pivotLocalKey}`, this.parent[this.fromKey])
+  }
+
+  /**
+   * Returns an object of keys and values of timestamps to be
+   * set on pivot table. All values/keys are derived from
+   * the parent model. Also if parent model disables
+   * timestamps, the withTimestamps function will
+   * have no effect.
+   *
+   * @return  {Object}
+   * @private
+   */
+  _getTimestampsForPivotTable () {
+    const timestamps = {}
+    if (this.pivotTimestamps) {
+      this.parent.setCreateTimestamp(timestamps)
+      this.parent.setUpdateTimestamp(timestamps)
+    }
+    return timestamps
   }
 
   /**
@@ -158,6 +183,38 @@ class BelongsToMany extends Relation {
      * which optionally accepts a countByQuery
      */
     return this.relatedQuery.paginate(page, perPage, countByQuery)
+  }
+
+  /**
+   * Returns the existence query to be used when main
+   * query is dependent upon childs.
+   *
+   * @param  {Function} [callback]
+   * @return {Object}
+   */
+  exists (callback) {
+    this._makeJoinQuery(true)
+    this.relatedQuery.whereRaw(`${this.pivotTable}.${this.pivotLocalKey} = ${this.parent.constructor.table}.${this.fromKey}`)
+    if (typeof (callback) === 'function') {
+      callback(this.relatedQuery)
+    }
+    return this.relatedQuery.modelQueryBuilder
+  }
+
+  /**
+   * Returns the existence query to be used when main
+   * query is dependent upon childs.
+   *
+   * @param  {Function} [callback]
+   * @return {Object}
+   */
+  counts (callback) {
+    this._makeJoinQuery(true)
+    this.relatedQuery.count('*').whereRaw(`${this.pivotTable}.${this.pivotLocalKey} = ${this.parent.constructor.table}.${this.fromKey}`)
+    if (typeof (callback) === 'function') {
+      callback(this.relatedQuery)
+    }
+    return this.relatedQuery.modelQueryBuilder
   }
 
   /**
@@ -366,11 +423,12 @@ class BelongsToMany extends Relation {
    * inside the pivot table.
    *
    * @param  {Object} relatedInstance
+   * @param  {Object} [pivotValues]
    * @return {Boolean}
    *
    * @public
    */
-  * save (relatedInstance) {
+  * save (relatedInstance, pivotValues) {
     if (relatedInstance instanceof this.related === false) {
       throw CE.ModelRelationException.relationMisMatch('save expects an instance of related model')
     }
@@ -383,7 +441,11 @@ class BelongsToMany extends Relation {
 
     const isSaved = yield relatedInstance.save()
     if (isSaved) {
-      yield this.attach([relatedInstance[this.toKey]])
+      const pivotValuesToSave = _.merge({}, this._getTimestampsForPivotTable(), pivotValues)
+      yield this.attach([relatedInstance[this.toKey]], pivotValuesToSave)
+      _.each(pivotValuesToSave, (value, key) => {
+        relatedInstance[`${this.pivotPrefix}${key}`] = value
+      })
     }
     relatedInstance[`${this.pivotPrefix}${this.pivotLocalKey}`] = this.parent[this.fromKey]
     relatedInstance[`${this.pivotPrefix}${this.pivotOtherKey}`] = relatedInstance[this.toKey]
@@ -394,14 +456,15 @@ class BelongsToMany extends Relation {
    * creates the related model instance and calls save on it
    *
    * @param  {Object} values
+   * @param  {Object} [pivotValues]
    * @return {Boolean}
    *
    * @public
    */
-  * create (values) {
+  * create (values, pivotValues) {
     const RelatedModel = this.related
     const relatedInstance = new RelatedModel(values)
-    yield this.save(relatedInstance)
+    yield this.save(relatedInstance, pivotValues)
     return relatedInstance
   }
 
@@ -424,6 +487,14 @@ class BelongsToMany extends Relation {
     return this
   }
 
+  /**
+   * Updates pivot table with an object of values. Optionally
+   * you can define the foriegn keys to be updated.
+   *
+   * @param  {Object} values
+   * @param  {Array} otherKeyValue
+   * @return {Promise}
+   */
   updatePivot (values, otherKeyValue) {
     if (otherKeyValue && !_.isArray(otherKeyValue)) {
       otherKeyValue = [otherKeyValue]
@@ -438,6 +509,17 @@ class BelongsToMany extends Relation {
     }
 
     return query.update(values)
+  }
+
+  /**
+   * Makes sure to respect the timestamps on pivot table. Also timestamps fields
+   * and values are derived by the parent model. Disabling timestamps on parent
+   * model results in no impact even after using pivotTimestamps.
+   */
+  withTimestamps () {
+    this.pivotTimestamps = true
+    this.withPivot(this.parent.constructor.createTimestamp, this.parent.constructor.updateTimestamp)
+    return this
   }
 
 }

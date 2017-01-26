@@ -29,6 +29,7 @@ module.exports = {
       knex.schema.createTable('profiles', function (table) {
         table.increments()
         table.integer('account_id')
+        table.boolean('is_primary')
         table.string('profile_name')
         table.timestamps()
         table.timestamp('deleted_at').nullable()
@@ -77,6 +78,13 @@ module.exports = {
         table.timestamps()
         table.timestamp('deleted_at').nullable()
       }),
+      knex.schema.createTable('replies', function (table) {
+        table.increments()
+        table.integer('comment_id')
+        table.string('body')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
       knex.schema.createTable('students', function (table) {
         table.increments()
         table.string('name')
@@ -102,6 +110,7 @@ module.exports = {
         table.integer('course_id')
         table.boolean('is_enrolled')
         table.integer('lessons_done')
+        table.timestamps()
       }),
       knex.schema.createTable('authors', function (table) {
         table.increments()
@@ -140,6 +149,7 @@ module.exports = {
       knex.schema.dropTable('users'),
       knex.schema.dropTable('posts'),
       knex.schema.dropTable('comments'),
+      knex.schema.dropTable('replies'),
       knex.schema.dropTable('courses'),
       knex.schema.dropTable('students'),
       knex.schema.dropTable('subjects'),
