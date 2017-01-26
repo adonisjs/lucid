@@ -1,3 +1,21 @@
+<a name="3.0.13"></a>
+## [3.0.13](https://github.com/adonisjs/adonis-lucid/compare/v3.0.12...v3.0.13) (2017-01-26)
+
+
+### Bug Fixes
+
+* **migrations:** select column as {name} ([0a09111](https://github.com/adonisjs/adonis-lucid/commit/0a09111)), closes [#82](https://github.com/adonisjs/adonis-lucid/issues/82)
+
+
+### Features
+
+* **lucid:** add incrementing flag ([7cad89a](https://github.com/adonisjs/adonis-lucid/commit/7cad89a)), closes [#89](https://github.com/adonisjs/adonis-lucid/issues/89)
+* **relations:** add support for withTimestamps in belongsToMany ([41dd327](https://github.com/adonisjs/adonis-lucid/commit/41dd327)), closes [#84](https://github.com/adonisjs/adonis-lucid/issues/84)
+* **relations:** add support to save pivot values during save/create ([774757d](https://github.com/adonisjs/adonis-lucid/commit/774757d))
+* **relations:** filter results based upon relations ([80afc1d](https://github.com/adonisjs/adonis-lucid/commit/80afc1d)), closes [#92](https://github.com/adonisjs/adonis-lucid/issues/92)
+
+
+
 <a name="3.0.12"></a>
 ## [3.0.12](https://github.com/adonisjs/adonis-lucid/compare/v3.0.11...v3.0.12) (2016-12-15)
 
