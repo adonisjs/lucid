@@ -1420,6 +1420,18 @@ describe('Lucid', function () {
       expect(User.$modelHooks['beforeCreate'][1].handler).to.have.property('method')
     })
 
+    it('should be able to define multiple hooks as an array', function () {
+      class User extends Model {}
+      User.bootIfNotBooted()
+      User.defineHooks('beforeCreate', ['Users.validate', 'Users.log'])
+      expect(User.$modelHooks['beforeCreate']).to.be.an('array')
+      expect(User.$modelHooks['beforeCreate'].length).to.equal(2)
+      expect(User.$modelHooks['beforeCreate'][0].handler).to.have.property('instance')
+      expect(User.$modelHooks['beforeCreate'][0].handler).to.have.property('method')
+      expect(User.$modelHooks['beforeCreate'][1].handler).to.have.property('instance')
+      expect(User.$modelHooks['beforeCreate'][1].handler).to.have.property('method')
+    })
+
     it('should override existing hooks when calling defineHooks', function () {
       class User extends Model {}
       User.bootIfNotBooted()
