@@ -5,7 +5,7 @@
   "directories": {
     "test": "test"
   },
-  "version": "3.0.13",
+  "version": "3.0.14",
   "scripts": {
     "lint": "standard",
     "test:all": "DB=sqlite3 npm run test && DB=mysql npm run test && DB=pg npm run test",
@@ -27,18 +27,18 @@
   "author": "adonisjs",
   "license": "MIT",
   "devDependencies": {
-    "adonis-ace": "^3.0.5",
+    "adonis-ace": "^3.0.6",
     "adonis-fold": "^3.0.3",
     "bluebird": "^3.4.7",
     "chai": "^3.5.0",
     "co-fs-extra": "^1.2.1",
-    "co-mocha": "^1.1.3",
-    "coveralls": "^2.11.15",
-    "cz-conventional-changelog": "^1.2.0",
+    "co-mocha": "^1.2.0",
+    "coveralls": "^2.11.16",
+    "cz-conventional-changelog": "^2.0.0",
     "istanbul": "^0.4.5",
     "mocha": "^3.2.0",
-    "mocha-lcov-reporter": "^1.2.0",
-    "mysql": "^2.12.0",
+    "mocha-lcov-reporter": "^1.3.0",
+    "mysql": "^2.13.0",
     "pg": "^6.1.2",
     "semantic-release": "^6.3.2",
     "semver": "^5.3.0",
@@ -56,20 +56,20 @@
   },
   "dependencies": {
     "adonis-binding-resolver": "^1.0.1",
-    "auto-loader": "git+https://github.com/thetutlage/node-auto-loader.git",
     "cat-log": "^1.0.2",
-    "chance": "^1.0.4",
+    "chance": "^1.0.6",
     "co": "^4.6.0",
     "co-functional": "^0.2.1",
     "cz-conventional-changelog": "^1.2.0",
     "es6-class-mixin": "^1.0.5",
     "harmony-reflect": "^1.5.1",
     "inflect": "^0.3.0",
-    "knex": "^0.12.6",
+    "knex": "^0.12.7",
     "lodash": "^4.17.4",
     "moment": "^2.17.1",
     "node-exceptions": "^1.0.3",
-    "pretty-hrtime": "^1.0.3"
+    "pretty-hrtime": "^1.0.3",
+    "require-all": "^2.2.0"
   },
   "repository": {
     "type": "git",

@@ -205,11 +205,9 @@ class Model {
    *
    * @public
    */
-  static defineHooks () {
+  static defineHooks (type, hooks) {
     this.$modelHooks = {}
-    const args = _.toArray(arguments)
-    const type = args[0]
-    const hooks = _.tail(args)
+    hooks = _.isArray(hooks) ? hooks : _.tail(arguments)
     _.each(hooks, (hook) => {
       this.addHook(type, hook)
     })

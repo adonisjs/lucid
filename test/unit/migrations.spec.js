@@ -843,4 +843,24 @@ describe('Migrations', function () {
     yield runner.database.schema.dropTable('adonis_migrations')
     yield runner.database.schema.dropTable('my_users')
   })
+
+  it('should ignore prefix when selecting migrations table', function * () {
+    Database._setConfigProvider(config.withPrefix)
+    const Runner = new Migrations(Database, Config)
+    const runner = new Runner()
+    class Users extends Schema {
+      up () {
+        this.create('ad_users', (table) => {
+          table.increments()
+        })
+      }
+    }
+    const migrations = {'2016-04-21': Users}
+    yield runner.up(migrations)
+    yield runner.up(migrations)
+    const myUsersInfo = yield runner.database.table('users').columnInfo()
+    expect(myUsersInfo.id).be.an('object')
+    yield runner.database.schema.dropTable('adonis_migrations')
+    yield runner.database.schema.dropTable('ad_users')
+  })
 })
