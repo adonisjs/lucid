@@ -1,3 +1,15 @@
+<a name="3.0.14"></a>
+## [3.0.14](https://github.com/adonisjs/adonis-lucid/compare/v3.0.13...v3.0.14) (2017-02-25)
+
+
+### Bug Fixes
+
+* **hooks:** improve defineHooks signature ([ca614e0](https://github.com/adonisjs/adonis-lucid/commit/ca614e0)), closes [#94](https://github.com/adonisjs/adonis-lucid/issues/94)
+* **migration:** ignore prefixing inside migrations ([5aebc5b](https://github.com/adonisjs/adonis-lucid/commit/5aebc5b)), closes [#105](https://github.com/adonisjs/adonis-lucid/issues/105)
+* **util:** filter .js files before requiring them ([a21d6fc](https://github.com/adonisjs/adonis-lucid/commit/a21d6fc)), closes [#96](https://github.com/adonisjs/adonis-lucid/issues/96)
+
+
+
 <a name="3.0.13"></a>
 ## [3.0.13](https://github.com/adonisjs/adonis-lucid/compare/v3.0.12...v3.0.13) (2017-01-26)
 
