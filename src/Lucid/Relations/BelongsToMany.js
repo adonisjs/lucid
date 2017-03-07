@@ -439,7 +439,15 @@ class BelongsToMany extends Relation {
       logger.warn(`Trying to save relationship from ${this.parent.constructor.name} model with ${this.fromKey} as primaryKey, whose value is falsy`)
     }
 
-    const isSaved = yield relatedInstance.save()
+    let isSaved = 0
+
+    try {
+      yield relatedInstance.save()
+      isSaved = 1
+    } catch (e) {
+      isSaved = 0
+    }
+
     if (isSaved) {
       const pivotValuesToSave = _.merge({}, this._getTimestampsForPivotTable(), pivotValues)
       yield this.attach([relatedInstance[this.toKey]], pivotValuesToSave)
