@@ -12,7 +12,6 @@
 const NE = require('node-exceptions')
 
 class RuntimeException extends NE.RuntimeException {
-
   /**
    * default error code to be used for raising
    * exceptions
@@ -68,11 +67,9 @@ class RuntimeException extends NE.RuntimeException {
       'E_LOCK_ON_MIGRATIONS'
       )
   }
-
 }
 
 class InvalidArgumentException extends NE.InvalidArgumentException {
-
   /**
    * default error code to be used for raising
    * exceptions
@@ -150,11 +147,9 @@ class InvalidArgumentException extends NE.InvalidArgumentException {
   static invalidTrait (code) {
     return new this('Make sure you have defined register method on model', code || this.defaultErrorCode, 'E_INVALID_MODEL_TRAIT')
   }
-
 }
 
 class ModelNotFoundException extends NE.LogicalException {
-
   /**
    * default error code to be used for raising
    * exceptions
@@ -180,11 +175,9 @@ class ModelNotFoundException extends NE.LogicalException {
   static raise (message, code) {
     return new this(message, code || this.defaultErrorCode, 'E_MISSING_DATABASE_ROW')
   }
-
 }
 
 class ModelException extends NE.LogicalException {
-
   /**
    * default error code to be used for raising
    * exceptions
@@ -224,11 +217,9 @@ class ModelException extends NE.LogicalException {
   static cannotRestore (model, code) {
     return this.invalidState(`Cannot restore ${model} model since soft deletes are not enabled`, code)
   }
-
 }
 
 class ModelRelationException extends NE.LogicalException {
-
   /**
    * default error code to be used for raising
    * exceptions
@@ -310,11 +301,9 @@ class ModelRelationException extends NE.LogicalException {
   static undefinedRelation (relation, model, code) {
     return new this(`${relation} is not defined on ${model} model as a relationship`, code || this.defaultErrorCode, 'E_MISSING_DATABASE_RELATION')
   }
-
 }
 
 class DomainException extends NE.DomainException {
-
   /**
    * default error code to be used for raising
    * exceptions
@@ -354,7 +343,6 @@ class DomainException extends NE.DomainException {
   static unsafeEnv (message, code) {
     return new this(message, code, 'E_UNSAFE_ENVIRONMENT')
   }
-
 }
 
 module.exports = {

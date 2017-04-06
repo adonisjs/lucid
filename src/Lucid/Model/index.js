@@ -69,7 +69,6 @@ const validHookTypes = [
  * @class
  */
 class Model {
-
   constructor (values) {
     if (_.isArray(values)) {
       throw CE.InvalidArgumentException.bulkInstantiate(this.constructor.name)

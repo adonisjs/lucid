@@ -18,7 +18,6 @@ const Ioc = require('adonis-fold').Ioc
 const CE = require('../../Exceptions')
 
 class Relation {
-
   constructor (parent, related) {
     this.parent = parent
     this.related = this._resolveModel(related)
@@ -260,7 +259,6 @@ class Relation {
       return yield self.save(relatedInstance)
     }, arrayOfInstances)
   }
-
 }
 
 module.exports = Relation

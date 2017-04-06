@@ -15,7 +15,6 @@ const CE = require('../Exceptions')
 const BaseCommand = Ioc.use('Adonis/Src/Command')
 
 class Command extends BaseCommand {
-
   constructor (Helpers, Migrations, Seeder) {
     super()
     this.helpers = Helpers
@@ -108,7 +107,6 @@ class Command extends BaseCommand {
       item.queries.forEach((query) => this.log(`>SQL: ${query}`))
     })
   }
-
 }
 
 module.exports = Command

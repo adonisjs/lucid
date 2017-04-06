@@ -14,7 +14,6 @@ const cf = require('co-functional')
 const CE = require('../../Exceptions')
 
 class EagerLoad {
-
   constructor () {
     this.instantiate()
   }
