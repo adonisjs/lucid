@@ -464,8 +464,13 @@ methods.ids = function (target) {
  * @return {Function}
  */
 methods.pair = function (target) {
+  // console.log(target)
   return function (lhs, rhs) {
-    return target.modelQueryBuilder.select(lhs, rhs).reduce(function (result, row) {
+    return target.modelQueryBuilder.select(lhs, rhs).where(function (builder) {
+      if (target.HostModel.deleteTimestamp) {
+        return builder.whereNull(target.HostModel.deleteTimestamp)
+      }
+    }).reduce(function (result, row) {
       result[row[lhs]] = row[rhs]
       return result
     }, {})

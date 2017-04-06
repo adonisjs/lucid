@@ -1071,6 +1071,26 @@ describe('Lucid', function () {
       expect(usersPair).deep.equal(manualPair)
     })
 
+    it('should exclude soft deleted rows from pair', function * () {
+      class User extends Model {
+        static get deleteTimestamp () {
+          return 'deleted_at'
+        }
+      }
+      User.bootIfNotBooted()
+      yield User.createMany([{username: 'foo'}, {username: 'bar'}, {username: 'bash'}])
+      const deletedUser = yield User.first()
+      yield deletedUser.delete()
+      const usersPair = yield User.pair('id', 'username')
+      const users = yield User.all()
+      let manualPair = users.map(function (user) {
+        return [user.id, user.username]
+      }).fromPairs().value()
+      expect(usersPair).to.be.an('object')
+      expect(usersPair[1]).to.be.undefined
+      expect(usersPair).deep.equal(manualPair)
+    })
+
     it('should be able to use pairs of the query builder chain', function * () {
       class User extends Model {
       }
