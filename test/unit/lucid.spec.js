@@ -453,8 +453,8 @@ describe('Lucid', function () {
       user.fill({username: 'bana'})
       yield user.save()
       expect(user.isNew()).to.equal(false)
-      expect(typeof user.created_at).to.not.equal('undefined')
-      expect(typeof user.created_at).to.not.equal('null')
+      expect(typeof user.id).to.not.equal('undefined')
+      expect(typeof user.id).to.not.equal('null')
     })
 
     it('should call setters when making use of fill method', function * () {
