@@ -67,7 +67,7 @@
     "knex": "^0.12.7",
     "lodash": "^4.17.4",
     "moment": "^2.17.1",
-    "node-exceptions": "^1.0.3",
+    "node-exceptions": "^2.0.0",
     "pretty-hrtime": "^1.0.3",
     "require-all": "^2.2.0"
   },
