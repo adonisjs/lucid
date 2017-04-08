@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-expressions */
 'use strict'
 
 /**
@@ -454,7 +453,8 @@ describe('Lucid', function () {
       user.fill({username: 'bana'})
       yield user.save()
       expect(user.isNew()).to.equal(false)
-      expect(user.id).to.exist
+      expect(typeof user.created_at).to.not.equal('undefined')
+      expect(typeof user.created_at).to.not.equal('null')
     })
 
     it('should call setters when making use of fill method', function * () {
@@ -477,7 +477,8 @@ describe('Lucid', function () {
         }
       }
       const user = yield User.create({username: 'dukki'})
-      expect(user.created_at).to.exist
+      expect(typeof user.created_at).to.not.equal('undefined')
+      expect(typeof user.created_at).to.not.equal('null')
       user.fill({firstname: 'foo', lastname: 'bar'})
       yield user.save()
       const reFetchUser = yield User.find(user.id)
@@ -1938,9 +1939,9 @@ describe('Lucid', function () {
     it('should consider model as new even when primary key is provided in advance', function () {
       class User extends Model {}
       const user = new User()
-      expect(user.isNew()).to.be.true
+      expect(user.isNew()).to.equal(true)
       user.id = 10
-      expect(user.isNew()).to.be.true
+      expect(user.isNew()).to.equal(true)
     })
 
     it('should make use of existing primary key when primary key defined when saving model', function * () {
