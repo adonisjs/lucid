@@ -1,3 +1,14 @@
+<a name="3.0.15"></a>
+## [3.0.15](https://github.com/adonisjs/adonis-lucid/compare/v3.0.14...v3.0.15) (2017-04-09)
+
+
+### Bug Fixes
+
+* **package:** update node-exceptions to version 2.0.0 ([#111](https://github.com/adonisjs/adonis-lucid/issues/111)) ([38acb47](https://github.com/adonisjs/adonis-lucid/commit/38acb47))
+* **soft-deletes:** pairs and ids ignore soft deleted ([c394950](https://github.com/adonisjs/adonis-lucid/commit/c394950)), closes [#109](https://github.com/adonisjs/adonis-lucid/issues/109)
+
+
+
 <a name="3.0.14"></a>
 ## [3.0.14](https://github.com/adonisjs/adonis-lucid/compare/v3.0.13...v3.0.14) (2017-02-25)
 
