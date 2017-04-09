@@ -2221,5 +2221,50 @@ describe('Lucid', function () {
       expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select * from "users" order by "id" desc limit ?'))
       expect(queryHelpers.formatBindings(query.bindings)).deep.equal(queryHelpers.formatBindings([1]))
     })
+
+    it('should not select soft deleted rows with pair method', function * () {
+      class User extends Model {
+        static get deleteTimestamp () {
+          return 'deleted_at'
+        }
+      }
+
+      User.bootIfNotBooted()
+
+      yield User.createMany([{username: 'foo'}, {username: 'bar'}, {username: 'baz'}])
+      const bazUser = yield User.findBy('username', 'baz')
+      yield bazUser.delete()
+
+      const usersPair = yield User.pair('id', 'username')
+      const users = yield User.all()
+      let manualPair = users.map(function (user) {
+        return [user.id, user.username]
+      }).fromPairs().value()
+      expect(usersPair).to.be.an('object')
+      expect(usersPair).deep.equal(manualPair)
+      yield User.truncate()
+    })
+
+    it('should not select soft deleted with ids method', function * () {
+      class User extends Model {
+        static get deleteTimestamp () {
+          return 'deleted_at'
+        }
+      }
+
+      User.bootIfNotBooted()
+
+      yield User.createMany([{username: 'foo'}, {username: 'bar'}, {username: 'baz'}])
+      const bazUser = yield User.findBy('username', 'baz')
+      yield bazUser.delete()
+
+      const userIds = yield User.ids()
+      expect(userIds).to.be.an('array')
+      expect(userIds).has.length(2)
+      userIds.forEach(function (id) {
+        expect(id).to.be.a('number')
+      })
+      yield User.truncate()
+    })
   })
 })
