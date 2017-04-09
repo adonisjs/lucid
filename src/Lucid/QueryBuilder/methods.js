@@ -451,6 +451,8 @@ methods.scope = function (target) {
  */
 methods.ids = function (target) {
   return function () {
+    const serializer = new target.HostModel.QuerySerializer(target, this)
+    serializer._decorateQuery()
     return target.modelQueryBuilder.select(target.HostModel.primaryKey).pluck(target.HostModel.primaryKey)
   }
 }
@@ -465,6 +467,8 @@ methods.ids = function (target) {
  */
 methods.pair = function (target) {
   return function (lhs, rhs) {
+    const serializer = new target.HostModel.QuerySerializer(target, this)
+    serializer._decorateQuery()
     return target.modelQueryBuilder.select(lhs, rhs).reduce(function (result, row) {
       result[row[lhs]] = row[rhs]
       return result
