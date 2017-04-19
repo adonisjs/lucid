@@ -3485,6 +3485,32 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
+    it('should not throw SQLITE_MISUSE exception', function * () {
+      var exceptionThrown = false
+
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      const student = yield Student.find(savedStudent[0])
+
+      try {
+        yield student.courses().sync([])
+      } catch (e) {
+        exceptionThrown = true
+      }
+
+      yield relationFixtures.truncate(Database, 'students')
+
+      expect(exceptionThrown).to.be.false
+    })
+
     it('should be able to create a related model and put relation into pivot table', function * () {
       const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
       class Course extends Model {

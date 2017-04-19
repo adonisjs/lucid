@@ -373,7 +373,13 @@ class BelongsToMany extends Relation {
       return result
     })
 
-    yield this.relatedQuery.queryBuilder.table(this.pivotTable).insert(values)
+    /**
+     * No need to run the query if there is nothing to insert.
+     * Besides, trying to insert empty list causes misuse error on Sqlite3.
+     */
+    if (values.length > 0) {
+      yield this.relatedQuery.queryBuilder.table(this.pivotTable).insert(values)
+    }
   }
 
   /**
