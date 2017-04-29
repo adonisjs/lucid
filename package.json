@@ -64,7 +64,7 @@
     "es6-class-mixin": "^1.0.5",
     "harmony-reflect": "^1.5.1",
     "inflect": "^0.3.0",
-    "knex": "^0.12.7",
+    "knex": "^0.13.0",
     "lodash": "^4.17.4",
     "moment": "^2.17.1",
     "node-exceptions": "^2.0.0",
