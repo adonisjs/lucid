@@ -50,7 +50,7 @@ describe('Relations', function () {
   })
 
   context('QueryBuilder', function () {
-    it('should make the exists query when fetching account with has method on it @current', function () {
+    it('should make the exists query when fetching account with has method on it', function () {
       class Profile extends Model {
       }
 
@@ -66,7 +66,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(accountQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "accounts" where exists (select * from "profiles" where profiles.account_id = accounts.id)'))
     })
 
-    it('should make the exists query when fetching account with has method on it for multiple relations @current', function () {
+    it('should make the exists query when fetching account with has method on it for multiple relations', function () {
       class Profile extends Model {
       }
 
@@ -90,7 +90,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(accountQuery.sql)).to.equal(queryHelpers.formatQuery(expectedQuery))
     })
 
-    it('should make the exists query with custom where clause @current', function () {
+    it('should make the exists query with custom where clause', function () {
       class Profile extends Model {
       }
 
@@ -117,7 +117,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatBindings(accountQuery.bindings)).deep.equal([true])
     })
 
-    it('should make the exists query with nested clause @current', function () {
+    it('should make the exists query with nested clause', function () {
       class Reply extends Model {
       }
 
@@ -141,7 +141,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(postQuery.sql)).to.equal(queryHelpers.formatQuery(expectedQuery))
     })
 
-    it('should make the exists query with multiple nested clause @current', function () {
+    it('should make the exists query with multiple nested clause', function () {
       class Like extends Model {
       }
 
@@ -171,7 +171,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(PostQuery.sql)).to.equal(queryHelpers.formatQuery(expectedQuery))
     })
 
-    it('should run the count query when has method has additional constraints @current', function () {
+    it('should run the count query when has method has additional constraints', function () {
       class Profile extends Model {
       }
 
@@ -188,7 +188,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatBindings(accountQuery.bindings)).deep.equal(queryHelpers.formatBindings([1]))
     })
 
-    it('should run the count query and respect the expression for counts @current', function () {
+    it('should run the count query and respect the expression for counts', function () {
       class Profile extends Model {
       }
 
@@ -205,7 +205,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatBindings(accountQuery.bindings)).deep.equal(queryHelpers.formatBindings([1]))
     })
 
-    it('should run the count query for the last relation when has method receives a nested expression @current', function () {
+    it('should run the count query for the last relation when has method receives a nested expression', function () {
       class Reply extends Model {
       }
 
@@ -230,7 +230,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatBindings(postQuery.bindings)).deep.equal(queryHelpers.formatBindings([1]))
     })
 
-    it('should run the whereHas callback on the last child of nested relation @current', function () {
+    it('should run the whereHas callback on the last child of nested relation', function () {
       class Reply extends Model {
       }
 
@@ -257,7 +257,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatBindings(postQuery.bindings)).deep.equal(queryHelpers.formatBindings(['today']))
     })
 
-    it('should make a check for the count when whereHas defines value constraint @current', function () {
+    it('should make a check for the count when whereHas defines value constraint', function () {
       class Reply extends Model {
       }
 
@@ -284,7 +284,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatBindings(postQuery.bindings)).deep.equal(queryHelpers.formatBindings(['today', 4]))
     })
 
-    it('should use the count expression with whereHas when defined @current', function () {
+    it('should use the count expression with whereHas when defined', function () {
       class Reply extends Model {
       }
 
@@ -311,7 +311,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatBindings(postQuery.bindings)).deep.equal(queryHelpers.formatBindings(['today', 4]))
     })
 
-    it('should make the does not exists when doesntHave method is used @current', function () {
+    it('should make the does not exists when doesntHave method is used', function () {
       class Profile extends Model {
       }
 
@@ -328,7 +328,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatBindings(accountQuery.bindings)).deep.equal(queryHelpers.formatBindings([]))
     })
 
-    it('should make the does not exists when whereDoesntHave method is used @current', function () {
+    it('should make the does not exists when whereDoesntHave method is used', function () {
       class Profile extends Model {
       }
 
@@ -347,7 +347,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatBindings(accountQuery.bindings)).deep.equal(queryHelpers.formatBindings([true]))
     })
 
-    it('should ignore the count expression when defined with doesntHave @current', function () {
+    it('should ignore the count expression when defined with doesntHave', function () {
       class Profile extends Model {
       }
 
@@ -364,7 +364,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatBindings(accountQuery.bindings)).deep.equal(queryHelpers.formatBindings([]))
     })
 
-    it('should find the counts of a relationship using withCount method @Wcurrent', function () {
+    it('should find the counts of a relationship using withCount method', function () {
       class Profile extends Model {
       }
 
@@ -381,7 +381,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(accountQuery.sql)).to.equal(queryHelpers.formatQuery(expectedQuery))
     })
 
-    it('should append to already selected columns when finding counts @Wcurrent', function () {
+    it('should append to already selected columns when finding counts', function () {
       class Profile extends Model {
       }
 
@@ -398,7 +398,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(accountQuery.sql)).to.equal(queryHelpers.formatQuery(expectedQuery))
     })
 
-    it('should append to already selected columns when finding counts after applying filter @Wcurrent', function () {
+    it('should append to already selected columns when finding counts after applying filter', function () {
       class Profile extends Model {
       }
 
@@ -1593,7 +1593,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'accounts')
     })
 
-    it('should return the correct query for existence of relationship records @current', function () {
+    it('should return the correct query for existence of relationship records', function () {
       class Account extends Model {
       }
 
@@ -1608,7 +1608,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(relationQuery.toSQL().sql)).to.equal(queryHelpers.formatQuery('select * from "accounts" where accounts.supplier_id = suppliers.id'))
     })
 
-    it('should return the correct counts query for existence of relationship records @current', function () {
+    it('should return the correct counts query for existence of relationship records', function () {
       class Account extends Model {
       }
 
@@ -1623,7 +1623,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(relationQuery.toSQL().sql)).to.equal(queryHelpers.formatQuery('select count(*) from "accounts" where accounts.supplier_id = suppliers.id'))
     })
 
-    it('should return zero records when related rows are empty @current', function * () {
+    it('should return zero records when related rows are empty', function * () {
       yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
       class Account extends Model {
       }
@@ -1639,7 +1639,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'suppliers')
     })
 
-    it('should return all records when related rows exists @current', function * () {
+    it('should return all records when related rows exists', function * () {
       const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
       yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
       class Account extends Model {
@@ -1657,7 +1657,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'accounts')
     })
 
-    it('should return zero records when related rows exists but where clause fails @current', function * () {
+    it('should return zero records when related rows exists but where clause fails', function * () {
       const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
       yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
       class Account extends Model {
@@ -1677,7 +1677,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'accounts')
     })
 
-    it('should return all records when related rows exists and where clause passed @current', function * () {
+    it('should return all records when related rows exists and where clause passed', function * () {
       const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
       yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
       class Account extends Model {
@@ -1697,7 +1697,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'accounts')
     })
 
-    it('should return zero records when count for related rows does not match @current', function * () {
+    it('should return zero records when count for related rows does not match', function * () {
       const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
       yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
       class Account extends Model {
@@ -1715,7 +1715,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'accounts')
     })
 
-    it('should return all records when count for related rows matches @current', function * () {
+    it('should return all records when count for related rows matches', function * () {
       const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
       yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
       class Account extends Model {
@@ -1733,7 +1733,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'accounts')
     })
 
-    it('should return counts for the related models @Wcurrent', function * () {
+    it('should return counts for the related models', function * () {
       const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
       yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
       yield relationFixtures.createRecords(Database, 'accounts', {name: 'reebook', supplier_id: savedSupplier[0]})
@@ -1752,7 +1752,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'accounts')
     })
 
-    it('should return counts for the related models by applying a filter on withCount method @Wcurrent', function * () {
+    it('should return counts for the related models by applying a filter on withCount method', function * () {
       const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
       yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
       yield relationFixtures.createRecords(Database, 'accounts', {name: 'reebook', supplier_id: savedSupplier[0]})
@@ -2169,7 +2169,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'comments')
     })
 
-    it('should return the correct query for existence of relationship records @current', function () {
+    it('should return the correct query for existence of relationship records', function () {
       class Comment extends Model {
       }
 
@@ -2184,7 +2184,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(relationQuery.toSQL().sql)).to.equal(queryHelpers.formatQuery('select * from "comments" where comments.post_id = posts.id'))
     })
 
-    it('should return the correct counts query for existence of relationship records @current', function () {
+    it('should return the correct counts query for existence of relationship records', function () {
       class Comment extends Model {
       }
 
@@ -2199,7 +2199,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(relationQuery.toSQL().sql)).to.equal(queryHelpers.formatQuery('select count(*) from "comments" where comments.post_id = posts.id'))
     })
 
-    it('should return zero records when related rows are empty @current', function * () {
+    it('should return zero records when related rows are empty', function * () {
       yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
 
       class Comment extends Model {
@@ -2216,7 +2216,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'posts')
     })
 
-    it('should return all records when related rows exists @current', function * () {
+    it('should return all records when related rows exists', function * () {
       const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
       yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
 
@@ -2235,7 +2235,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'comments')
     })
 
-    it('should return zero records when related rows exists but where clause fails @current', function * () {
+    it('should return zero records when related rows exists but where clause fails', function * () {
       const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
       yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
 
@@ -2256,7 +2256,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'comments')
     })
 
-    it('should return all records when related rows exists but where clause passed @current', function * () {
+    it('should return all records when related rows exists but where clause passed', function * () {
       const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
       yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
 
@@ -2277,7 +2277,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'comments')
     })
 
-    it('should return zero records when count for related rows does not match @current', function * () {
+    it('should return zero records when count for related rows does not match', function * () {
       const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
       yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
 
@@ -2296,7 +2296,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'comments')
     })
 
-    it('should return zero records when count for related rows does not match @current', function * () {
+    it('should return zero records when count for related rows does not match', function * () {
       const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
       yield relationFixtures.createRecords(Database, 'comments', [{body: 'Nice article', post_id: savedPost[0]}, {body: 'Another Nice article', post_id: savedPost[0]}])
 
@@ -2315,7 +2315,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'comments')
     })
 
-    it('should return counts for the related models @Wcurrent', function * () {
+    it('should return counts for the related models', function * () {
       const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
       yield relationFixtures.createRecords(Database, 'comments', [{body: 'Nice article', post_id: savedPost[0]}, {body: 'Another Nice article', post_id: savedPost[0]}])
 
@@ -2334,7 +2334,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'comments')
     })
 
-    it('should return counts for the related models by applying a filter on withCount method @Wcurrent', function * () {
+    it('should return counts for the related models by applying a filter on withCount method', function * () {
       const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis'})
       yield relationFixtures.createRecords(Database, 'comments', [{body: 'Nice article', post_id: savedPost[0]}, {body: 'Another Nice article', post_id: savedPost[0]}])
 
@@ -2750,7 +2750,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'comments')
     })
 
-    it('should return the correct query for existence of relationship records @current', function () {
+    it('should return the correct query for existence of relationship records', function () {
       class Post extends Model {
       }
 
@@ -2765,7 +2765,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(relationQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "posts" where posts.id = comments.post_id'))
     })
 
-    it('should return the correct query for existence of relationship records @current', function () {
+    it('should return the correct query for existence of relationship records', function () {
       class Post extends Model {
       }
 
@@ -2780,7 +2780,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(relationQuery.sql)).to.equal(queryHelpers.formatQuery('select count(*) from "posts" where posts.id = comments.post_id'))
     })
 
-    it('should return zero records when related rows are empty @current', function * () {
+    it('should return zero records when related rows are empty', function * () {
       yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: null})
 
       class Post extends Model {
@@ -2798,7 +2798,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'comments')
     })
 
-    it('should return all records when related rows exists @current', function * () {
+    it('should return all records when related rows exists', function * () {
       const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis', id: 24})
       yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
 
@@ -2817,7 +2817,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'comments')
     })
 
-    it('should return zero records when related rows exists but where clause fails @current', function * () {
+    it('should return zero records when related rows exists but where clause fails', function * () {
       const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis', id: 24})
       yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
 
@@ -2838,7 +2838,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'comments')
     })
 
-    it('should return all records when related rows exists but where clause passed @current', function * () {
+    it('should return all records when related rows exists but where clause passed', function * () {
       const savedPost = yield relationFixtures.createRecords(Database, 'posts', {title: 'Adonis 101', body: 'Let\'s learn Adonis', id: 24})
       yield relationFixtures.createRecords(Database, 'comments', {body: 'Nice article', post_id: savedPost[0]})
 
@@ -4009,7 +4009,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
-    it('should return the correct query for existence of relationship records @current', function () {
+    it('should return the correct query for existence of relationship records', function () {
       class Course extends Model {
       }
 
@@ -4026,7 +4026,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(relationQuery.sql)).to.equal(queryHelpers.formatQuery('select * from "courses" inner join "course_student" on "courses"."id" = "course_student"."course_id" where course_student.student_id = students.id'))
     })
 
-    it('should return the correct counts query for existence of relationship records @current', function () {
+    it('should return the correct counts query for existence of relationship records', function () {
       class Course extends Model {
       }
 
@@ -4043,7 +4043,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(relationQuery.sql)).to.equal(queryHelpers.formatQuery('select count(*) from "courses" inner join "course_student" on "courses"."id" = "course_student"."course_id" where course_student.student_id = students.id'))
     })
 
-    it('should return zero records when related rows are empty @current', function * () {
+    it('should return zero records when related rows are empty', function * () {
       yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
 
       class Course extends Model {
@@ -4063,7 +4063,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'students')
     })
 
-    it('should return zero records when related rows exists but pivot table is empty @current', function * () {
+    it('should return zero records when related rows exists but pivot table is empty', function * () {
       yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
       yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12})
 
@@ -4085,7 +4085,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'courses')
     })
 
-    it('should return all records when related rows exists @current', function * () {
+    it('should return all records when related rows exists', function * () {
       class Course extends Model {
       }
 
@@ -4111,7 +4111,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
-    it('should return zero records when related rows exists but where clause fails @current', function * () {
+    it('should return zero records when related rows exists but where clause fails', function * () {
       class Course extends Model {
       }
 
@@ -4139,7 +4139,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
-    it('should return all records when related rows exists but where clause passed @current', function * () {
+    it('should return all records when related rows exists but where clause passed', function * () {
       class Course extends Model {
       }
 
@@ -4167,7 +4167,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
-    it('should return zero records when related rows exists but where clause fails via wherePivot clause @current', function * () {
+    it('should return zero records when related rows exists but where clause fails via wherePivot clause', function * () {
       class Course extends Model {
       }
 
@@ -4193,7 +4193,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
-    it('should return all records when related rows exists but where clause passed via wherePivot clause @current', function * () {
+    it('should return all records when related rows exists but where clause passed via wherePivot clause', function * () {
       class Course extends Model {
       }
 
@@ -4219,7 +4219,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
-    it('should paginate over rows properly when has method filters are applied @current', function * () {
+    it('should paginate over rows properly when has method filters are applied', function * () {
       class Course extends Model {
       }
 
@@ -4257,7 +4257,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
-    it('should return counts for the related models @Wcurrent', function * () {
+    it('should return counts for the related models', function * () {
       const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
       const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12, weightage: 8})
       const savedCourse1 = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 14, weightage: 8})
@@ -4286,7 +4286,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
-    it('should return counts for the related models by applying a filter on withCount method @Wcurrent', function * () {
+    it('should return counts for the related models by applying a filter on withCount method', function * () {
       const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
       const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12, weightage: 8})
       const savedCourse1 = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 14, weightage: 8})
@@ -4665,7 +4665,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'publications')
     })
 
-    it('should return the correct query for existence of relationship records @current', function () {
+    it('should return the correct query for existence of relationship records', function () {
       class Author extends Model {
       }
 
@@ -4685,7 +4685,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(relationQuery.sql)).to.equal(queryHelpers.formatQuery(expectedQuery))
     })
 
-    it('should return the correct counts query for existence of relationship records @current', function () {
+    it('should return the correct counts query for existence of relationship records', function () {
       class Author extends Model {
       }
 
@@ -4705,7 +4705,7 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(relationQuery.sql)).to.equal(queryHelpers.formatQuery(expectedQuery))
     })
 
-    it('should return zero records when related rows are empty @current', function * () {
+    it('should return zero records when related rows are empty', function * () {
       yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND', id: 11})
       class Author extends Model {
       }
@@ -4726,7 +4726,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'countries')
     })
 
-    it('should return all records when related rows exists @current', function * () {
+    it('should return all records when related rows exists', function * () {
       const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND', id: 11})
       const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0], id: 23})
       yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0], amount: 20})
@@ -4752,7 +4752,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'publications')
     })
 
-    it('should return zero records when related rows exists but where clause fails @current', function * () {
+    it('should return zero records when related rows exists but where clause fails', function * () {
       const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND', id: 11})
       const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0], id: 23})
       yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0], amount: 20})
@@ -4780,7 +4780,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'publications')
     })
 
-    it('should return all records when related rows exists but where clause passed @current', function * () {
+    it('should return all records when related rows exists but where clause passed', function * () {
       const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND', id: 11})
       const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0], id: 23})
       yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0], amount: 20})
@@ -4808,7 +4808,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'publications')
     })
 
-    it('should paginate over rows properly when has method filters are applied @current', function * () {
+    it('should paginate over rows properly when has method filters are applied', function * () {
       const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND'})
       yield relationFixtures.createRecords(Database, 'countries', {name: 'United Kingdom', locale: 'UK'})
       const savedCountry2 = yield relationFixtures.createRecords(Database, 'countries', {name: 'United States Of America', locale: 'USA'})
@@ -4840,7 +4840,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'publications')
     })
 
-    it('should return counts for the related models @Wcurrent', function * () {
+    it('should return counts for the related models', function * () {
       const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND'})
       const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0]})
       const savedAuthor1 = yield relationFixtures.createRecords(Database, 'authors', {name: 'Russell', country_id: savedCountry[0]})
@@ -4868,7 +4868,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'publications')
     })
 
-    it('should return correct counts for the related models when related model records are less @Wcurrent', function * () {
+    it('should return correct counts for the related models when related model records are less', function * () {
       const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND'})
       const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0]})
       yield relationFixtures.createRecords(Database, 'authors', {name: 'Russell', country_id: savedCountry[0]})
@@ -4895,7 +4895,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'publications')
     })
 
-    it('should return correct counts for the related models when related through records are less @Wcurrent', function * () {
+    it('should return correct counts for the related models when related through records are less', function * () {
       const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND'})
       const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0]})
       yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0], amount: 20})
@@ -4922,7 +4922,7 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'publications')
     })
 
-    it('should return counts for the related models by applying a filter on withCount method @Wcurrent', function * () {
+    it('should return counts for the related models by applying a filter on withCount method', function * () {
       const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND'})
       const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0]})
       const savedAuthor1 = yield relationFixtures.createRecords(Database, 'authors', {name: 'Russell', country_id: savedCountry[0]})
