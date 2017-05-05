@@ -14,7 +14,6 @@ const CE = require('../../Exceptions')
 const helpers = require('../QueryBuilder/helpers')
 
 class HasManyThrough extends Relation {
-
   constructor (parent, related, through, primaryKey, foreignKey, throughPrimaryKey, throughForeignKey) {
     super(parent, related)
     this.through = this._resolveModel(through)
@@ -277,7 +276,6 @@ class HasManyThrough extends Relation {
   * delete () {
     throw CE.ModelRelationException.unSupportedMethod('delete', this.constructor.name)
   }
-
 }
 
 module.exports = HasManyThrough

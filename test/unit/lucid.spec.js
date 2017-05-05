@@ -13,6 +13,7 @@
 const Model = require('../../src/Lucid/Model')
 const Database = require('../../src/Database')
 const chai = require('chai')
+chai.use(require('dirty-chai'))
 const uuid = require('uuid')
 const moment = require('moment')
 const path = require('path')
@@ -94,7 +95,7 @@ describe('Lucid', function () {
       const fn = function () {
         User.addGlobalScope('hello')
       }
-      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: global scope callback must be a function')
+      expect(fn).to.throw('E_INVALID_PARAMETER: global scope callback must be a function')
     })
 
     it('should be able to add global scopes to the model instance', function () {
@@ -188,7 +189,7 @@ describe('Lucid', function () {
       const fn = function () {
         User.onQuery('foo')
       }
-      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: onQuery callback must be a function')
+      expect(fn).to.throw('E_INVALID_PARAMETER: onQuery callback must be a function')
     })
 
     it('should return query builder instance when .query method is called', function () {
@@ -214,7 +215,7 @@ describe('Lucid', function () {
       const fn = function () {
         return new User([{name: 'foo'}, {name: 'bar'}])
       }
-      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: Cannot instantiate User model with multiple rows, using createMany instead')
+      expect(fn).to.throw('E_INVALID_PARAMETER: Cannot instantiate User model with multiple rows, using createMany instead')
     })
 
     it('should be able to instantiate a model with an object of values', function () {
@@ -453,7 +454,7 @@ describe('Lucid', function () {
       user.fill({username: 'bana'})
       yield user.save()
       expect(user.isNew()).to.equal(false)
-      expect(user.id).to.exist
+      expect(user.id).to.exist()
     })
 
     it('should call setters when making use of fill method', function * () {
@@ -476,7 +477,7 @@ describe('Lucid', function () {
         }
       }
       const user = yield User.create({username: 'dukki'})
-      expect(user.created_at).to.exist
+      expect(user.created_at).to.exist()
       user.fill({firstname: 'foo', lastname: 'bar'})
       yield user.save()
       const reFetchUser = yield User.find(user.id)
@@ -1353,7 +1354,7 @@ describe('Lucid', function () {
       const fn = function () {
         User.addHook('anytime', function () {})
       }
-      expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: anytime is not a valid hook type')
+      expect(fn).to.throw('E_INVALID_PARAMETER: anytime is not a valid hook type')
     })
 
     it('should throw an error when hook handler is defined', function () {
@@ -1361,7 +1362,7 @@ describe('Lucid', function () {
       const fn = function () {
         User.addHook('beforeCreate')
       }
-      expect(fn).to.throw('InvalidArgumentException: E_INVALID_IOC_BINDING: Handler must point to a valid namespace or a closure')
+      expect(fn).to.throw('E_INVALID_IOC_BINDING: Handler must point to a valid namespace or a closure')
     })
 
     it('should add a hook for a given type', function () {
@@ -1937,9 +1938,9 @@ describe('Lucid', function () {
     it('should consider model as new even when primary key is provided in advance', function () {
       class User extends Model {}
       const user = new User()
-      expect(user.isNew()).to.be.true
+      expect(user.isNew()).to.be.true()
       user.id = 10
-      expect(user.isNew()).to.be.true
+      expect(user.isNew()).to.be.true()
     })
 
     it('should make use of existing primary key when primary key defined when saving model', function * () {
@@ -2131,7 +2132,7 @@ describe('Lucid', function () {
         }
       }
       const fn = () => User.bootIfNotBooted()
-      expect(fn).to.throw('InvalidArgumentException: E_INVALID_MODEL_TRAIT: Make sure you have defined register method on model')
+      expect(fn).to.throw('E_INVALID_MODEL_TRAIT: Make sure you have defined register method on model')
     })
 
     it('should be able to assign trait to the model', function () {

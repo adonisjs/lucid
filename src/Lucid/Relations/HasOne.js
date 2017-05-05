@@ -13,7 +13,6 @@ const Relation = require('./Relation')
 const CE = require('../../Exceptions')
 
 class HasOne extends Relation {
-
   constructor (parent, related, primaryKey, foreignKey) {
     super(parent, related)
     this.fromKey = primaryKey || this.parent.constructor.primaryKey
@@ -123,7 +122,6 @@ class HasOne extends Relation {
   * saveMany () {
     throw CE.ModelRelationException.unSupportedMethod('saveMany', this.constructor.name)
   }
-
 }
 
 module.exports = HasOne

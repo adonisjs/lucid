@@ -58,7 +58,7 @@ describe('Database provider', function () {
     const fn = function () {
       Database.where()
     }
-    expect(fn).to.throw('InvalidArgumentException: E_MISSING_CONFIG: Make sure to define a connection inside the database config file')
+    expect(fn).to.throw('E_MISSING_CONFIG: Make sure to define a connection inside the database config file')
   })
 
   it('should throw an error when unable to find connection settings using connection key', function () {
@@ -74,7 +74,7 @@ describe('Database provider', function () {
     const fn = function () {
       Database.where()
     }
-    expect(fn).to.throw('InvalidArgumentException: E_MISSING_CONFIG: Unable to get database client configuration for sqlite')
+    expect(fn).to.throw('E_MISSING_CONFIG: Unable to get database client configuration for sqlite')
   })
 
   it('should reuse the old pool if exists', function () {
