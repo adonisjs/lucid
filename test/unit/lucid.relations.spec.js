@@ -1772,6 +1772,39 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'suppliers')
       yield relationFixtures.truncate(Database, 'accounts')
     })
+
+    it('update existing related model', function * () {
+      const savedSupplier = yield relationFixtures.createRecords(Database, 'suppliers', {name: 'nike'})
+      yield relationFixtures.createRecords(Database, 'accounts', {name: 'nike', supplier_id: savedSupplier[0]})
+      yield relationFixtures.createRecords(Database, 'accounts', {name: 'reebook', supplier_id: savedSupplier[0]})
+      let query = null
+
+      class Account extends Model {
+        static boot () {
+          super.boot()
+          this.onQuery((q) => {
+            query = q
+          })
+        }
+      }
+
+      class Supplier extends Model {
+        account () {
+          return this.hasOne(Account)
+        }
+      }
+
+      Account.bootIfNotBooted()
+
+      const supplier = yield Supplier.find(savedSupplier[0])
+      const account = supplier.account()
+      yield account.update({'points': 10})
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('update "accounts" set "points" = ?, "updated_at" = ? where "supplier_id" = ?'))
+      expect(queryHelpers.formatBindings(query.bindings)).contains(savedSupplier[0])
+
+      yield relationFixtures.truncate(Database, 'suppliers')
+      yield relationFixtures.truncate(Database, 'accounts')
+    })
   })
 
   context('HasMany', function () {

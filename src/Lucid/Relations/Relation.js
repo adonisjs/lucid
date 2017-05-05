@@ -27,6 +27,21 @@ class Relation {
   }
 
   /**
+   * Returns related query after validating that
+   * read is possible + decorating the query
+   * by adding required where statement(s)
+   *
+   * @attribute relationQuery
+   *
+   * @return {Object}
+   */
+  get relationQuery () {
+    this._validateRead()
+    this._decorateRead()
+    return this.relatedQuery
+  }
+
+  /**
    * empty placeholder to be used when unable to eagerload
    * relations. It needs to be an array of many to many
    * relationships.
@@ -227,6 +242,20 @@ class Relation {
     const relatedInstance = new RelatedModel(values)
     yield this.save(relatedInstance)
     return relatedInstance
+  }
+
+  /**
+   * Update value on the related model instance
+   *
+   * @param  {Object} values
+   * @return {Object}
+   *
+   * @public
+   */
+  * update (values) {
+    this._validateRead()
+    this._decorateRead()
+    return yield this.relatedQuery.update(values)
   }
 
   /**
