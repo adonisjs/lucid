@@ -16,7 +16,6 @@ let ConfigReference = null
 let DatabaseReference = null
 
 class Migrations {
-
   constructor () {
     this.database = DatabaseReference
     this.migrationsTable = ConfigReference.get('database.migrationsTable', 'adonis_schema')

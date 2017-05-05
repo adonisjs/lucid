@@ -12,7 +12,6 @@
 const ServiceProvider = require('adonis-fold').ServiceProvider
 
 class CommandsProvider extends ServiceProvider {
-
   constructor () {
     super()
     this.commands = ['Run', 'Rollback', 'Refresh', 'Reset', 'Status']

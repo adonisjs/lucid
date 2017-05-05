@@ -13,7 +13,6 @@ const _ = require('lodash')
 const helpers = require('../helpers')
 
 class BaseSerializer {
-
   constructor (queryBuilder, proxyScope) {
     /**
      * this is the reference to the proxied query builder.
@@ -142,7 +141,6 @@ class BaseSerializer {
     }
     return collection
   }
-
 }
 
 module.exports = BaseSerializer

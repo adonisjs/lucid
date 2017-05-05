@@ -13,7 +13,6 @@ const Command = require('./Command')
 const prettyHrTime = require('pretty-hrtime')
 
 class Run extends Command {
-
   /**
    * signature to be used by ace
    *

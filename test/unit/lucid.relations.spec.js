@@ -13,6 +13,7 @@
 const Model = require('../../src/Lucid/Model')
 const Database = require('../../src/Database')
 const chai = require('chai')
+chai.use(require('dirty-chai'))
 const Ioc = require('adonis-fold').Ioc
 const expect = chai.expect
 const moment = require('moment')
@@ -2655,7 +2656,7 @@ describe('Relations', function () {
       const fn = function () {
         return comment.post().associate(post)
       }
-      expect(fn).to.throw('ModelRelationException: E_INVALID_RELATION_INSTANCE: associate accepts an instance of related model')
+      expect(fn).to.throw('E_INVALID_RELATION_INSTANCE: associate accepts an instance of related model')
     })
 
     it('should throw an error when trying to associate a related model which is unsaved', function * () {
@@ -2674,7 +2675,7 @@ describe('Relations', function () {
       const fn = function () {
         return comment.post().associate(post)
       }
-      expect(fn).to.throw('ModelRelationException: E_UNSAVED_MODEL_INSTANCE: Cannot perform associate on Post model since Comment instance is unsaved')
+      expect(fn).to.throw('E_UNSAVED_MODEL_INSTANCE: Cannot perform associate on Post model since Comment instance is unsaved')
     })
 
     it('should throw an error when trying to call save method on a belongsTo relation', function * () {
@@ -3283,7 +3284,7 @@ describe('Relations', function () {
       expect(courses.isArray()).to.equal(true)
       expect(courses.first()._pivot_course_id).to.equal(savedCourse[0]).to.equal(12)
       expect(courses.first()._pivot_student_id).to.equal(savedStudent[0]).to.equal(29)
-      expect(courses.first()._pivot_is_enrolled).to.be.ok
+      expect(courses.first()._pivot_is_enrolled).to.be.ok()
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
       yield relationFixtures.truncate(Database, 'course_student')
@@ -3310,7 +3311,7 @@ describe('Relations', function () {
       expect(courses.isArray()).to.equal(true)
       expect(courses.first()._pivot_course_id).to.equal(savedCourse[0]).to.equal(12)
       expect(courses.first()._pivot_student_id).to.equal(savedStudent[0]).to.equal(29)
-      expect(courses.first()._pivot_is_enrolled).to.be.ok
+      expect(courses.first()._pivot_is_enrolled).to.be.ok()
       expect(courses.first()._pivot_lessons_done).to.equal(2)
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
@@ -3340,8 +3341,8 @@ describe('Relations', function () {
       const courses = yield student.courses().withPivot('is_enrolled').fetch()
       expect(courses.size()).to.equal(2)
       expect(courses.isArray()).to.equal(true)
-      expect(courses.first()._pivot_is_enrolled).not.to.be.ok
-      expect(courses.last()._pivot_is_enrolled).to.be.ok
+      expect(courses.first()._pivot_is_enrolled).not.to.be.ok()
+      expect(courses.last()._pivot_is_enrolled).to.be.ok()
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
       yield relationFixtures.truncate(Database, 'course_student')
@@ -3727,7 +3728,7 @@ describe('Relations', function () {
       const student = yield Student.find(savedStudent[0])
       try {
         const weightage = yield student.courses().increment('weightage')
-        expect(weightage).to.not.exist
+        expect(weightage).to.not.exist()
       } catch (e) {
         expect(e.message).to.equal('E_INVALID_RELATION_METHOD: increment is not supported by BelongsToMany relationship')
       } finally {
@@ -3753,7 +3754,7 @@ describe('Relations', function () {
       const student = yield Student.find(savedStudent[0])
       try {
         const weightage = yield student.courses().decrement('weightage')
-        expect(weightage).to.not.exist
+        expect(weightage).to.not.exist()
       } catch (e) {
         expect(e.message).to.equal('E_INVALID_RELATION_METHOD: decrement is not supported by BelongsToMany relationship')
       } finally {
@@ -3829,7 +3830,7 @@ describe('Relations', function () {
 
       Course.bootIfNotBooted()
       const students = yield Student.query().where('id', savedStudent[0]).with('courses').fetch()
-      expect(students.first().get('courses').first()._pivot_is_enrolled).to.be.ok
+      expect(students.first().get('courses').first()._pivot_is_enrolled).to.be.ok()
 
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
@@ -4009,7 +4010,7 @@ describe('Relations', function () {
       const student = yield Student.find(savedStudent[0])
       yield student.courses().create({title: 'geometry'}, {is_enrolled: true})
       const courses = yield student.courses().fetch()
-      expect(courses.first()._pivot_is_enrolled).to.be.ok
+      expect(courses.first()._pivot_is_enrolled).to.be.ok()
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
       yield relationFixtures.truncate(Database, 'course_student')
@@ -4035,8 +4036,8 @@ describe('Relations', function () {
       const student = yield Student.find(savedStudent[0])
       yield student.courses().save(course, {is_enrolled: true})
       const courses = yield student.courses().fetch()
-      expect(courses.first()._pivot_is_enrolled).to.be.ok
-      expect(course._pivot_is_enrolled).to.be.ok
+      expect(courses.first()._pivot_is_enrolled).to.be.ok()
+      expect(course._pivot_is_enrolled).to.be.ok()
       yield relationFixtures.truncate(Database, 'students')
       yield relationFixtures.truncate(Database, 'courses')
       yield relationFixtures.truncate(Database, 'course_student')
@@ -5265,7 +5266,7 @@ describe('Relations', function () {
       const student = yield Student.find(savedStudent[0])
       try {
         const isDeleted = yield student.courses().delete()
-        expect(isDeleted).not.to.exist
+        expect(isDeleted).not.to.exist()
       } catch (e) {
         expect(e.message).to.equal('delete is not supported by BelongsToMany, use detach instead')
         yield relationFixtures.truncate(Database, 'students')
