@@ -15,7 +15,6 @@ const Ioc = require('adonis-fold').Ioc
 const fake = require('./fake')
 
 class DatabaseFactory {
-
   constructor (binding, callback) {
     this.dbTable = binding
     this.callback = callback

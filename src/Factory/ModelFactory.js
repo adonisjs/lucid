@@ -15,7 +15,6 @@ const Ioc = require('adonis-fold').Ioc
 const fake = require('./fake')
 
 class ModelFactory {
-
   constructor (binding, callback) {
     this.binding = Ioc.use(binding)
     this.callback = callback
@@ -125,7 +124,6 @@ class ModelFactory {
   reset () {
     return this.binding.query().truncate()
   }
-
 }
 
 module.exports = ModelFactory

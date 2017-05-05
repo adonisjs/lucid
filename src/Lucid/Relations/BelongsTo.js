@@ -15,7 +15,6 @@ const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
 
 class BelongsTo extends Relation {
-
   constructor (parent, related, primaryKey, foreignKey) {
     super(parent, related)
     this.toKey = primaryKey || this.related.primaryKey
@@ -176,7 +175,6 @@ class BelongsTo extends Relation {
     response[value] = results
     return response
   }
-
 }
 
 module.exports = BelongsTo

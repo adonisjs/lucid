@@ -18,7 +18,6 @@ const util = require('../../../lib/util')
 const logger = new CatLog('adonis:lucid')
 
 class BelongsToMany extends Relation {
-
   constructor (parent, related, pivotTable, pivotLocalKey, pivotOtherKey, primaryKey, relatedPrimaryKey) {
     super(parent, related)
     this.pivotPrefix = '_pivot_'
@@ -521,7 +520,6 @@ class BelongsToMany extends Relation {
     this.withPivot(this.parent.constructor.createTimestamp, this.parent.constructor.updateTimestamp)
     return this
   }
-
 }
 
 module.exports = BelongsToMany

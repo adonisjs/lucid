@@ -13,7 +13,6 @@ const Relation = require('./Relation')
 const helpers = require('../QueryBuilder/helpers')
 
 class HasMany extends Relation {
-
   constructor (parent, related, primaryKey, foreignKey) {
     super(parent, related)
     this.fromKey = primaryKey || this.parent.constructor.primaryKey

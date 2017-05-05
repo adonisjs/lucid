@@ -17,4 +17,3 @@ module.exports = {
     return yield fs.ensureDir(path.join(__dirname, '../storage'))
   }
 }
-

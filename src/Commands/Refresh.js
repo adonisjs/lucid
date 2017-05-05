@@ -12,7 +12,6 @@
 const Command = require('./Command')
 
 class Refresh extends Command {
-
   /**
    * signature to be used by ace
    *

@@ -18,12 +18,26 @@ const Ioc = require('adonis-fold').Ioc
 const CE = require('../../Exceptions')
 
 class Relation {
-
   constructor (parent, related) {
     this.parent = parent
     this.related = this._resolveModel(related)
     this.relatedQuery = this.related.query()
     return new Proxy(this, proxyHandler)
+  }
+
+  /**
+   * Returns related query after validating that
+   * read is possible + decorating the query
+   * by adding required where statement(s)
+   *
+   * @attribute relationQuery
+   *
+   * @return {Object}
+   */
+  get relationQuery () {
+    this._validateRead()
+    this._decorateRead()
+    return this.relatedQuery
   }
 
   /**
@@ -230,6 +244,20 @@ class Relation {
   }
 
   /**
+   * Update value on the related model instance
+   *
+   * @param  {Object} values
+   * @return {Object}
+   *
+   * @public
+   */
+  * update (values) {
+    this._validateRead()
+    this._decorateRead()
+    return yield this.relatedQuery.update(values)
+  }
+
+  /**
    * create many related instances
    *
    * @method createMany
@@ -260,7 +288,6 @@ class Relation {
       return yield self.save(relatedInstance)
     }, arrayOfInstances)
   }
-
 }
 
 module.exports = Relation

@@ -50,21 +50,21 @@ describe('Factory', function () {
     const fn = function () {
       Factory.blueprint('App/Model/User', 'foo')
     }
-    expect(fn).to.throw('InvalidArgumentException: E_INVALID_PARAMETER: Factory blueprint expects callback to be a function')
+    expect(fn).to.throw('E_INVALID_PARAMETER: Factory blueprint expects callback to be a function')
   })
 
   it('should throw an error when unable to resolve model factory', function () {
     const fn = function () {
       Factory.model('App/Model/User')
     }
-    expect(fn).to.throw('RuntimeException: E_MISSING_MODEL_FACTORY: Cannot find model factory for App/Model/User')
+    expect(fn).to.throw('E_MISSING_MODEL_FACTORY: Cannot find model factory for App/Model/User')
   })
 
   it('should throw an error when unable to resolve database factory', function () {
     const fn = function () {
       Factory.get('users')
     }
-    expect(fn).to.throw('RuntimeException: E_MISSING_DATABASE_FACTORY: Cannot find database factory for users')
+    expect(fn).to.throw('E_MISSING_DATABASE_FACTORY: Cannot find database factory for users')
   })
 
   it('should be able to define a factory blueprint', function () {
