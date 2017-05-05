@@ -1,3 +1,12 @@
+<a name="3.0.16"></a>
+## [3.0.16](https://github.com/adonisjs/adonis-lucid/compare/v3.0.15...v3.0.16) (2017-05-05)
+
+### Features
+
+* **relation:** add update method to relations ([6151b78](https://github.com/adonisjs/adonis-lucid/commit/6151b78))
+
+
+
 <a name="3.0.15"></a>
 ## [3.0.15](https://github.com/adonisjs/adonis-lucid/compare/v3.0.14...v3.0.15) (2017-04-09)
 
