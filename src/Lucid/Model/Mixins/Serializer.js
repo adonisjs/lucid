@@ -34,6 +34,40 @@ Serializer.toJSON = function () {
 }
 
 /**
+ * async version of toJSON
+ *
+ * @return Promise
+ *
+ * @public
+ */
+Serializer.toJSONAsync = function () {
+  return new Promise((resolve) => {
+    const removeSafeFields = (values) => {
+      return _.size(this.constructor.visible) ? this.pickVisible(values) : this.omitHidden(values)
+    }
+
+    Promise.all([
+      this.initializeComputedPropertiesAsync(),
+      this.serializeRelationsAsync()
+    ]).then((results) => {
+      const computedProperties = results[0]
+      const serializedRelations = results[1]
+
+      const attributes = _(this.attributes)
+      .thru(removeSafeFields)
+      .transform((result, value, key) => {
+        result[key] = this[key]
+      })
+      .merge(computedProperties)
+      .merge(serializedRelations)
+      .value()
+
+      resolve(attributes)
+    })
+  })
+}
+
+/**
  * here we call toJSON on all eagerly loaded relations.
  *
  * @method serializeRelations
@@ -45,6 +79,25 @@ Serializer.toJSON = function () {
 Serializer.serializeRelations = function () {
   return _.transform(this.relations, function (result, value, index) {
     result[index] = _.size(value) && value.toJSON() ? value.toJSON() : value
+  })
+}
+
+/**
+ * async version of serializeRelations
+ *
+ * @method serializeRelationsAsync
+ *
+ * @return Promise
+ *
+ * @public
+ */
+Serializer.serializeRelationsAsync = function () {
+  return new Promise((resolve) => {
+    Promise.all(_.map(this.relations, (value, index) => {
+      return Promise.all([index, _.size(value) ? value.toJSONAsync() : value])
+    })).then((relations) => {
+      resolve(_.fromPairs(relations))
+    })
   })
 }
 
