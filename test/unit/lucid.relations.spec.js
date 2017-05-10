@@ -3407,6 +3407,70 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
+    it('should be able save to related model and put relation into pivot table when both models are already saved', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'chemistry', id: 30})
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      expect(student instanceof Student).to.equal(true)
+      expect(student.id).to.equal(savedStudent[0])
+      const course = yield Course.find(savedCourse[0])
+      expect(course instanceof Course).to.equal(true)
+      expect(course.id).to.equal(savedCourse[0])
+      yield student.courses().save(course)
+
+      expect(course.id).not.to.equal(undefined)
+      expect(course._pivot_student_id).to.equal(student.id)
+      expect(course._pivot_course_id).to.equal(course.id)
+
+      const fetchedStudent = yield Student.query(savedStudent[0]).with('courses').fetch()
+
+      expect(fetchedStudent.toJSON()[0].courses[0].id).to.equal(course.id)
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
+    it('should not put relation into pivot table if there is an issue with initial model', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      class Course extends Model {
+        static get table () {
+          return 'table_that_doesnt_exist'
+        }
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      expect(student instanceof Student).to.equal(true)
+      expect(student.id).to.equal(savedStudent[0])
+      const course = new Course({title: 'chemistry'})
+
+      try {
+        yield student.courses().save(course)
+        expect(1).to.equal(0)
+      } catch (e) {
+        expect(course.id).to.be.undefined
+      }
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
     it('should be able save many instances of related model and put relation into pivot table', function * () {
       const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
       class Course extends Model {
