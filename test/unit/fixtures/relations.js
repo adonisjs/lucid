@@ -78,6 +78,36 @@ module.exports = {
         table.timestamps()
         table.timestamp('deleted_at').nullable()
       }),
+      knex.schema.createTable('videos', function (table) {
+        table.increments()
+        table.timestamps()
+        table.string('title')
+        table.string('uri')
+        table.timestamp('deleted_at').nullable()
+      }),
+      knex.schema.createTable('tags', function (table) {
+        table.increments()
+        table.string('title')
+        table.integer('taggable_id')
+        table.string('taggable_type')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
+      knex.schema.createTable('places', function (table) {
+        table.increments()
+        table.timestamps()
+        table.string('title')
+        table.timestamp('deleted_at').nullable()
+      }),
+      knex.schema.createTable('locations', function (table) {
+        table.increments()
+        table.decimal('lat', 8, 5)
+        table.decimal('lng', 8, 5)
+        table.integer('locationable_id')
+        table.string('locationable_type')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
       knex.schema.createTable('replies', function (table) {
         table.increments()
         table.integer('comment_id')
@@ -149,6 +179,10 @@ module.exports = {
       knex.schema.dropTable('users'),
       knex.schema.dropTable('posts'),
       knex.schema.dropTable('comments'),
+      knex.schema.dropTable('videos'),
+      knex.schema.dropTable('tags'),
+      knex.schema.dropTable('locations'),
+      knex.schema.dropTable('places'),
       knex.schema.dropTable('replies'),
       knex.schema.dropTable('courses'),
       knex.schema.dropTable('students'),

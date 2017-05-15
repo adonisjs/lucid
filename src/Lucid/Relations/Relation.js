@@ -14,15 +14,63 @@ const proxyHandler = require('./proxyHandler')
 const CatLog = require('cat-log')
 const logger = new CatLog('adonis:lucid')
 const cf = require('co-functional')
+const _ = require('lodash')
 const Ioc = require('adonis-fold').Ioc
 const CE = require('../../Exceptions')
+
+const morphMap = {}
 
 class Relation {
   constructor (parent, related) {
     this.parent = parent
-    this.related = this._resolveModel(related)
-    this.relatedQuery = this.related.query()
+    this.related = related ? this._resolveModel(related) : null
+    this.relatedQuery = related ? this.related.query() : null
     return new Proxy(this, proxyHandler)
+  }
+
+  /**
+   * Set or get the morph map for polymorphic relations.
+   *
+   * @param  {Object|Array}  map
+   * @param  {Boolean}       merge
+   *
+   * @return {Object}
+   */
+  static morphMap (map = {}, merge = true) {
+    if (merge) {
+      if (Array.isArray(map)) {
+        map = _.reduce(map, (result, model) => {
+          result[model.table] = model
+          return result
+        }, {})
+      }
+      _.assignIn(morphMap, map)
+    }
+    return morphMap
+  }
+
+  /**
+   * Get the morph key for polymorphic relations.
+   *
+   * @param  {Object}  model
+   *
+   * @return {String|null}
+   */
+  static morphKey (model) {
+    return _.findKey(morphMap, (value) => {
+      return model.constructor.table === value.table
+    })
+  }
+
+  /**
+   * Get the morph model for polymorphic relations.
+   *
+   * @param  {String}  key
+   *
+   * @return {Object|null}
+   */
+  static morphModel (key) {
+    return _.get(morphMap, key)
   }
 
   /**

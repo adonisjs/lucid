@@ -241,9 +241,9 @@ class EagerLoad {
       self._passNestedScopes(relation, relationInstance)
 
       if (isSingle) {
-        return yield relationInstance.eagerLoadSingle(values, relationScope)
+        return yield relationInstance.eagerLoadSingle(values, relationScope, result)
       }
-      return yield relationInstance.eagerLoad(values, relationScope)
+      return yield relationInstance.eagerLoad(values, relationScope, result)
     }, this.withRelations)
 
     return {values: response, keys: mappedKeys, fallbackValues}
