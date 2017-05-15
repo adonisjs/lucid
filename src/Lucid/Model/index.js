@@ -1014,6 +1014,53 @@ class Model {
   }
 
   /**
+   * returns morphMany instance for a given model. Later
+   * returned instance will be responsible for
+   * resolving relations
+   *
+   * @param  {Object}  related
+   * @param  {String}  [determiner]
+   * @param  {String}  [primaryKey]
+   * @return {Object}
+   *
+   * @public
+   */
+  morphMany (related, determiner, primaryKey) {
+    return new Relations.MorphMany(this, related, determiner, primaryKey)
+  }
+
+  /**
+   * returns morphOne instance for a given model. Later
+   * returned instance will be responsible for
+   * resolving relations
+   *
+   * @param  {Object}  related
+   * @param  {String}  [determiner]
+   * @param  {String}  [primaryKey]
+   * @return {Object}
+   *
+   * @public
+   */
+  morphOne (related, determiner, primaryKey) {
+    return new Relations.MorphOne(this, related, determiner, primaryKey)
+  }
+
+  /**
+   * returns morphTo instance for a given model. Later
+   * returned instance will be responsible for
+   * resolving relations
+   *
+   * @param  {String}  [determiner]
+   * @param  {String}  [primaryKey]
+   * @return {Object}
+   *
+   * @public
+   */
+  morphTo (determiner, primaryKey) {
+    return new Relations.MorphTo(this, determiner, primaryKey)
+  }
+
+  /**
    * returns eagerly loaded relation for a given model
    * instance
    *
