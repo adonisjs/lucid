@@ -265,6 +265,18 @@ class BelongsToMany extends Relation {
   }
 
   /**
+   * This will pluck the specified column from each row in your results
+   *
+   * @param  {String} column
+   *
+   * @return {Array}
+   */
+  pluck (column) {
+    this._validateRead()
+    return this._getAlternateQuery().pluck(column)
+  }
+
+  /**
    * Throws exception since update should be
    * done after getting the instance.
    */

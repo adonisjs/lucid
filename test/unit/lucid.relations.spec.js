@@ -3664,6 +3664,31 @@ describe('Relations', function () {
       yield relationFixtures.truncate(Database, 'course_student')
     })
 
+    it('should be able to pluck rows of related model', function * () {
+      const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
+      const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12})
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: savedStudent[0], course_id: savedCourse[0]}])
+      yield relationFixtures.createRecords(Database, 'course_student', [{student_id: null, course_id: savedCourse[0]}])
+      class Course extends Model {
+      }
+      class Student extends Model {
+        courses () {
+          return this.belongsToMany(Course)
+        }
+      }
+
+      Course.bootIfNotBooted()
+      const student = yield Student.find(savedStudent[0])
+      const query = student.courses().pluck('title').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select "title" from "courses" inner join "course_student" on "courses"."id" = "course_student"."course_id" where "course_student"."student_id" = ?'))
+      const courses = yield student.courses().pluck('title')
+      expect(courses[0]).to.equal('geometry')
+
+      yield relationFixtures.truncate(Database, 'students')
+      yield relationFixtures.truncate(Database, 'courses')
+      yield relationFixtures.truncate(Database, 'course_student')
+    })
+
     it('should be able to find avg of a column on related model', function * () {
       const savedStudent = yield relationFixtures.createRecords(Database, 'students', {name: 'ricky', id: 29})
       const savedCourse = yield relationFixtures.createRecords(Database, 'courses', {title: 'geometry', id: 12, weightage: 8})
@@ -4653,6 +4678,31 @@ describe('Relations', function () {
       expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select count("publications"."id") as "total" from "publications" inner join "authors" on "authors"."id" = "publications"."author_id" where "authors"."country_id" = ?'))
       const publicationsCount = yield country.publications().count('publications.id as total')
       expect(Number(publicationsCount[0].total)).deep.equal(2)
+      yield relationFixtures.truncate(Database, 'countries')
+      yield relationFixtures.truncate(Database, 'authors')
+      yield relationFixtures.truncate(Database, 'publications')
+    })
+
+    it('should be able to pluck rows of related model', function * () {
+      const savedCountry = yield relationFixtures.createRecords(Database, 'countries', {name: 'India', locale: 'IND', id: 11})
+      const savedAuthor = yield relationFixtures.createRecords(Database, 'authors', {name: 'Virk', country_id: savedCountry[0], id: 23})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn', author_id: savedAuthor[0], amount: 20})
+      yield relationFixtures.createRecords(Database, 'publications', {title: 'Adonis 101', body: 'Time to learn part 2', author_id: savedAuthor[0], amount: 10})
+      class Author extends Model {
+      }
+      class Publication extends Model {
+      }
+      class Country extends Model {
+        publications () {
+          return this.hasManyThrough(Publication, Author)
+        }
+      }
+      Publication.bootIfNotBooted()
+      const country = yield Country.find(savedCountry[0])
+      const query = country.publications().pluck('publications.body').toSQL()
+      expect(queryHelpers.formatQuery(query.sql)).to.equal(queryHelpers.formatQuery('select "publications"."body" from "publications" inner join "authors" on "authors"."id" = "publications"."author_id" where "authors"."country_id" = ?'))
+      const publicationsPluck = yield country.publications().pluck('publications.body')
+      expect(publicationsPluck).deep.equal(['Time to learn', 'Time to learn part 2'])
       yield relationFixtures.truncate(Database, 'countries')
       yield relationFixtures.truncate(Database, 'authors')
       yield relationFixtures.truncate(Database, 'publications')
