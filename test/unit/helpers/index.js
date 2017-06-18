@@ -14,6 +14,10 @@ module.exports = {
     }
   },
 
+  formatBindings (bindings) {
+    return bindings
+  },
+
   getConfig () {
     if (process.env.DB === 'sqlite') {
       return _.cloneDeep({
@@ -43,13 +47,26 @@ module.exports = {
         table.increments()
         table.string('username')
         table.timestamps()
+        table.timestamp('login_at')
+      }),
+      db.schema.createTable('my_users', function (table) {
+        table.integer('uuid')
+        table.string('username')
+        table.timestamps()
       })
     ])
   },
 
   dropTables (db) {
     return Promise.all([
-      db.schema.dropTable('users')
+      db.schema.dropTable('users'),
+      db.schema.dropTable('my_users')
     ])
+  },
+
+  sleep (time) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, time)
+    })
   }
 }

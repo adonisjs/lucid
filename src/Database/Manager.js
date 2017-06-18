@@ -49,10 +49,12 @@ class DatabaseManager {
    *
    * @return {Database}
    */
-  connection (name = this.Config.get('database.connection')) {
+  connection (name) {
+    name = name || this.Config.get('database.connection')
     if (this._connectionPools[name]) {
       return this._connectionPools[name]
     }
+
     const connectionSettings = this.Config.get(`database.${name}`)
     if (!connectionSettings) {
       throw CE.RuntimeException.missingDatabaseConnection(name)

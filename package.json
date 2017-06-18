@@ -17,11 +17,16 @@
   },
   "homepage": "https://github.com/adonisjs/adonis-lucid#readme",
   "dependencies": {
+    "date-fns": "^1.28.5",
+    "debug": "^2.6.8",
     "knex": "^0.13.0",
     "lodash": "^4.17.4",
-    "node-exceptions": "^2.0.2"
+    "moment": "^2.18.1",
+    "node-exceptions": "^2.0.2",
+    "pluralize": "^5.0.0"
   },
   "devDependencies": {
+    "@adonisjs/fold": "git+https://github.com/poppinss/adonis-fold.git#dawn",
     "@adonisjs/sink": "^1.0.8",
     "chance": "^1.0.9",
     "coveralls": "^2.13.1",

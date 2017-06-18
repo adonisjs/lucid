@@ -27,4 +27,14 @@ class RuntimeException extends NE.RuntimeException {
   }
 }
 
-module.exports = { RuntimeException }
+class InvalidArgumentException extends NE.InvalidArgumentException {
+  static missingParameter (message) {
+    return new this(message, 500, 'E_MISSING_PARAMETER')
+  }
+
+  static invalidParamter (message) {
+    return new this(message, 500, 'E_INVALID_PARAMETER')
+  }
+}
+
+module.exports = { RuntimeException, InvalidArgumentException }
