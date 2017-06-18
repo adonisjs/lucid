@@ -728,7 +728,7 @@ class Model {
    *
    * @return {Model|Null}
    */
-  static async find (value) {
+  static find (value) {
     return this.findBy(this.primaryKey, value)
   }
 
@@ -742,17 +742,69 @@ class Model {
    *
    * @return {Model|Null}
    */
-  static async findBy (key, value) {
-    const result = await this.query().where(key, value).first()
+  static findBy (key, value) {
+    return this.query().where(key, value).first()
+  }
 
-    if (!result) {
-      return null
-    }
+  /**
+   * Returns the first row. This method will add orderBy asc
+   * clause
+   *
+   * @method first
+   *
+   * @return {Model|Null}
+   */
+  static first () {
+    return this.query().orderBy(this.primaryKey, 'asc').first()
+  }
 
-    const modelInstance = new this()
-    modelInstance.newUp(result)
-    this.$hooks.after.exec('find', modelInstance)
-    return modelInstance
+  /**
+   * Returns last row. This method will add orderBy desc
+   * clause.
+   *
+   * @method last
+   *
+   * @return {Model|Null}
+   */
+  static last () {
+    return this.query().orderBy(this.primaryKey, 'desc').first()
+  }
+
+  /**
+   * Fetch everything from the database
+   *
+   * @method all
+   *
+   * @return {Collection}
+   */
+  static all () {
+    return this.query().fetch()
+  }
+
+  /**
+   * Select x number of rows
+   *
+   * @method pick
+   *
+   * @param  {Number} [limit = 1]
+   *
+   * @return {Collection}
+   */
+  static pick (limit = 1) {
+    return this.query().orderBy(this.primaryKey, 'asc').limit(limit).fetch()
+  }
+
+  /**
+   * Select x number of rows in inverse
+   *
+   * @method pickInverse
+   *
+   * @param  {Number}    [limit = 1]
+   *
+   * @return {Collection}
+   */
+  static pickInverse (limit = 1) {
+    return this.query().orderBy(this.primaryKey, 'desc').limit(limit).fetch()
   }
 }
 

@@ -144,6 +144,25 @@ class QueryBuilder {
     this.applyScopes()
     return this.query.update(this.model.formatDates(values))
   }
+
+  /**
+   * Returns the first row from the database.
+   *
+   * @method first
+   *
+   * @return {Model|Null}
+   */
+  async first () {
+    const result = await this.query.first()
+    if (!result) {
+      return null
+    }
+
+    const modelInstance = new this.model()
+    modelInstance.newUp(result)
+    this.model.$hooks.after.exec('find', modelInstance)
+    return modelInstance
+  }
 }
 
 module.exports = QueryBuilder

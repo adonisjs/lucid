@@ -689,4 +689,41 @@ test.group('Model', (group) => {
     const user = await User.findBy('username', 'virk')
     assert.deepEqual(hookInstance, user)
   })
+
+  test('return everything from the database', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' })
+    const users = await User.all()
+    assert.instanceOf(users, CollectionSerializer)
+  })
+
+  test('pick x number of rows from database', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    const users = await User.pick(1)
+    assert.instanceOf(users, CollectionSerializer)
+    assert.equal(users.size(), 1)
+    assert.equal(users.first().$attributes.username, 'virk')
+  })
+
+  test('pick inverse x number of rows from database', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    const users = await User.pickInverse(1)
+    assert.instanceOf(users, CollectionSerializer)
+    assert.equal(users.size(), 1)
+    assert.equal(users.first().$attributes.username, 'nikk')
+  })
 })

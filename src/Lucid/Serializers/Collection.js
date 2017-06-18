@@ -10,6 +10,10 @@ class Collection {
     return this.rows[0]
   }
 
+  size () {
+    return this.isOne ? 1 : this.rows.length
+  }
+
   toJSON () {
     return this.isOne ? this.rows.toObject() : this.rows.map((row) => row.toObject())
   }
