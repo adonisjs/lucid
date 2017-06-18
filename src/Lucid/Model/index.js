@@ -306,6 +306,12 @@ class Model {
      * @type {Array}
      */
     Model.$queryListeners = []
+
+    /**
+     * List of global query scopes. Chained before executing
+     * query builder queries.
+     */
+    Model.$globalScopes = []
   }
 
   /**
@@ -334,6 +340,20 @@ class Model {
      * Add the handler
      */
     this.$hooks[cycle].addHandler(event, handler)
+  }
+
+  /**
+   * Adds the global scope to the model global scopes.
+   * A named global scope can be removed later
+   *
+   * @method addGlobalScope
+   *
+   * @param  {Function}     callback
+   * @param  {String}       [name = null]
+   */
+  static addGlobalScope (callback, name = null) {
+    this.$globalScopes.push({ callback, name })
+    return this
   }
 
   /**

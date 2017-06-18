@@ -36,10 +36,6 @@ test.group('Model', (group) => {
     await helpers.createTables(ioc.use('Adonis/Src/Database'))
   })
 
-  group.beforeEach(() => {
-    Model.hydrate()
-  })
-
   group.afterEach(async () => {
     await ioc.use('Adonis/Src/Database').table('users').truncate()
     await ioc.use('Adonis/Src/Database').table('my_users').truncate()
@@ -52,6 +48,7 @@ test.group('Model', (group) => {
 
   test('run queries using query builder', (assert) => {
     class User extends Model {}
+    User._bootIfNotBooted()
     const query = User.query().toSQL()
     assert.equal(query.sql, helpers.formatQuery('select * from "users"'))
   })
@@ -63,6 +60,7 @@ test.group('Model', (group) => {
       }
     }
 
+    User._bootIfNotBooted()
     const query = User.query().toSQL()
     assert.equal(query.sql, helpers.formatQuery('select * from "my_users"'))
   })
@@ -74,6 +72,7 @@ test.group('Model', (group) => {
       }
     }
 
+    User._bootIfNotBooted()
     const query = User.query().toSQL()
     assert.equal(query.sql, helpers.formatQuery('select * from "my_users"'))
   })
@@ -96,6 +95,7 @@ test.group('Model', (group) => {
     class User extends Model {
     }
 
+    User._bootIfNotBooted()
     const user = new User()
     user.fill({ username: 'virk', age: 22 })
     assert.deepEqual(user.$attributes, { username: 'virk', age: 22 })
@@ -105,6 +105,7 @@ test.group('Model', (group) => {
     class User extends Model {
     }
 
+    User._bootIfNotBooted()
     const user = new User()
     user.fill({ username: 'virk', age: 22 })
     user.fill({ username: 'virk' })
@@ -118,6 +119,7 @@ test.group('Model', (group) => {
       }
     }
 
+    User._bootIfNotBooted()
     const user = new User()
     user.fill({ username: 'virk', age: 22 })
     assert.deepEqual(user.$attributes, { username: 'VIRK', age: 22 })
@@ -130,6 +132,7 @@ test.group('Model', (group) => {
       }
     }
 
+    User._bootIfNotBooted()
     const user = new User()
     user.username = 'virk'
     assert.deepEqual(user.$attributes, { username: 'VIRK' })
@@ -139,6 +142,7 @@ test.group('Model', (group) => {
     class User extends Model {
     }
 
+    User._bootIfNotBooted()
     const user = new User()
     user.username = 'virk'
     await user.save()
@@ -150,6 +154,7 @@ test.group('Model', (group) => {
     class User extends Model {
     }
 
+    User._bootIfNotBooted()
     const user = new User()
     user.username = 'virk'
     await user.save()
@@ -171,6 +176,7 @@ test.group('Model', (group) => {
       }
     }
 
+    User._bootIfNotBooted()
     const user = new User()
     user.username = 'virk'
     user.uuid = 112000
@@ -184,6 +190,7 @@ test.group('Model', (group) => {
     class User extends Model {
     }
 
+    User._bootIfNotBooted()
     User.addHook('beforeCreate', function () {})
     User.addHook('afterCreate', function () {})
 
@@ -194,6 +201,8 @@ test.group('Model', (group) => {
   test('throw exception when hook cycle is invalid', async (assert) => {
     class User extends Model {
     }
+
+    User._bootIfNotBooted()
     const fn = () => User.addHook('orCreate', function () {
     })
     assert.throw(fn, 'E_INVALID_PARAMETER: Invalid hook event {orCreate}')
@@ -203,6 +212,7 @@ test.group('Model', (group) => {
     class User extends Model {
     }
 
+    User._bootIfNotBooted()
     const stack = []
     User.addHook('beforeCreate', function () {
       stack.push('before')
@@ -221,6 +231,8 @@ test.group('Model', (group) => {
     assert.plan(2)
     class User extends Model {
     }
+
+    User._bootIfNotBooted()
 
     User.addHook('beforeCreate', function () {
       throw new Error('Something bad happened')
@@ -244,6 +256,7 @@ test.group('Model', (group) => {
     class User extends Model {
     }
 
+    User._bootIfNotBooted()
     const user = new User()
     user.username = 'virk'
     await user.save()
@@ -259,6 +272,7 @@ test.group('Model', (group) => {
     class User extends Model {
     }
 
+    User._bootIfNotBooted()
     const queries = []
     User.onQuery((query) => queries.push(query))
 
@@ -275,6 +289,7 @@ test.group('Model', (group) => {
     class User extends Model {
     }
 
+    User._bootIfNotBooted()
     const queries = []
     User.onQuery((query) => queries.push(query))
 
@@ -299,6 +314,7 @@ test.group('Model', (group) => {
     class User extends Model {
     }
 
+    User._bootIfNotBooted()
     const user = new User()
     user.username = 'virk'
     await user.save()
@@ -313,6 +329,7 @@ test.group('Model', (group) => {
       }
     }
 
+    User._bootIfNotBooted()
     const user = new User()
     user.username = 'virk'
     await user.save()
@@ -323,6 +340,7 @@ test.group('Model', (group) => {
   test('return serializer instance when calling fetch', async (assert) => {
     class User extends Model {
     }
+    User._bootIfNotBooted()
     await ioc.use('Adonis/Src/Database').insert({ username: 'virk' }).into('users')
     const users = await User.query().fetch()
     assert.instanceOf(users, CollectionSerializer)
@@ -331,6 +349,7 @@ test.group('Model', (group) => {
   test('cast all dates to moment objects after fetch', async (assert) => {
     class User extends Model {
     }
+    User._bootIfNotBooted()
     const user = new User()
     user.username = 'virk'
     await user.save()
@@ -345,6 +364,8 @@ test.group('Model', (group) => {
         return date.fromNow()
       }
     }
+
+    User._bootIfNotBooted()
     const user = new User()
     user.username = 'virk'
     await user.save()
@@ -358,6 +379,7 @@ test.group('Model', (group) => {
     class User extends Model {
     }
 
+    User._bootIfNotBooted()
     let userQuery = null
     User.onQuery(function (query) {
       userQuery = query
@@ -384,6 +406,7 @@ test.group('Model', (group) => {
       }
     }
 
+    User._bootIfNotBooted()
     const user = new User()
     user.username = 'nikk'
     user.login_at = new Date()
@@ -500,6 +523,82 @@ test.group('Model', (group) => {
     User._bootIfNotBooted()
     await ioc.use('Adonis/Src/Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
-    assert.deepEqual(Object.keys(users.first().toJSON()), ['id', 'username', 'updated_at', 'login_at'])
+    assert.deepEqual(Object.keys(users.first().toJSON()), ['id', 'username', 'updated_at', 'login_at', 'deleted_at'])
+  })
+
+  test('apply all global scopes to the query builder', async (assert) => {
+    class User extends Model {
+    }
+    User._bootIfNotBooted()
+    User.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    const query = User.query().where('username', 'virk').applyScopes().toSQL()
+    assert.equal(query.sql, helpers.formatQuery('select * from "users" where "username" = ? and "deleted_at" is null'))
+  })
+
+  test('instruct query builder to ignore all query scopes', async (assert) => {
+    class User extends Model {
+    }
+    User._bootIfNotBooted()
+    User.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    const query = User.query().where('username', 'virk').ignoreScopes().applyScopes().toSQL()
+    assert.equal(query.sql, helpers.formatQuery('select * from "users" where "username" = ?'))
+  })
+
+  test('instruct query builder to ignore selected scopes', async (assert) => {
+    class User extends Model {
+    }
+    User._bootIfNotBooted()
+    User.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    }, 'softDeletes')
+
+    User.addGlobalScope(function (builder) {
+      builder.whereNot('login_at', null)
+    }, 'loggedOnce')
+
+    const query = User.query().where('username', 'virk').ignoreScopes(['softDeletes']).applyScopes().toSQL()
+    assert.equal(query.sql, helpers.formatQuery('select * from "users" where "username" = ? and "login_at" is not null'))
+  })
+
+  test('call query scopes when fetching data', async (assert) => {
+    let userQuery = null
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    User.onQuery(function (query) {
+      userQuery = query
+    })
+
+    await User.query().where('username', 'virk').fetch()
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "username" = ? and "deleted_at" is null'))
+  })
+
+  test('call query scopes when bulk updating data', async (assert) => {
+    let userQuery = null
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    User.onQuery(function (query) {
+      userQuery = query
+    })
+
+    await User.query().where('username', 'virk').update({ login_at: new Date() })
+    assert.equal(userQuery.sql, helpers.formatQuery('update "users" set "login_at" = ?, "updated_at" = ? where "username" = ? and "deleted_at" is null'))
   })
 })

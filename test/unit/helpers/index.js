@@ -48,11 +48,13 @@ module.exports = {
         table.string('username')
         table.timestamps()
         table.timestamp('login_at')
+        table.timestamp('deleted_at')
       }),
       db.schema.createTable('my_users', function (table) {
         table.integer('uuid')
         table.string('username')
         table.timestamps()
+        table.timestamp('deleted_at')
       })
     ])
   },
