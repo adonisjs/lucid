@@ -806,6 +806,32 @@ class Model {
   static pickInverse (limit = 1) {
     return this.query().orderBy(this.primaryKey, 'desc').limit(limit).fetch()
   }
+
+  /**
+   * Returns an array of ids.
+   *
+   * Note: this method doesn't allow eagerloading relations
+   *
+   * @method ids
+   *
+   * @return {Array}
+   */
+  static ids () {
+    return this.query().ids()
+  }
+
+  /**
+   * Returns an array of ids.
+   *
+   * Note: this method doesn't allow eagerloading relations
+   *
+   * @method ids
+   *
+   * @return {Array}
+   */
+  static pair (lhs, rhs) {
+    return this.query().pair(lhs, rhs)
+  }
 }
 
 Model.hydrate()

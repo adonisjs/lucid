@@ -726,4 +726,37 @@ test.group('Model', (group) => {
     assert.equal(users.size(), 1)
     assert.equal(users.first().$attributes.username, 'nikk')
   })
+
+  test('return an array of ids from the database', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    const userIds = await User.ids()
+    assert.deepEqual(userIds, [1, 2])
+  })
+
+  test('return an array of ids from the database', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    const userIds = await User.ids()
+    assert.deepEqual(userIds, [1, 2])
+  })
+
+  test('return a pair of key/values from the database', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    const users = await User.pair('id', 'username')
+    assert.deepEqual(users, { 1: 'virk', 2: 'nikk' })
+  })
 })

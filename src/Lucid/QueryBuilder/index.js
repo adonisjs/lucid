@@ -163,6 +163,37 @@ class QueryBuilder {
     this.model.$hooks.after.exec('find', modelInstance)
     return modelInstance
   }
+
+  /**
+   * Returns an array of primaryKeys
+   *
+   * @method ids
+   *
+   * @return {Array}
+   */
+  async ids () {
+    const rows = this.query
+    return rows.map((row) => row[this.model.primaryKey])
+  }
+
+  /**
+   * Returns a pair of lhs and rhs. This method will not
+   * eagerload relationships.
+   *
+   * @method pair
+   *
+   * @param  {String} lhs
+   * @param  {String} rhs
+   *
+   * @return {Object}
+   */
+  async pair (lhs, rhs) {
+    const collection = await this.fetch()
+    return _.transform(collection.rows, (result, row) => {
+      result[row.$attributes[lhs]] = row.$attributes[rhs]
+      return result
+    }, {})
+  }
 }
 
 module.exports = QueryBuilder
