@@ -601,4 +601,34 @@ test.group('Model', (group) => {
     await User.query().where('username', 'virk').update({ login_at: new Date() })
     assert.equal(userQuery.sql, helpers.formatQuery('update "users" set "login_at" = ?, "updated_at" = ? where "username" = ? and "deleted_at" is null'))
   })
+
+  test('define local scopes', async (assert) => {
+    let userQuery = null
+    class User extends Model {
+      static scopeIsLogged (builder) {
+        builder.whereNotNull('login_at')
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const query = User.query().where('username', 'virk').isLogged().toSQL()
+    assert.equal(query.sql, helpers.formatQuery('select * from "users" where "username" = ? and "login_at" is not null'))
+  })
+
+  test('pass arguments to local scopes', async (assert) => {
+    let userQuery = null
+    class User extends Model {
+      static scopeIsLogged (builder, time) {
+        builder.where('login_at', '>', time)
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const date = new Date()
+    const query = User.query().where('username', 'virk').isLogged(date).toSQL()
+    assert.equal(query.sql, helpers.formatQuery('select * from "users" where "username" = ? and "login_at" > ?'))
+    assert.deepEqual(query.bindings, helpers.formatBindings(['virk', date]))
+  })
 })

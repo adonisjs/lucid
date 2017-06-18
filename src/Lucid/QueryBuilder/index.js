@@ -11,12 +11,26 @@
 
 const { ioc } = require('@adonisjs/fold')
 const _ = require('lodash')
+const util = require('../../../lib/util')
 
 const proxyHandler = {
   get (target, name) {
     if (target[name]) {
       return target[name]
     }
+
+    /**
+     * If property accessed is a local query scope
+     * then call it
+     */
+    const queryScope = util.makeScopeName(name)
+    if (typeof (target.model[queryScope]) === 'function') {
+      return function (...args) {
+        target.model[queryScope](this, ...args)
+        return this
+      }
+    }
+
     return target.query[name]
   }
 }
