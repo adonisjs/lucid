@@ -114,10 +114,7 @@ class QueryBuilder {
      */
     const collection = rows.map((row) => {
       const modelInstance = new this.model()
-      modelInstance.$persisted = true
-      modelInstance.$attributes = row
-      modelInstance._syncOriginals()
-      modelInstance.castDates()
+      modelInstance.newUp(row)
       return modelInstance
     })
 

@@ -497,7 +497,7 @@ test.group('Model', (group) => {
     User._bootIfNotBooted()
     await ioc.use('Adonis/Src/Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
-    assert.equal(users.first().toJSON().full_name, 'Mr. virk')
+    assert.equal(users.first().toObject().full_name, 'Mr. virk')
   })
 
   test('only pick visible fields', async (assert) => {
@@ -510,7 +510,7 @@ test.group('Model', (group) => {
     User._bootIfNotBooted()
     await ioc.use('Adonis/Src/Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
-    assert.deepEqual(Object.keys(users.first().toJSON()), ['created_at'])
+    assert.deepEqual(Object.keys(users.first().toObject()), ['created_at'])
   })
 
   test('omit hidden fields', async (assert) => {
@@ -523,7 +523,7 @@ test.group('Model', (group) => {
     User._bootIfNotBooted()
     await ioc.use('Adonis/Src/Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
-    assert.deepEqual(Object.keys(users.first().toJSON()), ['id', 'username', 'updated_at', 'login_at', 'deleted_at'])
+    assert.deepEqual(Object.keys(users.first().toObject()), ['id', 'username', 'updated_at', 'login_at', 'deleted_at'])
   })
 
   test('apply all global scopes to the query builder', async (assert) => {
@@ -630,5 +630,63 @@ test.group('Model', (group) => {
     const query = User.query().where('username', 'virk').isLogged(date).toSQL()
     assert.equal(query.sql, helpers.formatQuery('select * from "users" where "username" = ? and "login_at" > ?'))
     assert.deepEqual(query.bindings, helpers.formatBindings(['virk', date]))
+  })
+
+  test('find model instance using find method', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    const userId = await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' })
+    const user = await User.find(userId[0])
+    assert.instanceOf(user, User)
+    assert.equal(user.$attributes.username, 'virk')
+    assert.isFalse(user.isNew)
+    assert.isFalse(user.isDirty)
+  })
+
+  test('find with a single where clause', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' })
+    const user = await User.findBy('username', 'virk')
+    assert.instanceOf(user, User)
+    assert.equal(user.$attributes.username, 'virk')
+    assert.isFalse(user.isNew)
+    assert.isFalse(user.isDirty)
+  })
+
+  test('call after find hooks on findBy', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    const stack = []
+    User.addHook('afterFind', function () {
+      stack.push('afterFind')
+    })
+
+    await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' })
+    await User.findBy('username', 'virk')
+    assert.deepEqual(stack, ['afterFind'])
+  })
+
+  test('pass model instance to after find hook', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    let hookInstance = null
+    User.addHook('afterFind', function (model) {
+      hookInstance = model
+    })
+
+    await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' })
+    const user = await User.findBy('username', 'virk')
+    assert.deepEqual(hookInstance, user)
   })
 })

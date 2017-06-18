@@ -466,7 +466,7 @@ class Model {
    * @return {Boolean}
    */
   get isDirty () {
-    return _.size(this.dirty)
+    return !!_.size(this.dirty)
   }
 
   /**
@@ -643,11 +643,11 @@ class Model {
    * defined on the model and will attach `computed`
    * properties to the JSON.
    *
-   * @method toJSON
+   * @method toObject
    *
    * @return {Object}
    */
-  toJSON () {
+  toObject () {
     let evaluatedAttrs = _.transform(this.$attributes, (result, value, key) => {
       const getter = this[util.getGetterName(key)]
       result[key] = typeof (getter) === 'function' ? getter(value) : value
@@ -677,6 +677,18 @@ class Model {
   }
 
   /**
+   * Converts model instance toJSON using the serailizer
+   * toJSON method
+   *
+   * @method toJSON
+   *
+   * @return {Object}
+   */
+  toJSON () {
+    return new this.constructor.serializer(this, true).toJSON()
+  }
+
+  /**
    * Persist model to the database. It will create a new row
    * when model has not been persisted already, otherwise
    * will update it.
@@ -687,6 +699,60 @@ class Model {
    */
   async save () {
     return this.isNew ? await this._insert() : await this._update()
+  }
+
+  /**
+   * Perform required actions to newUp the model instance. This
+   * method does not call setters since it is supposed to be
+   * called after `fetch` or `find`.
+   *
+   * @method newUp
+   *
+   * @param  {Object} row
+   *
+   * @return {void}
+   */
+  newUp (row) {
+    this.$persisted = true
+    this.$attributes = row
+    this._syncOriginals()
+    this.castDates()
+  }
+
+  /**
+   * Find a row using the primary key
+   *
+   * @method find
+   *
+   * @param  {String|Number} value
+   *
+   * @return {Model|Null}
+   */
+  static async find (value) {
+    return this.findBy(this.primaryKey, value)
+  }
+
+  /**
+   * Find a model instance using key/value pair
+   *
+   * @method findBy
+   *
+   * @param  {String} key
+   * @param  {Mixed} value
+   *
+   * @return {Model|Null}
+   */
+  static async findBy (key, value) {
+    const result = await this.query().where(key, value).first()
+
+    if (!result) {
+      return null
+    }
+
+    const modelInstance = new this()
+    modelInstance.newUp(result)
+    this.$hooks.after.exec('find', modelInstance)
+    return modelInstance
   }
 }
 

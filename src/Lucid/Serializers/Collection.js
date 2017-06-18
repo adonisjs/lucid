@@ -11,7 +11,7 @@ class Collection {
   }
 
   toJSON () {
-    return this.rows.map((row) => row.toJSON())
+    return this.isOne ? this.rows.toObject() : this.rows.map((row) => row.toObject())
   }
 }
 
