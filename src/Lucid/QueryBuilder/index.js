@@ -194,6 +194,14 @@ class QueryBuilder {
       return result
     }, {})
   }
+
+  pickInverse (limit = 1) {
+    return this.query.orderBy(this.primaryKey, 'desc').limit(limit).fetch()
+  }
+
+  pick (limit = 1) {
+    return this.query.orderBy(this.primaryKey, 'asc').limit(limit).fetch()
+  }
 }
 
 module.exports = QueryBuilder

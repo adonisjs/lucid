@@ -25,6 +25,24 @@ class RuntimeException extends NE.RuntimeException {
   static missingDatabaseConnection (name) {
     return new this(`Missing database connection {${name}}. Make sure you define it inside config/database.js file`, 500, 'E_MISSING_DB_CONNECTION')
   }
+
+  /**
+   * This exception is raised when user is trying to query
+   * relationships from an unsaved model instance
+   *
+   * @method unSavedModel
+   *
+   * @param  {String}     name
+   *
+   * @return {Object}
+   */
+  static unSavedModel (name) {
+    return new this(`Cannot process relation, since ${name} model is not persisted to database or relational value is undefined`, 500, 'E_UNSAVED_MODEL_INSTANCE')
+  }
+
+  static undefinedRelation (relation, name) {
+    return new this(`${relation} is not defined on ${name} model`, 500, 'E_INVALID_MODEL_RELATION')
+  }
 }
 
 class InvalidArgumentException extends NE.InvalidArgumentException {

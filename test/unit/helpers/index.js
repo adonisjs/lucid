@@ -50,6 +50,21 @@ module.exports = {
         table.timestamp('login_at')
         table.timestamp('deleted_at')
       }),
+      db.schema.createTable('profiles', function (table) {
+        table.increments()
+        table.integer('user_id')
+        table.string('profile_name')
+        table.integer('likes')
+        table.timestamps()
+        table.timestamp('deleted_at')
+      }),
+      db.schema.createTable('identities', function (table) {
+        table.increments()
+        table.integer('user_id')
+        table.boolean('is_active').defaultsTo(true)
+        table.timestamps()
+        table.timestamp('deleted_at')
+      }),
       db.schema.createTable('my_users', function (table) {
         table.integer('uuid')
         table.string('username')
@@ -62,6 +77,8 @@ module.exports = {
   dropTables (db) {
     return Promise.all([
       db.schema.dropTable('users'),
+      db.schema.dropTable('profiles'),
+      db.schema.dropTable('identities'),
       db.schema.dropTable('my_users')
     ])
   },

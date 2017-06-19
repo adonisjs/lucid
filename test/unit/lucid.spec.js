@@ -183,7 +183,7 @@ test.group('Model', (group) => {
     await user.save()
 
     assert.equal(user.primaryKeyValue, 112000)
-    assert.equal(user.primaryKeyValue, user.$attributes.uuid)
+    assert.equal(user.primaryKeyValue, user.uuid)
   })
 
   test('add hook for a given type', async (assert) => {
@@ -264,7 +264,7 @@ test.group('Model', (group) => {
     await user.save()
     const users = await ioc.use('Adonis/Src/Database').table('users')
     assert.lengthOf(users, 1)
-    assert.equal(users[0].username, user.$attributes.username)
+    assert.equal(users[0].username, user.username)
     assert.equal(users[0].id, user.primaryKeyValue)
   })
 
@@ -318,8 +318,8 @@ test.group('Model', (group) => {
     const user = new User()
     user.username = 'virk'
     await user.save()
-    assert.isDefined(user.$attributes.created_at)
-    assert.isDefined(user.$attributes.updated_at)
+    assert.isDefined(user.created_at)
+    assert.isDefined(user.updated_at)
   })
 
   test('do not set timestamps when columns are not defined', async (assert) => {
@@ -333,8 +333,8 @@ test.group('Model', (group) => {
     const user = new User()
     user.username = 'virk'
     await user.save()
-    assert.isUndefined(user.$attributes.created_at)
-    assert.isDefined(user.$attributes.updated_at)
+    assert.isUndefined(user.created_at)
+    assert.isDefined(user.updated_at)
   })
 
   test('return serializer instance when calling fetch', async (assert) => {
@@ -355,7 +355,7 @@ test.group('Model', (group) => {
     await user.save()
 
     const users = await User.query().fetch()
-    assert.instanceOf(users.first().$attributes.created_at, moment)
+    assert.instanceOf(users.first().created_at, moment)
   })
 
   test('collection toJSON should call model toJSON and getters', async (assert) => {
@@ -640,7 +640,7 @@ test.group('Model', (group) => {
     const userId = await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' })
     const user = await User.find(userId[0])
     assert.instanceOf(user, User)
-    assert.equal(user.$attributes.username, 'virk')
+    assert.equal(user.username, 'virk')
     assert.isFalse(user.isNew)
     assert.isFalse(user.isDirty)
   })
@@ -653,7 +653,7 @@ test.group('Model', (group) => {
     await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' })
     const user = await User.findBy('username', 'virk')
     assert.instanceOf(user, User)
-    assert.equal(user.$attributes.username, 'virk')
+    assert.equal(user.username, 'virk')
     assert.isFalse(user.isNew)
     assert.isFalse(user.isDirty)
   })
@@ -711,7 +711,7 @@ test.group('Model', (group) => {
     const users = await User.pick(1)
     assert.instanceOf(users, CollectionSerializer)
     assert.equal(users.size(), 1)
-    assert.equal(users.first().$attributes.username, 'virk')
+    assert.equal(users.first().username, 'virk')
   })
 
   test('pick inverse x number of rows from database', async (assert) => {
@@ -724,7 +724,7 @@ test.group('Model', (group) => {
     const users = await User.pickInverse(1)
     assert.instanceOf(users, CollectionSerializer)
     assert.equal(users.size(), 1)
-    assert.equal(users.first().$attributes.username, 'nikk')
+    assert.equal(users.first().username, 'nikk')
   })
 
   test('return an array of ids from the database', async (assert) => {

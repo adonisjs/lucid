@@ -15,8 +15,10 @@ const moment = require('moment')
 const Hooks = require('../Hooks')
 const QueryBuilder = require('../QueryBuilder')
 const CollectionSerializer = require('../Serializers/Collection')
-const CE = require('../../Exceptions')
+const HasOne = require('../Relations/HasOne')
+const EagerLoad = require('../EagerLoad')
 
+const CE = require('../../Exceptions')
 const util = require('../../../lib/util')
 
 /**
@@ -45,6 +47,7 @@ class Model {
    */
   static _bootIfNotBooted () {
     if (!this.$booted) {
+      this.$booted = true
       this.boot()
     }
   }
@@ -75,6 +78,17 @@ class Model {
    */
   static get primaryKey () {
     return 'id'
+  }
+
+  /**
+   * The foreignkey for the model
+   *
+   * @method foreignKey
+   *
+   * @return {String}
+   */
+  static get foreignKey () {
+    return util.makeForeignKey(this.name)
   }
 
   /**
@@ -268,7 +282,6 @@ class Model {
    */
   static boot () {
     this.hydrate()
-    this.$booted = true
   }
 
   /**
@@ -283,19 +296,12 @@ class Model {
    */
   static hydrate () {
     /**
-     * Whether or not model has been booted
-     *
-     * @type {Boolean}
-     */
-    Model.$booted = false
-
-    /**
      * Model hooks for different lifecycle
      * events
      *
      * @type {Object}
      */
-    Model.$hooks = {
+    this.$hooks = {
       before: new Hooks(),
       after: new Hooks()
     }
@@ -305,13 +311,13 @@ class Model {
      *
      * @type {Array}
      */
-    Model.$queryListeners = []
+    this.$queryListeners = []
 
     /**
      * List of global query scopes. Chained before executing
      * query builder queries.
      */
-    Model.$globalScopes = []
+    this.$globalScopes = []
   }
 
   /**
@@ -482,7 +488,8 @@ class Model {
    * @private
    */
   _instantiate () {
-    this.__setters__ = ['$attributes', '$persisted', 'primaryKeyValue', '$originalAttributes']
+    this.__setters__ = ['$attributes', '$persisted', 'primaryKeyValue', '$originalAttributes', '$relations']
+    this.$relations = {}
     this.$attributes = {}
     this.$originalAttributes = {}
     this.$persisted = false
@@ -791,7 +798,7 @@ class Model {
    * @return {Collection}
    */
   static pick (limit = 1) {
-    return this.query().orderBy(this.primaryKey, 'asc').limit(limit).fetch()
+    return this.query().pick(limit)
   }
 
   /**
@@ -804,7 +811,7 @@ class Model {
    * @return {Collection}
    */
   static pickInverse (limit = 1) {
-    return this.query().orderBy(this.primaryKey, 'desc').limit(limit).fetch()
+    return this.query().pickInverse(limit)
   }
 
   /**
@@ -832,7 +839,43 @@ class Model {
   static pair (lhs, rhs) {
     return this.query().pair(lhs, rhs)
   }
+
+  /**
+   * Loads relationships and set them as $relations
+   * attribute.
+   *
+   * To load multiple relations, call this method for
+   * multiple times
+   *
+   * @method load
+   *
+   * @param  {String}   relation
+   * @param  {Function} callback
+   *
+   * @return {void}
+   */
+  async load (relation, callback) {
+    const eagerLoad = new EagerLoad(this, { [relation]: callback })
+    const result = await eagerLoad.loadOne()
+    _.each(result, (values, name) => {
+      this.$relations[name] = values
+    })
+  }
+
+  /**
+   * Returns an instance of hasOne relation
+   *
+   * @method hasOne
+   *
+   * @param  {String}  relatedModel
+   * @param  {String}  primaryKey
+   * @param  {String}  foreignKey
+   *
+   * @return {HasOne}
+   */
+  hasOne (relatedModel, primaryKey = this.constructor.primaryKey, foreignKey = this.constructor.foreignKey) {
+    return new HasOne(this, relatedModel, primaryKey, foreignKey)
+  }
 }
 
-Model.hydrate()
 module.exports = Model

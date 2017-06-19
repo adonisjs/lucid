@@ -23,3 +23,22 @@
 - [ ] computed properties
 - [ ] visible/hidden attributes
 - [ ] timestamps
+
+
+## Eager Loading
+
+```js
+User
+  .query()
+  .with('posts.comments')
+
+// when constraints
+User
+  .query()
+  .with('posts', (builder) => {
+    builder.with('comments', () => {
+    })
+  })
+```
+
+

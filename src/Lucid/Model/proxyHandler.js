@@ -16,3 +16,10 @@ proxyHandler.set = function (target, name, value) {
   }
   return target.set(name, value)
 }
+
+proxyHandler.get = function (target, name) {
+  if (typeof (target[name]) !== 'undefined') {
+    return target[name]
+  }
+  return target.$attributes[name]
+}
