@@ -12,6 +12,7 @@
 const { ioc } = require('@adonisjs/fold')
 const _ = require('lodash')
 const util = require('../../../lib/util')
+const EagerLoad = require('../EagerLoad')
 
 const proxyHandler = {
   get (target, name) {
@@ -42,6 +43,7 @@ class QueryBuilder {
     const table = this.model.prefix ? `${this.model.prefix}${this.model.table}` : this.model.table
     this.query = this.db.table(table).on('query', this.model._executeListeners.bind(this.model))
     this._ignoreScopes = []
+    this._eagerLoads = {}
     return new Proxy(this, proxyHandler)
   }
 
@@ -112,16 +114,20 @@ class QueryBuilder {
     /**
      * Convert to an array of model instances
      */
-    const collection = rows.map((row) => {
+    const modelInstances = rows.map((row) => {
       const modelInstance = new this.model()
       modelInstance.newUp(row)
       return modelInstance
     })
 
+    if (_.size(modelInstances)) {
+      await new EagerLoad(this._eagerLoads).load(modelInstances)
+    }
+
     /**
      * Return an instance of active model serializer
      */
-    return new this.model.serializer(collection)
+    return new this.model.serializer(modelInstances)
   }
 
   /**
@@ -199,8 +205,16 @@ class QueryBuilder {
     return this.query.orderBy(this.primaryKey, 'desc').limit(limit).fetch()
   }
 
+  with (relation, callback) {
+    this._eagerLoads[relation] = callback
+    return this
+  }
+
   pick (limit = 1) {
     return this.query.orderBy(this.primaryKey, 'asc').limit(limit).fetch()
+  }
+
+  whereHas () {
   }
 }
 

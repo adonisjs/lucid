@@ -45,6 +45,7 @@ module.exports = {
     return Promise.all([
       db.schema.createTable('users', function (table) {
         table.increments()
+        table.integer('vid')
         table.string('username')
         table.timestamps()
         table.timestamp('login_at')
@@ -55,6 +56,13 @@ module.exports = {
         table.integer('user_id')
         table.string('profile_name')
         table.integer('likes')
+        table.timestamps()
+        table.timestamp('deleted_at')
+      }),
+      db.schema.createTable('pictures', function (table) {
+        table.increments()
+        table.integer('profile_id')
+        table.string('storage_path')
         table.timestamps()
         table.timestamp('deleted_at')
       }),
@@ -78,6 +86,7 @@ module.exports = {
     return Promise.all([
       db.schema.dropTable('users'),
       db.schema.dropTable('profiles'),
+      db.schema.dropTable('pictures'),
       db.schema.dropTable('identities'),
       db.schema.dropTable('my_users')
     ])

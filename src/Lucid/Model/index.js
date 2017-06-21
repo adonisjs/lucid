@@ -840,6 +840,17 @@ class Model {
     return this.query().pair(lhs, rhs)
   }
 
+  setRelated (key, value) {
+    if (this.$relations[key]) {
+      throw new Error('Trying to reset twice')
+    }
+    this.$relations[key] = value
+  }
+
+  getRelated (key) {
+    return this.$relations[key]
+  }
+
   /**
    * Loads relationships and set them as $relations
    * attribute.
@@ -855,11 +866,9 @@ class Model {
    * @return {void}
    */
   async load (relation, callback) {
-    const eagerLoad = new EagerLoad(this, { [relation]: callback })
-    const result = await eagerLoad.loadOne()
-    _.each(result, (values, name) => {
-      this.$relations[name] = values
-    })
+    const eagerLoad = new EagerLoad({ [relation]: callback })
+    const result = await eagerLoad.loadOne(this)
+    _.each(result, (values, name) => this.setRelated(name, values))
   }
 
   /**

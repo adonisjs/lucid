@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
 */
 
+const _ = require('lodash')
 const BaseRelation = require('./BaseRelation')
 const CE = require('../../Exceptions')
 
@@ -52,6 +53,8 @@ class HasOne extends BaseRelation {
    * @return {void}
    *
    * @throws {RuntimeException} If parent model is not persisted
+   *
+   * @private
    */
   _validateRead () {
     if (!this.$primaryKeyValue || !this.parentInstance.$persisted) {
@@ -74,17 +77,52 @@ class HasOne extends BaseRelation {
   }
 
   /**
-   * Eagerload a single relationship from parent to child
-   * model
+   * Returns an array of values to be used for running
+   * whereIn query when eagerloading relationships.
    *
-   * @method eagerLoad
+   * @method mapValues
    *
-   * @param  {Array}  values
+   * @param  {Array}  modelInstances - An array of model instances
    *
-   * @return {Collection}
+   * @return {Array}
    */
-  eagerLoad (values) {
-    return this.query.whereIn(this.foreignKey, values).fetch()
+  mapValues (modelInstances) {
+    return _.map(modelInstances, (modelInstance) => modelInstance[this.primaryKey])
+  }
+
+  /**
+   * Takes an array of related instances and returns an array
+   * for each parent record.
+   *
+   * @method group
+   *
+   * @param  {Array} relatedInstances
+   *
+   * @return {Array}
+   */
+  group (relatedInstances) {
+    const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
+      const foreignKeyValue = relatedInstance[this.foreignKey]
+      const existingRelation = _.find(result, (row) => row.identity === foreignKeyValue)
+
+      /**
+       * If there is already an existing instance for same parent
+       * record. We should override the value and do WARN the
+       * user since hasOne should never have multiple
+       * related instance.
+       */
+      if (existingRelation) {
+        existingRelation.value = relatedInstance
+        return result
+      }
+
+      result.push({
+        identity: foreignKeyValue,
+        value: relatedInstance
+      })
+      return result
+    }, [])
+    return { key: this.primaryKey, values: transformedValues, defaultValue: null }
   }
 
   /**
