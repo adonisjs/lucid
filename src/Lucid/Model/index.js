@@ -488,9 +488,10 @@ class Model {
    * @private
    */
   _instantiate () {
-    this.__setters__ = ['$attributes', '$persisted', 'primaryKeyValue', '$originalAttributes', '$relations']
+    this.__setters__ = ['$attributes', '$persisted', 'primaryKeyValue', '$originalAttributes', '$relations', '$sideLoaded']
     this.$relations = {}
     this.$attributes = {}
+    this.$sideLoaded = {}
     this.$originalAttributes = {}
     this.$persisted = false
   }

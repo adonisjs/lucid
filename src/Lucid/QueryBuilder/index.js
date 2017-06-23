@@ -14,6 +14,7 @@ const _ = require('lodash')
 const util = require('../../../lib/util')
 const EagerLoad = require('../EagerLoad')
 const RelationsParser = require('../Relations/Parser')
+const CE = require('../../Exceptions')
 
 const proxyHandler = {
   get (target, name) {
@@ -45,6 +46,7 @@ class QueryBuilder {
     this.query = this.db.table(table).on('query', this.model._executeListeners.bind(this.model))
     this._ignoreScopes = []
     this._eagerLoads = {}
+    this._sideLoaded = []
     return new Proxy(this, proxyHandler)
   }
 
@@ -94,7 +96,7 @@ class QueryBuilder {
     const { name, nested } = RelationsParser.parseRelation(relation)
     RelationsParser.validateRelationExistence(this.model.prototype, name)
     const relationInstance = RelationsParser.getRelatedInstance(this.model.prototype, name)
-    return { relationInstance, nested }
+    return { relationInstance, nested, name }
   }
 
   /**
@@ -135,7 +137,12 @@ class QueryBuilder {
   _mapRowsToInstances (rows) {
     return rows.map((row) => {
       const modelInstance = new this.model()
-      modelInstance.newUp(row)
+      modelInstance.newUp(_.omitBy(row, (value, field) => {
+        if (this._sideLoaded.indexOf(field) > -1) {
+          modelInstance.$sideLoaded[field] = value
+          return true
+        }
+      }))
       return modelInstance
     })
   }
@@ -546,6 +553,43 @@ class QueryBuilder {
       this._has(relationInstance, 'orWhereNotExists', null, null, null, callback)
     }
 
+    return this
+  }
+
+  /**
+   * Returns count of a relationship
+   *
+   * @method withCount
+   *
+   * @param  {String}   relation
+   * @param  {Function} callback
+   *
+   * @chainable
+   */
+  withCount (relation, callback) {
+    let { name, nested } = RelationsParser.parseRelation(relation)
+    if (nested) {
+      throw CE.RuntimeException.cannotNestRelation(_.first(_.keys(nested)), name, 'withCount')
+    }
+
+    const tokens = name.match(/as\s(\w+)/)
+    let asStatement = `${name}_count`
+    if (_.size(tokens)) {
+      asStatement = tokens[1]
+      name = name.replace(tokens[0], '').trim()
+    }
+
+    RelationsParser.validateRelationExistence(this.model.prototype, name)
+    const relationInstance = RelationsParser.getRelatedInstance(this.model.prototype, name)
+
+    if (typeof (callback) === 'function') {
+      callback(relationInstance)
+    }
+
+    const columns = _.find(this.query._statement, (statement) => statement.grouping === 'columns') || ['*']
+    this._sideLoaded.push(asStatement)
+    columns.push(relationInstance.relatedWhere(true).as(asStatement))
+    this.query.select(columns)
     return this
   }
 }

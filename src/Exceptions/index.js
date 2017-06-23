@@ -43,6 +43,11 @@ class RuntimeException extends NE.RuntimeException {
   static undefinedRelation (relation, name) {
     return new this(`${relation} is not defined on ${name} model`, 500, 'E_INVALID_MODEL_RELATION')
   }
+
+  static cannotNestRelation (relation, parent, method) {
+    const message = `${method} does not allowed nested relations. Instead use .with('${parent}', (builder) => builder.${method}('${relation}'))`
+    return new this(message, 500, 'E_CANNOT_NEST_RELATION')
+  }
 }
 
 class InvalidArgumentException extends NE.InvalidArgumentException {

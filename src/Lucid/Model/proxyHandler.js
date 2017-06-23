@@ -21,5 +21,10 @@ proxyHandler.get = function (target, name) {
   if (typeof (target[name]) !== 'undefined') {
     return target[name]
   }
+
+  if (typeof (target.$sideLoaded[name]) !== 'undefined') {
+    return target.$sideLoaded[name]
+  }
+
   return target.$attributes[name]
 }

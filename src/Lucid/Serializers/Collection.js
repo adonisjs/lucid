@@ -1,5 +1,7 @@
 'use strict'
 
+const _ = require('lodash')
+
 class Collection {
   constructor (rows, pages = null, isOne = false) {
     this.rows = rows
@@ -8,7 +10,11 @@ class Collection {
   }
 
   first () {
-    return this.rows[0]
+    return _.first(this.rows)
+  }
+
+  last () {
+    return _.last(this.rows)
   }
 
   size () {

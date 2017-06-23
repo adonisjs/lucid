@@ -1035,4 +1035,171 @@ test.group('Relations | HasOne', (group) => {
     assert.deepEqual(users.pages, { lastPage: 1, perPage: 20, total: 1, page: 1 })
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "profiles" where users.id = profiles.user_id) = ? limit ?'))
   })
+
+  test('return relation count', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
+
+    const users = await User.query().withCount('profile').fetch()
+    assert.equal(users.size(), 2)
+    assert.equal(users.first().profile_count, 1)
+    assert.deepEqual(users.first().$sideLoaded, { profile_count: 1 })
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where users.id = profiles.user_id) as "profile_count" from "users"'))
+  })
+
+  test('return relation count with paginate method', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
+
+    const users = await User.query().withCount('profile').paginate()
+    assert.equal(users.size(), 2)
+    assert.equal(users.first().profile_count, 1)
+    assert.deepEqual(users.first().$sideLoaded, { profile_count: 1 })
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where users.id = profiles.user_id) as "profile_count" from "users" limit ?'))
+  })
+
+  test('define count column for withCount', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
+
+    const users = await User.query().withCount('profile as my_profile').fetch()
+    assert.equal(users.size(), 2)
+    assert.equal(users.first().my_profile, 1)
+    assert.deepEqual(users.first().$sideLoaded, { my_profile: 1 })
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where users.id = profiles.user_id) as "my_profile" from "users"'))
+  })
+
+  test('define callback with withCount', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
+
+    const users = await User.query().withCount('profile', function (builder) {
+      builder.where('likes', '>', 3)
+    }).fetch()
+    assert.equal(users.size(), 2)
+    assert.equal(users.first().profile_count, 0)
+    assert.deepEqual(users.first().$sideLoaded, { profile_count: 0 })
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where "likes" > ? and users.id = profiles.user_id) as "profile_count" from "users"'))
+  })
+
+  test('throw exception when trying to call withCount with nested relations', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
+
+    const users = () => User.query().withCount('profile.picture')
+    assert.throw(users, `E_CANNOT_NEST_RELATION: withCount does not allowed nested relations. Instead use .with('profile', (builder) => builder.withCount('picture'))`)
+  })
+
+  test('allow withCount on nested query builder', async (assert) => {
+    class Picture extends Model {
+
+    }
+
+    class Profile extends Model {
+      picture () {
+        return this.hasOne(Picture)
+      }
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+    Picture._bootIfNotBooted()
+
+    let userQuery = null
+    let profileQuery = null
+    User.onQuery((query) => userQuery = query)
+    Profile.onQuery((query) => profileQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
+    await ioc.use('Database').table('pictures').insert([{ profile_id: 1, storage_path: '/foo' }])
+
+    const users = await User.query().with('profile', (builder) => builder.withCount('picture')).fetch()
+    assert.equal(users.size(), 2)
+    assert.equal(users.first().getRelated('profile').picture_count, 1)
+    assert.deepEqual(users.first().getRelated('profile').$sideLoaded, { picture_count: 1 })
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users"'))
+    assert.equal(profileQuery.sql, helpers.formatQuery('select *, (select count(*) from "pictures" where profiles.id = pictures.profile_id) as "picture_count" from "profiles" where "user_id" in (?, ?)'))
+  })
 })
