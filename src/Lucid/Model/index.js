@@ -692,7 +692,7 @@ class Model {
    * @return {Object}
    */
   toJSON () {
-    return new this.constructor.serializer(this, true).toJSON()
+    return new this.constructor.serializer(this, null, true).toJSON()
   }
 
   /**

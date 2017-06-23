@@ -534,7 +534,7 @@ test.group('Model', (group) => {
       builder.where('deleted_at', null)
     })
 
-    const query = User.query().where('username', 'virk').applyScopes().toSQL()
+    const query = User.query().where('username', 'virk')._applyScopes().toSQL()
     assert.equal(query.sql, helpers.formatQuery('select * from "users" where "username" = ? and "deleted_at" is null'))
   })
 
@@ -546,7 +546,7 @@ test.group('Model', (group) => {
       builder.where('deleted_at', null)
     })
 
-    const query = User.query().where('username', 'virk').ignoreScopes().applyScopes().toSQL()
+    const query = User.query().where('username', 'virk').ignoreScopes()._applyScopes().toSQL()
     assert.equal(query.sql, helpers.formatQuery('select * from "users" where "username" = ?'))
   })
 
@@ -562,7 +562,7 @@ test.group('Model', (group) => {
       builder.whereNot('login_at', null)
     }, 'loggedOnce')
 
-    const query = User.query().where('username', 'virk').ignoreScopes(['softDeletes']).applyScopes().toSQL()
+    const query = User.query().where('username', 'virk').ignoreScopes(['softDeletes'])._applyScopes().toSQL()
     assert.equal(query.sql, helpers.formatQuery('select * from "users" where "username" = ? and "login_at" is not null'))
   })
 
@@ -757,5 +757,17 @@ test.group('Model', (group) => {
     await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.pair('id', 'username')
     assert.deepEqual(users, { 1: 'virk', 2: 'nikk' })
+  })
+
+  test('paginate model', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    const users = await User.query().paginate(1, 1)
+    assert.instanceOf(users, CollectionSerializer)
+    assert.deepEqual(users.pages, { perPage: 1, total: 2, page: 1, lastPage: 2 })
+    assert.equal(users.first().username, 'virk')
   })
 })

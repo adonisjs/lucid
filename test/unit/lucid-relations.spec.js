@@ -980,4 +980,59 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.first().username, 'virk')
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "likes" > ? and users.id = profiles.user_id) or not exists (select * from "identities" where "is_active" = ? and users.id = identities.user_id)'))
   })
+
+  test('eagerload and paginate via query builder', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let profileQuery = null
+
+    Profile.onQuery((query) => profileQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk'}, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([
+      { user_id: 1, profile_name: 'virk', likes: 3 },
+      { user_id: 2, profile_name: 'nikk', likes: 2 }
+    ])
+
+    const users = await User.query().with('profile').paginate(1, 1)
+    assert.instanceOf(users, CollectionSerializer)
+    assert.equal(users.size(), 1)
+    assert.instanceOf(users.first().getRelated('profile'), Profile)
+    assert.equal(users.first().getRelated('profile').profile_name, 'virk')
+  })
+
+  test('paginate with has constraints', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
+
+    const users = await User.query().has('profile', '=', 1).paginate(1)
+    assert.equal(users.size(), 1)
+    assert.deepEqual(users.pages, { lastPage: 1, perPage: 20, total: 1, page: 1 })
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "profiles" where users.id = profiles.user_id) = ? limit ?'))
+  })
 })

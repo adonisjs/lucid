@@ -98,6 +98,66 @@ class QueryBuilder {
   }
 
   /**
+   * This method will apply all the global query scopes
+   * to the query builder
+   *
+   * @method applyScopes
+   *
+   * @private
+   */
+  _applyScopes () {
+    if (this._ignoreScopes.indexOf('*') > -1) {
+      return this
+    }
+
+    _(this.model.$globalScopes)
+    .filter((scope) => this._ignoreScopes.indexOf(scope.name) <= -1)
+    .each((scope) => {
+      if (typeof (scope.callback) === 'function') {
+        scope.callback(this)
+      }
+    })
+
+    return this
+  }
+
+  /**
+   * Maps all rows to model instances
+   *
+   * @method _mapRowsToInstances
+   *
+   * @param  {Array}            rows
+   *
+   * @return {Array}
+   *
+   * @private
+   */
+  _mapRowsToInstances (rows) {
+    return rows.map((row) => {
+      const modelInstance = new this.model()
+      modelInstance.newUp(row)
+      return modelInstance
+    })
+  }
+
+  /**
+   * Eagerload relations for all model instances
+   *
+   * @method _eagerLoad
+   *
+   * @param  {Array}   modelInstance
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  async _eagerLoad (modelInstances) {
+    if (_.size(modelInstances)) {
+      await new EagerLoad(this._eagerLoads).load(modelInstances)
+    }
+  }
+
+  /**
    * Instruct query builder to ignore all global
    * scopes
    *
@@ -119,30 +179,6 @@ class QueryBuilder {
   }
 
   /**
-   * This method will apply all the global query scopes
-   * to the query builder
-   *
-   * @method applyScopes
-   *
-   * @chainable
-   */
-  applyScopes () {
-    if (this._ignoreScopes.indexOf('*') > -1) {
-      return this
-    }
-
-    _(this.model.$globalScopes)
-    .filter((scope) => this._ignoreScopes.indexOf(scope.name) <= -1)
-    .each((scope) => {
-      if (typeof (scope.callback) === 'function') {
-        scope.callback(this)
-      }
-    })
-
-    return this
-  }
-
-  /**
    * Execute the query builder chain by applying global scopes
    *
    * @method fetch
@@ -154,7 +190,7 @@ class QueryBuilder {
      * Apply all the scopes before fetching
      * data
      */
-    this.applyScopes()
+    this._applyScopes()
 
     /**
      * Execute query
@@ -164,20 +200,44 @@ class QueryBuilder {
     /**
      * Convert to an array of model instances
      */
-    const modelInstances = rows.map((row) => {
-      const modelInstance = new this.model()
-      modelInstance.newUp(row)
-      return modelInstance
-    })
-
-    if (_.size(modelInstances)) {
-      await new EagerLoad(this._eagerLoads).load(modelInstances)
-    }
+    const modelInstances = this._mapRowsToInstances(rows)
+    await this._eagerLoad(modelInstances)
 
     /**
      * Return an instance of active model serializer
      */
     return new this.model.serializer(modelInstances)
+  }
+
+  /**
+   * Paginate records, same as fetch but returns a
+   * collection with pagination info
+   *
+   * @method paginate
+   *
+   * @param  {Number} [page = 1]
+   * @param  {Number} [limit = 20]
+   *
+   * @return {Serializer}
+   */
+  async paginate (page, limit) {
+    /**
+     * Apply all the scopes before fetching
+     * data
+     */
+    this._applyScopes()
+    const result = await this.query.paginate(page, limit)
+
+    /**
+     * Convert to an array of model instances
+     */
+    const modelInstances = this._mapRowsToInstances(result.data)
+    await this._eagerLoad(modelInstances)
+
+    /**
+     * Return an instance of active model serializer
+     */
+    return new this.model.serializer(modelInstances, _.omit(result, ['data']))
   }
 
   /**
@@ -197,7 +257,7 @@ class QueryBuilder {
      * Apply all the scopes before update
      * data
      */
-    this.applyScopes()
+    this._applyScopes()
     return this.query.update(this.model.formatDates(values))
   }
 
@@ -213,7 +273,7 @@ class QueryBuilder {
      * Apply all the scopes before fetching
      * data
      */
-    this.applyScopes()
+    this._applyScopes()
 
     const result = await this.query.first()
     if (!result) {

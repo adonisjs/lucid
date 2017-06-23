@@ -1,8 +1,9 @@
 'use strict'
 
 class Collection {
-  constructor (rows, isOne = false) {
+  constructor (rows, pages = null, isOne = false) {
     this.rows = rows
+    this.pages = pages
     this.isOne = isOne
   }
 
