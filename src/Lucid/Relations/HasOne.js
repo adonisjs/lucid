@@ -22,12 +22,34 @@ class HasOne extends BaseRelation {
    * Returns the value for the primary key set on
    * the relationship
    *
-   * @method $primaryKeyValue
+   * @attribute $primaryKeyValue
    *
    * @return {Mixed}
    */
   get $primaryKeyValue () {
     return this.parentInstance[this.primaryKey]
+  }
+
+  /**
+   * Returns the primary table
+   *
+   * @attribute $primaryTable
+   *
+   * @return {String}
+   */
+  get $primaryTable () {
+    return this.parentInstance.constructor.table
+  }
+
+  /**
+   * Returns the foriegn table
+   *
+   * @attribute $foriegnTable
+   *
+   * @return {String}
+   */
+  get $foriegnTable () {
+    return this.relatedModel.table
   }
 
   /**
@@ -149,6 +171,23 @@ class HasOne extends BaseRelation {
     this._validateRead()
     this._decorateQuery()
     return this.query.first()
+  }
+
+  /**
+   * Returns the related where query
+   *
+   * @method relatedWhere
+   *
+   * @param  {Boolean}     count
+   *
+   * @return {Object}
+   */
+  relatedWhere (count) {
+    this.query.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$foriegnTable}.${this.foreignKey}`)
+    if (count) {
+      this.query.count('*')
+    }
+    return this.query.query
   }
 }
 

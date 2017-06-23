@@ -603,26 +603,381 @@ test.group('Relations | HasOne', (group) => {
     assert.isNull(pictureQuery)
   })
 
-  // test('limit parent records based on child', async (assert) => {
-  //   class Profile extends Model {
-  //   }
+  test('limit parent records based on child', async (assert) => {
+    class Profile extends Model {
+    }
 
-  //   class User extends Model {
-  //     profile () {
-  //       return this.hasOne(Profile)
-  //     }
-  //   }
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
 
-  //   User._bootIfNotBooted()
-  //   Profile._bootIfNotBooted()
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
 
-  //   let profileQuery = null
-  //   Profile.onQuery((query) => profileQuery = query)
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
 
-  //   await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-  //   await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
 
-  //   const users = await User.query().whereHas('profile').fetch()
-  //   assert.equal(users.size(), 1)
-  // })
+    const users = await User.query().has('profile').fetch()
+    assert.equal(users.size(), 1)
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where users.id = profiles.user_id)'))
+  })
+
+  test('limit parent records based on nested childs', async (assert) => {
+    class Picture extends Model {
+    }
+
+    class Profile extends Model {
+      picture () {
+        return this.hasOne(Picture)
+      }
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+    Picture._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
+    await ioc.use('Database').table('pictures').insert({ profile_id: 1, storage_path: 'foo' })
+
+    const users = await User.query().has('profile.picture').fetch()
+    assert.equal(users.size(), 1)
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where exists (select * from "pictures" where profiles.id = pictures.profile_id) and users.id = profiles.user_id)'))
+  })
+
+  test('return null when nested child query fails', async (assert) => {
+    class Picture extends Model {
+    }
+
+    class Profile extends Model {
+      picture () {
+        return this.hasOne(Picture)
+      }
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+    Picture._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
+
+    const users = await User.query().has('profile.picture').fetch()
+    assert.equal(users.size(), 0)
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where exists (select * from "pictures" where profiles.id = pictures.profile_id) and users.id = profiles.user_id)'))
+  })
+
+  test('throw exception when has receives an invalid relationship', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    const fn = () => User.query().has('foo')
+    assert.throw(fn, 'E_INVALID_MODEL_RELATION: foo is not defined on User model')
+  })
+
+  test('add expression and value to has method', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
+
+    const users = await User.query().has('profile', '>', 1).fetch()
+    assert.equal(users.size(), 0)
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "profiles" where users.id = profiles.user_id) > ?'))
+    assert.deepEqual(userQuery.bindings, helpers.formatBindings([1]))
+  })
+
+  test('add expression and value to nested relation using has method', async (assert) => {
+    class Picture extends Model {
+    }
+
+    class Profile extends Model {
+      picture () {
+        return this.hasOne(Picture)
+      }
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+    Picture._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
+
+    const users = await User.query().has('profile.picture', '>', 1).fetch()
+    assert.equal(users.size(), 0)
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where (select count(*) from "pictures" where profiles.id = pictures.profile_id) > ? and users.id = profiles.user_id)'))
+    assert.deepEqual(userQuery.bindings, helpers.formatBindings([1]))
+  })
+
+  test('add expression and value to nested relation using has method', async (assert) => {
+    class Identity extends Model {
+    }
+
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+
+      identity () {
+        return this.hasOne(Identity)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+    Identity._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('identities').insert({ user_id: 1 })
+
+    const users = await User.query().has('profile').orHas('identity').fetch()
+    assert.equal(users.size(), 1)
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where users.id = profiles.user_id) or exists (select * from "identities" where users.id = identities.user_id)'))
+  })
+
+  test('apply has via query scope', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+
+      static scopeHasProfile (query) {
+        return query.has('profile')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert({ user_id: 1 })
+
+    const users = await User.query().hasProfile().fetch()
+    assert.equal(users.size(), 1)
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where users.id = profiles.user_id)'))
+  })
+
+  test('add more constraints to has via whereHas', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }, { user_id: 2, likes: 2 }])
+
+    const users = await User.query().whereHas('profile', function (builder) {
+      builder.where('likes', '>', 2)
+    }).fetch()
+    assert.equal(users.size(), 1)
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "likes" > ? and users.id = profiles.user_id)'))
+  })
+
+  test('add count constraints via whereHas', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }, { user_id: 2, likes: 2 }])
+
+    const users = await User.query().whereHas('profile', function (builder) {
+      builder.where('likes', '>', 2)
+    }, '=', 1).fetch()
+    assert.equal(users.size(), 1)
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "profiles" where "likes" > ? and users.id = profiles.user_id) = ?'))
+  })
+
+  test('add whereDoesHave constraint', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }, { user_id: 2, likes: 2 }])
+
+    const users = await User.query().whereDoesntHave('profile', function (builder) {
+      builder.where('likes', '>', 2)
+    }).fetch()
+    assert.equal(users.size(), 1)
+    assert.equal(users.first().username, 'nikk')
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where not exists (select * from "profiles" where "likes" > ? and users.id = profiles.user_id)'))
+  })
+
+  test('add orWhereHas constraint', async (assert) => {
+    class Identity extends Model {
+    }
+
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+
+      identity () {
+        return this.hasOne(Identity)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+    Identity._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }, { user_id: 2, likes: 2 }])
+    await ioc.use('Database').table('identities').insert([{ user_id: 1, is_active: false }, { user_id: 2, is_active: true }])
+
+    const users = await User.query().whereHas('profile', function (builder) {
+      builder.where('likes', '>', 2)
+    }).orWhereHas('identity', function (builder) {
+      builder.where('is_active', true)
+    }).fetch()
+    assert.equal(users.size(), 2)
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "likes" > ? and users.id = profiles.user_id) or exists (select * from "identities" where "is_active" = ? and users.id = identities.user_id)'))
+  })
+
+  test('add orWhereDoesntHave constraint', async (assert) => {
+    class Identity extends Model {
+    }
+
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+
+      identity () {
+        return this.hasOne(Identity)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+    Identity._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }, { user_id: 2, likes: 2 }])
+    await ioc.use('Database').table('identities').insert([{ user_id: 1, is_active: false }, { user_id: 2, is_active: true }])
+
+    const users = await User.query().whereHas('profile', function (builder) {
+      builder.where('likes', '>', 2)
+    }).orWhereDoesntHave('identity', function (builder) {
+      builder.where('is_active', true)
+    }).fetch()
+    assert.equal(users.size(), 1)
+    assert.equal(users.first().username, 'virk')
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "likes" > ? and users.id = profiles.user_id) or not exists (select * from "identities" where "is_active" = ? and users.id = identities.user_id)'))
+  })
 })

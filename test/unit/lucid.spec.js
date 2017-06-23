@@ -523,7 +523,7 @@ test.group('Model', (group) => {
     User._bootIfNotBooted()
     await ioc.use('Adonis/Src/Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
-    assert.deepEqual(Object.keys(users.first().toObject()), ['id', 'username', 'updated_at', 'login_at', 'deleted_at'])
+    assert.deepEqual(Object.keys(users.first().toObject()), ['id', 'vid', 'username', 'updated_at', 'login_at', 'deleted_at'])
   })
 
   test('apply all global scopes to the query builder', async (assert) => {
@@ -754,7 +754,6 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-
     await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.pair('id', 'username')
     assert.deepEqual(users, { 1: 'virk', 2: 'nikk' })

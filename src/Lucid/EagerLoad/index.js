@@ -10,94 +10,11 @@
 */
 
 const _ = require('lodash')
-const CE = require('../../Exceptions')
+const RelationsParser = require('../Relations/Parser')
 
 class EagerLoad {
   constructor (relations) {
-    this._relations = {}
-    this._parseRelations(relations)
-  }
-
-  /**
-   * Parses the eagerloading string passed to `with` or
-   * `load`.
-   *
-   * @method _parseRelations
-   *
-   * @param  {Object}             relations
-   *
-   * @return {void}
-   */
-  _parseRelations (relations) {
-    _.each(relations, (callback = null, relation) => {
-      let [name, nested] = relation.split(/\.(.+)/)
-
-      /**
-       * Setup nested relation when it exists
-       */
-      nested = nested ? { [nested]: callback } : null
-      const map = { nested }
-
-      /**
-       * The callback belongs to parent relation only
-       * when nested relation does not exists.
-       */
-      map.callback = !nested ? callback : null
-
-      /**
-       * Find if there is already an existing relationship
-       * and use that over creating a new one
-       */
-      const existingRelation = this._relations[name]
-      if (existingRelation) {
-        existingRelation.callback = map.callback
-        _.each(map.nested, (v, k) => {
-          existingRelation.nested[k] = v
-        })
-        return
-      }
-
-      /**
-       * Otherwise push a new relationship
-       */
-      this._relations[name] = map
-    })
-  }
-
-  /**
-   * Validates the model instance to make sure the relationship
-   * exists.
-   *
-   * @method _validateRelationExistence
-   *
-   * @param  {Object}                   modelInstance
-   * @param  {String}                   relation
-   *
-   * @return {void}
-   *
-   * @private
-   */
-  _validateRelationExistence (modelInstance, relation) {
-    if (typeof (modelInstance[relation]) !== 'function') {
-      throw CE.RuntimeException.undefinedRelation(relation, modelInstance.constructor.name)
-    }
-  }
-
-  /**
-   * Returns the relationship instance by calling the relationship
-   * method on the model instance.
-   *
-   * @method _getRelatedInstance
-   *
-   * @param  {Object}            modelInstance
-   * @param  {String}            relation
-   *
-   * @return {void}
-   *
-   * @private
-   */
-  _getRelatedInstance (modelInstance, relation) {
-    return modelInstance[relation]()
+    this._relations = RelationsParser.parseRelations(relations)
   }
 
   /**
@@ -183,8 +100,8 @@ class EagerLoad {
      * Gets an array of queries to be executed in parallel
      */
     const queries = _.map(this._relations, (attributes, relation) => {
-      this._validateRelationExistence(modelInstance, relation)
-      const relationInstance = this._getRelatedInstance(modelInstance, relation)
+      RelationsParser.validateRelationExistence(modelInstance, relation)
+      const relationInstance = RelationsParser.getRelatedInstance(modelInstance, relation)
       this._applyRuntimeConstraints(relationInstance, attributes.callback)
       this._fetchNested(relationInstance, attributes.nested)
       return relationInstance.load()
@@ -218,8 +135,8 @@ class EagerLoad {
     const modelInstance = modelInstances[0]
 
     const queries = _.map(this._relations, (attributes, relation) => {
-      this._validateRelationExistence(modelInstance, relation)
-      const relationInstance = this._getRelatedInstance(modelInstance, relation)
+      RelationsParser.validateRelationExistence(modelInstance, relation)
+      const relationInstance = RelationsParser.getRelatedInstance(modelInstance, relation)
       this._applyRuntimeConstraints(relationInstance, attributes.callback)
       this._fetchNested(relationInstance, attributes.nested)
       return this._eagerLoad(modelInstances, relationInstance)
@@ -259,5 +176,3 @@ class EagerLoad {
 }
 
 module.exports = EagerLoad
-
-
