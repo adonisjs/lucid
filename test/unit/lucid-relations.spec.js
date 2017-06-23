@@ -1226,4 +1226,54 @@ test.group('Relations | HasOne', (group) => {
     const user = await User.query().with('profile').first()
     assert.instanceOf(user.getRelated('profile'), Profile)
   })
+
+  test('set model parent when fetched as a relation', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let profileQuery = null
+
+    Profile.onQuery((query) => profileQuery = query)
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
+
+    const user = await User.query().with('profile').first()
+    assert.equal(user.getRelated('profile').$parent, 'User')
+    assert.isTrue(user.getRelated('profile').hasParent)
+  })
+
+  test('set model parent when fetched via query builder fetch method', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let profileQuery = null
+
+    Profile.onQuery((query) => profileQuery = query)
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
+
+    const user = await User.query().with('profile').fetch()
+    assert.equal(user.first().getRelated('profile').$parent, 'User')
+    assert.isTrue(user.first().getRelated('profile').hasParent)
+  })
 })

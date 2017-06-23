@@ -476,6 +476,18 @@ class Model {
   }
 
   /**
+   * Returns a boolean indicating if model is
+   * child of a parent model
+   *
+   * @method hasParent
+   *
+   * @return {Boolean}
+   */
+  get hasParent () {
+    return !!this.$parent
+  }
+
+  /**
    * Instantiate the model by defining constructor properties
    * and also setting `__setters__` to tell the proxy that
    * these values should be set directly on the constructor
@@ -488,12 +500,22 @@ class Model {
    * @private
    */
   _instantiate () {
-    this.__setters__ = ['$attributes', '$persisted', 'primaryKeyValue', '$originalAttributes', '$relations', '$sideLoaded']
-    this.$relations = {}
+    this.__setters__ = [
+      '$attributes',
+      '$persisted',
+      'primaryKeyValue',
+      '$originalAttributes',
+      '$relations',
+      '$sideLoaded',
+      '$parent'
+    ]
+
     this.$attributes = {}
-    this.$sideLoaded = {}
-    this.$originalAttributes = {}
     this.$persisted = false
+    this.$originalAttributes = {}
+    this.$relations = {}
+    this.$sideLoaded = {}
+    this.$parent = null
   }
 
   /**
@@ -845,6 +867,23 @@ class Model {
     if (this.$relations[key]) {
       throw new Error('Trying to reset twice')
     }
+
+    /**
+     * If related value exists, then see if it's an array
+     * of not. Since new each to add parent model name
+     * on each instance of related model inside an
+     * array and for one instance if not an array.
+     *
+     * HOPE MAKES SENSE :)
+     *
+     * If not, then `hasOne` set the value to a model instances
+     * and `hasMany` set it to a collection of instances.
+     */
+    if (_.size(value)) {
+      const arrayify = _.isArray(value) ? value : [value]
+      _(arrayify).filter((val) => !!val).each((val) => val.$parent = this.constructor.name)
+    }
+
     this.$relations[key] = value
   }
 
