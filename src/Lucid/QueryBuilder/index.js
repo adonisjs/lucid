@@ -135,16 +135,27 @@ class QueryBuilder {
    * @private
    */
   _mapRowsToInstances (rows) {
-    return rows.map((row) => {
-      const modelInstance = new this.model()
-      modelInstance.newUp(_.omitBy(row, (value, field) => {
-        if (this._sideLoaded.indexOf(field) > -1) {
-          modelInstance.$sideLoaded[field] = value
-          return true
-        }
-      }))
-      return modelInstance
-    })
+    return rows.map((row) => this._mapRowToInstance(row))
+  }
+
+  /**
+   * Maps a single row to model instance
+   *
+   * @method _mapRowToInstance
+   *
+   * @param  {Object}          row
+   *
+   * @return {Model}
+   */
+  _mapRowToInstance (row) {
+    const modelInstance = new this.model()
+    modelInstance.newUp(_.omitBy(row, (value, field) => {
+      if (this._sideLoaded.indexOf(field) > -1) {
+        modelInstance.$sideLoaded[field] = value
+        return true
+      }
+    }))
+    return modelInstance
   }
 
   /**
@@ -217,6 +228,38 @@ class QueryBuilder {
   }
 
   /**
+   * Returns the first row from the database.
+   *
+   * @method first
+   *
+   * @return {Model|Null}
+   */
+  async first () {
+    /**
+     * Apply all the scopes before fetching
+     * data
+     */
+    this._applyScopes()
+
+    const row = await this.query.first()
+    if (!row) {
+      return null
+    }
+
+    const modelInstance = this._mapRowToInstance(row)
+
+    /**
+     * Eagerload relations when defined on query
+     */
+    if (_.size(this._eagerLoads)) {
+      await modelInstance.loadMany(this._eagerLoads)
+    }
+
+    this.model.$hooks.after.exec('find', modelInstance)
+    return modelInstance
+  }
+
+  /**
    * Paginate records, same as fetch but returns a
    * collection with pagination info
    *
@@ -266,31 +309,6 @@ class QueryBuilder {
      */
     this._applyScopes()
     return this.query.update(this.model.formatDates(values))
-  }
-
-  /**
-   * Returns the first row from the database.
-   *
-   * @method first
-   *
-   * @return {Model|Null}
-   */
-  async first () {
-    /**
-     * Apply all the scopes before fetching
-     * data
-     */
-    this._applyScopes()
-
-    const result = await this.query.first()
-    if (!result) {
-      return null
-    }
-
-    const modelInstance = new this.model()
-    modelInstance.newUp(result)
-    this.model.$hooks.after.exec('find', modelInstance)
-    return modelInstance
   }
 
   /**

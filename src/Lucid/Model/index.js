@@ -872,6 +872,12 @@ class Model {
     _.each(result, (values, name) => this.setRelated(name, values))
   }
 
+  async loadMany (eagerLoadMap) {
+    const eagerLoad = new EagerLoad(eagerLoadMap)
+    const result = await eagerLoad.loadOne(this)
+    _.each(result, (values, name) => this.setRelated(name, values))
+  }
+
   /**
    * Returns an instance of hasOne relation
    *

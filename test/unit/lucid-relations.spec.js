@@ -1202,4 +1202,28 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users"'))
     assert.equal(profileQuery.sql, helpers.formatQuery('select *, (select count(*) from "pictures" where profiles.id = pictures.profile_id) as "picture_count" from "profiles" where "user_id" in (?, ?)'))
   })
+
+  test('eagerload when calling first', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let profileQuery = null
+
+    Profile.onQuery((query) => profileQuery = query)
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
+
+    const user = await User.query().with('profile').first()
+    assert.instanceOf(user.getRelated('profile'), Profile)
+  })
 })
