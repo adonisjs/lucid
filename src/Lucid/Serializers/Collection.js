@@ -9,6 +9,25 @@ class Collection {
     this.isOne = isOne
   }
 
+  _attachRelations (modelInstance, output) {
+    _.each(modelInstance.$relations, (values, relation) => {
+      output[relation] = values && values.toJSON ? values.toJSON() : values
+    })
+  }
+
+  _attachMeta (modelInstance, output) {
+    if (_.size(modelInstance.$sideLoaded)) {
+      output.__meta__ = _.clone(modelInstance.$sideLoaded)
+    }
+  }
+
+  _getRowJSON (row) {
+    const json = row.toObject()
+    this._attachRelations(row, json)
+    this._attachMeta(row, json)
+    return json
+  }
+
   first () {
     return _.first(this.rows)
   }
@@ -22,7 +41,14 @@ class Collection {
   }
 
   toJSON () {
-    return this.isOne ? this.rows.toObject() : this.rows.map((row) => row.toObject())
+    if (this.isOne) {
+      return this._getRowJSON(this.rows)
+    }
+    const data = this.rows.map(this._getRowJSON.bind(this))
+    if (this.pages) {
+      return _.merge({}, this.pages, { data })
+    }
+    return data
   }
 }
 

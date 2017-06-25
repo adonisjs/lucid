@@ -19,6 +19,7 @@
   "dependencies": {
     "date-fns": "^1.28.5",
     "debug": "^2.6.8",
+    "edge.js": "^1.0.1",
     "knex": "^0.13.0",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
@@ -26,7 +27,7 @@
     "pluralize": "^5.0.0"
   },
   "devDependencies": {
-    "@adonisjs/fold": "git+https://github.com/poppinss/adonis-fold.git#dawn",
+    "@adonisjs/fold": "^4.0.0",
     "@adonisjs/sink": "^1.0.8",
     "chance": "^1.0.9",
     "coveralls": "^2.13.1",
@@ -35,6 +36,7 @@
     "japa-cli": "^1.0.1",
     "mysql": "^2.13.0",
     "nyc": "^11.0.2",
+    "pg": "^6.4.0",
     "sqlite3": "^3.1.8"
   }
 }

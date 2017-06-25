@@ -23,9 +23,14 @@ const proxyHandler = {
       throw new Error(`Database.${name} is not a function`)
     }
 
+    /**
+     * Attach transacting to all the database
+     * queries if global transactions are on
+     */
     if (target._globalTrx) {
       queryBuilder.transacting(target._globalTrx)
     }
+
     return queryBuilder[name].bind(queryBuilder)
   }
 }
@@ -35,6 +40,7 @@ const proxyHandler = {
  * queries and transactions.
  *
  * @class Database
+ *
  * @constructor
  */
 class Database {
@@ -48,7 +54,8 @@ class Database {
   }
 
   /**
-   * Returns the schema builder
+   * The schema builder instance to be used
+   * for creating database schema.
    *
    * @attribute schema
    *
@@ -59,7 +66,7 @@ class Database {
   }
 
   /**
-   * Method to build raw queries
+   * Method to construct raw queries
    *
    * @method raw
    *
@@ -141,7 +148,7 @@ class Database {
 
   /**
    * Closes the database connection. No more queries
-   * can be made after this
+   * can be made after this.
    *
    * @method close
    *

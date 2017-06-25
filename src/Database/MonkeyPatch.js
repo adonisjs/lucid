@@ -16,35 +16,92 @@
 
 const _ = require('lodash')
 var KnexQueryBuilder = require('knex/lib/query/builder')
-const excludeAttrFromCount = ['order']
+const excludeAttrFromCount = ['order', 'columns', 'limit', 'offset']
 
 const _from = KnexQueryBuilder.prototype.from
 
+/**
+ * A custom from method with support for prefixing
+ * tables.
+ *
+ * @method from
+ *
+ * @for Database
+ *
+ * @param  {String} name
+ *
+ * @chainable
+ */
 KnexQueryBuilder.prototype.from = function (name) {
   const prefix = _.get(this.client, 'config.prefix')
   name = prefix && !this._ignorePrefix ? `${prefix}${name}` : name
   return _from.bind(this)(name)
 }
 
+/**
+ * Alias for {{crossLink "Database.table"}}{{/crossLink}}
+ *
+ * @method table
+ */
 KnexQueryBuilder.prototype.table = function (...args) {
   return this.from(...args)
 }
 
+/**
+ * Alias for {{crossLink "Database.table"}}{{/crossLink}}
+ *
+ * @method table
+ */
 KnexQueryBuilder.prototype.into = function (...args) {
   return this.from(...args)
 }
 
+/**
+ * Instruct query builder to ignore prefix when
+ * selecting table
+ *
+ * @method withOutPrefix
+ *
+ * @chainable
+ */
 KnexQueryBuilder.prototype.withOutPrefix = function () {
   this._ignorePrefix = true
   return this
 }
 
-KnexQueryBuilder.prototype.forPage = function (page, perPage = 20) {
+/**
+ * Add `offset` and `limit` based upon the current
+ * and per page params
+ *
+ * @method forPage
+ *
+ * @for Database
+ *
+ * @param  {Number} [page = 1]
+ * @param  {Number} [perPage = 20]
+ *
+ * @chainable
+ */
+KnexQueryBuilder.prototype.forPage = function (page = 1, perPage = 20) {
   const offset = page === 1 ? 0 : perPage * (page - 1)
   return this.offset(offset).limit(perPage)
 }
 
-KnexQueryBuilder.prototype.paginate = async function (page, perPage = 20) {
+/**
+ * Paginate results from database. This method is same as
+ * {{#crossLink "Database/forPage"}}{{/crossLink}} but
+ * instead returns pagination meta data as well
+ *
+ * @method paginate
+ *
+ * @for Database
+ *
+ * @param  {Number} page
+ * @param  {Number} perPage
+ *
+ * @return {Object}
+ */
+KnexQueryBuilder.prototype.paginate = async function (page = 2, perPage = 20) {
   const countByQuery = this.clone()
 
   /**

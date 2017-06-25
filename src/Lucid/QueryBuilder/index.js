@@ -270,7 +270,7 @@ class QueryBuilder {
    *
    * @return {Serializer}
    */
-  async paginate (page, limit) {
+  async paginate (page = 1, limit = 20) {
     /**
      * Apply all the scopes before fetching
      * data

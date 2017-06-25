@@ -22,7 +22,7 @@ const CollectionSerializer = require('../../src/Lucid/Serializers/Collection')
 
 test.group('Relations | HasOne', (group) => {
   group.before(async () => {
-    ioc.bind('Adonis/Src/Database', function () {
+    ioc.singleton('Adonis/Src/Database', function () {
       const config = new Config()
       config.set('database', {
         connection: 'testing',
@@ -423,7 +423,7 @@ test.group('Relations | HasOne', (group) => {
 
     Profile.onQuery((query) => profileQuery = query)
 
-    const user = await ioc.use('Database').table('users').insert({ username: 'virk' })
+    const user = await ioc.use('Database').table('users').insert({ username: 'virk' }).returning('id')
     await ioc.use('Database').table('profiles').insert({ user_id: user[0], profile_name: 'virk', likes: 3 })
 
     const result = await User.query().with('profile').fetch()
@@ -1032,7 +1032,7 @@ test.group('Relations | HasOne', (group) => {
 
     const users = await User.query().has('profile', '=', 1).paginate(1)
     assert.equal(users.size(), 1)
-    assert.deepEqual(users.pages, { lastPage: 1, perPage: 20, total: 1, page: 1 })
+    assert.deepEqual(users.pages, { lastPage: 1, perPage: 20, total: helpers.formatNumber(1), page: 1 })
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "profiles" where users.id = profiles.user_id) = ? limit ?'))
   })
 
@@ -1058,7 +1058,7 @@ test.group('Relations | HasOne', (group) => {
     const users = await User.query().withCount('profile').fetch()
     assert.equal(users.size(), 2)
     assert.equal(users.first().profile_count, 1)
-    assert.deepEqual(users.first().$sideLoaded, { profile_count: 1 })
+    assert.deepEqual(users.first().$sideLoaded, { profile_count: helpers.formatNumber(1) })
     assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where users.id = profiles.user_id) as "profile_count" from "users"'))
   })
 
@@ -1084,7 +1084,7 @@ test.group('Relations | HasOne', (group) => {
     const users = await User.query().withCount('profile').paginate()
     assert.equal(users.size(), 2)
     assert.equal(users.first().profile_count, 1)
-    assert.deepEqual(users.first().$sideLoaded, { profile_count: 1 })
+    assert.deepEqual(users.first().$sideLoaded, { profile_count: helpers.formatNumber(1) })
     assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where users.id = profiles.user_id) as "profile_count" from "users" limit ?'))
   })
 
@@ -1110,7 +1110,7 @@ test.group('Relations | HasOne', (group) => {
     const users = await User.query().withCount('profile as my_profile').fetch()
     assert.equal(users.size(), 2)
     assert.equal(users.first().my_profile, 1)
-    assert.deepEqual(users.first().$sideLoaded, { my_profile: 1 })
+    assert.deepEqual(users.first().$sideLoaded, { my_profile: helpers.formatNumber(1) })
     assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where users.id = profiles.user_id) as "my_profile" from "users"'))
   })
 
@@ -1138,7 +1138,7 @@ test.group('Relations | HasOne', (group) => {
     }).fetch()
     assert.equal(users.size(), 2)
     assert.equal(users.first().profile_count, 0)
-    assert.deepEqual(users.first().$sideLoaded, { profile_count: 0 })
+    assert.deepEqual(users.first().$sideLoaded, { profile_count: helpers.formatNumber(0) })
     assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where "likes" > ? and users.id = profiles.user_id) as "profile_count" from "users"'))
   })
 
@@ -1197,8 +1197,8 @@ test.group('Relations | HasOne', (group) => {
 
     const users = await User.query().with('profile', (builder) => builder.withCount('picture')).fetch()
     assert.equal(users.size(), 2)
-    assert.equal(users.first().getRelated('profile').picture_count, 1)
-    assert.deepEqual(users.first().getRelated('profile').$sideLoaded, { picture_count: 1 })
+    assert.equal(users.first().getRelated('profile').picture_count, helpers.formatNumber(1))
+    assert.deepEqual(users.first().getRelated('profile').$sideLoaded, { picture_count: helpers.formatNumber(1) })
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users"'))
     assert.equal(profileQuery.sql, helpers.formatQuery('select *, (select count(*) from "pictures" where profiles.id = pictures.profile_id) as "picture_count" from "profiles" where "user_id" in (?, ?)'))
   })

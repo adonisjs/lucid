@@ -559,7 +559,7 @@ class Model {
 
     const result = await this.constructor
       .query()
-      .returning(this.constructor.$primaryKey)
+      .returning(this.constructor.primaryKey)
       .insert(this.constructor.formatDates(this.$attributes))
 
     /**

@@ -23,7 +23,7 @@ const CollectionSerializer = require('../../src/Lucid/Serializers/Collection')
 
 test.group('Model', (group) => {
   group.before(async () => {
-    ioc.bind('Adonis/Src/Database', function () {
+    ioc.singleton('Adonis/Src/Database', function () {
       const config = new Config()
       config.set('database', {
         connection: 'testing',
@@ -282,7 +282,10 @@ test.group('Model', (group) => {
     await user.save()
 
     assert.lengthOf(queries, 1)
-    assert.equal(queries[0].sql, helpers.formatQuery('insert into "users" ("created_at", "updated_at", "username") values (?, ?, ?)'))
+    assert.equal(queries[0].sql, helpers.addReturningStatement(
+      helpers.formatQuery('insert into "users" ("created_at", "updated_at", "username") values (?, ?, ?)'),
+      'id'
+    ))
   })
 
   test('update model for multiple times', async (assert) => {
@@ -302,7 +305,10 @@ test.group('Model', (group) => {
     await user.save()
 
     assert.lengthOf(queries, 3)
-    assert.equal(queries[0].sql, helpers.formatQuery('insert into "users" ("created_at", "updated_at", "username") values (?, ?, ?)'))
+    assert.equal(queries[0].sql, helpers.addReturningStatement(
+      helpers.formatQuery('insert into "users" ("created_at", "updated_at", "username") values (?, ?, ?)'),
+      'id'
+    ))
     assert.equal(queries[1].sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ?'))
     assert.deepEqual(queries[1].bindings[1], 'nikk')
     assert.equal(queries[2].sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ?'))
@@ -402,7 +408,7 @@ test.group('Model', (group) => {
       }
 
       static get dateFormat () {
-        return 'DD'
+        return 'YYYY-MM-DD'
       }
     }
 
@@ -412,7 +418,7 @@ test.group('Model', (group) => {
     user.login_at = new Date()
     await user.save()
     const freshUser = await ioc.use('Adonis/Src/Database').table('users').first()
-    assert.equal(freshUser.login_at, new Date().getDate())
+    assert.equal(moment(freshUser.login_at).format('YYYY-MM-DD'), moment().format('YYYY-MM-DD'))
   })
 
   test('call update hooks when updating model', async (assert) => {
@@ -472,15 +478,15 @@ test.group('Model', (group) => {
       }
 
       static get dateFormat () {
-        return 'DD'
+        return 'YYYY-MM-DD'
       }
     }
 
     User._bootIfNotBooted()
     await ioc.use('Adonis/Src/Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     await User.query().where('username', 'virk').update({ login_at: new Date() })
-    const users = await ioc.use('Adonis/Src/Database').table('users')
-    assert.equal(users[0].login_at, new Date().getDate())
+    const users = await ioc.use('Adonis/Src/Database').table('users').orderBy('id', 'asc')
+    assert.equal(moment(users[0].updated_at).format('YYYY-MM-DD'), moment().format('YYYY-MM-DD'))
   })
 
   test('attach computed properties to the final output', async (assert) => {
@@ -637,7 +643,7 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-    const userId = await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' })
+    const userId = await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' }).returning('id')
     const user = await User.find(userId[0])
     assert.instanceOf(user, User)
     assert.equal(user.username, 'virk')
@@ -767,7 +773,7 @@ test.group('Model', (group) => {
     await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.query().paginate(1, 1)
     assert.instanceOf(users, CollectionSerializer)
-    assert.deepEqual(users.pages, { perPage: 1, total: 2, page: 1, lastPage: 2 })
+    assert.deepEqual(users.pages, { perPage: 1, total: helpers.formatNumber(2), page: 1, lastPage: 2 })
     assert.equal(users.first().username, 'virk')
   })
 })

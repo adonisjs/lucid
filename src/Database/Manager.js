@@ -16,7 +16,7 @@ const CE = require('../Exceptions')
 
 const proxyHandler = {
   get (target, name) {
-    if (target[name]) {
+    if (typeof (target[name]) !== 'undefined') {
       return target[name]
     }
 
@@ -32,6 +32,12 @@ const proxyHandler = {
  * DatabaseManager is a layer on top of {{crossLink "Database"}}{{/crossLink}}
  * class which manages a pool of different database connections and proxy
  * all Database methods, so that it's easier to work with them.
+ *
+ * @binding Adonis/Src/Database
+ * @singleton
+ * @alias Database
+ *
+ * @class DatabaseManager
  */
 class DatabaseManager {
   constructor (Config) {
@@ -51,6 +57,7 @@ class DatabaseManager {
    */
   connection (name) {
     name = name || this.Config.get('database.connection')
+
     if (this._connectionPools[name]) {
       return this._connectionPools[name]
     }
