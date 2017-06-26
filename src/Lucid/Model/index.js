@@ -54,7 +54,7 @@ class Model {
 
   /**
    * An array of methods to be called everytime
-   * a model in imported via boot method
+   * a model is imported via ioc container.
    *
    * @attribute iocHooks
    *
@@ -72,7 +72,7 @@ class Model {
    *
    * @attribute primaryKey
    *
-   * @return {String}
+   * @return {String} The default value is `id`
    *
    * @static
    */
@@ -81,20 +81,28 @@ class Model {
   }
 
   /**
-   * The foreignkey for the model
+   * The foreign key for the model. It is generated
+   * by converting model name to lowercase and then
+   * snake case and appending `_id` to it.
    *
-   * @method foreignKey
+   * @attribute foreignKey
    *
    * @return {String}
+   *
+   * @example
+   * ```
+   * User - user_id
+   * Post - posts_id
+   * ``
    */
   static get foreignKey () {
     return util.makeForeignKey(this.name)
   }
 
   /**
-   * Tell lucid whether primary key is supposed to be
-   * incrementing or not. If `false` is returned then
-   * users is responsible for setting the `primaryKey`.
+   * Tell Lucid whether primary key is supposed to be incrementing
+   * or not. If `false` is returned then you are responsible for
+   * setting the `primaryKeyValue` for the model instance.
    *
    * @attribute incrementing
    *
@@ -108,9 +116,9 @@ class Model {
 
   /**
    * Returns the value of primary key regardless of
-   * the key name
+   * the key name.
    *
-   * @method primaryKeyValue
+   * @attribute primaryKeyValue
    *
    * @return {Mixed}
    */
@@ -128,7 +136,7 @@ class Model {
    * The only time you want to do is when `incrementing` is
    * set to false
    *
-   * @method primaryKeyValue
+   * @attribute primaryKeyValue
    *
    * @param  {Mixed}        value
    *
@@ -140,7 +148,8 @@ class Model {
 
   /**
    * The database connection to be used for
-   * the model.
+   * the model. Returning blank string will
+   * use the `default` connection.
    *
    * @attribute connection
    *
@@ -168,8 +177,8 @@ class Model {
 
   /**
    * The attributes to be considered as dates. By default
-   * `createdAtColumn` and `updatedAtColumn` are
-   * considered as dates.
+   * @ref('Model.createdAtColumn') and @ref('Model.updatedAtColumn')
+   * are considered as dates.
    *
    * @attribute dates
    *
@@ -185,7 +194,7 @@ class Model {
   }
 
   /**
-   * The attribute name for created at timestamp
+   * The attribute name for created at timestamp.
    *
    * @attribute createdAtColumn
    *
@@ -198,7 +207,7 @@ class Model {
   }
 
   /**
-   * The attribute name for updated at timestamp
+   * The attribute name for updated at timestamp.
    *
    * @attribute updatedAtColumn
    *
@@ -211,13 +220,24 @@ class Model {
   }
 
   /**
-   * The table name for the model
+   * The table name for the model. It is dynamically generated
+   * from the Model by name by pluralizing it and converting
+   * it to lowercase.
    *
-   * @method table
+   * @attribute table
    *
    * @return {String}
    *
    * @static
+   *
+   * @example
+   * ```
+   * Model - User
+   * table - users
+   *
+   * Model - Person
+   * table - people
+   * ```
    */
   static get table () {
     return util.makeTableName(this.name)
@@ -228,7 +248,9 @@ class Model {
    * data. The return value must always be a
    * ES6 class.
    *
-   * @method serializer
+   * By default Lucid uses @ref('BaseSerializer')
+   *
+   * @attribute serializer
    *
    * @return {Class}
    */
@@ -258,11 +280,11 @@ class Model {
 
   /**
    * Get fresh instance of query builder for
-   * this model
+   * this model.
    *
    * @method query
    *
-   * @return {QueryBuilder}
+   * @return {LucidQueryBuilder}
    *
    * @static
    */
@@ -272,7 +294,7 @@ class Model {
 
   /**
    * Method to be called only once to boot
-   * the model
+   * the model.
    *
    * @method boot
    *
@@ -379,7 +401,7 @@ class Model {
 
   /**
    * Formats all the dates set as `dates` on the model
-   * and exists in the values object.
+   * that exists in the values object.
    *
    * Note: This method will not mutate the original object
    * and instead returns a new one.
@@ -479,7 +501,7 @@ class Model {
    * Returns a boolean indicating if model is
    * child of a parent model
    *
-   * @method hasParent
+   * @attribute hasParent
    *
    * @return {Boolean}
    */
@@ -615,6 +637,26 @@ class Model {
   }
 
   /**
+   * Converts all date fields to moment objects, so
+   * that you can transform them into something
+   * else.
+   *
+   * @method _castDates
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  _castDates () {
+    this.constructor.dates.forEach((field) => {
+      const value = this.$attributes[field]
+      if (value) {
+        this.$attributes[field] = moment(value)
+      }
+    })
+  }
+
+  /**
    * Set attributes on model instance in bulk. Calling
    * fill will remove the existing attributes.
    *
@@ -649,23 +691,6 @@ class Model {
       value = this[setterName](value)
     }
     return this.$attributes[name] = value
-  }
-
-  /**
-   * Converts all date fields inside moment objects, so
-   * that you can transform them into something else.
-   *
-   * @method castDates
-   *
-   * @return {void}
-   */
-  castDates () {
-    this.constructor.dates.forEach((field) => {
-      const value = this.$attributes[field]
-      if (value) {
-        this.$attributes[field] = moment(value)
-      }
-    })
   }
 
   /**
@@ -746,7 +771,7 @@ class Model {
     this.$persisted = true
     this.$attributes = row
     this._syncOriginals()
-    this.castDates()
+    this._castDates()
   }
 
   /**
@@ -863,6 +888,16 @@ class Model {
     return this.query().pair(lhs, rhs)
   }
 
+  /**
+   * Sets a preloaded relationship on the model instance
+   *
+   * @method setRelated
+   *
+   * @param  {String}   key
+   * @param  {Object|Array}   value
+   *
+   * @throws {RuntimeException} If trying to set a relationship twice.
+   */
   setRelated (key, value) {
     if (this.$relations[key]) {
       throw new Error('Trying to reset twice')
@@ -870,9 +905,8 @@ class Model {
 
     /**
      * If related value exists, then see if it's an array
-     * of not. Since new each to add parent model name
-     * on each instance of related model inside an
-     * array and for one instance if not an array.
+     * or not. Each model instance whether inside an array
+     * or not should have a parent.
      *
      * HOPE MAKES SENSE :)
      *
@@ -887,6 +921,15 @@ class Model {
     this.$relations[key] = value
   }
 
+  /**
+   * Returns the relationship value
+   *
+   * @method getRelated
+   *
+   * @param  {String}   key
+   *
+   * @return {Object}
+   */
   getRelated (key) {
     return this.$relations[key]
   }
@@ -911,6 +954,16 @@ class Model {
     _.each(result, (values, name) => this.setRelated(name, values))
   }
 
+  /**
+   * Just like load but instead loads multiple relations for a
+   * single model instance
+   *
+   * @method loadMany
+   *
+   * @param  {Object} eagerLoadMap
+   *
+   * @return {void}
+   */
   async loadMany (eagerLoadMap) {
     const eagerLoad = new EagerLoad(eagerLoadMap)
     const result = await eagerLoad.loadOne(this)
@@ -918,7 +971,7 @@ class Model {
   }
 
   /**
-   * Returns an instance of hasOne relation
+   * Returns an instance of hasOne relation.
    *
    * @method hasOne
    *

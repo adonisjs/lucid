@@ -63,7 +63,8 @@ class BaseRelation {
       'pluckId',
       'pick',
       'pickInverse',
-      'update'
+      'update',
+      'first'
     ]
 
     return new Proxy(this, proxyHandler)

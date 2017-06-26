@@ -29,9 +29,9 @@ const proxyHandler = {
 }
 
 /**
- * DatabaseManager is a layer on top of {{crossLink "Database"}}{{/crossLink}}
- * class which manages a pool of different database connections and proxy
- * all Database methods, so that it's easier to work with them.
+ * DatabaseManager is a layer on top of @ref('Database') class. It
+ * manages a pool of different database connections and proxy all
+ * Database methods, so that it's easier to work with them.
  *
  * @binding Adonis/Src/Database
  * @singleton
@@ -47,7 +47,12 @@ class DatabaseManager {
   }
 
   /**
-   * Creates a new/resuse and returns the database connection.
+   * Creates a new database connection for a the config defined inside
+   * config/database. You just need to pass the key name or don't
+   * pass any name to use the default connection.
+   *
+   * Also this method will return the existing connection instance if
+   * it exists.
    *
    * @method connection
    *
@@ -58,6 +63,9 @@ class DatabaseManager {
   connection (name) {
     name = name || this.Config.get('database.connection')
 
+    /**
+     * Return connection if part of connection pool already
+     */
     if (this._connectionPools[name]) {
       return this._connectionPools[name]
     }

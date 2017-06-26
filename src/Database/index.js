@@ -36,12 +36,13 @@ const proxyHandler = {
 }
 
 /**
- * Database class instance is used to initiate database
- * queries and transactions.
+ * The database class is a reference to knex for a single
+ * connection. It has couple of extra methods over knex.
+ *
+ * Note: You don't instantiate this class directly but instead
+ * make use of @ref('DatabaseManager').
  *
  * @class Database
- *
- * @constructor
  */
 class Database {
   constructor (config) {

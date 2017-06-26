@@ -12,6 +12,15 @@
 const _ = require('lodash')
 const RelationsParser = require('../Relations/Parser')
 
+/**
+ * This class makes the required queries and returned transformed
+ * output of eagerloaded relations.
+ *
+ * Also multiple relations are resolved parallely
+ *
+ * @class EagerLoad
+ * @constructor
+ */
 class EagerLoad {
   constructor (relations) {
     this._relations = RelationsParser.parseRelations(relations)
@@ -37,9 +46,11 @@ class EagerLoad {
   }
 
   /**
-   * Fetches nested relationships when they are defined
+   * Chain the nested relationship by calling `with`
+   * on the relationship instance and this goes on
+   * recursively.
    *
-   * @method _fetchNested
+   * @method _chainNested
    *
    * @param  {Object}     options.query
    * @param  {Object}     nested
@@ -48,7 +59,7 @@ class EagerLoad {
    *
    * @private
    */
-  _fetchNested ({ query }, nested) {
+  _chainNested ({ query }, nested) {
     if (nested) {
       const name = _.first(_.keys(nested))
       query.with(name, nested[name])
@@ -103,7 +114,7 @@ class EagerLoad {
       RelationsParser.validateRelationExistence(modelInstance, relation)
       const relationInstance = RelationsParser.getRelatedInstance(modelInstance, relation)
       this._applyRuntimeConstraints(relationInstance, attributes.callback)
-      this._fetchNested(relationInstance, attributes.nested)
+      this._chainNested(relationInstance, attributes.nested)
       return relationInstance.load()
     })
 
@@ -124,6 +135,16 @@ class EagerLoad {
     }, {})
   }
 
+  /**
+   * Load relationships for all the model instances and set
+   * relationships on the model instances using @ref('Model.setRelated')
+   *
+   * @method load
+   *
+   * @param  {Array} modelInstances
+   *
+   * @return {void}
+   */
   async load (modelInstances) {
     const relationsKeys = _.keys(this._relations)
 
@@ -134,11 +155,14 @@ class EagerLoad {
      */
     const modelInstance = modelInstances[0]
 
+    /**
+     * An array of queries to be executed queries parallel
+     */
     const queries = _.map(this._relations, (attributes, relation) => {
       RelationsParser.validateRelationExistence(modelInstance, relation)
       const relationInstance = RelationsParser.getRelatedInstance(modelInstance, relation)
       this._applyRuntimeConstraints(relationInstance, attributes.callback)
-      this._fetchNested(relationInstance, attributes.nested)
+      this._chainNested(relationInstance, attributes.nested)
       return this._eagerLoad(modelInstances, relationInstance)
     })
 

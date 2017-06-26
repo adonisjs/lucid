@@ -18,7 +18,7 @@ const CE = require('../../Exceptions')
 
 const proxyHandler = {
   get (target, name) {
-    if (target[name]) {
+    if (typeof (target[name]) !== 'undefined') {
       return target[name]
     }
 
@@ -65,6 +65,8 @@ class QueryBuilder {
    * @param  {Function} callback
    *
    * @return {Boolean}
+   *
+   * @private
    */
   _has (relationInstance, method, expression, value, rawWhere, callback) {
     if (typeof (callback) === 'function') {
@@ -583,6 +585,12 @@ class QueryBuilder {
    * @param  {Function} callback
    *
    * @chainable
+   *
+   * @example
+   * ```js
+   * query().withCount('profile')
+   * query().withCount('profile as userProfile')
+   * ```
    */
   withCount (relation, callback) {
     let { name, nested } = RelationsParser.parseRelation(relation)
@@ -590,6 +598,10 @@ class QueryBuilder {
       throw CE.RuntimeException.cannotNestRelation(_.first(_.keys(nested)), name, 'withCount')
     }
 
+    /**
+     * Since user can set the `count as` statement, we need
+     * to parse them properly.
+     */
     const tokens = name.match(/as\s(\w+)/)
     let asStatement = `${name}_count`
     if (_.size(tokens)) {
@@ -600,14 +612,34 @@ class QueryBuilder {
     RelationsParser.validateRelationExistence(this.model.prototype, name)
     const relationInstance = RelationsParser.getRelatedInstance(this.model.prototype, name)
 
+    /**
+     * Call the callback with relationship instance
+     * when callback is defined
+     */
     if (typeof (callback) === 'function') {
       callback(relationInstance)
     }
 
+    /**
+     * Fetch existing selected columns, since we need to append
+     * another column to the list
+     */
     const columns = _.find(this.query._statement, (statement) => statement.grouping === 'columns') || ['*']
+
+    /**
+     * Saving reference of count inside _sideloaded
+     * so that we can set them later to the
+     * model.$sideLoaded
+     */
     this._sideLoaded.push(asStatement)
+
     columns.push(relationInstance.relatedWhere(true).as(asStatement))
+
+    /**
+     * Clear previously selected columns and set new
+     */
     this.query.select(columns)
+
     return this
   }
 }

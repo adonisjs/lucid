@@ -12,6 +12,15 @@
 const _ = require('lodash')
 const CE = require('../../Exceptions')
 
+/**
+ * This class is used internally by @ref('Model') to add
+ * hooks functionality.
+ *
+ * Hooks are executed in sequence for a given event.
+ *
+ * @class Hooks
+ * @constructor
+ */
 class Hooks {
   constructor () {
     this._events = ['create', 'update', 'delete', 'restore', 'find']

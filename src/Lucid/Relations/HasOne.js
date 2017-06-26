@@ -13,6 +13,13 @@ const _ = require('lodash')
 const BaseRelation = require('./BaseRelation')
 const CE = require('../../Exceptions')
 
+/**
+ * The HasOne relationship defines a relation between
+ * two models
+ *
+ * @class HasOne
+ * @constructor
+ */
 class HasOne extends BaseRelation {
   constructor (parentInstance, relatedModel, primaryKey, foreignKey) {
     super(parentInstance, relatedModel, primaryKey, foreignKey)
@@ -31,7 +38,7 @@ class HasOne extends BaseRelation {
   }
 
   /**
-   * Returns the primary table
+   * The primary table in relationship
    *
    * @attribute $primaryTable
    *
@@ -42,7 +49,7 @@ class HasOne extends BaseRelation {
   }
 
   /**
-   * Returns the foriegn table
+   * The foreign table in relationship
    *
    * @attribute $foriegnTable
    *
@@ -86,7 +93,7 @@ class HasOne extends BaseRelation {
 
   /**
    * Load a single relationship from parent to child
-   * model, but only for one row
+   * model, but only for one row.
    *
    * @method load
    *
@@ -120,7 +127,7 @@ class HasOne extends BaseRelation {
    *
    * @param  {Array} relatedInstances
    *
-   * @return {Array}
+   * @return {Object} @multiple([key=String, values=Array, defaultValue=Null])
    */
   group (relatedInstances) {
     const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
@@ -158,19 +165,6 @@ class HasOne extends BaseRelation {
    */
   fetch () {
     return this.first()
-  }
-
-  /**
-   * Returns the first row for the relationship
-   *
-   * @method first
-   *
-   * @return {Model}
-   */
-  first () {
-    this._validateRead()
-    this._decorateQuery()
-    return this.query.first()
   }
 
   /**

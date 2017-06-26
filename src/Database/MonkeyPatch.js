@@ -39,18 +39,22 @@ KnexQueryBuilder.prototype.from = function (name) {
 }
 
 /**
- * Alias for {{crossLink "Database.table"}}{{/crossLink}}
+ * Alias for @ref('Database.table')
  *
  * @method table
+ *
+ * @for Database
  */
 KnexQueryBuilder.prototype.table = function (...args) {
   return this.from(...args)
 }
 
 /**
- * Alias for {{crossLink "Database.table"}}{{/crossLink}}
+ * Alias for @ref('Database.table')
  *
  * @method table
+ *
+ * @for Database
  */
 KnexQueryBuilder.prototype.into = function (...args) {
   return this.from(...args)
@@ -61,6 +65,8 @@ KnexQueryBuilder.prototype.into = function (...args) {
  * selecting table
  *
  * @method withOutPrefix
+ *
+ * @for Database
  *
  * @chainable
  */
@@ -89,8 +95,8 @@ KnexQueryBuilder.prototype.forPage = function (page = 1, perPage = 20) {
 
 /**
  * Paginate results from database. This method is same as
- * {{#crossLink "Database/forPage"}}{{/crossLink}} but
- * instead returns pagination meta data as well
+ * @ref('Database.forPage') but instead returns pagination
+ * meta data as well.
  *
  * @method paginate
  *
@@ -99,7 +105,7 @@ KnexQueryBuilder.prototype.forPage = function (page = 1, perPage = 20) {
  * @param  {Number} page
  * @param  {Number} perPage
  *
- * @return {Object}
+ * @return {Object} @multiple([data=Array, page=Number, perPage=Number, total=Number, lastPage=Number])
  */
 KnexQueryBuilder.prototype.paginate = async function (page = 2, perPage = 20) {
   const countByQuery = this.clone()
