@@ -79,6 +79,13 @@ module.exports = {
         table.timestamps()
         table.timestamp('deleted_at').nullable()
       }),
+      db.schema.createTable('parts', function (table) {
+        table.increments()
+        table.integer('car_id')
+        table.string('part_name')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
       db.schema.createTable('profiles', function (table) {
         table.increments()
         table.integer('user_id')
@@ -114,6 +121,7 @@ module.exports = {
     return Promise.all([
       db.schema.dropTable('users'),
       db.schema.dropTable('cars'),
+      db.schema.dropTable('parts'),
       db.schema.dropTable('profiles'),
       db.schema.dropTable('pictures'),
       db.schema.dropTable('identities'),

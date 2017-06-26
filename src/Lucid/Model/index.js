@@ -903,23 +903,20 @@ class Model {
     if (this.$relations[key]) {
       throw new Error('Trying to reset twice')
     }
+    this.$relations[key] = value
 
-    /**
-     * If related value exists, then see if it's an array
-     * or not. Each model instance whether inside an array
-     * or not should have a parent.
-     *
-     * HOPE MAKES SENSE :)
-     *
-     * If not, then `hasOne` set the value to a model instances
-     * and `hasMany` set it to a collection of instances.
-     */
-    if (_.size(value)) {
-      const arrayify = _.isArray(value) ? value : [value]
-      _(arrayify).filter((val) => !!val).each((val) => val.$parent = this.constructor.name)
+    if (!value) {
+      return
     }
 
-    this.$relations[key] = value
+    if (value instanceof Model) {
+      value.$parent = this.constructor.name
+      return
+    }
+
+    if (value.rows) {
+      _(value.rows).filter((val) => !!val).each((val) => val.$parent = this.constructor.name)
+    }
   }
 
   /**
@@ -972,13 +969,13 @@ class Model {
   }
 
   /**
-   * Returns an instance of hasOne relation.
+   * Returns an instance of @ref('HasOne') relation.
    *
    * @method hasOne
    *
-   * @param  {String}  relatedModel
-   * @param  {String}  primaryKey
-   * @param  {String}  foreignKey
+   * @param  {String|Class}  relatedModel
+   * @param  {String}        primaryKey
+   * @param  {String}        foreignKey
    *
    * @return {HasOne}
    */
@@ -986,6 +983,17 @@ class Model {
     return new HasOne(this, relatedModel, primaryKey, foreignKey)
   }
 
+  /**
+   * Returns an instance of @ref('HasMany') relation
+   *
+   * @method hasMany
+   *
+   * @param  {String|Class}  relatedModel
+   * @param  {String}        primaryKey
+   * @param  {String}        foreignKey
+   *
+   * @return {HasMany}
+   */
   hasMany (relatedModel, primaryKey = this.constructor.primaryKey, foreignKey = this.constructor.foreignKey) {
     return new HasMany(this, relatedModel, primaryKey, foreignKey)
   }

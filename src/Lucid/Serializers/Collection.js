@@ -28,6 +28,10 @@ class Collection {
     return json
   }
 
+  addRow (row) {
+    this.rows.push(row)
+  }
+
   first () {
     return _.first(this.rows)
   }
