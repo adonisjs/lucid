@@ -11,7 +11,6 @@
 
 const _ = require('lodash')
 const BaseRelation = require('./BaseRelation')
-const CE = require('../../Exceptions')
 
 /**
  * The HasOne relationship defines a relation between
@@ -21,76 +20,6 @@ const CE = require('../../Exceptions')
  * @constructor
  */
 class HasOne extends BaseRelation {
-  constructor (parentInstance, relatedModel, primaryKey, foreignKey) {
-    super(parentInstance, relatedModel, primaryKey, foreignKey)
-  }
-
-  /**
-   * Returns the value for the primary key set on
-   * the relationship
-   *
-   * @attribute $primaryKeyValue
-   *
-   * @return {Mixed}
-   */
-  get $primaryKeyValue () {
-    return this.parentInstance[this.primaryKey]
-  }
-
-  /**
-   * The primary table in relationship
-   *
-   * @attribute $primaryTable
-   *
-   * @return {String}
-   */
-  get $primaryTable () {
-    return this.parentInstance.constructor.table
-  }
-
-  /**
-   * The foreign table in relationship
-   *
-   * @attribute $foriegnTable
-   *
-   * @return {String}
-   */
-  get $foriegnTable () {
-    return this.relatedModel.table
-  }
-
-  /**
-   * Decorates the query instance with the required where
-   * clause. This method should be called internally by
-   * all read/update methods.
-   *
-   * @method _decorateQuery
-   *
-   * @return {void}
-   *
-   * @private
-   */
-  _decorateQuery () {
-    this.query.where(this.foreignKey, this.$primaryKeyValue)
-  }
-
-  /**
-   * Validates the read operation
-   *
-   * @method _validateRead
-   *
-   * @return {void}
-   *
-   * @throws {RuntimeException} If parent model is not persisted
-   *
-   * @private
-   */
-  _validateRead () {
-    if (!this.$primaryKeyValue || !this.parentInstance.$persisted) {
-      throw CE.RuntimeException.unSavedModel(this.parentInstance.constructor.name)
-    }
-  }
-
   /**
    * Load a single relationship from parent to child
    * model, but only for one row.
@@ -102,7 +31,7 @@ class HasOne extends BaseRelation {
    * @return {Model}
    */
   load () {
-    return this.query.where(this.foreignKey, this.$primaryKeyValue).first()
+    return this.relatedQuery.where(this.foreignKey, this.$primaryKeyValue).first()
   }
 
   /**
@@ -177,11 +106,11 @@ class HasOne extends BaseRelation {
    * @return {Object}
    */
   relatedWhere (count) {
-    this.query.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$foriegnTable}.${this.foreignKey}`)
+    this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$foriegnTable}.${this.foreignKey}`)
     if (count) {
-      this.query.count('*')
+      this.relatedQuery.count('*')
     }
-    return this.query.query
+    return this.relatedQuery.query
   }
 }
 

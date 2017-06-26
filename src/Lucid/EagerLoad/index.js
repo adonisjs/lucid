@@ -32,16 +32,16 @@ class EagerLoad {
    *
    * @method _applyRuntimeConstraints
    *
-   * @param  {Object}     options.query
+   * @param  {Object}     options.relatedQuery
    * @param  {Function}   callback
    *
    * @return {void}
    *
    * @private
    */
-  _applyRuntimeConstraints ({ query }, callback) {
+  _applyRuntimeConstraints ({ relatedQuery }, callback) {
     if (typeof (callback) === 'function') {
-      callback(query)
+      callback(relatedQuery)
     }
   }
 
@@ -52,17 +52,17 @@ class EagerLoad {
    *
    * @method _chainNested
    *
-   * @param  {Object}     options.query
+   * @param  {Object}     options.relatedQuery
    * @param  {Object}     nested
    *
    * @return {void}
    *
    * @private
    */
-  _chainNested ({ query }, nested) {
+  _chainNested ({ relatedQuery }, nested) {
     if (nested) {
       const name = _.first(_.keys(nested))
-      query.with(name, nested[name])
+      relatedQuery.with(name, nested[name])
     }
   }
 
@@ -83,7 +83,7 @@ class EagerLoad {
    */
   async _eagerLoad (rows, relationInstance) {
     const relatedInstances = await relationInstance
-      .query
+      .relatedQuery
       .whereIn(relationInstance.foreignKey, relationInstance.mapValues(rows))
       .fetch()
 
@@ -100,11 +100,11 @@ class EagerLoad {
    * The return value is a key/value pair of relations and
    * their resolved values.
    *
-   * @method loadOne
+   * @method loadForOne
    *
    * @return {Object}
    */
-  async loadOne (modelInstance) {
+  async loadForOne (modelInstance) {
     const relationsKeys = _.keys(this._relations)
 
     /**

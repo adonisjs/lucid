@@ -16,6 +16,7 @@ const Hooks = require('../Hooks')
 const QueryBuilder = require('../QueryBuilder')
 const CollectionSerializer = require('../Serializers/Collection')
 const HasOne = require('../Relations/HasOne')
+const HasMany = require('../Relations/HasMany')
 const EagerLoad = require('../EagerLoad')
 
 const CE = require('../../Exceptions')
@@ -950,7 +951,7 @@ class Model {
    */
   async load (relation, callback) {
     const eagerLoad = new EagerLoad({ [relation]: callback })
-    const result = await eagerLoad.loadOne(this)
+    const result = await eagerLoad.loadForOne(this)
     _.each(result, (values, name) => this.setRelated(name, values))
   }
 
@@ -966,7 +967,7 @@ class Model {
    */
   async loadMany (eagerLoadMap) {
     const eagerLoad = new EagerLoad(eagerLoadMap)
-    const result = await eagerLoad.loadOne(this)
+    const result = await eagerLoad.loadForOne(this)
     _.each(result, (values, name) => this.setRelated(name, values))
   }
 
@@ -983,6 +984,10 @@ class Model {
    */
   hasOne (relatedModel, primaryKey = this.constructor.primaryKey, foreignKey = this.constructor.foreignKey) {
     return new HasOne(this, relatedModel, primaryKey, foreignKey)
+  }
+
+  hasMany (relatedModel, primaryKey = this.constructor.primaryKey, foreignKey = this.constructor.foreignKey) {
+    return new HasMany(this, relatedModel, primaryKey, foreignKey)
   }
 }
 

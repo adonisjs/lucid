@@ -13,20 +13,7 @@ require('./MonkeyPatch')
 
 const Database = require('.')
 const CE = require('../Exceptions')
-
-const proxyHandler = {
-  get (target, name) {
-    if (typeof (target[name]) !== 'undefined') {
-      return target[name]
-    }
-
-    const db = target.connection()
-    if (typeof (db[name]) === 'function') {
-      return db[name].bind(db)
-    }
-    return db[name]
-  }
-}
+const proxyGet = require('../../lib/proxyGet')
 
 /**
  * DatabaseManager is a layer on top of @ref('Database') class. It
@@ -43,7 +30,9 @@ class DatabaseManager {
   constructor (Config) {
     this.Config = Config
     this._connectionPools = {}
-    return new Proxy(this, proxyHandler)
+    return new Proxy(this, {
+      get: proxyGet('connection', true)
+    })
   }
 
   /**

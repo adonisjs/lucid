@@ -15,38 +15,63 @@ const util = require('../../../lib/util')
 const EagerLoad = require('../EagerLoad')
 const RelationsParser = require('../Relations/Parser')
 const CE = require('../../Exceptions')
+const proxyGet = require('../../../lib/proxyGet')
 
 const proxyHandler = {
-  get (target, name) {
-    if (typeof (target[name]) !== 'undefined') {
-      return target[name]
-    }
+  get: proxyGet('query', false, function (target, name) {
+    const queryScope = util.makeScopeName(name)
 
     /**
-     * If property accessed is a local query scope
-     * then call it
+     * if value is a local query scope and a function, please
+     * execute it
      */
-    const queryScope = util.makeScopeName(name)
     if (typeof (target.model[queryScope]) === 'function') {
       return function (...args) {
         target.model[queryScope](this, ...args)
         return this
       }
     }
-
-    return target.query[name]
-  }
+  })
 }
 
 class QueryBuilder {
   constructor (model, connection) {
     this.model = model
-    this.db = ioc.use('Adonis/Src/Database').connection(connection)
     const table = this.model.prefix ? `${this.model.prefix}${this.model.table}` : this.model.table
+
+    /**
+     * Reference to database provider
+     */
+    this.db = ioc.use('Adonis/Src/Database').connection(connection)
+
+    /**
+     * Reference to query builder with pre selected table
+     */
     this.query = this.db.table(table).on('query', this.model._executeListeners.bind(this.model))
+
+    /**
+     * Scopes to be ignored at runtime
+     *
+     * @type {Array}
+     *
+     * @private
+     */
     this._ignoreScopes = []
+
+    /**
+     * Relations to be eagerloaded
+     *
+     * @type {Object}
+     */
     this._eagerLoads = {}
+
+    /**
+     * The sideloaded data for this query
+     *
+     * @type {Array}
+     */
     this._sideLoaded = []
+
     return new Proxy(this, proxyHandler)
   }
 
@@ -641,6 +666,28 @@ class QueryBuilder {
     this.query.select(columns)
 
     return this
+  }
+
+  /**
+   * Returns the sql representation of query
+   *
+   * @method toSQL
+   *
+   * @return {Object}
+   */
+  toSQL () {
+    return this.query.toSQL()
+  }
+
+  /**
+   * Returns string representation of query
+   *
+   * @method toString
+   *
+   * @return {String}
+   */
+  toString () {
+    return this.query.toString()
   }
 }
 

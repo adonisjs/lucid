@@ -10,65 +10,121 @@
 */
 
 const { ioc } = require('@adonisjs/fold')
-const proxyHandler = {
-  get (target, name) {
-    /**
-     * if value exists on the model instance, we return
-     * it right away.
-     */
-    if (typeof (target[name]) !== 'undefined') {
-      return target[name]
-    }
+const CE = require('../../Exceptions')
+const proxyGet = require('../../../lib/proxyGet')
 
-    /**
-     * Here we called methods on the relationships
-     * to decorate the query chain by chain required
-     * methods.
-     */
-    if (target.__getters__.indexOf(name) > -1) {
-      target._validateRead()
-      target._decorateQuery()
-    }
+const methodsList = [
+  'increment',
+  'decrement',
+  'avg',
+  'min',
+  'max',
+  'count',
+  'truncate',
+  'ids',
+  'pair',
+  'pluckFirst',
+  'pluckId',
+  'pick',
+  'pickInverse',
+  'update',
+  'first',
+  'fetch'
+]
 
-    return target.query[name]
-  }
-}
-
+/**
+ * Base relation is supposed to be extended by other
+ * relations. It takes care of commonly required
+ * stuff.
+ *
+ * @class BaseRelation
+ * @constructor
+ */
 class BaseRelation {
   constructor (parentInstance, relatedModel, primaryKey, foreignKey) {
     this.parentInstance = parentInstance
     this.relatedModel = typeof (relatedModel) === 'string' ? ioc.use(relatedModel) : relatedModel
     this.primaryKey = primaryKey
     this.foreignKey = foreignKey
-    this.query = this.relatedModel.query()
+    this.relatedQuery = this.relatedModel.query()
+    return new Proxy(this, {
+      get: proxyGet('relatedQuery', false)
+    })
+  }
 
-    /**
-     * These methods are called directly on the
-     * query builder after decorating the
-     * query with required where clause.
-     *
-     * @type {Array}
-     */
-    this.__getters__ = [
-      'increment',
-      'decrement',
-      'avg',
-      'min',
-      'max',
-      'count',
-      'truncate',
-      'ids',
-      'pair',
-      'pluckFirst',
-      'pluckId',
-      'pick',
-      'pickInverse',
-      'update',
-      'first'
-    ]
+  /**
+   * Returns the value for the primary key set on
+   * the relationship
+   *
+   * @attribute $primaryKeyValue
+   *
+   * @return {Mixed}
+   */
+  get $primaryKeyValue () {
+    return this.parentInstance[this.primaryKey]
+  }
 
-    return new Proxy(this, proxyHandler)
+  /**
+   * The primary table in relationship
+   *
+   * @attribute $primaryTable
+   *
+   * @return {String}
+   */
+  get $primaryTable () {
+    return this.parentInstance.constructor.table
+  }
+
+  /**
+   * The foreign table in relationship
+   *
+   * @attribute $foriegnTable
+   *
+   * @return {String}
+   */
+  get $foriegnTable () {
+    return this.relatedModel.table
+  }
+
+  /**
+   * Decorates the query instance with the required where
+   * clause. This method should be called internally by
+   * all read/update methods.
+   *
+   * @method _decorateQuery
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  _decorateQuery () {
+    this.relatedQuery.where(this.foreignKey, this.$primaryKeyValue)
+  }
+
+  /**
+   * Validates the read operation
+   *
+   * @method _validateRead
+   *
+   * @return {void}
+   *
+   * @throws {RuntimeException} If parent model is not persisted
+   *
+   * @private
+   */
+  _validateRead () {
+    if (!this.$primaryKeyValue || !this.parentInstance.$persisted) {
+      throw CE.RuntimeException.unSavedModel(this.parentInstance.constructor.name)
+    }
   }
 }
+
+methodsList.forEach((method) => {
+  BaseRelation.prototype[method] = function (...args) {
+    this._validateRead()
+    this._decorateQuery()
+    return this.relatedQuery[method](...args)
+  }
+})
 
 module.exports = BaseRelation
