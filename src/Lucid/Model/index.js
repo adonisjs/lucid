@@ -22,6 +22,7 @@ const EagerLoad = require('../EagerLoad')
 
 const CE = require('../../Exceptions')
 const util = require('../../../lib/util')
+const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss'
 
 /**
  * Lucid model is a base model and supposed to be
@@ -161,20 +162,6 @@ class Model {
    */
   static get connection () {
     return ''
-  }
-
-  /**
-   * The date format to be used for formatting
-   * `dates`.
-   *
-   * @attribute dateFormat
-   *
-   * @return {String}
-   *
-   * @static
-   */
-  static get dateFormat () {
-    return 'YYYY-MM-DD HH:mm:ss'
   }
 
   /**
@@ -402,30 +389,69 @@ class Model {
   }
 
   /**
-   * Formats all the dates set as `dates` on the model
-   * that exists in the values object.
+   * This method is executed for all the date fields
+   * with the field name and the value. The return
+   * value gets saved to the database.
    *
-   * Note: This method will not mutate the original object
-   * and instead returns a new one.
+   * Also if you have defined a setter for a date field
+   * this method will not be executed for that field.
    *
    * @method formatDates
    *
-   * @param  {Object}    values
+   * @param  {String}    key
+   * @param  {String|Date}    value
+   *
+   * @return {String}
+   */
+  static formatDates (key, value) {
+    return moment(value).format(DATE_FORMAT)
+  }
+
+  /**
+   * This method is executed when toJSON is called on a
+   * model or collection of models. The value received
+   * will always be an instance of momentjs and return
+   * value is used.
+   *
+   * NOTE: This method will not be executed when you define
+   * a getter for a given field.
+   *
+   * @method castDates
+   *
+   * @param  {String}  key
+   * @param  {Moment}  value
+   *
+   * @return {String}
+   *
+   * @static
+   */
+  static castDates (key, value) {
+    return value.format(DATE_FORMAT)
+  }
+
+  /**
+   * Formats the date fields from the payload, only
+   * when they are marked as dates and there are
+   * not setters for them.
+   *
+   * Note: This method will mutate the existing object. If
+   * any part of your application doesn't want mutations
+   * then pass a cloned copy of object
+   *
+   * @method _formatDateFields
+   *
+   * @param  {Object}          values
    *
    * @return {Object}
+   *
+   * @private
    */
-  static formatDates (values) {
-    /**
-     * Format dates properly when saving them to database
-     */
-    return _.transform(values, (result, value, key) => {
-      if (this.dates.indexOf(key) > -1) {
-        result[key] = moment(value).format(this.dateFormat)
-      } else {
-        result[key] = value
-      }
-      return result
-    }, {})
+  _formatDateFields (values) {
+    _(this.constructor.dates)
+    .filter((date) => {
+      return values[date] && typeof(this[util.getSetterName(date)]) !== 'function'
+    })
+    .each((date) => { values[date] = this.constructor.formatDates(date, values[date]) })
   }
 
   /**
@@ -434,14 +460,56 @@ class Model {
    * Note: This method will mutate the original object
    * by adding a new key/value pair.
    *
-   * @method setCreatedAt
+   * @method _setCreatedAt
    *
    * @param  {Object}     values
+   *
+   * @private
    */
-  static setCreatedAt (values) {
-    if (this.createdAtColumn) {
-      values[this.createdAtColumn] = new Date()
+  _setCreatedAt (values) {
+    const createdAtColumn = this.constructor.createdAtColumn
+    if (createdAtColumn) {
+      values[createdAtColumn] = this._getSetterValue(createdAtColumn, new Date())
     }
+  }
+
+  /**
+   * Checks for existence of setter on model and if exists
+   * returns the return value of setter, otherwise returns
+   * the default value
+   *
+   * @method _getSetterValue
+   *
+   * @param  {String}        key
+   * @param  {Mixed}        value
+   *
+   * @return {Mixed}
+   *
+   * @private
+   */
+  _getSetterValue (key, value) {
+    const setterName = util.getSetterName(key)
+    return typeof (this[setterName]) === 'function' ? this[setterName](value) : value
+  }
+
+  /**
+   * Checks for existence of getter on model and if exists
+   * returns the return value of getter, otherwise returns
+   * the default value
+   *
+   * @method _getGetterValue
+   *
+   * @param  {String}        key
+   * @param  {Mixed}         value
+   * @param  {Mixed}         [passAttrs = null]
+   *
+   * @return {Mixed}
+   *
+   * @private
+   */
+  _getGetterValue (key, value, passAttrs = null) {
+    const getterName = util.getGetterName(key)
+    return typeof (this[getterName]) === 'function' ? this[getterName](passAttrs ? passAttrs : value) : value
   }
 
   /**
@@ -450,15 +518,16 @@ class Model {
    * Note: This method will mutate the original object
    * by adding a new key/value pair.
    *
-   * @method setUpdatedAt
+   * @method _setUpdatedAt
    *
    * @param  {Object}     values
    *
-   * @static
+   * @private
    */
-  static setUpdatedAt (values) {
-    if (this.updatedAtColumn) {
-      values[this.updatedAtColumn] = new Date()
+  _setUpdatedAt (values) {
+    const updatedAtColumn = this.constructor.updatedAtColumn
+    if (updatedAtColumn) {
+      values[updatedAtColumn] = this._getSetterValue(updatedAtColumn, new Date())
     }
   }
 
@@ -578,13 +647,14 @@ class Model {
     /**
      * Set timestamps
      */
-    this.constructor.setCreatedAt(this.$attributes)
-    this.constructor.setUpdatedAt(this.$attributes)
+    this._setCreatedAt(this.$attributes)
+    this._setUpdatedAt(this.$attributes)
+    this._formatDateFields(this.$attributes)
 
     const result = await this.constructor
       .query()
       .returning(this.constructor.primaryKey)
-      .insert(this.constructor.formatDates(this.$attributes))
+      .insert(this.$attributes)
 
     /**
      * Only set the primary key value when incrementing is
@@ -643,13 +713,13 @@ class Model {
    * that you can transform them into something
    * else.
    *
-   * @method _castDates
+   * @method _convertDatesToMomentInstances
    *
    * @return {void}
    *
    * @private
    */
-  _castDates () {
+  _convertDatesToMomentInstances () {
     this.constructor.dates.forEach((field) => {
       const value = this.$attributes[field]
       if (value) {
@@ -688,11 +758,7 @@ class Model {
    * @return {void}
    */
   set (name, value) {
-    const setterName = util.getSetterName(name)
-    if (typeof (this[setterName]) === 'function') {
-      value = this[setterName](value)
-    }
-    return this.$attributes[name] = value
+    return this.$attributes[name] = this._getSetterValue(name, value)
   }
 
   /**
@@ -706,8 +772,11 @@ class Model {
    */
   toObject () {
     let evaluatedAttrs = _.transform(this.$attributes, (result, value, key) => {
-      const getter = this[util.getGetterName(key)]
-      result[key] = typeof (getter) === 'function' ? getter(value) : value
+      if (value instanceof moment && typeof (this[util.getGetterName(key)]) !== 'function') {
+        result[key] = this.constructor.castDates(key, value)
+      } else {
+        result[key] =  this._getGetterValue(key, value)
+      }
       return result
     }, {})
 
@@ -715,10 +784,7 @@ class Model {
      * Set computed properties when defined
      */
     _.each(this.constructor.computed || [], (key) => {
-      const getter = this[util.getGetterName(key)]
-      if (typeof (getter) === 'function') {
-        evaluatedAttrs[key] = getter(evaluatedAttrs)
-      }
+      evaluatedAttrs[key] = this._getGetterValue(key, null, evaluatedAttrs)
     })
 
     /**
@@ -772,8 +838,8 @@ class Model {
   newUp (row) {
     this.$persisted = true
     this.$attributes = row
+    this._convertDatesToMomentInstances()
     this._syncOriginals()
-    this._castDates()
   }
 
   /**
@@ -999,6 +1065,17 @@ class Model {
     return new HasMany(this, relatedModel, primaryKey, foreignKey)
   }
 
+  /**
+   * Returns an instance of @ref('BelongsTo') relation
+   *
+   * @method belongsTo
+   *
+   * @param  {String|Class}  relatedModel
+   * @param  {String}  primaryKey
+   * @param  {String}  foreignKey
+   *
+   * @return {belongsTo}
+   */
   belongsTo (relatedModel, primaryKey = relatedModel.foreignKey, foreignKey = relatedModel.primaryKey) {
     return new BelongsTo(this, relatedModel, primaryKey, foreignKey)
   }

@@ -13,6 +13,7 @@ const test = require('japa')
 const fs = require('fs-extra')
 const path = require('path')
 const moment = require('moment')
+const _ = require('lodash')
 const { ioc } = require('@adonisjs/fold')
 const { Config } = require('@adonisjs/sink')
 
@@ -31,18 +32,19 @@ test.group('Model', (group) => {
       })
       return new DatabaseManager(config)
     })
+    ioc.alias('Adonis/Src/Database', 'Database')
 
     await fs.ensureDir(path.join(__dirname, './tmp'))
-    await helpers.createTables(ioc.use('Adonis/Src/Database'))
+    await helpers.createTables(ioc.use('Database'))
   })
 
   group.afterEach(async () => {
-    await ioc.use('Adonis/Src/Database').table('users').truncate()
-    await ioc.use('Adonis/Src/Database').table('my_users').truncate()
+    await ioc.use('Database').table('users').truncate()
+    await ioc.use('Database').table('my_users').truncate()
   })
 
   group.after(async () => {
-    await helpers.dropTables(ioc.use('Adonis/Src/Database'))
+    await helpers.dropTables(ioc.use('Database'))
     await fs.remove(path.join(__dirname, './tmp'))
   })
 
@@ -247,7 +249,7 @@ test.group('Model', (group) => {
       await user.save()
     } catch ({ message }) {
       assert.equal(message, 'Something bad happened')
-      const users = await ioc.use('Adonis/Src/Database').table('users')
+      const users = await ioc.use('Database').table('users')
       assert.lengthOf(users, 0)
     }
   })
@@ -262,7 +264,7 @@ test.group('Model', (group) => {
     await user.save()
     user.username = 'nikk'
     await user.save()
-    const users = await ioc.use('Adonis/Src/Database').table('users')
+    const users = await ioc.use('Database').table('users')
     assert.lengthOf(users, 1)
     assert.equal(users[0].username, user.username)
     assert.equal(users[0].id, user.primaryKeyValue)
@@ -347,7 +349,7 @@ test.group('Model', (group) => {
     class User extends Model {
     }
     User._bootIfNotBooted()
-    await ioc.use('Adonis/Src/Database').insert({ username: 'virk' }).into('users')
+    await ioc.use('Database').insert({ username: 'virk' }).into('users')
     const users = await User.query().fetch()
     assert.instanceOf(users, CollectionSerializer)
   })
@@ -391,34 +393,12 @@ test.group('Model', (group) => {
       userQuery = query
     })
 
-    await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
     const users = await User.query().fetch()
     const user = users.first()
     user.username = 'nikk'
     await user.save()
     assert.equal(userQuery.sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ?'))
-  })
-
-  test('format dates when saving model', async (assert) => {
-    class User extends Model {
-      static get dates () {
-        const dates = super.dates
-        dates.push('login_at')
-        return dates
-      }
-
-      static get dateFormat () {
-        return 'YYYY-MM-DD'
-      }
-    }
-
-    User._bootIfNotBooted()
-    const user = new User()
-    user.username = 'nikk'
-    user.login_at = new Date()
-    await user.save()
-    const freshUser = await ioc.use('Adonis/Src/Database').table('users').first()
-    assert.equal(moment(freshUser.login_at).format('YYYY-MM-DD'), moment().format('YYYY-MM-DD'))
   })
 
   test('call update hooks when updating model', async (assert) => {
@@ -476,16 +456,12 @@ test.group('Model', (group) => {
         dates.push('login_at')
         return dates
       }
-
-      static get dateFormat () {
-        return 'YYYY-MM-DD'
-      }
     }
 
     User._bootIfNotBooted()
-    await ioc.use('Adonis/Src/Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     await User.query().where('username', 'virk').update({ login_at: new Date() })
-    const users = await ioc.use('Adonis/Src/Database').table('users').orderBy('id', 'asc')
+    const users = await ioc.use('Database').table('users').orderBy('id', 'asc')
     assert.equal(moment(users[0].updated_at).format('YYYY-MM-DD'), moment().format('YYYY-MM-DD'))
   })
 
@@ -501,7 +477,7 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-    await ioc.use('Adonis/Src/Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
     assert.equal(users.first().toObject().full_name, 'Mr. virk')
   })
@@ -514,7 +490,7 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-    await ioc.use('Adonis/Src/Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
     assert.deepEqual(Object.keys(users.first().toObject()), ['created_at'])
   })
@@ -527,7 +503,7 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-    await ioc.use('Adonis/Src/Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
     assert.deepEqual(Object.keys(users.first().toObject()), ['id', 'vid', 'username', 'updated_at', 'login_at', 'deleted_at'])
   })
@@ -643,7 +619,7 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-    const userId = await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' }).returning('id')
+    const userId = await ioc.use('Database').table('users').insert({ username: 'virk' }).returning('id')
     const user = await User.find(userId[0])
     assert.instanceOf(user, User)
     assert.equal(user.username, 'virk')
@@ -656,7 +632,7 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-    await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
     const user = await User.findBy('username', 'virk')
     assert.instanceOf(user, User)
     assert.equal(user.username, 'virk')
@@ -675,7 +651,7 @@ test.group('Model', (group) => {
       stack.push('afterFind')
     })
 
-    await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
     await User.findBy('username', 'virk')
     assert.deepEqual(stack, ['afterFind'])
   })
@@ -691,7 +667,7 @@ test.group('Model', (group) => {
       hookInstance = model
     })
 
-    await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
     const user = await User.findBy('username', 'virk')
     assert.deepEqual(hookInstance, user)
   })
@@ -702,7 +678,7 @@ test.group('Model', (group) => {
 
     User._bootIfNotBooted()
 
-    await ioc.use('Adonis/Src/Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
     const users = await User.all()
     assert.instanceOf(users, CollectionSerializer)
   })
@@ -713,7 +689,7 @@ test.group('Model', (group) => {
 
     User._bootIfNotBooted()
 
-    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.pick(1)
     assert.instanceOf(users, CollectionSerializer)
     assert.equal(users.size(), 1)
@@ -726,7 +702,7 @@ test.group('Model', (group) => {
 
     User._bootIfNotBooted()
 
-    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.pickInverse(1)
     assert.instanceOf(users, CollectionSerializer)
     assert.equal(users.size(), 1)
@@ -739,7 +715,7 @@ test.group('Model', (group) => {
 
     User._bootIfNotBooted()
 
-    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const userIds = await User.ids()
     assert.deepEqual(userIds, [1, 2])
   })
@@ -750,7 +726,7 @@ test.group('Model', (group) => {
 
     User._bootIfNotBooted()
 
-    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const userIds = await User.ids()
     assert.deepEqual(userIds, [1, 2])
   })
@@ -760,7 +736,7 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.pair('id', 'username')
     assert.deepEqual(users, { 1: 'virk', 2: 'nikk' })
   })
@@ -770,7 +746,7 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.query().paginate(1, 1)
     assert.instanceOf(users, CollectionSerializer)
     assert.deepEqual(users.pages, { perPage: 1, total: helpers.formatNumber(2), page: 1, lastPage: 2 })
@@ -785,7 +761,7 @@ test.group('Model', (group) => {
     let userQuery = null
     User.onQuery((query) => userQuery = query)
 
-    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const user = await User.first()
     assert.instanceOf(user, User)
     assert.equal(user.username, 'virk')
@@ -799,5 +775,282 @@ test.group('Model', (group) => {
     User._bootIfNotBooted()
     const queryString = User.query().where('username', 'virk').toString()
     assert.equal(queryString, helpers.formatQuery('select * from "users" where "username" = \'virk\''))
+  })
+
+  test('auto format dates via formatDates when creating', async (assert) => {
+    const formatting = []
+
+    class User extends Model {
+      static formatDates (key, value) {
+        const formattedValue = super.formatDates(key, value)
+        formatting.push({ key, value: formattedValue })
+      }
+    }
+
+    User._bootIfNotBooted()
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    const keys = formatting.map((item) => item.key)
+    const values = formatting.map((item) => moment(item.value, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.deepEqual(keys, ['created_at', 'updated_at'])
+    assert.deepEqual(values, [true, true])
+  })
+
+  test('auto format just updated_at via formatDates when updating', async (assert) => {
+    const formatting = []
+
+    class User extends Model {
+      static formatDates (key, value) {
+        const formattedValue = super.formatDates(key, value)
+        formatting.push({ key, value: formattedValue })
+      }
+    }
+
+    User._bootIfNotBooted()
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    const user = await User.find(1)
+    user.username = 'nikk'
+    await user.save()
+    const keys = formatting.map((item) => item.key)
+    const values = formatting.map((item) => moment(item.value, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.deepEqual(keys, ['updated_at'])
+    assert.deepEqual(values, [true])
+  })
+
+  test('auto format when bulk updating', async (assert) => {
+    const formatting = []
+
+    class User extends Model {
+      static formatDates (key, value) {
+        const formattedValue = super.formatDates(key, value)
+        formatting.push({ key, value: formattedValue })
+      }
+    }
+
+    User._bootIfNotBooted()
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await User.query().where('username', 'virk').update({ username: 'nikk' })
+    const keys = formatting.map((item) => item.key)
+    const values = formatting.map((item) => moment(item.value, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.deepEqual(keys, ['updated_at'])
+    assert.deepEqual(values, [true])
+  })
+
+  test('do not mutate bulk updates object', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    const updates = { username: 'nikk' }
+    await User.query().where('username', 'virk').update(updates)
+    assert.deepEqual(updates, { username: 'nikk' })
+  })
+
+  test('mutate model attributes when date is formatted', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    const timestamps = _(user.$attributes)
+      .pick(['created_at', 'updated_at'])
+      .map((item) => {
+        return moment(item.toString(), 'YYYY-MM-DD HH:mm:ss', true).isValid()
+      })
+      .value()
+
+    assert.deepEqual(timestamps, [true, true])
+  })
+
+  test('do not call formatDates when setters for them are defined', async (assert) => {
+    const formatting = []
+
+    class User extends Model {
+      static formatDates (key, value) {
+        const formattedValue = super.formatDates(key, value)
+        formatting.push({ key, value: formattedValue })
+        return formattedValue
+      }
+
+      setCreatedAt () {
+        return null
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    const keys = formatting.map((item) => item.key)
+    const values = formatting.map((item) => moment(item.value, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.deepEqual(keys, ['updated_at'])
+    assert.deepEqual(values, [true])
+    assert.isNull(user.created_at)
+  })
+
+  test('do not call formatDates when not part of dates', async (assert) => {
+    const formatting = []
+
+    class User extends Model {
+      static formatDates (key, value) {
+        const formattedValue = super.formatDates(key, value)
+        formatting.push({ key, value: formattedValue })
+        return formattedValue
+      }
+
+      static get createdAtColumn () {
+        return null
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    const keys = formatting.map((item) => item.key)
+    const values = formatting.map((item) => moment(item.value, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.deepEqual(keys, ['updated_at'])
+    assert.deepEqual(values, [true])
+    assert.isUndefined(user.created_at)
+  })
+
+  test('use setter value when bulk updating and do not call formatDates', async (assert) => {
+    const formatting = []
+
+    class User extends Model {
+      static formatDates (key, value) {
+        const formattedValue = super.formatDates(key, value)
+        formatting.push({ key, value: formattedValue })
+        return formattedValue
+      }
+
+      setUpdatedAt () {
+        return null
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await User.query().where('username', 'virk').update({ username: 'nikk' })
+    const users = await User.query().pair('id', 'updated_at')
+    assert.deepEqual(users, { '1': null })
+    assert.deepEqual(formatting, [])
+  })
+
+  test('call castDates when toJSON or toObject is called', async (assert) => {
+    const casting = []
+
+    class User extends Model {
+      static castDates (key, value) {
+        const formattedValue = super.castDates(key, value)
+        casting.push({ key, value: formattedValue })
+        return formattedValue
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database')
+      .table('users')
+      .insert({ username: 'virk', created_at: new Date(), updated_at: new Date() })
+
+    const user = await User.find(1)
+    const json = user.toObject()
+    assert.isTrue(moment(json.created_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.isTrue(moment(json.updated_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.deepEqual(casting.map((field) => field.key), ['created_at', 'updated_at'])
+  })
+
+  test('do not cast date when field not defined as date', async (assert) => {
+    const casting = []
+
+    class User extends Model {
+      static castDates (key, value) {
+        const formattedValue = value.format('YYYY-MM-DD')
+        casting.push({ key, value: formattedValue })
+        return formattedValue
+      }
+
+      static get createdAtColumn () {
+        return null
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database')
+      .table('users')
+      .insert({ username: 'virk', created_at: new Date(), updated_at: new Date() })
+
+    const user = await User.find(1)
+    const json = user.toObject()
+    assert.isFalse(moment(json.created_at.toString(), 'YYYY-MM-DD', true).isValid())
+    assert.isTrue(moment(json.updated_at.toString(), 'YYYY-MM-DD', true).isValid())
+    assert.deepEqual(casting.map((field) => field.key), ['updated_at'])
+  })
+
+  test('do not cast date when field has a getter', async (assert) => {
+    const casting = []
+
+    class User extends Model {
+      static castDates (key, value) {
+        const formattedValue = super.castDates(key, value)
+        casting.push({ key, value: formattedValue })
+        return formattedValue
+      }
+
+      getCreatedAt (value) {
+        return value.fromNow(true)
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database')
+      .table('users')
+      .insert({ username: 'virk', created_at: new Date(), updated_at: new Date() })
+
+    const user = await User.find(1)
+    const json = user.toObject()
+    assert.equal(json.created_at, 'a few seconds')
+    assert.deepEqual(casting.map((field) => field.key), ['updated_at'])
+  })
+
+  test('cast dates should work for custom dates as well', async (assert) => {
+    const casting = []
+
+    class User extends Model {
+      static castDates (key, value) {
+        const formattedValue = super.castDates(key, value)
+        casting.push({ key, value: formattedValue })
+        return formattedValue
+      }
+
+      static get dates () {
+        const existingDates = super.dates
+        existingDates.push('login_at')
+        return existingDates
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database')
+      .table('users')
+      .insert({ username: 'virk', created_at: new Date(), updated_at: new Date(), login_at: new Date() })
+
+    const user = await User.find(1)
+    const json = user.toObject()
+    assert.isTrue(moment(json.created_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.isTrue(moment(json.updated_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.isTrue(moment(json.login_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.deepEqual(casting.map((field) => field.key), ['created_at', 'updated_at', 'login_at'])
   })
 })

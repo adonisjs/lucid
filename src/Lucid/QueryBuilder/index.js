@@ -327,14 +327,16 @@ class QueryBuilder {
    * @return {Promise}
    */
   async update (values) {
-    this.model.setUpdatedAt(values)
+    const valuesCopy = _.clone(values)
+    const fakeModel = new this.model()
+    fakeModel._setUpdatedAt(valuesCopy)
+    fakeModel._formatDateFields(valuesCopy)
 
     /**
      * Apply all the scopes before update
-     * data
      */
     this._applyScopes()
-    return this.query.update(this.model.formatDates(values))
+    return this.query.update(valuesCopy)
   }
 
   /**
@@ -363,7 +365,7 @@ class QueryBuilder {
   async pair (lhs, rhs) {
     const collection = await this.fetch()
     return _.transform(collection.rows, (result, row) => {
-      result[row.$attributes[lhs]] = row.$attributes[rhs]
+      result[row[lhs]] = row[rhs]
       return result
     }, {})
   }
