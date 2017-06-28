@@ -776,4 +776,28 @@ test.group('Model', (group) => {
     assert.deepEqual(users.pages, { perPage: 1, total: helpers.formatNumber(2), page: 1, lastPage: 2 })
     assert.equal(users.first().username, 'virk')
   })
+
+  test('return first row from database on calling static first method', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Adonis/Src/Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    const user = await User.first()
+    assert.instanceOf(user, User)
+    assert.equal(user.username, 'virk')
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" order by "id" asc limit ?'))
+  })
+
+  test('get string representation of a query', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    const queryString = User.query().where('username', 'virk').toString()
+    assert.equal(queryString, helpers.formatQuery('select * from "users" where "username" = \'virk\''))
+  })
 })

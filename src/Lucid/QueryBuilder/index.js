@@ -215,11 +215,10 @@ class QueryBuilder {
      * Don't do anything when array is empty or value is not
      * an array
      */
-    if (!_.size(scopes) || !_.isArray(scopes)) {
-      return this
+    if (_.isArray(scopes) && _.size(scopes)) {
+      this._ignoreScopes = this._ignoreScopes.concat(scopes)
     }
 
-    this._ignoreScopes = this._ignoreScopes.concat(scopes)
     return this
   }
 

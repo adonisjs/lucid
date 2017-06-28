@@ -41,19 +41,6 @@ class BelongsTo extends BaseRelation {
   group (relatedInstances) {
     const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
       const foreignKeyValue = relatedInstance[this.foreignKey]
-      const existingRelation = _.find(result, (row) => row.identity === foreignKeyValue)
-
-      /**
-       * If there is already an existing instance for same parent
-       * record. We should override the value and do WARN the
-       * user since hasOne should never have multiple
-       * related instance.
-       */
-      if (existingRelation) {
-        existingRelation.value = relatedInstance
-        return result
-      }
-
       result.push({
         identity: foreignKeyValue,
         value: relatedInstance

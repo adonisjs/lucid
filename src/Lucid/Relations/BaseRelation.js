@@ -48,7 +48,7 @@ class BaseRelation {
     this.foreignKey = foreignKey
     this.relatedQuery = this.relatedModel.query()
     return new Proxy(this, {
-      get: proxyGet('relatedQuery', false)
+      get: proxyGet('relatedQuery')
     })
   }
 

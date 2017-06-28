@@ -48,6 +48,10 @@ class RuntimeException extends NE.RuntimeException {
     const message = `${method} does not allowed nested relations. Instead use .with('${parent}', (builder) => builder.${method}('${relation}'))`
     return new this(message, 500, 'E_CANNOT_NEST_RELATION')
   }
+
+  static overRidingRelation (relation) {
+    return new this(`Trying to eagerload ${relation} relationship twice`, 500, 'E_CANNOT_OVERRIDE_RELATION')
+  }
 }
 
 class InvalidArgumentException extends NE.InvalidArgumentException {

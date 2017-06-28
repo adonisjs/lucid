@@ -816,18 +816,6 @@ class Model {
   }
 
   /**
-   * Returns last row. This method will add orderBy desc
-   * clause.
-   *
-   * @method last
-   *
-   * @return {Model|Null}
-   */
-  static last () {
-    return this.query().orderBy(this.primaryKey, 'desc').first()
-  }
-
-  /**
    * Fetch everything from the database
    *
    * @method all
@@ -902,22 +890,34 @@ class Model {
    */
   setRelated (key, value) {
     if (this.$relations[key]) {
-      throw new Error('Trying to reset twice')
+      throw CE.RuntimeException.overRidingRelation(key)
     }
+
     this.$relations[key] = value
 
+    /**
+     * Don't do anything when value doesn't exists
+     */
     if (!value) {
       return
     }
 
+    /**
+     * Set parent on model instance if value is instance
+     * of model.
+     */
     if (value instanceof Model) {
       value.$parent = this.constructor.name
       return
     }
 
-    if (value.rows) {
-      _(value.rows).filter((val) => !!val).each((val) => val.$parent = this.constructor.name)
-    }
+    /**
+     * Otherwise loop over collection rows to set
+     * the $parent.
+     */
+    _(value.rows)
+    .filter((val) => !!val)
+    .each((val) => val.$parent = this.constructor.name)
   }
 
   /**

@@ -41,6 +41,7 @@ test.group('Relations | HasOne', (group) => {
     await ioc.use('Adonis/Src/Database').table('profiles').truncate()
     await ioc.use('Adonis/Src/Database').table('pictures').truncate()
     await ioc.use('Adonis/Src/Database').table('identities').truncate()
+    await ioc.use('Adonis/Src/Database').table('cars').truncate()
   })
 
   group.after(async () => {
@@ -1301,5 +1302,129 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.first().profile_count, 1)
     assert.deepEqual(users.first().$sideLoaded, { profile_count: helpers.formatNumber(1) })
     assert.equal(userQuery.sql, helpers.formatQuery('select "username", (select count(*) from "profiles" where users.id = profiles.user_id) as "profile_count" from "users"'))
+  })
+
+  test('orHas should work fine', async (assert) => {
+    class Car extends Model {
+    }
+
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk' })
+    await ioc.use('Database').table('cars').insert({ user_id: 2, name: 'audi', model: '2001' })
+
+    const users = await User.query().has('cars').orHas('profile').fetch()
+    assert.equal(users.size(), 2)
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "cars" where users.id = cars.user_id) or exists (select * from "profiles" where users.id = profiles.user_id)'))
+  })
+
+  test('doesntHave should work fine', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk' })
+
+    const users = await User.query().doesntHave('profile').fetch()
+    assert.equal(users.size(), 1)
+    assert.equal(users.first().username, 'nikk')
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where not exists (select * from "profiles" where users.id = profiles.user_id)'))
+  })
+
+  test('orDoesntHave should work fine', async (assert) => {
+    class Car extends Model {
+    }
+
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([
+      { user_id: 1, profile_name: 'virk' },
+      { user_id: 2, profile_name: 'nikk' }
+    ])
+    await ioc.use('Database').table('cars').insert({ user_id: 2, name: 'audi', model: '2001' })
+
+    const users = await User.query().doesntHave('profile').orDoesntHave('cars').paginate()
+    assert.equal(users.size(), 1)
+    assert.equal(users.first().username, 'virk')
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where not exists (select * from "profiles" where users.id = profiles.user_id) or not exists (select * from "cars" where users.id = cars.user_id) limit ?'))
+  })
+
+  test('throw exception when trying to eagerload relation twice', async (assert) => {
+    assert.plan(3)
+
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ user_id: 1, name: 'audi', model: '2001' })
+
+    const user = await User.query().with('cars').first()
+    assert.instanceOf(user.getRelated('cars'), CollectionSerializer)
+    assert.equal(user.getRelated('cars').size(), 1)
+
+    try {
+      await user.load('cars')
+    } catch ({ message }) {
+      assert.equal(message, 'E_CANNOT_OVERRIDE_RELATION: Trying to eagerload cars relationship twice')
+    }
   })
 })
