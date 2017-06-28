@@ -645,11 +645,15 @@ class QueryBuilder {
       callback(relationInstance)
     }
 
+    const columns = []
+
     /**
-     * Fetch existing selected columns, since we need to append
-     * another column to the list
+     * Add `*` to columns only when there are no existing columns selected
      */
-    const columns = _.find(this.query._statement, (statement) => statement.grouping === 'columns') || ['*']
+    if (!_.find(this.query._statements, (statement) => statement.grouping === 'columns')) {
+      columns.push('*')
+    }
+    columns.push(relationInstance.relatedWhere(true).as(asStatement))
 
     /**
      * Saving reference of count inside _sideloaded
@@ -657,8 +661,6 @@ class QueryBuilder {
      * model.$sideLoaded
      */
     this._sideLoaded.push(asStatement)
-
-    columns.push(relationInstance.relatedWhere(true).as(asStatement))
 
     /**
      * Clear previously selected columns and set new

@@ -21,7 +21,7 @@ const Model = require('../../src/Lucid/Model')
 const DatabaseManager = require('../../src/Database/Manager')
 const CollectionSerializer = require('../../src/Lucid/Serializers/Collection')
 
-test.group('Model', (group) => {
+test.group('Relations | Serializer', (group) => {
   group.before(async () => {
     ioc.singleton('Adonis/Src/Database', function () {
       const config = new Config()

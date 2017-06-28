@@ -1276,4 +1276,30 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(user.first().getRelated('profile').$parent, 'User')
     assert.isTrue(user.first().getRelated('profile').hasParent)
   })
+
+  test('withCount should respect existing selected columns', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => userQuery = query)
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
+
+    const users = await User.query().select('username').withCount('profile').fetch()
+    assert.equal(users.size(), 2)
+    assert.equal(users.first().profile_count, 1)
+    assert.deepEqual(users.first().$sideLoaded, { profile_count: helpers.formatNumber(1) })
+    assert.equal(userQuery.sql, helpers.formatQuery('select "username", (select count(*) from "profiles" where users.id = profiles.user_id) as "profile_count" from "users"'))
+  })
 })

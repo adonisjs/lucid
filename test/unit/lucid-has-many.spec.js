@@ -629,7 +629,7 @@ test.group('Relations | Has Many', (group) => {
 
     const users = await User.query().with('cars').paginate()
     assert.equal(users.size(), 2)
-    assert.deepEqual(users.pages, { total: 2, perPage: 20, page: 1, lastPage: 1 })
+    assert.deepEqual(users.pages, { total: helpers.formatNumber(2), perPage: 20, page: 1, lastPage: 1 })
   })
 
   test('convert paginated records to json', async (assert) => {
@@ -660,7 +660,7 @@ test.group('Relations | Has Many', (group) => {
 
     const users = await User.query().with('cars').paginate()
     const json = users.toJSON()
-    assert.deepEqual(json.total, 2)
+    assert.deepEqual(json.total, helpers.formatNumber(2))
     assert.deepEqual(json.perPage, 20)
     assert.deepEqual(json.page, 1)
     assert.deepEqual(json.lastPage, 1)

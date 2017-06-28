@@ -12,17 +12,17 @@
 
 ## Model
 
-- [ ] hooks
-- [ ] getters
-- [ ] setters
-- [ ] helper static methods
-- [ ] boot method ( ability to extend via BaseModel )
+- [x] hooks
+- [x] getters
+- [x] setters
+- [x] helper static methods
+- [x] boot method ( ability to extend via BaseModel )
 - [ ] refresh model
-- [ ] fill model with json data
+- [x] fill model with json data
 - [ ] use traits
-- [ ] computed properties
+- [x] computed properties
 - [ ] visible/hidden attributes
-- [ ] timestamps
+- [x] timestamps
 
 
 ## Eager Loading

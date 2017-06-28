@@ -17,6 +17,7 @@ const QueryBuilder = require('../QueryBuilder')
 const CollectionSerializer = require('../Serializers/Collection')
 const HasOne = require('../Relations/HasOne')
 const HasMany = require('../Relations/HasMany')
+const BelongsTo = require('../Relations/BelongsTo')
 const EagerLoad = require('../EagerLoad')
 
 const CE = require('../../Exceptions')
@@ -996,6 +997,10 @@ class Model {
    */
   hasMany (relatedModel, primaryKey = this.constructor.primaryKey, foreignKey = this.constructor.foreignKey) {
     return new HasMany(this, relatedModel, primaryKey, foreignKey)
+  }
+
+  belongsTo (relatedModel, primaryKey = relatedModel.foreignKey, foreignKey = relatedModel.primaryKey) {
+    return new BelongsTo(this, relatedModel, primaryKey, foreignKey)
   }
 }
 
