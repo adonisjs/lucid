@@ -240,9 +240,7 @@ test.group('Model', (group) => {
       throw new Error('Something bad happened')
     })
 
-    User.addHook('afterCreate', function () {
-      stack.push('after')
-    })
+    User.addHook('afterCreate', function () {})
 
     const user = new User()
     try {
@@ -585,7 +583,6 @@ test.group('Model', (group) => {
   })
 
   test('define local scopes', async (assert) => {
-    let userQuery = null
     class User extends Model {
       static scopeIsLogged (builder) {
         builder.whereNotNull('login_at')
@@ -599,7 +596,6 @@ test.group('Model', (group) => {
   })
 
   test('pass arguments to local scopes', async (assert) => {
-    let userQuery = null
     class User extends Model {
       static scopeIsLogged (builder, time) {
         builder.where('login_at', '>', time)
@@ -759,7 +755,7 @@ test.group('Model', (group) => {
 
     User._bootIfNotBooted()
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const user = await User.first()

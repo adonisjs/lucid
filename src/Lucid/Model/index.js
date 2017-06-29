@@ -239,11 +239,11 @@ class Model {
    *
    * By default Lucid uses @ref('BaseSerializer')
    *
-   * @attribute serializer
+   * @attribute Serializer
    *
    * @return {Class}
    */
-  static get serializer () {
+  static get Serializer () {
     return CollectionSerializer
   }
 
@@ -449,7 +449,7 @@ class Model {
   _formatDateFields (values) {
     _(this.constructor.dates)
     .filter((date) => {
-      return values[date] && typeof(this[util.getSetterName(date)]) !== 'function'
+      return values[date] && typeof (this[util.getSetterName(date)]) !== 'function'
     })
     .each((date) => { values[date] = this.constructor.formatDates(date, values[date]) })
   }
@@ -509,7 +509,7 @@ class Model {
    */
   _getGetterValue (key, value, passAttrs = null) {
     const getterName = util.getGetterName(key)
-    return typeof (this[getterName]) === 'function' ? this[getterName](passAttrs ? passAttrs : value) : value
+    return typeof (this[getterName]) === 'function' ? this[getterName](passAttrs || value) : value
   }
 
   /**
@@ -695,7 +695,7 @@ class Model {
       /**
        * Set proper timestamps
        */
-      const result = await this.constructor.query().update(this.dirty)
+      await this.constructor.query().update(this.dirty)
       /**
        * Sync originals to find a diff when updating for next time
        */
@@ -758,7 +758,7 @@ class Model {
    * @return {void}
    */
   set (name, value) {
-    return this.$attributes[name] = this._getSetterValue(name, value)
+    this.$attributes[name] = this._getSetterValue(name, value)
   }
 
   /**
@@ -775,7 +775,7 @@ class Model {
       if (value instanceof moment && typeof (this[util.getGetterName(key)]) !== 'function') {
         result[key] = this.constructor.castDates(key, value)
       } else {
-        result[key] =  this._getGetterValue(key, value)
+        result[key] = this._getGetterValue(key, value)
       }
       return result
     }, {})
@@ -808,7 +808,7 @@ class Model {
    * @return {Object}
    */
   toJSON () {
-    return new this.constructor.serializer(this, null, true).toJSON()
+    return new this.constructor.Serializer(this, null, true).toJSON()
   }
 
   /**
@@ -821,7 +821,7 @@ class Model {
    * @return {void}
    */
   async save () {
-    return this.isNew ? await this._insert() : await this._update()
+    return this.isNew ? this._insert() : this._update()
   }
 
   /**
@@ -983,7 +983,7 @@ class Model {
      */
     _(value.rows)
     .filter((val) => !!val)
-    .each((val) => val.$parent = this.constructor.name)
+    .each((val) => (val.$parent = this.constructor.name))
   }
 
   /**

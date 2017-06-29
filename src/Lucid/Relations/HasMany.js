@@ -11,7 +11,6 @@
 
 const _ = require('lodash')
 const BaseRelation = require('./BaseRelation')
-const CE = require('../../Exceptions')
 
 class HasMany extends BaseRelation {
   /**
@@ -53,7 +52,7 @@ class HasMany extends BaseRelation {
    * @return {Object} @multiple([key=String, values=Array, defaultValue=Null])
    */
   group (relatedInstances) {
-    const Serializer = this.relatedModel.serializer
+    const Serializer = this.relatedModel.Serializer
 
     const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
       const foreignKeyValue = relatedInstance[this.foreignKey]

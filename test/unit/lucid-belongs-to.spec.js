@@ -61,13 +61,13 @@ test.group('Relations | Belongs To', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk' })
 
     const profile = await Profile.find(1)
-    const user = await profile.user().first()
+    await profile.user().first()
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" = ? limit ?'))
     assert.deepEqual(userQuery.bindings, helpers.formatBindings([1, 1]))
   })
@@ -86,13 +86,13 @@ test.group('Relations | Belongs To', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk' })
 
     const profile = await Profile.find(1)
-    const user = await profile.user().fetch()
+    await profile.user().fetch()
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" = ? limit ?'))
     assert.deepEqual(userQuery.bindings, helpers.formatBindings([1, 1]))
   })
@@ -111,13 +111,13 @@ test.group('Relations | Belongs To', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert({ user_id: 2, profile_name: 'nikk' })
 
     const profile = await Profile.find(1)
-    const user = await profile.user().fetch()
+    await profile.user().fetch()
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" = ? limit ?'))
     assert.deepEqual(userQuery.bindings, helpers.formatBindings([2, 1]))
   })
@@ -136,7 +136,7 @@ test.group('Relations | Belongs To', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert({ user_id: 2, profile_name: 'nikk' })
@@ -164,7 +164,7 @@ test.group('Relations | Belongs To', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([
@@ -265,7 +265,7 @@ test.group('Relations | Belongs To', (group) => {
     Picture._bootIfNotBooted()
 
     let pictureQuery = null
-    Picture.onQuery((query) => pictureQuery = query)
+    Picture.onQuery((query) => (pictureQuery = query))
 
     await ioc.use('Database').table('users').insert({ id: 3, username: 'virk' })
     await ioc.use('Database').table('profiles').insert({ id: 22, user_id: 3, profile_name: 'virk' })
@@ -290,10 +290,10 @@ test.group('Relations | Belongs To', (group) => {
     Profile._bootIfNotBooted()
 
     let profileQuery = null
-    Profile.onQuery((query) => profileQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-    await ioc.use('Database').table('profiles').insert({user_id: 2, profile_name: 'nikk' })
+    await ioc.use('Database').table('profiles').insert({ user_id: 2, profile_name: 'nikk' })
 
     const profiles = await Profile.query().has('user').fetch()
     assert.equal(profiles.size(), 1)
@@ -315,10 +315,10 @@ test.group('Relations | Belongs To', (group) => {
     Profile._bootIfNotBooted()
 
     let profileQuery = null
-    Profile.onQuery((query) => profileQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-    await ioc.use('Database').table('profiles').insert({user_id: 2, profile_name: 'nikk' })
+    await ioc.use('Database').table('profiles').insert({ user_id: 2, profile_name: 'nikk' })
 
     const profiles = await Profile.query().has('user', '>', 1).fetch()
     assert.equal(profiles.size(), 0)
@@ -339,7 +339,7 @@ test.group('Relations | Belongs To', (group) => {
     Profile._bootIfNotBooted()
 
     let profileQuery = null
-    Profile.onQuery((query) => profileQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([
@@ -367,7 +367,7 @@ test.group('Relations | Belongs To', (group) => {
     Profile._bootIfNotBooted()
 
     let profileQuery = null
-    Profile.onQuery((query) => profileQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([

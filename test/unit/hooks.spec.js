@@ -63,7 +63,6 @@ test.group('Hooks', () => {
 
   test('do not create empty array if there were no handlers ever', (assert) => {
     const hooks = new Hooks()
-    const fn = function () {}
     hooks.removeAllHandlers('create')
     assert.deepEqual(hooks._handlers, {})
   })

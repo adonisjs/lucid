@@ -142,7 +142,7 @@ class Database {
    * @return {Object}
    */
   query () {
-    return new this.knex.queryBuilder()
+    return this.knex.queryBuilder()
   }
 
   /**

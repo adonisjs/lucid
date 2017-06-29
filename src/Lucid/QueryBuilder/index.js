@@ -25,9 +25,9 @@ const proxyHandler = {
      * if value is a local query scope and a function, please
      * execute it
      */
-    if (typeof (target.model[queryScope]) === 'function') {
+    if (typeof (target.Model[queryScope]) === 'function') {
       return function (...args) {
-        target.model[queryScope](this, ...args)
+        target.Model[queryScope](this, ...args)
         return this
       }
     }
@@ -35,9 +35,9 @@ const proxyHandler = {
 }
 
 class QueryBuilder {
-  constructor (model, connection) {
-    this.model = model
-    const table = this.model.prefix ? `${this.model.prefix}${this.model.table}` : this.model.table
+  constructor (Model, connection) {
+    this.Model = Model
+    const table = this.Model.prefix ? `${this.Model.prefix}${this.Model.table}` : this.Model.table
 
     /**
      * Reference to database provider
@@ -47,7 +47,7 @@ class QueryBuilder {
     /**
      * Reference to query builder with pre selected table
      */
-    this.query = this.db.table(table).on('query', this.model._executeListeners.bind(this.model))
+    this.query = this.db.table(table).on('query', this.Model._executeListeners.bind(this.Model))
 
     /**
      * Scopes to be ignored at runtime
@@ -121,8 +121,8 @@ class QueryBuilder {
    */
   _parseRelation (relation) {
     const { name, nested } = RelationsParser.parseRelation(relation)
-    RelationsParser.validateRelationExistence(this.model.prototype, name)
-    const relationInstance = RelationsParser.getRelatedInstance(this.model.prototype, name)
+    RelationsParser.validateRelationExistence(this.Model.prototype, name)
+    const relationInstance = RelationsParser.getRelatedInstance(this.Model.prototype, name)
     return { relationInstance, nested, name }
   }
 
@@ -139,7 +139,7 @@ class QueryBuilder {
       return this
     }
 
-    _(this.model.$globalScopes)
+    _(this.Model.$globalScopes)
     .filter((scope) => this._ignoreScopes.indexOf(scope.name) <= -1)
     .each((scope) => {
       if (typeof (scope.callback) === 'function') {
@@ -175,7 +175,7 @@ class QueryBuilder {
    * @return {Model}
    */
   _mapRowToInstance (row) {
-    const modelInstance = new this.model()
+    const modelInstance = new this.Model()
     modelInstance.newUp(_.omitBy(row, (value, field) => {
       if (this._sideLoaded.indexOf(field) > -1) {
         modelInstance.$sideLoaded[field] = value
@@ -250,7 +250,7 @@ class QueryBuilder {
     /**
      * Return an instance of active model serializer
      */
-    return new this.model.serializer(modelInstances)
+    return new this.Model.Serializer(modelInstances)
   }
 
   /**
@@ -281,7 +281,7 @@ class QueryBuilder {
       await modelInstance.loadMany(this._eagerLoads)
     }
 
-    this.model.$hooks.after.exec('find', modelInstance)
+    this.Model.$hooks.after.exec('find', modelInstance)
     return modelInstance
   }
 
@@ -313,7 +313,7 @@ class QueryBuilder {
     /**
      * Return an instance of active model serializer
      */
-    return new this.model.serializer(modelInstances, _.omit(result, ['data']))
+    return new this.Model.Serializer(modelInstances, _.omit(result, ['data']))
   }
 
   /**
@@ -328,7 +328,7 @@ class QueryBuilder {
    */
   async update (values) {
     const valuesCopy = _.clone(values)
-    const fakeModel = new this.model()
+    const fakeModel = new this.Model()
     fakeModel._setUpdatedAt(valuesCopy)
     fakeModel._formatDateFields(valuesCopy)
 
@@ -348,7 +348,7 @@ class QueryBuilder {
    */
   async ids () {
     const rows = await this.query
-    return rows.map((row) => row[this.model.primaryKey])
+    return rows.map((row) => row[this.Model.primaryKey])
   }
 
   /**
@@ -380,7 +380,7 @@ class QueryBuilder {
    * @return {Collection}
    */
   pickInverse (limit = 1) {
-    this.query.orderBy(this.model.primaryKey, 'desc').limit(limit)
+    this.query.orderBy(this.Model.primaryKey, 'desc').limit(limit)
     return this.fetch()
   }
 
@@ -394,7 +394,7 @@ class QueryBuilder {
    * @return {Collection}
    */
   pick (limit = 1) {
-    this.query.orderBy(this.model.primaryKey, 'asc').limit(limit)
+    this.query.orderBy(this.Model.primaryKey, 'asc').limit(limit)
     return this.fetch()
   }
 
@@ -635,8 +635,8 @@ class QueryBuilder {
       name = name.replace(tokens[0], '').trim()
     }
 
-    RelationsParser.validateRelationExistence(this.model.prototype, name)
-    const relationInstance = RelationsParser.getRelatedInstance(this.model.prototype, name)
+    RelationsParser.validateRelationExistence(this.Model.prototype, name)
+    const relationInstance = RelationsParser.getRelatedInstance(this.Model.prototype, name)
 
     /**
      * Call the callback with relationship instance

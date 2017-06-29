@@ -167,7 +167,7 @@ test.group('Database | QueryBuilder', (group) => {
 
   test('paginate data inside transactions', async (assert) => {
     const trx = await this.database.beginTransaction()
-    assert.equal(typeof(trx.table('users').paginate), 'function')
+    assert.equal(typeof (trx.table('users').paginate), 'function')
     trx.rollback()
   })
 

@@ -12,7 +12,6 @@
 const test = require('japa')
 const fs = require('fs-extra')
 const path = require('path')
-const moment = require('moment')
 const { ioc } = require('@adonisjs/fold')
 const { Config } = require('@adonisjs/sink')
 

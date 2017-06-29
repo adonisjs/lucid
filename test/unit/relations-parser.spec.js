@@ -47,13 +47,13 @@ test.group('Relations Parser', () => {
   })
 
   test('parse multiple nested relations', (assert) => {
-    const parsed = RelationsParser.parseRelations({ 'posts.comments': null, 'posts.likes' : null })
-    assert.deepEqual(parsed, { posts: { name: 'posts', callback: null, nested: { comments: null, likes: null  } } })
+    const parsed = RelationsParser.parseRelations({ 'posts.comments': null, 'posts.likes': null })
+    assert.deepEqual(parsed, { posts: { name: 'posts', callback: null, nested: { comments: null, likes: null } } })
   })
 
   test('parse multiple nested relations with callback', (assert) => {
     const fn = function () {}
-    const parsed = RelationsParser.parseRelations({ 'posts.comments': null, 'posts.likes' : null, posts: fn })
-    assert.deepEqual(parsed, { posts: { name: 'posts', callback: fn, nested: { comments: null, likes: null  } } })
+    const parsed = RelationsParser.parseRelations({ 'posts.comments': null, 'posts.likes': null, posts: fn })
+    assert.deepEqual(parsed, { posts: { name: 'posts', callback: fn, nested: { comments: null, likes: null } } })
   })
 })

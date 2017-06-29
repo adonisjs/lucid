@@ -63,7 +63,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let profileQuery = null
-    Profile.onQuery((query) => profileQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk' })
@@ -90,7 +90,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let profileQuery = null
-    Profile.onQuery((query) => profileQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
 
     const user = new User()
     user.username = 'virk'
@@ -116,13 +116,10 @@ test.group('Relations | HasOne', (group) => {
     User._bootIfNotBooted()
     Profile._bootIfNotBooted()
 
-    let profileQuery = null
-    Profile.onQuery((query) => profileQuery = query)
-
     const user = new User()
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk' })
     try {
-      const profile = await user.profile().fetch()
+      await user.profile().fetch()
     } catch ({ message }) {
       assert.equal(message, 'E_UNSAVED_MODEL_INSTANCE: Cannot process relation, since User model is not persisted to database or relational value is undefined')
     }
@@ -142,7 +139,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let profileQuery = null
-    Profile.onQuery((query) => profileQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
 
     const user = new User()
     user.username = 'virk'
@@ -167,7 +164,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let profileQuery = null
-    Profile.onQuery((query) => profileQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
 
     const user = new User()
     user.username = 'virk'
@@ -191,7 +188,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let profileQuery = null
-    Profile.onQuery((query) => profileQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
 
     const user = new User()
     user.username = 'virk'
@@ -216,7 +213,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let profileQuery = null
-    Profile.onQuery((query) => profileQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
 
     const user = new User()
     user.username = 'virk'
@@ -249,12 +246,6 @@ test.group('Relations | HasOne', (group) => {
     User._bootIfNotBooted()
     Profile._bootIfNotBooted()
     Identity._bootIfNotBooted()
-
-    let profileQuery = null
-    let identityQuery = null
-
-    Profile.onQuery((query) => profileQuery = query)
-    Identity.onQuery((query) => identityQuery = query)
 
     const user = new User()
     user.username = 'virk'
@@ -420,10 +411,6 @@ test.group('Relations | HasOne', (group) => {
     User._bootIfNotBooted()
     Profile._bootIfNotBooted()
 
-    let profileQuery = null
-
-    Profile.onQuery((query) => profileQuery = query)
-
     const user = await ioc.use('Database').table('users').insert({ username: 'virk' }).returning('id')
     await ioc.use('Database').table('profiles').insert({ user_id: user[0], profile_name: 'virk', likes: 3 })
 
@@ -446,7 +433,7 @@ test.group('Relations | HasOne', (group) => {
 
     let profileQuery = null
 
-    Profile.onQuery((query) => profileQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([
@@ -477,7 +464,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let profileQuery = null
-    Profile.onQuery((query) => profileQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([
@@ -517,8 +504,8 @@ test.group('Relations | HasOne', (group) => {
 
     let profileQuery = null
     let pictureQuery = null
-    Profile.onQuery((query) => profileQuery = query)
-    Picture.onQuery((query) => pictureQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
+    Picture.onQuery((query) => (pictureQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
@@ -552,8 +539,8 @@ test.group('Relations | HasOne', (group) => {
 
     let profileQuery = null
     let pictureQuery = null
-    Profile.onQuery((query) => profileQuery = query)
-    Picture.onQuery((query) => pictureQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
+    Picture.onQuery((query) => (pictureQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
@@ -589,8 +576,8 @@ test.group('Relations | HasOne', (group) => {
 
     let profileQuery = null
     let pictureQuery = null
-    Profile.onQuery((query) => profileQuery = query)
-    Picture.onQuery((query) => pictureQuery = query)
+    Profile.onQuery((query) => (profileQuery = query))
+    Picture.onQuery((query) => (pictureQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
@@ -618,7 +605,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
@@ -649,7 +636,7 @@ test.group('Relations | HasOne', (group) => {
     Picture._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
@@ -681,7 +668,7 @@ test.group('Relations | HasOne', (group) => {
     Picture._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
@@ -704,9 +691,6 @@ test.group('Relations | HasOne', (group) => {
     User._bootIfNotBooted()
     Profile._bootIfNotBooted()
 
-    let userQuery = null
-    User.onQuery((query) => userQuery = query)
-
     const fn = () => User.query().has('foo')
     assert.throw(fn, 'E_INVALID_MODEL_RELATION: foo is not defined on User model')
   })
@@ -725,7 +709,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
@@ -757,7 +741,7 @@ test.group('Relations | HasOne', (group) => {
     Picture._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
@@ -790,7 +774,7 @@ test.group('Relations | HasOne', (group) => {
     Identity._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('identities').insert({ user_id: 1 })
@@ -818,7 +802,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert({ user_id: 1 })
@@ -842,7 +826,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }, { user_id: 2, likes: 2 }])
@@ -868,7 +852,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }, { user_id: 2, likes: 2 }])
@@ -894,7 +878,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }, { user_id: 2, likes: 2 }])
@@ -929,7 +913,7 @@ test.group('Relations | HasOne', (group) => {
     Identity._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }, { user_id: 2, likes: 2 }])
@@ -966,7 +950,7 @@ test.group('Relations | HasOne', (group) => {
     Identity._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }, { user_id: 2, likes: 2 }])
@@ -995,11 +979,7 @@ test.group('Relations | HasOne', (group) => {
     User._bootIfNotBooted()
     Profile._bootIfNotBooted()
 
-    let profileQuery = null
-
-    Profile.onQuery((query) => profileQuery = query)
-
-    await ioc.use('Database').table('users').insert([{ username: 'virk'}, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([
       { user_id: 1, profile_name: 'virk', likes: 3 },
       { user_id: 2, profile_name: 'nikk', likes: 2 }
@@ -1026,7 +1006,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
@@ -1051,7 +1031,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
@@ -1077,7 +1057,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
@@ -1103,7 +1083,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
@@ -1129,7 +1109,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
@@ -1155,9 +1135,6 @@ test.group('Relations | HasOne', (group) => {
 
     User._bootIfNotBooted()
     Profile._bootIfNotBooted()
-
-    let userQuery = null
-    User.onQuery((query) => userQuery = query)
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
@@ -1189,8 +1166,8 @@ test.group('Relations | HasOne', (group) => {
 
     let userQuery = null
     let profileQuery = null
-    User.onQuery((query) => userQuery = query)
-    Profile.onQuery((query) => profileQuery = query)
+    User.onQuery((query) => (userQuery = query))
+    Profile.onQuery((query) => (profileQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
@@ -1217,10 +1194,6 @@ test.group('Relations | HasOne', (group) => {
     User._bootIfNotBooted()
     Profile._bootIfNotBooted()
 
-    let profileQuery = null
-
-    Profile.onQuery((query) => profileQuery = query)
-
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
 
@@ -1240,10 +1213,6 @@ test.group('Relations | HasOne', (group) => {
 
     User._bootIfNotBooted()
     Profile._bootIfNotBooted()
-
-    let profileQuery = null
-
-    Profile.onQuery((query) => profileQuery = query)
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
@@ -1265,10 +1234,6 @@ test.group('Relations | HasOne', (group) => {
 
     User._bootIfNotBooted()
     Profile._bootIfNotBooted()
-
-    let profileQuery = null
-
-    Profile.onQuery((query) => profileQuery = query)
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
@@ -1292,7 +1257,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
@@ -1326,7 +1291,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk' })
@@ -1351,7 +1316,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk' })
@@ -1384,7 +1349,7 @@ test.group('Relations | HasOne', (group) => {
     Profile._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('profiles').insert([

@@ -24,9 +24,11 @@ const proxyHandler = exports = module.exports = {}
  */
 proxyHandler.set = function (target, name, value) {
   if (target.__setters__.indexOf(name) > -1) {
-    return target[name] = value
+    target[name] = value
+    return true
   }
-  return target.set(name, value)
+  target.set(name, value)
+  return true
 }
 
 /**

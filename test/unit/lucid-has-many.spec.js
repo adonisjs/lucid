@@ -61,7 +61,7 @@ test.group('Relations | Has Many', (group) => {
     User._bootIfNotBooted()
 
     let carQuery = null
-    Car.onQuery((query) => carQuery = query)
+    Car.onQuery((query) => (carQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('cars').insert([
@@ -91,7 +91,7 @@ test.group('Relations | Has Many', (group) => {
     User._bootIfNotBooted()
 
     let carQuery = null
-    Car.onQuery((query) => carQuery = query)
+    Car.onQuery((query) => (carQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('cars').insert([
@@ -121,7 +121,7 @@ test.group('Relations | Has Many', (group) => {
     User._bootIfNotBooted()
 
     let carQuery = null
-    Car.onQuery((query) => carQuery = query)
+    Car.onQuery((query) => (carQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('cars').insert([
@@ -151,7 +151,7 @@ test.group('Relations | Has Many', (group) => {
     User._bootIfNotBooted()
 
     let carQuery = null
-    Car.onQuery((query) => carQuery = query)
+    Car.onQuery((query) => (carQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('cars').insert([
@@ -183,7 +183,7 @@ test.group('Relations | Has Many', (group) => {
     User._bootIfNotBooted()
 
     let carQuery = null
-    Car.onQuery((query) => carQuery = query)
+    Car.onQuery((query) => (carQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     const users = await User.query().with('cars').fetch()
@@ -205,9 +205,6 @@ test.group('Relations | Has Many', (group) => {
 
     Car._bootIfNotBooted()
     User._bootIfNotBooted()
-
-    let carQuery = null
-    Car.onQuery((query) => carQuery = query)
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('cars').insert([
@@ -233,9 +230,6 @@ test.group('Relations | Has Many', (group) => {
 
     Car._bootIfNotBooted()
     User._bootIfNotBooted()
-
-    let carQuery = null
-    Car.onQuery((query) => carQuery = query)
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('cars').insert([
@@ -296,8 +290,8 @@ test.group('Relations | Has Many', (group) => {
 
     let carQuery = null
     let partQuery = null
-    Car.onQuery((query) => carQuery = query)
-    Part.onQuery((query) => partQuery = query)
+    Car.onQuery((query) => (carQuery = query))
+    Part.onQuery((query) => (partQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('cars').insert([
@@ -341,8 +335,8 @@ test.group('Relations | Has Many', (group) => {
 
     let carQuery = null
     let partQuery = null
-    Car.onQuery((query) => carQuery = query)
-    Part.onQuery((query) => partQuery = query)
+    Car.onQuery((query) => (carQuery = query))
+    Part.onQuery((query) => (partQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('cars').insert([
@@ -386,8 +380,8 @@ test.group('Relations | Has Many', (group) => {
 
     let carQuery = null
     let partQuery = null
-    Car.onQuery((query) => carQuery = query)
-    Part.onQuery((query) => partQuery = query)
+    Car.onQuery((query) => (carQuery = query))
+    Part.onQuery((query) => (partQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('cars').insert([
@@ -413,9 +407,6 @@ test.group('Relations | Has Many', (group) => {
 
   test('get relation count', async (assert) => {
     class Car extends Model {
-      parts () {
-        return this.hasMany(Part)
-      }
     }
 
     class User extends Model {
@@ -428,7 +419,7 @@ test.group('Relations | Has Many', (group) => {
     User._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('cars').insert([
@@ -443,9 +434,6 @@ test.group('Relations | Has Many', (group) => {
 
   test('filter parent based upon child', async (assert) => {
     class Car extends Model {
-      parts () {
-        return this.hasMany(Part)
-      }
     }
 
     class User extends Model {
@@ -458,7 +446,7 @@ test.group('Relations | Has Many', (group) => {
     User._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('cars').insert([
@@ -473,9 +461,6 @@ test.group('Relations | Has Many', (group) => {
 
   test('define minimum count via has', async (assert) => {
     class Car extends Model {
-      parts () {
-        return this.hasMany(Part)
-      }
     }
 
     class User extends Model {
@@ -488,7 +473,7 @@ test.group('Relations | Has Many', (group) => {
     User._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('cars').insert([
@@ -504,9 +489,6 @@ test.group('Relations | Has Many', (group) => {
 
   test('add additional constraints via where has', async (assert) => {
     class Car extends Model {
-      parts () {
-        return this.hasMany(Part)
-      }
     }
 
     class User extends Model {
@@ -519,7 +501,7 @@ test.group('Relations | Has Many', (group) => {
     User._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('cars').insert([
@@ -537,9 +519,6 @@ test.group('Relations | Has Many', (group) => {
 
   test('add additional constraints and count constraints at same time', async (assert) => {
     class Car extends Model {
-      parts () {
-        return this.hasMany(Part)
-      }
     }
 
     class User extends Model {
@@ -552,7 +531,7 @@ test.group('Relations | Has Many', (group) => {
     User._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('cars').insert([
@@ -570,9 +549,6 @@ test.group('Relations | Has Many', (group) => {
 
   test('add orWhereHas clause', async (assert) => {
     class Car extends Model {
-      parts () {
-        return this.hasMany(Part)
-      }
     }
 
     class User extends Model {
@@ -585,7 +561,7 @@ test.group('Relations | Has Many', (group) => {
     User._bootIfNotBooted()
 
     let userQuery = null
-    User.onQuery((query) => userQuery = query)
+    User.onQuery((query) => (userQuery = query))
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('cars').insert([
@@ -603,9 +579,6 @@ test.group('Relations | Has Many', (group) => {
 
   test('paginate records', async (assert) => {
     class Car extends Model {
-      parts () {
-        return this.hasMany(Part)
-      }
     }
 
     class User extends Model {
@@ -616,9 +589,6 @@ test.group('Relations | Has Many', (group) => {
 
     Car._bootIfNotBooted()
     User._bootIfNotBooted()
-
-    let userQuery = null
-    User.onQuery((query) => userQuery = query)
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('cars').insert([
@@ -634,9 +604,6 @@ test.group('Relations | Has Many', (group) => {
 
   test('convert paginated records to json', async (assert) => {
     class Car extends Model {
-      parts () {
-        return this.hasMany(Part)
-      }
     }
 
     class User extends Model {
@@ -647,9 +614,6 @@ test.group('Relations | Has Many', (group) => {
 
     Car._bootIfNotBooted()
     User._bootIfNotBooted()
-
-    let userQuery = null
-    User.onQuery((query) => userQuery = query)
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await ioc.use('Database').table('cars').insert([
