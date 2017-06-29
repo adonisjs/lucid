@@ -31,8 +31,7 @@ test.group('Database | QueryBuilder', (group) => {
     try {
       await fs.remove(path.join(__dirname, './tmp'))
     } catch (error) {
-      if (process.plaform !== 'win32' || error.code !== 'EBUSY') {
-        console.log(error.code, process.plaform)
+      if (process.platform !== 'win32' || error.code !== 'EBUSY') {
         throw error
       }
     }

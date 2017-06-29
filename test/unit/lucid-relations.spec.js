@@ -49,7 +49,7 @@ test.group('Relations | HasOne', (group) => {
     try {
       await fs.remove(path.join(__dirname, './tmp'))
     } catch (error) {
-      if (process.plaform !== 'win32' || error.code !== 'EBUSY') {
+      if (process.platform !== 'win32' || error.code !== 'EBUSY') {
         throw error
       }
     }
