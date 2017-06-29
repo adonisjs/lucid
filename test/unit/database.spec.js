@@ -28,8 +28,15 @@ test.group('Database | QueryBuilder', (group) => {
 
   group.after(async () => {
     await helpers.dropTables(this.database)
-    await fs.remove(path.join(__dirname, './tmp'))
-  })
+    try {
+      await fs.remove(path.join(__dirname, './tmp'))
+    } catch (error) {
+      if (process.plaform !== 'win32' || error.code !== 'EBUSY') {
+        console.log(error.code, process.plaform)
+        throw error
+      }
+    }
+  }).timeout(0)
 
   test('get instance of query builder', (assert) => {
     const queryBuilder = this.database.query()

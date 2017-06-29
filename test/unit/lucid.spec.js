@@ -45,8 +45,14 @@ test.group('Model', (group) => {
 
   group.after(async () => {
     await helpers.dropTables(ioc.use('Database'))
-    await fs.remove(path.join(__dirname, './tmp'))
-  })
+    try {
+      await fs.remove(path.join(__dirname, './tmp'))
+    } catch (error) {
+      if (process.plaform !== 'win32' || error.code !== 'EBUSY') {
+        throw error
+      }
+    }
+  }).timeout(0)
 
   test('run queries using query builder', (assert) => {
     class User extends Model {}

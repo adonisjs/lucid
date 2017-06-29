@@ -44,8 +44,14 @@ test.group('Relations | Has Many', (group) => {
 
   group.after(async () => {
     await helpers.dropTables(ioc.use('Adonis/Src/Database'))
-    await fs.remove(path.join(__dirname, './tmp'))
-  })
+    try {
+      await fs.remove(path.join(__dirname, './tmp'))
+    } catch (error) {
+      if (process.plaform !== 'win32' || error.code !== 'EBUSY') {
+        throw error
+      }
+    }
+  }).timeout(0)
 
   test('get instance of has many when calling to relation method', async (assert) => {
     class Car extends Model {

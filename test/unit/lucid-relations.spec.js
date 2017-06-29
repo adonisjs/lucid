@@ -46,8 +46,14 @@ test.group('Relations | HasOne', (group) => {
 
   group.after(async () => {
     await helpers.dropTables(ioc.use('Adonis/Src/Database'))
-    await fs.remove(path.join(__dirname, './tmp'))
-  })
+    try {
+      await fs.remove(path.join(__dirname, './tmp'))
+    } catch (error) {
+      if (process.plaform !== 'win32' || error.code !== 'EBUSY') {
+        throw error
+      }
+    }
+  }).timeout(0)
 
   test('hasOne relation should make right query', async (assert) => {
     class Profile extends Model {
