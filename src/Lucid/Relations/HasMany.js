@@ -12,6 +12,14 @@
 const _ = require('lodash')
 const BaseRelation = require('./BaseRelation')
 
+/**
+ * HasMany relationship instance is used to define a
+ * has many relation. The instance of this class
+ * is obtained via @ref(Model.hasMany) method.
+ *
+ * @class HasMany
+ * @constructor
+ */
 class HasMany extends BaseRelation {
   /**
    * Load a single relationship from parent to child
@@ -80,7 +88,8 @@ class HasMany extends BaseRelation {
   }
 
   /**
-   * Returns the related where query
+   * Adds a where clause to limit the select search
+   * to related rows only.
    *
    * @method relatedWhere
    *

@@ -95,7 +95,7 @@ class Model {
    * @example
    * ```
    * User - user_id
-   * Post - posts_id
+   * Post - post_id
    * ``
    */
   static get foreignKey () {
@@ -210,8 +210,8 @@ class Model {
 
   /**
    * The table name for the model. It is dynamically generated
-   * from the Model by name by pluralizing it and converting
-   * it to lowercase.
+   * from the Model name by pluralizing it and converting it
+   * to lowercase.
    *
    * @attribute table
    *
@@ -430,108 +430,6 @@ class Model {
   }
 
   /**
-   * Formats the date fields from the payload, only
-   * when they are marked as dates and there are
-   * not setters for them.
-   *
-   * Note: This method will mutate the existing object. If
-   * any part of your application doesn't want mutations
-   * then pass a cloned copy of object
-   *
-   * @method _formatDateFields
-   *
-   * @param  {Object}          values
-   *
-   * @return {Object}
-   *
-   * @private
-   */
-  _formatDateFields (values) {
-    _(this.constructor.dates)
-    .filter((date) => {
-      return values[date] && typeof (this[util.getSetterName(date)]) !== 'function'
-    })
-    .each((date) => { values[date] = this.constructor.formatDates(date, values[date]) })
-  }
-
-  /**
-   * Sets `created_at` column on the values object.
-   *
-   * Note: This method will mutate the original object
-   * by adding a new key/value pair.
-   *
-   * @method _setCreatedAt
-   *
-   * @param  {Object}     values
-   *
-   * @private
-   */
-  _setCreatedAt (values) {
-    const createdAtColumn = this.constructor.createdAtColumn
-    if (createdAtColumn) {
-      values[createdAtColumn] = this._getSetterValue(createdAtColumn, new Date())
-    }
-  }
-
-  /**
-   * Checks for existence of setter on model and if exists
-   * returns the return value of setter, otherwise returns
-   * the default value
-   *
-   * @method _getSetterValue
-   *
-   * @param  {String}        key
-   * @param  {Mixed}        value
-   *
-   * @return {Mixed}
-   *
-   * @private
-   */
-  _getSetterValue (key, value) {
-    const setterName = util.getSetterName(key)
-    return typeof (this[setterName]) === 'function' ? this[setterName](value) : value
-  }
-
-  /**
-   * Checks for existence of getter on model and if exists
-   * returns the return value of getter, otherwise returns
-   * the default value
-   *
-   * @method _getGetterValue
-   *
-   * @param  {String}        key
-   * @param  {Mixed}         value
-   * @param  {Mixed}         [passAttrs = null]
-   *
-   * @return {Mixed}
-   *
-   * @private
-   */
-  _getGetterValue (key, value, passAttrs = null) {
-    const getterName = util.getGetterName(key)
-    return typeof (this[getterName]) === 'function' ? this[getterName](passAttrs || value) : value
-  }
-
-  /**
-   * Sets `updated_at` column on the values object.
-   *
-   * Note: This method will mutate the original object
-   * by adding a new key/value pair.
-   *
-   * @method _setUpdatedAt
-   *
-   * @param  {Object}     values
-   *
-   * @private
-   */
-  _setUpdatedAt (values) {
-    const updatedAtColumn = this.constructor.updatedAtColumn
-    if (updatedAtColumn) {
-      values[updatedAtColumn] = this._getSetterValue(updatedAtColumn, new Date())
-    }
-  }
-
-  /**
    * Tells whether model instance is new or
    * persisted to database.
    *
@@ -609,6 +507,108 @@ class Model {
     this.$relations = {}
     this.$sideLoaded = {}
     this.$parent = null
+  }
+
+  /**
+   * Formats the date fields from the payload, only
+   * when they are marked as dates and there are
+   * no setters defined for them.
+   *
+   * Note: This method will mutate the existing object. If
+   * any part of your application doesn't want mutations
+   * then pass a cloned copy of object
+   *
+   * @method _formatDateFields
+   *
+   * @param  {Object}          values
+   *
+   * @return {Object}
+   *
+   * @private
+   */
+  _formatDateFields (values) {
+    _(this.constructor.dates)
+    .filter((date) => {
+      return values[date] && typeof (this[util.getSetterName(date)]) !== 'function'
+    })
+    .each((date) => { values[date] = this.constructor.formatDates(date, values[date]) })
+  }
+
+  /**
+   * Checks for existence of setter on model and if exists
+   * returns the return value of setter, otherwise returns
+   * the default value
+   *
+   * @method _getSetterValue
+   *
+   * @param  {String}        key
+   * @param  {Mixed}        value
+   *
+   * @return {Mixed}
+   *
+   * @private
+   */
+  _getSetterValue (key, value) {
+    const setterName = util.getSetterName(key)
+    return typeof (this[setterName]) === 'function' ? this[setterName](value) : value
+  }
+
+  /**
+   * Checks for existence of getter on model and if exists
+   * returns the return value of getter, otherwise returns
+   * the default value
+   *
+   * @method _getGetterValue
+   *
+   * @param  {String}        key
+   * @param  {Mixed}         value
+   * @param  {Mixed}         [passAttrs = null]
+   *
+   * @return {Mixed}
+   *
+   * @private
+   */
+  _getGetterValue (key, value, passAttrs = null) {
+    const getterName = util.getGetterName(key)
+    return typeof (this[getterName]) === 'function' ? this[getterName](passAttrs || value) : value
+  }
+
+  /**
+   * Sets `created_at` column on the values object.
+   *
+   * Note: This method will mutate the original object
+   * by adding a new key/value pair.
+   *
+   * @method _setCreatedAt
+   *
+   * @param  {Object}     values
+   *
+   * @private
+   */
+  _setCreatedAt (values) {
+    const createdAtColumn = this.constructor.createdAtColumn
+    if (createdAtColumn) {
+      values[createdAtColumn] = this._getSetterValue(createdAtColumn, new Date())
+    }
+  }
+
+  /**
+   * Sets `updated_at` column on the values object.
+   *
+   * Note: This method will mutate the original object
+   * by adding a new key/value pair.
+   *
+   * @method _setUpdatedAt
+   *
+   * @param  {Object}     values
+   *
+   * @private
+   */
+  _setUpdatedAt (values) {
+    const updatedAtColumn = this.constructor.updatedAtColumn
+    if (updatedAtColumn) {
+      values[updatedAtColumn] = this._getSetterValue(updatedAtColumn, new Date())
+    }
   }
 
   /**
@@ -721,16 +721,16 @@ class Model {
    */
   _convertDatesToMomentInstances () {
     this.constructor.dates.forEach((field) => {
-      const value = this.$attributes[field]
-      if (value) {
-        this.$attributes[field] = moment(value)
+      if (this.$attributes[field]) {
+        this.$attributes[field] = moment(this.$attributes[field])
       }
     })
   }
 
   /**
-   * Set attributes on model instance in bulk. Calling
-   * fill will remove the existing attributes.
+   * Set attributes on model instance in bulk.
+   *
+   * NOTE: Calling this method will remove the existing attributes.
    *
    * @method fill
    *
@@ -762,9 +762,9 @@ class Model {
   }
 
   /**
-   * Converts model to JSON. This method will call getters
-   * defined on the model and will attach `computed`
-   * properties to the JSON.
+   * Converts model to an object. This method will call getters,
+   * cast dates and will attach `computed` properties to the
+   * object.
    *
    * @method toObject
    *
@@ -772,6 +772,10 @@ class Model {
    */
   toObject () {
     let evaluatedAttrs = _.transform(this.$attributes, (result, value, key) => {
+      /**
+       * If value is an instance of moment and there is no getter defined
+       * for it, then cast it as a date.
+       */
       if (value instanceof moment && typeof (this[util.getGetterName(key)]) !== 'function') {
         result[key] = this.constructor.castDates(key, value)
       } else {

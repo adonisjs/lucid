@@ -34,10 +34,29 @@ class BelongsTo extends BaseRelation {
     return this.relatedQuery.where(this.foreignKey, this.$primaryKeyValue).first()
   }
 
+  /**
+   * Map values from model instances to an array. It is required
+   * to make `whereIn` query when eagerloading results.
+   *
+   * @method mapValues
+   *
+   * @param  {Array}  modelInstances
+   *
+   * @return {Array}
+   */
   mapValues (modelInstances) {
     return _.map(modelInstances, (modelInstance) => modelInstance[this.primaryKey])
   }
 
+  /**
+   * Groups related instances with their foriegn keys
+   *
+   * @method group
+   *
+   * @param  {Array} relatedInstances
+   *
+   * @return {Object} @multiple([key=String, values=Array, defaultValue=Null])
+   */
   group (relatedInstances) {
     const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
       const foreignKeyValue = relatedInstance[this.foreignKey]
@@ -51,12 +70,21 @@ class BelongsTo extends BaseRelation {
     return { key: this.primaryKey, values: transformedValues, defaultValue: null }
   }
 
+  /**
+   * Overriding fetch to call first, since belongsTo
+   * can never have many rows
+   *
+   * @method fetch
+   *
+   * @return {Object}
+   */
   fetch () {
     return this.first()
   }
 
   /**
-   * Returns the related where query
+   * Adds a where clause to limit the select search
+   * to related rows only.
    *
    * @method relatedWhere
    *

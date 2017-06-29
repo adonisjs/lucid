@@ -38,9 +38,11 @@ const proxyHandler = {
  * connection. It has couple of extra methods over knex.
  *
  * Note: You don't instantiate this class directly but instead
- * make use of @ref('DatabaseManager').
+ * make use of @ref('DatabaseManager')
  *
  * @class Database
+ * @constructor
+ * @group Database
  */
 class Database {
   constructor (config) {

@@ -176,12 +176,19 @@ class QueryBuilder {
    */
   _mapRowToInstance (row) {
     const modelInstance = new this.Model()
+
+    /**
+     * The omitBy function is used to remove sideLoaded data
+     * from the actual values and set them as $sideLoaded
+     * property on models
+     */
     modelInstance.newUp(_.omitBy(row, (value, field) => {
       if (this._sideLoaded.indexOf(field) > -1) {
         modelInstance.$sideLoaded[field] = value
         return true
       }
     }))
+
     return modelInstance
   }
 

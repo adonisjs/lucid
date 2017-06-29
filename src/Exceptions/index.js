@@ -40,25 +40,76 @@ class RuntimeException extends NE.RuntimeException {
     return new this(`Cannot process relation, since ${name} model is not persisted to database or relational value is undefined`, 500, 'E_UNSAVED_MODEL_INSTANCE')
   }
 
+  /**
+   * This exception is raised when an undefined relation is
+   * fetched or referenced within the code
+   *
+   * @method undefinedRelation
+   *
+   * @param  {String}          relation
+   * @param  {String}          name
+   *
+   * @return {Object}
+   */
   static undefinedRelation (relation, name) {
     return new this(`${relation} is not defined on ${name} model`, 500, 'E_INVALID_MODEL_RELATION')
   }
 
+  /**
+   * This exception is raised when nested relationships are not
+   * supported. `withCount` method is an example of same
+   *
+   * @method cannotNestRelation
+   *
+   * @param  {String}           relation
+   * @param  {String}           parent
+   * @param  {String}           method
+   *
+   * @return {Object}
+   */
   static cannotNestRelation (relation, parent, method) {
     const message = `${method} does not allowed nested relations. Instead use .with('${parent}', (builder) => builder.${method}('${relation}'))`
     return new this(message, 500, 'E_CANNOT_NEST_RELATION')
   }
 
+  /**
+   * This exception is raised when you are trying to eagerload
+   * relationship for multiple times
+   *
+   * @method overRidingRelation
+   *
+   * @param  {String}           relation
+   *
+   * @return {Object}
+   */
   static overRidingRelation (relation) {
     return new this(`Trying to eagerload ${relation} relationship twice`, 500, 'E_CANNOT_OVERRIDE_RELATION')
   }
 }
 
 class InvalidArgumentException extends NE.InvalidArgumentException {
+  /**
+   * This exception is raised when a parameter is missing
+   *
+   * @method missingParameter
+   *
+   * @param  {String}         message
+   *
+   * @return {Object}
+   */
   static missingParameter (message) {
     return new this(message, 500, 'E_MISSING_PARAMETER')
   }
 
+  /**
+   * This exception is raised when a parameter is invalid
+   *
+   * @method invalidParamter
+   *
+   * @param  {String}        message
+   *
+   * @return {Object}
+   */
   static invalidParamter (message) {
     return new this(message, 500, 'E_INVALID_PARAMETER')
   }

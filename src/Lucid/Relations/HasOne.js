@@ -97,7 +97,8 @@ class HasOne extends BaseRelation {
   }
 
   /**
-   * Returns the related where query
+   * Adds a where clause to limit the select search
+   * to related rows only.
    *
    * @method relatedWhere
    *

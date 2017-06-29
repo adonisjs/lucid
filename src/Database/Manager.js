@@ -20,9 +20,20 @@ const proxyGet = require('../../lib/proxyGet')
  * manages a pool of different database connections and proxy all
  * Database methods, so that it's easier to work with them.
  *
+ * ```js
+ * const Database = use('Database')
+ *
+ * // making query on default connection
+ * await Database.table('users')
+ *
+ * // making query on selected connection
+ * await Database.connection('mysql').table('users')
+ * ```
+ *
  * @binding Adonis/Src/Database
  * @singleton
  * @alias Database
+ * @group Database
  *
  * @class DatabaseManager
  */
