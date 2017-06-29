@@ -9,7 +9,7 @@
     "posttest": "npm run coverage",
     "test:local": "FORCE_COLOR=true DB=sqlite node bin/index.js --local",
     "test": "nyc npm run test:local",
-    "test:win": "set FORCE_COLOR=true && set DB=sqlite && node bin/index.js --win",
+    "test:win": "set FORCE_COLOR=true & set DB=sqlite && node bin/index.js --win",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
