@@ -10,6 +10,7 @@
 */
 
 const _ = require('lodash')
+const { resolver } = require('@adonisjs/fold')
 const CE = require('../../Exceptions')
 
 /**
@@ -153,7 +154,8 @@ class Hooks {
      * Execute all handlers in sequence
      */
     for (let handler of allHandlers) {
-      await handler.handler(ctx)
+      const { method } = resolver.forDir('modelHooks').resolveFunc(handler.handler)
+      await method(ctx)
     }
   }
 }

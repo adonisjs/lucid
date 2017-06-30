@@ -12,8 +12,18 @@
 const test = require('japa')
 const Hooks = require('../../src/Lucid/Hooks')
 const helpers = require('./helpers')
+const { ioc } = require('@adonisjs/fold')
+const { setupResolver } = require('@adonisjs/sink')
 
-test.group('Hooks', () => {
+test.group('Hooks', (group) => {
+  group.before(() => {
+    setupResolver()
+  })
+
+  group.beforeEach(() => {
+    ioc.restore()
+  })
+
   test('it should add handler for a hook', (assert) => {
     const hooks = new Hooks()
     const fn = function () {}
@@ -144,5 +154,57 @@ test.group('Hooks', () => {
 
     await hooks.exec('create')
     assert.deepEqual(stack, [2, 3, 1])
+  })
+
+  test('define hook handler as a binding', async (assert) => {
+    const hooks = new Hooks()
+    const stack = []
+
+    ioc.fake('Foo', () => {
+      return {
+        bar () {
+          stack.push(1)
+        }
+      }
+    })
+
+    hooks.addHandler('save', '@provider:Foo.bar')
+    await hooks.exec('create')
+    assert.deepEqual(stack, [1])
+  })
+
+  test('auto pic hook from pre-defined directory', async (assert) => {
+    const hooks = new Hooks()
+    const stack = []
+
+    ioc.fake('App/Models/Hooks/Foo', () => {
+      return {
+        bar () {
+          stack.push(1)
+        }
+      }
+    })
+
+    hooks.addHandler('save', 'Foo.bar')
+    await hooks.exec('create')
+    assert.deepEqual(stack, [1])
+  })
+
+  test('hook class should have access to this', async (assert) => {
+    assert.plan(1)
+    const hooks = new Hooks()
+
+    class Foo {
+      bar () {
+        assert.instanceOf(this, Foo)
+      }
+    }
+
+    ioc.fake('App/Models/Hooks/Foo', () => {
+      return new Foo()
+    })
+
+    hooks.addHandler('save', 'Foo.bar')
+    await hooks.exec('create')
   })
 })
