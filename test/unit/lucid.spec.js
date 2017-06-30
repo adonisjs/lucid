@@ -1170,4 +1170,40 @@ test.group('Model', (group) => {
       assert.equal(message, 'E_INVALID_PARAMETER: User.createMany expects an array of values')
     }
   })
+
+  test('throw exception when unable to find row', async (assert) => {
+    assert.plan(1)
+    class User extends Model {
+    }
+
+    try {
+      await User.findOrFail(1)
+    } catch ({ message }) {
+      assert.equal(message, 'E_MISSING_DATABASE_ROW: Cannot find database row for User model')
+    }
+  })
+
+  test('throw exception when unable to find row via findByOrFail', async (assert) => {
+    assert.plan(1)
+    class User extends Model {
+    }
+
+    try {
+      await User.findByOrFail('username', 'virk')
+    } catch ({ message }) {
+      assert.equal(message, 'E_MISSING_DATABASE_ROW: Cannot find database row for User model')
+    }
+  })
+
+  test('throw exception via firstOrFail', async (assert) => {
+    assert.plan(1)
+    class User extends Model {
+    }
+
+    try {
+      await User.firstOrFail()
+    } catch ({ message }) {
+      assert.equal(message, 'E_MISSING_DATABASE_ROW: Cannot find database row for User model')
+    }
+  })
 })

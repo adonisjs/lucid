@@ -293,6 +293,25 @@ class QueryBuilder {
   }
 
   /**
+   * Throws an exception when unable to find the first
+   * row for the built query
+   *
+   * @method firstOrFail
+   *
+   * @return {Model}
+   *
+   * @throws {ModelNotFoundException} If unable to find first row
+   */
+  async firstOrFail () {
+    const returnValue = await this.first()
+    if (!returnValue) {
+      throw CE.ModelNotFoundException.raise(this.Model.name)
+    }
+
+    return returnValue
+  }
+
+  /**
    * Paginate records, same as fetch but returns a
    * collection with pagination info
    *

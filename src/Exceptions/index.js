@@ -121,4 +121,10 @@ class ModelException extends RuntimeException {
   }
 }
 
-module.exports = { RuntimeException, InvalidArgumentException, ModelException }
+class ModelNotFoundException extends RuntimeException {
+  static raise (name) {
+    return new this(`Cannot find database row for ${name} model`, 500, 'E_MISSING_DATABASE_ROW')
+  }
+}
+
+module.exports = { RuntimeException, InvalidArgumentException, ModelException, ModelNotFoundException }

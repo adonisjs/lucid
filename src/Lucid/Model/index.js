@@ -1013,17 +1013,50 @@ class Model {
   }
 
   /**
+   * Find a row using the primary key or
+   * fail with an exception
+   *
+   * @method findByOrFail
+   *
+   * @param  {String|Number}     value
+   *
+   * @return {Model}
+   *
+   * @throws {ModelNotFoundException} If unable to find row
+   */
+  static findOrFail (value) {
+    return this.findByOrFail(this.primaryKey, value)
+  }
+
+  /**
    * Find a model instance using key/value pair
    *
    * @method findBy
    *
    * @param  {String} key
-   * @param  {Mixed} value
+   * @param  {String|Number} value
    *
    * @return {Model|Null}
    */
   static findBy (key, value) {
     return this.query().where(key, value).first()
+  }
+
+  /**
+   * Find a model instance using key/value pair or
+   * fail with an exception
+   *
+   * @method findByOrFail
+   *
+   * @param  {String}     key
+   * @param  {String|Number}     value
+   *
+   * @return {Model}
+   *
+   * @throws {ModelNotFoundException} If unable to find row
+   */
+  static findByOrFail (key, value) {
+    return this.query().where(key, value).firstOrFail()
   }
 
   /**
@@ -1036,6 +1069,20 @@ class Model {
    */
   static first () {
     return this.query().orderBy(this.primaryKey, 'asc').first()
+  }
+
+  /**
+   * Returns the first row or throw an exception.
+   * This method will add orderBy asc clause.
+   *
+   * @method first
+   *
+   * @return {Model}
+   *
+   * @throws {ModelNotFoundException} If unable to find row
+   */
+  static firstOrFail () {
+    return this.query().orderBy(this.primaryKey, 'asc').firstOrFail()
   }
 
   /**
