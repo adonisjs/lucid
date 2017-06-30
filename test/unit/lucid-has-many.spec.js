@@ -638,4 +638,174 @@ test.group('Relations | Has Many', (group) => {
     assert.isArray(json.data[0].cars)
     assert.isArray(json.data[1].cars)
   })
+
+  test('save related model instance', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const mercedes = new Car()
+    mercedes.name = 'mercedes'
+    mercedes.model = '1992'
+
+    await user.cars().save(mercedes)
+    assert.equal(mercedes.user_id, user.id)
+    assert.isTrue(mercedes.$persisted)
+    assert.isFalse(mercedes.isNew)
+  })
+
+  test('create related model instance', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const mercedes = await user.cars().create({ name: 'mercedes', model: '1992' })
+    assert.equal(mercedes.user_id, 1)
+    assert.equal(mercedes.user_id, user.id)
+    assert.isTrue(mercedes.$persisted)
+    assert.isFalse(mercedes.isNew)
+  })
+
+  test('persist parent model when isNew', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+
+    const mercedes = await user.cars().create({ name: 'mercedes', model: '1992' })
+    assert.equal(mercedes.user_id, 1)
+    assert.equal(mercedes.user_id, user.id)
+    assert.isTrue(mercedes.$persisted)
+    assert.isFalse(mercedes.isNew)
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.isNew)
+  })
+
+  test('persist parent model when isNew while calling save', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+
+    const mercedes = new Car()
+    mercedes.name = 'mercedes'
+    mercedes.model = '1992'
+
+    await user.cars().save(mercedes)
+    assert.equal(mercedes.user_id, 1)
+    assert.equal(mercedes.user_id, user.id)
+    assert.isTrue(mercedes.$persisted)
+    assert.isFalse(mercedes.isNew)
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.isNew)
+  })
+
+  test('saveMany of related instances', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+
+    const mercedes = new Car()
+    mercedes.name = 'mercedes'
+    mercedes.model = '1992'
+
+    const ferrari = new Car()
+    ferrari.name = 'ferrari'
+    ferrari.model = '2002'
+
+    await user.cars().saveMany([mercedes, ferrari])
+    assert.equal(mercedes.user_id, 1)
+    assert.equal(mercedes.user_id, user.id)
+    assert.equal(ferrari.user_id, user.id)
+    assert.isTrue(mercedes.$persisted)
+    assert.isFalse(ferrari.isNew)
+    assert.isTrue(ferrari.$persisted)
+    assert.isFalse(mercedes.isNew)
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.isNew)
+  })
+
+  test('createMany of related instances', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+
+    const [mercedes, ferrari] = await user.cars().createMany([{ name: 'mercedes', model: '1992' }, { name: 'ferrari', model: '2002' }])
+
+    assert.equal(mercedes.user_id, 1)
+    assert.equal(mercedes.user_id, user.id)
+    assert.equal(ferrari.user_id, user.id)
+    assert.isTrue(mercedes.$persisted)
+    assert.isFalse(ferrari.isNew)
+    assert.isTrue(ferrari.$persisted)
+    assert.isFalse(mercedes.isNew)
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.isNew)
+  })
 })

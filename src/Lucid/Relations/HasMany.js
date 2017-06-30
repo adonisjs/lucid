@@ -11,6 +11,7 @@
 
 const _ = require('lodash')
 const BaseRelation = require('./BaseRelation')
+const CE = require('../../Exceptions')
 
 /**
  * HasMany relationship instance is used to define a
@@ -21,6 +22,23 @@ const BaseRelation = require('./BaseRelation')
  * @constructor
  */
 class HasMany extends BaseRelation {
+  /**
+   * Persists the parent model instance if it's not
+   * persisted already. This is done before saving
+   * the related instance
+   *
+   * @method _persistParentIfRequired
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  async _persistParentIfRequired () {
+    if (this.parentInstance.isNew) {
+      await this.parentInstance.save()
+    }
+  }
+
   /**
    * Load a single relationship from parent to child
    * model, but only for one row.
@@ -103,6 +121,74 @@ class HasMany extends BaseRelation {
       this.relatedQuery.count('*')
     }
     return this.relatedQuery.query
+  }
+
+  /**
+   * Saves the related instance to the database. Foreign
+   * key is set automatically
+   *
+   * @method save
+   *
+   * @param  {Object} relatedInstance
+   *
+   * @return {Promise}
+   */
+  async save (relatedInstance) {
+    await this._persistParentIfRequired()
+    relatedInstance[this.foreignKey] = this.$primaryKeyValue
+    return relatedInstance.save()
+  }
+
+  /**
+   * Creates the new related instance model and persist
+   * it to database. Foreign key is set automatically
+   *
+   * @method create
+   *
+   * @param  {Object} payload
+   *
+   * @return {Promise}
+   */
+  async create (payload) {
+    await this._persistParentIfRequired()
+    payload[this.foreignKey] = this.$primaryKeyValue
+    return this.relatedModel.create(payload)
+  }
+
+  /**
+   * Creates an array of model instances in parallel
+   *
+   * @method createMany
+   *
+   * @param  {Array}   arrayOfPayload
+   *
+   * @return {Array}
+   */
+  async createMany (arrayOfPayload) {
+    if (arrayOfPayload instanceof Array === false) {
+      throw CE.InvalidArgumentException.invalidParamter('hasMany.createMany expects an array of values')
+    }
+
+    await this._persistParentIfRequired()
+    return Promise.all(arrayOfPayload.map((payload) => this.create(payload)))
+  }
+
+  /**
+   * Creates an array of model instances in parallel
+   *
+   * @method createMany
+   *
+   * @param  {Array}   arrayOfRelatedInstances
+   *
+   * @return {Array}
+   */
+  async saveMany (arrayOfRelatedInstances) {
+    if (arrayOfRelatedInstances instanceof Array === false) {
+      throw CE.InvalidArgumentException.invalidParamter('hasMany.saveMany expects an array of related model instances')
+    }
+
+    await this._persistParentIfRequired()
+    return Promise.all(arrayOfRelatedInstances.map((relatedInstance) => this.save(relatedInstance)))
   }
 }
 
