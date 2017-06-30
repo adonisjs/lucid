@@ -11,6 +11,7 @@
 
 const _ = require('lodash')
 const moment = require('moment')
+const { resolver } = require('@adonisjs/fold')
 
 const Hooks = require('../Hooks')
 const QueryBuilder = require('../QueryBuilder')
@@ -278,7 +279,7 @@ class Model {
    * @static
    */
   static query () {
-    return new QueryBuilder(this, this.connection)
+    return new (this.QueryBuilder || QueryBuilder)(this, this.connection)
   }
 
   /**
@@ -293,6 +294,7 @@ class Model {
    */
   static boot () {
     this.hydrate()
+    _.each(this.traits, (trait) => this.addTrait(trait))
   }
 
   /**
@@ -329,6 +331,39 @@ class Model {
      * query builder queries.
      */
     this.$globalScopes = []
+
+    /**
+     * We use the default query builder class to run queries, but as soon
+     * as someone wants to add methods to the query builder via traits,
+     * we need an isolated copy of query builder class just for that
+     * model, so that the methods added via traits are not impacting
+     * other models.
+     */
+    this.QueryBuilder = null
+  }
+
+  /**
+   * Define a query macro to be added to query builder.
+   *
+   * @method queryMacro
+   *
+   * @param  {String}   name
+   * @param  {Function} fn
+   *
+   * @chainable
+   */
+  static queryMacro (name, fn) {
+    /**
+     * Someone wished to add methods to query builder but just for
+     * this model. First get a unique copy of query builder and
+     * then add methods to it's prototype.
+     */
+    if (!this.QueryBuilder) {
+      this.QueryBuilder = class ExtendedQueryBuilder extends QueryBuilder {}
+    }
+
+    this.QueryBuilder.prototype[name] = fn
+    return this
   }
 
   /**
@@ -386,6 +421,24 @@ class Model {
   static onQuery (callback) {
     this.$queryListeners.push(callback)
     return this
+  }
+
+  /**
+   * Adds a new trait to the model. Ideally it does a very
+   * simple thing and that is to pass the model class to
+   * your trait and your own it from there
+   *
+   * @method addTrait
+   *
+   * @param  {Function|String} trait - A plain function or reference to IoC container string
+   */
+  static addTrait (trait) {
+    if (typeof (trait) !== 'function' && typeof (trait) !== 'string') {
+      throw new Error('fuck off')
+    }
+
+    const { method } = resolver.forDir('modelTraits').resolveFunc(trait)
+    method(this)
   }
 
   /**
