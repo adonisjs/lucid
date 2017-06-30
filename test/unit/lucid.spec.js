@@ -1206,4 +1206,16 @@ test.group('Model', (group) => {
       assert.equal(message, 'E_MISSING_DATABASE_ROW: Cannot find database row for User model')
     }
   })
+
+  test('return model instance findByOrFail finds row', async (assert) => {
+    assert.plan(1)
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    const user = await User.findByOrFail('username', 'virk')
+    assert.instanceOf(user, User)
+  })
 })
