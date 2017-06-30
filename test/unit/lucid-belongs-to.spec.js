@@ -386,4 +386,171 @@ test.group('Relations | Belongs To', (group) => {
     assert.equal(profiles.first().profile_name, 'nikk')
     assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where not exists (select * from "users" where "profile_name" = ? and profiles.user_id = users.id)'))
   })
+
+  test('associate related instance', async (assert) => {
+    class User extends Model {
+    }
+
+    class Profile extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let profileQuery = null
+    Profile.onQuery((query) => (profileQuery = query))
+
+    const profile = new Profile()
+    profile.profile_name = 'virk'
+    await profile.save()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await profile.user().associate(user)
+    assert.equal(profile.user_id, 1)
+    assert.isFalse(profile.isNew)
+
+    const freshProfile = await ioc.use('Database').table('profiles').first()
+    assert.equal(freshProfile.id, 1)
+    assert.equal(freshProfile.user_id, 1)
+    assert.equal(profileQuery.sql, helpers.formatQuery('update "profiles" set "updated_at" = ?, "user_id" = ? where "id" = ?'))
+  })
+
+  test('persist parent record if not already persisted', async (assert) => {
+    class User extends Model {
+    }
+
+    class Profile extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let profileQuery = null
+    Profile.onQuery((query) => (profileQuery = query))
+
+    const profile = new Profile()
+    profile.profile_name = 'virk'
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await profile.user().associate(user)
+    assert.equal(profile.user_id, 1)
+    assert.isFalse(profile.isNew)
+
+    const freshProfile = await ioc.use('Database').table('profiles').first()
+    assert.equal(freshProfile.id, 1)
+    assert.equal(freshProfile.user_id, 1)
+    assert.equal(profileQuery.sql, helpers.formatQuery(helpers.addReturningStatement('insert into "profiles" ("created_at", "profile_name", "updated_at", "user_id") values (?, ?, ?, ?)', 'id')))
+    assert.isNull(userQuery)
+  })
+
+  test('persist related instance if not already persisted', async (assert) => {
+    class User extends Model {
+    }
+
+    class Profile extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let profileQuery = null
+    Profile.onQuery((query) => (profileQuery = query))
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    const profile = new Profile()
+    profile.profile_name = 'virk'
+
+    const user = new User()
+    user.username = 'virk'
+
+    await profile.user().associate(user)
+    assert.equal(profile.user_id, 1)
+    assert.isFalse(profile.isNew)
+    assert.isFalse(user.isNew)
+
+    const freshProfile = await ioc.use('Database').table('profiles').first()
+    assert.equal(freshProfile.id, 1)
+    assert.equal(freshProfile.user_id, 1)
+
+    const freshUser = await ioc.use('Database').table('users').first()
+    assert.equal(freshUser.id, 1)
+    assert.equal(profileQuery.sql, helpers.formatQuery(helpers.addReturningStatement('insert into "profiles" ("created_at", "profile_name", "updated_at", "user_id") values (?, ?, ?, ?)', 'id')))
+    assert.equal(userQuery.sql, helpers.formatQuery(helpers.addReturningStatement('insert into "users" ("created_at", "updated_at", "username") values (?, ?, ?)', 'id')))
+  })
+
+  test('dissociate existing relationship', async (assert) => {
+    class User extends Model {
+    }
+
+    class Profile extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let profileQuery = null
+    Profile.onQuery((query) => (profileQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('profiles').insert({ profile_name: 'virk', user_id: 1 })
+
+    const profile = await Profile.find(1)
+    assert.equal(profile.user_id, 1)
+
+    await profile.user().dissociate()
+    assert.equal(profile.user_id, null)
+    assert.isFalse(profile.isNew)
+
+    const freshProfile = await ioc.use('Database').table('profiles').first()
+    assert.equal(freshProfile.id, 1)
+    assert.equal(freshProfile.user_id, null)
+
+    assert.equal(profileQuery.sql, helpers.formatQuery('update "profiles" set "updated_at" = ?, "user_id" = ? where "id" = ?'))
+    assert.isNull(profileQuery.bindings[1])
+  })
+
+  test('throw exception when trying to dissociate fresh models', async (assert) => {
+    assert.plan(1)
+    class User extends Model {
+    }
+
+    class Profile extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    const profile = new Profile()
+    try {
+      await profile.user().dissociate()
+    } catch ({ message }) {
+      assert.equal(message, 'E_UNSAVED_MODEL_INSTANCE: Cannot dissociate relationship since model instance is not persisted')
+    }
+  })
 })

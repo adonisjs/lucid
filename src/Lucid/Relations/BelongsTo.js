@@ -11,6 +11,7 @@
 
 const _ = require('lodash')
 const BaseRelation = require('./BaseRelation')
+const CE = require('../../Exceptions')
 
 /**
  * The BelongsTo relationship defines a relation between
@@ -98,6 +99,69 @@ class BelongsTo extends BaseRelation {
       this.relatedQuery.count('*')
     }
     return this.relatedQuery.query
+  }
+
+  /**
+   * DO NOT DOCUMENT
+   */
+  create () {
+    throw CE.ModelRelationException.unSupportedMethod('create', 'belongsTo')
+  }
+
+  /**
+   * DO NOT DOCUMENT
+   */
+  save () {
+    throw CE.ModelRelationException.unSupportedMethod('save', 'belongsTo')
+  }
+
+  /**
+   * DO NOT DOCUMENT
+   */
+  createMany () {
+    throw CE.ModelRelationException.unSupportedMethod('createMany', 'belongsTo')
+  }
+
+  /**
+   * DO NOT DOCUMENT
+   */
+  saveMany () {
+    throw CE.ModelRelationException.unSupportedMethod('saveMany', 'belongsTo')
+  }
+
+  /**
+   * Associate 2 models together, also this method will save
+   * the related model if not already persisted
+   *
+   * @method associate
+   *
+   * @param  {Object}  relatedInstance
+   *
+   * @return {Promise}
+   */
+  async associate (relatedInstance) {
+    if (relatedInstance.isNew) {
+      await relatedInstance.save()
+    }
+
+    this.parentInstance[this.primaryKey] = relatedInstance[this.foreignKey]
+    return this.parentInstance.save()
+  }
+
+  /**
+   * Dissociate relationship from database by setting `foriegnKey` to null
+   *
+   * @method dissociate
+   *
+   * @return {Promise}
+   */
+  async dissociate () {
+    if (this.parentInstance.isNew) {
+      throw CE.ModelRelationException.unsavedModelInstance('Cannot dissociate relationship since model instance is not persisted')
+    }
+
+    this.parentInstance[this.primaryKey] = null
+    return this.parentInstance.save()
   }
 }
 

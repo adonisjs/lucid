@@ -131,6 +131,10 @@ class ModelRelationException extends NE.LogicalException {
   static unSupportedMethod (method, relation) {
     return new this(`${method} is not supported by ${relation} relation`, 500, 'E_INVALID_RELATION_METHOD')
   }
+
+  static unsavedModelInstance (message) {
+    return new this(message, 500, 'E_UNSAVED_MODEL_INSTANCE')
+  }
 }
 
 module.exports = {
