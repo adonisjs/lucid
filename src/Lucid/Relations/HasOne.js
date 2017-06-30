@@ -113,6 +113,36 @@ class HasOne extends BaseRelation {
     }
     return this.relatedQuery.query
   }
+
+  /**
+   * Saves the related instance to the database. Foreign
+   * key is set automatically
+   *
+   * @method save
+   *
+   * @param  {Object} relatedInstance
+   *
+   * @return {Promise}
+   */
+  save (relatedInstance) {
+    relatedInstance[this.foreignKey] = this.$primaryKeyValue
+    return relatedInstance.save()
+  }
+
+  /**
+   * Creates the new related instance model and persist
+   * it to database. Foreign key is set automatically
+   *
+   * @method create
+   *
+   * @param  {Object} payload
+   *
+   * @return {Promise}
+   */
+  create (payload) {
+    payload[this.foreignKey] = this.$primaryKeyValue
+    return this.relatedModel.create(payload)
+  }
 }
 
 module.exports = HasOne

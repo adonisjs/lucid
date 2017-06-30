@@ -1398,4 +1398,54 @@ test.group('Relations | HasOne', (group) => {
       assert.equal(message, 'E_CANNOT_OVERRIDE_RELATION: Trying to eagerload cars relationship twice')
     }
   })
+
+  test('save related hasOne relation', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    Profile._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    assert.isTrue(user.$persisted)
+
+    const profile = new Profile()
+    profile.profile_name = 'virk'
+    await user.profile().save(profile)
+
+    assert.equal(profile.user_id, 1)
+    assert.isTrue(profile.$persisted)
+  })
+
+  test('create related instance', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    Profile._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    assert.isTrue(user.$persisted)
+    const profile = await user.profile().create({ profile_name: 'virk' })
+    assert.equal(profile.user_id, 1)
+    assert.isTrue(profile.$persisted)
+  })
 })
