@@ -83,7 +83,7 @@ test.group('Traits', (group) => {
     class User extends Model {
       static boot () {
         super.boot()
-        this.addTrait('@provider:FooTrait.register')
+        this.addTrait('@provider:FooTrait')
       }
     }
 
@@ -106,7 +106,7 @@ test.group('Traits', (group) => {
     class User extends Model {
       static boot () {
         super.boot()
-        this.addTrait('FooTrait.register')
+        this.addTrait('FooTrait')
       }
     }
 
@@ -128,7 +128,7 @@ test.group('Traits', (group) => {
 
     class User extends Model {
       static get traits () {
-        return ['FooTrait.register']
+        return ['FooTrait']
       }
     }
 

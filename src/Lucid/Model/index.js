@@ -437,6 +437,10 @@ class Model {
       throw new Error('fuck off')
     }
 
+    /**
+     * If trait is a string, then point to register function
+     */
+    trait = typeof (trait) === 'string' ? `${trait}.register` : trait
     const { method } = resolver.forDir('modelTraits').resolveFunc(trait)
     method(this)
   }
