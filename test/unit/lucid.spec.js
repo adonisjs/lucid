@@ -1083,4 +1083,50 @@ test.group('Model', (group) => {
 
     assert.equal(userQuery.sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ? where "id" = ?'))
   })
+
+  test('should be able to delete the model instance', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    const user = await User.create({ username: 'virk' })
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.isNew)
+    await user.delete()
+    const fn = () => {
+      user.username = 'virk'
+    }
+
+    assert.isTrue(user.isDeleted)
+    assert.throw(fn, 'E_DELETED_MODEL: Cannot edit deleted model instance for User model')
+    assert.equal(userQuery.sql, helpers.formatQuery('delete from "users" where "id" = ?'))
+  })
+
+  test('ignore global scopes when deleting model', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addGlobalScope(function (builder) {
+      builder.where('username', 'virk')
+    })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    const user = await User.create({ username: 'virk' })
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.isNew)
+    await user.delete()
+    const fn = () => {
+      user.username = 'virk'
+    }
+
+    assert.isTrue(user.isDeleted)
+    assert.throw(fn, 'E_DELETED_MODEL: Cannot edit deleted model instance for User model')
+    assert.equal(userQuery.sql, helpers.formatQuery('delete from "users" where "id" = ?'))
+  })
 })

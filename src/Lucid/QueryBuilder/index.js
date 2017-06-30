@@ -333,7 +333,7 @@ class QueryBuilder {
    *
    * @return {Promise}
    */
-  async update (values) {
+  update (values) {
     const valuesCopy = _.clone(values)
     const fakeModel = new this.Model()
     fakeModel._setUpdatedAt(valuesCopy)
@@ -344,6 +344,18 @@ class QueryBuilder {
      */
     this._applyScopes()
     return this.query.update(valuesCopy)
+  }
+
+  /**
+   * Deletes the rows from the database.
+   *
+   * @method delete
+   *
+   * @return {Promise}
+   */
+  delete () {
+    this._applyScopes()
+    return this.query.delete()
   }
 
   /**

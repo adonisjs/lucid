@@ -553,6 +553,18 @@ class Model {
   }
 
   /**
+   * Returns a boolean indicating whether model
+   * has been deleted or not
+   *
+   * @method isDeleted
+   *
+   * @return {Boolean}
+   */
+  get isDeleted () {
+    return this.$frozen
+  }
+
+  /**
    * Instantiate the model by defining constructor properties
    * and also setting `__setters__` to tell the proxy that
    * these values should be set directly on the constructor
@@ -572,7 +584,8 @@ class Model {
       '$originalAttributes',
       '$relations',
       '$sideLoaded',
-      '$parent'
+      '$parent',
+      '$frozen'
     ]
 
     this.$attributes = {}
@@ -581,6 +594,7 @@ class Model {
     this.$relations = {}
     this.$sideLoaded = {}
     this.$parent = null
+    this.$frozen = false
   }
 
   /**
@@ -769,7 +783,11 @@ class Model {
       /**
        * Set proper timestamps
        */
-      await this.constructor.query().where(this.constructor.primaryKey, this.primaryKeyValue).update(this.dirty)
+      await this.constructor
+        .query()
+        .where(this.constructor.primaryKey, this.primaryKeyValue)
+        .ignoreScopes()
+        .update(this.dirty)
       /**
        * Sync originals to find a diff when updating for next time
        */
@@ -833,6 +851,17 @@ class Model {
    */
   set (name, value) {
     this.$attributes[name] = this._getSetterValue(name, value)
+  }
+
+  /**
+   * Freezes the model instance for modifications
+   *
+   * @method freeze
+   *
+   * @return {void}
+   */
+  freeze () {
+    this.$frozen = true
   }
 
   /**
@@ -900,6 +929,40 @@ class Model {
    */
   async save () {
     return this.isNew ? this._insert() : this._update()
+  }
+
+  /**
+   * Deletes the model instance from the database. Also this
+   * method will freeze the model instance for updates
+   *
+   * @method delete
+   *
+   * @return {Boolean}
+   */
+  async delete () {
+    /**
+     * Executing before hooks
+     */
+    await this.constructor.$hooks.before.exec('delete', this)
+
+    const affected = await this.constructor
+      .query()
+      .where(this.constructor.primaryKey, this.primaryKeyValue)
+      .ignoreScopes()
+      .delete()
+
+    /**
+     * If model was delete then freeze it modifications
+     */
+    if (affected > 0) {
+      this.freeze()
+    }
+
+    /**
+     * Executing after hooks
+     */
+    await this.constructor.$hooks.after.exec('delete', this)
+    return !!affected
   }
 
   /**

@@ -115,4 +115,10 @@ class InvalidArgumentException extends NE.InvalidArgumentException {
   }
 }
 
-module.exports = { RuntimeException, InvalidArgumentException }
+class ModelException extends RuntimeException {
+  static deletedInstance (name) {
+    return new this(`Cannot edit deleted model instance for ${name} model`, 500, 'E_DELETED_MODEL')
+  }
+}
+
+module.exports = { RuntimeException, InvalidArgumentException, ModelException }
