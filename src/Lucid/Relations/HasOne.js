@@ -11,6 +11,7 @@
 
 const _ = require('lodash')
 const BaseRelation = require('./BaseRelation')
+const CE = require('../../Exceptions')
 
 /**
  * The HasOne relationship defines a relation between
@@ -116,7 +117,10 @@ class HasOne extends BaseRelation {
 
   /**
    * Saves the related instance to the database. Foreign
-   * key is set automatically
+   * key is set automatically.
+   *
+   * NOTE: This method will persist the parent model if
+   * not persisted already.
    *
    * @method save
    *
@@ -124,14 +128,20 @@ class HasOne extends BaseRelation {
    *
    * @return {Promise}
    */
-  save (relatedInstance) {
+  async save (relatedInstance) {
+    if (this.parentInstance.isNew) {
+      await this.parentInstance.save()
+    }
     relatedInstance[this.foreignKey] = this.$primaryKeyValue
     return relatedInstance.save()
   }
 
   /**
    * Creates the new related instance model and persist
-   * it to database. Foreign key is set automatically
+   * it to database. Foreign key is set automatically.
+   *
+   * NOTE: This method will persist the parent model if
+   * not persisted already.
    *
    * @method create
    *
@@ -139,9 +149,27 @@ class HasOne extends BaseRelation {
    *
    * @return {Promise}
    */
-  create (payload) {
+  async create (payload) {
+    if (this.parentInstance.isNew) {
+      await this.parentInstance.save()
+    }
+
     payload[this.foreignKey] = this.$primaryKeyValue
     return this.relatedModel.create(payload)
+  }
+
+  /**
+   * DO NOT DOCUMENT
+   */
+  createMany () {
+    throw CE.ModelRelationException.unSupportedMethod('createMany', 'hasOne')
+  }
+
+  /**
+   * DO NOT DOCUMENT
+   */
+  saveMany () {
+    throw CE.ModelRelationException.unSupportedMethod('saveMany', 'hasOne')
   }
 }
 

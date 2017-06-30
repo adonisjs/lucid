@@ -115,16 +115,28 @@ class InvalidArgumentException extends NE.InvalidArgumentException {
   }
 }
 
-class ModelException extends RuntimeException {
+class ModelException extends NE.LogicalException {
   static deletedInstance (name) {
     return new this(`Cannot edit deleted model instance for ${name} model`, 500, 'E_DELETED_MODEL')
   }
 }
 
-class ModelNotFoundException extends RuntimeException {
+class ModelNotFoundException extends NE.LogicalException {
   static raise (name) {
-    return new this(`Cannot find database row for ${name} model`, 500, 'E_MISSING_DATABASE_ROW')
+    return new this(`Cannot find database row for ${name} model`, 404, 'E_MISSING_DATABASE_ROW')
   }
 }
 
-module.exports = { RuntimeException, InvalidArgumentException, ModelException, ModelNotFoundException }
+class ModelRelationException extends NE.LogicalException {
+  static unSupportedMethod (method, relation) {
+    return new this(`${method} is not supported by ${relation} relation`, 500, 'E_INVALID_RELATION_METHOD')
+  }
+}
+
+module.exports = {
+  RuntimeException,
+  InvalidArgumentException,
+  ModelException,
+  ModelNotFoundException,
+  ModelRelationException
+}

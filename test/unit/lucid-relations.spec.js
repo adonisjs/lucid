@@ -1448,4 +1448,89 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(profile.user_id, 1)
     assert.isTrue(profile.$persisted)
   })
+
+  test('persist parent model if it\'s not persisted', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    Profile._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    assert.isTrue(user.isNew)
+
+    const profile = new Profile()
+    profile.profile_name = 'virk'
+
+    await user.profile().save(profile)
+    assert.equal(profile.user_id, 1)
+    assert.isTrue(profile.$persisted)
+    assert.isTrue(user.$persisted)
+  })
+
+  test('persist parent model if it\'s not persisted via create method', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    Profile._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    assert.isTrue(user.isNew)
+
+    const profile = await user.profile().create({ profile_name: 'virk' })
+    assert.equal(profile.user_id, 1)
+    assert.isTrue(profile.$persisted)
+    assert.isTrue(user.$persisted)
+  })
+
+  test('createMany with hasOne should throw exception', (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    Profile._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    const fn = () => user.profile().createMany({ profile_name: 'virk' })
+    assert.throw(fn, 'E_INVALID_RELATION_METHOD: createMany is not supported by hasOne relation')
+  })
+
+  test('saveMany with hasOne should throw exception', (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    Profile._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    const fn = () => user.profile().saveMany({ profile_name: 'virk' })
+    assert.throw(fn, 'E_INVALID_RELATION_METHOD: saveMany is not supported by hasOne relation')
+  })
 })
