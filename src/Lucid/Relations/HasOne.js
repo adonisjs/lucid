@@ -22,6 +22,23 @@ const CE = require('../../Exceptions')
  */
 class HasOne extends BaseRelation {
   /**
+   * Persists the parent model instance if it's not
+   * persisted already. This is done before saving
+   * the related instance
+   *
+   * @method _persistParentIfRequired
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  async _persistParentIfRequired () {
+    if (this.parentInstance.isNew) {
+      await this.parentInstance.save()
+    }
+  }
+
+  /**
    * Load a single relationship from parent to child
    * model, but only for one row.
    *
@@ -129,9 +146,7 @@ class HasOne extends BaseRelation {
    * @return {Promise}
    */
   async save (relatedInstance) {
-    if (this.parentInstance.isNew) {
-      await this.parentInstance.save()
-    }
+    await this._persistParentIfRequired()
     relatedInstance[this.foreignKey] = this.$primaryKeyValue
     return relatedInstance.save()
   }
@@ -150,10 +165,7 @@ class HasOne extends BaseRelation {
    * @return {Promise}
    */
   async create (payload) {
-    if (this.parentInstance.isNew) {
-      await this.parentInstance.save()
-    }
-
+    await this._persistParentIfRequired()
     payload[this.foreignKey] = this.$primaryKeyValue
     return this.relatedModel.create(payload)
   }
