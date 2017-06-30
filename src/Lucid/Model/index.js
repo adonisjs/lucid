@@ -487,6 +487,23 @@ class Model {
   }
 
   /**
+   * Creates a new model instances from payload
+   * and also persist it to database
+   *
+   * @method create
+   *
+   * @param  {Object} payload
+   *
+   * @return {Model} Model instance is returned
+   */
+  static async create (payload) {
+    const modelInstance = new this()
+    modelInstance.fill(payload)
+    await modelInstance.save()
+    return modelInstance
+  }
+
+  /**
    * Tells whether model instance is new or
    * persisted to database.
    *
@@ -752,7 +769,7 @@ class Model {
       /**
        * Set proper timestamps
        */
-      await this.constructor.query().update(this.dirty)
+      await this.constructor.query().where(this.constructor.primaryKey, this.primaryKeyValue).update(this.dirty)
       /**
        * Sync originals to find a diff when updating for next time
        */

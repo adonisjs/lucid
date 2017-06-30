@@ -15,7 +15,7 @@ const path = require('path')
 const moment = require('moment')
 const _ = require('lodash')
 const { ioc } = require('@adonisjs/fold')
-const { Config } = require('@adonisjs/sink')
+const { Config, setupResolver } = require('@adonisjs/sink')
 
 const helpers = require('./helpers')
 const Model = require('../../src/Lucid/Model')
@@ -36,6 +36,7 @@ test.group('Model', (group) => {
 
     await fs.ensureDir(path.join(__dirname, './tmp'))
     await helpers.createTables(ioc.use('Database'))
+    setupResolver()
   })
 
   group.afterEach(async () => {
@@ -315,9 +316,9 @@ test.group('Model', (group) => {
       helpers.formatQuery('insert into "users" ("created_at", "updated_at", "username") values (?, ?, ?)'),
       'id'
     ))
-    assert.equal(queries[1].sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ?'))
+    assert.equal(queries[1].sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ? where "id" = ?'))
     assert.deepEqual(queries[1].bindings[1], 'nikk')
-    assert.equal(queries[2].sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ?'))
+    assert.equal(queries[2].sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ? where "id" = ?'))
     assert.deepEqual(queries[2].bindings[1], 'virk')
     assert.deepEqual(user.dirty, {})
   })
@@ -402,7 +403,7 @@ test.group('Model', (group) => {
     const user = users.first()
     user.username = 'nikk'
     await user.save()
-    assert.equal(userQuery.sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ? where "id" = ?'))
   })
 
   test('call update hooks when updating model', async (assert) => {
@@ -1054,5 +1055,32 @@ test.group('Model', (group) => {
     assert.isTrue(moment(json.updated_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
     assert.isTrue(moment(json.login_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
     assert.deepEqual(casting.map((field) => field.key), ['created_at', 'updated_at', 'login_at'])
+  })
+
+  test('create model instance and persist it to database', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    const user = await User.create({ username: 'virk' })
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.isNew)
+  })
+
+  test('further changes to instance returned by create should update the model', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    const user = await User.create({ username: 'virk' })
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.isNew)
+    user.username = 'nikk'
+    await user.save()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ? where "id" = ?'))
   })
 })
