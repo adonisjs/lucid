@@ -504,6 +504,22 @@ class Model {
   }
 
   /**
+   * Creates many instance of model in parallel
+   *
+   * @method createMany
+   *
+   * @param  {Array} payloadArray
+   *
+   * @return {Array} Array of model instances is returned
+   */
+  static async createMany (payloadArray) {
+    if (payloadArray instanceof Array === false) {
+      throw CE.InvalidArgumentException.invalidParamter(`${this.name}.createMany expects an array of values`)
+    }
+    return Promise.all(payloadArray.map((payload) => this.create(payload)))
+  }
+
+  /**
    * Tells whether model instance is new or
    * persisted to database.
    *

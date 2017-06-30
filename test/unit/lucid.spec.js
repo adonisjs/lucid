@@ -1129,4 +1129,45 @@ test.group('Model', (group) => {
     assert.throw(fn, 'E_DELETED_MODEL: Cannot edit deleted model instance for User model')
     assert.equal(userQuery.sql, helpers.formatQuery('delete from "users" where "id" = ?'))
   })
+
+  test('create an array of models', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    const users = await User.createMany([{ username: 'virk' }, { username: 'nikk' }])
+    assert.isArray(users)
+    assert.isTrue(users[0].$persisted)
+    assert.isFalse(users[0].isNew)
+    assert.isTrue(users[1].$persisted)
+    assert.isFalse(users[1].isNew)
+  })
+
+  test('run create hooks for all the models to be created via createMany', async (assert) => {
+    const stack = []
+
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addHook('beforeCreate', (ctx) => {
+      stack.push(ctx.username)
+    })
+
+    await User.createMany([{ username: 'virk' }, { username: 'nikk' }])
+    assert.deepEqual(stack, ['virk', 'nikk'])
+  })
+
+  test('throw an exception when createMany doesn\'t recieves an array', async (assert) => {
+    assert.plan(1)
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    try {
+      await User.createMany({ username: 'virk' })
+    } catch ({ message }) {
+      assert.equal(message, 'E_INVALID_PARAMETER: User.createMany expects an array of values')
+    }
+  })
 })
