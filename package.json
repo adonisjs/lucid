@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@adonisjs/fold": "^4.0.0",
-    "@adonisjs/sink": "^1.0.8",
+    "@adonisjs/sink": "^1.0.9",
     "chance": "^1.0.9",
     "coveralls": "^2.13.1",
     "cz-conventional-changelog": "^2.0.0",
