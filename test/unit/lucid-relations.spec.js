@@ -75,6 +75,7 @@ test.group('Relations | HasOne', (group) => {
     await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk' })
     const user = new User()
     user.id = 1
+    user.$persisted = true
     const profile = await user.profile().load()
     assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "user_id" = ? limit ?'))
     assert.deepEqual(profileQuery.bindings, helpers.formatBindings([1, 1]))

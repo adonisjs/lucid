@@ -40,20 +40,6 @@ class HasMany extends BaseRelation {
   }
 
   /**
-   * Load a single relationship from parent to child
-   * model, but only for one row.
-   *
-   * @method load
-   *
-   * @param  {String|Number}     value
-   *
-   * @return {Model}
-   */
-  load () {
-    return this.relatedQuery.where(this.foreignKey, this.$primaryKeyValue).fetch()
-  }
-
-  /**
    * Returns an array of values to be used for running
    * whereIn query when eagerloading relationships.
    *
@@ -116,7 +102,7 @@ class HasMany extends BaseRelation {
    * @return {Object}
    */
   relatedWhere (count) {
-    this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$foriegnTable}.${this.foreignKey}`)
+    this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$foreignTable}.${this.foreignKey}`)
     if (count) {
       this.relatedQuery.count('*')
     }

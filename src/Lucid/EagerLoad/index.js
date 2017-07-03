@@ -67,33 +67,6 @@ class EagerLoad {
   }
 
   /**
-   * Calls the whereIn query for eagerloading relationship for
-   * multiple parent records. Also it will use the relationship
-   * instance to map the right values and then return grouped
-   * result.
-   *
-   * @method _eagerLoad
-   *
-   * @param  {Array}   rows
-   * @param  {Object}   relationInstance
-   *
-   * @return {Array}
-   *
-   * @private
-   */
-  async _eagerLoad (rows, relationInstance) {
-    const relatedInstances = await relationInstance
-      .relatedQuery
-      .whereIn(relationInstance.foreignKey, relationInstance.mapValues(rows))
-      .fetch()
-
-    /**
-     * We need to pull `rows` since the return value from fetch is a collection.
-     */
-    return relationInstance.group(relatedInstances.rows)
-  }
-
-  /**
    * Loads a single relationship of the model. This method
    * will execute parallel queries for multiple relations.
    *
@@ -163,7 +136,7 @@ class EagerLoad {
       const relationInstance = RelationsParser.getRelatedInstance(modelInstance, relation)
       this._applyRuntimeConstraints(relationInstance, attributes.callback)
       this._chainNested(relationInstance, attributes.nested)
-      return this._eagerLoad(modelInstances, relationInstance)
+      return relationInstance.eagerLoad(modelInstances)
     })
 
     const relatedModelsGroup = await Promise.all(queries)

@@ -113,6 +113,20 @@ module.exports = {
         table.string('username')
         table.timestamps()
         table.timestamp('deleted_at').nullable()
+      }),
+      db.schema.createTable('posts', function (table) {
+        table.increments('id')
+        table.string('title')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
+      db.schema.createTable('post_user', function (table) {
+        table.increments('id')
+        table.integer('post_id')
+        table.integer('user_id')
+        table.boolean('is_published')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
       })
     ])
   },
@@ -125,7 +139,9 @@ module.exports = {
       db.schema.dropTable('profiles'),
       db.schema.dropTable('pictures'),
       db.schema.dropTable('identities'),
-      db.schema.dropTable('my_users')
+      db.schema.dropTable('my_users'),
+      db.schema.dropTable('posts'),
+      db.schema.dropTable('post_user')
     ])
   },
 

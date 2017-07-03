@@ -12,18 +12,18 @@
 const _ = require('lodash')
 const moment = require('moment')
 const { resolver } = require('@adonisjs/fold')
+const BaseModel = require('./Base')
 
 const Hooks = require('../Hooks')
 const QueryBuilder = require('../QueryBuilder')
-const CollectionSerializer = require('../Serializers/Collection')
 const HasOne = require('../Relations/HasOne')
 const HasMany = require('../Relations/HasMany')
 const BelongsTo = require('../Relations/BelongsTo')
+const BelongsToMany = require('../Relations/BelongsToMany')
 const EagerLoad = require('../EagerLoad')
 
 const CE = require('../../Exceptions')
 const util = require('../../../lib/util')
-const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss'
 
 /**
  * Lucid model is a base model and supposed to be
@@ -31,12 +31,7 @@ const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss'
  *
  * @class Model
  */
-class Model {
-  constructor () {
-    this._instantiate()
-    return new Proxy(this, require('./proxyHandler'))
-  }
-
+class Model extends BaseModel {
   /**
    * Boot model if not booted. This method is supposed
    * to be executed via IoC container hooks.
@@ -166,50 +161,6 @@ class Model {
   }
 
   /**
-   * The attributes to be considered as dates. By default
-   * @ref('Model.createdAtColumn') and @ref('Model.updatedAtColumn')
-   * are considered as dates.
-   *
-   * @attribute dates
-   *
-   * @return {Array}
-   *
-   * @static
-   */
-  static get dates () {
-    const dates = []
-    if (this.createdAtColumn) { dates.push(this.createdAtColumn) }
-    if (this.updatedAtColumn) { dates.push(this.updatedAtColumn) }
-    return dates
-  }
-
-  /**
-   * The attribute name for created at timestamp.
-   *
-   * @attribute createdAtColumn
-   *
-   * @return {String}
-   *
-   * @static
-   */
-  static get createdAtColumn () {
-    return 'created_at'
-  }
-
-  /**
-   * The attribute name for updated at timestamp.
-   *
-   * @attribute updatedAtColumn
-   *
-   * @return {String}
-   *
-   * @static
-   */
-  static get updatedAtColumn () {
-    return 'updated_at'
-  }
-
-  /**
    * The table name for the model. It is dynamically generated
    * from the Model name by pluralizing it and converting it
    * to lowercase.
@@ -231,21 +182,6 @@ class Model {
    */
   static get table () {
     return util.makeTableName(this.name)
-  }
-
-  /**
-   * The serializer to be used for serializing
-   * data. The return value must always be a
-   * ES6 class.
-   *
-   * By default Lucid uses @ref('BaseSerializer')
-   *
-   * @attribute Serializer
-   *
-   * @return {Class}
-   */
-  static get Serializer () {
-    return CollectionSerializer
   }
 
   /**
@@ -446,47 +382,6 @@ class Model {
   }
 
   /**
-   * This method is executed for all the date fields
-   * with the field name and the value. The return
-   * value gets saved to the database.
-   *
-   * Also if you have defined a setter for a date field
-   * this method will not be executed for that field.
-   *
-   * @method formatDates
-   *
-   * @param  {String}    key
-   * @param  {String|Date}    value
-   *
-   * @return {String}
-   */
-  static formatDates (key, value) {
-    return moment(value).format(DATE_FORMAT)
-  }
-
-  /**
-   * This method is executed when toJSON is called on a
-   * model or collection of models. The value received
-   * will always be an instance of momentjs and return
-   * value is used.
-   *
-   * NOTE: This method will not be executed when you define
-   * a getter for a given field.
-   *
-   * @method castDates
-   *
-   * @param  {String}  key
-   * @param  {Moment}  value
-   *
-   * @return {String}
-   *
-   * @static
-   */
-  static castDates (key, value) {
-    return value.format(DATE_FORMAT)
-  }
-
-  /**
    * Creates a new model instances from payload
    * and also persist it to database
    *
@@ -517,18 +412,6 @@ class Model {
       throw CE.InvalidArgumentException.invalidParamter(`${this.name}.createMany expects an array of values`)
     }
     return Promise.all(payloadArray.map((payload) => this.create(payload)))
-  }
-
-  /**
-   * Tells whether model instance is new or
-   * persisted to database.
-   *
-   * @attribute isNew
-   *
-   * @return {Boolean}
-   */
-  get isNew () {
-    return !this.$persisted
   }
 
   /**
@@ -566,18 +449,6 @@ class Model {
    */
   get hasParent () {
     return !!this.$parent
-  }
-
-  /**
-   * Returns a boolean indicating whether model
-   * has been deleted or not
-   *
-   * @method isDeleted
-   *
-   * @return {Boolean}
-   */
-  get isDeleted () {
-    return this.$frozen
   }
 
   /**
@@ -920,18 +791,6 @@ class Model {
     }
 
     return evaluatedAttrs
-  }
-
-  /**
-   * Converts model instance toJSON using the serailizer
-   * toJSON method
-   *
-   * @method toJSON
-   *
-   * @return {Object}
-   */
-  toJSON () {
-    return new this.constructor.Serializer(this, null, true).toJSON()
   }
 
   /**
@@ -1282,6 +1141,16 @@ class Model {
    */
   belongsTo (relatedModel, primaryKey = relatedModel.foreignKey, foreignKey = relatedModel.primaryKey) {
     return new BelongsTo(this, relatedModel, primaryKey, foreignKey)
+  }
+
+  belongsToMany (
+    relatedModel,
+    foreignKey = this.constructor.foreignKey,
+    relatedForeignKey = relatedModel.foreignKey,
+    primaryKey = this.constructor.primaryKey,
+    relatedPrimaryKey = relatedModel.primaryKey
+  ) {
+    return new BelongsToMany(this, relatedModel, primaryKey, foreignKey, relatedPrimaryKey, relatedForeignKey)
   }
 }
 

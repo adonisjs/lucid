@@ -39,20 +39,6 @@ class HasOne extends BaseRelation {
   }
 
   /**
-   * Load a single relationship from parent to child
-   * model, but only for one row.
-   *
-   * @method load
-   *
-   * @param  {String|Number}     value
-   *
-   * @return {Model}
-   */
-  load () {
-    return this.relatedQuery.where(this.foreignKey, this.$primaryKeyValue).first()
-  }
-
-  /**
    * Returns an array of values to be used for running
    * whereIn query when eagerloading relationships.
    *
@@ -125,7 +111,7 @@ class HasOne extends BaseRelation {
    * @return {Object}
    */
   relatedWhere (count) {
-    this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$foriegnTable}.${this.foreignKey}`)
+    this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$foreignTable}.${this.foreignKey}`)
     if (count) {
       this.relatedQuery.count('*')
     }
@@ -170,16 +156,12 @@ class HasOne extends BaseRelation {
     return this.relatedModel.create(payload)
   }
 
-  /**
-   * DO NOT DOCUMENT
-   */
+  /* istanbul ignore next */
   createMany () {
     throw CE.ModelRelationException.unSupportedMethod('createMany', 'hasOne')
   }
 
-  /**
-   * DO NOT DOCUMENT
-   */
+  /* istanbul ignore next */
   saveMany () {
     throw CE.ModelRelationException.unSupportedMethod('saveMany', 'hasOne')
   }

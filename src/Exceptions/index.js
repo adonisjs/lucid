@@ -135,6 +135,10 @@ class ModelRelationException extends NE.LogicalException {
   static unsavedModelInstance (message) {
     return new this(message, 500, 'E_UNSAVED_MODEL_INSTANCE')
   }
+
+  static pivotModelIsDefined (method) {
+    return new this(`Cannot call ${method} since pivotModel has been defined`, 500, 'E_INVALID_RELATION_METHOD')
+  }
 }
 
 module.exports = {

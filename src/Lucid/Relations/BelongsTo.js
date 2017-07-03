@@ -22,20 +22,6 @@ const CE = require('../../Exceptions')
  */
 class BelongsTo extends BaseRelation {
   /**
-   * Load a single relationship from parent to child
-   * model, but only for one row.
-   *
-   * @method load
-   *
-   * @param  {String|Number}     value
-   *
-   * @return {Model}
-   */
-  load () {
-    return this.relatedQuery.where(this.foreignKey, this.$primaryKeyValue).first()
-  }
-
-  /**
    * Map values from model instances to an array. It is required
    * to make `whereIn` query when eagerloading results.
    *
@@ -94,37 +80,29 @@ class BelongsTo extends BaseRelation {
    * @return {Object}
    */
   relatedWhere (count) {
-    this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$foriegnTable}.${this.foreignKey}`)
+    this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$foreignTable}.${this.foreignKey}`)
     if (count) {
       this.relatedQuery.count('*')
     }
     return this.relatedQuery.query
   }
 
-  /**
-   * DO NOT DOCUMENT
-   */
+  /* istanbul ignore next */
   create () {
     throw CE.ModelRelationException.unSupportedMethod('create', 'belongsTo')
   }
 
-  /**
-   * DO NOT DOCUMENT
-   */
+  /* istanbul ignore next */
   save () {
     throw CE.ModelRelationException.unSupportedMethod('save', 'belongsTo')
   }
 
-  /**
-   * DO NOT DOCUMENT
-   */
+  /* istanbul ignore next */
   createMany () {
     throw CE.ModelRelationException.unSupportedMethod('createMany', 'belongsTo')
   }
 
-  /**
-   * DO NOT DOCUMENT
-   */
+  /* istanbul ignore next */
   saveMany () {
     throw CE.ModelRelationException.unSupportedMethod('saveMany', 'belongsTo')
   }

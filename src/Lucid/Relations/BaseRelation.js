@@ -29,7 +29,9 @@ const methodsList = [
   'pickInverse',
   'update',
   'first',
-  'fetch'
+  'fetch',
+  'toSQL',
+  'toString'
 ]
 
 /**
@@ -78,11 +80,11 @@ class BaseRelation {
   /**
    * The foreign table in relationship
    *
-   * @attribute $foriegnTable
+   * @attribute $foreignTable
    *
    * @return {String}
    */
-  get $foriegnTable () {
+  get $foreignTable () {
     return this.relatedModel.table
   }
 
@@ -116,6 +118,34 @@ class BaseRelation {
     if (!this.$primaryKeyValue || !this.parentInstance.$persisted) {
       throw CE.RuntimeException.unSavedModel(this.parentInstance.constructor.name)
     }
+  }
+
+  /**
+   * Returns the eagerLoad query for the relationship
+   *
+   * @method eagerLoad
+   *
+   * @param  {Array}          rows
+   *
+   * @return {Object}
+   */
+  async eagerLoad (rows) {
+    const relatedInstances = await this.relatedQuery.whereIn(this.foreignKey, this.mapValues(rows)).fetch()
+    return this.group(relatedInstances.rows)
+  }
+
+  /**
+   * Load a single relationship from parent to child
+   * model, but only for one row.
+   *
+   * @method load
+   *
+   * @param  {String|Number}     value
+   *
+   * @return {Model}
+   */
+  load () {
+    return this.fetch()
   }
 }
 
