@@ -64,7 +64,7 @@ class HasMany extends BaseRelation {
    * @return {Object} @multiple([key=String, values=Array, defaultValue=Null])
    */
   group (relatedInstances) {
-    const Serializer = this.relatedModel.Serializer
+    const Serializer = this.RelatedModel.Serializer
 
     const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
       const foreignKeyValue = relatedInstance[this.foreignKey]
@@ -138,7 +138,7 @@ class HasMany extends BaseRelation {
   async create (payload) {
     await this._persistParentIfRequired()
     payload[this.foreignKey] = this.$primaryKeyValue
-    return this.relatedModel.create(payload)
+    return this.RelatedModel.create(payload)
   }
 
   /**

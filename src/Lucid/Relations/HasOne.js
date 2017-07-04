@@ -153,7 +153,7 @@ class HasOne extends BaseRelation {
   async create (payload) {
     await this._persistParentIfRequired()
     payload[this.foreignKey] = this.$primaryKeyValue
-    return this.relatedModel.create(payload)
+    return this.RelatedModel.create(payload)
   }
 
   /* istanbul ignore next */

@@ -12,15 +12,12 @@
 const _ = require('lodash')
 const moment = require('moment')
 const { resolver } = require('@adonisjs/fold')
-const BaseModel = require('./Base')
 
+const BaseModel = require('./Base')
 const Hooks = require('../Hooks')
 const QueryBuilder = require('../QueryBuilder')
-const HasOne = require('../Relations/HasOne')
-const HasMany = require('../Relations/HasMany')
-const BelongsTo = require('../Relations/BelongsTo')
-const BelongsToMany = require('../Relations/BelongsToMany')
 const EagerLoad = require('../EagerLoad')
+const { HasOne, HasMany, BelongsTo, BelongsToMany } = require('../Relations')
 
 const CE = require('../../Exceptions')
 const util = require('../../../lib/util')
@@ -146,21 +143,6 @@ class Model extends BaseModel {
   }
 
   /**
-   * The database connection to be used for
-   * the model. Returning blank string will
-   * use the `default` connection.
-   *
-   * @attribute connection
-   *
-   * @return {String}
-   *
-   * @static
-   */
-  static get connection () {
-    return ''
-  }
-
-  /**
    * The table name for the model. It is dynamically generated
    * from the Model name by pluralizing it and converting it
    * to lowercase.
@@ -185,26 +167,6 @@ class Model extends BaseModel {
   }
 
   /**
-   * Executes the query listeners attached on the
-   * model
-   *
-   * @method _executeListeners
-   *
-   * @param  {Object}          query
-   *
-   * @return {void}
-   *
-   * @static
-   *
-   * @private
-   */
-  static _executeListeners (query) {
-    _(this.$queryListeners)
-    .filter((listener) => typeof (listener) === 'function')
-    .each((listener) => listener(query))
-  }
-
-  /**
    * Get fresh instance of query builder for
    * this model.
    *
@@ -215,7 +177,19 @@ class Model extends BaseModel {
    * @static
    */
   static query () {
-    return new (this.QueryBuilder || QueryBuilder)(this, this.connection)
+    const query = new (this.QueryBuilder || QueryBuilder)(this, this.connection)
+
+    /**
+     * Listening for query event and executing
+     * listeners if any
+     */
+    query.on('query', (builder) => {
+      _(this.$queryListeners)
+      .filter((listener) => typeof (listener) === 'function')
+      .each((listener) => listener(builder))
+    })
+
+    return query
   }
 
   /**
@@ -370,7 +344,7 @@ class Model extends BaseModel {
    */
   static addTrait (trait) {
     if (typeof (trait) !== 'function' && typeof (trait) !== 'string') {
-      throw new Error('fuck off')
+      throw new Error('some error')
     }
 
     /**
@@ -704,22 +678,6 @@ class Model extends BaseModel {
         this.$attributes[field] = moment(this.$attributes[field])
       }
     })
-  }
-
-  /**
-   * Set attributes on model instance in bulk.
-   *
-   * NOTE: Calling this method will remove the existing attributes.
-   *
-   * @method fill
-   *
-   * @param  {Object} attributes
-   *
-   * @return {void}
-   */
-  fill (attributes) {
-    this.$attributes = {}
-    _.each(attributes, (value, key) => this.set(key, value))
   }
 
   /**
@@ -1137,12 +1095,25 @@ class Model extends BaseModel {
    * @param  {String}  primaryKey
    * @param  {String}  foreignKey
    *
-   * @return {belongsTo}
+   * @return {BelongsTo}
    */
   belongsTo (relatedModel, primaryKey = relatedModel.foreignKey, foreignKey = relatedModel.primaryKey) {
     return new BelongsTo(this, relatedModel, primaryKey, foreignKey)
   }
 
+  /**
+   * Returns an instance of @ref('BelongsToMany') relation
+   *
+   * @method belongsToMany
+   *
+   * @param  {Class|String}      relatedModel
+   * @param  {String}      foreignKey
+   * @param  {String}      relatedForeignKey
+   * @param  {String}      primaryKey
+   * @param  {String}      relatedPrimaryKey
+   *
+   * @return {BelongsToMany}
+   */
   belongsToMany (
     relatedModel,
     foreignKey = this.constructor.foreignKey,

@@ -176,7 +176,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).withFields('is_published')
+        return this.belongsToMany(Post).withPivot('is_published')
       }
     }
 
@@ -194,7 +194,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).withFields('is_published').withFields('deleted_at')
+        return this.belongsToMany(Post).withPivot('is_published').withPivot('deleted_at')
       }
     }
 
@@ -212,7 +212,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).withFields(['is_published', 'deleted_at'])
+        return this.belongsToMany(Post).withPivot(['is_published', 'deleted_at'])
       }
     }
 
@@ -350,7 +350,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).withFields('is_published')
+        return this.belongsToMany(Post).withPivot('is_published')
       }
     }
 
@@ -370,7 +370,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).withFields('is_published')
+        return this.belongsToMany(Post).withPivot('is_published')
       }
     }
 
@@ -393,7 +393,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).withFields('is_published')
+        return this.belongsToMany(Post).withPivot('is_published')
       }
     }
 
@@ -415,7 +415,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).withFields('is_published')
+        return this.belongsToMany(Post).withPivot('is_published')
       }
     }
 
@@ -434,9 +434,9 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(posts.size(), 1)
     assert.equal(posts.first().title, 'Adonis 101')
     assert.deepEqual(posts.first().getRelated('pivot').$attributes, {
-      post_id: helpers.formatNumber(1),
-      user_id: helpers.formatNumber(1),
-      is_published: helpers.formatNumber(1)
+      post_id: 1,
+      user_id: 1,
+      is_published: helpers.formatBoolean(true)
     })
   })
 
@@ -446,7 +446,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).withFields('is_published')
+        return this.belongsToMany(Post).withPivot('is_published')
       }
     }
 
@@ -471,9 +471,9 @@ test.group('Relations | Belongs To Many', (group) => {
         deleted_at: null,
         updated_at: null,
         pivot: {
-          post_id: helpers.formatNumber(1),
-          user_id: helpers.formatNumber(1),
-          is_published: helpers.formatNumber(1)
+          post_id: 1,
+          user_id: 1,
+          is_published: helpers.formatBoolean(true)
         }
       }
     ])
@@ -485,7 +485,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).withFields('is_published')
+        return this.belongsToMany(Post).withPivot('is_published')
       }
     }
 
@@ -508,7 +508,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).withFields('is_published')
+        return this.belongsToMany(Post).withPivot('is_published')
       }
     }
 
@@ -523,7 +523,7 @@ test.group('Relations | Belongs To Many', (group) => {
       { post_id: 19, user_id: 20 }
     ])
 
-    const users = await User.query().with('posts').fetch()
+    const users = await User.query().with('posts').orderBy('id', 'asc').fetch()
     assert.equal(users.size(), 2)
     assert.equal(users.last().username, 'virk')
     assert.equal(users.last().id, 20)
@@ -539,7 +539,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).withFields('is_published')
+        return this.belongsToMany(Post).withPivot('is_published')
       }
     }
 
@@ -567,7 +567,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).withFields('is_published')
+        return this.belongsToMany(Post).withPivot('is_published')
       }
     }
 
@@ -582,7 +582,7 @@ test.group('Relations | Belongs To Many', (group) => {
       { post_id: 19, user_id: 20 }
     ])
 
-    const users = await User.query().with('posts').paginate()
+    const users = await User.query().with('posts').orderBy('id', 'asc').paginate()
     assert.equal(users.size(), 2)
     assert.deepEqual(users.pages, { total: helpers.formatNumber(2), perPage: 20, page: 1, lastPage: 1 })
     assert.equal(users.last().getRelated('posts').size(), 2)
@@ -779,7 +779,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).withFields(['created_at', 'updated_at'])
+        return this.belongsToMany(Post).withPivot(['created_at', 'updated_at'])
       }
     }
 
@@ -818,7 +818,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     class User extends Model {
       posts () {
-        return this.belongsToMany(Post).pivotModel(PostUser).withFields(['created_at', 'updated_at'])
+        return this.belongsToMany(Post).pivotModel(PostUser).withPivot(['created_at', 'updated_at'])
       }
     }
 
@@ -835,5 +835,452 @@ test.group('Relations | Belongs To Many', (group) => {
     const json = user.toJSON()
     assert.isTrue(moment(json.posts[0].pivot.created_at, 'YYYY-MM-DD', true).isValid())
     assert.isTrue(moment(json.posts[0].pivot.updated_at, 'YYYY-MM-DD', true).isValid())
+  })
+
+  test('save related model', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 2, username: 'virk' })
+    const user = await User.find(2)
+
+    const post = new Post()
+    post.title = 'Adonis 101'
+
+    await user.posts().save(post)
+    assert.isTrue(post.$persisted)
+    assert.equal(post.getRelated('pivot').post_id, 1)
+    assert.equal(post.getRelated('pivot').user_id, 2)
+
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 1)
+    assert.equal(pivotValues[0].post_id, 1)
+    assert.equal(pivotValues[0].user_id, 2)
+    assert.isNull(pivotValues[0].created_at)
+    assert.isNull(pivotValues[0].updated_at)
+  })
+
+  test('save related model with timestamps', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).withTimestamps()
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 2, username: 'virk' })
+    const user = await User.find(2)
+
+    const post = new Post()
+    post.title = 'Adonis 101'
+
+    await user.posts().save(post)
+    assert.isTrue(post.$persisted)
+    assert.equal(post.getRelated('pivot').post_id, 1)
+    assert.equal(post.getRelated('pivot').user_id, 2)
+
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 1)
+    assert.equal(pivotValues[0].post_id, 1)
+    assert.equal(pivotValues[0].user_id, 2)
+    assert.isTrue(moment(pivotValues[0].created_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.isTrue(moment(pivotValues[0].updated_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+  })
+
+  test('execute setters when pivotModel in play', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+
+      setCreatedAt () {
+        return moment().format('YYYY-MM-DD')
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 2, username: 'virk' })
+    const user = await User.find(2)
+
+    const post = new Post()
+    post.title = 'Adonis 101'
+
+    await user.posts().save(post)
+    assert.isTrue(post.$persisted)
+    assert.equal(post.getRelated('pivot').post_id, 1)
+    assert.equal(post.getRelated('pivot').user_id, 2)
+
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 1)
+    assert.equal(pivotValues[0].post_id, 1)
+    assert.equal(pivotValues[0].user_id, 2)
+    assert.isTrue(moment(pivotValues[0].created_at, 'YYYY-MM-DD', true).isValid())
+    assert.isTrue(moment(pivotValues[0].updated_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+  })
+
+  test('save pivot values to database', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 2, username: 'virk' })
+    const user = await User.find(2)
+
+    const post = new Post()
+    post.title = 'Adonis 101'
+
+    await user.posts().save(post, (pivotModel) => (pivotModel.is_published = true))
+    assert.isTrue(post.$persisted)
+    assert.equal(post.getRelated('pivot').post_id, 1)
+    assert.equal(post.getRelated('pivot').user_id, 2)
+    assert.equal(post.getRelated('pivot').is_published, true)
+
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 1)
+    assert.equal(pivotValues[0].post_id, 1)
+    assert.equal(pivotValues[0].user_id, 2)
+    assert.equal(pivotValues[0].is_published, 1)
+  })
+
+  test('persist parent model to db is not persisted already', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    assert.isFalse(user.$persisted)
+
+    const post = new Post()
+    post.title = 'Adonis 101'
+    assert.isFalse(post.$persisted)
+
+    await user.posts().save(post)
+    assert.isTrue(post.$persisted)
+    assert.isTrue(user.$persisted)
+
+    const pivotCount = await ioc.use('Database').table('post_user').count('* as total')
+    const usersCount = await ioc.use('Database').table('users').count('* as total')
+    const postsCount = await ioc.use('Database').table('posts').count('* as total')
+    assert.equal(pivotCount[0].total, helpers.formatNumber(1))
+    assert.equal(usersCount[0].total, helpers.formatNumber(1))
+    assert.equal(postsCount[0].total, helpers.formatNumber(1))
+  })
+
+  test('attach existing model', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.posts().attach(1)
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 1)
+    assert.equal(pivotValues[0].user_id, 1)
+    assert.equal(pivotValues[0].post_id, 1)
+  })
+
+  test('attach existing model with pivot values', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.posts().attach(1, (pivotModel) => (pivotModel.is_published = true))
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 1)
+    assert.equal(pivotValues[0].user_id, 1)
+    assert.equal(pivotValues[0].post_id, 1)
+    assert.equal(pivotValues[0].is_published, 1)
+  })
+
+  test('attach multiple existing models', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.posts().attach([1, 2, 3])
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 3)
+    assert.equal(pivotValues[0].user_id, 1)
+    assert.equal(pivotValues[0].post_id, 1)
+    assert.equal(pivotValues[1].user_id, 1)
+    assert.equal(pivotValues[1].post_id, 2)
+    assert.equal(pivotValues[2].user_id, 1)
+    assert.equal(pivotValues[2].post_id, 3)
+  })
+
+  test('attach multiple existing models with pivotValues', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.posts().attach([1, 2, 3], (pivotModel) => (pivotModel.is_published = true))
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 3)
+    assert.equal(pivotValues[0].user_id, 1)
+    assert.equal(pivotValues[0].post_id, 1)
+    assert.equal(pivotValues[0].is_published, 1)
+    assert.equal(pivotValues[1].user_id, 1)
+    assert.equal(pivotValues[1].post_id, 2)
+    assert.equal(pivotValues[1].is_published, 1)
+    assert.equal(pivotValues[2].user_id, 1)
+    assert.equal(pivotValues[2].post_id, 3)
+    assert.equal(pivotValues[2].is_published, 1)
+  })
+
+  test('attach different pivot values to each pivot row', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.posts().attach([1, 2, 3], (pivotModel) => {
+      if (pivotModel.post_id === 1) {
+        pivotModel.is_published = true
+      } else {
+        pivotModel.is_published = false
+      }
+    })
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 3)
+    assert.equal(pivotValues[0].user_id, 1)
+    assert.equal(pivotValues[0].post_id, 1)
+    assert.equal(pivotValues[0].is_published, 1)
+    assert.equal(pivotValues[1].user_id, 1)
+    assert.equal(pivotValues[1].post_id, 2)
+    assert.equal(pivotValues[1].is_published, 0)
+    assert.equal(pivotValues[2].user_id, 1)
+    assert.equal(pivotValues[2].post_id, 3)
+    assert.equal(pivotValues[2].is_published, 0)
+  })
+
+  test('save many related rows with different pivot values', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+
+    const post = new Post()
+    post.title = 'Adonis 101'
+
+    const lucid = new Post()
+    lucid.title = 'Lucid 101'
+
+    await user.posts().saveMany([post, lucid], (pivotModel) => {
+      if (pivotModel.post_id === 1) {
+        pivotModel.is_published = true
+      } else {
+        pivotModel.is_published = false
+      }
+    })
+    assert.isTrue(user.$persisted)
+    assert.isTrue(post.$persisted)
+    assert.equal(post.getRelated('pivot').post_id, 1)
+    assert.equal(post.getRelated('pivot').user_id, 1)
+    assert.equal(post.getRelated('pivot').is_published, true)
+
+    assert.isTrue(lucid.$persisted)
+    assert.equal(lucid.getRelated('pivot').post_id, 2)
+    assert.equal(lucid.getRelated('pivot').user_id, 1)
+    assert.equal(lucid.getRelated('pivot').is_published, false)
+  })
+
+  test('attach different pivot values to each pivot row', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.posts().attach([1, 2, 3], (pivotModel) => {
+      if (pivotModel.post_id === 1) {
+        pivotModel.is_published = true
+      } else {
+        pivotModel.is_published = false
+      }
+    })
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 3)
+    assert.equal(pivotValues[0].user_id, 1)
+    assert.equal(pivotValues[0].post_id, 1)
+    assert.equal(pivotValues[0].is_published, 1)
+    assert.equal(pivotValues[1].user_id, 1)
+    assert.equal(pivotValues[1].post_id, 2)
+    assert.equal(pivotValues[1].is_published, 0)
+    assert.equal(pivotValues[2].user_id, 1)
+    assert.equal(pivotValues[2].post_id, 3)
+    assert.equal(pivotValues[2].is_published, 0)
+  })
+
+  test('create related row', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+
+    const post = await user.posts().create({ title: 'Adonis 101' })
+    assert.isTrue(post.$persisted)
+    assert.equal(post.id, 1)
+    assert.equal(post.title, 'Adonis 101')
+    assert.equal(post.getRelated('pivot').post_id, 1)
+    assert.equal(post.getRelated('pivot').user_id, 1)
+  })
+
+  test('create many related rows', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+
+    const posts = await user.posts().createMany([{ title: 'Adonis 101' }, { title: 'Lucid 101' }])
+    assert.isTrue(posts[0].$persisted)
+    assert.equal(posts[0].id, 1)
+    assert.equal(posts[0].getRelated('pivot').post_id, 1)
+    assert.equal(posts[0].getRelated('pivot').user_id, 1)
+
+    assert.isTrue(posts[1].$persisted)
+    assert.equal(posts[1].id, 2)
+    assert.equal(posts[1].getRelated('pivot').post_id, 2)
+    assert.equal(posts[1].getRelated('pivot').user_id, 1)
   })
 })

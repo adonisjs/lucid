@@ -171,16 +171,12 @@ class BelongsToMany extends BaseRelation {
    *
    * @method _newUpPivotModel
    *
-   * @param  {Object}         attributes
-   *
    * @return {Object}
    *
    * @private
    */
-  _newUpPivotModel (attributes) {
-    const pivotModel = new (this._PivotModel || PivotModel)()
-    pivotModel.newUp(attributes)
-    return pivotModel
+  _newUpPivotModel () {
+    return new (this._PivotModel || PivotModel)()
   }
 
   /**
@@ -208,7 +204,75 @@ class BelongsToMany extends BaseRelation {
       }
     })
 
-    row.setRelated('pivot', this._newUpPivotModel(pivotAttributes))
+    const pivotModel = this._newUpPivotModel()
+    pivotModel.newUp(pivotAttributes)
+    row.setRelated('pivot', pivotModel)
+  }
+
+  /**
+   * Saves the relationship to the pivot table
+   *
+   * @method _attachSingle
+   *
+   * @param  {Number|String}      value
+   * @param  {Function}           [pivotCallback]
+   *
+   * @return {Object}                    Instance of pivot model
+   *
+   * @private
+   */
+  async _attachSingle (value, pivotCallback) {
+    /**
+     * The relationship values
+     *
+     * @type {Object}
+     */
+    const pivotValues = {
+      [this.relatedForeignKey]: value,
+      [this.foreignKey]: this.$primaryKeyValue
+    }
+
+    const pivotModel = this._newUpPivotModel()
+    pivotModel.fill(pivotValues)
+
+    /**
+     * Set $table, $timestamps, $connection when there
+     * is no pre-defined pivot model.
+     */
+    if (!this._PivotModel) {
+      pivotModel.$table = this.$pivotTable
+      pivotModel.$connection = this.RelatedModel.connection
+      pivotModel.$withTimestamps = this._pivot.withTimestamps
+    }
+
+    /**
+     * If pivot callback is defined, do call it. This gives
+     * chance to the user to set additional fields to the
+     * model.
+     */
+    if (typeof (pivotCallback) === 'function') {
+      pivotCallback(pivotModel)
+    }
+
+    await pivotModel.save()
+    return pivotModel
+  }
+
+  /**
+   * Persists the parent model instance if it's not
+   * persisted already. This is done before saving
+   * the related instance
+   *
+   * @method _persistParentIfRequired
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  async _persistParentIfRequired () {
+    if (this.parentInstance.isNew) {
+      await this.parentInstance.save()
+    }
   }
 
   /**
@@ -271,7 +335,7 @@ class BelongsToMany extends BaseRelation {
    *
    * @chainable
    */
-  withFields (fields) {
+  withPivot (fields) {
     fields = _.isArray(fields) ? fields : [fields]
     this._pivot.withFields = this._pivot.withFields.concat(fields)
     return this
@@ -392,7 +456,7 @@ class BelongsToMany extends BaseRelation {
    * @return {Object} @multiple([key=String, values=Array, defaultValue=Null])
    */
   group (relatedInstances) {
-    const Serializer = this.relatedModel.Serializer
+    const Serializer = this.RelatedModel.Serializer
 
     const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
       const foreignKeyValue = relatedInstance.$sideLoaded[`pivot_${this.foreignKey}`]
@@ -439,6 +503,121 @@ class BelongsToMany extends BaseRelation {
     }
 
     return this.relatedQuery.query
+  }
+
+  /**
+   * Attach existing rows inside pivot table as a relationship
+   *
+   * @method attach
+   *
+   * @param  {Number|String|Array} relatedPrimaryKeyValue
+   * @param  {Function} [pivotCallback]
+   *
+   * @return {Promise}
+   */
+  async attach (relatedPrimaryKeyValue, pivotCallback = null) {
+    const rows = relatedPrimaryKeyValue instanceof Array === false ? [relatedPrimaryKeyValue] : relatedPrimaryKeyValue
+    return Promise.all(rows.map((row) => this._attachSingle(row, pivotCallback)))
+  }
+
+  /**
+   * Save the related model instance and setup the relationship
+   * inside pivot table
+   *
+   * @method save
+   *
+   * @param  {Object} relatedInstance
+   * @param  {Function} pivotCallback
+   *
+   * @return {void}
+   */
+  async save (relatedInstance, pivotCallback) {
+    await this._persistParentIfRequired()
+
+    /**
+     * Only save related instance when not persisted already. This is
+     * only required in belongsToMany since relatedInstance is not
+     * made dirty by this method.
+     */
+    if (relatedInstance.isNew || relatedInstance.isDirty) {
+      await relatedInstance.save()
+    }
+
+    /**
+     * Attach the pivot rows
+     */
+    const pivotRows = await this.attach(relatedInstance.primaryKeyValue, pivotCallback)
+
+    /**
+     * Set saved pivot row as a relationship
+     */
+    relatedInstance.setRelated('pivot', pivotRows[0])
+  }
+
+  /**
+   * Save multiple relationships to the database. This method
+   * will run queries in parallel
+   *
+   * @method saveMany
+   * @async
+   *
+   * @param  {Array}    arrayOfRelatedInstances
+   * @param  {Function} [pivotCallback]
+   *
+   * @return {void}
+   */
+  async saveMany (arrayOfRelatedInstances, pivotCallback) {
+    if (arrayOfRelatedInstances instanceof Array === false) {
+      throw CE
+        .InvalidArgumentException
+        .invalidParamter('belongsToMany.saveMany expects an array of related model instances')
+    }
+
+    await this._persistParentIfRequired()
+    return Promise.all(arrayOfRelatedInstances.map((relatedInstance) => this.save(relatedInstance, pivotCallback)))
+  }
+
+  /**
+   * Creates a new related model instance and persist
+   * the relationship inside pivot table
+   *
+   * @method create
+   *
+   * @param  {Object}   row
+   * @param  {Function} [pivotCallback]
+   *
+   * @return {Object}               Instance of related model
+   */
+  async create (row, pivotCallback) {
+    await this._persistParentIfRequired()
+
+    const relatedInstance = new this.RelatedModel()
+    relatedInstance.fill(row)
+    await this.save(relatedInstance, pivotCallback)
+
+    return relatedInstance
+  }
+
+  /**
+   * Creates multiple related relationships. This method will
+   * call all queries in parallel
+   *
+   * @method createMany
+   *
+   * @param  {Array}   rows
+   * @param  {Function}   pivotCallback
+   *
+   * @return {Array}
+   */
+  async createMany (rows, pivotCallback) {
+    if (rows instanceof Array === false) {
+      throw CE
+        .InvalidArgumentException
+        .invalidParamter('belongsToMany.createMany expects an array of related model instances')
+    }
+
+    await this._persistParentIfRequired()
+    return Promise.all(rows.map((relatedInstance) => this.create(relatedInstance, pivotCallback)))
   }
 }
 

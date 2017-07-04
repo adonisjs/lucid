@@ -47,7 +47,7 @@ class QueryBuilder {
     /**
      * Reference to query builder with pre selected table
      */
-    this.query = this.db.table(table).on('query', this.Model._executeListeners.bind(this.Model))
+    this.query = this.db.table(table)
 
     /**
      * Scopes to be ignored at runtime

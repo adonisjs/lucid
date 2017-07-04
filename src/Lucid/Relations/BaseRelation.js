@@ -43,12 +43,12 @@ const methodsList = [
  * @constructor
  */
 class BaseRelation {
-  constructor (parentInstance, relatedModel, primaryKey, foreignKey) {
+  constructor (parentInstance, RelatedModel, primaryKey, foreignKey) {
     this.parentInstance = parentInstance
-    this.relatedModel = typeof (relatedModel) === 'string' ? ioc.use(relatedModel) : relatedModel
+    this.RelatedModel = typeof (RelatedModel) === 'string' ? ioc.use(RelatedModel) : RelatedModel
     this.primaryKey = primaryKey
     this.foreignKey = foreignKey
-    this.relatedQuery = this.relatedModel.query()
+    this.relatedQuery = this.RelatedModel.query()
     return new Proxy(this, {
       get: proxyGet('relatedQuery')
     })
@@ -85,7 +85,7 @@ class BaseRelation {
    * @return {String}
    */
   get $foreignTable () {
-    return this.relatedModel.table
+    return this.RelatedModel.table
   }
 
   /**

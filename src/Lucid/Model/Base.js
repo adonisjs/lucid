@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
 */
 
+const _ = require('lodash')
 const moment = require('moment')
 const CollectionSerializer = require('../Serializers/Collection')
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss'
@@ -82,6 +83,21 @@ class BaseModel {
    */
   static get Serializer () {
     return CollectionSerializer
+  }
+
+  /**
+   * The database connection to be used for
+   * the model. Returning blank string will
+   * use the `default` connection.
+   *
+   * @attribute connection
+   *
+   * @return {String}
+   *
+   * @static
+   */
+  static get connection () {
+    return ''
   }
 
   /**
@@ -180,6 +196,22 @@ class BaseModel {
     this.$sideLoaded = {}
     this.$parent = null
     this.$frozen = false
+  }
+
+  /**
+   * Set attributes on model instance in bulk.
+   *
+   * NOTE: Calling this method will remove the existing attributes.
+   *
+   * @method fill
+   *
+   * @param  {Object} attributes
+   *
+   * @return {void}
+   */
+  fill (attributes) {
+    this.$attributes = {}
+    _.each(attributes, (value, key) => this.set(key, value))
   }
 
   /**

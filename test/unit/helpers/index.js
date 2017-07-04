@@ -26,6 +26,10 @@ module.exports = {
     return process.env.DB === 'pg' ? String(num) : num
   },
 
+  formatBoolean (bool) {
+    return process.env.DB === 'pg' ? bool : Number(bool)
+  },
+
   getConfig () {
     if (process.env.DB === 'sqlite') {
       return _.cloneDeep({
