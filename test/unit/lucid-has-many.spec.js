@@ -808,4 +808,55 @@ test.group('Relations | Has Many', (group) => {
     assert.isTrue(user.$persisted)
     assert.isFalse(user.isNew)
   })
+
+  test('delete related rows', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+    let carQuery = null
+    Car.onQuery((query) => (carQuery = query))
+
+    const user = new User()
+    user.username = 'virk'
+
+    await user.cars().createMany([{ name: 'mercedes', model: '1992' }, { name: 'ferrari', model: '2002' }])
+    await user.cars().delete()
+    const cars = await ioc.use('Database').table('cars')
+    assert.lengthOf(cars, 0)
+    assert.equal(carQuery.sql, helpers.formatQuery('delete from "cars" where "user_id" = ?'))
+  })
+
+  test('add constraints to delete query', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+    let carQuery = null
+    Car.onQuery((query) => (carQuery = query))
+
+    const user = new User()
+    user.username = 'virk'
+
+    await user.cars().createMany([{ name: 'mercedes', model: '1992' }, { name: 'ferrari', model: '2002' }])
+    await user.cars().where('name', 'mercedes').delete()
+    const cars = await ioc.use('Database').table('cars')
+    assert.lengthOf(cars, 1)
+    assert.equal(cars[0].name, 'ferrari')
+    assert.equal(carQuery.sql, helpers.formatQuery('delete from "cars" where "name" = ? and "user_id" = ?'))
+  })
 })

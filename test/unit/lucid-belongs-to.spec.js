@@ -553,4 +553,28 @@ test.group('Relations | Belongs To', (group) => {
       assert.equal(message, 'E_UNSAVED_MODEL_INSTANCE: Cannot dissociate relationship since model instance is not persisted')
     }
   })
+
+  test('delete related rows', async (assert) => {
+    assert.plan(1)
+    class User extends Model {
+    }
+
+    class Profile extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('profiles').insert({ profile_name: 'virk', user_id: 1 })
+
+    const profile = await Profile.find(1)
+    await profile.user().delete()
+    assert.equal(userQuery.sql, helpers.formatQuery('delete from "users" where "id" = ?'))
+  })
 })

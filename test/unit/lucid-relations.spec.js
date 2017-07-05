@@ -1534,4 +1534,29 @@ test.group('Relations | HasOne', (group) => {
     const fn = () => user.profile().saveMany({ profile_name: 'virk' })
     assert.throw(fn, 'E_INVALID_RELATION_METHOD: saveMany is not supported by hasOne relation')
   })
+
+  test('delete related row', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    Profile._bootIfNotBooted()
+    User._bootIfNotBooted()
+    let profileQuery = null
+    Profile.onQuery((query) => (profileQuery = query))
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    await user.profile().create({ profile_name: 'virk' })
+    await user.profile().delete()
+    const profiles = await ioc.use('Database').table('profiles')
+    assert.lengthOf(profiles, 0)
+    assert.equal(profileQuery.sql, helpers.formatQuery('delete from "profiles" where "user_id" = ?'))
+  })
 })

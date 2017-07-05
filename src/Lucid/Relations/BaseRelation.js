@@ -27,6 +27,7 @@ const methodsList = [
   'pluckId',
   'pick',
   'pickInverse',
+  'delete',
   'update',
   'first',
   'fetch',
