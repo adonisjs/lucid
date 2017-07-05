@@ -218,4 +218,52 @@ test.group('Factory', (group) => {
     const fn = () => Factory.blueprint('App/Model/User')
     assert.throw(fn, 'E_INVALID_PARAMETER: Factory.blueprint expects a callback as 2nd parameter')
   })
+
+  test('blueprint should receive faker instance', async (assert) => {
+    assert.plan(1)
+
+    class User extends Model {}
+
+    ioc.fake('App/Model/User', () => {
+      User._bootIfNotBooted()
+      return User
+    })
+
+    Factory.blueprint('App/Model/User', (faker) => {
+      assert.isFunction(faker.age)
+    })
+    await Factory.model('App/Model/User').make()
+  })
+
+  test('blueprint should receive index', async (assert) => {
+    const indexes = []
+    class User extends Model {}
+
+    ioc.fake('App/Model/User', () => {
+      User._bootIfNotBooted()
+      return User
+    })
+
+    Factory.blueprint('App/Model/User', (faker, index) => {
+      indexes.push(index)
+    })
+    await Factory.model('App/Model/User').makeMany(2)
+    assert.deepEqual(indexes, [0, 1])
+  })
+
+  test('blueprint should receive extra data', async (assert) => {
+    const stack = []
+    class User extends Model {}
+
+    ioc.fake('App/Model/User', () => {
+      User._bootIfNotBooted()
+      return User
+    })
+
+    Factory.blueprint('App/Model/User', (faker, index, data) => {
+      stack.push(data)
+    })
+    await Factory.model('App/Model/User').makeMany(2, { username: 'virk' })
+    assert.deepEqual(stack, [{ username: 'virk' }, { username: 'virk' }])
+  })
 })
