@@ -104,13 +104,13 @@ class InvalidArgumentException extends NE.InvalidArgumentException {
   /**
    * This exception is raised when a parameter is invalid
    *
-   * @method invalidParamter
+   * @method invalidParameter
    *
    * @param  {String}        message
    *
    * @return {Object}
    */
-  static invalidParamter (message) {
+  static invalidParameter (message) {
     return new this(message, 500, 'E_INVALID_PARAMETER')
   }
 }

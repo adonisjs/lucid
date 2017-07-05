@@ -295,7 +295,7 @@ class Model extends BaseModel {
      * If user has defined wrong hook cycle, do let them know
      */
     if (!this.$hooks[cycle]) {
-      throw CE.InvalidArgumentException.invalidParamter(`Invalid hook event {${forEvent}}`)
+      throw CE.InvalidArgumentException.invalidParameter(`Invalid hook event {${forEvent}}`)
     }
 
     /**
@@ -383,7 +383,7 @@ class Model extends BaseModel {
    */
   static async createMany (payloadArray) {
     if (payloadArray instanceof Array === false) {
-      throw CE.InvalidArgumentException.invalidParamter(`${this.name}.createMany expects an array of values`)
+      throw CE.InvalidArgumentException.invalidParameter(`${this.name}.createMany expects an array of values`)
     }
     return Promise.all(payloadArray.map((payload) => this.create(payload)))
   }
