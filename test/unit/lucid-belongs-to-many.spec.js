@@ -1283,4 +1283,241 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(posts[1].getRelated('pivot').post_id, 2)
     assert.equal(posts[1].getRelated('pivot').user_id, 1)
   })
+
+  test('attach should not attach duplicate records', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = await User.create({ username: 'virk' })
+    const post = await Post.create({ title: 'Adonis 101' })
+    await user.posts().attach(post.id)
+    await user.posts().attach(post.id)
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 1)
+  })
+
+  test('attach should grow the private pivotInstances array', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = await User.create({ username: 'virk' })
+    const post = await Post.create({ title: 'Adonis 101' })
+    const userPosts = user.posts()
+    await userPosts.attach(post.id)
+    assert.lengthOf(userPosts._existingPivotInstances, 1)
+    const cachedPost = await userPosts.attach(post.id)
+    assert.deepEqual(cachedPost[0], userPosts._existingPivotInstances[0])
+    assert.lengthOf(userPosts._existingPivotInstances, 1)
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 1)
+  })
+
+  test('attach look in the database and ignore existing relations', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).withPivot('is_published')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = await User.create({ username: 'virk', id: 2 })
+    const post = await Post.create({ title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 2 })
+    const userPost = user.posts()
+    await userPost.attach(post.id)
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 1)
+  })
+
+  test('attach using explicit pivotModel', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    let postQuery = null
+    PostUser.onQuery((query) => (postQuery = query))
+
+    const user = await User.create({ username: 'virk', id: 2 })
+    const post = await Post.create({ title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 2 })
+    const userPost = user.posts()
+    await userPost.attach(post.id)
+    assert.instanceOf(userPost._existingPivotInstances[0], PostUser)
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 1)
+    assert.equal(postQuery.sql, helpers.formatQuery('select "post_id", "user_id" from "post_user" where "user_id" = ?'))
+  })
+
+  test('save should not attach existing relations', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = await User.create({ username: 'virk', id: 2 })
+    const post = await Post.create({ title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ user_id: 2, post_id: 1 })
+    await user.posts().save(post)
+    const postsCount = await ioc.use('Database').table('posts')
+    const pivotCount = await ioc.use('Database').table('post_user')
+    assert.lengthOf(postsCount, 1)
+    assert.lengthOf(pivotCount, 1)
+  })
+
+  test('detach existing relations', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    let postQuery = null
+    PostUser.onQuery((query) => (postQuery = query))
+
+    const user = await User.create({ username: 'virk', id: 2 })
+    const post = await Post.create({ title: 'Adonis 101' })
+    const userPost = user.posts()
+    await userPost.attach(post.id)
+    await userPost.detach()
+    const postsCount = await ioc.use('Database').table('posts')
+    const pivotCount = await ioc.use('Database').table('post_user')
+    assert.lengthOf(postsCount, 1)
+    assert.lengthOf(pivotCount, 0)
+    assert.lengthOf(userPost._existingPivotInstances, 0)
+    assert.equal(postQuery.sql, helpers.formatQuery('delete from "post_user" where "user_id" = ?'))
+  })
+
+  test('detach only specific existing relations', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    let postQuery = null
+    PostUser.onQuery((query) => (postQuery = query))
+
+    const user = await User.create({ username: 'virk', id: 2 })
+    await Post.create({ title: 'Adonis 101' })
+    await Post.create({ title: 'Lucid 101' })
+    const userPost = user.posts()
+    await userPost.attach([1, 2])
+    await userPost.detach(1)
+    const postsCount = await ioc.use('Database').table('posts')
+    const pivotCount = await ioc.use('Database').table('post_user')
+    assert.lengthOf(postsCount, 2)
+    assert.lengthOf(pivotCount, 1)
+    assert.lengthOf(userPost._existingPivotInstances, 1)
+    assert.equal(userPost._existingPivotInstances[0].post_id, 2)
+    assert.equal(postQuery.sql, helpers.formatQuery('delete from "post_user" where "user_id" = ? and "post_id" in (?)'))
+  })
+
+  test('delete existing relation', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    let postUserQuery = null
+    let postQuery = null
+    PostUser.onQuery((query) => (postUserQuery = query))
+    Post.onQuery((query) => (postQuery = query))
+
+    const user = await User.create({ username: 'virk', id: 2 })
+    await Post.create({ title: 'Adonis 101' })
+    await Post.create({ title: 'Lucid 101' })
+    await user.posts().attach([1, 2])
+    await user.posts().where('posts.id', 1).delete()
+    const postsCount = await ioc.use('Database').table('posts')
+    const postUserCount = await ioc.use('Database').table('post_user')
+    assert.lengthOf(postsCount, 1)
+    assert.lengthOf(postUserCount, 1)
+    assert.equal(postQuery.sql, helpers.formatQuery('delete from "posts" where "id" in (?)'))
+    assert.equal(postUserQuery.sql, helpers.formatQuery('delete from "post_user" where "user_id" = ? and "post_id" in (?)'))
+  })
 })

@@ -47,6 +47,14 @@ class BelongsToMany extends BaseRelation {
       withTimestamps: false,
       withFields: []
     }
+
+    /**
+     * Here we store the existing pivot rows, to make
+     * sure we are not inserting duplicates.
+     *
+     * @type {Array}
+     */
+    this._existingPivotInstances = []
   }
 
   /**
@@ -233,6 +241,7 @@ class BelongsToMany extends BaseRelation {
     }
 
     const pivotModel = this._newUpPivotModel()
+    this._existingPivotInstances.push(pivotModel)
     pivotModel.fill(pivotValues)
 
     /**
@@ -273,6 +282,41 @@ class BelongsToMany extends BaseRelation {
     if (this.parentInstance.isNew) {
       await this.parentInstance.save()
     }
+  }
+
+  /**
+   * Loads the pivot relationship and then caches
+   * it inside memory, so that more calls to
+   * this function are not hitting database.
+   *
+   * @method _loadAndCachePivot
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  async _loadAndCachePivot () {
+    if (_.size(this._existingPivotInstances) === 0) {
+      this._existingPivotInstances = (await this
+          .pivotQuery().fetch()
+      ).rows
+    }
+  }
+
+  /**
+   * Returns the existing pivot instance for a given
+   * value.
+   *
+   * @method _getPivotInstance
+   *
+   * @param  {String|Number}          value
+   *
+   * @return {Object|Null}
+   *
+   * @private
+   */
+  _getPivotInstance (value) {
+    return _.find(this._existingPivotInstances, (instance) => instance[this.relatedForeignKey] === value)
   }
 
   /**
@@ -482,6 +526,28 @@ class BelongsToMany extends BaseRelation {
   }
 
   /**
+   * Returns the query for pivot table
+   *
+   * @method pivotQuery
+   *
+   * @param {Boolean} selectFields
+   *
+   * @return {Object}
+   */
+  pivotQuery (selectFields = true) {
+    const query = this._PivotModel
+      ? this._PivotModel.query()
+      : new PivotModel().query(this.$pivotTable, this.RelatedModel.$connection)
+
+    if (selectFields) {
+      query.select(this.$pivotColumns)
+    }
+
+    query.where(this.foreignKey, this.$primaryKeyValue)
+    return query
+  }
+
+  /**
    * Adds a where clause to limit the select search
    * to related rows only.
    *
@@ -515,9 +581,60 @@ class BelongsToMany extends BaseRelation {
    *
    * @return {Promise}
    */
-  async attach (relatedPrimaryKeyValue, pivotCallback = null) {
-    const rows = relatedPrimaryKeyValue instanceof Array === false ? [relatedPrimaryKeyValue] : relatedPrimaryKeyValue
-    return Promise.all(rows.map((row) => this._attachSingle(row, pivotCallback)))
+  async attach (references, pivotCallback = null) {
+    await this._loadAndCachePivot()
+    const rows = references instanceof Array === false ? [references] : references
+
+    return Promise.all(rows.map((row) => {
+      const pivotInstance = this._getPivotInstance(row)
+      return pivotInstance ? Promise.resolve(pivotInstance) : this._attachSingle(row, pivotCallback)
+    }))
+  }
+
+  /**
+   * Delete related model rows in bulk and also detach
+   * them from the pivot table.
+   *
+   * NOTE: This method will run 3 queries in total. First is to
+   * fetch the related rows, next is to delete them and final
+   * is to remove the relationship from pivot table.
+   *
+   * @method delete
+   * @async
+   *
+   * @return {Number} Number of effected rows
+   */
+  async delete () {
+    this._makeJoinQuery()
+    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    const foreignKeyValues = await this.relatedQuery.pluck(this.relatedForeignKey)
+    const effectedRows = await this.RelatedModel.query().whereIn(this.relatedPrimaryKey, foreignKeyValues).delete()
+    await this.detach(foreignKeyValues)
+    return effectedRows
+  }
+
+  /**
+   * Detach existing relations from the pivot table
+   *
+   * @method detach
+   * @async
+   *
+   * @param  {Array} references
+   *
+   * @return {Number}  The number of effected rows
+   */
+  detach (references) {
+    const query = this.pivotQuery(false)
+    if (references) {
+      const rows = references instanceof Array === false ? [references] : references
+      query.whereIn(this.relatedForeignKey, rows)
+      _.remove(this._existingPivotInstances, (pivotInstance) => {
+        return _.includes(rows, pivotInstance[this.relatedForeignKey])
+      })
+    } else {
+      this._existingPivotInstances = []
+    }
+    return query.delete()
   }
 
   /**

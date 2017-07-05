@@ -122,6 +122,21 @@ class PivotModel extends BaseModel {
   }
 
   /**
+   * Returns query builder instance for a given connection
+   * and table
+   *
+   * @method query
+   *
+   * @param  {String} table
+   * @param  {Object} connection
+   *
+   * @return {Object}
+   */
+  query (table, connection) {
+    return new QueryBuilder(this.constructor, connection).table(table)
+  }
+
+  /**
    * Save the model instance to the database.
    *
    * @method save
@@ -138,10 +153,7 @@ class PivotModel extends BaseModel {
       this.$attributes['updated_at'] = moment().format(DATE_FORMAT)
     }
 
-    const result = await new QueryBuilder(this, this.$connection)
-      .table(this.$table)
-      .returning('id')
-      .insert(this.$attributes)
+    const result = await this.query(this.$table, this.$connection).returning('id').insert(this.$attributes)
 
     this.primaryKeyValue = result[0]
     this.$persisted = true
