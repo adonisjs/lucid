@@ -1520,4 +1520,30 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(postQuery.sql, helpers.formatQuery('delete from "posts" where "id" in (?)'))
     assert.equal(postUserQuery.sql, helpers.formatQuery('delete from "post_user" where "user_id" = ? and "post_id" in (?)'))
   })
+
+  test('update existing relation', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    let postQuery = null
+    Post.onQuery((query) => (postQuery = query))
+
+    const user = await User.create({ username: 'virk', id: 2 })
+    await Post.create({ title: 'Adonis 101' })
+    await Post.create({ title: 'Lucid 101' })
+    await user.posts().attach([1, 2])
+    await user.posts().where('posts.id', 1).update({ title: 'Adonis 102' })
+    const post = await ioc.use('Database').table('posts').where('id', 1)
+    assert.equal(post[0].title, 'Adonis 102')
+    assert.equal(postQuery.sql, helpers.formatQuery('update "posts" set "title" = ?, "updated_at" = ? where "id" in (?)'))
+  })
 })

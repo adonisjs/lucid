@@ -605,12 +605,31 @@ class BelongsToMany extends BaseRelation {
    * @return {Number} Number of effected rows
    */
   async delete () {
-    this._makeJoinQuery()
-    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
-    const foreignKeyValues = await this.relatedQuery.pluck(this.relatedForeignKey)
-    const effectedRows = await this.RelatedModel.query().whereIn(this.relatedPrimaryKey, foreignKeyValues).delete()
+    const foreignKeyValues = await this.ids()
+    const effectedRows = await this.RelatedModel
+      .query()
+      .whereIn(this.RelatedModel.primaryKey, foreignKeyValues)
+      .delete()
+
     await this.detach(foreignKeyValues)
     return effectedRows
+  }
+
+  /**
+   * Update related rows
+   *
+   * @method update
+   *
+   * @param  {Object} values
+   *
+   * @return {Number}        Number of effected rows
+   */
+  async update (values) {
+    const foreignKeyValues = await this.ids()
+    return this.RelatedModel
+      .query()
+      .whereIn(this.RelatedModel.primaryKey, foreignKeyValues)
+      .update(values)
   }
 
   /**
