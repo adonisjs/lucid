@@ -67,6 +67,17 @@ class Database {
   }
 
   /**
+   * Returns the fn from knex instance
+   *
+   * @method fn
+   *
+   * @return {Object}
+   */
+  get fn () {
+    return this.knex.fn
+  }
+
+  /**
    * Method to construct raw queries
    *
    * @method raw
