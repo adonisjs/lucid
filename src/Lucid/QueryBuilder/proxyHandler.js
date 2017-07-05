@@ -10,6 +10,7 @@
 */
 
 const proxyHandler = exports = module.exports = {}
+require('harmony-reflect')
 const methods = require('./methods')
 const helpers = require('./helpers')
 const _ = require('lodash')
@@ -42,7 +43,7 @@ proxyHandler.get = function (target, name) {
     const scopeMethod = helpers.getScopeMethod(target.HostModel, name)
     if (scopeMethod) {
       return function () {
-        const args = [target.modelQueryBuilder].concat(_.toArray(arguments))
+        const args = [new Proxy(target, proxyHandler)].concat(_.toArray(arguments))
         scopeMethod.apply(target.HostModel, args)
         return this
       }
