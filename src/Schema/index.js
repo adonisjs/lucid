@@ -10,14 +10,18 @@
 */
 
 const { ioc } = require('@adonisjs/fold')
-const proxyGet = require('../../lib/proxyGet')
 
+/**
+ * The schema is used to define SQL table schemas. This makes
+ * use of all the methods from http://knexjs.org/#Schema
+ *
+ * @class Schema
+ * @constructor
+ */
 class Schema {
   constructor () {
     this.db = ioc.use('Adonis/Src/Database').connection(this.constructor.connection)
-    return new Proxy(this, {
-      get: proxyGet('schema', true)
-    })
+    this._deferredActions = []
   }
 
   /**
@@ -54,30 +58,190 @@ class Schema {
   }
 
   /**
-   * Alias for `createTable`
+   * Create a new table.
    *
-   * @method create
+   * NOTE: This action is deferred
    *
-   * @param  {String}   table
-   * @param  {Function} callback
+   * @method createTable
    *
-   * @return {Promise}
+   * @param  {String}    tableName
+   * @param  {Function}  callback
+   *
+   * @chainable
    */
-  create (table, callback) {
-    return this.schema.createTable(table, callback)
+  createTable (tableName, callback) {
+    this._deferredActions.push({ name: 'createTable', args: [tableName, callback] })
+    return this
   }
 
   /**
-   * Alias for `dropTable`
+   * Create a new table if not already exists.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method createTableIfNotExists
+   *
+   * @param  {String}    tableName
+   * @param  {Function}  callback
+   *
+   * @chainable
+   */
+  createTableIfNotExists (tableName, callback) {
+    this._deferredActions.push({ name: 'createTableIfNotExists', args: [tableName, callback] })
+    return this
+  }
+
+  /**
+   * Rename existing table.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method renameTable
+   *
+   * @param  {String}    fromTable
+   * @param  {String}    toTable
+   *
+   * @chainable
+   */
+  renameTable (fromTable, toTable) {
+    this._deferredActions.push({ name: 'renameTable', args: [fromTable, toTable] })
+    return this
+  }
+
+  /**
+   * Drop existing table.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method dropTable
+   *
+   * @param  {String}    tableName
+   *
+   * @chainable
+   */
+  dropTable (tableName) {
+    this._deferredActions.push({ name: 'dropTable', args: [tableName] })
+    return this
+  }
+
+  /**
+   * Drop table only if it exists.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method dropTableIfExists
+   *
+   * @param  {String}    tableName
+   *
+   * @chainable
+   */
+  dropTableIfExists (tableName) {
+    this._deferredActions.push({ name: 'dropTableIfExists', args: [tableName] })
+    return this
+  }
+
+  /**
+   * Select table for altering it.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method table
+   *
+   * @param  {String}    tableName
+   * @param  {Function}  callback
+   *
+   * @chainable
+   */
+  table (tableName, callback) {
+    this._deferredActions.push({ name: 'table', args: [tableName, callback] })
+    return this
+  }
+
+  /**
+   * Run a raw SQL statement
+   *
+   * @method raw
+   *
+   * @param  {String} statement
+   *
+   * @return {Object}
+   */
+  raw (statement) {
+    return this.schema.raw(statement)
+  }
+
+  /**
+   * Returns a boolean indicating if a table
+   * already exists or not
+   *
+   * @method hasTable
+   *
+   * @param  {String}  tableName
+   *
+   * @return {Boolean}
+   */
+  hasTable (tableName) {
+    return this.schema.hasTable(tableName)
+  }
+
+  /**
+   * Returns a boolean indicating if a column exists
+   * inside a table or not.
+   *
+   * @method hasColumn
+   *
+   * @param  {String}  tableName
+   * @param  {String}  columnName
+   *
+   * @return {Boolean}
+   */
+  hasColumn (tableName, columnName) {
+    return this.schema.hasTable(tableName, columnName)
+  }
+
+  /**
+   * Alias for @ref('Schema.table')
+   *
+   * @method alter
+   */
+  alter (...args) {
+    return this.table(...args)
+  }
+
+  /**
+   * Alias for @ref('Schema.createTable')
+   *
+   * @method create
+   */
+  create (...args) {
+    return this.createTable(...args)
+  }
+
+  /**
+   * Alias for @ref('Schema.dropTable')
    *
    * @method drop
-   *
-   * @param  {String} table
-   *
-   * @return {Promise}
    */
-  drop (table) {
-    return this.schema.dropTable(table)
+  drop (...args) {
+    return this.dropTable(...args)
+  }
+
+  /**
+   * Alias for @ref('Schema.dropTableIfExists')
+   *
+   * @method dropIfExists
+   */
+  dropIfExists (...args) {
+    return this.dropTableIfExists(...args)
+  }
+
+  /**
+   * Alias for @ref('Schema.renameTable')
+   *
+   * @method rename
+   */
+  rename (...args) {
+    return this.renameTable(...args)
   }
 }
 

@@ -50,19 +50,9 @@ test.group('Schema', (group) => {
     class UserSchema extends Schema {
     }
     const userSchema = new UserSchema()
-    assert.doesNotThrow(userSchema.createTable)
-  })
-
-  test('create table', async (assert) => {
-    class UserSchema extends Schema {
-    }
-    const userSchema = new UserSchema()
-    await userSchema.create('schema_users', (table) => {
-      table.increments()
-    })
-    const hasTable = await userSchema.hasTable('schema_users')
-    assert.isTrue(hasTable)
-    await userSchema.drop('schema_users')
+    const fn = function () {}
+    userSchema.createTable('users', fn)
+    assert.deepEqual(userSchema._deferredActions, [{ name: 'createTable', args: ['users', fn] }])
   })
 
   test('should have access to knex fn', async (assert) => {
