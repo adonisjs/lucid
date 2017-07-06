@@ -9,13 +9,14 @@
  * file that was distributed with this source code.
 */
 
-const { ioc } = require('@adonisjs/fold')
+const { ioc } = require('../../../lib/iocResolver')
 const _ = require('lodash')
-const util = require('../../../lib/util')
+
 const EagerLoad = require('../EagerLoad')
 const RelationsParser = require('../Relations/Parser')
 const CE = require('../../Exceptions')
 const proxyGet = require('../../../lib/proxyGet')
+const util = require('../../../lib/util')
 
 const proxyHandler = {
   get: proxyGet('query', false, function (target, name) {

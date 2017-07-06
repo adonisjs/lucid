@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
 */
 
-const { ioc } = require('@adonisjs/fold')
+const { ioc } = require('../../../lib/iocResolver')
 const CE = require('../../Exceptions')
 const proxyGet = require('../../../lib/proxyGet')
 

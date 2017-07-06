@@ -9,8 +9,6 @@
  * file that was distributed with this source code.
 */
 
-const { ioc } = require('@adonisjs/fold')
-
 /**
  * The schema is used to define SQL table schemas. This makes
  * use of all the methods from http://knexjs.org/#Schema
@@ -19,8 +17,8 @@ const { ioc } = require('@adonisjs/fold')
  * @constructor
  */
 class Schema {
-  constructor () {
-    this.db = ioc.use('Adonis/Src/Database').connection(this.constructor.connection)
+  constructor (Database) {
+    this.db = Database.connection(this.constructor.connection)
     this._deferredActions = []
   }
 

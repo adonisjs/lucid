@@ -10,7 +10,7 @@
 */
 
 const _ = require('lodash')
-const { resolver } = require('@adonisjs/fold')
+const { resolver } = require('../../../lib/iocResolver')
 const CE = require('../../Exceptions')
 
 /**

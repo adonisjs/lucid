@@ -19,9 +19,9 @@
 - [x] boot method ( ability to extend via BaseModel )
 - [ ] refresh model
 - [x] fill model with json data
-- [ ] use traits
+- [x] use traits
 - [x] computed properties
-- [ ] visible/hidden attributes
+- [x] visible/hidden attributes
 - [x] timestamps
 
 

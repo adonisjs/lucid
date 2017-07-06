@@ -11,7 +11,7 @@
 
 const _ = require('lodash')
 const chancejs = require('chance').Chance()
-const { ioc } = require('@adonisjs/fold')
+const { ioc } = require('../../lib/iocResolver')
 
 /**
  * Model factory to seed database using Lucid

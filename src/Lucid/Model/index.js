@@ -11,7 +11,7 @@
 
 const _ = require('lodash')
 const moment = require('moment')
-const { resolver } = require('@adonisjs/fold')
+const { resolver } = require('../../../lib/iocResolver')
 
 const BaseModel = require('./Base')
 const Hooks = require('../Hooks')

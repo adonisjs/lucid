@@ -49,7 +49,7 @@ test.group('Schema', (group) => {
   test('run schema methods using schema instance', (assert) => {
     class UserSchema extends Schema {
     }
-    const userSchema = new UserSchema()
+    const userSchema = new UserSchema(ioc.use('Database'))
     const fn = function () {}
     userSchema.createTable('users', fn)
     assert.deepEqual(userSchema._deferredActions, [{ name: 'createTable', args: ['users', fn] }])
@@ -58,7 +58,7 @@ test.group('Schema', (group) => {
   test('should have access to knex fn', async (assert) => {
     class UserSchema extends Schema {
     }
-    const userSchema = new UserSchema()
+    const userSchema = new UserSchema(ioc.use('Database'))
     assert.isDefined(userSchema.fn.now)
   })
 })
