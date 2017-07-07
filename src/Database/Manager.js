@@ -11,6 +11,7 @@
 
 require('./MonkeyPatch')
 
+const _ = require('lodash')
 const Database = require('.')
 const CE = require('../Exceptions')
 const proxyGet = require('../../lib/proxyGet')
@@ -77,6 +78,22 @@ class DatabaseManager {
 
     this._connectionPools[name] = new Database(connectionSettings)
     return this._connectionPools[name]
+  }
+
+  /**
+   * Close all db connections and remove them from pool
+   *
+   * @method close
+   *
+   * @return {void}
+   */
+  close (names) {
+    let connections = names || _.keys(this._connectionPools)
+    connections = connections instanceof Array === false ? [connections] : connections
+    _.each(connections, (name) => {
+      this._connectionPools[name].close()
+      this._connectionPools[name] = null
+    })
   }
 }
 

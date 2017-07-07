@@ -25,20 +25,18 @@
 - [x] timestamps
 
 
-## Eager Loading
+## Using StandAlone
+Lucid can be standalone as well
 
 ```js
-User
-  .query()
-  .with('posts.comments')
+const { config, db, Models } = require('@adonisjs/lucid-standalone')
+config({
+  // define connections
+})
 
-// when constraints
-User
-  .query()
-  .with('posts', (builder) => {
-    builder.with('comments', () => {
-    })
-  })
+await db.table('users').insert()
+Models.register('App/Model/User', require('./models/User'))
+Models.register('App/Model/City', require('./models/City'))
+
+const User = Models.get('App/Model/User')
 ```
-
-
