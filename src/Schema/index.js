@@ -155,6 +155,7 @@ class Schema {
     return this
   }
 
+  /* istanbul ignore next */
   /**
    * Run a raw SQL statement
    *
@@ -182,6 +183,7 @@ class Schema {
     return this.schema.hasTable(tableName)
   }
 
+  /* istanbul ignore next */
   /**
    * Returns a boolean indicating if a column exists
    * inside a table or not.
@@ -240,6 +242,29 @@ class Schema {
    */
   rename (...args) {
     return this.renameTable(...args)
+  }
+
+  /**
+   * Execute deferred actions in sequence. All the actions will be
+   * wrapped inside a transaction, which get's rolled back on
+   * error.
+   *
+   * @method executeActions
+   *
+   * @return {void}
+   */
+  async executeActions () {
+    const trx = await this.db.beginTransaction()
+    for (let action of this._deferredActions) {
+      try {
+        await trx.schema[action.name](...action.args)
+      } catch (error) {
+        trx.rollback()
+        throw error
+      }
+    }
+    trx.commit()
+    this._deferredActions = []
   }
 }
 
