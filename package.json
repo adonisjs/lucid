@@ -49,5 +49,14 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "nyc": {
+    "include": [
+      "src",
+      "lib"
+    ],
+    "exclude": [
+      "src/Logger/index.js"
+    ]
   }
 }
