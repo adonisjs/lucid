@@ -251,9 +251,20 @@ class Schema {
    *
    * @method executeActions
    *
-   * @return {void}
+   * @param {Boolean} [getSql = false] Get sql for the actions over executing them
+   *
+   * @return {Array}
    */
-  async executeActions () {
+  async executeActions (getSql = false) {
+    /**
+     * Returns SQL array over executing the actions
+     */
+    if (getSql) {
+      return this._deferredActions.map((action) => {
+        return this.schema[action.name](...action.args).toString()
+      })
+    }
+
     const trx = await this.db.beginTransaction()
     for (let action of this._deferredActions) {
       try {
@@ -265,6 +276,7 @@ class Schema {
     }
     trx.commit()
     this._deferredActions = []
+    return [] // just to consistent with the return output
   }
 }
 

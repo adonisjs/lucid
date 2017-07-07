@@ -159,4 +159,25 @@ test.group('Schema', (group) => {
       }
     }
   })
+
+  test('get actions sql over executing them', async (assert) => {
+    class UserSchema extends Schema {
+      up () {
+        this.createTable('schema_users', (table) => {
+          table.increments()
+        })
+
+        this.createTable('users', (table) => {
+          table.increments()
+        })
+      }
+    }
+
+    const userSchema = new UserSchema(ioc.use('Database'))
+    userSchema.up()
+    const queries = await userSchema.executeActions(true)
+    assert.lengthOf(queries, 2)
+    const hasSchemaUsers = await ioc.use('Database').schema.hasTable('schema_users')
+    assert.isFalse(hasSchemaUsers)
+  })
 })
