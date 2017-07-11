@@ -17,6 +17,11 @@ const ModelFactory = require('./ModelFactory')
  * and then get model or database factory
  * instances to seed the database.
  *
+ * @binding Adonis/Src/Factory
+ * @singleton
+ * @alias Factory
+ * @group Database
+ *
  * @class Factory
  * @constructor
  */
@@ -27,8 +32,8 @@ class Factory {
 
   /**
    * Register a new blueprint with model or table name
-   * and callback to be called for each new model
-   * instance or insert query
+   * and callback to be called to return the fake data
+   * for model instance of table insert query.
    *
    * @method blueprint
    *
@@ -36,6 +41,18 @@ class Factory {
    * @param  {Function} callback
    *
    * @chainable
+   *
+   * @example
+   * ```js
+   * Factory.blueprint('App/Model/User', (fake) => {
+   *   return {
+   *     username: fake.username(),
+   *     password: async () => {
+   *       return await Hash.make('secret')
+   *     }
+   *   }
+   * })
+   * ```
    */
   blueprint (name, callback) {
     if (typeof (callback) !== 'function') {
@@ -46,7 +63,8 @@ class Factory {
   }
 
   /**
-   * Returns the blueprint
+   * Returns the blueprint map with the map
+   * and the callback.
    *
    * @method getBlueprint
    *
@@ -59,7 +77,7 @@ class Factory {
   }
 
   /**
-   * Get model factory for a registered blueprint
+   * Get model factory for a registered blueprint.
    *
    * @method model
    *
@@ -73,7 +91,7 @@ class Factory {
   }
 
   /**
-   * Clear all the registered blueprints
+   * Clear all the registered blueprints.
    *
    * @method clear
    *

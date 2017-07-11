@@ -22,6 +22,13 @@ const util = require('../../../lib/util')
 const CE = require('../../Exceptions')
 const PivotModel = require('../Model/PivotModel')
 
+/**
+ * BelongsToMany class builds relationship between
+ * two models with the help of pivot table/model
+ *
+ * @class BelongsToMany
+ * @constructor
+ */
 class BelongsToMany extends BaseRelation {
   constructor (parentInstance, relatedModel, primaryKey, foreignKey, relatedPrimaryKey, relatedForeignKey) {
     super(parentInstance, relatedModel, primaryKey, foreignKey)
@@ -221,6 +228,7 @@ class BelongsToMany extends BaseRelation {
    * Saves the relationship to the pivot table
    *
    * @method _attachSingle
+   * @async
    *
    * @param  {Number|String}      value
    * @param  {Function}           [pivotCallback]
@@ -273,6 +281,7 @@ class BelongsToMany extends BaseRelation {
    * the related instance
    *
    * @method _persistParentIfRequired
+   * @async
    *
    * @return {void}
    *
@@ -290,6 +299,7 @@ class BelongsToMany extends BaseRelation {
    * this function are not hitting database.
    *
    * @method _loadAndCachePivot
+   * @async
    *
    * @return {void}
    *
@@ -448,6 +458,7 @@ class BelongsToMany extends BaseRelation {
    * Returns the eagerLoad query for the relationship
    *
    * @method eagerLoad
+   * @async
    *
    * @param  {Array}          rows
    *
@@ -467,6 +478,7 @@ class BelongsToMany extends BaseRelation {
    * instance
    *
    * @method load
+   * @async
    *
    * @return {Promise}
    */
@@ -479,6 +491,7 @@ class BelongsToMany extends BaseRelation {
    * as a relation
    *
    * @method fetch
+   * @async
    *
    * @return {Serializer}
    */
@@ -706,7 +719,7 @@ class BelongsToMany extends BaseRelation {
     if (arrayOfRelatedInstances instanceof Array === false) {
       throw CE
         .InvalidArgumentException
-        .invalidParamter('belongsToMany.saveMany expects an array of related model instances')
+        .invalidParameter('belongsToMany.saveMany expects an array of related model instances')
     }
 
     await this._persistParentIfRequired()
@@ -718,6 +731,7 @@ class BelongsToMany extends BaseRelation {
    * the relationship inside pivot table
    *
    * @method create
+   * @async
    *
    * @param  {Object}   row
    * @param  {Function} [pivotCallback]
@@ -739,6 +753,7 @@ class BelongsToMany extends BaseRelation {
    * call all queries in parallel
    *
    * @method createMany
+   * @async
    *
    * @param  {Array}   rows
    * @param  {Function}   pivotCallback
@@ -749,7 +764,7 @@ class BelongsToMany extends BaseRelation {
     if (rows instanceof Array === false) {
       throw CE
         .InvalidArgumentException
-        .invalidParamter('belongsToMany.createMany expects an array of related model instances')
+        .invalidParameter('belongsToMany.createMany expects an array of related model instances')
     }
 
     await this._persistParentIfRequired()

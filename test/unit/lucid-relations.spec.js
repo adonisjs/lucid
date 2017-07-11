@@ -18,7 +18,7 @@ const { Config } = require('@adonisjs/sink')
 const helpers = require('./helpers')
 const Model = require('../../src/Lucid/Model')
 const DatabaseManager = require('../../src/Database/Manager')
-const CollectionSerializer = require('../../src/Lucid/Serializers/Collection')
+const VanillaSerializer = require('../../src/Lucid/Serializers/Vanilla')
 
 test.group('Relations | HasOne', (group) => {
   group.before(async () => {
@@ -993,7 +993,7 @@ test.group('Relations | HasOne', (group) => {
     ])
 
     const users = await User.query().with('profile').paginate(1, 1)
-    assert.instanceOf(users, CollectionSerializer)
+    assert.instanceOf(users, VanillaSerializer)
     assert.equal(users.size(), 1)
     assert.instanceOf(users.first().getRelated('profile'), Profile)
     assert.equal(users.first().getRelated('profile').profile_name, 'virk')
@@ -1390,7 +1390,7 @@ test.group('Relations | HasOne', (group) => {
     await ioc.use('Database').table('cars').insert({ user_id: 1, name: 'audi', model: '2001' })
 
     const user = await User.query().with('cars').first()
-    assert.instanceOf(user.getRelated('cars'), CollectionSerializer)
+    assert.instanceOf(user.getRelated('cars'), VanillaSerializer)
     assert.equal(user.getRelated('cars').size(), 1)
 
     try {

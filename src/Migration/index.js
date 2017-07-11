@@ -10,7 +10,20 @@
 */
 
 const _ = require('lodash')
+const CE = require('../Exceptions')
 
+/**
+ * Migration class is used to migrate the database by
+ * calling actions defined inside schema class.
+ *
+ * @binding Adonis/Src/Migration
+ * @alias Migration
+ * @group Database
+ * @uses (['Adonis/Src/Config', 'Adonis/Src/Database'])
+ *
+ * @class Migration
+ * @constructor
+ */
 class Migration {
   constructor (Config, Database) {
     this.db = Database
@@ -100,7 +113,7 @@ class Migration {
       .first()
 
     if (hasLock) {
-      throw new Error('df')
+      throw CE.RuntimeException.migrationsAreLocked(this._lockTable)
     }
   }
 

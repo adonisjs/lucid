@@ -20,7 +20,7 @@ const { Config, setupResolver } = require('@adonisjs/sink')
 const helpers = require('./helpers')
 const Model = require('../../src/Lucid/Model')
 const DatabaseManager = require('../../src/Database/Manager')
-const CollectionSerializer = require('../../src/Lucid/Serializers/Collection')
+const VanillaSerializer = require('../../src/Lucid/Serializers/Vanilla')
 
 test.group('Model', (group) => {
   group.before(async () => {
@@ -356,7 +356,7 @@ test.group('Model', (group) => {
     User._bootIfNotBooted()
     await ioc.use('Database').insert({ username: 'virk' }).into('users')
     const users = await User.query().fetch()
-    assert.instanceOf(users, CollectionSerializer)
+    assert.instanceOf(users, VanillaSerializer)
   })
 
   test('cast all dates to moment objects after fetch', async (assert) => {
@@ -683,7 +683,7 @@ test.group('Model', (group) => {
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     const users = await User.all()
-    assert.instanceOf(users, CollectionSerializer)
+    assert.instanceOf(users, VanillaSerializer)
   })
 
   test('pick x number of rows from database', async (assert) => {
@@ -694,7 +694,7 @@ test.group('Model', (group) => {
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.pick(1)
-    assert.instanceOf(users, CollectionSerializer)
+    assert.instanceOf(users, VanillaSerializer)
     assert.equal(users.size(), 1)
     assert.equal(users.first().username, 'virk')
   })
@@ -707,7 +707,7 @@ test.group('Model', (group) => {
 
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.pickInverse(1)
-    assert.instanceOf(users, CollectionSerializer)
+    assert.instanceOf(users, VanillaSerializer)
     assert.equal(users.size(), 1)
     assert.equal(users.first().username, 'nikk')
   })
@@ -751,7 +751,7 @@ test.group('Model', (group) => {
     User._bootIfNotBooted()
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.query().paginate(1, 1)
-    assert.instanceOf(users, CollectionSerializer)
+    assert.instanceOf(users, VanillaSerializer)
     assert.deepEqual(users.pages, { perPage: 1, total: helpers.formatNumber(2), page: 1, lastPage: 2 })
     assert.equal(users.first().username, 'virk')
   })
@@ -1217,5 +1217,87 @@ test.group('Model', (group) => {
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     const user = await User.findByOrFail('username', 'virk')
     assert.instanceOf(user, User)
+  })
+
+  test('delete existing model instance', async (assert) => {
+    assert.plan(3)
+    class User extends Model {
+    }
+    User._bootIfNotBooted()
+    let userQuery = null
+
+    User.onQuery((query) => (userQuery = query))
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    await user.delete()
+
+    assert.isTrue(user.$frozen)
+    try {
+      user.username = 'foo'
+    } catch ({ message }) {
+      assert.equal(message, 'E_DELETED_MODEL: Cannot edit deleted model instance for User model')
+    }
+    assert.equal(userQuery.sql, helpers.formatQuery('delete from "users" where "id" = ?'))
+  })
+
+  test('dates should be an empty array when createdAtColumn and updatedAtColumn is not defined', async (assert) => {
+    class User extends Model {
+      static get createdAtColumn () {
+        return null
+      }
+
+      static get updatedAtColumn () {
+        return null
+      }
+    }
+    User._bootIfNotBooted()
+    assert.deepEqual(User.dates, [])
+  })
+
+  test('do not populate dates when columns are set to null', async (assert) => {
+    class User extends Model {
+      static get createdAtColumn () {
+        return null
+      }
+
+      static get updatedAtColumn () {
+        return null
+      }
+    }
+    User._bootIfNotBooted()
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    assert.equal(userQuery.sql, helpers.formatQuery('insert into "users" ("username") values (?)'))
+  })
+
+  test('throw exception when onQuery doesn\'t recieves as callback', (assert) => {
+    assert.plan(1)
+
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    const fn = () => User.onQuery('foo')
+    assert.throw(fn, 'E_INVALID_PARAMETER: Model.onQuery expects a closure as first parameter')
+  })
+
+  test('throw exception when addGlobalScope doesn\'t recieves as callback', (assert) => {
+    assert.plan(1)
+
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    const fn = () => User.addGlobalScope('foo')
+    assert.throw(fn, 'E_INVALID_PARAMETER: Model.addGlobalScope expects a closure as first parameter')
   })
 })

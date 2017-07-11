@@ -21,8 +21,8 @@ const excludeAttrFromCount = ['order', 'columns', 'limit', 'offset']
 const _from = KnexQueryBuilder.prototype.from
 
 /**
- * A custom from method with support for prefixing
- * tables.
+ * Facade over `knex.from` method to entertain the `prefix`
+ * value inside the file when selecting the table.
  *
  * @method from
  *
@@ -39,7 +39,7 @@ KnexQueryBuilder.prototype.from = function (name) {
 }
 
 /**
- * Alias for @ref('Database.table')
+ * Alias for @ref('Database.from')
  *
  * @method table
  *
@@ -50,7 +50,7 @@ KnexQueryBuilder.prototype.table = function (...args) {
 }
 
 /**
- * Alias for @ref('Database.table')
+ * Alias for @ref('Database.from')
  *
  * @method table
  *
@@ -77,7 +77,7 @@ KnexQueryBuilder.prototype.withOutPrefix = function () {
 
 /**
  * Add `offset` and `limit` based upon the current
- * and per page params
+ * and per page params.
  *
  * @method forPage
  *

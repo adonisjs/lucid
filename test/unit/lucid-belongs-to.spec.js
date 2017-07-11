@@ -18,7 +18,7 @@ const { Config } = require('@adonisjs/sink')
 const helpers = require('./helpers')
 const Model = require('../../src/Lucid/Model')
 const DatabaseManager = require('../../src/Database/Manager')
-const CollectionSerializer = require('../../src/Lucid/Serializers/Collection')
+const VanillaSerializer = require('../../src/Lucid/Serializers/Vanilla')
 
 test.group('Relations | Belongs To', (group) => {
   group.before(async () => {
@@ -148,7 +148,7 @@ test.group('Relations | Belongs To', (group) => {
     await ioc.use('Database').table('profiles').insert({ user_id: 2, profile_name: 'nikk' })
 
     const profiles = await Profile.query().with('user').fetch()
-    assert.instanceOf(profiles, CollectionSerializer)
+    assert.instanceOf(profiles, VanillaSerializer)
     assert.equal(profiles.size(), 1)
     assert.instanceOf(profiles.first().getRelated('user'), User)
     assert.equal(profiles.first().getRelated('user').username, 'nikk')
@@ -179,7 +179,7 @@ test.group('Relations | Belongs To', (group) => {
     ])
 
     const profiles = await Profile.query().with('user').paginate()
-    assert.instanceOf(profiles, CollectionSerializer)
+    assert.instanceOf(profiles, VanillaSerializer)
     assert.equal(profiles.size(), 2)
     assert.instanceOf(profiles.first().getRelated('user'), User)
     assert.equal(profiles.first().getRelated('user').username, 'nikk')

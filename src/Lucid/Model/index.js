@@ -26,6 +26,10 @@ const util = require('../../../lib/util')
  * Lucid model is a base model and supposed to be
  * extended by other models.
  *
+ * @binding Adonis/Src/Lucid
+ * @alias Lucid
+ * @group Database
+ *
  * @class Model
  */
 class Model extends BaseModel {
@@ -64,7 +68,8 @@ class Model extends BaseModel {
 
   /**
    * The primary key for the model. You can change it
-   * to anything you want.
+   * to anything you want, just make sure that the
+   * value of this key will always be unique.
    *
    * @attribute primaryKey
    *
@@ -196,6 +201,10 @@ class Model extends BaseModel {
    * Method to be called only once to boot
    * the model.
    *
+   * NOTE: This is called automatically by the IoC
+   * container hooks when you make use of `use()`
+   * method.
+   *
    * @method boot
    *
    * @return {void}
@@ -306,7 +315,9 @@ class Model extends BaseModel {
 
   /**
    * Adds the global scope to the model global scopes.
-   * A named global scope can be removed later
+   *
+   * You can also give name to the scope, since named
+   * scopes can be removed when executing queries.
    *
    * @method addGlobalScope
    *
@@ -314,13 +325,18 @@ class Model extends BaseModel {
    * @param  {String}       [name = null]
    */
   static addGlobalScope (callback, name = null) {
+    if (typeof (callback) !== 'function') {
+      throw CE
+        .InvalidArgumentException
+        .invalidParameter('Model.addGlobalScope expects a closure as first parameter')
+    }
     this.$globalScopes.push({ callback, name })
     return this
   }
 
   /**
    * Attach a listener to be called everytime a query on
-   * the model is executed
+   * the model is executed.
    *
    * @method onQuery
    *
@@ -329,6 +345,10 @@ class Model extends BaseModel {
    * @chainable
    */
   static onQuery (callback) {
+    if (typeof (callback) !== 'function') {
+      throw CE.InvalidArgumentException.invalidParameter('Model.onQuery expects a closure as first parameter')
+    }
+
     this.$queryListeners.push(callback)
     return this
   }
@@ -336,7 +356,7 @@ class Model extends BaseModel {
   /**
    * Adds a new trait to the model. Ideally it does a very
    * simple thing and that is to pass the model class to
-   * your trait and your own it from there
+   * your trait and you own it from there.
    *
    * @method addTrait
    *
@@ -344,7 +364,9 @@ class Model extends BaseModel {
    */
   static addTrait (trait) {
     if (typeof (trait) !== 'function' && typeof (trait) !== 'string') {
-      throw new Error('some error')
+      throw CE
+        .InvalidArgumentException
+        .invalidParameter('Model.addTrait expects an IoC container binding or a closure')
     }
 
     /**
@@ -357,7 +379,8 @@ class Model extends BaseModel {
 
   /**
    * Creates a new model instances from payload
-   * and also persist it to database
+   * and also persist it to database at the
+   * same time.
    *
    * @method create
    *
@@ -373,13 +396,15 @@ class Model extends BaseModel {
   }
 
   /**
-   * Creates many instance of model in parallel
+   * Creates many instances of model in parallel.
    *
    * @method createMany
    *
    * @param  {Array} payloadArray
    *
    * @return {Array} Array of model instances is returned
+   *
+   * @throws {InvalidArgumentException} If payloadArray is not an array
    */
   static async createMany (payloadArray) {
     if (payloadArray instanceof Array === false) {
@@ -486,7 +511,7 @@ class Model extends BaseModel {
   /**
    * Checks for existence of setter on model and if exists
    * returns the return value of setter, otherwise returns
-   * the default value
+   * the default value.
    *
    * @method _getSetterValue
    *
@@ -582,8 +607,9 @@ class Model extends BaseModel {
    * `save` event.
    *
    * @method _insert
+   * @async
    *
-   * @return {void}
+   * @return {Boolean}
    *
    * @private
    */
@@ -625,26 +651,29 @@ class Model extends BaseModel {
      * Executing after hooks
      */
     await this.constructor.$hooks.after.exec('create', this)
+    return true
   }
 
   /**
    * Update model by updating dirty attributes to the database.
    *
    * @method _update
+   * @async
    *
-   * @return {void}
+   * @return {Boolean}
    */
   async _update () {
     /**
      * Executing before hooks
      */
     await this.constructor.$hooks.before.exec('update', this)
+    let affected = 0
 
     if (this.isDirty) {
       /**
        * Set proper timestamps
        */
-      await this.constructor
+      affected = await this.constructor
         .query()
         .where(this.constructor.primaryKey, this.primaryKeyValue)
         .ignoreScopes()
@@ -659,6 +688,7 @@ class Model extends BaseModel {
      * Executing after hooks
      */
     await this.constructor.$hooks.after.exec('update', this)
+    return !!affected
   }
 
   /**
@@ -685,7 +715,7 @@ class Model extends BaseModel {
    * manually or calling the `set` function has no
    * difference.
    *
-   * Note this method will call the setter
+   * NOTE: this method will call the setter
    *
    * @method set
    *
@@ -696,17 +726,6 @@ class Model extends BaseModel {
    */
   set (name, value) {
     this.$attributes[name] = this._getSetterValue(name, value)
-  }
-
-  /**
-   * Freezes the model instance for modifications
-   *
-   * @method freeze
-   *
-   * @return {void}
-   */
-  freeze () {
-    this.$frozen = true
   }
 
   /**
@@ -752,13 +771,14 @@ class Model extends BaseModel {
   }
 
   /**
-   * Persist model to the database. It will create a new row
-   * when model has not been persisted already, otherwise
-   * will update it.
+   * Persist model instance to the database. It will create
+   * a new row when model has not been persisted already,
+   * otherwise will update it.
    *
    * @method save
+   * @async
    *
-   * @return {void}
+   * @return {Boolean} Whether or not the model was persisted
    */
   async save () {
     return this.isNew ? this._insert() : this._update()
@@ -766,9 +786,10 @@ class Model extends BaseModel {
 
   /**
    * Deletes the model instance from the database. Also this
-   * method will freeze the model instance for updates
+   * method will freeze the model instance for updates.
    *
    * @method delete
+   * @async
    *
    * @return {Boolean}
    */
@@ -820,6 +841,7 @@ class Model extends BaseModel {
    * Find a row using the primary key
    *
    * @method find
+   * @async
    *
    * @param  {String|Number} value
    *
@@ -834,6 +856,7 @@ class Model extends BaseModel {
    * fail with an exception
    *
    * @method findByOrFail
+   * @async
    *
    * @param  {String|Number}     value
    *
@@ -849,6 +872,7 @@ class Model extends BaseModel {
    * Find a model instance using key/value pair
    *
    * @method findBy
+   * @async
    *
    * @param  {String} key
    * @param  {String|Number} value
@@ -864,6 +888,7 @@ class Model extends BaseModel {
    * fail with an exception
    *
    * @method findByOrFail
+   * @async
    *
    * @param  {String}     key
    * @param  {String|Number}     value
@@ -881,6 +906,7 @@ class Model extends BaseModel {
    * clause
    *
    * @method first
+   * @async
    *
    * @return {Model|Null}
    */
@@ -893,6 +919,7 @@ class Model extends BaseModel {
    * This method will add orderBy asc clause.
    *
    * @method first
+   * @async
    *
    * @return {Model}
    *
@@ -906,6 +933,7 @@ class Model extends BaseModel {
    * Fetch everything from the database
    *
    * @method all
+   * @async
    *
    * @return {Collection}
    */
@@ -917,6 +945,7 @@ class Model extends BaseModel {
    * Select x number of rows
    *
    * @method pick
+   * @async
    *
    * @param  {Number} [limit = 1]
    *
@@ -930,6 +959,7 @@ class Model extends BaseModel {
    * Select x number of rows in inverse
    *
    * @method pickInverse
+   * @async
    *
    * @param  {Number}    [limit = 1]
    *
@@ -945,6 +975,7 @@ class Model extends BaseModel {
    * Note: this method doesn't allow eagerloading relations
    *
    * @method ids
+   * @async
    *
    * @return {Array}
    */
@@ -958,6 +989,7 @@ class Model extends BaseModel {
    * Note: this method doesn't allow eagerloading relations
    *
    * @method ids
+   * @async
    *
    * @return {Array}
    */
@@ -1028,6 +1060,7 @@ class Model extends BaseModel {
    * multiple times
    *
    * @method load
+   * @async
    *
    * @param  {String}   relation
    * @param  {Function} callback
@@ -1041,10 +1074,11 @@ class Model extends BaseModel {
   }
 
   /**
-   * Just like load but instead loads multiple relations for a
-   * single model instance
+   * Just like @ref('Model.load') but instead loads multiple relations for a
+   * single model instance.
    *
    * @method loadMany
+   * @async
    *
    * @param  {Object} eagerLoadMap
    *
@@ -1092,8 +1126,8 @@ class Model extends BaseModel {
    * @method belongsTo
    *
    * @param  {String|Class}  relatedModel
-   * @param  {String}  primaryKey
-   * @param  {String}  foreignKey
+   * @param  {String}        primaryKey
+   * @param  {String}        foreignKey
    *
    * @return {BelongsTo}
    */
@@ -1107,10 +1141,10 @@ class Model extends BaseModel {
    * @method belongsToMany
    *
    * @param  {Class|String}      relatedModel
-   * @param  {String}      foreignKey
-   * @param  {String}      relatedForeignKey
-   * @param  {String}      primaryKey
-   * @param  {String}      relatedPrimaryKey
+   * @param  {String}            foreignKey
+   * @param  {String}            relatedForeignKey
+   * @param  {String}            primaryKey
+   * @param  {String}            relatedPrimaryKey
    *
    * @return {BelongsToMany}
    */

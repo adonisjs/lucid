@@ -125,6 +125,7 @@ class BaseRelation {
    * Returns the eagerLoad query for the relationship
    *
    * @method eagerLoad
+   * @async
    *
    * @param  {Array}          rows
    *
@@ -140,6 +141,7 @@ class BaseRelation {
    * model, but only for one row.
    *
    * @method load
+   * @async
    *
    * @param  {String|Number}     value
    *

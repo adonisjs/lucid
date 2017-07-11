@@ -62,6 +62,7 @@ class BelongsTo extends BaseRelation {
    * can never have many rows
    *
    * @method fetch
+   * @async
    *
    * @return {Object}
    */
@@ -112,6 +113,7 @@ class BelongsTo extends BaseRelation {
    * the related model if not already persisted
    *
    * @method associate
+   * @async
    *
    * @param  {Object}  relatedInstance
    *
@@ -130,6 +132,7 @@ class BelongsTo extends BaseRelation {
    * Dissociate relationship from database by setting `foriegnKey` to null
    *
    * @method dissociate
+   * @async
    *
    * @return {Promise}
    */

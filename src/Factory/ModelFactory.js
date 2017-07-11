@@ -46,9 +46,10 @@ class ModelFactory {
   /**
    * Make a single instance of blueprint for a given
    * index. This method will evaluate the functions
-   * in the return payload from blueprint
+   * in the return payload from blueprint.
    *
    * @method _makeOne
+   * @async
    *
    * @param  {Number} index
    * @param  {Object} data
@@ -82,6 +83,7 @@ class ModelFactory {
    * from blueprint fake values
    *
    * @method make
+   * @async
    *
    * @param  {Object} data
    * @param  {Number} [index = 0]
@@ -98,6 +100,7 @@ class ModelFactory {
    * fake data
    *
    * @method makeMany
+   * @async
    *
    * @param  {Number} instances
    * @param  {Object} [data = {}]
@@ -113,6 +116,7 @@ class ModelFactory {
    * and then return it back
    *
    * @method create
+   * @async
    *
    * @param  {Object} data
    *
@@ -129,6 +133,7 @@ class ModelFactory {
    * them back as an array
    *
    * @method createMany
+   * @async
    *
    * @param  {Number}   numberOfRows
    * @param  {Object}   [data = {}]

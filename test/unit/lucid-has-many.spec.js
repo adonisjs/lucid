@@ -18,7 +18,7 @@ const { Config } = require('@adonisjs/sink')
 const helpers = require('./helpers')
 const Model = require('../../src/Lucid/Model')
 const DatabaseManager = require('../../src/Database/Manager')
-const CollectionSerializer = require('../../src/Lucid/Serializers/Collection')
+const VanillaSerializer = require('../../src/Lucid/Serializers/Vanilla')
 
 test.group('Relations | Has Many', (group) => {
   group.before(async () => {
@@ -77,7 +77,7 @@ test.group('Relations | Has Many', (group) => {
 
     const user = await User.find(1)
     const cars = await user.cars().fetch()
-    assert.instanceOf(cars, CollectionSerializer)
+    assert.instanceOf(cars, VanillaSerializer)
     assert.equal(cars.size(), 2)
     assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" = ?'))
     assert.deepEqual(carQuery.bindings, helpers.formatBindings([1]))
@@ -136,7 +136,7 @@ test.group('Relations | Has Many', (group) => {
     ])
 
     const user = await User.query().with('cars').first()
-    assert.instanceOf(user.getRelated('cars'), CollectionSerializer)
+    assert.instanceOf(user.getRelated('cars'), VanillaSerializer)
     assert.equal(user.getRelated('cars').size(), 2)
     assert.deepEqual(user.getRelated('cars').rows.map((car) => car.$parent), ['User', 'User'])
     assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" = ?'))
@@ -858,5 +858,55 @@ test.group('Relations | Has Many', (group) => {
     assert.lengthOf(cars, 1)
     assert.equal(cars[0].name, 'ferrari')
     assert.equal(carQuery.sql, helpers.formatQuery('delete from "cars" where "name" = ? and "user_id" = ?'))
+  })
+
+  test('throw exception when createMany doesn\'t receives an array', async (assert) => {
+    assert.plan(1)
+
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+
+    try {
+      await user.cars().createMany({ name: 'mercedes', model: '1992' })
+    } catch ({ message }) {
+      assert.equal(message, 'E_INVALID_PARAMETER: hasMany.createMany expects an array of values')
+    }
+  })
+
+  test('throw exception when saveMany doesn\'t receives an array', async (assert) => {
+    assert.plan(1)
+
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+
+    try {
+      await user.cars().saveMany(new Car())
+    } catch ({ message }) {
+      assert.equal(message, 'E_INVALID_PARAMETER: hasMany.saveMany expects an array of related model instances')
+    }
   })
 })

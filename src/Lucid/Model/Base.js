@@ -11,14 +11,15 @@
 
 const _ = require('lodash')
 const moment = require('moment')
-const CollectionSerializer = require('../Serializers/Collection')
+const VanillaSerializer = require('../Serializers/Vanilla')
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss'
 
 /**
- * Lucid model is a base model and supposed to be
- * extended by other models.
+ * The base model to share attributes with Lucid
+ * model and the Pivot model.
  *
  * @class BaseModel
+ * @constructor
  */
 class BaseModel {
   constructor () {
@@ -75,14 +76,14 @@ class BaseModel {
    * data. The return value must always be a
    * ES6 class.
    *
-   * By default Lucid uses @ref('BaseSerializer')
+   * By default Lucid uses @ref('VanillaSerializer')
    *
    * @attribute Serializer
    *
    * @return {Class}
    */
   static get Serializer () {
-    return CollectionSerializer
+    return VanillaSerializer
   }
 
   /**

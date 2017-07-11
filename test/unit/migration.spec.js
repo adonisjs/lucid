@@ -488,4 +488,50 @@ test.group('Migration', (group) => {
     const status = await migration.status({ '2017-08-10': UserSchema, '2017-08-12': UserSchema })
     assert.deepEqual(status, { '2017-08-10': 'Y', '2017-08-12': 'N' })
   })
+
+  test('throw exceptions when migrations are locked', async (assert) => {
+    const migration = new Migration(new Config(), ioc.use('Database'))
+    assert.plan(1)
+
+    class UserSchema extends Schema {
+      async up () {
+        this.create('schema_users', (table) => {
+          table.increments()
+          table.string('username')
+        })
+      }
+
+      down () {
+      }
+    }
+
+    try {
+      await migration._makeLockTable()
+      await migration._addLock()
+      await migration.up({ '2017-08-10': UserSchema })
+    } catch ({ message }) {
+      assert.equal(message, 'Migrations are locked. Make sure you are not multiple migration scripts or delete `adonis_schema_lock` table manually')
+    }
+  })
+
+  test('return status as skipped when there is nothing to migrate', async (assert) => {
+    const migration = new Migration(new Config(), ioc.use('Database'))
+    assert.plan(1)
+
+    class UserSchema extends Schema {
+      async up () {
+        this.create('schema_users', (table) => {
+          table.increments()
+          table.string('username')
+        })
+      }
+
+      down () {
+      }
+    }
+
+    await migration.up({ '2017-08-10': UserSchema })
+    const result = await migration.up({ '2017-08-10': UserSchema })
+    assert.deepEqual(result, { migrated: [], status: 'skipped' })
+  })
 })

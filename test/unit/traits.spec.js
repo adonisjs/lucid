@@ -36,6 +36,20 @@ test.group('Traits', (group) => {
     ioc.restore()
   })
 
+  test('throw exception when addTrait doesn\'t receives a callback or a string', (assert) => {
+    assert.plan(1)
+
+    class User extends Model {
+      static boot () {
+        super.boot()
+        this.addTrait({})
+      }
+    }
+
+    const fn = () => User._bootIfNotBooted()
+    assert.throw(fn, 'E_INVALID_PARAMETER: Model.addTrait expects an IoC container binding or a closure')
+  })
+
   test('add a trait to the model', (assert) => {
     assert.plan(1)
 

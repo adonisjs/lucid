@@ -18,7 +18,7 @@ const { Config } = require('@adonisjs/sink')
 const helpers = require('./helpers')
 const Model = require('../../src/Lucid/Model')
 const DatabaseManager = require('../../src/Database/Manager')
-const CollectionSerializer = require('../../src/Lucid/Serializers/Collection')
+const VanillaSerializer = require('../../src/Lucid/Serializers/Vanilla')
 
 test.group('Relations | Serializer', (group) => {
   group.before(async () => {
@@ -63,7 +63,7 @@ test.group('Relations | Serializer', (group) => {
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const users = await User.all()
-    assert.instanceOf(users, CollectionSerializer)
+    assert.instanceOf(users, VanillaSerializer)
   })
 
   test('return json representation of all the models', async (assert) => {

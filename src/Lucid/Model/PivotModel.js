@@ -140,6 +140,7 @@ class PivotModel extends BaseModel {
    * Save the model instance to the database.
    *
    * @method save
+   * @async
    *
    * @return {void}
    */
@@ -153,7 +154,10 @@ class PivotModel extends BaseModel {
       this.$attributes['updated_at'] = moment().format(DATE_FORMAT)
     }
 
-    const result = await this.query(this.$table, this.$connection).returning('id').insert(this.$attributes)
+    const result = await this
+      .query(this.$table, this.$connection)
+      .returning('id')
+      .insert(this.$attributes)
 
     this.primaryKeyValue = result[0]
     this.$persisted = true

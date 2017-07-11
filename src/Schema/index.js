@@ -276,7 +276,7 @@ class Schema {
     }
     trx.commit()
     this._deferredActions = []
-    return [] // just to consistent with the return output
+    return [] // just to be consistent with the return output
   }
 }
 

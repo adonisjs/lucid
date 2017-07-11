@@ -9,14 +9,15 @@
  * file that was distributed with this source code.
 */
 
-const { ioc } = require('../../../lib/iocResolver')
 const _ = require('lodash')
 
 const EagerLoad = require('../EagerLoad')
 const RelationsParser = require('../Relations/Parser')
 const CE = require('../../Exceptions')
+
 const proxyGet = require('../../../lib/proxyGet')
 const util = require('../../../lib/util')
+const { ioc } = require('../../../lib/iocResolver')
 
 const proxyHandler = {
   get: proxyGet('query', false, function (target, name) {
@@ -35,6 +36,13 @@ const proxyHandler = {
   })
 }
 
+/**
+ * Query builder for the lucid models extended
+ * by the @ref('Database') class.
+ *
+ * @class QueryBuilder
+ * @constructor
+ */
 class QueryBuilder {
   constructor (Model, connection) {
     this.Model = Model
@@ -143,9 +151,7 @@ class QueryBuilder {
     _(this.Model.$globalScopes)
     .filter((scope) => this._ignoreScopes.indexOf(scope.name) <= -1)
     .each((scope) => {
-      if (typeof (scope.callback) === 'function') {
-        scope.callback(this)
-      }
+      scope.callback(this)
     })
 
     return this
@@ -212,21 +218,24 @@ class QueryBuilder {
 
   /**
    * Instruct query builder to ignore all global
-   * scopes
+   * scopes.
+   *
+   * Passing `*` will ignore all scopes or you can
+   * pass an array of scope names.
+   *
+   * @param {Array} [scopes = ['*']]
    *
    * @method ignoreScopes
    *
    * @chainable
    */
-  ignoreScopes (scopes = ['*']) {
+  ignoreScopes (scopes) {
     /**
      * Don't do anything when array is empty or value is not
      * an array
      */
-    if (_.isArray(scopes) && _.size(scopes)) {
-      this._ignoreScopes = this._ignoreScopes.concat(scopes)
-    }
-
+    const scopesToIgnore = scopes instanceof Array === true ? scopes : ['*']
+    this._ignoreScopes = this._ignoreScopes.concat(scopesToIgnore)
     return this
   }
 
@@ -234,6 +243,7 @@ class QueryBuilder {
    * Execute the query builder chain by applying global scopes
    *
    * @method fetch
+   * @async
    *
    * @return {Serializer} Instance of model serializer
    */
@@ -265,6 +275,7 @@ class QueryBuilder {
    * Returns the first row from the database.
    *
    * @method first
+   * @async
    *
    * @return {Model|Null}
    */
@@ -298,6 +309,7 @@ class QueryBuilder {
    * row for the built query
    *
    * @method firstOrFail
+   * @async
    *
    * @return {Model}
    *
@@ -317,6 +329,7 @@ class QueryBuilder {
    * collection with pagination info
    *
    * @method paginate
+   * @async
    *
    * @param  {Number} [page = 1]
    * @param  {Number} [limit = 20]
@@ -348,6 +361,7 @@ class QueryBuilder {
    * format all dates and set `updated_at` column
    *
    * @method update
+   * @async
    *
    * @param  {Object} values
    *
@@ -370,6 +384,7 @@ class QueryBuilder {
    * Deletes the rows from the database.
    *
    * @method delete
+   * @async
    *
    * @return {Promise}
    */
@@ -382,6 +397,7 @@ class QueryBuilder {
    * Returns an array of primaryKeys
    *
    * @method ids
+   * @async
    *
    * @return {Array}
    */
@@ -395,6 +411,7 @@ class QueryBuilder {
    * eagerload relationships.
    *
    * @method pair
+   * @async
    *
    * @param  {String} lhs
    * @param  {String} rhs
@@ -413,6 +430,7 @@ class QueryBuilder {
    * Same as `pick` but inverse
    *
    * @method pickInverse
+   * @async
    *
    * @param  {Number}    [limit = 1]
    *
@@ -427,6 +445,7 @@ class QueryBuilder {
    * Pick x number of rows from the database
    *
    * @method pick
+   * @async
    *
    * @param  {Number} [limit = 1]
    *

@@ -58,6 +58,24 @@ class Database {
    * The schema builder instance to be used
    * for creating database schema.
    *
+   * You should obtain a new schema instance for every
+   * database operation and should never use stale
+   * instances. For example
+   *
+   * @example
+   * ```js
+   * // WRONG
+   * const schema = Database.schema
+   * schema.createTable('users')
+   * schema.createTable('profiles')
+   * ```
+   *
+   * ```js
+   * // RIGHT
+   * Database.schema.createTable('users')
+   * Database.schema.createTable('profiles')
+   * ```
+   *
    * @attribute schema
    *
    * @return {Object}
@@ -78,7 +96,7 @@ class Database {
   }
 
   /**
-   * Method to construct raw queries
+   * Method to construct raw database queries.
    *
    * @method raw
    *
@@ -95,8 +113,23 @@ class Database {
    * under transaction.
    *
    * @method beginTransaction
+   * @async
    *
-   * @return {Promise}
+   * @return {Object}
+   *
+   * @example
+   * ```js
+   * const trx = await Database.beginTransaction()
+   * await trx
+   *   .table('users')
+   *   .insert({ username: 'virk' })
+   *
+   * // or
+   * Database
+   *   .table('users')
+   *   .transacting(trx)
+   *   .insert({ username: 'virk' })
+   * ```
    */
   beginTransaction () {
     return new Promise((resolve, reject) => {
@@ -116,6 +149,7 @@ class Database {
    * writing tests.
    *
    * @method beginGlobalTransaction
+   * @async
    *
    * @return {void}
    */
@@ -124,7 +158,7 @@ class Database {
   }
 
   /**
-   * Rollbacks global transaction
+   * Rollbacks global transaction.
    *
    * @method rollbackGlobalTransaction
    *
@@ -136,7 +170,7 @@ class Database {
   }
 
   /**
-   * Commits global transaction
+   * Commits global transaction.
    *
    * @method commitGlobalTransaction
    *

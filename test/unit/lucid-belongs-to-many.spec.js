@@ -1546,4 +1546,57 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(post[0].title, 'Adonis 102')
     assert.equal(postQuery.sql, helpers.formatQuery('update "posts" set "title" = ?, "updated_at" = ? where "id" in (?)'))
   })
+
+  test('throw exception when saveMany doesn\'t  receives an array', async (assert) => {
+    assert.plan(1)
+
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+
+    const post = new Post()
+    post.title = 'Adonis 101'
+
+    try {
+      await user.posts().saveMany(post)
+    } catch ({ message }) {
+      assert.equal(message, 'E_INVALID_PARAMETER: belongsToMany.saveMany expects an array of related model instances')
+    }
+  })
+
+  test('throw exception when createMany doesn\'t  receives an array', async (assert) => {
+    assert.plan(1)
+
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+
+    try {
+      await user.posts().createMany({})
+    } catch ({ message }) {
+      assert.equal(message, 'E_INVALID_PARAMETER: belongsToMany.createMany expects an array of related model instances')
+    }
+  })
 })

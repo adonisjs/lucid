@@ -35,6 +35,7 @@ const proxyGet = require('../../lib/proxyGet')
  * @singleton
  * @alias Database
  * @group Database
+ * @uses (['Adonis/Src/Config'])
  *
  * @class DatabaseManager
  */
@@ -48,18 +49,19 @@ class DatabaseManager {
   }
 
   /**
-   * Creates a new database connection for a the config defined inside
-   * config/database. You just need to pass the key name or don't
+   * Creates a new database connection for the config defined inside
+   * `config/database` file. You just need to pass the key name or don't
    * pass any name to use the default connection.
    *
-   * Also this method will return the existing connection instance if
-   * it exists.
+   * Also this method will reuse and returns the existing connections.
    *
    * @method connection
    *
    * @param  {String}   [name = Config.get('database.connection')]
    *
    * @return {Database}
+   *
+   * @throws {missingDatabaseConnection} If connection is not defined in config file.
    */
   connection (name) {
     name = name || this.Config.get('database.connection')
@@ -81,11 +83,29 @@ class DatabaseManager {
   }
 
   /**
-   * Close all db connections and remove them from pool
+   * Close all or selected db connections and remove them from pool.
+   *
+   * Note always use this method to close database connection and
+   * never use the direct instance of database, since that will
+   * cause memory leaks.
    *
    * @method close
    *
+   * @param {String|Array} [names = *]
+   *
    * @return {void}
+   *
+   * @example
+   * ```js
+   * // WRONG
+   * const Db = Database.connection('mysql')
+   * Db.close()
+   * ```
+   *
+   * ```js
+   * // RIGHT
+   * Database.close('mysql')
+   * ```
    */
   close (names) {
     let connections = names || _.keys(this._connectionPools)

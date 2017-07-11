@@ -152,7 +152,9 @@ class HasMany extends BaseRelation {
    */
   async createMany (arrayOfPayload) {
     if (arrayOfPayload instanceof Array === false) {
-      throw CE.InvalidArgumentException.invalidParamter('hasMany.createMany expects an array of values')
+      throw CE
+        .InvalidArgumentException
+        .invalidParameter('hasMany.createMany expects an array of values')
     }
 
     await this._persistParentIfRequired()
@@ -170,7 +172,9 @@ class HasMany extends BaseRelation {
    */
   async saveMany (arrayOfRelatedInstances) {
     if (arrayOfRelatedInstances instanceof Array === false) {
-      throw CE.InvalidArgumentException.invalidParamter('hasMany.saveMany expects an array of related model instances')
+      throw CE
+        .InvalidArgumentException
+        .invalidParameter('hasMany.saveMany expects an array of related model instances')
     }
 
     await this._persistParentIfRequired()
