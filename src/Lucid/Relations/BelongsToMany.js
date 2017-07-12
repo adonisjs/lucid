@@ -55,6 +55,8 @@ class BelongsToMany extends BaseRelation {
       withFields: []
     }
 
+    this._relatedFields = []
+
     /**
      * Here we store the existing pivot rows, to make
      * sure we are not inserting duplicates.
@@ -62,6 +64,21 @@ class BelongsToMany extends BaseRelation {
      * @type {Array}
      */
     this._existingPivotInstances = []
+  }
+
+  /**
+   * The colums to be selected from the related
+   * query
+   *
+   * @method select
+   *
+   * @param  {Array} columns
+   *
+   * @chainable
+   */
+  select (columns) {
+    this._relatedFields = _.isArray(columns) ? columns : _.toArray(arguments)
+    return this
   }
 
   /**
@@ -132,16 +149,20 @@ class BelongsToMany extends BaseRelation {
     const pivotColumns = this.$pivotColumns
 
     /**
-     * The list of columns to be selected
+     * The list of pivotFields to be selected
      *
      * @type {Array}
      */
-    const columns = _.map(pivotColumns, (column) => {
+    const pivotFields = _.map(pivotColumns, (column) => {
       this.relatedQuery._sideLoaded.push(`pivot_${column}`)
       return this._selectForPivot(column)
     })
 
-    this.relatedQuery.select(`${this.$foreignTable}.*`).select(columns)
+    const relatedFields = _.size(this._relatedFields) ? this._relatedFields.map((field) => {
+      return `${this.$foreignTable}.${field}`
+    }) : `${this.$foreignTable}.*`
+
+    this.relatedQuery.select(relatedFields).select(pivotFields)
   }
 
   /**

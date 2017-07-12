@@ -1599,4 +1599,57 @@ test.group('Relations | Belongs To Many', (group) => {
       assert.equal(message, 'E_INVALID_PARAMETER: belongsToMany.createMany expects an array of related model instances')
     }
   })
+
+  test('select few fields from related model when eagerloading', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    let postQuery = null
+    Post.onQuery((query) => (postQuery = query))
+
+    await ioc.use('Database').table('users').insert({ id: 20, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 18, title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 18, user_id: 20 })
+
+    await User.query().with('posts', (builder) => {
+      builder.select('title')
+    }).fetch()
+
+    assert.equal(postQuery.sql, helpers.formatQuery('select "posts"."title", "post_user"."post_id" as "pivot_post_id", "post_user"."user_id" as "pivot_user_id" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" in (?)'))
+  })
+
+  test('select few fields from related model', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    let postQuery = null
+    Post.onQuery((query) => (postQuery = query))
+
+    await ioc.use('Database').table('users').insert({ id: 20, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 18, title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 18, user_id: 20 })
+
+    const user = await User.find(20)
+    await user.posts().select('title').fetch()
+
+    assert.equal(postQuery.sql, helpers.formatQuery('select "posts"."title", "post_user"."post_id" as "pivot_post_id", "post_user"."user_id" as "pivot_user_id" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" = ?'))
+  })
 })

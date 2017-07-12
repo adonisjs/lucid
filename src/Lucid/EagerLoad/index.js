@@ -32,16 +32,16 @@ class EagerLoad {
    *
    * @method _applyRuntimeConstraints
    *
-   * @param  {Object}     options.relatedQuery
+   * @param  {Object}     relationInstance
    * @param  {Function}   callback
    *
    * @return {void}
    *
    * @private
    */
-  _applyRuntimeConstraints ({ relatedQuery }, callback) {
+  _applyRuntimeConstraints (relationInstance, callback) {
     if (typeof (callback) === 'function') {
-      callback(relatedQuery)
+      callback(relationInstance)
     }
   }
 
