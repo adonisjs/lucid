@@ -17,6 +17,7 @@ const CE = require('../Exceptions')
  * calling actions defined inside schema class.
  *
  * @binding Adonis/Src/Migration
+ * @singleton
  * @alias Migration
  * @group Database
  * @uses (['Adonis/Src/Config', 'Adonis/Src/Database'])

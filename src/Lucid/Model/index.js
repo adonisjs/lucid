@@ -26,8 +26,8 @@ const util = require('../../../lib/util')
  * Lucid model is a base model and supposed to be
  * extended by other models.
  *
- * @binding Adonis/Src/Lucid
- * @alias Lucid
+ * @binding Adonis/Src/Model
+ * @alias Model
  * @group Database
  *
  * @class Model

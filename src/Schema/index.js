@@ -13,6 +13,11 @@
  * The schema is used to define SQL table schemas. This makes
  * use of all the methods from http://knexjs.org/#Schema
  *
+ * @binding Adonis/Src/Schema
+ * @alias Schema
+ * @group Database
+ * @uses (['Adonis/Src/Database'])
+ *
  * @class Schema
  * @constructor
  */
