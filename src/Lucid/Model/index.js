@@ -17,7 +17,7 @@ const BaseModel = require('./Base')
 const Hooks = require('../Hooks')
 const QueryBuilder = require('../QueryBuilder')
 const EagerLoad = require('../EagerLoad')
-const { HasOne, HasMany, BelongsTo, BelongsToMany } = require('../Relations')
+const { HasOne, HasMany, BelongsTo, BelongsToMany, HasManyThrough } = require('../Relations')
 
 const CE = require('../../Exceptions')
 const util = require('../../../lib/util')
@@ -1156,6 +1156,15 @@ class Model extends BaseModel {
     relatedPrimaryKey = relatedModel.primaryKey
   ) {
     return new BelongsToMany(this, relatedModel, primaryKey, foreignKey, relatedPrimaryKey, relatedForeignKey)
+  }
+
+  manyThrough (
+    relatedModel,
+    relatedMethod,
+    primaryKey = this.constructor.primaryKey,
+    foreignKey = this.constructor.foreignKey
+  ) {
+    return new HasManyThrough(this, relatedModel, relatedMethod, primaryKey, foreignKey)
   }
 }
 

@@ -13,5 +13,6 @@ module.exports = {
   HasOne: require('./HasOne'),
   HasMany: require('./HasMany'),
   BelongsTo: require('./BelongsTo'),
-  BelongsToMany: require('./BelongsToMany')
+  BelongsToMany: require('./BelongsToMany'),
+  HasManyThrough: require('./HasManyThrough')
 }

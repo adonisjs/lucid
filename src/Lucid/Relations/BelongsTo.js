@@ -88,6 +88,10 @@ class BelongsTo extends BaseRelation {
     return this.relatedQuery.query
   }
 
+  addWhereOn (context) {
+    context.on(`${this.$primaryTable}.${this.primaryKey}`, '=', `${this.$foreignTable}.${this.foreignKey}`)
+  }
+
   /* istanbul ignore next */
   create () {
     throw CE.ModelRelationException.unSupportedMethod('create', 'belongsTo')

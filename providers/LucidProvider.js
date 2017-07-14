@@ -57,6 +57,21 @@ class LucidProvider extends ServiceProvider {
     this._registerDatabase()
     this._registerModel()
   }
+
+  /**
+   * Boot the provider
+   *
+   * @method boot
+   *
+   * @return {void}
+   */
+  boot () {
+    /**
+     * Setup ioc resolver for internally accessing fold
+     * methods.
+     */
+    require('../lib/iocResolver').setFold(require('@adonisjs/fold'))
+  }
 }
 
 module.exports = LucidProvider

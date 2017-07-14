@@ -109,6 +109,10 @@ class HasMany extends BaseRelation {
     return this.relatedQuery.query
   }
 
+  addWhereOn (context) {
+    context.on(`${this.$primaryTable}.${this.primaryKey}`, '=', `${this.$foreignTable}.${this.foreignKey}`)
+  }
+
   /**
    * Saves the related instance to the database. Foreign
    * key is set automatically
