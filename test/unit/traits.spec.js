@@ -11,27 +11,11 @@
 
 const test = require('japa')
 const { ioc } = require('@adonisjs/fold')
-const { setupResolver, Config } = require('@adonisjs/sink')
 const helpers = require('./helpers')
 const Model = require('../../src/Lucid/Model')
-const DatabaseManager = require('../../src/Database/Manager')
 const QueryBuilder = require('../../src/Lucid/QueryBuilder')
 
 test.group('Traits', (group) => {
-  group.before(() => {
-    ioc.singleton('Adonis/Src/Database', function () {
-      const config = new Config()
-      config.set('database', {
-        connection: 'testing',
-        testing: helpers.getConfig()
-      })
-      return new DatabaseManager(config)
-    })
-    ioc.alias('Adonis/Src/Database', 'Database')
-
-    setupResolver()
-  })
-
   group.beforeEach(() => {
     ioc.restore()
   })

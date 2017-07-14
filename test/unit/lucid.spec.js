@@ -46,6 +46,7 @@ test.group('Model', (group) => {
 
   group.after(async () => {
     await helpers.dropTables(ioc.use('Database'))
+    ioc.use('Database').close()
     try {
       await fs.remove(path.join(__dirname, './tmp'))
     } catch (error) {
@@ -510,7 +511,9 @@ test.group('Model', (group) => {
     User._bootIfNotBooted()
     await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
-    assert.deepEqual(Object.keys(users.first().toObject()), ['id', 'vid', 'username', 'updated_at', 'login_at', 'deleted_at'])
+    assert.deepEqual(Object.keys(users.first().toObject()), [
+      'id', 'vid', 'country_id', 'username', 'updated_at', 'login_at', 'deleted_at'
+    ])
   })
 
   test('apply all global scopes to the query builder', async (assert) => {
@@ -1272,7 +1275,7 @@ test.group('Model', (group) => {
     const user = new User()
     user.username = 'virk'
     await user.save()
-    assert.equal(userQuery.sql, helpers.formatQuery('insert into "users" ("username") values (?)'))
+    assert.equal(userQuery.sql, helpers.addReturningStatement(helpers.formatQuery('insert into "users" ("username") values (?)'), 'id'))
   })
 
   test('throw exception when onQuery doesn\'t recieves as callback', (assert) => {

@@ -44,6 +44,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
   group.after(async () => {
     await helpers.dropTables(ioc.use('Adonis/Src/Database'))
+    ioc.use('Database').close()
     try {
       await fs.remove(path.join(__dirname, './tmp'))
     } catch (error) {
@@ -467,6 +468,7 @@ test.group('Relations | Belongs To Many', (group) => {
       {
         id: 1,
         title: 'Adonis 101',
+        user_id: null,
         created_at: null,
         deleted_at: null,
         updated_at: null,

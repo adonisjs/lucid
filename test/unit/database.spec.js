@@ -28,6 +28,7 @@ test.group('Database | QueryBuilder', (group) => {
 
   group.after(async () => {
     await helpers.dropTables(this.database)
+    this.database.close()
     try {
       await fs.remove(path.join(__dirname, './tmp'))
     } catch (error) {

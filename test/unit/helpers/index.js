@@ -70,6 +70,7 @@ module.exports = {
       db.schema.createTable('users', function (table) {
         table.increments()
         table.integer('vid')
+        table.integer('country_id')
         table.string('username')
         table.timestamps()
         table.timestamp('login_at')
@@ -93,6 +94,7 @@ module.exports = {
       db.schema.createTable('profiles', function (table) {
         table.increments()
         table.integer('user_id')
+        table.integer('country_id')
         table.string('profile_name')
         table.integer('likes')
         table.timestamps()
@@ -120,6 +122,7 @@ module.exports = {
       }),
       db.schema.createTable('posts', function (table) {
         table.increments('id')
+        table.integer('user_id')
         table.string('title')
         table.timestamps()
         table.timestamp('deleted_at').nullable()
@@ -129,6 +132,12 @@ module.exports = {
         table.integer('post_id')
         table.integer('user_id')
         table.boolean('is_published')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
+      db.schema.createTable('countries', function (table) {
+        table.increments('id')
+        table.string('name')
         table.timestamps()
         table.timestamp('deleted_at').nullable()
       })
@@ -145,7 +154,8 @@ module.exports = {
       db.schema.dropTable('identities'),
       db.schema.dropTable('my_users'),
       db.schema.dropTable('posts'),
-      db.schema.dropTable('post_user')
+      db.schema.dropTable('post_user'),
+      db.schema.dropTable('countries')
     ])
   },
 

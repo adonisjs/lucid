@@ -45,6 +45,7 @@ test.group('Migration', (group) => {
 
   group.after(async () => {
     await helpers.dropTables(ioc.use('Database'))
+    ioc.use('Database').close()
     try {
       await fs.remove(path.join(__dirname, './tmp'))
     } catch (error) {

@@ -45,6 +45,7 @@ test.group('Relations | Serializer', (group) => {
 
   group.after(async () => {
     await helpers.dropTables(ioc.use('Adonis/Src/Database'))
+    ioc.use('Database').close()
     try {
       await fs.remove(path.join(__dirname, './tmp'))
     } catch (error) {
