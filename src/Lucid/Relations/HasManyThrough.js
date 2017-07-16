@@ -11,6 +11,7 @@
 
 const _ = require('lodash')
 const BaseRelation = require('./BaseRelation')
+const CE = require('../../Exceptions')
 
 /**
  * BelongsToMany class builds relationship between
@@ -211,6 +212,14 @@ class HasManyThrough extends BaseRelation {
     return { key: this.primaryKey, values: transformedValues, defaultValue: new Serializer([]) }
   }
 
+  /**
+   * Adds `on` clause to the innerjoin context. This
+   * method is mainly used by HasManyThrough
+   *
+   * @method addWhereOn
+   *
+   * @param  {Object}   context
+   */
   relatedWhere (count) {
     this._makeJoinQuery()
     this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$foreignTable}.${this.foreignKey}`)
@@ -223,6 +232,26 @@ class HasManyThrough extends BaseRelation {
     }
 
     return this.relatedQuery.query
+  }
+
+  /* istanbul ignore next */
+  create () {
+    throw CE.ModelRelationException.unSupportedMethod('create', 'HasManyThrough')
+  }
+
+  /* istanbul ignore next */
+  save () {
+    throw CE.ModelRelationException.unSupportedMethod('save', 'HasManyThrough')
+  }
+
+  /* istanbul ignore next */
+  createMany () {
+    throw CE.ModelRelationException.unSupportedMethod('createMany', 'HasManyThrough')
+  }
+
+  /* istanbul ignore next */
+  saveMany () {
+    throw CE.ModelRelationException.unSupportedMethod('saveMany', 'HasManyThrough')
   }
 }
 

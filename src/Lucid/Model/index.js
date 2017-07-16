@@ -1158,6 +1158,18 @@ class Model extends BaseModel {
     return new BelongsToMany(this, relatedModel, primaryKey, foreignKey, relatedPrimaryKey, relatedForeignKey)
   }
 
+  /**
+   * Returns instance of @ref('HasManyThrough')
+   *
+   * @method manyThrough
+   *
+   * @param  {Class|String}    relatedModel
+   * @param  {String}    relatedMethod
+   * @param  {String}    primaryKey
+   * @param  {String}    foreignKey
+   *
+   * @return {HasManyThrough}
+   */
   manyThrough (
     relatedModel,
     relatedMethod,

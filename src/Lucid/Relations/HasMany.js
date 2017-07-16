@@ -109,6 +109,14 @@ class HasMany extends BaseRelation {
     return this.relatedQuery.query
   }
 
+  /**
+   * Adds `on` clause to the innerjoin context. This
+   * method is mainly used by HasManyThrough
+   *
+   * @method addWhereOn
+   *
+   * @param  {Object}   context
+   */
   addWhereOn (context) {
     context.on(`${this.$primaryTable}.${this.primaryKey}`, '=', `${this.$foreignTable}.${this.foreignKey}`)
   }
