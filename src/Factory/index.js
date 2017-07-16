@@ -11,6 +11,7 @@
 
 const CE = require('../Exceptions')
 const ModelFactory = require('./ModelFactory')
+const DatabaseFactory = require('./DatabaseFactory')
 
 /**
  * Factory class is used to define blueprints
@@ -88,6 +89,11 @@ class Factory {
   model (name) {
     const blueprint = this.getBlueprint(name)
     return new ModelFactory(blueprint.name, blueprint.callback)
+  }
+
+  get (name) {
+    const blueprint = this.getBlueprint(name)
+    return new DatabaseFactory(blueprint.name, blueprint.callback)
   }
 
   /**

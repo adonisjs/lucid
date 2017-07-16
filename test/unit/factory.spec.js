@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
 */
 
+require('../../lib/iocResolver').setFold(require('@adonisjs/fold'))
 const test = require('japa')
 const path = require('path')
 const fs = require('fs-extra')
@@ -266,5 +267,99 @@ test.group('Factory', (group) => {
     })
     await Factory.model('App/Model/User').makeMany(2, { username: 'virk' })
     assert.deepEqual(stack, [{ username: 'virk' }, { username: 'virk' }])
+  })
+
+  test('get data object for table', async (assert) => {
+    Factory.blueprint('users', () => {
+      return {
+        username: 'virk'
+      }
+    })
+
+    const user = await Factory.get('users').make()
+    assert.deepEqual(user, { username: 'virk' })
+  })
+
+  test('get array of data objects for table', async (assert) => {
+    Factory.blueprint('users', (faker, i) => {
+      return {
+        id: i + 1,
+        username: 'virk'
+      }
+    })
+
+    const user = await Factory.get('users').makeMany(2)
+    assert.deepEqual(user, [{ username: 'virk', id: 1 }, { username: 'virk', id: 2 }])
+  })
+
+  test('save data to table', async (assert) => {
+    Factory.blueprint('users', (faker, i) => {
+      return {
+        id: i + 1,
+        username: 'virk'
+      }
+    })
+
+    await Factory.get('users').create()
+    const user = await ioc.use('Database').table('users').first()
+    assert.equal(user.id, 1)
+    assert.equal(user.username, 'virk')
+  })
+
+  test('define table name at runtime', async (assert) => {
+    Factory.blueprint('User', (faker, i) => {
+      return {
+        id: i + 1,
+        username: 'virk'
+      }
+    })
+
+    await Factory.get('User').table('users').create()
+    const user = await ioc.use('Database').table('users').first()
+    assert.equal(user.id, 1)
+    assert.equal(user.username, 'virk')
+  })
+
+  test('define returning value', async (assert) => {
+    Factory.blueprint('User', (faker, i) => {
+      return {
+        id: i + 1,
+        username: 'virk'
+      }
+    })
+
+    const returned = await Factory.get('User').table('users').returning('id').create()
+    const user = await ioc.use('Database').table('users').first()
+    assert.deepEqual(returned, [1])
+    assert.equal(user.id, 1)
+    assert.equal(user.username, 'virk')
+  })
+
+  test('define connection', async (assert) => {
+    Factory.blueprint('User', (faker, i) => {
+      return {
+        id: i + 1,
+        username: 'virk'
+      }
+    })
+
+    await Factory.get('User').table('users').connection('').create()
+    const user = await ioc.use('Database').table('users').first()
+    assert.equal(user.id, 1)
+    assert.equal(user.username, 'virk')
+  })
+
+  test('truncate table', async (assert) => {
+    Factory.blueprint('User', (faker, i) => {
+      return {
+        id: i + 1,
+        username: 'virk'
+      }
+    })
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await Factory.get('User').table('users').reset()
+    const user = await ioc.use('Database').table('users').first()
+    assert.isUndefined(user)
   })
 })
