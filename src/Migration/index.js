@@ -397,8 +397,27 @@ class Migration {
       return name
     }, {})
 
+    /**
+     * If toSQL is set to true, return an array of
+     * queries to be executed instead of executing
+     * them.
+     */
+    if (toSQL) {
+      try {
+        const queries = await this._getQueries(filteredSchemas, 'down')
+        await this._cleanup()
+        return { migrated: [], status: 'completed', queries }
+      } catch (error) {
+        await this._cleanup()
+        throw error
+      }
+    }
+
+    /**
+     * Otherwise execute them
+     */
     try {
-      await this._execute(filteredSchemas, 'down', batch, toSQL)
+      await this._execute(filteredSchemas, 'down', batch)
       await this._cleanup()
       return { migrated: diff, status: 'completed' }
     } catch (error) {

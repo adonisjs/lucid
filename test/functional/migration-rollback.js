@@ -18,8 +18,9 @@ const { Config, setupResolver, Helpers } = require('@adonisjs/sink')
 
 const helpers = require('../unit/helpers')
 const MigrationRun = require('../../commands/MigrationRun')
+const MigrationRollback = require('../../commands/MigrationRollback')
 
-test.group('Migration Run', (group) => {
+test.group('Migration Rollback', (group) => {
   group.before(async () => {
     ioc.bind('Adonis/Src/Config', () => {
       const config = new Config()
@@ -68,14 +69,16 @@ test.group('Migration Run', (group) => {
     }
   }).timeout(0)
 
-  test('skip when there are no schema files', async (assert) => {
-    ace.addCommand(MigrationRun)
-    const result = await ace.call('migration:run')
+  test('skip when there is nothing to rollback', async (assert) => {
+    ace.addCommand(MigrationRollback)
+    const result = await ace.call('migration:rollback')
     assert.deepEqual(result, { migrated: [], status: 'skipped', queries: undefined })
   })
 
-  test('run migrations by requiring all schema files', async (assert) => {
+  test('rollback migrations by requiring all schema files', async (assert) => {
     ace.addCommand(MigrationRun)
+    ace.addCommand(MigrationRollback)
+
     await fs.writeFile(path.join(__dirname, 'database/migrations/User.js'), `
       const Schema = use('Schema')
       class User extends Schema {
@@ -85,21 +88,26 @@ test.group('Migration Run', (group) => {
             table.string('username')
           })
         }
+
+        down () {
+          this.drop('schema_users')
+        }
       }
 
       module.exports = User
     `)
 
-    const result = await ace.call('migration:run')
+    await ace.call('migration:run')
+    const result = await ace.call('migration:rollback')
     assert.deepEqual(result, { migrated: ['User'], status: 'completed', queries: undefined })
     const migrations = await ioc.use('Database').table('adonis_schema')
-    assert.lengthOf(migrations, 1)
-    assert.equal(migrations[0].batch, 1)
-    assert.equal(migrations[0].name, 'User')
+    assert.lengthOf(migrations, 0)
   })
 
   test('log queries when asked to log', async (assert) => {
     ace.addCommand(MigrationRun)
+    ace.addCommand(MigrationRollback)
+
     await fs.writeFile(path.join(__dirname, 'database/migrations/User.js'), `
       const Schema = use('Schema')
       class User extends Schema {
@@ -109,14 +117,17 @@ test.group('Migration Run', (group) => {
             table.string('username')
           })
         }
+
+        down () {
+          this.drop('schema_users')
+        }
       }
 
       module.exports = User
     `)
 
-    const result = await ace.call('migration:run', {}, { log: true })
-    const migrations = await ioc.use('Database').table('adonis_schema')
-    assert.lengthOf(migrations, 0)
+    await ace.call('migration:run')
+    const result = await ace.call('migration:rollback', {}, { log: true })
     assert.isArray(result.queries)
   })
 })

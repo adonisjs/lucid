@@ -12,7 +12,7 @@
 const BaseMigration = require('./BaseMigration')
 const _ = require('lodash')
 
-class MigrationRun extends BaseMigration {
+class MirationRollback extends BaseMigration {
   /**
    * Command signature required by ace
    *
@@ -22,7 +22,8 @@ class MigrationRun extends BaseMigration {
    */
   static get signature () {
     return `
-    migration:run
+    migration:rollback
+    { -b, --batch=@value: Rollback upto a specific batch number }
     { -f, --force: Forcefully run migrations in production }
     { --log: Log SQL queries instead of executing them }
     `
@@ -36,38 +37,42 @@ class MigrationRun extends BaseMigration {
    * @return {String}
    */
   static get description () {
-    return 'Run all pending migrations'
+    return 'Rollback migration to latest batch or to a specific batch number'
   }
 
   /**
    * Method called when command is executed. This method will
    * require all files from the migrations directory
-   * and execute all pending schema files
+   * and rollback to a specific batch
    *
    * @method handle
    *
    * @param  {Object} args
    * @param  {Boolean} options.log
+   * @param  {Boolean} options.force
+   * @param  {Number} options.batch
    *
    * @return {void|Array}
    */
-  async handle (args, { log, force }) {
+  async handle (args, { log, force, batch }) {
+    batch = batch ? Number(batch) : null
+
     this._validateState(force)
 
-    const { migrated, status, queries } = await this.migration.up(this._getSchemaFiles(), log)
+    const { migrated, status, queries } = await this.migration.down(this._getSchemaFiles(), batch, log)
 
     /**
      * Tell user that there is nothing to migrate
      */
     if (status === 'skipped') {
-      this.info('Nothing to migrate')
+      this.info('Already at the last batch')
     }
 
     /**
      * Log files that been migrated successfully
      */
     if (status === 'completed' && !queries) {
-      migrated.forEach((name) => this.completed('migrate', `${name}.js`))
+      migrated.forEach((name) => this.completed('rollback', `${name}.js`))
     }
 
     /**
@@ -87,4 +92,4 @@ class MigrationRun extends BaseMigration {
   }
 }
 
-module.exports = MigrationRun
+module.exports = MirationRollback

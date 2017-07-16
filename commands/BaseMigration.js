@@ -38,6 +38,26 @@ class BaseMigration extends Command {
       filters: /(.*)\.js$/
     })
   }
+
+  /**
+   * Throws exception when trying to run migrations are
+   * executed in production and not using force flag.
+   *
+   * @method _validateState
+   *
+   * @param  {Boolean}       force
+   *
+   * @return {void}
+   *
+   * @private
+   *
+   * @throws {Error} If NODE_ENV is production
+   */
+  _validateState (force) {
+    if (process.env.NODE_ENV === 'production' && !force) {
+      throw new Error('Cannot run migrations in production. Use --force flag to continue')
+    }
+  }
 }
 
 module.exports = BaseMigration
