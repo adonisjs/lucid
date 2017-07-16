@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
 */
 
-require('../../lib/iocResolver').setFold(require('@adonisjs/fold'))
 const test = require('japa')
 const path = require('path')
 const fs = require('fs-extra')
@@ -359,6 +358,23 @@ test.group('Factory', (group) => {
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await Factory.get('User').table('users').reset()
+    const user = await ioc.use('Database').table('users').first()
+    assert.isUndefined(user)
+  })
+
+  test('reset table via model factory', async (assert) => {
+    class User extends Model {}
+
+    ioc.fake('App/Model/User', () => {
+      User._bootIfNotBooted()
+      return User
+    })
+
+    Factory.blueprint('App/Model/User', (faker, index, data) => {
+      return {}
+    })
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await Factory.model('App/Model/User').reset()
     const user = await ioc.use('Database').table('users').first()
     assert.isUndefined(user)
   })

@@ -143,6 +143,18 @@ class ModelFactory {
   async createMany (numberOfRows, data = {}) {
     return Promise.all(_.map(_.range(numberOfRows), (index) => this.create(data, index)))
   }
+
+  /**
+   * Truncate the database table
+   *
+   * @method reset
+   * @async
+   *
+   * @return {Number}
+   */
+  async reset () {
+    return ioc.use(this.Model).query().truncate()
+  }
 }
 
 module.exports = ModelFactory
