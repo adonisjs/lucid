@@ -605,6 +605,11 @@ class BelongsToMany extends BaseRelation {
     return this.relatedQuery.query
   }
 
+  addWhereOn (context) {
+    this._makeJoinQuery()
+    context.on(`${this.$primaryTable}.${this.primaryKey}`, '=', `${this.$pivotTable}.${this.foreignKey}`)
+  }
+
   /**
    * Attach existing rows inside pivot table as a relationship
    *

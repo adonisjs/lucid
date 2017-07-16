@@ -140,6 +140,27 @@ module.exports = {
         table.string('name')
         table.timestamps()
         table.timestamp('deleted_at').nullable()
+      }),
+      db.schema.createTable('categories', function (table) {
+        table.increments('id')
+        table.string('name')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
+      db.schema.createTable('sections', function (table) {
+        table.increments('id')
+        table.integer('category_id')
+        table.string('name')
+        table.boolean('is_active')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
+      db.schema.createTable('post_section', function (table) {
+        table.increments('id')
+        table.integer('post_id')
+        table.integer('section_id')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
       })
     ])
   },
@@ -155,7 +176,10 @@ module.exports = {
       db.schema.dropTable('my_users'),
       db.schema.dropTable('posts'),
       db.schema.dropTable('post_user'),
-      db.schema.dropTable('countries')
+      db.schema.dropTable('countries'),
+      db.schema.dropTable('categories'),
+      db.schema.dropTable('sections'),
+      db.schema.dropTable('post_section')
     ])
   },
 
