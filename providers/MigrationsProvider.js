@@ -38,8 +38,24 @@ class MigrationsProvider extends ServiceProvider {
    * @private
    */
   _registerFactory () {
-    this.app.bind('Adonis/Src/Factory', (app) => require('../src/Factory'))
+    this.app.bind('Adonis/Src/Factory', () => require('../src/Factory'))
     this.app.alias('Adonis/Src/Factory', 'Factory')
+  }
+
+  /**
+   * Registers providers for all the migration related
+   * commands
+   *
+   * @method _registerCommands
+   *
+   * @return {void}
+   */
+  _registerCommands () {
+    this.app.bind('Adonis/Src/Migration:Run', () => require('../commands/MigrationRun'))
+    this.app.bind('Adonis/Src/Migration:Rollback', () => require('../commands/MigrationRollback'))
+    this.app.bind('Adonis/Src/Migration:Refresh', () => require('../commands/MigrationRefresh'))
+    this.app.bind('Adonis/Src/Migration:Reset', () => require('../commands/MigrationReset'))
+    this.app.bind('Adonis/Src/Migration:Make', () => require('../commands/MigrationMake'))
   }
 
   /**
@@ -73,6 +89,7 @@ class MigrationsProvider extends ServiceProvider {
     this._registerSchema()
     this._registerFactory()
     this._registerMigration()
+    this._registerCommands()
   }
 }
 
