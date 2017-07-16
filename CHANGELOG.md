@@ -1,3 +1,15 @@
+<a name="4.0.1"></a>
+## [4.0.1](https://github.com/adonisjs/adonis-lucid/compare/v4.0.0...v4.0.1) (2017-07-16)
+
+
+### Features
+
+* **commands:** add make,refresh and reset commands ([7d32b74](https://github.com/adonisjs/adonis-lucid/commit/7d32b74))
+* **commands:** add migration:run command ([02fce82](https://github.com/adonisjs/adonis-lucid/commit/02fce82))
+* **commands:** implement migration:rollback ([6181459](https://github.com/adonisjs/adonis-lucid/commit/6181459))
+
+
+
 <a name="4.0.0"></a>
 # 4.0.0 (2017-07-16)
 

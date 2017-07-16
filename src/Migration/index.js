@@ -219,9 +219,30 @@ class Migration {
   }
 
   /**
+   * Executes a single schema file
+   *
+   * @method _executeSchema
+   *
+   * @param  {Object}       schemaInstance
+   * @param  {String}       direction
+   * @param  {Boolean}      [toSQL]
+   * @param  {String}       [name] Required when toSQL is set to true
+   *
+   * @return {Object|void}   The queries array is returned when toSQL is set to true
+   *
+   * @private
+   */
+  async _executeSchema (schemaInstance, direction, toSQL, name) {
+    await schemaInstance[direction]()
+    const queries = await schemaInstance.executeActions(toSQL)
+    return toSQL ? { queries, name } : void 0
+  }
+
+  /**
    * Execute all schemas one by one in sequence
    *
    * @method _execute
+   * @async
    *
    * @param  {Object} Schemas
    * @param  {String} direction
@@ -232,11 +253,28 @@ class Migration {
    */
   async _execute (schemas, direction, batch, toSQL) {
     for (let schema in schemas) {
-      const schemaInstance = new schemas[schema](this.db)
-      await schemaInstance[direction](toSQL)
-      await schemaInstance.executeActions()
+      await this._executeSchema(new schemas[schema](this.db), direction)
       direction === 'up' ? await this._addForBatch(schema, batch) : await this._remove(schema)
     }
+  }
+
+  /**
+   * Return an array of queries strings
+   *
+   * @method _getQueries
+   * @async
+   *
+   * @param  {Object}    schemas
+   * @param  {String}    direction
+   *
+   * @return {Array}
+   *
+   * @private
+   */
+  async _getQueries (schemas, direction) {
+    return Promise.all(_.map(schemas, (Schema, name) => {
+      return this._executeSchema(new Schema(this.db), direction, true, name)
+    }))
   }
 
   /**
@@ -287,6 +325,24 @@ class Migration {
       return name
     }, {})
 
+    /**
+     * If log is to true, return array of nested queries
+     * instead of executing them
+     */
+    if (toSQL) {
+      try {
+        const queries = await this._getQueries(filteredSchemas, 'up')
+        await this._cleanup()
+        return { migrated: [], status: 'completed', queries }
+      } catch (error) {
+        await this._cleanup()
+        throw error
+      }
+    }
+
+    /**
+     * Otherwise execute schema files
+     */
     try {
       const batch = await this._getLatestBatch()
       await this._execute(filteredSchemas, 'up', batch + 1, toSQL)
@@ -341,8 +397,27 @@ class Migration {
       return name
     }, {})
 
+    /**
+     * If toSQL is set to true, return an array of
+     * queries to be executed instead of executing
+     * them.
+     */
+    if (toSQL) {
+      try {
+        const queries = await this._getQueries(filteredSchemas, 'down')
+        await this._cleanup()
+        return { migrated: [], status: 'completed', queries }
+      } catch (error) {
+        await this._cleanup()
+        throw error
+      }
+    }
+
+    /**
+     * Otherwise execute them
+     */
     try {
-      await this._execute(filteredSchemas, 'down', batch, toSQL)
+      await this._execute(filteredSchemas, 'down', batch)
       await this._cleanup()
       return { migrated: diff, status: 'completed' }
     } catch (error) {
