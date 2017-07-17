@@ -12,6 +12,10 @@ const _ = require('lodash')
 
 const proxyHandler = {
   get (target, name) {
+    if (typeof (name) === 'symbol' || name === 'inspect') {
+      return target[name]
+    }
+
     if (typeof (target[name]) !== 'undefined') {
       return target[name]
     }
