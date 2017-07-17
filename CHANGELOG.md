@@ -1,3 +1,13 @@
+<a name="4.0.3"></a>
+## [4.0.3](https://github.com/adonisjs/adonis-lucid/compare/v4.0.2...v4.0.3) (2017-07-17)
+
+
+### Bug Fixes
+
+* **proxy:** handle proxy inspection properly ([c8ab664](https://github.com/adonisjs/adonis-lucid/commit/c8ab664))
+
+
+
 <a name="4.0.2"></a>
 ## [4.0.2](https://github.com/adonisjs/adonis-lucid/compare/v4.0.1...v4.0.2) (2017-07-16)
 
