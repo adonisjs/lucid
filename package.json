@@ -28,7 +28,7 @@
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
     "node-exceptions": "^2.0.2",
-    "pluralize": "^5.0.0",
+    "pluralize": "^6.0.0",
     "require-all": "^2.2.0"
   },
   "devDependencies": {
