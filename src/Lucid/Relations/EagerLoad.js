@@ -182,7 +182,9 @@ class EagerLoad {
     _.each(relations, (relation) => {
       relation = relation.split('.')
       const rootRelation = relation[0]
-      this.withRelations.push(rootRelation)
+      if (this.withRelations.indexOf(rootRelation) === -1) {
+        this.withRelations.push(rootRelation)
+      }
       if (_.size(relation) > 1) {
         this._pushNestedRelation(rootRelation, relation)
       }
