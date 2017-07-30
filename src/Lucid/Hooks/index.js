@@ -66,7 +66,7 @@ class Hooks {
    */
   addHandler (event, handler, name) {
     if (!this._events[event]) {
-      // error
+      throw CE.InvalidArgumentException.invalidParameter(`${event} is not a valid hook event`)
     }
     this._handlers[event] = this._handlers[event] || []
     this._handlers[event].push({ handler, name })
