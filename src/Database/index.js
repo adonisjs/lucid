@@ -50,7 +50,7 @@ const proxyHandler = {
  */
 class Database {
   constructor (config) {
-    if (config.client === 'sqlite') {
+    if (config.client === 'sqlite' || config.client === 'sqlite3') {
       config.useNullAsDefault = _.defaultTo(config.useNullAsDefault, true)
     }
     this.knex = knex(config)
