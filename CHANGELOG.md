@@ -1,3 +1,18 @@
+<a name="4.0.4"></a>
+## [4.0.4](https://github.com/adonisjs/adonis-lucid/compare/v4.0.3...v4.0.4) (2017-07-30)
+
+
+### Bug Fixes
+
+* **model:** set makePlain getter for ioc container ([40b3e85](https://github.com/adonisjs/adonis-lucid/commit/40b3e85))
+
+
+### Features
+
+* **migration:** remove migration:make command ([0a97527](https://github.com/adonisjs/adonis-lucid/commit/0a97527))
+
+
+
 <a name="4.0.3"></a>
 ## [4.0.3](https://github.com/adonisjs/adonis-lucid/compare/v4.0.2...v4.0.3) (2017-07-17)
 
