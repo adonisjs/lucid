@@ -67,6 +67,19 @@ class Model extends BaseModel {
   }
 
   /**
+   * Making sure that `ioc.make` returns
+   * the class object and not it's
+   * instance
+   *
+   * @method makePlain
+   *
+   * @return {Boolean}
+   */
+  static get makePlain () {
+    return true
+  }
+
+  /**
    * The primary key for the model. You can change it
    * to anything you want, just make sure that the
    * value of this key will always be unique.
