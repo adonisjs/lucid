@@ -1,3 +1,18 @@
+<a name="4.0.5"></a>
+## [4.0.5](https://github.com/adonisjs/adonis-lucid/compare/v4.0.4...v4.0.5) (2017-07-30)
+
+
+### Bug Fixes
+
+* **hooks:** fix bad validation behavior ([1b3a0d5](https://github.com/adonisjs/adonis-lucid/commit/1b3a0d5))
+
+
+### Features
+
+* **commands:** add config:database command ([98a318a](https://github.com/adonisjs/adonis-lucid/commit/98a318a))
+
+
+
 <a name="4.0.4"></a>
 ## [4.0.4](https://github.com/adonisjs/adonis-lucid/compare/v4.0.3...v4.0.4) (2017-07-30)
 

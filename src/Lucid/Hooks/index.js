@@ -38,6 +38,14 @@ class Hooks {
     }
 
     /**
+     * The events array of aliases, just required
+     * for validation purposes
+     *
+     * @type {Array}
+     */
+    this._aliasEvents = _.values(this._aliases)
+
+    /**
      * A map of handlers to be called for each event
      *
      * @type {Object}
@@ -65,7 +73,7 @@ class Hooks {
    * ```
    */
   addHandler (event, handler, name) {
-    if (!this._events[event]) {
+    if (_.includes(this._events[event]) && !_.includes(this._aliasEvents, event)) {
       throw CE.InvalidArgumentException.invalidParameter(`${event} is not a valid hook event`)
     }
     this._handlers[event] = this._handlers[event] || []
