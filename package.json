@@ -38,7 +38,7 @@
     "chance": "^1.0.10",
     "coveralls": "^2.13.1",
     "cz-conventional-changelog": "^2.0.0",
-    "fs-extra": "^3.0.1",
+    "fs-extra": "^4.0.1",
     "japa": "^1.0.3",
     "japa-cli": "^1.0.1",
     "mysql": "^2.13.0",
