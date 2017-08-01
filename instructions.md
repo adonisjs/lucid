@@ -33,3 +33,21 @@ const aceProviders = [
 ```
 
 After this running `adonis --help` will list a set of commands under `migration` namespace.
+
+## Environment Variables
+
+The configuration file `config/database.js` references **environment variables** from `.env` file. Make sure to set them accordingly for development and prodiction envorinment. 
+
+```
+DB_CONNECTION=sqlite
+```
+
+When using mysql set following
+
+```
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=
+DB_DATABASE=adonis
+```
