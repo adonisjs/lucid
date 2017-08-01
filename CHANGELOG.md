@@ -1,3 +1,8 @@
+<a name="4.0.7"></a>
+## [4.0.7](https://github.com/adonisjs/adonis-lucid/compare/v4.0.6...v4.0.7) (2017-08-01)
+
+
+
 <a name="4.0.6"></a>
 ## [4.0.6](https://github.com/adonisjs/adonis-lucid/compare/v4.0.5...v4.0.6) (2017-08-01)
 
