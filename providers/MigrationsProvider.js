@@ -55,7 +55,6 @@ class MigrationsProvider extends ServiceProvider {
     this.app.bind('Adonis/Src/Migration:Rollback', () => require('../commands/MigrationRollback'))
     this.app.bind('Adonis/Src/Migration:Refresh', () => require('../commands/MigrationRefresh'))
     this.app.bind('Adonis/Src/Migration:Reset', () => require('../commands/MigrationReset'))
-    this.app.bind('Adonis/Src/Migration:Make', () => require('../commands/MigrationMake'))
   }
 
   /**
