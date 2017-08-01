@@ -51,10 +51,11 @@ class MigrationsProvider extends ServiceProvider {
    * @return {void}
    */
   _registerCommands () {
-    this.app.bind('Adonis/Src/Migration:Run', () => require('../commands/MigrationRun'))
-    this.app.bind('Adonis/Src/Migration:Rollback', () => require('../commands/MigrationRollback'))
-    this.app.bind('Adonis/Src/Migration:Refresh', () => require('../commands/MigrationRefresh'))
-    this.app.bind('Adonis/Src/Migration:Reset', () => require('../commands/MigrationReset'))
+    this.app.bind('Adonis/Commands/Migration:Run', () => require('../commands/MigrationRun'))
+    this.app.bind('Adonis/Commands/Migration:Rollback', () => require('../commands/MigrationRollback'))
+    this.app.bind('Adonis/Commands/Migration:Refresh', () => require('../commands/MigrationRefresh'))
+    this.app.bind('Adonis/Commands/Migration:Reset', () => require('../commands/MigrationReset'))
+    this.app.bind('Adonis/Commands/Seed', () => require('../commands/Seed'))
   }
 
   /**
@@ -100,10 +101,10 @@ class MigrationsProvider extends ServiceProvider {
    */
   boot () {
     const ace = require('@adonisjs/ace')
-    ace.addCommand('Adonis/Src/Migration:Run')
-    ace.addCommand('Adonis/Src/Migration:Rollback')
-    ace.addCommand('Adonis/Src/Migration:Refresh')
-    ace.addCommand('Adonis/Src/Migration:Reset')
+    ace.addCommand('Adonis/Commands/Migration:Run')
+    ace.addCommand('Adonis/Commands/Migration:Rollback')
+    ace.addCommand('Adonis/Commands/Migration:Refresh')
+    ace.addCommand('Adonis/Commands/Seed')
   }
 }
 
