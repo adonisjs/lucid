@@ -1,3 +1,19 @@
+<a name="4.0.8"></a>
+## [4.0.8](https://github.com/adonisjs/adonis-lucid/compare/v4.0.7...v4.0.8) (2017-08-01)
+
+
+### Bug Fixes
+
+* **test:** remove clear require from tests ([b120aa4](https://github.com/adonisjs/adonis-lucid/commit/b120aa4))
+
+
+### Features
+
+* **commands:** add seed time to seed command ([98626f3](https://github.com/adonisjs/adonis-lucid/commit/98626f3))
+* **commands:** log migration time next to command ([63339fb](https://github.com/adonisjs/adonis-lucid/commit/63339fb))
+
+
+
 <a name="4.0.7"></a>
 ## [4.0.7](https://github.com/adonisjs/adonis-lucid/compare/v4.0.6...v4.0.7) (2017-08-01)
 

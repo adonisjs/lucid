@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/lucid",
-  "version": "4.0.7",
+  "version": "4.0.8",
   "description": "SQL ORM built on top of Active Record pattern",
   "main": "index.js",
   "scripts": {
@@ -29,6 +29,7 @@
     "moment": "^2.18.1",
     "node-exceptions": "^2.0.2",
     "pluralize": "^5.0.0",
+    "pretty-hrtime": "^1.0.3",
     "require-all": "^2.2.0"
   },
   "devDependencies": {

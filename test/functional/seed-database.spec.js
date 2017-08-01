@@ -11,7 +11,6 @@
 
 const test = require('japa')
 const ace = require('@adonisjs/ace')
-const clearRequire = require('clear-require')
 const fs = require('fs-extra')
 const path = require('path')
 const { ioc, registrar } = require('@adonisjs/fold')
@@ -74,14 +73,15 @@ test.group('Seed Database', (group) => {
 
   test('run seeds in sequence', async (assert) => {
     ace.addCommand(Seed)
-    global.stack = []
+    const g = global || GLOBAL
+    g.stack = []
 
     await fs.outputFile(path.join(__dirname, 'database/seeds/bar.js'), `
       class Seed {
         run () {
           return new Promise((resolve) => {
             setTimeout(() => {
-              global.stack.push('bar')
+              (global || GLOBAL).stack.push('bar')
               resolve()
             }, 10)
           })
@@ -93,7 +93,7 @@ test.group('Seed Database', (group) => {
     await fs.outputFile(path.join(__dirname, 'database/seeds/baz.js'), `
       class Seed {
         run () {
-          global.stack.push('baz')
+          (global || GLOBAL).stack.push('baz')
         }
       }
       module.exports = Seed
@@ -101,20 +101,19 @@ test.group('Seed Database', (group) => {
 
     await ace.call('seed')
     assert.deepEqual(global.stack, ['bar', 'baz'])
-    clearRequire(path.join(__dirname, 'database/seeds/bar.js'))
-    clearRequire(path.join(__dirname, 'database/seeds/baz.js'))
   })
 
   test('run only selected files', async (assert) => {
     ace.addCommand(Seed)
-    global.stack = []
+    const g = global || GLOBAL
+    g.stack = []
 
     await fs.outputFile(path.join(__dirname, 'database/seeds/bar.js'), `
       class Seed {
         run () {
           return new Promise((resolve) => {
             setTimeout(() => {
-              global.stack.push('bar')
+              (global || GLOBAL).stack.push('bar')
               resolve()
             }, 10)
           })
@@ -123,17 +122,16 @@ test.group('Seed Database', (group) => {
       module.exports = Seed
     `)
 
-    await fs.outputFile(path.join(__dirname, 'database/seeds/baz.js'), `
+    await fs.outputFile(path.join(__dirname, 'database/seeds/foo.js'), `
       class Seed {
         run () {
-          global.stack.push('baz')
+          (global || GLOBAL).stack.push('foo')
         }
       }
       module.exports = Seed
     `)
 
-    await ace.call('seed', {}, { files: 'baz.js' })
-    assert.deepEqual(global.stack, ['baz'])
-    clearRequire(path.join(__dirname, 'database/seeds/baz.js'))
+    await ace.call('seed', {}, { files: 'foo.js' })
+    assert.deepEqual(global.stack, ['foo'])
   })
 })

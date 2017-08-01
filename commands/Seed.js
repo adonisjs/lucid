@@ -13,6 +13,7 @@ const { Command } = require('@adonisjs/ace')
 const requireAll = require('require-all')
 const _ = require('lodash')
 const { ioc } = require('@adonisjs/fold')
+const prettyHrTime = require('pretty-hrtime')
 
 class SeedDatabase extends Command {
   constructor (Helpers) {
@@ -113,22 +114,31 @@ class SeedDatabase extends Command {
    * @return {void|Array}
    */
   async handle (args, { force, files }) {
-    this._validateState(force)
+    try {
+      this._validateState(force)
 
-    files = typeof (files) === 'string' ? files.split(',') : null
-    const allFiles = this._getSeedFiles(files)
+      const startTime = process.hrtime()
 
-    if (!_.size(allFiles)) {
-      return this.viaAce ? this.info('Nothing to seed') : 'Nothing to seed'
-    }
+      files = typeof (files) === 'string' ? files.split(',') : null
+      const allFiles = this._getSeedFiles(files)
 
-    for (const file of _.keys(allFiles)) {
-      const seedInstance = ioc.make(allFiles[file])
-      if (typeof (seedInstance.run) === 'function') {
-        await seedInstance.run()
-      } else {
-        this.warn(`${seedInstance.constructor.name} does not have a run method`)
+      if (!_.size(allFiles)) {
+        return this.viaAce ? this.info('Nothing to seed') : 'Nothing to seed'
       }
+
+      for (const file of _.keys(allFiles)) {
+        const seedInstance = ioc.make(allFiles[file])
+        if (typeof (seedInstance.run) === 'function') {
+          await seedInstance.run()
+        } else {
+          this.warn(`${seedInstance.constructor.name} does not have a run method`)
+        }
+      }
+
+      const endTime = process.hrtime(startTime)
+      this.success(`Seeded database in ${prettyHrTime(endTime)}`)
+    } catch (error) {
+      console.log(error)
     }
   }
 }

@@ -11,6 +11,7 @@
 
 const BaseMigration = require('./BaseMigration')
 const _ = require('lodash')
+const prettyHrTime = require('pretty-hrtime')
 
 class MigrationReset extends BaseMigration {
   /**
@@ -53,37 +54,44 @@ class MigrationReset extends BaseMigration {
    * @return {void|Array}
    */
   async handle (args, { log, force }) {
-    this._validateState(force)
+    try {
+      this._validateState(force)
 
-    const { migrated, status, queries } = await this.migration.down(this._getSchemaFiles(), 0, log)
+      const startTime = process.hrtime()
+      const { migrated, status, queries } = await this.migration.down(this._getSchemaFiles(), 0, log)
 
-    /**
-     * Tell user that there is nothing to migrate
-     */
-    if (status === 'skipped') {
-      this.info('Already at the last batch')
-    }
+      /**
+       * Tell user that there is nothing to migrate
+       */
+      if (status === 'skipped') {
+        this.info('Already at the last batch')
+      }
 
-    /**
-     * Log files that been migrated successfully
-     */
-    if (status === 'completed' && !queries) {
-      migrated.forEach((name) => this.completed('rollback', `${name}.js`))
-    }
+      /**
+       * Log files that been migrated successfully
+       */
+      if (status === 'completed' && !queries) {
+        const endTime = process.hrtime(startTime)
+        migrated.forEach((name) => this.completed('rollback', `${name}.js`))
+        this.success(`Reset completed in ${prettyHrTime(endTime)}`)
+      }
 
-    /**
-     * If there are queries in the result, just log them
-     */
-    if (queries) {
-      _.each(queries, ({queries, name}) => {
-        console.log(this.chalk.magenta(`\n Queries for ${name}.js`))
-        _.each(queries, (query) => console.log(`  ${query}`))
-        console.log('\n')
-      })
-    }
+      /**
+       * If there are queries in the result, just log them
+       */
+      if (queries) {
+        _.each(queries, ({queries, name}) => {
+          console.log(this.chalk.magenta(`\n Queries for ${name}.js`))
+          _.each(queries, (query) => console.log(`  ${query}`))
+          console.log('\n')
+        })
+      }
 
-    if (!this.viaAce) {
-      return { status, migrated, queries }
+      if (!this.viaAce) {
+        return { status, migrated, queries }
+      }
+    } catch (error) {
+      console.log(error)
     }
   }
 }
