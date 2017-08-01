@@ -29,6 +29,7 @@
     "moment": "^2.18.1",
     "node-exceptions": "^2.0.2",
     "pluralize": "^5.0.0",
+    "pretty-hrtime": "^1.0.3",
     "require-all": "^2.2.0"
   },
   "devDependencies": {
