@@ -1,3 +1,19 @@
+<a name="4.0.6"></a>
+## [4.0.6](https://github.com/adonisjs/adonis-lucid/compare/v4.0.5...v4.0.6) (2017-08-01)
+
+
+### Features
+
+* **commands:** add seed command ([dd56409](https://github.com/adonisjs/adonis-lucid/commit/dd56409))
+* **instructions:** add instructions file ([a1086d9](https://github.com/adonisjs/adonis-lucid/commit/a1086d9))
+
+
+### Reverts
+
+* **commands:** remove config:database command ([0671c56](https://github.com/adonisjs/adonis-lucid/commit/0671c56))
+
+
+
 <a name="4.0.5"></a>
 ## [4.0.5](https://github.com/adonisjs/adonis-lucid/compare/v4.0.4...v4.0.5) (2017-07-30)
 
