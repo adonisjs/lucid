@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/lucid",
-  "version": "4.0.5",
+  "version": "4.0.6",
   "description": "SQL ORM built on top of Active Record pattern",
   "main": "index.js",
   "scripts": {
@@ -36,6 +36,7 @@
     "@adonisjs/fold": "^4.0.0",
     "@adonisjs/sink": "^1.0.9",
     "chance": "^1.0.10",
+    "clear-require": "^2.0.0",
     "coveralls": "^2.13.1",
     "cz-conventional-changelog": "^2.0.0",
     "fs-extra": "^3.0.1",
