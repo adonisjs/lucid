@@ -90,6 +90,21 @@ class MigrationsProvider extends ServiceProvider {
     this._registerMigration()
     this._registerCommands()
   }
+
+  /**
+   * On boot add commands with ace
+   *
+   * @method boot
+   *
+   * @return {void}
+   */
+  boot () {
+    const ace = require('@adonisjs/ace')
+    ace.addCommand('Adonis/Src/Migration:Run')
+    ace.addCommand('Adonis/Src/Migration:Rollback')
+    ace.addCommand('Adonis/Src/Migration:Refresh')
+    ace.addCommand('Adonis/Src/Migration:Reset')
+  }
 }
 
 module.exports = MigrationsProvider
