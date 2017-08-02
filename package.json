@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@adonisjs/ace": "git+https://github.com/adonisjs/ace.git#dawn",
-    "@adonisjs/fold": "^4.0.1",
+    "@adonisjs/fold": "^4.0.2",
     "@adonisjs/sink": "^1.0.11",
     "chance": "^1.0.10",
     "clear-require": "^2.0.0",
