@@ -55,7 +55,7 @@ test.group('Hooks', (group) => {
     const hooks = new Hooks()
     hooks.addHandler('create', function () {}, 'hashPassword')
     const fn = () => hooks.removeHandler('create')
-    assert.throw(fn, 'E_MISSING_PARAMETER: Cannot remove hook without a name')
+    assert.throw(fn, 'E_MISSING_PARAMETER: Missing parameter name expected by Hook.removeHandler as 2nd parameter')
   })
 
   test('it should remove all handlers', (assert) => {

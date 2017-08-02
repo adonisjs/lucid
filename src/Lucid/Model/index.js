@@ -11,6 +11,7 @@
 
 const _ = require('lodash')
 const moment = require('moment')
+const GE = require('@adonisjs/generic-exceptions')
 const { resolver } = require('../../../lib/iocResolver')
 
 const BaseModel = require('./Base')
@@ -317,7 +318,7 @@ class Model extends BaseModel {
      * If user has defined wrong hook cycle, do let them know
      */
     if (!this.$hooks[cycle]) {
-      throw CE.InvalidArgumentException.invalidParameter(`Invalid hook event {${forEvent}}`)
+      throw GE.InvalidArgumentException.invalidParameter(`Invalid hook event {${forEvent}}`)
     }
 
     /**
@@ -339,9 +340,9 @@ class Model extends BaseModel {
    */
   static addGlobalScope (callback, name = null) {
     if (typeof (callback) !== 'function') {
-      throw CE
+      throw GE
         .InvalidArgumentException
-        .invalidParameter('Model.addGlobalScope expects a closure as first parameter')
+        .invalidParameter('Model.addGlobalScope expects a closure as first parameter', callback)
     }
     this.$globalScopes.push({ callback, name })
     return this
@@ -359,7 +360,9 @@ class Model extends BaseModel {
    */
   static onQuery (callback) {
     if (typeof (callback) !== 'function') {
-      throw CE.InvalidArgumentException.invalidParameter('Model.onQuery expects a closure as first parameter')
+      throw GE
+        .InvalidArgumentException
+        .invalidParameter('Model.onQuery expects a closure as first parameter', callback)
     }
 
     this.$queryListeners.push(callback)
@@ -377,9 +380,9 @@ class Model extends BaseModel {
    */
   static addTrait (trait) {
     if (typeof (trait) !== 'function' && typeof (trait) !== 'string') {
-      throw CE
+      throw GE
         .InvalidArgumentException
-        .invalidParameter('Model.addTrait expects an IoC container binding or a closure')
+        .invalidParameter('Model.addTrait expects an IoC container binding or a closure', trait)
     }
 
     /**
@@ -421,7 +424,9 @@ class Model extends BaseModel {
    */
   static async createMany (payloadArray) {
     if (payloadArray instanceof Array === false) {
-      throw CE.InvalidArgumentException.invalidParameter(`${this.name}.createMany expects an array of values`)
+      throw GE
+        .InvalidArgumentException
+        .invalidParameter(`${this.name}.createMany expects an array of values`, payloadArray)
     }
     return Promise.all(payloadArray.map((payload) => this.create(payload)))
   }

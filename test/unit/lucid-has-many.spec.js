@@ -882,7 +882,7 @@ test.group('Relations | Has Many', (group) => {
     try {
       await user.cars().createMany({ name: 'mercedes', model: '1992' })
     } catch ({ message }) {
-      assert.equal(message, 'E_INVALID_PARAMETER: hasMany.createMany expects an array of values')
+      assert.equal(message, 'E_INVALID_PARAMETER: hasMany.createMany expects an array of values instead received object')
     }
   })
 
@@ -907,7 +907,7 @@ test.group('Relations | Has Many', (group) => {
     try {
       await user.cars().saveMany(new Car())
     } catch ({ message }) {
-      assert.equal(message, 'E_INVALID_PARAMETER: hasMany.saveMany expects an array of related model instances')
+      assert.equal(message, 'E_INVALID_PARAMETER: hasMany.saveMany expects an array of related model instances instead received object')
     }
   })
 })

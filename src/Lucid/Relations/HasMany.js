@@ -10,8 +10,8 @@
 */
 
 const _ = require('lodash')
+const GE = require('@adonisjs/generic-exceptions')
 const BaseRelation = require('./BaseRelation')
-const CE = require('../../Exceptions')
 
 /**
  * HasMany relationship instance is used to define a
@@ -164,9 +164,9 @@ class HasMany extends BaseRelation {
    */
   async createMany (arrayOfPayload) {
     if (arrayOfPayload instanceof Array === false) {
-      throw CE
+      throw GE
         .InvalidArgumentException
-        .invalidParameter('hasMany.createMany expects an array of values')
+        .invalidParameter('hasMany.createMany expects an array of values', arrayOfPayload)
     }
 
     await this._persistParentIfRequired()
@@ -184,9 +184,9 @@ class HasMany extends BaseRelation {
    */
   async saveMany (arrayOfRelatedInstances) {
     if (arrayOfRelatedInstances instanceof Array === false) {
-      throw CE
+      throw GE
         .InvalidArgumentException
-        .invalidParameter('hasMany.saveMany expects an array of related model instances')
+        .invalidParameter('hasMany.saveMany expects an array of related model instances', arrayOfRelatedInstances)
     }
 
     await this._persistParentIfRequired()
