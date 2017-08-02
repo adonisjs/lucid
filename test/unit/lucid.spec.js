@@ -1170,7 +1170,7 @@ test.group('Model', (group) => {
     try {
       await User.createMany({ username: 'virk' })
     } catch ({ message }) {
-      assert.equal(message, 'E_INVALID_PARAMETER: User.createMany expects an array of values')
+      assert.equal(message, 'E_INVALID_PARAMETER: User.createMany expects an array of values instead received object')
     }
   })
 

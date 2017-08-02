@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
 */
 
-const CE = require('../Exceptions')
+const GE = require('@adonisjs/generic-exceptions')
 const ModelFactory = require('./ModelFactory')
 const DatabaseFactory = require('./DatabaseFactory')
 
@@ -57,7 +57,9 @@ class Factory {
    */
   blueprint (name, callback) {
     if (typeof (callback) !== 'function') {
-      throw CE.InvalidArgumentException.invalidParameter('Factory.blueprint expects a callback as 2nd parameter')
+      throw GE
+        .InvalidArgumentException
+        .invalidParameter('Factory.blueprint expects a callback as 2nd parameter', callback)
     }
     this._blueprints.push({ name, callback })
     return this
@@ -91,6 +93,15 @@ class Factory {
     return new ModelFactory(blueprint.name, blueprint.callback)
   }
 
+  /**
+   * Get database factory instance for a registered blueprint
+   *
+   * @method get
+   *
+   * @param  {String} name
+   *
+   * @return {DatabaseFactory}
+   */
   get (name) {
     const blueprint = this.getBlueprint(name)
     return new DatabaseFactory(blueprint.name, blueprint.callback)

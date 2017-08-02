@@ -17,6 +17,8 @@
 */
 
 const _ = require('lodash')
+const GE = require('@adonisjs/generic-exceptions')
+
 const BaseRelation = require('./BaseRelation')
 const util = require('../../../lib/util')
 const CE = require('../../Exceptions')
@@ -743,9 +745,9 @@ class BelongsToMany extends BaseRelation {
    */
   async saveMany (arrayOfRelatedInstances, pivotCallback) {
     if (arrayOfRelatedInstances instanceof Array === false) {
-      throw CE
+      throw GE
         .InvalidArgumentException
-        .invalidParameter('belongsToMany.saveMany expects an array of related model instances')
+        .invalidParameter('belongsToMany.saveMany expects an array of related model instances', arrayOfRelatedInstances)
     }
 
     await this._persistParentIfRequired()
@@ -788,9 +790,9 @@ class BelongsToMany extends BaseRelation {
    */
   async createMany (rows, pivotCallback) {
     if (rows instanceof Array === false) {
-      throw CE
+      throw GE
         .InvalidArgumentException
-        .invalidParameter('belongsToMany.createMany expects an array of related model instances')
+        .invalidParameter('belongsToMany.createMany expects an array of related model instances', rows)
     }
 
     await this._persistParentIfRequired()

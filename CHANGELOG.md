@@ -1,3 +1,13 @@
+<a name="4.0.9"></a>
+## [4.0.9](https://github.com/adonisjs/adonis-lucid/compare/v4.0.8...v4.0.9) (2017-08-02)
+
+
+### Features
+
+* **exceptions:** use generic-exceptions module ([d3daecc](https://github.com/adonisjs/adonis-lucid/commit/d3daecc))
+
+
+
 <a name="4.0.8"></a>
 ## [4.0.8](https://github.com/adonisjs/adonis-lucid/compare/v4.0.7...v4.0.8) (2017-08-01)
 
