@@ -1196,6 +1196,31 @@ class Model extends BaseModel {
   ) {
     return new HasManyThrough(this, relatedModel, relatedMethod, primaryKey, foreignKey)
   }
+
+  /**
+   * Reload the model instance in memory. Some may
+   * not like it, but in real use cases no one
+   * wants a new instance.
+   *
+   * @method reload
+   *
+   * @return {void}
+   */
+  async reload () {
+    if (this.$frozen) {
+      throw GE.RuntimeException.invoke('Cannot reload a deleted model instance')
+    }
+
+    if (!this.isNew) {
+      const attributes = await this.constructor.find(this.primaryKeyValue)
+      if (!attributes) {
+        throw GE
+          .RuntimeException
+          .invoke(`Cannot reload model since row with ${this.constructor.primaryKey} ${this.primaryKeyValue} has been removed`)
+      }
+      this.newUp(attributes)
+    }
+  }
 }
 
 module.exports = Model

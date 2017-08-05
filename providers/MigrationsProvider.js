@@ -104,6 +104,7 @@ class MigrationsProvider extends ServiceProvider {
     ace.addCommand('Adonis/Commands/Migration:Run')
     ace.addCommand('Adonis/Commands/Migration:Rollback')
     ace.addCommand('Adonis/Commands/Migration:Refresh')
+    ace.addCommand('Adonis/Commands/Migration:Reset')
     ace.addCommand('Adonis/Commands/Seed')
   }
 }
