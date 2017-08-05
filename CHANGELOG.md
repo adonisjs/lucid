@@ -1,3 +1,19 @@
+<a name="4.0.10"></a>
+## [4.0.10](https://github.com/adonisjs/adonis-lucid/compare/v4.0.8...v4.0.10) (2017-08-05)
+
+
+### Bug Fixes
+
+* **provider:** load migration:reset command too ([7afdc62](https://github.com/adonisjs/adonis-lucid/commit/7afdc62))
+
+
+### Features
+
+* **exceptions:** use generic-exceptions module ([d3daecc](https://github.com/adonisjs/adonis-lucid/commit/d3daecc))
+* **lucid:** add support for model instance reload ([87569b1](https://github.com/adonisjs/adonis-lucid/commit/87569b1))
+
+
+
 <a name="4.0.9"></a>
 ## [4.0.9](https://github.com/adonisjs/adonis-lucid/compare/v4.0.8...v4.0.9) (2017-08-02)
 
