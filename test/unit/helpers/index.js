@@ -73,6 +73,7 @@ module.exports = {
         table.integer('country_id')
         table.string('username')
         table.timestamps()
+        table.string('type').defaultTo('admin')
         table.timestamp('login_at')
         table.timestamp('deleted_at').nullable()
       }),

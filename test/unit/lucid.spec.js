@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
 */
 
+require('../../lib/iocResolver').setFold(require('@adonisjs/fold'))
 const test = require('japa')
 const fs = require('fs-extra')
 const path = require('path')
@@ -512,7 +513,7 @@ test.group('Model', (group) => {
     await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
     assert.deepEqual(Object.keys(users.first().toObject()), [
-      'id', 'vid', 'country_id', 'username', 'updated_at', 'login_at', 'deleted_at'
+      'id', 'vid', 'country_id', 'username', 'updated_at', 'type', 'login_at', 'deleted_at'
     ])
   })
 
@@ -1302,5 +1303,84 @@ test.group('Model', (group) => {
 
     const fn = () => User.addGlobalScope('foo')
     assert.throw(fn, 'E_INVALID_PARAMETER: Model.addGlobalScope expects a closure as first parameter')
+  })
+
+  test('refresh model state', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    assert.isUndefined(user.type)
+    await user.reload()
+    assert.equal(user.type, 'admin')
+  })
+
+  test('do not reload when isNew', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    assert.isUndefined(user.type)
+    await user.reload()
+    assert.isUndefined(user.type)
+  })
+
+  test('throw exception when on reloas the row is missing', async (assert) => {
+    assert.plan(2)
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    assert.isUndefined(user.type)
+
+    await ioc.use('Database').table('users').truncate()
+    try {
+      await user.reload()
+    } catch ({ message }) {
+      assert.equal(message, 'E_RUNTIME_ERROR: Cannot reload model since row with id 1 has been removed')
+    }
+  })
+
+  test('do not reload when model is deleted', async (assert) => {
+    assert.plan(2)
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    assert.isUndefined(user.type)
+    await user.delete()
+
+    try {
+      await user.reload()
+    } catch ({ message }) {
+      assert.equal(message, 'E_RUNTIME_ERROR: Cannot reload a deleted model instance')
+    }
   })
 })
