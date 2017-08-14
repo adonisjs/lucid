@@ -300,7 +300,7 @@ class QueryBuilder {
       await modelInstance.loadMany(this._eagerLoads)
     }
 
-    this.Model.$hooks.after.exec('find', modelInstance)
+    await this.Model.$hooks.after.exec('find', modelInstance)
     return modelInstance
   }
 

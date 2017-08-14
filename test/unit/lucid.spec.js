@@ -654,7 +654,8 @@ test.group('Model', (group) => {
     User._bootIfNotBooted()
 
     const stack = []
-    User.addHook('afterFind', function () {
+    User.addHook('afterFind', async function () {
+      await helpers.sleep(1)
       stack.push('afterFind')
     })
 
