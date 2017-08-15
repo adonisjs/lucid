@@ -128,16 +128,17 @@ class BelongsTo extends BaseRelation {
    * @async
    *
    * @param  {Object}  relatedInstance
+   * @param  {Object}  [trx]
    *
    * @return {Promise}
    */
-  async associate (relatedInstance) {
+  async associate (relatedInstance, trx) {
     if (relatedInstance.isNew) {
-      await relatedInstance.save()
+      await relatedInstance.save(trx)
     }
 
     this.parentInstance[this.primaryKey] = relatedInstance[this.foreignKey]
-    return this.parentInstance.save()
+    return this.parentInstance.save(trx)
   }
 
   /**
@@ -146,15 +147,17 @@ class BelongsTo extends BaseRelation {
    * @method dissociate
    * @async
    *
+   * @param  {Object}  [trx]
+   *
    * @return {Promise}
    */
-  async dissociate () {
+  async dissociate (trx) {
     if (this.parentInstance.isNew) {
       throw CE.ModelRelationException.unsavedModelInstance('Cannot dissociate relationship since model instance is not persisted')
     }
 
     this.parentInstance[this.primaryKey] = null
-    return this.parentInstance.save()
+    return this.parentInstance.save(trx)
   }
 }
 

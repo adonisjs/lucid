@@ -1384,4 +1384,99 @@ test.group('Model', (group) => {
       assert.equal(message, 'E_RUNTIME_ERROR: Cannot reload a deleted model instance')
     }
   })
+
+  test('rollback save operation via transaction', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const trx = await ioc.use('Database').beginTransaction()
+    try {
+      const user = new User()
+      user.username = 'virk'
+      await user.save(trx)
+      trx.rollback()
+    } catch (error) {
+      trx.rollback()
+      throw error
+    }
+
+    const count = await ioc.use('Database').table('users').count('* as total')
+    assert.deepEqual(count, [{ 'total': 0 }])
+  })
+
+  test('rollback update operation via transaction', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const trx = await ioc.use('Database').beginTransaction()
+    try {
+      user.username = 'nikk'
+      await user.save(trx)
+      trx.rollback()
+    } catch (error) {
+      trx.rollback()
+      throw error
+    }
+
+    const firtUser = await ioc.use('Database').table('users').first()
+    assert.equal(firtUser.username, 'virk')
+  })
+
+  test('create inside a transaction', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+    const trx = await ioc.use('Database').beginTransaction()
+
+    try {
+      await User.create({ username: 'virk' }, trx)
+      trx.rollback()
+    } catch (error) {
+      trx.rollback()
+      throw error
+    }
+
+    const count = await ioc.use('Database').table('users').count('* as total')
+    assert.deepEqual(count, [{ 'total': 0 }])
+  })
+
+  test('createMany inside a transaction', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+    const trx = await ioc.use('Database').beginTransaction()
+
+    try {
+      await User.createMany([{ username: 'virk' }], trx)
+      trx.rollback()
+    } catch (error) {
+      trx.rollback()
+      throw error
+    }
+
+    const count = await ioc.use('Database').table('users').count('* as total')
+    assert.deepEqual(count, [{ 'total': 0 }])
+  })
 })

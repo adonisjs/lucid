@@ -401,13 +401,14 @@ class Model extends BaseModel {
    * @method create
    *
    * @param  {Object} payload
+   * @param  {Object} [trx]
    *
    * @return {Model} Model instance is returned
    */
-  static async create (payload) {
+  static async create (payload, trx) {
     const modelInstance = new this()
     modelInstance.fill(payload)
-    await modelInstance.save()
+    await modelInstance.save(trx)
     return modelInstance
   }
 
@@ -417,18 +418,19 @@ class Model extends BaseModel {
    * @method createMany
    *
    * @param  {Array} payloadArray
+   * @param  {Object} [trx]
    *
    * @return {Array} Array of model instances is returned
    *
    * @throws {InvalidArgumentException} If payloadArray is not an array
    */
-  static async createMany (payloadArray) {
+  static async createMany (payloadArray, trx) {
     if (payloadArray instanceof Array === false) {
       throw GE
         .InvalidArgumentException
         .invalidParameter(`${this.name}.createMany expects an array of values`, payloadArray)
     }
-    return Promise.all(payloadArray.map((payload) => this.create(payload)))
+    return Promise.all(payloadArray.map((payload) => this.create(payload, trx)))
   }
 
   /**
@@ -627,11 +629,13 @@ class Model extends BaseModel {
    * @method _insert
    * @async
    *
+   * @param {Object} trx
+   *
    * @return {Boolean}
    *
    * @private
    */
-  async _insert () {
+  async _insert (trx) {
     /**
      * Executing before hooks
      */
@@ -644,8 +648,20 @@ class Model extends BaseModel {
     this._setUpdatedAt(this.$attributes)
     this._formatDateFields(this.$attributes)
 
-    const result = await this.constructor
-      .query()
+    const query = this.constructor.query()
+
+    /**
+     * If trx is defined then use it for the save
+     * operation.
+     */
+    if (trx) {
+      query.transacting(trx)
+    }
+
+    /**
+     * Execute query
+     */
+    const result = await query
       .returning(this.constructor.primaryKey)
       .insert(this.$attributes)
 
@@ -678,21 +694,32 @@ class Model extends BaseModel {
    * @method _update
    * @async
    *
+   * @param {Object} trx
+   *
    * @return {Boolean}
    */
-  async _update () {
+  async _update (trx) {
     /**
      * Executing before hooks
      */
     await this.constructor.$hooks.before.exec('update', this)
     let affected = 0
 
+    const query = this.constructor.query()
+
+    /**
+     * If trx is defined then use it for the update
+     * operation.
+     */
+    if (trx) {
+      query.transacting(trx)
+    }
+
     if (this.isDirty) {
       /**
        * Set proper timestamps
        */
-      affected = await this.constructor
-        .query()
+      affected = await query
         .where(this.constructor.primaryKey, this.primaryKeyValue)
         .ignoreScopes()
         .update(this.dirty)
@@ -796,10 +823,12 @@ class Model extends BaseModel {
    * @method save
    * @async
    *
+   * @param {Object} trx Transaction object to be used
+   *
    * @return {Boolean} Whether or not the model was persisted
    */
-  async save () {
-    return this.isNew ? this._insert() : this._update()
+  async save (trx) {
+    return this.isNew ? this._insert(trx) : this._update(trx)
   }
 
   /**
