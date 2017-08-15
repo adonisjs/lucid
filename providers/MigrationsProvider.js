@@ -55,6 +55,7 @@ class MigrationsProvider extends ServiceProvider {
     this.app.bind('Adonis/Commands/Migration:Rollback', () => require('../commands/MigrationRollback'))
     this.app.bind('Adonis/Commands/Migration:Refresh', () => require('../commands/MigrationRefresh'))
     this.app.bind('Adonis/Commands/Migration:Reset', () => require('../commands/MigrationReset'))
+    this.app.bind('Adonis/Commands/Migration:Status', () => require('../commands/MigrationStatus'))
     this.app.bind('Adonis/Commands/Seed', () => require('../commands/Seed'))
   }
 
@@ -105,6 +106,7 @@ class MigrationsProvider extends ServiceProvider {
     ace.addCommand('Adonis/Commands/Migration:Rollback')
     ace.addCommand('Adonis/Commands/Migration:Refresh')
     ace.addCommand('Adonis/Commands/Migration:Reset')
+    ace.addCommand('Adonis/Commands/Migration:Status')
     ace.addCommand('Adonis/Commands/Seed')
   }
 }

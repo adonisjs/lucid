@@ -1,3 +1,21 @@
+<a name="4.0.11"></a>
+## [4.0.11](https://github.com/adonisjs/adonis-lucid/compare/v4.0.10...v4.0.11) (2017-08-15)
+
+
+### Bug Fixes
+
+* **database:** database.on bind events on knex and not query ([948d05b](https://github.com/adonisjs/adonis-lucid/commit/948d05b))
+* **lucid:** call afterFind hook via await keyword ([c4de51d](https://github.com/adonisjs/adonis-lucid/commit/c4de51d))
+* **package:** add missing dependencies ([5e7e304](https://github.com/adonisjs/adonis-lucid/commit/5e7e304))
+
+
+### Features
+
+* **commands:** add migration:status command ([a6bc882](https://github.com/adonisjs/adonis-lucid/commit/a6bc882))
+* **lucid:** add support for transactions in save operations ([687de3c](https://github.com/adonisjs/adonis-lucid/commit/687de3c))
+
+
+
 <a name="4.0.10"></a>
 ## [4.0.10](https://github.com/adonisjs/adonis-lucid/compare/v4.0.8...v4.0.10) (2017-08-05)
 

@@ -59,6 +59,23 @@ class Database {
   }
 
   /**
+   * Bind listeners for database events. Which are
+   * `query`, `query-error`, `query-response` and
+   * `sql`
+   *
+   * @method on
+   *
+   * @param  {Strign}   event
+   * @param  {Function} callback
+   *
+   * @chainable
+   */
+  on (event, callback) {
+    this.knex.on(event, callback)
+    return this
+  }
+
+  /**
    * The schema builder instance to be used
    * for creating database schema.
    *

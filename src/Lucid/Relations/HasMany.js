@@ -29,11 +29,13 @@ class HasMany extends BaseRelation {
    *
    * @method _persistParentIfRequired
    *
+   * @param {Object} [trx]
+   *
    * @return {void}
    *
    * @private
    */
-  async _persistParentIfRequired () {
+  async _persistParentIfRequired (trx) {
     if (this.parentInstance.isNew) {
       await this.parentInstance.save()
     }
@@ -127,14 +129,15 @@ class HasMany extends BaseRelation {
    *
    * @method save
    *
-   * @param  {Object} relatedInstance
+   * @param  {Object}  relatedInstance
+   * @param  {Object}  [trx]
    *
    * @return {Promise}
    */
-  async save (relatedInstance) {
-    await this._persistParentIfRequired()
+  async save (relatedInstance, trx) {
+    await this._persistParentIfRequired(trx)
     relatedInstance[this.foreignKey] = this.$primaryKeyValue
-    return relatedInstance.save()
+    return relatedInstance.save(trx)
   }
 
   /**
@@ -144,13 +147,14 @@ class HasMany extends BaseRelation {
    * @method create
    *
    * @param  {Object} payload
+   * @param  {Object}  [trx]
    *
    * @return {Promise}
    */
-  async create (payload) {
-    await this._persistParentIfRequired()
+  async create (payload, trx) {
+    await this._persistParentIfRequired(trx)
     payload[this.foreignKey] = this.$primaryKeyValue
-    return this.RelatedModel.create(payload)
+    return this.RelatedModel.create(payload, trx)
   }
 
   /**
@@ -159,18 +163,19 @@ class HasMany extends BaseRelation {
    * @method createMany
    *
    * @param  {Array}   arrayOfPayload
+   * @param  {Object}  [trx]
    *
    * @return {Array}
    */
-  async createMany (arrayOfPayload) {
+  async createMany (arrayOfPayload, trx) {
     if (arrayOfPayload instanceof Array === false) {
       throw GE
         .InvalidArgumentException
         .invalidParameter('hasMany.createMany expects an array of values', arrayOfPayload)
     }
 
-    await this._persistParentIfRequired()
-    return Promise.all(arrayOfPayload.map((payload) => this.create(payload)))
+    await this._persistParentIfRequired(trx)
+    return Promise.all(arrayOfPayload.map((payload) => this.create(payload, trx)))
   }
 
   /**
@@ -179,18 +184,19 @@ class HasMany extends BaseRelation {
    * @method createMany
    *
    * @param  {Array}   arrayOfRelatedInstances
+   * @param  {Object}  [trx]
    *
    * @return {Array}
    */
-  async saveMany (arrayOfRelatedInstances) {
+  async saveMany (arrayOfRelatedInstances, trx) {
     if (arrayOfRelatedInstances instanceof Array === false) {
       throw GE
         .InvalidArgumentException
         .invalidParameter('hasMany.saveMany expects an array of related model instances', arrayOfRelatedInstances)
     }
 
-    await this._persistParentIfRequired()
-    return Promise.all(arrayOfRelatedInstances.map((relatedInstance) => this.save(relatedInstance)))
+    await this._persistParentIfRequired(trx)
+    return Promise.all(arrayOfRelatedInstances.map((relatedInstance) => this.save(relatedInstance, trx)))
   }
 }
 
