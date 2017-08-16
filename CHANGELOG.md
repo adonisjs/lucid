@@ -1,3 +1,14 @@
+<a name="4.0.12"></a>
+## [4.0.12](https://github.com/adonisjs/adonis-lucid/compare/v4.0.11...v4.0.12) (2017-08-16)
+
+
+### Bug Fixes
+
+* **relations:** relation parser set nested relations on demand ([48bdbba](https://github.com/adonisjs/adonis-lucid/commit/48bdbba))
+* **relations:** resolve relation ioc binding before hand ([713b55f](https://github.com/adonisjs/adonis-lucid/commit/713b55f)), closes [#161](https://github.com/adonisjs/adonis-lucid/issues/161)
+
+
+
 <a name="4.0.11"></a>
 ## [4.0.11](https://github.com/adonisjs/adonis-lucid/compare/v4.0.10...v4.0.11) (2017-08-15)
 

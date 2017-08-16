@@ -37,6 +37,7 @@ test.group('Relations | Belongs To Many', (group) => {
   })
 
   group.afterEach(async () => {
+    ioc.restore()
     await ioc.use('Adonis/Src/Database').table('users').truncate()
     await ioc.use('Adonis/Src/Database').table('posts').truncate()
     await ioc.use('Adonis/Src/Database').table('post_user').truncate()
@@ -1653,5 +1654,27 @@ test.group('Relations | Belongs To Many', (group) => {
     await user.posts().select('title').fetch()
 
     assert.equal(postQuery.sql, helpers.formatQuery('select "posts"."title", "post_user"."post_id" as "pivot_post_id", "post_user"."user_id" as "pivot_user_id" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" = ?'))
+  })
+
+  test('belongsToMany work fine with IoC container binding', async (assert) => {
+    class Post extends Model {
+    }
+
+    ioc.fake('App/Models/Post', () => Post)
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany('App/Models/Post')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.id = 1
+    user.$persisted = true
+    const postQuery = user.posts().toSQL()
+    assert.equal(postQuery.sql, helpers.formatQuery('select "posts".*, "post_user"."post_id" as "pivot_post_id", "post_user"."user_id" as "pivot_user_id" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" = ?'))
   })
 })
