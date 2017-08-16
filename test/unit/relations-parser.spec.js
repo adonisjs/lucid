@@ -51,6 +51,11 @@ test.group('Relations Parser', () => {
     assert.deepEqual(parsed, { posts: { name: 'posts', callback: null, nested: { comments: null, likes: null } } })
   })
 
+  test('parse multiple nested relations when first relation doesn\t have nesting', (assert) => {
+    const parsed = RelationsParser.parseRelations({ 'posts': null, 'posts.comments': null, 'posts.likes': null })
+    assert.deepEqual(parsed, { posts: { name: 'posts', callback: null, nested: { comments: null, likes: null } } })
+  })
+
   test('parse multiple nested relations with callback', (assert) => {
     const fn = function () {}
     const parsed = RelationsParser.parseRelations({ 'posts.comments': null, 'posts.likes': null, posts: fn })
