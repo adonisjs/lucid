@@ -37,6 +37,7 @@ test.group('Relations | HasOne', (group) => {
   })
 
   group.afterEach(async () => {
+    ioc.restore()
     await ioc.use('Adonis/Src/Database').table('users').truncate()
     await ioc.use('Adonis/Src/Database').table('profiles').truncate()
     await ioc.use('Adonis/Src/Database').table('pictures').truncate()
@@ -1559,5 +1560,37 @@ test.group('Relations | HasOne', (group) => {
     const profiles = await ioc.use('Database').table('profiles')
     assert.lengthOf(profiles, 0)
     assert.equal(profileQuery.sql, helpers.formatQuery('delete from "profiles" where "user_id" = ?'))
+  })
+
+  test('hasOne relation work fine with IoC container binding', async (assert) => {
+    class Profile extends Model {
+    }
+
+    ioc.fake('App/Models/Profile', () => {
+      return Profile
+    })
+
+    class User extends Model {
+      profile () {
+        return this.hasOne('App/Models/Profile')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let profileQuery = null
+    Profile.onQuery((query) => (profileQuery = query))
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk' })
+    const user = new User()
+    user.id = 1
+    user.$persisted = true
+    const profile = await user.profile().load()
+    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "user_id" = ? limit ?'))
+    assert.deepEqual(profileQuery.bindings, helpers.formatBindings([1, 1]))
+    assert.instanceOf(profile, Profile)
+    assert.equal(profile.$attributes.user_id, 1)
   })
 })

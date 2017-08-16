@@ -37,6 +37,7 @@ test.group('Relations | Has Many', (group) => {
   })
 
   group.afterEach(async () => {
+    ioc.restore()
     await ioc.use('Adonis/Src/Database').table('users').truncate()
     await ioc.use('Adonis/Src/Database').table('cars').truncate()
     await ioc.use('Adonis/Src/Database').table('parts').truncate()
@@ -909,5 +910,37 @@ test.group('Relations | Has Many', (group) => {
     } catch ({ message }) {
       assert.equal(message, 'E_INVALID_PARAMETER: hasMany.saveMany expects an array of related model instances instead received object')
     }
+  })
+
+  test('get first instance of related model via IoC container', async (assert) => {
+    class Car extends Model {
+    }
+
+    ioc.fake('App/Models/Car', () => Car)
+
+    class User extends Model {
+      cars () {
+        return this.hasMany('App/Models/Car')
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    let carQuery = null
+    Car.onQuery((query) => (carQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('cars').insert([
+      { user_id: 1, name: 'merc', model: '1990' },
+      { user_id: 1, name: 'audi', model: '2001' }
+    ])
+
+    const user = await User.find(1)
+    const car = await user.cars().first()
+    assert.instanceOf(car, Car)
+    assert.equal(car.name, 'merc')
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" = ? limit ?'))
+    assert.deepEqual(carQuery.bindings, helpers.formatBindings([1, 1]))
   })
 })

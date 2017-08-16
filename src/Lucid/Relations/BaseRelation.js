@@ -9,7 +9,6 @@
  * file that was distributed with this source code.
 */
 
-const { ioc } = require('../../../lib/iocResolver')
 const CE = require('../../Exceptions')
 const proxyGet = require('../../../lib/proxyGet')
 
@@ -46,7 +45,7 @@ const methodsList = [
 class BaseRelation {
   constructor (parentInstance, RelatedModel, primaryKey, foreignKey) {
     this.parentInstance = parentInstance
-    this.RelatedModel = typeof (RelatedModel) === 'string' ? ioc.use(RelatedModel) : RelatedModel
+    this.RelatedModel = RelatedModel
     this.primaryKey = primaryKey
     this.foreignKey = foreignKey
     this.relatedQuery = this.RelatedModel.query()
