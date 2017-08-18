@@ -62,5 +62,8 @@
     "exclude": [
       "src/Logger/index.js"
     ]
+  },
+  "standard": {
+    "globals": ["use"]
   }
 }

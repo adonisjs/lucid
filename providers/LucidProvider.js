@@ -47,6 +47,21 @@ class LucidProvider extends ServiceProvider {
   }
 
   /**
+   * Register transactions trait under `Adonis/Traits/DatabaseTransactions`
+   * namespace. Supposed to be used when writing tests.
+   *
+   * @method _registerTransactionsTrait
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  _registerTransactionsTrait () {
+    this.app.bind('Adonis/Traits/DatabaseTransactions', () => require('../src/Traits/DatabaseTransactions'))
+    this.app.alias('Adonis/Traits/DatabaseTransactions', 'DatabaseTransactions')
+  }
+
+  /**
    * Register all the required providers
    *
    * @method register
@@ -56,6 +71,7 @@ class LucidProvider extends ServiceProvider {
   register () {
     this._registerDatabase()
     this._registerModel()
+    this._registerTransactionsTrait()
   }
 
   /**
