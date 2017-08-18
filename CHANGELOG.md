@@ -1,3 +1,15 @@
+<a name="4.0.13"></a>
+## [4.0.13](https://github.com/adonisjs/adonis-lucid/compare/v4.0.12...v4.0.13) (2017-08-18)
+
+
+### Features
+
+* **model:** allow query level fields filtering ([8fc559d](https://github.com/adonisjs/adonis-lucid/commit/8fc559d))
+* **relations:** add andWherePivot in belongs to many ([e0f0c6a](https://github.com/adonisjs/adonis-lucid/commit/e0f0c6a))
+* **traits:** add database transactions trait ([bd4c8bb](https://github.com/adonisjs/adonis-lucid/commit/bd4c8bb))
+
+
+
 <a name="4.0.12"></a>
 ## [4.0.12](https://github.com/adonisjs/adonis-lucid/compare/v4.0.11...v4.0.12) (2017-08-16)
 

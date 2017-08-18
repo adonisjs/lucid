@@ -34,6 +34,22 @@ const aceProviders = [
 
 After this running `adonis --help` will list a set of commands under `migration` namespace.
 
+## Testing trait
+This provider also comes with a database transactions trait to run all of your tests inside transactions.
+
+You can use it as
+
+```js
+const { trait, test } = use('Test/Suite')('Example test suite')
+
+trait('DatabaseTransactions')
+
+test('sample test', () => {})
+```
+
+After this all queries will be wrapped inside a transaction.
+
+
 ## Environment Variables
 
 The configuration file `config/database.js` references **environment variables** from `.env` file. Make sure to set them accordingly for development and prodiction envorinment. 
