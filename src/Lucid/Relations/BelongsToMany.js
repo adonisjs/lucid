@@ -463,6 +463,21 @@ class BelongsToMany extends BaseRelation {
   }
 
   /**
+   * Make a andWhere clause on the pivot table
+   *
+   * @method andWherePivot
+   *
+   * @param  {String}     key
+   * @param  {...Spread}  args
+   *
+   * @chainable
+   */
+  andWherePivot (key, ...args) {
+    this._whereForPivot('andWhere', key, ...args)
+    return this
+  }
+
+  /**
    * Where clause on pivot table
    *
    * @method wherePivot
