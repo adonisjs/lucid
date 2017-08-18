@@ -106,9 +106,11 @@ test.group('Database | QueryBuilder', (group) => {
   test('create global transactions', async (assert) => {
     await this.database.beginGlobalTransaction()
     await this.database.table('users').insert({ username: 'virk' })
-    this.database.rollbackGlobalTransaction()
     const users = await this.database.table('users')
-    assert.lengthOf(users, 0)
+    assert.lengthOf(users, 1)
+    this.database.rollbackGlobalTransaction()
+    const usersAfterRollback = await this.database.table('users')
+    assert.lengthOf(usersAfterRollback, 0)
   })
 
   test('commit global transactions', async (assert) => {
