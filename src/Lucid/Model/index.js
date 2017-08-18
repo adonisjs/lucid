@@ -491,7 +491,9 @@ class Model extends BaseModel {
       '$relations',
       '$sideLoaded',
       '$parent',
-      '$frozen'
+      '$frozen',
+      '$visible',
+      '$hidden'
     ]
 
     this.$attributes = {}
@@ -501,6 +503,8 @@ class Model extends BaseModel {
     this.$sideLoaded = {}
     this.$parent = null
     this.$frozen = false
+    this.$visible = null
+    this.$hidden = null
   }
 
   /**
@@ -806,10 +810,10 @@ class Model extends BaseModel {
     /**
      * Pick visible fields or remove hidden fields
      */
-    if (_.isArray(this.constructor.visible)) {
-      evaluatedAttrs = _.pick(evaluatedAttrs, this.constructor.visible)
-    } else if (_.isArray(this.constructor.hidden)) {
-      evaluatedAttrs = _.omit(evaluatedAttrs, this.constructor.hidden)
+    if (_.isArray(this.$visible)) {
+      evaluatedAttrs = _.pick(evaluatedAttrs, this.$visible)
+    } else if (_.isArray(this.$hidden)) {
+      evaluatedAttrs = _.omit(evaluatedAttrs, this.$hidden)
     }
 
     return evaluatedAttrs

@@ -1479,4 +1479,17 @@ test.group('Model', (group) => {
     const count = await ioc.use('Database').table('users').count('* as total')
     assert.deepEqual(count, [{ 'total': 0 }])
   })
+
+  test('define runtime visible fields', async (assert) => {
+    class User extends Model {
+      static get visible () {
+        return ['created_at']
+      }
+    }
+
+    User._bootIfNotBooted()
+    await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
+    const users = await User.query().where('username', 'virk').setVisible(['created_at', 'id']).fetch()
+    assert.deepEqual(Object.keys(users.first().toObject()), ['created_at', 'id'])
+  })
 })
