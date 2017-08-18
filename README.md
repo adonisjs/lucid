@@ -20,6 +20,17 @@ Apart from being just a query builder, Lucid has following features.
 5. Migrations
 6. Factories and Seeds
 
+## Setup
+
+The provider must be installed from npm using `adonis` command.
+
+```js
+adonis install @adonisjs/lucid
+```
+
+Post that make sure to read [instructions.md](instructions.md) file on how to setup the provider.
+
+
 ## Node/OS Target
 
 This repo/branch is supposed to run fine on all major OS platforms and targets `Node.js >=7.0`
