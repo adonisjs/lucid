@@ -29,7 +29,7 @@
     "knex": "^0.13.0",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
-    "pluralize": "^6.0.0",
+    "pluralize": "^7.0.0",
     "pretty-hrtime": "^1.0.3",
     "require-all": "^2.2.0"
   },
