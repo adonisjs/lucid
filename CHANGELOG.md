@@ -1,3 +1,13 @@
+<a name="4.0.15"></a>
+## [4.0.15](https://github.com/adonisjs/adonis-lucid/compare/v4.0.14...v4.0.15) (2017-08-22)
+
+
+### Features
+
+* **validation:** add unique validation rule for validator ([74a9a3e](https://github.com/adonisjs/adonis-lucid/commit/74a9a3e))
+
+
+
 <a name="4.0.14"></a>
 ## [4.0.14](https://github.com/adonisjs/adonis-lucid/compare/v4.0.13...v4.0.14) (2017-08-22)
 
