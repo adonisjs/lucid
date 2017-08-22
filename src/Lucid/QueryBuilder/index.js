@@ -283,6 +283,13 @@ class QueryBuilder {
     await this._eagerLoad(modelInstances)
 
     /**
+     * Fire afterFetch event
+     */
+    if (this.Model.$hooks) {
+      await this.Model.$hooks.after.exec('fetch', modelInstances)
+    }
+
+    /**
      * Return an instance of active model serializer
      */
     return new this.Model.Serializer(modelInstances)
@@ -317,7 +324,10 @@ class QueryBuilder {
       await modelInstance.loadMany(this._eagerLoads)
     }
 
-    await this.Model.$hooks.after.exec('find', modelInstance)
+    if (this.Model.$hooks) {
+      await this.Model.$hooks.after.exec('find', modelInstance)
+    }
+
     return modelInstance
   }
 

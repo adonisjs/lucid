@@ -24,7 +24,7 @@ const { resolver } = require('../../../lib/iocResolver')
  */
 class Hooks {
   constructor () {
-    this._events = ['create', 'update', 'delete', 'restore', 'find']
+    this._events = ['create', 'update', 'delete', 'restore', 'find', 'fetch']
 
     /**
      * The event aliases. Whenever a handler is saved for a alias,
@@ -73,7 +73,7 @@ class Hooks {
    * ```
    */
   addHandler (event, handler, name) {
-    if (_.includes(this._events[event]) && !_.includes(this._aliasEvents, event)) {
+    if (!_.includes(this._events, event) && !_.includes(this._aliasEvents, event)) {
       throw GE.InvalidArgumentException.invalidParameter(`${event} is not a valid hook event`)
     }
     this._handlers[event] = this._handlers[event] || []

@@ -1,3 +1,18 @@
+<a name="4.0.14"></a>
+## [4.0.14](https://github.com/adonisjs/adonis-lucid/compare/v4.0.13...v4.0.14) (2017-08-22)
+
+
+### Bug Fixes
+
+* **package:** update pluralize to version 7.0.0 ([#162](https://github.com/adonisjs/adonis-lucid/issues/162)) ([7723779](https://github.com/adonisjs/adonis-lucid/commit/7723779))
+
+
+### Features
+
+* **hooks:** add afterFetch hook ([941986e](https://github.com/adonisjs/adonis-lucid/commit/941986e))
+
+
+
 <a name="4.0.13"></a>
 ## [4.0.13](https://github.com/adonisjs/adonis-lucid/compare/v4.0.12...v4.0.13) (2017-08-18)
 

@@ -1492,4 +1492,34 @@ test.group('Model', (group) => {
     const users = await User.query().where('username', 'virk').setVisible(['created_at', 'id']).fetch()
     assert.deepEqual(Object.keys(users.first().toObject()), ['created_at', 'id'])
   })
+
+  test('define after fetch hook', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    const fn = async function () {}
+    User.addHook('afterFetch', fn)
+
+    assert.deepEqual(User.$hooks.after._handlers.fetch, [{ handler: fn, name: undefined }])
+  })
+
+  test('call after fetch hook when fetching data', async (assert) => {
+    assert.plan(2)
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    const fn = async function (instances) {
+      instances.forEach((instance) => {
+        assert.instanceOf(instance, User)
+      })
+    }
+
+    User.addHook('afterFetch', fn)
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await User.all('username', 'virk')
+  })
 })
