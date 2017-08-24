@@ -429,7 +429,13 @@ class BelongsToMany extends BaseRelation {
    * @return {Array}
    */
   mapValues (modelInstances) {
-    return _.map(modelInstances, (modelInstance) => modelInstance[this.primaryKey])
+    const values = []
+    _.forEach(modelInstances, (modelInstance) => {
+      if (modelInstance[this.primaryKey]) {
+        values.push(modelInstance[this.primaryKey])
+      }
+    })
+    return values
   }
 
   /**
