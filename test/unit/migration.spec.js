@@ -487,7 +487,18 @@ test.group('Migration', (group) => {
 
     await migration.up({ '2017-08-10': UserSchema })
     const status = await migration.status({ '2017-08-10': UserSchema, '2017-08-12': UserSchema })
-    assert.deepEqual(status, { '2017-08-10': 'Y', '2017-08-12': 'N' })
+    assert.deepEqual(status, [
+      {
+        name: '2017-08-10',
+        migrated: true,
+        batch: 1
+      },
+      {
+        name: '2017-08-12',
+        migrated: false,
+        batch: null
+      }
+    ])
   })
 
   test('throw exceptions when migrations are locked', async (assert) => {

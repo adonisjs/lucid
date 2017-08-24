@@ -47,6 +47,41 @@ class LucidProvider extends ServiceProvider {
   }
 
   /**
+   * Register transactions trait under `Adonis/Traits/DatabaseTransactions`
+   * namespace. Supposed to be used when writing tests.
+   *
+   * @method _registerTransactionsTrait
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  _registerTransactionsTrait () {
+    this.app.bind('Adonis/Traits/DatabaseTransactions', () => require('../src/Traits/DatabaseTransactions'))
+    this.app.alias('Adonis/Traits/DatabaseTransactions', 'DatabaseTransactions')
+  }
+
+  /**
+   * Adds the unique rule to the validator
+   *
+   * @method _addUniqueRule
+   *
+   * @private
+   */
+  _addUniqueRule () {
+    try {
+      const { extend } = this.app.use('Adonis/Addons/Validator')
+      const Database = this.app.use('Adonis/Src/Database')
+      const validatorRules = new (require('../src/Validator'))(Database)
+
+      /**
+       * Extend by adding the rule
+       */
+      extend('unique', validatorRules.unique.bind(validatorRules), '{{field}} has already been taken by someone else')
+    } catch (error) {}
+  }
+
+  /**
    * Register all the required providers
    *
    * @method register
@@ -56,6 +91,7 @@ class LucidProvider extends ServiceProvider {
   register () {
     this._registerDatabase()
     this._registerModel()
+    this._registerTransactionsTrait()
   }
 
   /**
@@ -66,6 +102,8 @@ class LucidProvider extends ServiceProvider {
    * @return {void}
    */
   boot () {
+    this._addUniqueRule()
+
     /**
      * Setup ioc resolver for internally accessing fold
      * methods.

@@ -436,11 +436,19 @@ class Migration {
    * @return {Object}
    */
   async status (schemas) {
-    const migratedFiles = await this._getAfterBatch(0)
-    return _.transform(schemas, (result, schema, name) => {
-      result[name] = _.includes(migratedFiles, name) ? 'Y' : 'N'
-      return result
-    }, {})
+    const migrated = await this.db
+      .table(this._migrationsTable)
+      .orderBy('name')
+
+    this.db.close()
+    return _.map(schemas, (schema, name) => {
+      const migration = _.find(migrated, (mig) => mig.name === name)
+      return {
+        name,
+        migrated: !!migration,
+        batch: migration ? migration.batch : null
+      }
+    })
   }
 }
 

@@ -41,7 +41,10 @@ class RelationParser {
        */
       if (existingRelation) {
         existingRelation.callback = parsedRelation.callback
-        _.each(parsedRelation.nested, (v, k) => (existingRelation.nested[k] = v))
+        _.each(parsedRelation.nested, (v, k) => {
+          existingRelation.nested = existingRelation.nested || {}
+          existingRelation.nested[k] = v
+        })
         return result
       }
 

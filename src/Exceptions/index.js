@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
 */
 
-const NE = require('node-exceptions')
+const GE = require('@adonisjs/generic-exceptions')
 
 /**
  * Class to throw runtime exceptions
@@ -17,7 +17,7 @@ const NE = require('node-exceptions')
  * @class RuntimeException
  * @constructor
  */
-class RuntimeException extends NE.RuntimeException {
+class RuntimeException extends GE.RuntimeException {
   /**
    * This exception is raised when user is trying to use an
    * undefined database connection
@@ -108,46 +108,12 @@ class RuntimeException extends NE.RuntimeException {
 }
 
 /**
- * Class to invalid arguments exception
- *
- * @class InvalidArgumentException
- * @constructor
- */
-class InvalidArgumentException extends NE.InvalidArgumentException {
-  /**
-   * This exception is raised when a parameter is missing
-   *
-   * @method missingParameter
-   *
-   * @param  {String}         message
-   *
-   * @return {Object}
-   */
-  static missingParameter (message) {
-    return new this(message, 500, 'E_MISSING_PARAMETER')
-  }
-
-  /**
-   * This exception is raised when a parameter is invalid
-   *
-   * @method invalidParameter
-   *
-   * @param  {String}        message
-   *
-   * @return {Object}
-   */
-  static invalidParameter (message) {
-    return new this(message, 500, 'E_INVALID_PARAMETER')
-  }
-}
-
-/**
  * Class to lucid model related exceptions
  *
  * @class ModelException
  * @constructor
  */
-class ModelException extends NE.LogicalException {
+class ModelException extends GE.LogicalException {
   static deletedInstance (name) {
     return new this(`Cannot edit deleted model instance for ${name} model`, 500, 'E_DELETED_MODEL')
   }
@@ -160,7 +126,7 @@ class ModelException extends NE.LogicalException {
  * @class ModelNotFoundException
  * @constructor
  */
-class ModelNotFoundException extends NE.LogicalException {
+class ModelNotFoundException extends GE.LogicalException {
   static raise (name) {
     return new this(`Cannot find database row for ${name} model`, 404, 'E_MISSING_DATABASE_ROW')
   }
@@ -173,7 +139,7 @@ class ModelNotFoundException extends NE.LogicalException {
  * @class ModelRelationException
  * @constructor
  */
-class ModelRelationException extends NE.LogicalException {
+class ModelRelationException extends GE.LogicalException {
   /**
    * This exception is raised when an unsupported method
    * is called on a model relation. Naturally `xxx` is
@@ -225,7 +191,6 @@ class ModelRelationException extends NE.LogicalException {
 
 module.exports = {
   RuntimeException,
-  InvalidArgumentException,
   ModelException,
   ModelNotFoundException,
   ModelRelationException

@@ -37,6 +37,7 @@ test.group('Relations | Belongs To', (group) => {
   })
 
   group.afterEach(async () => {
+    ioc.restore()
     await ioc.use('Adonis/Src/Database').table('users').truncate()
     await ioc.use('Adonis/Src/Database').table('profiles').truncate()
     await ioc.use('Adonis/Src/Database').table('pictures').truncate()
@@ -577,5 +578,34 @@ test.group('Relations | Belongs To', (group) => {
     const profile = await Profile.find(1)
     await profile.user().delete()
     assert.equal(userQuery.sql, helpers.formatQuery('delete from "users" where "id" = ?'))
+  })
+
+  test('belongsTo relation work fine with IoC container binding', async (assert) => {
+    class User extends Model {
+    }
+
+    ioc.fake('App/Models/User', () => {
+      return User
+    })
+
+    class Profile extends Model {
+      user () {
+        return this.belongsTo('App/Models/User')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk' })
+
+    const profile = await Profile.find(1)
+    await profile.user().fetch()
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" = ? limit ?'))
+    assert.deepEqual(userQuery.bindings, helpers.formatBindings([1, 1]))
   })
 })

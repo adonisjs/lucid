@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
 */
 
+require('../../lib/iocResolver').setFold(require('@adonisjs/fold'))
 const test = require('japa')
 const fs = require('fs-extra')
 const path = require('path')
@@ -512,7 +513,7 @@ test.group('Model', (group) => {
     await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
     assert.deepEqual(Object.keys(users.first().toObject()), [
-      'id', 'vid', 'country_id', 'username', 'updated_at', 'login_at', 'deleted_at'
+      'id', 'vid', 'country_id', 'username', 'updated_at', 'type', 'login_at', 'deleted_at'
     ])
   })
 
@@ -653,7 +654,8 @@ test.group('Model', (group) => {
     User._bootIfNotBooted()
 
     const stack = []
-    User.addHook('afterFind', function () {
+    User.addHook('afterFind', async function () {
+      await helpers.sleep(1)
       stack.push('afterFind')
     })
 
@@ -1170,7 +1172,7 @@ test.group('Model', (group) => {
     try {
       await User.createMany({ username: 'virk' })
     } catch ({ message }) {
-      assert.equal(message, 'E_INVALID_PARAMETER: User.createMany expects an array of values')
+      assert.equal(message, 'E_INVALID_PARAMETER: User.createMany expects an array of values instead received object')
     }
   })
 
@@ -1302,5 +1304,222 @@ test.group('Model', (group) => {
 
     const fn = () => User.addGlobalScope('foo')
     assert.throw(fn, 'E_INVALID_PARAMETER: Model.addGlobalScope expects a closure as first parameter')
+  })
+
+  test('refresh model state', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    assert.isUndefined(user.type)
+    await user.reload()
+    assert.equal(user.type, 'admin')
+  })
+
+  test('do not reload when isNew', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    assert.isUndefined(user.type)
+    await user.reload()
+    assert.isUndefined(user.type)
+  })
+
+  test('throw exception when on reloas the row is missing', async (assert) => {
+    assert.plan(2)
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    assert.isUndefined(user.type)
+
+    await ioc.use('Database').table('users').truncate()
+    try {
+      await user.reload()
+    } catch ({ message }) {
+      assert.equal(message, 'E_RUNTIME_ERROR: Cannot reload model since row with id 1 has been removed')
+    }
+  })
+
+  test('do not reload when model is deleted', async (assert) => {
+    assert.plan(2)
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    assert.isUndefined(user.type)
+    await user.delete()
+
+    try {
+      await user.reload()
+    } catch ({ message }) {
+      assert.equal(message, 'E_RUNTIME_ERROR: Cannot reload a deleted model instance')
+    }
+  })
+
+  test('rollback save operation via transaction', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const trx = await ioc.use('Database').beginTransaction()
+    try {
+      const user = new User()
+      user.username = 'virk'
+      await user.save(trx)
+      trx.rollback()
+    } catch (error) {
+      trx.rollback()
+      throw error
+    }
+
+    const count = await ioc.use('Database').table('users').count('* as total')
+    assert.deepEqual(count, [{ 'total': 0 }])
+  })
+
+  test('rollback update operation via transaction', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const trx = await ioc.use('Database').beginTransaction()
+    try {
+      user.username = 'nikk'
+      await user.save(trx)
+      trx.rollback()
+    } catch (error) {
+      trx.rollback()
+      throw error
+    }
+
+    const firtUser = await ioc.use('Database').table('users').first()
+    assert.equal(firtUser.username, 'virk')
+  })
+
+  test('create inside a transaction', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+    const trx = await ioc.use('Database').beginTransaction()
+
+    try {
+      await User.create({ username: 'virk' }, trx)
+      trx.rollback()
+    } catch (error) {
+      trx.rollback()
+      throw error
+    }
+
+    const count = await ioc.use('Database').table('users').count('* as total')
+    assert.deepEqual(count, [{ 'total': 0 }])
+  })
+
+  test('createMany inside a transaction', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+    const trx = await ioc.use('Database').beginTransaction()
+
+    try {
+      await User.createMany([{ username: 'virk' }], trx)
+      trx.rollback()
+    } catch (error) {
+      trx.rollback()
+      throw error
+    }
+
+    const count = await ioc.use('Database').table('users').count('* as total')
+    assert.deepEqual(count, [{ 'total': 0 }])
+  })
+
+  test('define runtime visible fields', async (assert) => {
+    class User extends Model {
+      static get visible () {
+        return ['created_at']
+      }
+    }
+
+    User._bootIfNotBooted()
+    await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
+    const users = await User.query().where('username', 'virk').setVisible(['created_at', 'id']).fetch()
+    assert.deepEqual(Object.keys(users.first().toObject()), ['created_at', 'id'])
+  })
+
+  test('define after fetch hook', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    const fn = async function () {}
+    User.addHook('afterFetch', fn)
+
+    assert.deepEqual(User.$hooks.after._handlers.fetch, [{ handler: fn, name: undefined }])
+  })
+
+  test('call after fetch hook when fetching data', async (assert) => {
+    assert.plan(2)
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    const fn = async function (instances) {
+      instances.forEach((instance) => {
+        assert.instanceOf(instance, User)
+      })
+    }
+
+    User.addHook('afterFetch', fn)
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await User.all('username', 'virk')
   })
 })

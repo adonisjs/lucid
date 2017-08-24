@@ -10,8 +10,8 @@
 */
 
 const _ = require('lodash')
+const GE = require('@adonisjs/generic-exceptions')
 const { resolver } = require('../../../lib/iocResolver')
-const CE = require('../../Exceptions')
 
 /**
  * This class is used internally by @ref('Model') to add
@@ -24,7 +24,7 @@ const CE = require('../../Exceptions')
  */
 class Hooks {
   constructor () {
-    this._events = ['create', 'update', 'delete', 'restore', 'find']
+    this._events = ['create', 'update', 'delete', 'restore', 'find', 'fetch']
 
     /**
      * The event aliases. Whenever a handler is saved for a alias,
@@ -36,6 +36,14 @@ class Hooks {
       create: 'save',
       update: 'save'
     }
+
+    /**
+     * The events array of aliases, just required
+     * for validation purposes
+     *
+     * @type {Array}
+     */
+    this._aliasEvents = _.values(this._aliases)
 
     /**
      * A map of handlers to be called for each event
@@ -65,8 +73,8 @@ class Hooks {
    * ```
    */
   addHandler (event, handler, name) {
-    if (!this._events[event]) {
-      // error
+    if (!_.includes(this._events, event) && !_.includes(this._aliasEvents, event)) {
+      throw GE.InvalidArgumentException.invalidParameter(`${event} is not a valid hook event`)
     }
     this._handlers[event] = this._handlers[event] || []
     this._handlers[event].push({ handler, name })
@@ -93,7 +101,7 @@ class Hooks {
    */
   removeHandler (event, name) {
     if (!name) {
-      throw CE.InvalidArgumentException.missingParameter('Cannot remove hook without a name')
+      throw GE.InvalidArgumentException.missingParameter('Hook.removeHandler', 'name', '2nd')
     }
     _.remove(this._handlers[event], (handler) => handler.name === name)
   }

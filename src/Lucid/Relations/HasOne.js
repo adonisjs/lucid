@@ -28,13 +28,15 @@ class HasOne extends BaseRelation {
    *
    * @method _persistParentIfRequired
    *
+   * @param {Object} [trx]
+   *
    * @return {void}
    *
    * @private
    */
-  async _persistParentIfRequired () {
+  async _persistParentIfRequired (trx) {
     if (this.parentInstance.isNew) {
-      await this.parentInstance.save()
+      await this.parentInstance.save(trx)
     }
   }
 
@@ -139,14 +141,15 @@ class HasOne extends BaseRelation {
    *
    * @method save
    *
-   * @param  {Object} relatedInstance
+   * @param  {Object}  relatedInstance
+   * @param  {Object}  [trx]
    *
    * @return {Promise}
    */
-  async save (relatedInstance) {
-    await this._persistParentIfRequired()
+  async save (relatedInstance, trx) {
+    await this._persistParentIfRequired(trx)
     relatedInstance[this.foreignKey] = this.$primaryKeyValue
-    return relatedInstance.save()
+    return relatedInstance.save(trx)
   }
 
   /**
@@ -157,15 +160,16 @@ class HasOne extends BaseRelation {
    * not persisted already.
    *
    * @method create
+   * @param  {Object}  [trx]
    *
    * @param  {Object} payload
    *
    * @return {Promise}
    */
-  async create (payload) {
-    await this._persistParentIfRequired()
+  async create (payload, trx) {
+    await this._persistParentIfRequired(trx)
     payload[this.foreignKey] = this.$primaryKeyValue
-    return this.RelatedModel.create(payload)
+    return this.RelatedModel.create(payload, trx)
   }
 
   /* istanbul ignore next */

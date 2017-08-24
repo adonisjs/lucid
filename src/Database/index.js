@@ -50,12 +50,29 @@ const proxyHandler = {
  */
 class Database {
   constructor (config) {
-    if (config.client === 'sqlite') {
+    if (config.client === 'sqlite' || config.client === 'sqlite3') {
       config.useNullAsDefault = _.defaultTo(config.useNullAsDefault, true)
     }
     this.knex = knex(config)
     this._globalTrx = null
     return new Proxy(this, proxyHandler)
+  }
+
+  /**
+   * Bind listeners for database events. Which are
+   * `query`, `query-error`, `query-response` and
+   * `sql`
+   *
+   * @method on
+   *
+   * @param  {Strign}   event
+   * @param  {Function} callback
+   *
+   * @chainable
+   */
+  on (event, callback) {
+    this.knex.on(event, callback)
+    return this
   }
 
   /**

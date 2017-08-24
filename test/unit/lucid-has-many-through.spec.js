@@ -37,6 +37,7 @@ test.group('Relations | Has Many Through - Has Many ', (group) => {
   })
 
   group.afterEach(async () => {
+    ioc.restore()
     await ioc.use('Adonis/Src/Database').table('countries').truncate()
     await ioc.use('Adonis/Src/Database').table('users').truncate()
     await ioc.use('Adonis/Src/Database').table('posts').truncate()
@@ -673,5 +674,48 @@ test.group('Relations | Has Many Through - Belongs To Many', (group) => {
     assert.equal(categories.last().getRelated('posts').size(), 1)
     assert.equal(categories.last().getRelated('posts').toJSON()[0].title, 'For each loop')
     assert.equal(categories.first().getRelated('posts').size(), 0)
+  })
+
+  test('fetch related row via IoC container binding', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.hasMany('App/Models/Post')
+      }
+    }
+
+    ioc.fake('App/Models/Post', () => Post)
+    ioc.fake('App/Models/User', () => User)
+
+    class Country extends Model {
+      posts () {
+        return this.manyThrough('App/Models/User', 'posts')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Country._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('countries').insert({ name: 'India', id: 2 })
+    await ioc.use('Database').table('users').insert({ country_id: 2, id: 20, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ user_id: 20, title: 'Adonis 101' })
+
+    const country = await Country.find(2)
+    const posts = await country.posts().fetch()
+    assert.instanceOf(posts, VanillaSerializer)
+    assert.equal(posts.size(), 1)
+    assert.deepEqual(posts.toJSON(), [
+      {
+        id: 1,
+        user_id: 20,
+        title: 'Adonis 101',
+        created_at: null,
+        updated_at: null,
+        deleted_at: null
+      }
+    ])
   })
 })

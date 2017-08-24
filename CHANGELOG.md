@@ -1,3 +1,162 @@
+<a name="4.0.15"></a>
+## [4.0.15](https://github.com/adonisjs/adonis-lucid/compare/v4.0.14...v4.0.15) (2017-08-22)
+
+
+### Features
+
+* **validation:** add unique validation rule for validator ([74a9a3e](https://github.com/adonisjs/adonis-lucid/commit/74a9a3e))
+
+
+
+<a name="4.0.14"></a>
+## [4.0.14](https://github.com/adonisjs/adonis-lucid/compare/v4.0.13...v4.0.14) (2017-08-22)
+
+
+### Bug Fixes
+
+* **package:** update pluralize to version 7.0.0 ([#162](https://github.com/adonisjs/adonis-lucid/issues/162)) ([7723779](https://github.com/adonisjs/adonis-lucid/commit/7723779))
+
+
+### Features
+
+* **hooks:** add afterFetch hook ([941986e](https://github.com/adonisjs/adonis-lucid/commit/941986e))
+
+
+
+<a name="4.0.13"></a>
+## [4.0.13](https://github.com/adonisjs/adonis-lucid/compare/v4.0.12...v4.0.13) (2017-08-18)
+
+
+### Features
+
+* **model:** allow query level fields filtering ([8fc559d](https://github.com/adonisjs/adonis-lucid/commit/8fc559d))
+* **relations:** add andWherePivot in belongs to many ([e0f0c6a](https://github.com/adonisjs/adonis-lucid/commit/e0f0c6a))
+* **traits:** add database transactions trait ([bd4c8bb](https://github.com/adonisjs/adonis-lucid/commit/bd4c8bb))
+
+
+
+<a name="4.0.12"></a>
+## [4.0.12](https://github.com/adonisjs/adonis-lucid/compare/v4.0.11...v4.0.12) (2017-08-16)
+
+
+### Bug Fixes
+
+* **relations:** relation parser set nested relations on demand ([48bdbba](https://github.com/adonisjs/adonis-lucid/commit/48bdbba))
+* **relations:** resolve relation ioc binding before hand ([713b55f](https://github.com/adonisjs/adonis-lucid/commit/713b55f)), closes [#161](https://github.com/adonisjs/adonis-lucid/issues/161)
+
+
+
+<a name="4.0.11"></a>
+## [4.0.11](https://github.com/adonisjs/adonis-lucid/compare/v4.0.10...v4.0.11) (2017-08-15)
+
+
+### Bug Fixes
+
+* **database:** database.on bind events on knex and not query ([948d05b](https://github.com/adonisjs/adonis-lucid/commit/948d05b))
+* **lucid:** call afterFind hook via await keyword ([c4de51d](https://github.com/adonisjs/adonis-lucid/commit/c4de51d))
+* **package:** add missing dependencies ([5e7e304](https://github.com/adonisjs/adonis-lucid/commit/5e7e304))
+
+
+### Features
+
+* **commands:** add migration:status command ([a6bc882](https://github.com/adonisjs/adonis-lucid/commit/a6bc882))
+* **lucid:** add support for transactions in save operations ([687de3c](https://github.com/adonisjs/adonis-lucid/commit/687de3c))
+
+
+
+<a name="4.0.10"></a>
+## [4.0.10](https://github.com/adonisjs/adonis-lucid/compare/v4.0.8...v4.0.10) (2017-08-05)
+
+
+### Bug Fixes
+
+* **provider:** load migration:reset command too ([7afdc62](https://github.com/adonisjs/adonis-lucid/commit/7afdc62))
+
+
+### Features
+
+* **exceptions:** use generic-exceptions module ([d3daecc](https://github.com/adonisjs/adonis-lucid/commit/d3daecc))
+* **lucid:** add support for model instance reload ([87569b1](https://github.com/adonisjs/adonis-lucid/commit/87569b1))
+
+
+
+<a name="4.0.9"></a>
+## [4.0.9](https://github.com/adonisjs/adonis-lucid/compare/v4.0.8...v4.0.9) (2017-08-02)
+
+
+### Features
+
+* **exceptions:** use generic-exceptions module ([d3daecc](https://github.com/adonisjs/adonis-lucid/commit/d3daecc))
+
+
+
+<a name="4.0.8"></a>
+## [4.0.8](https://github.com/adonisjs/adonis-lucid/compare/v4.0.7...v4.0.8) (2017-08-01)
+
+
+### Bug Fixes
+
+* **test:** remove clear require from tests ([b120aa4](https://github.com/adonisjs/adonis-lucid/commit/b120aa4))
+
+
+### Features
+
+* **commands:** add seed time to seed command ([98626f3](https://github.com/adonisjs/adonis-lucid/commit/98626f3))
+* **commands:** log migration time next to command ([63339fb](https://github.com/adonisjs/adonis-lucid/commit/63339fb))
+
+
+
+<a name="4.0.7"></a>
+## [4.0.7](https://github.com/adonisjs/adonis-lucid/compare/v4.0.6...v4.0.7) (2017-08-01)
+
+
+
+<a name="4.0.6"></a>
+## [4.0.6](https://github.com/adonisjs/adonis-lucid/compare/v4.0.5...v4.0.6) (2017-08-01)
+
+
+### Features
+
+* **commands:** add seed command ([dd56409](https://github.com/adonisjs/adonis-lucid/commit/dd56409))
+* **instructions:** add instructions file ([a1086d9](https://github.com/adonisjs/adonis-lucid/commit/a1086d9))
+
+
+### Reverts
+
+* **commands:** remove config:database command ([0671c56](https://github.com/adonisjs/adonis-lucid/commit/0671c56))
+
+
+
+<a name="4.0.5"></a>
+## [4.0.5](https://github.com/adonisjs/adonis-lucid/compare/v4.0.4...v4.0.5) (2017-07-30)
+
+
+### Bug Fixes
+
+* **hooks:** fix bad validation behavior ([1b3a0d5](https://github.com/adonisjs/adonis-lucid/commit/1b3a0d5))
+
+
+### Features
+
+* **commands:** add config:database command ([98a318a](https://github.com/adonisjs/adonis-lucid/commit/98a318a))
+
+
+
+<a name="4.0.4"></a>
+## [4.0.4](https://github.com/adonisjs/adonis-lucid/compare/v4.0.3...v4.0.4) (2017-07-30)
+
+
+### Bug Fixes
+
+* **model:** set makePlain getter for ioc container ([40b3e85](https://github.com/adonisjs/adonis-lucid/commit/40b3e85))
+
+
+### Features
+
+* **migration:** remove migration:make command ([0a97527](https://github.com/adonisjs/adonis-lucid/commit/0a97527))
+
+
+
 <a name="4.0.3"></a>
 ## [4.0.3](https://github.com/adonisjs/adonis-lucid/compare/v4.0.2...v4.0.3) (2017-07-17)
 

@@ -11,7 +11,8 @@
 
 const _ = require('lodash')
 const moment = require('moment')
-const { resolver } = require('../../../lib/iocResolver')
+const GE = require('@adonisjs/generic-exceptions')
+const { resolver, ioc } = require('../../../lib/iocResolver')
 
 const BaseModel = require('./Base')
 const Hooks = require('../Hooks')
@@ -64,6 +65,19 @@ class Model extends BaseModel {
    */
   static get iocHooks () {
     return ['_bootIfNotBooted']
+  }
+
+  /**
+   * Making sure that `ioc.make` returns
+   * the class object and not it's
+   * instance
+   *
+   * @method makePlain
+   *
+   * @return {Boolean}
+   */
+  static get makePlain () {
+    return true
   }
 
   /**
@@ -304,7 +318,7 @@ class Model extends BaseModel {
      * If user has defined wrong hook cycle, do let them know
      */
     if (!this.$hooks[cycle]) {
-      throw CE.InvalidArgumentException.invalidParameter(`Invalid hook event {${forEvent}}`)
+      throw GE.InvalidArgumentException.invalidParameter(`Invalid hook event {${forEvent}}`)
     }
 
     /**
@@ -326,9 +340,9 @@ class Model extends BaseModel {
    */
   static addGlobalScope (callback, name = null) {
     if (typeof (callback) !== 'function') {
-      throw CE
+      throw GE
         .InvalidArgumentException
-        .invalidParameter('Model.addGlobalScope expects a closure as first parameter')
+        .invalidParameter('Model.addGlobalScope expects a closure as first parameter', callback)
     }
     this.$globalScopes.push({ callback, name })
     return this
@@ -346,7 +360,9 @@ class Model extends BaseModel {
    */
   static onQuery (callback) {
     if (typeof (callback) !== 'function') {
-      throw CE.InvalidArgumentException.invalidParameter('Model.onQuery expects a closure as first parameter')
+      throw GE
+        .InvalidArgumentException
+        .invalidParameter('Model.onQuery expects a closure as first parameter', callback)
     }
 
     this.$queryListeners.push(callback)
@@ -364,9 +380,9 @@ class Model extends BaseModel {
    */
   static addTrait (trait) {
     if (typeof (trait) !== 'function' && typeof (trait) !== 'string') {
-      throw CE
+      throw GE
         .InvalidArgumentException
-        .invalidParameter('Model.addTrait expects an IoC container binding or a closure')
+        .invalidParameter('Model.addTrait expects an IoC container binding or a closure', trait)
     }
 
     /**
@@ -385,13 +401,14 @@ class Model extends BaseModel {
    * @method create
    *
    * @param  {Object} payload
+   * @param  {Object} [trx]
    *
    * @return {Model} Model instance is returned
    */
-  static async create (payload) {
+  static async create (payload, trx) {
     const modelInstance = new this()
     modelInstance.fill(payload)
-    await modelInstance.save()
+    await modelInstance.save(trx)
     return modelInstance
   }
 
@@ -401,16 +418,19 @@ class Model extends BaseModel {
    * @method createMany
    *
    * @param  {Array} payloadArray
+   * @param  {Object} [trx]
    *
    * @return {Array} Array of model instances is returned
    *
    * @throws {InvalidArgumentException} If payloadArray is not an array
    */
-  static async createMany (payloadArray) {
+  static async createMany (payloadArray, trx) {
     if (payloadArray instanceof Array === false) {
-      throw CE.InvalidArgumentException.invalidParameter(`${this.name}.createMany expects an array of values`)
+      throw GE
+        .InvalidArgumentException
+        .invalidParameter(`${this.name}.createMany expects an array of values`, payloadArray)
     }
-    return Promise.all(payloadArray.map((payload) => this.create(payload)))
+    return Promise.all(payloadArray.map((payload) => this.create(payload, trx)))
   }
 
   /**
@@ -471,7 +491,9 @@ class Model extends BaseModel {
       '$relations',
       '$sideLoaded',
       '$parent',
-      '$frozen'
+      '$frozen',
+      '$visible',
+      '$hidden'
     ]
 
     this.$attributes = {}
@@ -481,6 +503,8 @@ class Model extends BaseModel {
     this.$sideLoaded = {}
     this.$parent = null
     this.$frozen = false
+    this.$visible = null
+    this.$hidden = null
   }
 
   /**
@@ -609,11 +633,13 @@ class Model extends BaseModel {
    * @method _insert
    * @async
    *
+   * @param {Object} trx
+   *
    * @return {Boolean}
    *
    * @private
    */
-  async _insert () {
+  async _insert (trx) {
     /**
      * Executing before hooks
      */
@@ -626,8 +652,20 @@ class Model extends BaseModel {
     this._setUpdatedAt(this.$attributes)
     this._formatDateFields(this.$attributes)
 
-    const result = await this.constructor
-      .query()
+    const query = this.constructor.query()
+
+    /**
+     * If trx is defined then use it for the save
+     * operation.
+     */
+    if (trx) {
+      query.transacting(trx)
+    }
+
+    /**
+     * Execute query
+     */
+    const result = await query
       .returning(this.constructor.primaryKey)
       .insert(this.$attributes)
 
@@ -660,21 +698,32 @@ class Model extends BaseModel {
    * @method _update
    * @async
    *
+   * @param {Object} trx
+   *
    * @return {Boolean}
    */
-  async _update () {
+  async _update (trx) {
     /**
      * Executing before hooks
      */
     await this.constructor.$hooks.before.exec('update', this)
     let affected = 0
 
+    const query = this.constructor.query()
+
+    /**
+     * If trx is defined then use it for the update
+     * operation.
+     */
+    if (trx) {
+      query.transacting(trx)
+    }
+
     if (this.isDirty) {
       /**
        * Set proper timestamps
        */
-      affected = await this.constructor
-        .query()
+      affected = await query
         .where(this.constructor.primaryKey, this.primaryKeyValue)
         .ignoreScopes()
         .update(this.dirty)
@@ -761,10 +810,10 @@ class Model extends BaseModel {
     /**
      * Pick visible fields or remove hidden fields
      */
-    if (_.isArray(this.constructor.visible)) {
-      evaluatedAttrs = _.pick(evaluatedAttrs, this.constructor.visible)
-    } else if (_.isArray(this.constructor.hidden)) {
-      evaluatedAttrs = _.omit(evaluatedAttrs, this.constructor.hidden)
+    if (_.isArray(this.$visible)) {
+      evaluatedAttrs = _.pick(evaluatedAttrs, this.$visible)
+    } else if (_.isArray(this.$hidden)) {
+      evaluatedAttrs = _.omit(evaluatedAttrs, this.$hidden)
     }
 
     return evaluatedAttrs
@@ -778,10 +827,12 @@ class Model extends BaseModel {
    * @method save
    * @async
    *
+   * @param {Object} trx Transaction object to be used
+   *
    * @return {Boolean} Whether or not the model was persisted
    */
-  async save () {
-    return this.isNew ? this._insert() : this._update()
+  async save (trx) {
+    return this.isNew ? this._insert(trx) : this._update(trx)
   }
 
   /**
@@ -1101,7 +1152,12 @@ class Model extends BaseModel {
    *
    * @return {HasOne}
    */
-  hasOne (relatedModel, primaryKey = this.constructor.primaryKey, foreignKey = this.constructor.foreignKey) {
+  hasOne (relatedModel, primaryKey, foreignKey) {
+    relatedModel = typeof (relatedModel) === 'string' ? ioc.use(relatedModel) : relatedModel
+
+    primaryKey = primaryKey || this.constructor.primaryKey
+    foreignKey = foreignKey || this.constructor.foreignKey
+
     return new HasOne(this, relatedModel, primaryKey, foreignKey)
   }
 
@@ -1116,7 +1172,12 @@ class Model extends BaseModel {
    *
    * @return {HasMany}
    */
-  hasMany (relatedModel, primaryKey = this.constructor.primaryKey, foreignKey = this.constructor.foreignKey) {
+  hasMany (relatedModel, primaryKey, foreignKey) {
+    relatedModel = typeof (relatedModel) === 'string' ? ioc.use(relatedModel) : relatedModel
+
+    primaryKey = primaryKey || this.constructor.primaryKey
+    foreignKey = foreignKey || this.constructor.foreignKey
+
     return new HasMany(this, relatedModel, primaryKey, foreignKey)
   }
 
@@ -1131,7 +1192,12 @@ class Model extends BaseModel {
    *
    * @return {BelongsTo}
    */
-  belongsTo (relatedModel, primaryKey = relatedModel.foreignKey, foreignKey = relatedModel.primaryKey) {
+  belongsTo (relatedModel, primaryKey, foreignKey) {
+    relatedModel = typeof (relatedModel) === 'string' ? ioc.use(relatedModel) : relatedModel
+
+    primaryKey = primaryKey || relatedModel.foreignKey
+    foreignKey = foreignKey || relatedModel.primaryKey
+
     return new BelongsTo(this, relatedModel, primaryKey, foreignKey)
   }
 
@@ -1148,13 +1214,14 @@ class Model extends BaseModel {
    *
    * @return {BelongsToMany}
    */
-  belongsToMany (
-    relatedModel,
-    foreignKey = this.constructor.foreignKey,
-    relatedForeignKey = relatedModel.foreignKey,
-    primaryKey = this.constructor.primaryKey,
-    relatedPrimaryKey = relatedModel.primaryKey
-  ) {
+  belongsToMany (relatedModel, foreignKey, relatedForeignKey, primaryKey, relatedPrimaryKey) {
+    relatedModel = typeof (relatedModel) === 'string' ? ioc.use(relatedModel) : relatedModel
+
+    foreignKey = foreignKey || this.constructor.foreignKey
+    relatedForeignKey = relatedForeignKey || relatedModel.foreignKey
+    primaryKey = primaryKey || this.constructor.primaryKey
+    relatedPrimaryKey = relatedPrimaryKey || relatedModel.primaryKey
+
     return new BelongsToMany(this, relatedModel, primaryKey, foreignKey, relatedPrimaryKey, relatedForeignKey)
   }
 
@@ -1170,13 +1237,38 @@ class Model extends BaseModel {
    *
    * @return {HasManyThrough}
    */
-  manyThrough (
-    relatedModel,
-    relatedMethod,
-    primaryKey = this.constructor.primaryKey,
-    foreignKey = this.constructor.foreignKey
-  ) {
+  manyThrough (relatedModel, relatedMethod, primaryKey, foreignKey) {
+    relatedModel = typeof (relatedModel) === 'string' ? ioc.use(relatedModel) : relatedModel
+
+    primaryKey = primaryKey || this.constructor.primaryKey
+    foreignKey = foreignKey || this.constructor.foreignKey
+
     return new HasManyThrough(this, relatedModel, relatedMethod, primaryKey, foreignKey)
+  }
+
+  /**
+   * Reload the model instance in memory. Some may
+   * not like it, but in real use cases no one
+   * wants a new instance.
+   *
+   * @method reload
+   *
+   * @return {void}
+   */
+  async reload () {
+    if (this.$frozen) {
+      throw GE.RuntimeException.invoke('Cannot reload a deleted model instance')
+    }
+
+    if (!this.isNew) {
+      const attributes = await this.constructor.find(this.primaryKeyValue)
+      if (!attributes) {
+        throw GE
+          .RuntimeException
+          .invoke(`Cannot reload model since row with ${this.constructor.primaryKey} ${this.primaryKeyValue} has been removed`)
+      }
+      this.newUp(attributes)
+    }
   }
 }
 
