@@ -25,7 +25,7 @@
   "dependencies": {
     "@adonisjs/generic-exceptions": "^1.0.0",
     "chance": "^1.0.10",
-    "debug": "^2.6.8",
+    "debug": "^3.0.1",
     "knex": "^0.13.0",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
