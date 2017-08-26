@@ -608,4 +608,30 @@ test.group('Relations | Belongs To', (group) => {
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" = ? limit ?'))
     assert.deepEqual(userQuery.bindings, helpers.formatBindings([1, 1]))
   })
+
+  test('load relation without null value in foreign key', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: null })
+    await ioc.use('Database').table('cars').insert({ name: 'GL350', model: 'Mercedes', user_id: 1 })
+
+    await Car.query().with('user').fetch()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" in (?)'))
+    assert.deepEqual(userQuery.bindings, helpers.formatBindings([1]))
+  })
 })
