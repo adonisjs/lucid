@@ -660,10 +660,9 @@ test.group('Relations | Belongs To', (group) => {
     await car.load('user')
     const json = car.toJSON()
 
-    assert.equal(json, {
+    assert.deepEqual(json, {
       id: 1,
       name: 'E180',
-      model: 'Mercedes',
       user: null,
       user_id: null
     })
