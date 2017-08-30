@@ -20,8 +20,8 @@
  * @return {void}
  */
 module.exports = function (suite) {
-  suite.beforeEach(() => {
-    use('Database').beginGlobalTransaction()
+  suite.beforeEach(async () => {
+    await use('Database').beginGlobalTransaction()
   })
 
   suite.afterEach(() => {
