@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/lucid",
-  "version": "4.0.15",
+  "version": "4.0.16",
   "description": "SQL ORM built on top of Active Record pattern",
   "main": "index.js",
   "scripts": {
@@ -25,7 +25,7 @@
   "dependencies": {
     "@adonisjs/generic-exceptions": "^1.0.0",
     "chance": "^1.0.10",
-    "debug": "^2.6.8",
+    "debug": "^3.0.1",
     "knex": "^0.13.0",
     "lodash": "^4.17.4",
     "moment": "^2.18.1",
