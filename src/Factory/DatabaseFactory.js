@@ -10,7 +10,7 @@
 */
 
 const _ = require('lodash')
-const chancejs = require('chance').Chance()
+const chancejs = require('./chance')
 const { ioc } = require('../../lib/iocResolver')
 
 /**

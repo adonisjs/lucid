@@ -1,3 +1,19 @@
+<a name="4.0.16"></a>
+## [4.0.16](https://github.com/adonisjs/adonis-lucid/compare/v4.0.15...v4.0.16) (2017-08-30)
+
+
+### Bug Fixes
+
+* **package:** update debug to version 3.0.1 ([#166](https://github.com/adonisjs/adonis-lucid/issues/166)) ([51965df](https://github.com/adonisjs/adonis-lucid/commit/51965df))
+* **trait:** add await to beginGlobalTransaction ([8280e55](https://github.com/adonisjs/adonis-lucid/commit/8280e55))
+
+
+### Features
+
+* **factory:** add faker methods for username & password ([1333862](https://github.com/adonisjs/adonis-lucid/commit/1333862))
+
+
+
 <a name="4.0.15"></a>
 ## [4.0.15](https://github.com/adonisjs/adonis-lucid/compare/v4.0.14...v4.0.15) (2017-08-22)
 
