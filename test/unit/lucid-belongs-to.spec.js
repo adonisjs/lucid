@@ -609,7 +609,7 @@ test.group('Relations | Belongs To', (group) => {
     assert.deepEqual(userQuery.bindings, helpers.formatBindings([1, 1]))
   })
 
-  test('load relation without null value in foreign key', async (assert) => {
+  test('load relations without null value in foreign key', async (assert) => {
     class User extends Model {
     }
 
@@ -633,5 +633,42 @@ test.group('Relations | Belongs To', (group) => {
 
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" in (?)'))
     assert.deepEqual(userQuery.bindings, helpers.formatBindings([1]))
+  })
+
+  test('not load relation with null value in foreign key', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    let userQuery = null
+    let carQuery = null
+    User.onQuery((query) => (userQuery = query))
+    Car.onQuery((query) => (carQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: null })
+
+    const car = await Car.query().select(['id', 'name', 'user_id']).where('id', 1).first()
+    await car.load('user')
+    const json = car.toJSON()
+
+    assert.deepEqual(json, {
+      id: 1,
+      name: 'E180',
+      user: null,
+      user_id: null
+    })
+
+    assert.equal(userQuery, null)
+    assert.equal(carQuery.sql, helpers.formatQuery('select "id", "name", "user_id" from "cars" where "id" = ? limit ?'))
+    assert.deepEqual(carQuery.bindings, helpers.formatBindings([1, 1]))
   })
 })

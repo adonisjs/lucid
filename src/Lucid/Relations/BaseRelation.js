@@ -115,7 +115,7 @@ class BaseRelation {
    * @private
    */
   _validateRead () {
-    if (!this.$primaryKeyValue || !this.parentInstance.$persisted) {
+    if (typeof this.$primaryKeyValue === 'undefined' || !this.parentInstance.$persisted) {
       throw CE.RuntimeException.unSavedModel(this.parentInstance.constructor.name)
     }
   }
@@ -154,6 +154,9 @@ class BaseRelation {
 methodsList.forEach((method) => {
   BaseRelation.prototype[method] = function (...args) {
     this._validateRead()
+    if (this.$primaryKeyValue === null) {
+      return null
+    }
     this._decorateQuery()
     return this.relatedQuery[method](...args)
   }
