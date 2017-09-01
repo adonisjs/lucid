@@ -141,16 +141,16 @@ Migrate._decorateTable = function (table) {
  *
  * @private
  */
-Migrate._makeMigrationsTable = function () {
-  return this
-    .database
-    .schema
-    .createTableIfNotExists(this.migrationsTable, function (table) {
+Migrate._makeMigrationsTable = function * () {
+  const migrationTableAlreadyExist = yield this.database.schema.hasTable(this.migrationsTable)
+  if (!migrationTableAlreadyExist) {
+    return this.database.schema.createTableIfNotExists(this.migrationsTable, function (table) {
       table.increments('id')
       table.string('name')
       table.integer('batch')
       table.timestamp('migration_time')
     })
+  }
 }
 
 /**
@@ -244,7 +244,7 @@ Migrate._mapMigrationsToActions = function (migrationsList, direction) {
  * @private
  */
 Migrate._getMigratedFiles = function () {
-  return this.database.select('name as name').withoutPrefix().from(this.migrationsTable).orderBy('name').pluck('name')
+  return this.database.select('name as aname').withoutPrefix().from(this.migrationsTable).orderBy('aname').pluck('name')
 }
 
 /**
