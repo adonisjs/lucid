@@ -258,10 +258,10 @@ Migrate._getMigratedFiles = function () {
  */
 Migrate._getFilesTillBatch = function (batch) {
   return this.database
-    .select('name')
+    .select('name as aname')
     .from(this.migrationsTable)
     .where('batch', '>', batch)
-    .orderBy('name')
+    .orderBy('aname')
     .pluck('name')
 }
 
