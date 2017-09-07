@@ -104,6 +104,42 @@ test.group('Schema', (group) => {
     assert.deepEqual(userSchema._deferredActions, [{ name: 'renameTable', args: ['users', 'my_users'] }])
   })
 
+  if (process.env.DB === 'pg') {
+    test('add deferred action for createExtension', (assert) => {
+      class UserSchema extends Schema {
+      }
+      const userSchema = new UserSchema(ioc.use('Database'))
+      const fn = function () {}
+      userSchema.createExtension('postgis', fn)
+      assert.deepEqual(userSchema._deferredActions, [{ name: 'createExtension', args: ['postgis', fn] }])
+    })
+
+    test('add deferred action for createExtensionIfNotExists', (assert) => {
+      class UserSchema extends Schema {
+      }
+      const userSchema = new UserSchema(ioc.use('Database'))
+      const fn = function () {}
+      userSchema.createExtensionIfNotExists('postgis', fn)
+      assert.deepEqual(userSchema._deferredActions, [{ name: 'createExtensionIfNotExists', args: ['postgis', fn] }])
+    })
+
+    test('add deferred action for dropExtension', (assert) => {
+      class UserSchema extends Schema {
+      }
+      const userSchema = new UserSchema(ioc.use('Database'))
+      userSchema.dropExtension('postgis')
+      assert.deepEqual(userSchema._deferredActions, [{ name: 'dropExtension', args: ['postgis'] }])
+    })
+
+    test('add deferred action for dropExtensionIfExists', (assert) => {
+      class UserSchema extends Schema {
+      }
+      const userSchema = new UserSchema(ioc.use('Database'))
+      userSchema.dropExtensionIfExists('postgis')
+      assert.deepEqual(userSchema._deferredActions, [{ name: 'dropExtensionIfExists', args: ['postgis'] }])
+    })
+  }
+
   test('should have access to knex fn', async (assert) => {
     class UserSchema extends Schema {
     }

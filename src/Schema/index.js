@@ -61,6 +61,40 @@ class Schema {
   }
 
   /**
+   * Create a extension.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method createExtension
+   *
+   * @param  {String}    extensionName
+   * @param  {Function}  callback
+   *
+   * @chainable
+   */
+  createExtension (extensionName, callback) {
+    this._deferredActions.push({ name: 'createExtension', args: [extensionName, callback] })
+    return this
+  }
+
+  /**
+   * Create a extension if not already exists.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method createExtensionIfNotExists
+   *
+   * @param  {String}    extensionName
+   * @param  {Function}  callback
+   *
+   * @chainable
+   */
+  createExtensionIfNotExists (extensionName, callback) {
+    this._deferredActions.push({ name: 'createExtensionIfNotExists', args: [extensionName, callback] })
+    return this
+  }
+
+  /**
    * Create a new table.
    *
    * NOTE: This action is deferred
@@ -108,6 +142,38 @@ class Schema {
    */
   renameTable (fromTable, toTable) {
     this._deferredActions.push({ name: 'renameTable', args: [fromTable, toTable] })
+    return this
+  }
+
+  /**
+   * Drop existing extension.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method dropExtension
+   *
+   * @param  {String}    extensionName
+   *
+   * @chainable
+   */
+  dropExtension (extensionName) {
+    this._deferredActions.push({ name: 'dropExtension', args: [extensionName] })
+    return this
+  }
+
+  /**
+   * Drop extension only if it exists.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method dropExtensionIfExists
+   *
+   * @param  {String}    tableName
+   *
+   * @chainable
+   */
+  dropExtensionIfExists (extensionName) {
+    this._deferredActions.push({ name: 'dropExtensionIfExists', args: [extensionName] })
     return this
   }
 
