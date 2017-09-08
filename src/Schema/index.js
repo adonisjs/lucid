@@ -166,7 +166,7 @@ class Schema {
    *
    * @method dropExtensionIfExists
    *
-   * @param  {String}    tableName
+   * @param  {String}    extensionName
    *
    * @chainable
    */
