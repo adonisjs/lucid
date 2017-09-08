@@ -68,12 +68,11 @@ class Schema {
    * @method createExtension
    *
    * @param  {String}    extensionName
-   * @param  {Function}  callback
    *
    * @chainable
    */
-  createExtension (extensionName, callback) {
-    this._deferredActions.push({ name: 'createExtension', args: [extensionName, callback] })
+  createExtension (extensionName) {
+    this._deferredActions.push({ name: 'createExtension', args: [extensionName] })
     return this
   }
 
@@ -85,12 +84,11 @@ class Schema {
    * @method createExtensionIfNotExists
    *
    * @param  {String}    extensionName
-   * @param  {Function}  callback
    *
    * @chainable
    */
-  createExtensionIfNotExists (extensionName, callback) {
-    this._deferredActions.push({ name: 'createExtensionIfNotExists', args: [extensionName, callback] })
+  createExtensionIfNotExists (extensionName) {
+    this._deferredActions.push({ name: 'createExtensionIfNotExists', args: [extensionName] })
     return this
   }
 

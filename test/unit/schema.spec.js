@@ -109,18 +109,16 @@ test.group('Schema', (group) => {
       class UserSchema extends Schema {
       }
       const userSchema = new UserSchema(ioc.use('Database'))
-      const fn = function () {}
-      userSchema.createExtension('postgis', fn)
-      assert.deepEqual(userSchema._deferredActions, [{ name: 'createExtension', args: ['postgis', fn] }])
+      userSchema.createExtension('postgis')
+      assert.deepEqual(userSchema._deferredActions, [{ name: 'createExtension', args: ['postgis'] }])
     })
 
     test('add deferred action for createExtensionIfNotExists', (assert) => {
       class UserSchema extends Schema {
       }
       const userSchema = new UserSchema(ioc.use('Database'))
-      const fn = function () {}
-      userSchema.createExtensionIfNotExists('postgis', fn)
-      assert.deepEqual(userSchema._deferredActions, [{ name: 'createExtensionIfNotExists', args: ['postgis', fn] }])
+      userSchema.createExtensionIfNotExists('postgis')
+      assert.deepEqual(userSchema._deferredActions, [{ name: 'createExtensionIfNotExists', args: ['postgis'] }])
     })
 
     test('add deferred action for dropExtension', (assert) => {
