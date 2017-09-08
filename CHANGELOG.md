@@ -1,3 +1,18 @@
+<a name="4.0.17"></a>
+## [4.0.17](https://github.com/adonisjs/adonis-lucid/compare/v4.0.16...v4.0.17) (2017-09-08)
+
+
+### Bug Fixes
+
+* **belongsTo:** ignore null bindings when eagerloading ([c3b5da3](https://github.com/adonisjs/adonis-lucid/commit/c3b5da3))
+
+
+### Features
+
+* **lucid:** add findOrCreate & findOrNew methods ([cd6041d](https://github.com/adonisjs/adonis-lucid/commit/cd6041d))
+
+
+
 <a name="4.0.16"></a>
 ## [4.0.16](https://github.com/adonisjs/adonis-lucid/compare/v4.0.15...v4.0.16) (2017-08-30)
 
