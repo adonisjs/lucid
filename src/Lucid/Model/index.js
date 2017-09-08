@@ -981,6 +981,71 @@ class Model extends BaseModel {
   }
 
   /**
+   * Find a row or create a new row when it doesn't
+   * exists.
+   *
+   * @method findOrCreate
+   * @async
+   *
+   * @param  {Object}     whereClause
+   * @param  {Object}     payload
+   * @param  {Object}     [trx]
+   *
+   * @return {Model}
+   */
+  static async findOrCreate (whereClause, payload, trx) {
+    if (!payload) {
+      payload = whereClause
+    }
+
+    /**
+     * Find a row using where clause
+     */
+    const row = await this.query().where(whereClause).first()
+    if (row) {
+      return row
+    }
+
+    /**
+     * Otherwise create one
+     */
+    return this.create(payload, trx)
+  }
+
+  /**
+   * Find row from database or returns an instance of
+   * new one.
+   *
+   * @method findOrNew
+   *
+   * @param  {Object}  whereClause
+   * @param  {Object}  payload
+   *
+   * @return {Model}
+   */
+  static async findOrNew (whereClause, payload) {
+    if (!payload) {
+      payload = whereClause
+    }
+
+    /**
+     * Find a row using where clause
+     */
+    const row = await this.query().where(whereClause).first()
+    if (row) {
+      return row
+    }
+
+    /**
+     * Newup row and fill data
+     */
+    const newRow = new this()
+    newRow.fill(payload)
+
+    return newRow
+  }
+
+  /**
    * Fetch everything from the database
    *
    * @method all

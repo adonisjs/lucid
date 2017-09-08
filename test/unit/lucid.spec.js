@@ -1522,4 +1522,62 @@ test.group('Model', (group) => {
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await User.all('username', 'virk')
   })
+
+  test('create a new row when unable to find one', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    const count = await ioc.use('Database').table('users').count('* as total')
+    assert.equal(count[0].total, 0)
+
+    const user = await User.findOrCreate({ username: 'foo' })
+    assert.isTrue(user.$persisted)
+    assert.equal(user.username, 'foo')
+  })
+
+  test('return existing row when found one', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    let usersQuery = null
+    User.onQuery((query) => (usersQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'foo' })
+    const user = await User.findOrCreate({ username: 'foo' })
+    assert.isTrue(user.$persisted)
+    assert.equal(user.username, 'foo')
+    assert.equal(helpers.formatQuery(usersQuery.sql), helpers.formatQuery('select * from "users" where "username" = ? limit ?'))
+  })
+
+  test('pass different payload for create', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    let usersQuery = null
+    User.onQuery((query) => (usersQuery = query))
+
+    const user = await User.findOrCreate({ username: 'foo' }, { username: 'foo', vid: 2 })
+    assert.isTrue(user.$persisted)
+    assert.equal(user.username, 'foo')
+    assert.equal(user.vid, 2)
+    assert.equal(helpers.formatQuery(usersQuery.sql), helpers.formatQuery('insert into "users" ("created_at", "updated_at", "username", "vid") values (?, ?, ?, ?)'))
+  })
+
+  test('new up a row when old doesn\'t exists', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    const user = await User.findOrNew({ username: 'foo' }, { username: 'foo', vid: 2 })
+    assert.isFalse(user.$persisted)
+    assert.equal(user.username, 'foo')
+    assert.equal(user.vid, 2)
+  })
 })
