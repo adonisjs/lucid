@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/lucid",
-  "version": "4.0.17",
+  "version": "4.0.18",
   "description": "SQL ORM built on top of Active Record pattern",
   "main": "index.js",
   "scripts": {
@@ -24,7 +24,7 @@
   "homepage": "https://github.com/adonisjs/adonis-lucid#readme",
   "dependencies": {
     "@adonisjs/generic-exceptions": "^1.0.0",
-    "chance": "^1.0.10",
+    "chance": "^1.0.11",
     "debug": "^3.0.1",
     "knex": "^0.13.0",
     "lodash": "^4.17.4",
@@ -35,19 +35,19 @@
   },
   "devDependencies": {
     "@adonisjs/ace": "git+https://github.com/adonisjs/ace.git#dawn",
-    "@adonisjs/fold": "^4.0.2",
-    "@adonisjs/sink": "^1.0.11",
+    "@adonisjs/fold": "^4.0.4",
+    "@adonisjs/sink": "^1.0.13",
     "clear-require": "^2.0.0",
     "coveralls": "^2.13.1",
     "cz-conventional-changelog": "^2.0.0",
-    "fs-extra": "^4.0.1",
-    "japa": "^1.0.3",
+    "fs-extra": "^4.0.2",
+    "japa": "^1.0.4",
     "japa-cli": "^1.0.1",
     "mysql": "^2.14.1",
-    "nyc": "^11.1.0",
-    "pg": "^7.0.2",
-    "sqlite3": "^3.1.8",
-    "standard": "^10.0.2"
+    "nyc": "^11.2.1",
+    "pg": "^7.3.0",
+    "sqlite3": "^3.1.12",
+    "standard": "^10.0.3"
   },
   "config": {
     "commitizen": {
@@ -64,6 +64,8 @@
     ]
   },
   "standard": {
-    "globals": ["use"]
+    "globals": [
+      "use"
+    ]
   }
 }

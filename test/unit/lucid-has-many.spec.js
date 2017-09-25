@@ -943,4 +943,34 @@ test.group('Relations | Has Many', (group) => {
     assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" = ? limit ?'))
     assert.deepEqual(carQuery.bindings, helpers.formatBindings([1, 1]))
   })
+
+  test('bind custom callback for eagerload query', async (assert) => {
+    class Car extends Model {
+    }
+
+    ioc.fake('App/Models/Car', () => Car)
+
+    class User extends Model {
+      cars () {
+        return this.hasMany('App/Models/Car')
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    let carQuery = null
+    Car.onQuery((query) => (carQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+
+    await User.query().with('cars', (builder) => {
+      builder.eagerLoadQuery((query, fk, values) => {
+        query.whereIn(fk, values).where('model', 'BMW')
+      })
+    }).fetch()
+
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" in (?) and "model" = ?'))
+    assert.deepEqual(carQuery.bindings, helpers.formatBindings([1, 'BMW']))
+  })
 })

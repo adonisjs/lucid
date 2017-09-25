@@ -1593,4 +1593,32 @@ test.group('Relations | HasOne', (group) => {
     assert.instanceOf(profile, Profile)
     assert.equal(profile.$attributes.user_id, 1)
   })
+
+  test('bind custom callback for eagerload query', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let profileQuery = null
+    Profile.onQuery((query) => (profileQuery = query))
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    await User.query().with('profile', (builder) => {
+      builder.eagerLoadQuery(function (query, relatedKey, values) {
+        query.where('likes', 1).whereIn(relatedKey, values)
+      })
+    }).fetch()
+
+    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "likes" = ? and "user_id" in (?, ?)'))
+    assert.deepEqual(profileQuery.bindings, helpers.formatBindings([1, 1, 2]))
+  })
 })

@@ -1677,4 +1677,39 @@ test.group('Relations | Belongs To Many', (group) => {
     const postQuery = user.posts().toSQL()
     assert.equal(postQuery.sql, helpers.formatQuery('select "posts".*, "post_user"."post_id" as "pivot_post_id", "post_user"."user_id" as "pivot_user_id" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" = ?'))
   })
+
+  test('bind custom callback for eagerload query', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    let postQuery = null
+    Post.onQuery((query) => (postQuery = query))
+
+    await ioc.use('Database').table('users').insert([{ id: 20, username: 'virk' }, { id: 10, username: 'nikk' }])
+    await ioc.use('Database').table('posts').insert([{ id: 18, title: 'Adonis 101' }, { id: 19, title: 'Lucid 101' }])
+    await ioc.use('Database').table('post_user').insert([
+      { post_id: 18, user_id: 20 },
+      { post_id: 18, user_id: 10 },
+      { post_id: 19, user_id: 20 }
+    ])
+
+    await User.query().with('posts', (builder) => {
+      builder.eagerLoadQuery(function (query, fk, values) {
+        builder._selectFields()
+        builder._makeJoinQuery()
+        builder.whereInPivot(fk, values)
+      })
+    }).fetch()
+
+    assert.equal(postQuery.sql, helpers.formatQuery('select "posts".*, "post_user"."post_id" as "pivot_post_id", "post_user"."user_id" as "pivot_user_id" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" in (?, ?)'))
+  })
 })
