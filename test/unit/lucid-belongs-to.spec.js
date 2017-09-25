@@ -42,6 +42,7 @@ test.group('Relations | Belongs To', (group) => {
     await ioc.use('Adonis/Src/Database').table('users').truncate()
     await ioc.use('Adonis/Src/Database').table('profiles').truncate()
     await ioc.use('Adonis/Src/Database').table('pictures').truncate()
+    await ioc.use('Adonis/Src/Database').table('cars').truncate()
   })
 
   group.after(async () => {
@@ -734,5 +735,33 @@ test.group('Relations | Belongs To', (group) => {
     const car = await Car.query().where('id', 1).first()
     const fn = () => car.user().toSQL()
     assert.throw(fn, 'E_UNSAVED_MODEL_INSTANCE: Cannot process relation, since Car model is not persisted to database or relational value is undefined')
+  })
+
+  test('bind custom callback for eagerload query', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 1 })
+
+    await Car.query().with('user', (builder) => {
+      builder.eagerLoadQuery(function (query, fk, values) {
+        query.whereIn(fk, values).where('country_id', 10)
+      })
+    }).fetch()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" in (?) and "country_id" = ?'))
+    assert.deepEqual(userQuery.bindings, helpers.formatBindings([1, 10]))
   })
 })

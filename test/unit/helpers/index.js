@@ -72,6 +72,7 @@ module.exports = {
         table.integer('vid')
         table.integer('country_id')
         table.string('username')
+        table.string('email')
         table.timestamps()
         table.string('type').defaultTo('admin')
         table.timestamp('login_at')

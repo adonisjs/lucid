@@ -66,6 +66,27 @@ class BelongsToMany extends BaseRelation {
      * @type {Array}
      */
     this._existingPivotInstances = []
+
+    /**
+     * The eagerloadFn is used to make the eagerloading
+     * query for a given relationship. The end-user
+     * can override this method by passing a
+     * custom closure to `eagerLoadQuery`
+     * method.
+     *
+     * @method _eagerLoadFn
+     *
+     * @param  {Object} query
+     * @param  {String} fk
+     * @param  {Array}  values
+     *
+     * @return {void}
+     */
+    this._eagerLoadFn = (query, fk, values) => {
+      this._selectFields()
+      this._makeJoinQuery()
+      this.whereInPivot(fk, values)
+    }
   }
 
   /**
@@ -508,10 +529,7 @@ class BelongsToMany extends BaseRelation {
    * @return {Object}
    */
   async eagerLoad (rows) {
-    this._selectFields()
-    this._makeJoinQuery()
-    this.whereInPivot(this.foreignKey, this.mapValues(rows))
-
+    this._eagerLoadFn(this.relatedQuery, this.foreignKey, this.mapValues(rows))
     const relatedInstances = await this.relatedQuery.fetch()
     return this.group(relatedInstances.rows)
   }

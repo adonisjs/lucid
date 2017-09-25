@@ -28,6 +28,30 @@ class HasManyThrough extends BaseRelation {
     this._relatedFields = []
     this._throughFields = []
     this._fields = []
+
+    /**
+     * The eagerloadFn is used to make the eagerloading
+     * query for a given relationship. The end-user
+     * can override this method by passing a
+     * custom closure to `eagerLoadQuery`
+     * method.
+     *
+     * @method _eagerLoadFn
+     *
+     * @param  {Object} query
+     * @param  {String} fk
+     * @param  {Array} values
+     * @param  {String} options.foreignTable
+     * @param  {String} options.foreignKey
+     *
+     * @return {void}
+     */
+    this._eagerLoadFn = (query, fk, values, { foreignTable, foreignKey }) => {
+      this.selectThrough(fk)
+      this._selectFields()
+      this._makeJoinQuery()
+      this.relatedQuery.whereIn(`${foreignTable}.${foreignKey}`, values)
+    }
   }
 
   /**
@@ -168,14 +192,12 @@ class HasManyThrough extends BaseRelation {
    * @return {Object}
    */
   async eagerLoad (rows) {
-    this.selectThrough(this.foreignKey)
-    this._selectFields()
-    this._makeJoinQuery()
+    this._eagerLoadFn(this.relatedQuery, this.foreignKey, this.mapValues(rows), {
+      foreignTable: this.$foreignTable,
+      foreignKey: this.foreignKey
+    })
 
-    const relatedInstances = await this.relatedQuery
-      .whereIn(`${this.$foreignTable}.${this.foreignKey}`, this.mapValues(rows))
-      .fetch()
-
+    const relatedInstances = await this.relatedQuery.fetch()
     return this.group(relatedInstances.rows)
   }
 
