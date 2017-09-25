@@ -1,3 +1,13 @@
+<a name="4.0.18"></a>
+## [4.0.18](https://github.com/adonisjs/adonis-lucid/compare/v4.0.17...v4.0.18) (2017-09-25)
+
+
+### Features
+
+* **eagerloading:** allow custom fn for eagerload query ([da1b71e](https://github.com/adonisjs/adonis-lucid/commit/da1b71e))
+
+
+
 <a name="4.0.17"></a>
 ## [4.0.17](https://github.com/adonisjs/adonis-lucid/compare/v4.0.16...v4.0.17) (2017-09-08)
 
