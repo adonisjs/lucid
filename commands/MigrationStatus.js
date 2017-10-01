@@ -47,7 +47,7 @@ class MigrationStatus extends BaseMigration {
       const migrations = await this.migration.status(this._getSchemaFiles())
       const head = ['File name', 'Migrated', 'Batch']
       const body = migrations.map((migration) => {
-        return [migration.name, migration.migrated ? 'Yes' : 'No', migration.batch]
+        return [migration.name, migration.migrated ? 'Yes' : 'No', migration.batch || '']
       })
       this.table(head, body)
     } catch (error) {
