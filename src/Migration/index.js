@@ -436,6 +436,8 @@ class Migration {
    * @return {Object}
    */
   async status (schemas) {
+    await this._makeMigrationsTable()
+
     const migrated = await this.db
       .table(this._migrationsTable)
       .orderBy('name')
