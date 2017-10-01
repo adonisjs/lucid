@@ -1,3 +1,19 @@
+<a name="4.0.19"></a>
+## [4.0.19](https://github.com/adonisjs/adonis-lucid/compare/v4.0.18...v4.0.19) (2017-10-01)
+
+
+### Bug Fixes
+
+* **migration:** make table when getting migration status ([ac33a52](https://github.com/adonisjs/adonis-lucid/commit/ac33a52))
+* **migration:status:** set batch to empty string over null ([7ebca55](https://github.com/adonisjs/adonis-lucid/commit/7ebca55))
+
+
+### BREAKING CHANGES
+
+* **migration:status:** Closes #180
+
+
+
 <a name="4.0.18"></a>
 ## [4.0.18](https://github.com/adonisjs/adonis-lucid/compare/v4.0.17...v4.0.18) (2017-09-25)
 
