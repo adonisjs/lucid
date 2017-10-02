@@ -42,13 +42,23 @@ class Migration {
    *
    * @private
    */
-  _makeMigrationsTable () {
-    return this.db.schema.createTableIfNotExists(this._migrationsTable, (table) => {
-      table.increments()
-      table.string('name')
-      table.integer('batch')
-      table.timestamp('migration_time').defaultsTo(this.db.fn.now())
-    })
+  async _makeMigrationsTable () {
+    const hasTable = await this.db.schema.hasTable(this._migrationsTable)
+
+    /**
+     * We need to run 2 queries, since `createTableIfNotExists` doesn't
+     * work with postgres. Check following issue for more info.
+     *
+     * https://github.com/adonisjs/adonis-lucid/issues/172
+     */
+    if (!hasTable) {
+      await this.db.schema.createTable(this._migrationsTable, (table) => {
+        table.increments()
+        table.string('name')
+        table.integer('batch')
+        table.timestamp('migration_time').defaultsTo(this.db.fn.now())
+      })
+    }
   }
 
   /**
@@ -61,11 +71,15 @@ class Migration {
    *
    * @private
    */
-  _makeLockTable () {
-    return this.db.schema.createTableIfNotExists(this._lockTable, (table) => {
-      table.increments()
-      table.boolean('is_locked')
-    })
+  async _makeLockTable () {
+    const hasTable = await this.db.schema.hasTable(this._lockTable)
+
+    if (!hasTable) {
+      await this.db.schema.createTable(this._lockTable, (table) => {
+        table.increments()
+        table.boolean('is_locked')
+      })
+    }
   }
 
   /**
