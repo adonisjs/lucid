@@ -1,3 +1,14 @@
+<a name="4.0.20"></a>
+## [4.0.20](https://github.com/adonisjs/adonis-lucid/compare/v4.0.19...v4.0.20) (2017-10-03)
+
+
+### Bug Fixes
+
+* **migrations:** use hasTable and createTable ([f12d51b](https://github.com/adonisjs/adonis-lucid/commit/f12d51b)), closes [#172](https://github.com/adonisjs/adonis-lucid/issues/172)
+* **schema:** raw method should be knex.raw ([8cae109](https://github.com/adonisjs/adonis-lucid/commit/8cae109)), closes [#181](https://github.com/adonisjs/adonis-lucid/issues/181)
+
+
+
 <a name="4.0.19"></a>
 ## [4.0.19](https://github.com/adonisjs/adonis-lucid/compare/v4.0.18...v4.0.19) (2017-10-01)
 
