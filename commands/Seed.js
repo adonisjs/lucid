@@ -44,11 +44,11 @@ class SeedDatabase extends Command {
   _getSeedFiles (selectedFiles) {
     return requireAll({
       dirname: this._seedsPath,
-      filters: /(.*)\.js$/,
       filter: (fileName) => {
-        if (!selectedFiles) {
+        if (!selectedFiles && fileName.match(/(.*)\.js$/)) {
           return fileName
         }
+
         return _.find(selectedFiles, (file) => file.trim().endsWith(fileName))
       }
     })
