@@ -289,7 +289,7 @@ class Schema {
   /**
    * Alias for @ref('Schema.createTableIfNotExists')
    *
-   * @method dropIfExists
+   * @method createIfNotExists
    */
   createIfNotExists (...args) {
     return this.createTableIfNotExists(...args)
