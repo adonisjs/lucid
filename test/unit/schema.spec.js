@@ -66,7 +66,7 @@ test.group('Schema', (group) => {
     }
     const userSchema = new UserSchema(ioc.use('Database'))
     const fn = function () {}
-    userSchema.createTableIfNotExists('users', fn)
+    userSchema.createIfNotExists('users', fn)
     assert.deepEqual(userSchema._deferredActions, [{ name: 'createTableIfNotExists', args: ['users', fn] }])
   })
 
