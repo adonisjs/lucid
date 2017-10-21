@@ -70,7 +70,7 @@ class SeedDatabase extends Command {
    */
   _validateState (force) {
     if (process.env.NODE_ENV === 'production' && !force) {
-      throw new Error('Cannot run migrations in production. Use --force flag to continue')
+      throw new Error('Cannot run seeds in production. Use --force flag to continue')
     }
   }
 
