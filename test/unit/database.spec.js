@@ -184,6 +184,15 @@ test.group('Database | QueryBuilder', (group) => {
     const fn = () => this.database.foo()
     assert.throw(fn, 'Database.foo is not a function')
   })
+
+  test('database.transaction should work', async (assert) => {
+    await this.database.transaction(function (trx) {
+      return trx.table('users').insert({ username: 'virk' })
+    })
+    const firstUser = await this.database.table('users').first()
+    assert.equal(firstUser.username, 'virk')
+    await this.database.truncate('users')
+  })
 })
 
 test.group('Database | Manager', () => {
