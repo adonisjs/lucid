@@ -122,8 +122,8 @@ class ModelFactory {
    *
    * @return {Object}
    */
-  async create (data = {}) {
-    const modelInstance = await this.make(data)
+  async create (data = {}, index = 0) {
+    const modelInstance = await this.make(data, index)
     await modelInstance.save()
     return modelInstance
   }

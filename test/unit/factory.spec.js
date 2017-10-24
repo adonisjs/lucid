@@ -415,4 +415,101 @@ test.group('Factory', (group) => {
     const user = await Factory.model('App/Model/User').make()
     assert.isDefined(user.password)
   })
+
+  test('create many pass custom data', async (assert) => {
+    Factory.blueprint('App/Model/User', (faker, i, data) => {
+      return {
+        username: data[i].username
+      }
+    })
+
+    class User extends Model {
+    }
+
+    ioc.fake('App/Model/User', () => {
+      User._bootIfNotBooted()
+      return User
+    })
+
+    const users = await Factory.model('App/Model/User').createMany(2, [
+      {
+        username: 'virk'
+      },
+      {
+        username: 'nikk'
+      }
+    ])
+
+    assert.lengthOf(users, 2)
+    assert.equal(users[0].username, 'virk')
+    assert.equal(users[1].username, 'nikk')
+  })
+
+  test('make many pass custom data', async (assert) => {
+    Factory.blueprint('App/Model/User', (faker, i, data) => {
+      return {
+        username: data[i].username
+      }
+    })
+
+    class User extends Model {
+    }
+
+    ioc.fake('App/Model/User', () => {
+      User._bootIfNotBooted()
+      return User
+    })
+
+    const users = await Factory.model('App/Model/User').makeMany(2, [
+      {
+        username: 'joe'
+      },
+      {
+        username: 'john'
+      }
+    ])
+
+    assert.lengthOf(users, 2)
+    assert.equal(users[0].username, 'joe')
+    assert.equal(users[1].username, 'john')
+  })
+
+  test('db factory makeMany pass custom data', async (assert) => {
+    Factory.blueprint('users', (faker, i, data) => {
+      return {
+        username: data[i].username
+      }
+    })
+
+    const users = await Factory.get('users').makeMany(2, [
+      {
+        username: 'virk'
+      },
+      {
+        username: 'nikk'
+      }
+    ])
+
+    assert.deepEqual(users, [{ username: 'virk' }, { username: 'nikk' }])
+  })
+
+  test('db factory createMany pass custom data', async (assert) => {
+    Factory.blueprint('users', (faker, i, data) => {
+      return {
+        username: data[i].username
+      }
+    })
+
+    await Factory.get('users').createMany(2, [
+      {
+        username: 'virk'
+      },
+      {
+        username: 'nikk'
+      }
+    ])
+
+    const users = await ioc.use('Database').table('users')
+    assert.deepEqual(users.map((user) => user.username), ['virk', 'nikk'])
+  })
 })

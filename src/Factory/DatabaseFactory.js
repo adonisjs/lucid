@@ -167,8 +167,8 @@ class DatabaseFactory {
    *
    * @return {Object}
    */
-  async create (data = {}) {
-    const attributes = await this.make(data)
+  async create (data = {}, index = 0) {
+    const attributes = await this.make(data, index)
     const query = this._getQueryBuilder()
 
     if (this._returningColumn) {
