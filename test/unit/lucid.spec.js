@@ -773,6 +773,17 @@ test.group('Model', (group) => {
     assert.deepEqual(users, { 1: 'virk', 2: 'nikk' })
   })
 
+  test('return data by chunks the database', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    let countChunks = 0
+    await User.query().chunk(1, async () => { countChunks++ })
+    assert.deepEqual(countChunks, 2)
+  })
+
   test('paginate model', async (assert) => {
     class User extends Model {
     }
