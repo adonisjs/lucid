@@ -773,7 +773,7 @@ test.group('Model', (group) => {
     assert.deepEqual(users, { 1: 'virk', 2: 'nikk' })
   })
 
-  test('return data by chunks the database', async (assert) => {
+  test('return data by chunks from the database', async (assert) => {
     class User extends Model {
     }
 
@@ -781,7 +781,7 @@ test.group('Model', (group) => {
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     let countChunks = 0
     await User.query().chunk(1, async (users) => {
-      assert.instanceOf(users[0], Model)
+      assert.instanceOf(users, VanillaSerializer)
       countChunks++
     })
     assert.equal(countChunks, 2)

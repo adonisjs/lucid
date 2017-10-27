@@ -476,7 +476,7 @@ class QueryBuilder {
     await this._eagerLoad(modelInstances)
 
     if (results.length) {
-      await callback(modelInstances)
+      await callback(new this.Model.Serializer(modelInstances))
       page++
       await this.chunk(limit, callback, page)
     }
