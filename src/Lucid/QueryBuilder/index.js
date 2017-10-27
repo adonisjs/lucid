@@ -452,6 +452,26 @@ class QueryBuilder {
       return result
     }, {})
   }
+  
+  /**
+   * Returns chunk of data under a defined limit of results, and
+   * invokes a callback, everytime there are results.
+   *
+   * @param limit {Number} # (default = 100)
+   * @param cb {Function|Promise}
+   * @param page {Number} # (default = 1)
+   *
+   * @return {Promise.<void>}
+   */
+  async chunk (limit = 100, cb, page = 1) {
+    const results = await this.forPage(page, limit)
+
+    if (results.length) {
+      await cb(results)
+      page++
+      this.chunk(limit, cb, page)
+    }
+  }
 
   /**
    * Same as `pick` but inverse
