@@ -452,7 +452,7 @@ class QueryBuilder {
       return result
     }, {})
   }
-  
+
   /**
    * Returns chunk of data under a defined limit of results, and
    * invokes a callback, everytime there are results.
@@ -467,7 +467,7 @@ class QueryBuilder {
     const results = await this.forPage(page, limit)
 
     if (results.length) {
-      await cb(results)
+      await cb(results);
       page++
       this.chunk(limit, cb, page)
     }
