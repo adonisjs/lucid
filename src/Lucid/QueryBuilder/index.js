@@ -457,19 +457,21 @@ class QueryBuilder {
    * Returns chunk of data under a defined limit of results, and
    * invokes a callback, everytime there are results.
    *
-   * @param limit {Number} # (default = 100)
-   * @param cb {Function|Promise}
-   * @param page {Number} # (default = 1)
+   * @method chunk
+   * @async
    *
-   * @return {Promise.<void>}
+   * @param  {Number}   [limit = 100]
+   * @param  {Function} [callback]
+   * @param  {Number}   [page = 1]
+   *
+   * @return {Promise}
    */
-  async chunk (limit = 100, cb, page = 1) {
+  async chunk (limit = 100, callback, page = 1) {
     const results = await this.forPage(page, limit)
-
     if (results.length) {
-      await cb(results)
+      await callback(results)
       page++
-      this.chunk(limit, cb, page)
+      await this.chunk(limit, callback, page)
     }
   }
 
