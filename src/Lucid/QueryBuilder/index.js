@@ -467,7 +467,7 @@ class QueryBuilder {
     const results = await this.forPage(page, limit)
 
     if (results.length) {
-      await cb(results);
+      await cb(results)
       page++
       this.chunk(limit, cb, page)
     }
