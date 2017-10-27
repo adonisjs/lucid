@@ -468,8 +468,15 @@ class QueryBuilder {
    */
   async chunk (limit = 100, callback, page = 1) {
     const results = await this.forPage(page, limit)
+
+    /**
+     * Convert to an array of model instances
+     */
+    const modelInstances = this._mapRowsToInstances(results)
+    await this._eagerLoad(modelInstances)
+
     if (results.length) {
-      await callback(results)
+      await callback(modelInstances)
       page++
       await this.chunk(limit, callback, page)
     }

@@ -780,8 +780,11 @@ test.group('Model', (group) => {
     User._bootIfNotBooted()
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     let countChunks = 0
-    await User.query().chunk(1, async () => { countChunks++ })
-    assert.deepEqual(countChunks, 2)
+    await User.query().chunk(1, async (users) => {
+      assert.instanceOf(users[0], Model)
+      countChunks++
+    })
+    assert.equal(countChunks, 2)
   })
 
   test('paginate model', async (assert) => {
