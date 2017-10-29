@@ -1,3 +1,24 @@
+<a name="4.0.21"></a>
+## [4.0.21](https://github.com/adonisjs/adonis-lucid/compare/v4.0.20...v4.0.21) (2017-10-29)
+
+
+### Bug Fixes
+
+* **database:** add database.transaction method ([56695d7](https://github.com/adonisjs/adonis-lucid/commit/56695d7)), closes [#184](https://github.com/adonisjs/adonis-lucid/issues/184)
+* **factory:** await dataCallback to get results ([045d587](https://github.com/adonisjs/adonis-lucid/commit/045d587))
+* **factory:** pass index to create/make many ([9cc69aa](https://github.com/adonisjs/adonis-lucid/commit/9cc69aa)), closes [#195](https://github.com/adonisjs/adonis-lucid/issues/195)
+* **schema:** add alias to createTableIfNotExists ([#190](https://github.com/adonisjs/adonis-lucid/issues/190)) ([1ce3d72](https://github.com/adonisjs/adonis-lucid/commit/1ce3d72))
+* **seed:** seed only js files ([#186](https://github.com/adonisjs/adonis-lucid/issues/186)) ([0496411](https://github.com/adonisjs/adonis-lucid/commit/0496411))
+* **seed:** typo in seed command ([#193](https://github.com/adonisjs/adonis-lucid/issues/193)) ([d99ec4f](https://github.com/adonisjs/adonis-lucid/commit/d99ec4f))
+
+
+### Features
+
+* **extension:** add extension methods to schema ([71fb268](https://github.com/adonisjs/adonis-lucid/commit/71fb268))
+* **lucid:** add merge method to model instance ([#188](https://github.com/adonisjs/adonis-lucid/issues/188)) ([ab31b4c](https://github.com/adonisjs/adonis-lucid/commit/ab31b4c))
+
+
+
 <a name="4.0.20"></a>
 ## [4.0.20](https://github.com/adonisjs/adonis-lucid/compare/v4.0.19...v4.0.20) (2017-10-03)
 

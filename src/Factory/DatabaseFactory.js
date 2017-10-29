@@ -60,7 +60,7 @@ class DatabaseFactory {
    * @private
    */
   async _makeOne (index, data) {
-    const hash = this.dataCallback(chancejs, index, data)
+    const hash = await this.dataCallback(chancejs, index, data)
     const keys = _.keys(hash)
 
     /**
@@ -167,8 +167,8 @@ class DatabaseFactory {
    *
    * @return {Object}
    */
-  async create (data = {}) {
-    const attributes = await this.make(data)
+  async create (data = {}, index = 0) {
+    const attributes = await this.make(data, index)
     const query = this._getQueryBuilder()
 
     if (this._returningColumn) {

@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/lucid",
-  "version": "4.0.20",
+  "version": "4.0.21",
   "description": "SQL ORM built on top of Active Record pattern",
   "main": "index.js",
   "scripts": {
@@ -24,29 +24,29 @@
   "homepage": "https://github.com/adonisjs/adonis-lucid#readme",
   "dependencies": {
     "@adonisjs/generic-exceptions": "^1.0.0",
-    "chance": "^1.0.11",
-    "debug": "^3.0.1",
+    "chance": "^1.0.12",
+    "debug": "^3.1.0",
     "knex": "^0.13.0",
     "lodash": "^4.17.4",
-    "moment": "^2.18.1",
+    "moment": "^2.19.1",
     "pluralize": "^7.0.0",
     "pretty-hrtime": "^1.0.3",
     "require-all": "^2.2.0"
   },
   "devDependencies": {
     "@adonisjs/ace": "git+https://github.com/adonisjs/ace.git#dawn",
-    "@adonisjs/fold": "^4.0.4",
+    "@adonisjs/fold": "^4.0.5",
     "@adonisjs/sink": "^1.0.13",
     "clear-require": "^2.0.0",
-    "coveralls": "^2.13.1",
-    "cz-conventional-changelog": "^2.0.0",
+    "coveralls": "^3.0.0",
+    "cz-conventional-changelog": "^2.1.0",
     "fs-extra": "^4.0.2",
-    "japa": "^1.0.4",
+    "japa": "^1.0.5",
     "japa-cli": "^1.0.1",
-    "mysql": "^2.14.1",
+    "mysql": "^2.15.0",
     "nyc": "^11.2.1",
     "pg": "^7.3.0",
-    "sqlite3": "^3.1.12",
+    "sqlite3": "^3.1.13",
     "standard": "^10.0.3"
   },
   "config": {
@@ -58,9 +58,6 @@
     "include": [
       "src",
       "lib"
-    ],
-    "exclude": [
-      "src/Logger/index.js"
     ]
   },
   "standard": {

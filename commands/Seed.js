@@ -44,11 +44,11 @@ class SeedDatabase extends Command {
   _getSeedFiles (selectedFiles) {
     return requireAll({
       dirname: this._seedsPath,
-      filters: /(.*)\.js$/,
       filter: (fileName) => {
-        if (!selectedFiles) {
+        if (!selectedFiles && fileName.match(/(.*)\.js$/)) {
           return fileName
         }
+
         return _.find(selectedFiles, (file) => file.trim().endsWith(fileName))
       }
     })
@@ -70,7 +70,7 @@ class SeedDatabase extends Command {
    */
   _validateState (force) {
     if (process.env.NODE_ENV === 'production' && !force) {
-      throw new Error('Cannot run migrations in production. Use --force flag to continue')
+      throw new Error('Cannot run seeds in production. Use --force flag to continue')
     }
   }
 

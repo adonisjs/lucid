@@ -212,6 +212,20 @@ class BaseModel {
    */
   fill (attributes) {
     this.$attributes = {}
+    this.merge(attributes)
+  }
+
+  /**
+   * Merge attributes into on a model instance without
+   * overriding existing attributes and their values
+   *
+   * @method fill
+   *
+   * @param  {Object} attributes
+   *
+   * @return {void}
+   */
+  merge (attributes) {
     _.each(attributes, (value, key) => this.set(key, value))
   }
 

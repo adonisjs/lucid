@@ -59,7 +59,7 @@ class ModelFactory {
    * @private
    */
   async _makeOne (index, data) {
-    const hash = this.dataCallback(chancejs, index, data)
+    const hash = await this.dataCallback(chancejs, index, data)
     const keys = _.keys(hash)
 
     /**
@@ -122,8 +122,8 @@ class ModelFactory {
    *
    * @return {Object}
    */
-  async create (data = {}) {
-    const modelInstance = await this.make(data)
+  async create (data = {}, index = 0) {
+    const modelInstance = await this.make(data, index)
     await modelInstance.save()
     return modelInstance
   }

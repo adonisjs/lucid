@@ -49,6 +49,14 @@ test.group('Seed Database', (group) => {
 
   group.afterEach(async () => {
     ace.commands = {}
+
+    try {
+      await fs.remove(path.join(__dirname, 'database'))
+    } catch (error) {
+      if (process.platform !== 'win32' || error.code !== 'EBUSY') {
+        throw error
+      }
+    }
   })
 
   group.after(async () => {
@@ -57,7 +65,6 @@ test.group('Seed Database', (group) => {
 
     try {
       await fs.remove(path.join(__dirname, '../unit/tmp'))
-      await fs.remove(path.join(__dirname, 'database'))
     } catch (error) {
       if (process.platform !== 'win32' || error.code !== 'EBUSY') {
         throw error
@@ -133,5 +140,37 @@ test.group('Seed Database', (group) => {
 
     await ace.call('seed', {}, { files: 'foo.js' })
     assert.deepEqual(global.stack, ['foo'])
+  })
+
+  test('run only js files', async (assert) => {
+    ace.addCommand(Seed)
+    const g = global || GLOBAL
+    g.stack = []
+
+    await fs.outputFile(path.join(__dirname, 'database/seeds/bar.js'), `
+      class Seed {
+        run () {
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              (global || GLOBAL).stack.push('bar')
+              resolve()
+            }, 10)
+          })
+        }
+      }
+      module.exports = Seed
+    `)
+
+    await fs.outputFile(path.join(__dirname, 'database/seeds/.bar.js.swp'), `
+      class Seed {
+        run () {
+          (global || GLOBAL).stack.push('foo')
+        }
+      }
+      module.exports = Seed
+    `)
+
+    await ace.call('seed')
+    assert.deepEqual(global.stack, ['bar'])
   })
 })

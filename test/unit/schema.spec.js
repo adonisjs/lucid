@@ -66,7 +66,7 @@ test.group('Schema', (group) => {
     }
     const userSchema = new UserSchema(ioc.use('Database'))
     const fn = function () {}
-    userSchema.createTableIfNotExists('users', fn)
+    userSchema.createIfNotExists('users', fn)
     assert.deepEqual(userSchema._deferredActions, [{ name: 'createTableIfNotExists', args: ['users', fn] }])
   })
 
@@ -103,6 +103,40 @@ test.group('Schema', (group) => {
     userSchema.rename('users', 'my_users')
     assert.deepEqual(userSchema._deferredActions, [{ name: 'renameTable', args: ['users', 'my_users'] }])
   })
+
+  if (process.env.DB === 'pg') {
+    test('add deferred action for createExtension', (assert) => {
+      class UserSchema extends Schema {
+      }
+      const userSchema = new UserSchema(ioc.use('Database'))
+      userSchema.createExtension('postgis')
+      assert.deepEqual(userSchema._deferredActions, [{ name: 'createExtension', args: ['postgis'] }])
+    })
+
+    test('add deferred action for createExtensionIfNotExists', (assert) => {
+      class UserSchema extends Schema {
+      }
+      const userSchema = new UserSchema(ioc.use('Database'))
+      userSchema.createExtensionIfNotExists('postgis')
+      assert.deepEqual(userSchema._deferredActions, [{ name: 'createExtensionIfNotExists', args: ['postgis'] }])
+    })
+
+    test('add deferred action for dropExtension', (assert) => {
+      class UserSchema extends Schema {
+      }
+      const userSchema = new UserSchema(ioc.use('Database'))
+      userSchema.dropExtension('postgis')
+      assert.deepEqual(userSchema._deferredActions, [{ name: 'dropExtension', args: ['postgis'] }])
+    })
+
+    test('add deferred action for dropExtensionIfExists', (assert) => {
+      class UserSchema extends Schema {
+      }
+      const userSchema = new UserSchema(ioc.use('Database'))
+      userSchema.dropExtensionIfExists('postgis')
+      assert.deepEqual(userSchema._deferredActions, [{ name: 'dropExtensionIfExists', args: ['postgis'] }])
+    })
+  }
 
   test('should have access to knex fn', async (assert) => {
     class UserSchema extends Schema {

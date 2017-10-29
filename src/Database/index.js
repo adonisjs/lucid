@@ -163,6 +163,19 @@ class Database {
   }
 
   /**
+   * Run a callback inside a transaction
+   *
+   * @param {Function} callback
+   *
+   * @method transaction
+   *
+   * @returns Object
+   */
+  transaction (callback) {
+    return this.knex.transaction(callback)
+  }
+
+  /**
    * Starts a global transaction, where all query builder
    * methods will be part of transaction automatically.
    *
