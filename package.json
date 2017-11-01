@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "standard",
-    "pretest": "npm run lint",
+    "pretest": "npm run test:cleanup && npm run lint",
+    "test:cleanup": "rm -rf test/functional/database && rm -rf test/unit/tmp",
     "posttest": "npm run coverage",
     "test:local": "FORCE_COLOR=true DB=sqlite node bin/index.js --local",
     "test": "nyc npm run test:local",
