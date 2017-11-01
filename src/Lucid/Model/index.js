@@ -1335,6 +1335,17 @@ class Model extends BaseModel {
       this.newUp(attributes)
     }
   }
+
+ /**
+  * Return a count of all model records.
+  *
+  * @method count
+  *
+  * @return {Number}
+  */
+ static async count () {
+   return this.query().rowsCount()
+ }
 }
 
 module.exports = Model

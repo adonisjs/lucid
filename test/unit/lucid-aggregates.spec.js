@@ -62,7 +62,8 @@ test.group('Aggregates | Count', (group) => {
     await User.create({username: 'u3'})
     const c1 = (await User.query().count('username as total'))[0].total
     const c2 = await User.query().rowsCount()
+    const c3 = await User.count()
     console.log(User.query().rowsCount())
-    assert.equal(c1, c2)
+    assert.equal(c1, c2, c3)
   })
 })
