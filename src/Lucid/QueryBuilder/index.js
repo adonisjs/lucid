@@ -811,6 +811,21 @@ class QueryBuilder {
     this._hiddenFields = fields
     return this
   }
+
+  /**
+   * Fetch and return a row count
+   *
+   * @method rowsCount
+   * @async
+   *
+   * @return {Number} The count of rows in this query
+   */
+  async rowsCount (columnName = '*') {
+    let wrapper = new this.query.constructor(this.query.client)
+    wrapper.from(this.query.as('__count')).count(`${columnName} as total`)
+    let count = await wrapper
+    return count[0].total
+  }
 }
 
 module.exports = QueryBuilder
