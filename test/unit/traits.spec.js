@@ -216,4 +216,40 @@ test.group('Traits', (group) => {
 
     assert.deepEqual(stack, ['on user', 'on profile'])
   })
+
+  test('pass settings to trait via ioc container', (assert) => {
+    class FooTrait {
+      register (ctx, settings) {
+        assert.deepEqual(ctx, User)
+        assert.deepEqual(settings, {foo: 1})
+      }
+    }
+
+    ioc.fake('FooTrait', () => {
+      return new FooTrait()
+    })
+
+    class User extends Model {
+      static boot () {
+        super.boot()
+        this.addTrait('@provider:FooTrait', {foo: 1})
+      }
+    }
+
+    User._bootIfNotBooted()
+  })
+
+  test('pass settings to bound function', (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+        this.addTrait((ctx, settings) => {
+          assert.deepEqual(ctx, User)
+          assert.deepEqual(settings, {foo: 1})
+        }, {foo: 1})
+      }
+    }
+
+    User._bootIfNotBooted()
+  })
 })
