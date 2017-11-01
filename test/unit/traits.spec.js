@@ -53,7 +53,7 @@ test.group('Traits', (group) => {
       }
     }
   }).timeout(0)
-  
+
   group.beforeEach(() => {
     ioc.restore()
   })
