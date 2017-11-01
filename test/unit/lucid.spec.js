@@ -780,8 +780,8 @@ test.group('Model', (group) => {
     User._bootIfNotBooted()
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     let countChunks = 0
-    await User.query().chunk(1, async (users) => {
-      assert.instanceOf(users, VanillaSerializer)
+    await User.query().chunk((user) => {
+      assert.instanceOf(user, Model)
       countChunks++
     })
     assert.equal(countChunks, 2)

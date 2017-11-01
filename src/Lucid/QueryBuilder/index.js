@@ -454,32 +454,36 @@ class QueryBuilder {
   }
 
   /**
-   * Returns chunk of data under a defined limit of results, and
-   * invokes a callback, everytime there are results.
+   * Returns chunk of data under and
+   * invokes a callback for every chunk of data.
    *
    * @method chunk
    * @async
    *
-   * @param  {Number}   [limit = 100]
    * @param  {Function} [callback]
-   * @param  {Number}   [page = 1]
+   * @param  {Object}   options
    *
    * @return {Promise}
    */
-  async chunk (limit = 100, callback, page = 1) {
-    const results = await this.forPage(page, limit)
+  chunk (callback, options = {}) {
+    return new Promise((resolve, reject) => {
+      const stream = this.query.stream(options)
 
-    /**
-     * Convert to an array of model instances
-     */
-    const modelInstances = this._mapRowsToInstances(results)
-    await this._eagerLoad(modelInstances)
+      stream.on('data', async (data) => {
+        stream.pause()
+        /**
+         * Convert to an array of model instances
+         */
+        const modelInstance = this._mapRowToInstance(data)
+        await this._eagerLoad([modelInstance])
 
-    if (results.length) {
-      await callback(new this.Model.Serializer(modelInstances))
-      page++
-      await this.chunk(limit, callback, page)
-    }
+        await callback(modelInstance)
+        stream.resume()
+      })
+      stream.on('end', () => setTimeout(resolve, 100))
+      stream.on('close', stream.end.bind(stream))
+      stream.on('error', reject)
+    })
   }
 
   /**
