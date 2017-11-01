@@ -223,4 +223,32 @@ test.group('Relations | Serializer', (group) => {
     assert.equal(json.perPage, 20)
     assert.equal(json.lastPage, 1)
   })
+
+  test('test toJSON with visible()', async (assert) => {
+    class User extends Model {
+      static get visible () {
+        return ['id', 'username']
+      }
+    }
+    User._bootIfNotBooted()
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    // Test 1 - find in DB
+    const a = await User.find(1)
+    assert.deepEqual(a.toJSON(), {id: 1, username: 'virk'})
+
+    // // test 2 - find in db then reload
+    const b = await User.find(1)
+    await b.reload()
+    assert.deepEqual(b.toJSON(), {id: 1, username: 'virk'})
+
+    // // test 3 - create
+    const c = await User.create({username: 'ben'})
+    assert.deepEqual(c.toJSON(), {id: 3, username: 'ben'})
+
+    // // test 4 - create then reload from db
+    const d = await User.create({username: 'simon'})
+    await d.reload()
+    assert.deepEqual(d.toJSON(), {id: 4, username: 'simon'})
+  })
 })

@@ -408,6 +408,8 @@ class Model extends BaseModel {
   static async create (payload, trx) {
     const modelInstance = new this()
     modelInstance.fill(payload)
+    modelInstance.$visible = this.visible
+    modelInstance.$hidden = this.hidden
     await modelInstance.save(trx)
     return modelInstance
   }
@@ -1326,13 +1328,13 @@ class Model extends BaseModel {
     }
 
     if (!this.isNew) {
-      const attributes = await this.constructor.find(this.primaryKeyValue)
-      if (!attributes) {
+      const newInstance = await this.constructor.find(this.primaryKeyValue)
+      if (!newInstance) {
         throw GE
           .RuntimeException
           .invoke(`Cannot reload model since row with ${this.constructor.primaryKey} ${this.primaryKeyValue} has been removed`)
       }
-      this.newUp(attributes)
+      this.newUp(newInstance.$attributes)
     }
   }
 }
