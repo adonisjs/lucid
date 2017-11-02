@@ -833,70 +833,70 @@ class QueryBuilder {
   /**
    * Fetch and return a row count
    *
-   * @method rowsCount
+   * @method getCount
    * @async
    *
    * @param  {String}   columnName = '*'
    *
-   * @return {Number} The count of rows in this query
+   * @return {Number} The count of get in this query
    */
-  async rowsCount (columnName = '*') {
+  async getCount (columnName = '*') {
     return this.aggregate(columnName, 'count')
   }
 
   /**
    * Fetch and return the sum of all values in columnName
    *
-   * @method rowsSum
+   * @method getSum
    * @async
    *
    * @param  {String}   columnName
    *
    * @return {Number} The sum of columnName
    */
-  async rowsSum (columnName) {
+  async getSum (columnName) {
     return this.aggregate(columnName, 'sum')
   }
 
   /**
    * Fetch and return the minimum of all values in columnName
    *
-   * @method rowsMin
+   * @method getMin
    * @async
    *
    * @param  {String}   columnName
    *
    * @return {Number} The minimunm value of columnName
    */
-  async rowsMin (columnName) {
+  async getMin (columnName) {
     return this.aggregate(columnName, 'min')
   }
 
   /**
    * Fetch and return the maximum of all values in columnName
    *
-   * @method rowsMax
+   * @method getMax
    * @async
    *
    * @param  {String}   columnName
    *
    * @return {Number} The maximunm value of columnName
    */
-  async rowsMax (columnName) {
+  async getMax (columnName) {
     return this.aggregate(columnName, 'max')
   }
 
   /**
    * Fetch and return the average of all values in columnName
    *
-   * @method rowsAvg
+   * @method getAvg
    * @async
    *
    * @param  {String}   columnName
    *
    * @return {Number} The average value of columnName
    */
-  async rowsAvg (columnName) {
+  async getAvg (columnName) {
     return this.aggregate(columnName, 'avg')
   }
 }

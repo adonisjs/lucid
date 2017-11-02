@@ -1339,56 +1339,56 @@ class Model extends BaseModel {
  /**
   * Return a count of all model records.
   *
-  * @method rowsCount
+  * @method getCount
   *
   * @return {Number}
   */
-  static async rowsCount (columnName = '*') {
-    return this.query().rowsCount(columnName)
+  static async getCount (columnName = '*') {
+    return this.query().getCount(columnName)
   }
 
  /**
   * Return the avgerage of all values of columnName.
   *
-  * @method rowsAvg(columnName)
+  * @method getAvg(columnName)
   *
   * @return {Number}
   */
-  static async rowsAvg (columnName) {
-    return this.query().rowsAvg(columnName)
+  static async getAvg (columnName) {
+    return this.query().getAvg(columnName)
   }
 
  /**
   * Return the minimum of all values of columnName.
   *
-  * @method rowsMin(coulmnName)
+  * @method getMin(coulmnName)
   *
   * @return {Number}
   */
-  static async rowsMin (columnName) {
-    return this.query().rowsMin(columnName)
+  static async getMin (columnName) {
+    return this.query().getMin(columnName)
   }
 
  /**
   * Return the maximum of all values of columnName.
   *
-  * @method rowsMax(coulmnName)
+  * @method getMax(coulmnName)
   *
   * @return {Number}
   */
-  static async rowsMax (columnName) {
-    return this.query().rowsMax(columnName)
+  static async getMax (columnName) {
+    return this.query().getMax(columnName)
   }
 
  /**
   * Return the sum of all values of columnName.
   *
-  * @method rowsSum(coulmnName)
+  * @method getSum(coulmnName)
   *
   * @return {Number}
   */
-  static async rowsSum (columnName) {
-    return this.query().rowsSum(columnName)
+  static async getSum (columnName) {
+    return this.query().getSum(columnName)
   }
 }
 

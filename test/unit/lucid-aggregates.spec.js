@@ -54,63 +54,63 @@ test.group('Aggregates | Count', (group) => {
     }
   }).timeout(0)
 
-  test('count rows', async (assert) => {
+  test('count get', async (assert) => {
     class User extends Model {}
     User._bootIfNotBooted()
     await User.create({username: 'u1'})
     await User.create({username: 'u2'})
     await User.create({username: 'u3'})
     const c1 = (await User.query().count('username as total'))[0].total
-    const c2 = await User.query().rowsCount()
-    const c3 = await User.rowsCount()
+    const c2 = await User.query().getCount()
+    const c3 = await User.getCount()
     assert.equal(c1, c2, c3)
   })
 
-  test('avg rows', async (assert) => {
+  test('avg get', async (assert) => {
     class User extends Model {}
     User._bootIfNotBooted()
     await User.create({username: 'u1'})
     await User.create({username: 'u2'})
     await User.create({username: 'u3'})
     const c1 = (await User.query().avg('id as total'))[0].total
-    const c2 = await User.query().rowsAvg('id')
-    const c3 = await User.rowsAvg('id')
+    const c2 = await User.query().getAvg('id')
+    const c3 = await User.getAvg('id')
     assert.equal(c1, c2, c3)
   })
 
-  test('sum rows', async (assert) => {
+  test('sum get', async (assert) => {
     class User extends Model {}
     User._bootIfNotBooted()
     await User.create({username: 'u1'})
     await User.create({username: 'u2'})
     await User.create({username: 'u3'})
     const c1 = (await User.query().sum('id as total'))[0].total
-    const c2 = await User.query().rowsSum('id')
-    const c3 = await User.rowsSum('id')
+    const c2 = await User.query().getSum('id')
+    const c3 = await User.getSum('id')
     assert.equal(c1, c2, c3)
   })
 
-  test('min rows', async (assert) => {
+  test('min get', async (assert) => {
     class User extends Model {}
     User._bootIfNotBooted()
     await User.create({username: 'u1'})
     await User.create({username: 'u2'})
     await User.create({username: 'u3'})
     const c1 = (await User.query().min('id as total'))[0].total
-    const c2 = await User.query().rowsMin('id')
-    const c3 = await User.rowsMin('id')
+    const c2 = await User.query().getMin('id')
+    const c3 = await User.getMin('id')
     assert.equal(c1, c2, c3)
   })
 
-  test('max rows', async (assert) => {
+  test('max get', async (assert) => {
     class User extends Model {}
     User._bootIfNotBooted()
     await User.create({username: 'u1'})
     await User.create({username: 'u2'})
     await User.create({username: 'u3'})
     const c1 = (await User.query().max('id as total'))[0].total
-    const c2 = await User.query().rowsMax('id')
-    const c3 = await User.rowsMax('id')
+    const c2 = await User.query().getMax('id')
+    const c3 = await User.getMax('id')
     assert.equal(c1, c2, c3)
   })
 })
