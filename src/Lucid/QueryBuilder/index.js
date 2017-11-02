@@ -813,18 +813,91 @@ class QueryBuilder {
   }
 
   /**
+   * Perform an aggregation query
+   *
+   * @method aggregate
+   * @async
+   *
+   * @param  {String}   columnName
+   * @param  {String}   aggregateOp
+   *
+   * @return {Number} The aggregate result
+   */
+  async aggregate (columnName, aggregateOp) {
+    let wrapper = new this.query.constructor(this.query.client)
+    wrapper.from(this.query.as('__lucid'))[aggregateOp](`${columnName} as __lucid_aggregate`)
+    let restults = await wrapper
+    return restults[0].__lucid_aggregate
+  }
+
+  /**
    * Fetch and return a row count
    *
    * @method rowsCount
    * @async
    *
+   * @param  {String}   columnName = '*'
+   *
    * @return {Number} The count of rows in this query
    */
   async rowsCount (columnName = '*') {
-    let wrapper = new this.query.constructor(this.query.client)
-    wrapper.from(this.query.as('__count')).count(`${columnName} as total`)
-    let count = await wrapper
-    return count[0].total
+    return this.aggregate(columnName, 'count')
+  }
+
+  /**
+   * Fetch and return the sum of all values in columnName
+   *
+   * @method rowsSum
+   * @async
+   *
+   * @param  {String}   columnName
+   *
+   * @return {Number} The sum of columnName
+   */
+  async rowsSum (columnName) {
+    return this.aggregate(columnName, 'sum')
+  }
+
+  /**
+   * Fetch and return the minimum of all values in columnName
+   *
+   * @method rowsMin
+   * @async
+   *
+   * @param  {String}   columnName
+   *
+   * @return {Number} The minimunm value of columnName
+   */
+  async rowsMin (columnName) {
+    return this.aggregate(columnName, 'min')
+  }
+
+  /**
+   * Fetch and return the maximum of all values in columnName
+   *
+   * @method rowsMax
+   * @async
+   *
+   * @param  {String}   columnName
+   *
+   * @return {Number} The maximunm value of columnName
+   */
+  async rowsMax (columnName) {
+    return this.aggregate(columnName, 'max')
+  }
+
+  /**
+   * Fetch and return the average of all values in columnName
+   *
+   * @method rowsAvg
+   * @async
+   *
+   * @param  {String}   columnName
+   *
+   * @return {Number} The average value of columnName
+   */
+  async rowsAvg (columnName) {
+    return this.aggregate(columnName, 'avg')
   }
 }
 

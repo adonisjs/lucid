@@ -1339,12 +1339,56 @@ class Model extends BaseModel {
  /**
   * Return a count of all model records.
   *
-  * @method count
+  * @method rowsCount
   *
   * @return {Number}
   */
-  static async count () {
-    return this.query().rowsCount()
+  static async rowsCount (columnName = '*') {
+    return this.query().rowsCount(columnName)
+  }
+
+ /**
+  * Return the avgerage of all values of columnName.
+  *
+  * @method rowsAvg(columnName)
+  *
+  * @return {Number}
+  */
+  static async rowsAvg (columnName) {
+    return this.query().rowsAvg(columnName)
+  }
+
+ /**
+  * Return the minimum of all values of columnName.
+  *
+  * @method rowsMin(coulmnName)
+  *
+  * @return {Number}
+  */
+  static async rowsMin (columnName) {
+    return this.query().rowsMin(columnName)
+  }
+
+ /**
+  * Return the maximum of all values of columnName.
+  *
+  * @method rowsMax(coulmnName)
+  *
+  * @return {Number}
+  */
+  static async rowsMax (columnName) {
+    return this.query().rowsMax(columnName)
+  }
+
+ /**
+  * Return the sum of all values of columnName.
+  *
+  * @method rowsSum(coulmnName)
+  *
+  * @return {Number}
+  */
+  static async rowsSum (columnName) {
+    return this.query().rowsSum(columnName)
   }
 }
 

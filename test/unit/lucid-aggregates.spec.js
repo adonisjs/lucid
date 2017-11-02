@@ -62,8 +62,55 @@ test.group('Aggregates | Count', (group) => {
     await User.create({username: 'u3'})
     const c1 = (await User.query().count('username as total'))[0].total
     const c2 = await User.query().rowsCount()
-    const c3 = await User.count()
-    console.log(User.query().rowsCount())
+    const c3 = await User.rowsCount()
+    assert.equal(c1, c2, c3)
+  })
+
+  test('avg rows', async (assert) => {
+    class User extends Model {}
+    User._bootIfNotBooted()
+    await User.create({username: 'u1'})
+    await User.create({username: 'u2'})
+    await User.create({username: 'u3'})
+    const c1 = (await User.query().avg('id as total'))[0].total
+    const c2 = await User.query().rowsAvg('id')
+    const c3 = await User.rowsAvg('id')
+    assert.equal(c1, c2, c3)
+  })
+
+  test('sum rows', async (assert) => {
+    class User extends Model {}
+    User._bootIfNotBooted()
+    await User.create({username: 'u1'})
+    await User.create({username: 'u2'})
+    await User.create({username: 'u3'})
+    const c1 = (await User.query().sum('id as total'))[0].total
+    const c2 = await User.query().rowsSum('id')
+    const c3 = await User.rowsSum('id')
+    assert.equal(c1, c2, c3)
+  })
+
+  test('min rows', async (assert) => {
+    class User extends Model {}
+    User._bootIfNotBooted()
+    await User.create({username: 'u1'})
+    await User.create({username: 'u2'})
+    await User.create({username: 'u3'})
+    const c1 = (await User.query().min('id as total'))[0].total
+    const c2 = await User.query().rowsMin('id')
+    const c3 = await User.rowsMin('id')
+    assert.equal(c1, c2, c3)
+  })
+
+  test('max rows', async (assert) => {
+    class User extends Model {}
+    User._bootIfNotBooted()
+    await User.create({username: 'u1'})
+    await User.create({username: 'u2'})
+    await User.create({username: 'u3'})
+    const c1 = (await User.query().max('id as total'))[0].total
+    const c2 = await User.query().rowsMax('id')
+    const c3 = await User.rowsMax('id')
     assert.equal(c1, c2, c3)
   })
 })
