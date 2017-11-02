@@ -826,8 +826,8 @@ class QueryBuilder {
   async aggregate (columnName, aggregateOp) {
     let wrapper = new this.query.constructor(this.query.client)
     wrapper.from(this.query.as('__lucid'))[aggregateOp](`${columnName} as __lucid_aggregate`)
-    let restults = await wrapper
-    return restults[0].__lucid_aggregate
+    let results = await wrapper
+    return results[0].__lucid_aggregate
   }
 
   /**
