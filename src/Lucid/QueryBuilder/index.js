@@ -813,24 +813,6 @@ class QueryBuilder {
   }
 
   /**
-   * Perform an aggregation query
-   *
-   * @method aggregate
-   * @async
-   *
-   * @param  {String}   columnName
-   * @param  {String}   aggregateOp
-   *
-   * @return {Number} The aggregate result
-   */
-  async aggregate (columnName, aggregateOp) {
-    let wrapper = new this.query.constructor(this.query.client)
-    wrapper.from(this.query.as('__lucid'))[aggregateOp](`${columnName} as __lucid_aggregate`)
-    let results = await wrapper
-    return results[0].__lucid_aggregate
-  }
-
-  /**
    * Fetch and return a row count
    *
    * @method getCount
@@ -841,7 +823,7 @@ class QueryBuilder {
    * @return {Number} The count of get in this query
    */
   async getCount (columnName = '*') {
-    return this.aggregate(columnName, 'count')
+    return this.query.getCount(columnName)
   }
 
   /**
@@ -855,7 +837,7 @@ class QueryBuilder {
    * @return {Number} The sum of columnName
    */
   async getSum (columnName) {
-    return this.aggregate(columnName, 'sum')
+    return this.query.getSum(columnName)
   }
 
   /**
@@ -869,7 +851,7 @@ class QueryBuilder {
    * @return {Number} The minimunm value of columnName
    */
   async getMin (columnName) {
-    return this.aggregate(columnName, 'min')
+    return this.query.getMin(columnName)
   }
 
   /**
@@ -883,7 +865,7 @@ class QueryBuilder {
    * @return {Number} The maximunm value of columnName
    */
   async getMax (columnName) {
-    return this.aggregate(columnName, 'max')
+    return this.query.getMax(columnName)
   }
 
   /**
@@ -897,7 +879,7 @@ class QueryBuilder {
    * @return {Number} The average value of columnName
    */
   async getAvg (columnName) {
-    return this.aggregate(columnName, 'avg')
+    return this.query.getAvg(columnName)
   }
 }
 
