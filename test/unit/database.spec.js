@@ -10,7 +10,7 @@
 */
 
 const test = require('japa')
-let chance = require('chance').Chance()
+const chance = require('chance').Chance()
 const _ = require('lodash')
 const fs = require('fs-extra')
 const path = require('path')
@@ -223,7 +223,7 @@ test.group('Database | QueryBuilder', (group) => {
 
 test.group('Database | Manager', () => {
   test('get instance of database using connection method', (assert) => {
-    let config = new Config()
+    const config = new Config()
     config.set('database', {
       connection: 'testing',
       testing: helpers.getConfig()
@@ -233,7 +233,7 @@ test.group('Database | Manager', () => {
   })
 
   test('throw exception when unable to connect to database', (assert) => {
-    let config = new Config()
+    const config = new Config()
     config.set('database', {
       connection: 'testing',
       testing: {}
@@ -243,7 +243,7 @@ test.group('Database | Manager', () => {
   })
 
   test('throw exception when connection does not exists', (assert) => {
-    let config = new Config()
+    const config = new Config()
     config.set('database', {
       connection: 'testing',
       testing: {}
@@ -253,7 +253,7 @@ test.group('Database | Manager', () => {
   })
 
   test('proxy database methods', (assert) => {
-    let config = new Config()
+    const config = new Config()
     config.set('database', {
       connection: 'testing',
       testing: helpers.getConfig()
@@ -263,7 +263,7 @@ test.group('Database | Manager', () => {
   })
 
   test('proxy database properties', (assert) => {
-    let config = new Config()
+    const config = new Config()
     config.set('database', {
       connection: 'testing',
       testing: helpers.getConfig()
@@ -272,7 +272,7 @@ test.group('Database | Manager', () => {
   })
 
   test('reuse existing database connection', (assert) => {
-    let config = new Config()
+    const config = new Config()
     config.set('database', {
       connection: 'testing',
       testing: helpers.getConfig()
