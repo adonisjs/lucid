@@ -210,7 +210,7 @@ test.group('Database | QueryBuilder', (group) => {
     try {
       await this.database.table('users').getAvg()
       assert.fail('success', 'exception')
-    } catch(err) {
+    } catch (err) {
       assert.equal(err.message, "'getAvg' requires a column name.")
     }
 

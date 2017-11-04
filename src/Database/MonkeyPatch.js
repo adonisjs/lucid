@@ -131,7 +131,7 @@ KnexQueryBuilder.prototype.paginate = async function (page = 2, perPage = 20) {
   }
 }
 
-function generateAggregate(aggregateOp, defaultColumnName = undefined) {
+function generateAggregate (aggregateOp, defaultColumnName = undefined) {
   let funcName = 'get' + aggregateOp.charAt(0).toUpperCase() + aggregateOp.slice(1)
   KnexQueryBuilder.prototype[funcName] = async function (columnName = defaultColumnName) {
     if (!columnName) throw new Error(`'${funcName}' requires a column name.`)
