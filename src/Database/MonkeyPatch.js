@@ -131,22 +131,15 @@ KnexQueryBuilder.prototype.paginate = async function (page = 2, perPage = 20) {
   }
 }
 
-/**
- * Perform an aggregation query
- *
- * @method aggregate
- * @async
- *
- * @param  {String}   columnName
- * @param  {String}   aggregateOp
- *
- * @return {Number} The aggregate result
- */
-KnexQueryBuilder.prototype.aggregate = async function (columnName, aggregateOp) {
-  let wrapper = new this.constructor(this.client)
-  wrapper.from(this.as('__lucid'))[aggregateOp](`${columnName} as __lucid_aggregate`)
-  let results = await wrapper
-  return results[0].__lucid_aggregate
+function generateAggregate(aggregateOp, defaultColumnName = undefined) {
+  let funcName = 'get' + aggregateOp.charAt(0).toUpperCase() + aggregateOp.slice(1)
+  KnexQueryBuilder.prototype[funcName] = async function (columnName = defaultColumnName) {
+    if (!columnName) throw new Error(`'${funcName}' requires a column name.`)
+    let wrapper = new this.constructor(this.client)
+    wrapper.from(this.as('__lucid'))[aggregateOp](`${columnName} as __lucid_aggregate`)
+    let results = await wrapper
+    return results[0].__lucid_aggregate
+  }
 }
 
 /**
@@ -159,9 +152,7 @@ KnexQueryBuilder.prototype.aggregate = async function (columnName, aggregateOp) 
  *
  * @return {Number} The count of get in this query
  */
-KnexQueryBuilder.prototype.getCount = async function (columnName = '*') {
-  return this.aggregate(columnName, 'count')
-}
+generateAggregate('count', '*')
 
 /**
  * Fetch and return the sum of all values in columnName
@@ -173,9 +164,7 @@ KnexQueryBuilder.prototype.getCount = async function (columnName = '*') {
  *
  * @return {Number} The sum of columnName
  */
-KnexQueryBuilder.prototype.getSum = async function (columnName) {
-  return this.aggregate(columnName, 'sum')
-}
+generateAggregate('sum')
 
 /**
  * Fetch and return the minimum of all values in columnName
@@ -187,9 +176,7 @@ KnexQueryBuilder.prototype.getSum = async function (columnName) {
  *
  * @return {Number} The minimunm value of columnName
  */
-KnexQueryBuilder.prototype.getMin = async function (columnName) {
-  return this.aggregate(columnName, 'min')
-}
+generateAggregate('min')
 
 /**
  * Fetch and return the maximum of all values in columnName
@@ -201,9 +188,7 @@ KnexQueryBuilder.prototype.getMin = async function (columnName) {
  *
  * @return {Number} The maximunm value of columnName
  */
-KnexQueryBuilder.prototype.getMax = async function (columnName) {
-  return this.aggregate(columnName, 'max')
-}
+generateAggregate('max')
 
 /**
  * Fetch and return the average of all values in columnName
@@ -215,6 +200,4 @@ KnexQueryBuilder.prototype.getMax = async function (columnName) {
  *
  * @return {Number} The average value of columnName
  */
-KnexQueryBuilder.prototype.getAvg = async function (columnName) {
-  return this.aggregate(columnName, 'avg')
-}
+generateAggregate('avg')

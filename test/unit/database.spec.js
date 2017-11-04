@@ -207,6 +207,13 @@ test.group('Database | QueryBuilder', (group) => {
     c2 = await this.database.table('users').getAvg('id')
     assert.equal(c1, c2)
 
+    try {
+      await this.database.table('users').getAvg()
+      assert.fail('success', 'exception')
+    } catch(err) {
+      assert.equal(err.message, "'getAvg' requires a column name.")
+    }
+
     c1 = (await this.database.table('users').sum('id as total'))[0].total
     c2 = await this.database.table('users').getSum('id')
     assert.equal(c1, c2)
