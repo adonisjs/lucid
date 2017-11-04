@@ -1341,16 +1341,33 @@ class Model extends BaseModel {
   *
   * @method getCount
   *
+  * @param  {String} columnName = '*'
+  *
   * @return {Number}
   */
   static async getCount (columnName = '*') {
     return this.query().getCount(columnName)
   }
 
- /**
-  * Return the avgerage of all values of columnName.
+  /**
+  * Return a distinct count of all model records.
   *
-  * @method getAvg(columnName)
+  * @method getCountDistinct
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  static async getCountDistinct (columnName) {
+    return this.query().getCountDistinct(columnName)
+  }
+
+ /**
+  * Return the average of all values of columnName.
+  *
+  * @method getAvg
+  *
+  * @param  {String} columnName
   *
   * @return {Number}
   */
@@ -1358,10 +1375,25 @@ class Model extends BaseModel {
     return this.query().getAvg(columnName)
   }
 
+  /**
+  * Return the average of all distinct values of columnName.
+  *
+  * @method getAvgDistinct
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  static async getAvgDistinct (columnName) {
+    return this.query().getAvgDistinct(columnName)
+  }
+
  /**
   * Return the minimum of all values of columnName.
   *
-  * @method getMin(coulmnName)
+  * @method getMin
+  *
+  * @param  {String} columnName
   *
   * @return {Number}
   */
@@ -1372,7 +1404,9 @@ class Model extends BaseModel {
  /**
   * Return the maximum of all values of columnName.
   *
-  * @method getMax(coulmnName)
+  * @method getMax
+  *
+  * @param  {String} columnName
   *
   * @return {Number}
   */
@@ -1383,13 +1417,27 @@ class Model extends BaseModel {
  /**
   * Return the sum of all values of columnName.
   *
-  * @method getSum(coulmnName)
+  * @method getSum
+  *
+  * @param  {String} columnName
   *
   * @return {Number}
   */
   static async getSum (columnName) {
     return this.query().getSum(columnName)
   }
-}
 
+ /**
+  * Return the sum of all distinct values of columnName.
+  *
+  * @method getSumDistinct
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  static async getSumDistinct (columnName) {
+    return this.query().getSumDistinct(columnName)
+  }
+}
 module.exports = Model
