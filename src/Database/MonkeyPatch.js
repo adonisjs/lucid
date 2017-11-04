@@ -150,9 +150,21 @@ function generateAggregate (aggregateOp, defaultColumnName = undefined) {
  *
  * @param  {String}   columnName = '*'
  *
- * @return {Number} The count of get in this query
+ * @return {Number} The count of of rows in this query
  */
 generateAggregate('count', '*')
+
+/**
+ * Fetch and return a distinct row count
+ *
+ * @method getCountDistinct
+ * @async
+ *
+ * @param  {String}   columnName
+ *
+ * @return {Number} The distinct count of rows in this query
+ */
+generateAggregate('countDistinct')
 
 /**
  * Fetch and return the sum of all values in columnName
@@ -165,6 +177,18 @@ generateAggregate('count', '*')
  * @return {Number} The sum of columnName
  */
 generateAggregate('sum')
+
+/**
+ * Fetch and return the sum of all distinct values in columnName
+ *
+ * @method getSumDistinct
+ * @async
+ *
+ * @param  {String}   columnName
+ *
+ * @return {Number} The sum of distinct values in columnName
+ */
+generateAggregate('sumDistinct')
 
 /**
  * Fetch and return the minimum of all values in columnName
@@ -201,3 +225,15 @@ generateAggregate('max')
  * @return {Number} The average value of columnName
  */
 generateAggregate('avg')
+
+/**
+ * Fetch and return the average of all distinct values in columnName
+ *
+ * @method getAvgDistinct
+ * @async
+ *
+ * @param  {String}   columnName
+ *
+ * @return {Number} The average of distinct values of columnName
+ */
+generateAggregate('avgDistinct')

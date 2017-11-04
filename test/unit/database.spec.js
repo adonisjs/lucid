@@ -196,11 +196,15 @@ test.group('Database | QueryBuilder', (group) => {
 
   test('aggregate functions', async (assert) => {
     await this.database.insert({ username: 'u1' }).into('users')
-    await this.database.insert({ username: 'u2' }).into('users')
+    await this.database.insert({ username: 'u1' }).into('users') // Intentional duplicate for testing distinct aggregates
     await this.database.insert({ username: 'u3' }).into('users')
 
     let c1 = (await this.database.table('users').count('username as total'))[0].total
     let c2 = await this.database.table('users').getCount()
+    assert.equal(c1, c2)
+
+    c1 = (await this.database.table('users').countDistinct('username as total'))[0].total
+    c2 = await this.database.table('users').getCountDistinct('username')
     assert.equal(c1, c2)
 
     c1 = (await this.database.table('users').avg('id as total'))[0].total
