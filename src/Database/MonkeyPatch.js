@@ -131,7 +131,6 @@ KnexQueryBuilder.prototype.paginate = async function (page = 2, perPage = 20) {
   }
 }
 
-
 /**
  * Perform an aggregation query
  *
@@ -219,5 +218,3 @@ KnexQueryBuilder.prototype.getMax = async function (columnName) {
 KnexQueryBuilder.prototype.getAvg = async function (columnName) {
   return this.aggregate(columnName, 'avg')
 }
-
-
