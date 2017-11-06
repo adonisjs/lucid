@@ -820,24 +820,10 @@ class QueryBuilder {
    *
    * @param  {String}   columnName = '*'
    *
-   * @return {Number} The count of rows in this query
+   * @return {Number} The count of get in this query
    */
   async getCount (columnName = '*') {
     return this.query.getCount(columnName)
-  }
-
-    /**
-   * Fetch and return a count of distinct values in columnName
-   *
-   * @method getCount
-   * @async
-   *
-   * @param  {String}   columnName = '*'
-   *
-   * @return {Number} The count of distinct values in columnName
-   */
-  async getCountDistinct (columnName) {
-    return this.query.getCountDistinct(columnName)
   }
 
   /**
@@ -852,20 +838,6 @@ class QueryBuilder {
    */
   async getSum (columnName) {
     return this.query.getSum(columnName)
-  }
-
-    /**
-   * Fetch and return the sum of all distinct values in columnName
-   *
-   * @method getSum
-   * @async
-   *
-   * @param  {String}   columnName
-   *
-   * @return {Number} The sum of distinct values in columnName
-   */
-  async getSumDistinct (columnName) {
-    return this.query.getSumDistinct(columnName)
   }
 
   /**
@@ -908,20 +880,6 @@ class QueryBuilder {
    */
   async getAvg (columnName) {
     return this.query.getAvg(columnName)
-  }
-
-    /**
-   * Fetch and return the average of all distinct values in columnName
-   *
-   * @method getAvg
-   * @async
-   *
-   * @param  {String}   columnName
-   *
-   * @return {Number} The average of all distinct values in columnName
-   */
-  async getAvgDistinct (columnName) {
-    return this.query.getAvgDistinct(columnName)
   }
 }
 
