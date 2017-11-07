@@ -675,6 +675,22 @@ class BelongsToMany extends BaseRelation {
   }
 
   /**
+   * Returns count of rows with distinct expression.
+   *
+   * @method count
+   *
+   * @param  {String} expression
+   *
+   * @return {Array}
+   */
+  countDistinct (expression) {
+    this._validateRead()
+    this._makeJoinQuery()
+    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    return this.relatedQuery.countDistinct(expression)
+  }
+
+  /**
    * Returns avg for a given column
    *
    * @method avg
