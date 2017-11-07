@@ -215,4 +215,17 @@ test.group('Schema', (group) => {
     const hasSchemaUsers = await ioc.use('Database').schema.hasTable('schema_users')
     assert.isFalse(hasSchemaUsers)
   })
+
+  test('calling this.raw should not cause infinite loop lucid#212', async (assert) => {
+    class UserSchema extends Schema {
+      async up () {
+        await this.raw('CREATE table schema_users (id int);')
+      }
+    }
+
+    const userSchema = new UserSchema(ioc.use('Database'))
+    userSchema.up()
+    const hasSchemaUsers = await ioc.use('Database').schema.hasTable('schema_users')
+    assert.isTrue(hasSchemaUsers)
+  })
 })

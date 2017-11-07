@@ -5,4 +5,5 @@ npm-debug.log
 .idea
 out
 .nyc_output
-test/tmp
+test/**/tmp
+test/functional/database

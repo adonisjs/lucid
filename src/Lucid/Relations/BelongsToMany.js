@@ -645,9 +645,81 @@ class BelongsToMany extends BaseRelation {
     return this.relatedQuery.query
   }
 
+  /**
+   * Adds `on` clause to the innerjoin context. This
+   * method is mainly used by HasManyThrough
+   *
+   * @method addWhereOn
+   *
+   * @param  {Object}   context
+   */
   addWhereOn (context) {
     this._makeJoinQuery()
     context.on(`${this.$primaryTable}.${this.primaryKey}`, '=', `${this.$pivotTable}.${this.foreignKey}`)
+  }
+
+  /**
+   * Returns count of rows.
+   *
+   * @method count
+   *
+   * @param  {String} expression
+   *
+   * @return {Array}
+   */
+  count (expression) {
+    this._validateRead()
+    this._makeJoinQuery()
+    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    return this.relatedQuery.count(expression)
+  }
+
+  /**
+   * Returns avg for a given column
+   *
+   * @method avg
+   *
+   * @param  {String} column
+   *
+   * @return {Array}
+   */
+  avg (column) {
+    this._validateRead()
+    this._makeJoinQuery()
+    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    return this.relatedQuery.avg(column)
+  }
+
+  /**
+   * Return min value for a column
+   *
+   * @method avg
+   *
+   * @param  {String} column
+   *
+   * @return {Array}
+   */
+  min (column) {
+    this._validateRead()
+    this._makeJoinQuery()
+    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    return this.relatedQuery.min(column)
+  }
+
+  /**
+   * Return max value for a column
+   *
+   * @method avg
+   *
+   * @param  {String} column
+   *
+   * @return {Array}
+   */
+  max (column) {
+    this._validateRead()
+    this._makeJoinQuery()
+    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    return this.relatedQuery.max(column)
   }
 
   /**
