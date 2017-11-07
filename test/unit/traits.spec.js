@@ -255,11 +255,11 @@ test.group('Traits', (group) => {
     assert.deepEqual(stack, ['on user', 'on profile'])
   })
 
-  test('pass settings to trait via ioc container', (assert) => {
+  test('pass options to trait via ioc container', (assert) => {
     class FooTrait {
-      register (ctx, settings) {
+      register (ctx, options) {
         assert.deepEqual(ctx, User)
-        assert.deepEqual(settings, {foo: 1})
+        assert.deepEqual(options, {foo: 1})
       }
     }
 
@@ -277,13 +277,13 @@ test.group('Traits', (group) => {
     User._bootIfNotBooted()
   })
 
-  test('pass settings to bound function', (assert) => {
+  test('pass options to bound function', (assert) => {
     class User extends Model {
       static boot () {
         super.boot()
-        this.addTrait((ctx, settings) => {
+        this.addTrait((ctx, options) => {
           assert.deepEqual(ctx, User)
-          assert.deepEqual(settings, {foo: 1})
+          assert.deepEqual(options, {foo: 1})
         }, {foo: 1})
       }
     }
