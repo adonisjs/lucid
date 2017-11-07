@@ -224,6 +224,17 @@ test.group('Relations | Serializer', (group) => {
     assert.equal(json.lastPage, 1)
   })
 
+  test('test toJSON with default visible() and hidden()', async (assert) => {
+    class User extends Model {
+    }
+    User._bootIfNotBooted()
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    // Test 1 - find in DB
+    const a = await User.find(1)
+    assert.include(a.toJSON(), {id: 1, username: 'virk'})
+  })
+
   test('test toJSON with visible()', async (assert) => {
     class User extends Model {
       static get visible () {
@@ -235,20 +246,20 @@ test.group('Relations | Serializer', (group) => {
 
     // Test 1 - find in DB
     const a = await User.find(1)
-    assert.deepEqual(a.toJSON(), {id: 1, username: 'virk'})
+    assert.deepEqual(a.toJSON(), {id: 1, username: 'virk'}, 'Test 1 failed')
 
     // // test 2 - find in db then reload
     const b = await User.find(1)
     await b.reload()
-    assert.deepEqual(b.toJSON(), {id: 1, username: 'virk'})
+    assert.deepEqual(b.toJSON(), {id: 1, username: 'virk'}, 'Test 2 failed')
 
     // // test 3 - create
     const c = await User.create({username: 'ben'})
-    assert.deepEqual(c.toJSON(), {id: 3, username: 'ben'})
+    assert.deepEqual(c.toJSON(), {id: 3, username: 'ben'}, 'Test 3 failed')
 
     // // test 4 - create then reload from db
     const d = await User.create({username: 'simon'})
     await d.reload()
-    assert.deepEqual(d.toJSON(), {id: 4, username: 'simon'})
+    assert.deepEqual(d.toJSON(), {id: 4, username: 'simon'}, 'Test 4 failed')
   })
 })

@@ -408,8 +408,6 @@ class Model extends BaseModel {
   static async create (payload, trx) {
     const modelInstance = new this()
     modelInstance.fill(payload)
-    modelInstance.$visible = this.visible
-    modelInstance.$hidden = this.hidden
     await modelInstance.save(trx)
     return modelInstance
   }
@@ -485,28 +483,11 @@ class Model extends BaseModel {
    * @private
    */
   _instantiate () {
-    this.__setters__ = [
-      '$attributes',
-      '$persisted',
-      'primaryKeyValue',
-      '$originalAttributes',
-      '$relations',
-      '$sideLoaded',
-      '$parent',
-      '$frozen',
-      '$visible',
-      '$hidden'
-    ]
-
-    this.$attributes = {}
-    this.$persisted = false
-    this.$originalAttributes = {}
-    this.$relations = {}
-    this.$sideLoaded = {}
-    this.$parent = null
-    this.$frozen = false
-    this.$visible = null
-    this.$hidden = null
+    super._instantiate()
+    this.__setters__.push('$visible')
+    this.__setters__.push('$hidden')
+    this.$visible = this.constructor.visible
+    this.$hidden = this.constructor.hidden
   }
 
   /**
