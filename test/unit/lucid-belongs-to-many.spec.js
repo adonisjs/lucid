@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
 */
 
+require('../../lib/iocResolver').setFold(require('@adonisjs/fold'))
 const test = require('japa')
 const fs = require('fs-extra')
 const path = require('path')
@@ -1711,5 +1712,30 @@ test.group('Relations | Belongs To Many', (group) => {
     }).fetch()
 
     assert.equal(postQuery.sql, helpers.formatQuery('select "posts".*, "post_user"."post_id" as "pivot_post_id", "post_user"."user_id" as "pivot_user_id" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" in (?, ?)'))
+  })
+
+  test('do not select all rows for a counts query', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 20, username: 'virk' })
+    await ioc.use('Database').table('posts').insert([{ id: 18, title: 'Adonis 101' }, { id: 19, title: 'Lucid 101' }])
+    await ioc.use('Database').table('post_user').insert([
+      { post_id: 18, user_id: 20 },
+      { post_id: 19, user_id: 20 }
+    ])
+
+    const user = await User.find(20)
+    const postsCount = await user.posts().count('* as total')
+    assert.deepEqual(postsCount, [{ 'total': 2 }])
   })
 })
