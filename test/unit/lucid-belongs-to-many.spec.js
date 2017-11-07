@@ -1738,4 +1738,29 @@ test.group('Relations | Belongs To Many', (group) => {
     const postsCount = await user.posts().count('* as total')
     assert.deepEqual(postsCount, [{ 'total': 2 }])
   })
+
+  test('count distinct on given field', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 20, username: 'virk' })
+    await ioc.use('Database').table('posts').insert([{ id: 18, title: 'Adonis 101' }, { id: 19, title: 'Lucid 101' }])
+    await ioc.use('Database').table('post_user').insert([
+      { post_id: 18, user_id: 20 },
+      { post_id: 19, user_id: 20 }
+    ])
+
+    const user = await User.find(20)
+    const postsCount = await user.posts().countDistinct('post_user.user_id as total')
+    assert.deepEqual(postsCount, [{ 'total': 1 }])
+  })
 })
