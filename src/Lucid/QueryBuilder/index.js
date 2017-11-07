@@ -454,6 +454,39 @@ class QueryBuilder {
   }
 
   /**
+   * Returns chunk of data under and
+   * invokes a callback for every chunk of data.
+   *
+   * @method chunk
+   * @async
+   *
+   * @param  {Function} [callback]
+   * @param  {Object}   options
+   *
+   * @return {Promise}
+   */
+  chunk (callback, options = {}) {
+    return new Promise((resolve, reject) => {
+      const stream = this.query.stream(options)
+
+      stream.on('data', async (data) => {
+        stream.pause()
+        /**
+         * Convert to an array of model instances
+         */
+        const modelInstance = this._mapRowToInstance(data)
+        await this._eagerLoad([modelInstance])
+
+        await callback(modelInstance)
+        stream.resume()
+      })
+      stream.on('end', () => setTimeout(resolve, 100))
+      stream.on('close', stream.end.bind(stream))
+      stream.on('error', reject)
+    })
+  }
+
+  /**
    * Same as `pick` but inverse
    *
    * @method pickInverse
