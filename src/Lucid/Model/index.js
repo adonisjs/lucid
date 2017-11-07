@@ -471,26 +471,6 @@ class Model extends BaseModel {
   }
 
   /**
-   * Instantiate the model by defining constructor properties
-   * and also setting `__setters__` to tell the proxy that
-   * these values should be set directly on the constructor
-   * and not on the `attributes` object.
-   *
-   * @method instantiate
-   *
-   * @return {void}
-   *
-   * @private
-   */
-  _instantiate () {
-    super._instantiate()
-    this.__setters__.push('$visible')
-    this.__setters__.push('$hidden')
-    this.$visible = this.constructor.visible
-    this.$hidden = this.constructor.hidden
-  }
-
-  /**
    * Formats the date fields from the payload, only
    * when they are marked as dates and there are
    * no setters defined for them.
