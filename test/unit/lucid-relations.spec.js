@@ -43,6 +43,7 @@ test.group('Relations | HasOne', (group) => {
     await ioc.use('Adonis/Src/Database').table('pictures').truncate()
     await ioc.use('Adonis/Src/Database').table('identities').truncate()
     await ioc.use('Adonis/Src/Database').table('cars').truncate()
+    await ioc.use('Adonis/Src/Database').table('posts').truncate()
   })
 
   group.after(async () => {
@@ -1076,6 +1077,33 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.first().profile_count, 1)
     assert.deepEqual(users.first().$sideLoaded, { profile_count: helpers.formatNumber(1) })
     assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where users.id = profiles.user_id) as "profile_count" from "users" limit ?'))
+  })
+
+  test('return relation with paginate method', async (assert) => {
+    class Post extends Model {
+      users () {
+        return this.belongsToMany(User)
+      }
+    }
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('posts').insert([{ title: 'Post #1' }, { title: 'Post #2' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await ioc.use('Database').table('post_user').insert([{ user_id: 1, post_id: 2 }, { user_id: 2, post_id: 2 }])
+
+    const post = await Post.find(2)
+    const users = await post.users().paginate(1, 1)
+    assert.equal(users.pages.total, 2)
+    assert.equal(users.pages.page, 1)
+    assert.equal(users.pages.perPage, 1)
+    assert.equal(users.pages.lastPage, 2)
   })
 
   test('define count column for withCount', async (assert) => {

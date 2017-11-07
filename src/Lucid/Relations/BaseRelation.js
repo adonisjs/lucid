@@ -21,6 +21,7 @@ const methodsList = [
   'count',
   'truncate',
   'ids',
+  'paginate',
   'pair',
   'pluckFirst',
   'pluckId',

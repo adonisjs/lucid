@@ -378,7 +378,7 @@ class Model extends BaseModel {
    *
    * @param  {Function|String} trait - A plain function or reference to IoC container string
    */
-  static addTrait (trait) {
+  static addTrait (trait, options = {}) {
     if (typeof (trait) !== 'function' && typeof (trait) !== 'string') {
       throw GE
         .InvalidArgumentException
@@ -390,7 +390,7 @@ class Model extends BaseModel {
      */
     trait = typeof (trait) === 'string' ? `${trait}.register` : trait
     const { method } = resolver.forDir('modelTraits').resolveFunc(trait)
-    method(this)
+    method(this, options)
   }
 
   /**
