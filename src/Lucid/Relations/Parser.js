@@ -21,17 +21,32 @@ const CE = require('../../Exceptions')
  */
 class RelationParser {
   /**
+   * Returns the relationships object
+   *
+   * @method _normalizeRelations
+   *
+   * @param {Object|Array}             relations
+   *
+   * @return {Object}
+   */
+  _normalizeRelations (relations) {
+    return !Array.isArray(relations)
+      ? relations
+      : _.zipObject(relations, _.fill(new Array(relations.length), null))
+  }
+
+  /**
    * Parses an object of relationship strings into
    * a new object
    *
    * @method parseRelations
    *
-   * @param  {Object}       relations
+   * @param  {Object|Array}       relations
    *
    * @return {Object}
    */
   parseRelations (relations) {
-    return _.transform(relations, (result, callback, relation) => {
+    return _.transform(this._normalizeRelations(relations), (result, callback, relation) => {
       const parsedRelation = this.parseRelation(relation, callback)
       const existingRelation = result[parsedRelation.name]
 
