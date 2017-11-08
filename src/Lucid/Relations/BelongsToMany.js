@@ -659,6 +659,17 @@ class BelongsToMany extends BaseRelation {
   }
 
   /**
+   * Prepare query for an aggregate function
+   *
+   * @method _prepareAggregate
+   */
+  _prepareAggregate () {
+    this._validateRead()
+    this._makeJoinQuery()
+    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+  }
+
+  /**
    * Returns count of rows.
    *
    * @method count
@@ -668,10 +679,22 @@ class BelongsToMany extends BaseRelation {
    * @return {Array}
    */
   count (expression) {
-    this._validateRead()
-    this._makeJoinQuery()
-    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    this._prepareAggregate()
     return this.relatedQuery.count(expression)
+  }
+
+  /**
+   * Returns count of rows with distinct expression.
+   *
+   * @method count
+   *
+   * @param  {String} expression
+   *
+   * @return {Array}
+   */
+  countDistinct (expression) {
+    this._prepareAggregate()
+    return this.relatedQuery.countDistinct(expression)
   }
 
   /**
@@ -684,9 +707,7 @@ class BelongsToMany extends BaseRelation {
    * @return {Array}
    */
   avg (column) {
-    this._validateRead()
-    this._makeJoinQuery()
-    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    this._prepareAggregate()
     return this.relatedQuery.avg(column)
   }
 
@@ -700,9 +721,7 @@ class BelongsToMany extends BaseRelation {
    * @return {Array}
    */
   min (column) {
-    this._validateRead()
-    this._makeJoinQuery()
-    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    this._prepareAggregate()
     return this.relatedQuery.min(column)
   }
 
@@ -716,9 +735,7 @@ class BelongsToMany extends BaseRelation {
    * @return {Array}
    */
   max (column) {
-    this._validateRead()
-    this._makeJoinQuery()
-    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    this._prepareAggregate()
     return this.relatedQuery.max(column)
   }
 
