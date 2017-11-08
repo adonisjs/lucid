@@ -1732,7 +1732,7 @@ test.group('Relations | Belongs To Many', (group) => {
     await ioc.use('Database').table('post_user').insert([
       { post_id: 18, user_id: 20 },
       { post_id: 19, user_id: 20 },
-      { post_id: 19, user_id: 20 }, // Intentianal duplicate for distinct tests
+      { post_id: 19, user_id: 20 }, // Intentional duplicate for distinct tests
       { post_id: 19, user_id: 21 }
     ])
 
