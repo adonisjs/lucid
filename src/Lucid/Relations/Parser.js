@@ -25,7 +25,7 @@ class RelationParser {
    *
    * @method _normalizeRelations
    *
-   * @param {Object|Array}             relations
+   * @param {Object|String[]}             relations
    *
    * @return {Object}
    */
@@ -41,7 +41,7 @@ class RelationParser {
    *
    * @method parseRelations
    *
-   * @param  {Object|Array}       relations
+   * @param  {Object|String[]}       relations
    *
    * @return {Object}
    */
