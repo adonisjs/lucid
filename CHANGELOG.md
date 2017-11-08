@@ -1,3 +1,20 @@
+<a name="4.0.22"></a>
+## [4.0.22](https://github.com/adonisjs/adonis-lucid/compare/v4.0.21...v4.0.22) (2017-11-08)
+
+
+### Bug Fixes
+
+* **belongsToMany:** do not select all fields for aggregates ([5e58e38](https://github.com/adonisjs/adonis-lucid/commit/5e58e38)), closes [#216](https://github.com/adonisjs/adonis-lucid/issues/216)
+* **schema:** this.raw should reference this.schema.raw ([dcfc265](https://github.com/adonisjs/adonis-lucid/commit/dcfc265)), closes [#212](https://github.com/adonisjs/adonis-lucid/issues/212)
+
+
+### Features
+
+* **belongsToMany:** add countDistinct method ([#224](https://github.com/adonisjs/adonis-lucid/issues/224)) ([26cca0e](https://github.com/adonisjs/adonis-lucid/commit/26cca0e))
+* **traits:** allow user to pass options to `addTrait` ([be987ca](https://github.com/adonisjs/adonis-lucid/commit/be987ca))
+
+
+
 <a name="4.0.21"></a>
 ## [4.0.21](https://github.com/adonisjs/adonis-lucid/compare/v4.0.20...v4.0.21) (2017-10-29)
 
