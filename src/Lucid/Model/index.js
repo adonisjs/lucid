@@ -378,7 +378,7 @@ class Model extends BaseModel {
    *
    * @param  {Function|String} trait - A plain function or reference to IoC container string
    */
-  static addTrait (trait) {
+  static addTrait (trait, options = {}) {
     if (typeof (trait) !== 'function' && typeof (trait) !== 'string') {
       throw GE
         .InvalidArgumentException
@@ -390,7 +390,7 @@ class Model extends BaseModel {
      */
     trait = typeof (trait) === 'string' ? `${trait}.register` : trait
     const { method } = resolver.forDir('modelTraits').resolveFunc(trait)
-    method(this)
+    method(this, options)
   }
 
   /**
@@ -468,43 +468,6 @@ class Model extends BaseModel {
    */
   get hasParent () {
     return !!this.$parent
-  }
-
-  /**
-   * Instantiate the model by defining constructor properties
-   * and also setting `__setters__` to tell the proxy that
-   * these values should be set directly on the constructor
-   * and not on the `attributes` object.
-   *
-   * @method instantiate
-   *
-   * @return {void}
-   *
-   * @private
-   */
-  _instantiate () {
-    this.__setters__ = [
-      '$attributes',
-      '$persisted',
-      'primaryKeyValue',
-      '$originalAttributes',
-      '$relations',
-      '$sideLoaded',
-      '$parent',
-      '$frozen',
-      '$visible',
-      '$hidden'
-    ]
-
-    this.$attributes = {}
-    this.$persisted = false
-    this.$originalAttributes = {}
-    this.$relations = {}
-    this.$sideLoaded = {}
-    this.$parent = null
-    this.$frozen = false
-    this.$visible = null
-    this.$hidden = null
   }
 
   /**
@@ -1326,13 +1289,13 @@ class Model extends BaseModel {
     }
 
     if (!this.isNew) {
-      const attributes = await this.constructor.find(this.primaryKeyValue)
-      if (!attributes) {
+      const newInstance = await this.constructor.find(this.primaryKeyValue)
+      if (!newInstance) {
         throw GE
           .RuntimeException
           .invoke(`Cannot reload model since row with ${this.constructor.primaryKey} ${this.primaryKeyValue} has been removed`)
       }
-      this.newUp(attributes)
+      this.newUp(newInstance.$attributes)
     }
   }
 }

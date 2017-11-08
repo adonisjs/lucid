@@ -9,13 +9,51 @@
  * file that was distributed with this source code.
 */
 
+require('../../lib/iocResolver').setFold(require('@adonisjs/fold'))
 const test = require('japa')
+const fs = require('fs-extra')
+const path = require('path')
 const { ioc } = require('@adonisjs/fold')
+const { Config, setupResolver } = require('@adonisjs/sink')
 const helpers = require('./helpers')
 const Model = require('../../src/Lucid/Model')
+const DatabaseManager = require('../../src/Database/Manager')
 const QueryBuilder = require('../../src/Lucid/QueryBuilder')
 
 test.group('Traits', (group) => {
+  group.before(async () => {
+    ioc.singleton('Adonis/Src/Database', function () {
+      const config = new Config()
+      config.set('database', {
+        connection: 'testing',
+        testing: helpers.getConfig()
+      })
+      return new DatabaseManager(config)
+    })
+    ioc.alias('Adonis/Src/Database', 'Database')
+
+    await fs.ensureDir(path.join(__dirname, './tmp'))
+    await helpers.createTables(ioc.use('Database'))
+    setupResolver()
+  })
+
+  group.afterEach(async () => {
+    await ioc.use('Database').table('users').truncate()
+    await ioc.use('Database').table('my_users').truncate()
+  })
+
+  group.after(async () => {
+    await helpers.dropTables(ioc.use('Database'))
+    ioc.use('Database').close()
+    try {
+      await fs.remove(path.join(__dirname, './tmp'))
+    } catch (error) {
+      if (process.platform !== 'win32' || error.code !== 'EBUSY') {
+        throw error
+      }
+    }
+  }).timeout(0)
+
   group.beforeEach(() => {
     ioc.restore()
   })
@@ -215,5 +253,41 @@ test.group('Traits', (group) => {
     Profile.query().foo()
 
     assert.deepEqual(stack, ['on user', 'on profile'])
+  })
+
+  test('pass options to trait via ioc container', (assert) => {
+    class FooTrait {
+      register (ctx, options) {
+        assert.deepEqual(ctx, User)
+        assert.deepEqual(options, {foo: 1})
+      }
+    }
+
+    ioc.fake('FooTrait', () => {
+      return new FooTrait()
+    })
+
+    class User extends Model {
+      static boot () {
+        super.boot()
+        this.addTrait('@provider:FooTrait', {foo: 1})
+      }
+    }
+
+    User._bootIfNotBooted()
+  })
+
+  test('pass options to bound function', (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+        this.addTrait((ctx, options) => {
+          assert.deepEqual(ctx, User)
+          assert.deepEqual(options, {foo: 1})
+        }, {foo: 1})
+      }
+    }
+
+    User._bootIfNotBooted()
   })
 })

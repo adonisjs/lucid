@@ -235,7 +235,7 @@ class Schema {
    * @return {Object}
    */
   raw (statement) {
-    return this.raw(statement)
+    return this.schema.raw(statement)
   }
 
   /**
