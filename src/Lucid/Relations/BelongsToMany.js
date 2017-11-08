@@ -660,17 +660,6 @@ class BelongsToMany extends BaseRelation {
   }
 
   /**
-   * Prepare query for an aggregate function
-   *
-   * @method _prepareAggregate
-   */
-  _prepareAggregate () {
-    this._validateRead()
-    this._makeJoinQuery()
-    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
-  }
-
-  /**
    * Attach existing rows inside pivot table as a relationship
    *
    * @method attach
