@@ -162,7 +162,8 @@ function generateAggregate (aggregateOp, defaultColumnName = undefined) {
       throw new Error(`'${funcName}' requires a column name.`)
     }
 
-    const results = await this.clone().from(this.as('__lucid'))[aggregateOp](`${columnName} as __lucid_aggregate`)
+    const wrapper = new this.constructor(this.client)
+    const results = await wrapper.from(this.as('__lucid'))[aggregateOp](`${columnName} as __lucid_aggregate`)
     return results[0].__lucid_aggregate
   }
 }
