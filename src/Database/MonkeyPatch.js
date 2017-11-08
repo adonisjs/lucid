@@ -163,7 +163,8 @@ function generateAggregate (aggregateOp, defaultColumnName = undefined) {
     }
 
     const wrapper = new this.constructor(this.client)
-    const results = await wrapper.from(this.as('__lucid'))[aggregateOp](`${columnName} as __lucid_aggregate`)
+    const query = wrapper.from(this.as('__lucid'))[aggregateOp](`${columnName} as __lucid_aggregate`)
+    const results = await query
     return results[0].__lucid_aggregate
   }
 }
