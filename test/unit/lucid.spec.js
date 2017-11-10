@@ -715,6 +715,30 @@ test.group('Model', (group) => {
     assert.instanceOf(users, VanillaSerializer)
   })
 
+  test('return the latest record from the database', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('users').insert({ username: 'romain' })
+    const user = await User.query().latest()
+    assert.equal(user.username, 'romain')
+  })
+
+  test('return the latest record from the database with a specified field', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('users').insert({ username: 'romain' })
+    const user = await User.query().latest('username')
+    assert.equal(user.username, 'virk')
+  })
+
   test('pick x number of rows from database', async (assert) => {
     class User extends Model {
     }
