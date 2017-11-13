@@ -27,7 +27,7 @@
     "@adonisjs/generic-exceptions": "^1.0.0",
     "chance": "^1.0.12",
     "debug": "^3.1.0",
-    "knex": "^0.13.0",
+    "knex": "^0.14.0",
     "lodash": "^4.17.4",
     "moment": "^2.19.1",
     "pluralize": "^7.0.0",
