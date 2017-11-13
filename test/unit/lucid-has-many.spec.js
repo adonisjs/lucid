@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
 */
 
+require('../../lib/iocResolver').setFold(require('@adonisjs/fold'))
 const test = require('japa')
 const fs = require('fs-extra')
 const path = require('path')
@@ -972,5 +973,41 @@ test.group('Relations | Has Many', (group) => {
 
     assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" in (?) and "model" = ?'))
     assert.deepEqual(carQuery.bindings, helpers.formatBindings([1, 'BMW']))
+  })
+
+  test('withCount work fine with self relations', async (assert) => {
+    class User extends Model {
+      teamMembers () {
+        return this.hasMany(User, 'id', 'manager_id')
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await ioc.use('Database').table('users').insert([
+      {
+        username: 'virk'
+      },
+      {
+        username: 'nikk',
+        manager_id: 1
+      },
+      {
+        username: 'prasan',
+        manager_id: 1
+      }
+    ])
+
+    const results = await User.query().withCount('teamMembers').fetch()
+
+    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" where users.id = sj_0.manager_id) as "teamMembers_count" from "users"'
+
+    assert.equal(results.first().$sideLoaded.teamMembers_count, 2)
+    assert.equal(results.rows[1].$sideLoaded.teamMembers_count, 0)
+    assert.equal(results.last().$sideLoaded.teamMembers_count, 0)
+    assert.equal(userQuery.sql, helpers.formatQuery(expectedQuery))
   })
 })

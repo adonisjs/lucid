@@ -71,6 +71,8 @@ module.exports = {
         table.increments()
         table.integer('vid')
         table.integer('country_id')
+        table.integer('manager_id')
+        table.integer('lead_id')
         table.string('username')
         table.string('email')
         table.timestamps()
@@ -161,6 +163,14 @@ module.exports = {
         table.increments('id')
         table.integer('post_id')
         table.integer('section_id')
+        table.timestamps()
+        table.timestamp('deleted_at').nullable()
+      }),
+      db.schema.createTable('followers', function (table) {
+        table.increments('id')
+        table.integer('user_id')
+        table.integer('follower_id')
+        table.boolean('has_blocked')
         table.timestamps()
         table.timestamp('deleted_at').nullable()
       })

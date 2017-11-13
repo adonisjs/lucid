@@ -199,12 +199,13 @@ class BelongsToMany extends BaseRelation {
    */
   _makeJoinQuery () {
     const self = this
+    const foreignTable = this.relatedTableAlias || this.$foreignTable
 
     /**
      * Inner join to limit the rows
      */
     this.relatedQuery.innerJoin(this.$pivotTable, function () {
-      this.on(`${self.$foreignTable}.${self.relatedPrimaryKey}`, `${self.$pivotTable}.${self.relatedForeignKey}`)
+      this.on(`${foreignTable}.${self.relatedPrimaryKey}`, `${self.$pivotTable}.${self.relatedForeignKey}`)
     })
   }
 
@@ -628,10 +629,23 @@ class BelongsToMany extends BaseRelation {
    * @method relatedWhere
    *
    * @param  {Boolean}     count
+   * @param  {Integer}     counter
    *
    * @return {Object}
    */
-  relatedWhere (count) {
+  relatedWhere (count, counter) {
+    /**
+     * When we are making self joins, we should alias the current
+     * table with the counter, which is sent by the consumer of
+     * this method.
+     *
+     * Also the counter should be incremented by the consumer itself.
+     */
+    if (this.$primaryTable === this.$foreignTable) {
+      this.relatedTableAlias = `sj_${counter}`
+      this.relatedQuery.table(`${this.$foreignTable} as ${this.relatedTableAlias}`)
+    }
+
     this._makeJoinQuery()
     this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$pivotTable}.${this.foreignKey}`)
 

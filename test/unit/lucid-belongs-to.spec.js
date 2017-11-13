@@ -764,4 +764,82 @@ test.group('Relations | Belongs To', (group) => {
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" in (?) and "country_id" = ?'))
     assert.deepEqual(userQuery.bindings, helpers.formatBindings([1, 10]))
   })
+
+  test('withCount work fine with self relations', async (assert) => {
+    class User extends Model {
+      manager () {
+        return this.belongsTo(User, 'manager_id', 'id')
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await ioc.use('Database').table('users').insert([
+      {
+        username: 'virk'
+      },
+      {
+        username: 'nikk',
+        manager_id: 1
+      }
+    ])
+
+    const results = await User.query().withCount('manager').fetch()
+
+    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" where users.manager_id = sj_0.id) as "manager_count" from "users"'
+
+    assert.equal(results.first().$sideLoaded.manager_count, 0)
+    assert.equal(results.last().$sideLoaded.manager_count, 1)
+    assert.equal(userQuery.sql, helpers.formatQuery(expectedQuery))
+  })
+
+  test('withCount work fine with multiple self relations', async (assert) => {
+    class User extends Model {
+      manager () {
+        return this.belongsTo(User, 'manager_id', 'id')
+      }
+
+      lead () {
+        return this.belongsTo(User, 'lead_id', 'id')
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await ioc.use('Database').table('users').insert([
+      {
+        username: 'virk'
+      },
+      {
+        username: 'nikk',
+        manager_id: 1
+      },
+      {
+        username: 'prasan',
+        manager_id: 1,
+        lead_id: 2
+      }
+    ])
+
+    const results = await User.query().withCount('manager').withCount('lead').fetch()
+
+    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" where users.manager_id = sj_0.id) as "manager_count", (select count(*) from "users" as "sj_1" where users.lead_id = sj_1.id) as "lead_count" from "users"'
+
+    assert.equal(results.first().$sideLoaded.manager_count, 0)
+    assert.equal(results.first().$sideLoaded.lead_count, 0)
+
+    assert.equal(results.rows[1].$sideLoaded.manager_count, 1)
+    assert.equal(results.rows[1].$sideLoaded.lead_count, 0)
+
+    assert.equal(results.last().$sideLoaded.manager_count, 1)
+    assert.equal(results.last().$sideLoaded.lead_count, 1)
+
+    assert.equal(userQuery.sql, helpers.formatQuery(expectedQuery))
+  })
 })

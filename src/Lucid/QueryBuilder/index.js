@@ -95,6 +95,17 @@ class QueryBuilder {
      */
     this._hiddenFields = this.Model.hidden
 
+    /**
+     * Storing the counter for how many withCount queries
+     * have been made by this query builder chain.
+     *
+     * This is required so that self joins have generate
+     * unique table names
+     *
+     * @type {Number}
+     */
+    this._withCountCounter = -1
+
     return new Proxy(this, proxyHandler)
   }
 
@@ -709,6 +720,8 @@ class QueryBuilder {
       throw CE.RuntimeException.cannotNestRelation(_.first(_.keys(nested)), name, 'withCount')
     }
 
+    this._withCountCounter++
+
     /**
      * Since user can set the `count as` statement, we need
      * to parse them properly.
@@ -739,7 +752,7 @@ class QueryBuilder {
     if (!_.find(this.query._statements, (statement) => statement.grouping === 'columns')) {
       columns.push('*')
     }
-    columns.push(relationInstance.relatedWhere(true).as(asStatement))
+    columns.push(relationInstance.relatedWhere(true, this._withCountCounter).as(asStatement))
 
     /**
      * Saving reference of count inside _sideloaded
