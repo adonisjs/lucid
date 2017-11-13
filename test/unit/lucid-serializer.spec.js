@@ -262,4 +262,17 @@ test.group('Relations | Serializer', (group) => {
     await d.reload()
     assert.deepEqual(d.toJSON(), {id: 4, username: 'simon'}, 'Test 4 failed')
   })
+
+  test('return nth child', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    const users = await User.all()
+    assert.equal(users.nth(0).username, 'virk')
+    assert.equal(users.nth(1).username, 'nikk')
+    assert.isNull(users.nth(2))
+  })
 })
