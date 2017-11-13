@@ -345,14 +345,14 @@ class QueryBuilder {
   /**
    * Returns the latest row from the database.
    *
-   * @method latest
+   * @method last
    * @async
    *
    * @param  {String} [field = 'id']
    *
    * @return {Model|Null}
    */
-  async latest (field = 'id') {
+  async last (field = 'id') {
     /**
      * Apply all the scopes before fetching
      * data

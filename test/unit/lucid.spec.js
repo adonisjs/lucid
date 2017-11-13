@@ -723,7 +723,7 @@ test.group('Model', (group) => {
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('users').insert({ username: 'romain' })
-    const user = await User.query().latest()
+    const user = await User.query().last()
     assert.equal(user.username, 'romain')
   })
 
@@ -735,7 +735,7 @@ test.group('Model', (group) => {
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('users').insert({ username: 'romain' })
-    const user = await User.query().latest('username')
+    const user = await User.query().last('username')
     assert.equal(user.username, 'virk')
   })
 
