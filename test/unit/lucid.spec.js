@@ -537,7 +537,7 @@ test.group('Model', (group) => {
     await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
     assert.deepEqual(Object.keys(users.first().toObject()), [
-      'id', 'vid', 'country_id', 'username', 'email', 'updated_at', 'type', 'login_at', 'deleted_at'
+      'id', 'vid', 'country_id', 'manager_id', 'lead_id', 'username', 'email', 'updated_at', 'type', 'login_at', 'deleted_at'
     ])
   })
 

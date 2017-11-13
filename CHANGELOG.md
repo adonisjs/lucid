@@ -1,3 +1,18 @@
+<a name="4.0.23"></a>
+## [4.0.23](https://github.com/adonisjs/adonis-lucid/compare/v4.0.22...v4.0.23) (2017-11-13)
+
+
+### Bug Fixes
+
+* **relations:** fix withCount query for self joins ([8b51561](https://github.com/adonisjs/adonis-lucid/commit/8b51561)), closes [#231](https://github.com/adonisjs/adonis-lucid/issues/231)
+
+
+### Features
+
+* **serializer:** add nth method to pull row for specific index ([e578eeb](https://github.com/adonisjs/adonis-lucid/commit/e578eeb))
+
+
+
 <a name="4.0.22"></a>
 ## [4.0.22](https://github.com/adonisjs/adonis-lucid/compare/v4.0.21...v4.0.22) (2017-11-08)
 
