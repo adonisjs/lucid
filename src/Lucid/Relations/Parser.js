@@ -30,9 +30,13 @@ class RelationParser {
    * @return {Object}
    */
   _normalizeRelations (relations) {
-    return !Array.isArray(relations)
-      ? relations
-      : _.zipObject(relations, _.fill(new Array(relations.length), null))
+    if (!Array.isArray(relations)) {
+      return relations
+    }
+
+    return _.transform(relations, (result, relation) => {
+      return (result[relation] = null)
+    }, {})
   }
 
   /**
