@@ -438,11 +438,11 @@ class Model extends BaseModel {
    *
    * @method reset
    *
-   * @return {void}
+   * @return {Promise<void>}
    */
-  static async reset () {
+  static reset () {
     const query = this.query()
-    await query.truncate()
+    return query.truncate()
   }
 
   /**
