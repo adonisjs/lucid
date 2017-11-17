@@ -434,6 +434,18 @@ class Model extends BaseModel {
   }
 
   /**
+   * Deletes all rows of this model (truncate table).
+   *
+   * @method truncate
+   *
+   * @return {Promise<void>}
+   */
+  static truncate () {
+    const query = this.query()
+    return query.truncate()
+  }
+
+  /**
    * Returns an object of values dirty after persisting to
    * database or after fetching from database.
    *

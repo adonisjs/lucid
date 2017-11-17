@@ -1096,6 +1096,21 @@ test.group('Model', (group) => {
     assert.isFalse(user.isNew)
   })
 
+  test('reset a table in the database', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    const user = await User.create({ username: 'virk' })
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.isNew)
+
+    await User.truncate()
+
+    const users = await User.all()
+    assert.equal(users.rows.length, 0)
+  })
+
   test('further changes to instance returned by create should update the model', async (assert) => {
     class User extends Model {
     }
