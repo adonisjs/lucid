@@ -343,6 +343,44 @@ class QueryBuilder {
   }
 
   /**
+   * Returns the latest row from the database.
+   *
+   * @method last
+   * @async
+   *
+   * @param  {String} field
+   *
+   * @return {Model|Null}
+   */
+  async last (field = this.Model.primaryKey) {
+    /**
+     * Apply all the scopes before fetching
+     * data
+     */
+    this._applyScopes()
+
+    const row = await this.query.orderBy(field, 'desc').first()
+    if (!row) {
+      return null
+    }
+
+    const modelInstance = this._mapRowToInstance(row)
+
+    /**
+     * Eagerload relations when defined on query
+     */
+    if (_.size(this._eagerLoads)) {
+      await modelInstance.loadMany(this._eagerLoads)
+    }
+
+    if (this.Model.$hooks) {
+      await this.Model.$hooks.after.exec('find', modelInstance)
+    }
+
+    return modelInstance
+  }
+
+  /**
    * Throws an exception when unable to find the first
    * row for the built query
    *

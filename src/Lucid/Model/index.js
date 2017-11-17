@@ -413,6 +413,20 @@ class Model extends BaseModel {
   }
 
   /**
+   * Returns the latest row from the database.
+   *
+   * @method last
+   * @async
+   *
+   * @param  {String} field
+   *
+   * @return {Model|Null}
+   */
+  static last (field = this.primaryKey) {
+    return this.query().last(field)
+  }
+
+  /**
    * Creates many instances of model in parallel.
    *
    * @method createMany

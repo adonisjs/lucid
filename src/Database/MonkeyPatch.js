@@ -130,3 +130,18 @@ KnexQueryBuilder.prototype.paginate = async function (page = 2, perPage = 20) {
     data: data
   }
 }
+
+/**
+ * Returns the latest row from the database.
+ *
+ * @method last
+ *
+ * @for Database
+ *
+ * @param  {string} [field = 'id']
+ *
+ * @chainable
+ */
+KnexQueryBuilder.prototype.last = async function (field = 'id') {
+  return this.orderBy(field, 'desc').first()
+}
