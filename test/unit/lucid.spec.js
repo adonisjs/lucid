@@ -1451,7 +1451,7 @@ test.group('Model', (group) => {
     }
 
     const count = await ioc.use('Database').table('users').count('* as total')
-    assert.deepEqual(count, [{ 'total': 0 }])
+    assert.deepEqual(count, [{ 'total': helpers.formatNumber(0) }])
   })
 
   test('rollback update operation via transaction', async (assert) => {
@@ -1500,7 +1500,7 @@ test.group('Model', (group) => {
     }
 
     const count = await ioc.use('Database').table('users').count('* as total')
-    assert.deepEqual(count, [{ 'total': 0 }])
+    assert.deepEqual(count, [{ 'total': helpers.formatNumber(0) }])
   })
 
   test('createMany inside a transaction', async (assert) => {
@@ -1522,7 +1522,7 @@ test.group('Model', (group) => {
     }
 
     const count = await ioc.use('Database').table('users').count('* as total')
-    assert.deepEqual(count, [{ 'total': 0 }])
+    assert.deepEqual(count, [{ 'total': helpers.formatNumber(0) }])
   })
 
   test('define runtime visible fields', async (assert) => {
@@ -1611,7 +1611,7 @@ test.group('Model', (group) => {
     assert.isTrue(user.$persisted)
     assert.equal(user.username, 'foo')
     assert.equal(user.vid, 2)
-    assert.equal(helpers.formatQuery(usersQuery.sql), helpers.formatQuery('insert into "users" ("created_at", "updated_at", "username", "vid") values (?, ?, ?, ?)'))
+    assert.equal(helpers.formatQuery(usersQuery.sql), helpers.formatQuery(helpers.addReturningStatement('insert into "users" ("created_at", "updated_at", "username", "vid") values (?, ?, ?, ?)', 'id')))
   })
 
   test('new up a row when old doesn\'t exists', async (assert) => {

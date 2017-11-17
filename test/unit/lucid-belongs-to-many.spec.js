@@ -1737,7 +1737,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const user = await User.find(20)
     const postsCount = await user.posts().count('* as total')
-    assert.deepEqual(postsCount, [{ 'total': 2 }])
+    assert.deepEqual(postsCount, [{ 'total': helpers.formatNumber(2) }])
   })
 
   test('count distinct on given field', async (assert) => {
@@ -1762,7 +1762,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const user = await User.find(20)
     const postsCount = await user.posts().countDistinct('post_user.user_id as total')
-    assert.deepEqual(postsCount, [{ 'total': 1 }])
+    assert.deepEqual(postsCount, [{ 'total': helpers.formatNumber(1) }])
   })
 
   test('withCount work fine with self relations', async (assert) => {
