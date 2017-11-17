@@ -1105,7 +1105,7 @@ test.group('Model', (group) => {
     assert.isTrue(user.$persisted)
     assert.isFalse(user.isNew)
 
-    await User.reset()
+    await User.truncate()
 
     const users = await User.all()
     assert.equal(users.rows.length, 0)

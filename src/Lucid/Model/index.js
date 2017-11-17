@@ -436,11 +436,11 @@ class Model extends BaseModel {
   /**
    * Deletes all rows of this model (truncate table).
    *
-   * @method reset
+   * @method truncate
    *
    * @return {Promise<void>}
    */
-  static reset () {
+  static truncate () {
     const query = this.query()
     return query.truncate()
   }
