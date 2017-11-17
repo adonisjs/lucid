@@ -1619,4 +1619,15 @@ test.group('Model', (group) => {
     assert.equal(user.username, 'foo')
     assert.equal(user.vid, 2)
   })
+
+  test('have access to id after save', async (assert) => {
+    class User extends Model {}
+    User._bootIfNotBooted()
+    const user = new User()
+    user.fill({ username: 'virk' })
+    await user.save()
+    assert.isDefined(user.id)
+    assert.equal(user.id, 1)
+    assert.equal(user.toJSON().id, 1)
+  })
 })
