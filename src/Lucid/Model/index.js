@@ -434,6 +434,18 @@ class Model extends BaseModel {
   }
 
   /**
+   * Deletes all rows of this model (truncate table).
+   *
+   * @method reset
+   *
+   * @return {void}
+   */
+  static async reset () {
+    const query = this.query()
+    await query.truncate()
+  }
+
+  /**
    * Returns an object of values dirty after persisting to
    * database or after fetching from database.
    *
