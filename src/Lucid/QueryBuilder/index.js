@@ -348,11 +348,11 @@ class QueryBuilder {
    * @method last
    * @async
    *
-   * @param  {String} [field = 'id']
+   * @param  {String} field
    *
    * @return {Model|Null}
    */
-  async last (field = 'id') {
+  async last (field = this.Model.primaryKey) {
     /**
      * Apply all the scopes before fetching
      * data
