@@ -332,8 +332,12 @@ test.group('Model', (group) => {
     const user = new User()
     user.username = 'virk'
     await user.save()
+    await helpers.sleep(1000)
+
     user.username = 'nikk'
     await user.save()
+
+    await helpers.sleep(1000)
     user.username = 'virk'
     await user.save()
 
@@ -347,7 +351,7 @@ test.group('Model', (group) => {
     assert.equal(queries[2].sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ? where "id" = ?'))
     assert.deepEqual(queries[2].bindings[1], 'virk')
     assert.deepEqual(user.dirty, {})
-  })
+  }).timeout(6000)
 
   test('set timestamps automatically', async (assert) => {
     class User extends Model {
@@ -1122,11 +1126,13 @@ test.group('Model', (group) => {
     const user = await User.create({ username: 'virk' })
     assert.isTrue(user.$persisted)
     assert.isFalse(user.isNew)
+
+    await helpers.sleep(1000)
     user.username = 'nikk'
     await user.save()
 
     assert.equal(userQuery.sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ? where "id" = ?'))
-  })
+  }).timeout(6000)
 
   test('should be able to delete the model instance', async (assert) => {
     class User extends Model {
@@ -1629,5 +1635,29 @@ test.group('Model', (group) => {
     assert.isDefined(user.id)
     assert.equal(user.id, 1)
     assert.equal(user.toJSON().id, 1)
+  })
+
+  test('should reflect new updated_at time', async (assert) => {
+    class User extends Model {}
+    User._bootIfNotBooted()
+
+    const user = await User.create({ username: 'virk' })
+    const timeBeforeSave = user.updated_at
+    await helpers.sleep(2000)
+
+    user.username = 'simon'
+    await user.save()
+    assert.notEqual(timeBeforeSave, user.updated_at)
+  }).timeout(6000)
+
+  test('creating a new row should have timestamps', async (assert) => {
+    class User extends Model {}
+    User._bootIfNotBooted()
+
+    const user = await User.create({ username: 'virk' })
+    assert.isDefined(user.created_at)
+    assert.isDefined(user.updated_at)
+    assert.equal(user.created_at, user.toJSON().created_at)
+    assert.equal(user.updated_at, user.toJSON().updated_at)
   })
 })

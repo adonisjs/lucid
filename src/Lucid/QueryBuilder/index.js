@@ -401,12 +401,21 @@ class QueryBuilder {
    * @method update
    * @async
    *
-   * @param  {Object} values
+   * @param  {Object|Model} valuesOrModelInstance
    *
    * @return {Promise}
    */
-  update (values) {
-    const valuesCopy = _.clone(values)
+  update (valuesOrModelInstance) {
+    /**
+     * If update receives the model instance, then it just picks the dirty
+     * fields and updates them
+     */
+    if (valuesOrModelInstance && valuesOrModelInstance instanceof this.Model === true) {
+      this._applyScopes()
+      return this.query.update(valuesOrModelInstance.dirty)
+    }
+
+    const valuesCopy = _.clone(valuesOrModelInstance)
     const fakeModel = new this.Model()
     fakeModel._setUpdatedAt(valuesCopy)
     fakeModel._formatDateFields(valuesCopy)

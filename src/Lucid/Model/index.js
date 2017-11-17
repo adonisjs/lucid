@@ -697,11 +697,14 @@ class Model extends BaseModel {
     if (this.isDirty) {
       /**
        * Set proper timestamps
-       */
+      */
+      this._setUpdatedAt(this.$attributes)
+      this._formatDateFields(this.$attributes)
+
       affected = await query
         .where(this.constructor.primaryKey, this.primaryKeyValue)
         .ignoreScopes()
-        .update(this.dirty)
+        .update(this)
       /**
        * Sync originals to find a diff when updating for next time
        */
