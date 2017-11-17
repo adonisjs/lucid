@@ -389,9 +389,21 @@ class QueryBuilder {
     await this._eagerLoad(modelInstances)
 
     /**
+     * Pagination meta data
+     */
+    const pages = _.omit(result, ['data'])
+
+    /**
+     * Fire afterPaginate event
+     */
+    if (this.Model.$hooks) {
+      await this.Model.$hooks.after.exec('paginate', modelInstances, pages)
+    }
+
+    /**
      * Return an instance of active model serializer
      */
-    return new this.Model.Serializer(modelInstances, _.omit(result, ['data']))
+    return new this.Model.Serializer(modelInstances, pages)
   }
 
   /**

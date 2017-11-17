@@ -1565,7 +1565,7 @@ test.group('Model', (group) => {
 
     User.addHook('afterFetch', fn)
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-    await User.all('username', 'virk')
+    await User.all()
   })
 
   test('create a new row when unable to find one', async (assert) => {
@@ -1659,5 +1659,25 @@ test.group('Model', (group) => {
     assert.isDefined(user.updated_at)
     assert.equal(user.created_at, user.toJSON().created_at)
     assert.equal(user.updated_at, user.toJSON().updated_at)
+  })
+
+  test('call after paginate hook when calling paginate method', async (assert) => {
+    assert.plan(3)
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    const fn = async function (instances, pages) {
+      assert.deepEqual(pages, { perPage: 20, total: helpers.formatNumber(2), page: 1, lastPage: 1 })
+
+      instances.forEach((instance) => {
+        assert.instanceOf(instance, User)
+      })
+    }
+
+    User.addHook('afterPaginate', fn)
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await User.query().paginate()
   })
 })
