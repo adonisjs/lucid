@@ -1789,12 +1789,6 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.include(c[0], { 'pivot_user_id': 20, 'total': 19 })
     c = await user.posts().getMax('id')
     assert.equal(19, c)
-      { post_id: 19, user_id: 20 }
-    ])
-
-    const user = await User.find(20)
-    const postsCount = await user.posts().count('* as total')
-    assert.deepEqual(postsCount, [{ 'total': helpers.formatNumber(2) }])
   })
 
   test('count distinct on given field', async (assert) => {
@@ -1819,7 +1813,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const user = await User.find(20)
     const postsCount = await user.posts().countDistinct('post_user.user_id as total')
-    assert.deepEqual(postsCount, [{ 'total': helpers.formatNumber(1) }])
+    assert.include(postsCount[0], { 'total': helpers.formatNumber(1) })
   })
 
   test('withCount work fine with self relations', async (assert) => {
