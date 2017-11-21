@@ -95,6 +95,17 @@ class QueryBuilder {
      */
     this._hiddenFields = this.Model.hidden
 
+    /**
+     * Storing the counter for how many withCount queries
+     * have been made by this query builder chain.
+     *
+     * This is required so that self joins have generate
+     * unique table names
+     *
+     * @type {Number}
+     */
+    this._withCountCounter = -1
+
     return new Proxy(this, proxyHandler)
   }
 
@@ -332,6 +343,44 @@ class QueryBuilder {
   }
 
   /**
+   * Returns the latest row from the database.
+   *
+   * @method last
+   * @async
+   *
+   * @param  {String} field
+   *
+   * @return {Model|Null}
+   */
+  async last (field = this.Model.primaryKey) {
+    /**
+     * Apply all the scopes before fetching
+     * data
+     */
+    this._applyScopes()
+
+    const row = await this.query.orderBy(field, 'desc').first()
+    if (!row) {
+      return null
+    }
+
+    const modelInstance = this._mapRowToInstance(row)
+
+    /**
+     * Eagerload relations when defined on query
+     */
+    if (_.size(this._eagerLoads)) {
+      await modelInstance.loadMany(this._eagerLoads)
+    }
+
+    if (this.Model.$hooks) {
+      await this.Model.$hooks.after.exec('find', modelInstance)
+    }
+
+    return modelInstance
+  }
+
+  /**
    * Throws an exception when unable to find the first
    * row for the built query
    *
@@ -378,9 +427,21 @@ class QueryBuilder {
     await this._eagerLoad(modelInstances)
 
     /**
+     * Pagination meta data
+     */
+    const pages = _.omit(result, ['data'])
+
+    /**
+     * Fire afterPaginate event
+     */
+    if (this.Model.$hooks) {
+      await this.Model.$hooks.after.exec('paginate', modelInstances, pages)
+    }
+
+    /**
      * Return an instance of active model serializer
      */
-    return new this.Model.Serializer(modelInstances, _.omit(result, ['data']))
+    return new this.Model.Serializer(modelInstances, pages)
   }
 
  /**
@@ -494,12 +555,21 @@ class QueryBuilder {
    * @method update
    * @async
    *
-   * @param  {Object} values
+   * @param  {Object|Model} valuesOrModelInstance
    *
    * @return {Promise}
    */
-  update (values) {
-    const valuesCopy = _.clone(values)
+  update (valuesOrModelInstance) {
+    /**
+     * If update receives the model instance, then it just picks the dirty
+     * fields and updates them
+     */
+    if (valuesOrModelInstance && valuesOrModelInstance instanceof this.Model === true) {
+      this._applyScopes()
+      return this.query.update(valuesOrModelInstance.dirty)
+    }
+
+    const valuesCopy = _.clone(valuesOrModelInstance)
     const fakeModel = new this.Model()
     fakeModel._setUpdatedAt(valuesCopy)
     fakeModel._formatDateFields(valuesCopy)
@@ -813,6 +883,8 @@ class QueryBuilder {
       throw CE.RuntimeException.cannotNestRelation(_.first(_.keys(nested)), name, 'withCount')
     }
 
+    this._withCountCounter++
+
     /**
      * Since user can set the `count as` statement, we need
      * to parse them properly.
@@ -843,7 +915,7 @@ class QueryBuilder {
     if (!_.find(this.query._statements, (statement) => statement.grouping === 'columns')) {
       columns.push('*')
     }
-    columns.push(relationInstance.relatedWhere(true).as(asStatement))
+    columns.push(relationInstance.relatedWhere(true, this._withCountCounter).as(asStatement))
 
     /**
      * Saving reference of count inside _sideloaded

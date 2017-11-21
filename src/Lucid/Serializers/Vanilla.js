@@ -132,6 +132,19 @@ class VanillaSerializer {
   }
 
   /**
+   * Returns the row for the given index
+   *
+   * @method nth
+   *
+   * @param  {Number} index
+   *
+   * @return {Model|Null}
+   */
+  nth (index) {
+    return _.nth(this.rows, index) || null
+  }
+
+  /**
    * Get last model instance
    *
    * @method last

@@ -413,6 +413,20 @@ class Model extends BaseModel {
   }
 
   /**
+   * Returns the latest row from the database.
+   *
+   * @method last
+   * @async
+   *
+   * @param  {String} field
+   *
+   * @return {Model|Null}
+   */
+  static last (field = this.primaryKey) {
+    return this.query().last(field)
+  }
+
+  /**
    * Creates many instances of model in parallel.
    *
    * @method createMany
@@ -431,6 +445,18 @@ class Model extends BaseModel {
         .invalidParameter(`${this.name}.createMany expects an array of values`, payloadArray)
     }
     return Promise.all(payloadArray.map((payload) => this.create(payload, trx)))
+  }
+
+  /**
+   * Deletes all rows of this model (truncate table).
+   *
+   * @method truncate
+   *
+   * @return {Promise<void>}
+   */
+  static truncate () {
+    const query = this.query()
+    return query.truncate()
   }
 
   /**
@@ -685,11 +711,14 @@ class Model extends BaseModel {
     if (this.isDirty) {
       /**
        * Set proper timestamps
-       */
+      */
+      this._setUpdatedAt(this.$attributes)
+      this._formatDateFields(this.$attributes)
+
       affected = await query
         .where(this.constructor.primaryKey, this.primaryKeyValue)
         .ignoreScopes()
-        .update(this.dirty)
+        .update(this)
       /**
        * Sync originals to find a diff when updating for next time
        */

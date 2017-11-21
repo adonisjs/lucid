@@ -105,11 +105,25 @@ class HasMany extends BaseRelation {
    * @method relatedWhere
    *
    * @param  {Boolean}     count
+   * @param  {Number}      counter
    *
    * @return {Object}
    */
-  relatedWhere (count) {
-    this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$foreignTable}.${this.foreignKey}`)
+  relatedWhere (count, counter) {
+    /**
+     * When we are making self joins, we should alias the current
+     * table with the counter, which is sent by the consumer of
+     * this method.
+     *
+     * Also the counter should be incremented by the consumer itself.
+     */
+    if (this.$primaryTable === this.$foreignTable) {
+      this.relatedTableAlias = `sj_${counter}`
+      this.relatedQuery.table(`${this.$foreignTable} AS ${this.relatedTableAlias}`)
+    }
+
+    const tableAlias = this.relatedTableAlias || this.$foreignTable
+    this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${tableAlias}.${this.foreignKey}`)
     if (count) {
       this.relatedQuery.count('*')
     }

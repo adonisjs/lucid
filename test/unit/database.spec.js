@@ -260,6 +260,28 @@ test.group('Database | QueryBuilder', (group) => {
     assert.equal(c1, 10)
     assert.equal(c2, 10)
   })
+
+  test('return the latest record from the database', async (assert) => {
+    const users = [
+      { username: 'virk' },
+      { username: 'romain' }
+    ]
+    await this.database.insert(users).into('users')
+
+    const user = await this.database.table('users').last()
+    assert.equal(user.username, 'romain')
+  })
+
+  test('return the latest record from the database via username field', async (assert) => {
+    const users = [
+      { username: 'romain' },
+      { username: 'virk' }
+    ]
+    await this.database.insert(users).into('users')
+
+    const user = await this.database.table('users').last('username')
+    assert.equal(user.username, 'virk')
+  })
 })
 
 test.group('Database | Manager', () => {

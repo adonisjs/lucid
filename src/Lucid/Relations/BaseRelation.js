@@ -81,6 +81,14 @@ class BaseRelation {
       query.whereIn(fk, values)
     }
 
+    /**
+     * This is set by `relatedWhere` method in case of a self
+     * join
+     *
+     * @type {Number|Null}
+     */
+    this.relatedTableAlias = null
+
     return new Proxy(this, {
       get: proxyGet('relatedQuery')
     })

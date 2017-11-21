@@ -42,6 +42,7 @@ test.group('Relations | Belongs To Many', (group) => {
     await ioc.use('Adonis/Src/Database').table('users').truncate()
     await ioc.use('Adonis/Src/Database').table('posts').truncate()
     await ioc.use('Adonis/Src/Database').table('post_user').truncate()
+    await ioc.use('Adonis/Src/Database').table('followers').truncate()
   })
 
   group.after(async () => {
@@ -1788,5 +1789,202 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.include(c[0], { 'pivot_user_id': 20, 'total': 19 })
     c = await user.posts().getMax('id')
     assert.equal(19, c)
+      { post_id: 19, user_id: 20 }
+    ])
+
+    const user = await User.find(20)
+    const postsCount = await user.posts().count('* as total')
+    assert.deepEqual(postsCount, [{ 'total': helpers.formatNumber(2) }])
+  })
+
+  test('count distinct on given field', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 20, username: 'virk' })
+    await ioc.use('Database').table('posts').insert([{ id: 18, title: 'Adonis 101' }, { id: 19, title: 'Lucid 101' }])
+    await ioc.use('Database').table('post_user').insert([
+      { post_id: 18, user_id: 20 },
+      { post_id: 19, user_id: 20 }
+    ])
+
+    const user = await User.find(20)
+    const postsCount = await user.posts().countDistinct('post_user.user_id as total')
+    assert.deepEqual(postsCount, [{ 'total': helpers.formatNumber(1) }])
+  })
+
+  test('withCount work fine with self relations', async (assert) => {
+    class Follower extends Model {
+    }
+
+    class User extends Model {
+      followers () {
+        return this.belongsToMany(User, 'user_id', 'follower_id').pivotTable('followers')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Follower._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await ioc.use('Database').table('users').insert([
+      {
+        username: 'virk'
+      },
+      {
+        username: 'nikk'
+      }
+    ])
+
+    await ioc.use('Database').table('followers').insert([
+      {
+        user_id: 1,
+        follower_id: 2
+      }
+    ])
+
+    const results = await User.query().withCount('followers').fetch()
+
+    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where users.id = followers.user_id) as "followers_count" from "users"'
+
+    assert.equal(results.first().$sideLoaded.followers_count, 1)
+    assert.equal(results.last().$sideLoaded.followers_count, 0)
+    assert.equal(userQuery.sql, helpers.formatQuery(expectedQuery))
+  })
+
+  test('withCount work fine with too much data', async (assert) => {
+    class Follower extends Model {
+    }
+
+    class User extends Model {
+      followers () {
+        return this.belongsToMany(User, 'user_id', 'follower_id').pivotTable('followers')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Follower._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await ioc.use('Database').table('users').insert([
+      {
+        username: 'virk'
+      },
+      {
+        username: 'nikk'
+      },
+      {
+        username: 'prasan'
+      },
+      {
+        username: 'tushar'
+      }
+    ])
+
+    await ioc.use('Database').table('followers').insert([
+      {
+        user_id: 1,
+        follower_id: 2
+      },
+      {
+        user_id: 1,
+        follower_id: 3
+      },
+      {
+        user_id: 2,
+        follower_id: 3
+      }
+    ])
+
+    const results = await User.query().withCount('followers').fetch()
+
+    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where users.id = followers.user_id) as "followers_count" from "users"'
+
+    assert.equal(results.first().$sideLoaded.followers_count, 2)
+    assert.equal(results.rows[1].$sideLoaded.followers_count, 1)
+    assert.equal(results.rows[2].$sideLoaded.followers_count, 0)
+    assert.equal(results.last().$sideLoaded.followers_count, 0)
+    assert.equal(userQuery.sql, helpers.formatQuery(expectedQuery))
+  })
+
+  test('withCount work fine with multiple relations', async (assert) => {
+    class Follower extends Model {
+    }
+
+    class User extends Model {
+      followers () {
+        return this.belongsToMany(User, 'user_id', 'follower_id').pivotTable('followers')
+      }
+
+      following () {
+        return this.belongsToMany(User, 'follower_id', 'user_id').pivotTable('followers')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Follower._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await ioc.use('Database').table('users').insert([
+      {
+        username: 'virk'
+      },
+      {
+        username: 'nikk'
+      },
+      {
+        username: 'prasan'
+      },
+      {
+        username: 'tushar'
+      }
+    ])
+
+    await ioc.use('Database').table('followers').insert([
+      {
+        user_id: 1,
+        follower_id: 2
+      },
+      {
+        user_id: 1,
+        follower_id: 3
+      },
+      {
+        user_id: 2,
+        follower_id: 3
+      }
+    ])
+
+    const results = await User.query().withCount('following').withCount('followers').fetch()
+
+    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."user_id" where users.id = followers.follower_id) as "following_count", (select count(*) from "users" as "sj_1" inner join "followers" on "sj_1"."id" = "followers"."follower_id" where users.id = followers.user_id) as "followers_count" from "users"'
+
+    assert.equal(results.first().$sideLoaded.followers_count, 2)
+    assert.equal(results.first().$sideLoaded.following_count, 0)
+
+    assert.equal(results.rows[1].$sideLoaded.followers_count, 1)
+    assert.equal(results.rows[1].$sideLoaded.following_count, 1)
+
+    assert.equal(results.rows[2].$sideLoaded.followers_count, 0)
+    assert.equal(results.rows[2].$sideLoaded.following_count, 2)
+
+    assert.equal(results.last().$sideLoaded.followers_count, 0)
+    assert.equal(results.last().$sideLoaded.following_count, 0)
+    assert.equal(userQuery.sql, helpers.formatQuery(expectedQuery))
   })
 })

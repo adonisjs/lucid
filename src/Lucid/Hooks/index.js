@@ -24,7 +24,7 @@ const { resolver } = require('../../../lib/iocResolver')
  */
 class Hooks {
   constructor () {
-    this._events = ['create', 'update', 'delete', 'restore', 'find', 'fetch']
+    this._events = ['create', 'update', 'delete', 'restore', 'find', 'fetch', 'paginate']
 
     /**
      * The event aliases. Whenever a handler is saved for a alias,
@@ -141,11 +141,11 @@ class Hooks {
    * @async
    *
    * @param  {String} event
-   * @param  {Object} ctx
+   * @param  {Spread} ...args
    *
    * @return {void}
    */
-  async exec (event, ctx) {
+  async exec (event, ...args) {
     const handlers = this._handlers[event] || []
     const aliasesHandlers = this._aliases[event] ? this._handlers[this._aliases[event]] || [] : []
     const allHandlers = handlers.concat(aliasesHandlers)
@@ -163,7 +163,7 @@ class Hooks {
      */
     for (let handler of allHandlers) {
       const { method } = resolver.forDir('modelHooks').resolveFunc(handler.handler)
-      await method(ctx)
+      await method(...args)
     }
   }
 }

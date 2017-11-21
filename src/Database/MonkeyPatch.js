@@ -264,3 +264,18 @@ generateAggregate('avg')
  * @return {Number} The average of distinct values of columnName
  */
 generateAggregate('avgDistinct')
+
+/**
+ * Returns the latest row from the database.
+ *
+ * @method last
+ *
+ * @for Database
+ *
+ * @param  {string} [field = 'id']
+ *
+ * @chainable
+ */
+KnexQueryBuilder.prototype.last = async function (field = 'id') {
+  return this.orderBy(field, 'desc').first()
+}
