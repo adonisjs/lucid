@@ -1,3 +1,26 @@
+<a name="4.0.24"></a>
+## [4.0.24](https://github.com/adonisjs/adonis-lucid/compare/v4.0.23...v4.0.24) (2017-11-22)
+
+
+### Bug Fixes
+
+* **lucid:** on save retain timestamps inside memory ([4f0c035](https://github.com/adonisjs/adonis-lucid/commit/4f0c035)), closes [#235](https://github.com/adonisjs/adonis-lucid/issues/235)
+* **relations:** changed method _normalizeRelations ([b085f8a](https://github.com/adonisjs/adonis-lucid/commit/b085f8a))
+* **relations:** parse relations array ([3cea702](https://github.com/adonisjs/adonis-lucid/commit/3cea702))
+* **test:** remove followers table on tear down ([fe69ed2](https://github.com/adonisjs/adonis-lucid/commit/fe69ed2))
+* **tests:** test fixes for postgresql ([27ac971](https://github.com/adonisjs/adonis-lucid/commit/27ac971))
+
+
+### Features
+
+* **database:** add aggregation helpers ([10023f7](https://github.com/adonisjs/adonis-lucid/commit/10023f7))
+* **lucid:** add afterPaginate hook ([f12d8a5](https://github.com/adonisjs/adonis-lucid/commit/f12d8a5)), closes [#236](https://github.com/adonisjs/adonis-lucid/issues/236)
+* **lucid:** add Model.truncate() function ([#240](https://github.com/adonisjs/adonis-lucid/issues/240)) ([9be15a9](https://github.com/adonisjs/adonis-lucid/commit/9be15a9))
+* **migrations:** introduce a silent flag to silent the output ([c16abb8](https://github.com/adonisjs/adonis-lucid/commit/c16abb8))
+* **query-builder:** add last method  ([#232](https://github.com/adonisjs/adonis-lucid/issues/232)) ([01a6fa7](https://github.com/adonisjs/adonis-lucid/commit/01a6fa7))
+
+
+
 <a name="4.0.23"></a>
 ## [4.0.23](https://github.com/adonisjs/adonis-lucid/compare/v4.0.22...v4.0.23) (2017-11-13)
 

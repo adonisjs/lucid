@@ -26,6 +26,7 @@ class MirationRollback extends BaseMigration {
     migration:rollback
     { -b, --batch=@value: Rollback upto a specific batch number }
     { -f, --force: Forcefully run migrations in production }
+    { -s, --silent: Silent the migrations output }
     { --log: Log SQL queries instead of executing them }
     `
   }
@@ -52,10 +53,11 @@ class MirationRollback extends BaseMigration {
    * @param  {Boolean} options.log
    * @param  {Boolean} options.force
    * @param  {Number} options.batch
+   * @param  {Boolean} options.silent
    *
    * @return {void|Array}
    */
-  async handle (args, { log, force, batch }) {
+  async handle (args, { log, force, batch, silent }) {
     try {
       batch = batch ? Number(batch) : null
 
@@ -68,7 +70,7 @@ class MirationRollback extends BaseMigration {
        * Tell user that there is nothing to migrate
        */
       if (status === 'skipped') {
-        this.info('Already at the last batch')
+        this.execIfNot(silent, () => this.info('Already at the last batch'))
       }
 
       /**
@@ -76,7 +78,7 @@ class MirationRollback extends BaseMigration {
        */
       if (status === 'completed' && !queries) {
         const endTime = process.hrtime(startTime)
-        migrated.forEach((name) => this.completed('rollback', `${name}.js`))
+        migrated.forEach((name) => this.execIfNot(silent, () => this.completed('rollback', `${name}.js`)))
         this.success(`Rollback completed in ${prettyHrTime(endTime)}`)
       }
 
@@ -85,8 +87,8 @@ class MirationRollback extends BaseMigration {
        */
       if (queries) {
         _.each(queries, ({queries, name}) => {
-          console.log(this.chalk.magenta(`\n Queries for ${name}.js`))
-          _.each(queries, (query) => console.log(`  ${query}`))
+          this.execIfNot(silent, () => console.log(this.chalk.magenta(`\n Queries for ${name}.js`)))
+          _.each(queries, (query) => this.execIfNot(silent, () => console.log(`  ${query}`)))
           console.log('\n')
         })
       }

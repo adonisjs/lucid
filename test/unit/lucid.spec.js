@@ -332,8 +332,12 @@ test.group('Model', (group) => {
     const user = new User()
     user.username = 'virk'
     await user.save()
+    await helpers.sleep(1000)
+
     user.username = 'nikk'
     await user.save()
+
+    await helpers.sleep(1000)
     user.username = 'virk'
     await user.save()
 
@@ -347,7 +351,7 @@ test.group('Model', (group) => {
     assert.equal(queries[2].sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ? where "id" = ?'))
     assert.deepEqual(queries[2].bindings[1], 'virk')
     assert.deepEqual(user.dirty, {})
-  })
+  }).timeout(6000)
 
   test('set timestamps automatically', async (assert) => {
     class User extends Model {
@@ -713,6 +717,53 @@ test.group('Model', (group) => {
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     const users = await User.all()
     assert.instanceOf(users, VanillaSerializer)
+  })
+  test('return the latest record with the querybuilder from the database', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('users').insert({ username: 'romain' })
+    const user = await User.query().last()
+    assert.equal(user.username, 'romain')
+  })
+
+  test('return the latest record with the querybuilder from the database with a specified field', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('users').insert({ username: 'romain' })
+    const user = await User.query().last('username')
+    assert.equal(user.username, 'virk')
+  })
+
+  test('return the latest record from the database', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('users').insert({ username: 'romain' })
+    const user = await User.last()
+    assert.equal(user.username, 'romain')
+  })
+
+  test('return the latest record from the database with a specified field', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('users').insert({ username: 'romain' })
+    const user = await User.last('username')
+    assert.equal(user.username, 'virk')
   })
 
   test('pick x number of rows from database', async (assert) => {
@@ -1096,6 +1147,21 @@ test.group('Model', (group) => {
     assert.isFalse(user.isNew)
   })
 
+  test('reset a table in the database', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    const user = await User.create({ username: 'virk' })
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.isNew)
+
+    await User.truncate()
+
+    const users = await User.all()
+    assert.equal(users.rows.length, 0)
+  })
+
   test('further changes to instance returned by create should update the model', async (assert) => {
     class User extends Model {
     }
@@ -1107,11 +1173,13 @@ test.group('Model', (group) => {
     const user = await User.create({ username: 'virk' })
     assert.isTrue(user.$persisted)
     assert.isFalse(user.isNew)
+
+    await helpers.sleep(1000)
     user.username = 'nikk'
     await user.save()
 
     assert.equal(userQuery.sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ? where "id" = ?'))
-  })
+  }).timeout(6000)
 
   test('should be able to delete the model instance', async (assert) => {
     class User extends Model {
@@ -1430,7 +1498,7 @@ test.group('Model', (group) => {
     }
 
     const count = await ioc.use('Database').table('users').count('* as total')
-    assert.deepEqual(count, [{ 'total': 0 }])
+    assert.deepEqual(count, [{ 'total': helpers.formatNumber(0) }])
   })
 
   test('rollback update operation via transaction', async (assert) => {
@@ -1479,7 +1547,7 @@ test.group('Model', (group) => {
     }
 
     const count = await ioc.use('Database').table('users').count('* as total')
-    assert.deepEqual(count, [{ 'total': 0 }])
+    assert.deepEqual(count, [{ 'total': helpers.formatNumber(0) }])
   })
 
   test('createMany inside a transaction', async (assert) => {
@@ -1501,7 +1569,7 @@ test.group('Model', (group) => {
     }
 
     const count = await ioc.use('Database').table('users').count('* as total')
-    assert.deepEqual(count, [{ 'total': 0 }])
+    assert.deepEqual(count, [{ 'total': helpers.formatNumber(0) }])
   })
 
   test('define runtime visible fields', async (assert) => {
@@ -1544,7 +1612,7 @@ test.group('Model', (group) => {
 
     User.addHook('afterFetch', fn)
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-    await User.all('username', 'virk')
+    await User.all()
   })
 
   test('create a new row when unable to find one', async (assert) => {
@@ -1590,7 +1658,7 @@ test.group('Model', (group) => {
     assert.isTrue(user.$persisted)
     assert.equal(user.username, 'foo')
     assert.equal(user.vid, 2)
-    assert.equal(helpers.formatQuery(usersQuery.sql), helpers.formatQuery('insert into "users" ("created_at", "updated_at", "username", "vid") values (?, ?, ?, ?)'))
+    assert.equal(helpers.formatQuery(usersQuery.sql), helpers.formatQuery(helpers.addReturningStatement('insert into "users" ("created_at", "updated_at", "username", "vid") values (?, ?, ?, ?)', 'id')))
   })
 
   test('new up a row when old doesn\'t exists', async (assert) => {
@@ -1603,5 +1671,60 @@ test.group('Model', (group) => {
     assert.isFalse(user.$persisted)
     assert.equal(user.username, 'foo')
     assert.equal(user.vid, 2)
+  })
+
+  test('have access to id after save', async (assert) => {
+    class User extends Model {}
+    User._bootIfNotBooted()
+    const user = new User()
+    user.fill({ username: 'virk' })
+    await user.save()
+    assert.isDefined(user.id)
+    assert.equal(user.id, 1)
+    assert.equal(user.toJSON().id, 1)
+  })
+
+  test('should reflect new updated_at time', async (assert) => {
+    class User extends Model {}
+    User._bootIfNotBooted()
+
+    const user = await User.create({ username: 'virk' })
+    const timeBeforeSave = user.updated_at
+    await helpers.sleep(2000)
+
+    user.username = 'simon'
+    await user.save()
+    assert.notEqual(timeBeforeSave, user.updated_at)
+  }).timeout(6000)
+
+  test('creating a new row should have timestamps', async (assert) => {
+    class User extends Model {}
+    User._bootIfNotBooted()
+
+    const user = await User.create({ username: 'virk' })
+    assert.isDefined(user.created_at)
+    assert.isDefined(user.updated_at)
+    assert.equal(user.created_at, user.toJSON().created_at)
+    assert.equal(user.updated_at, user.toJSON().updated_at)
+  })
+
+  test('call after paginate hook when calling paginate method', async (assert) => {
+    assert.plan(3)
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    const fn = async function (instances, pages) {
+      assert.deepEqual(pages, { perPage: 20, total: helpers.formatNumber(2), page: 1, lastPage: 1 })
+
+      instances.forEach((instance) => {
+        assert.instanceOf(instance, User)
+      })
+    }
+
+    User.addHook('afterPaginate', fn)
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await User.query().paginate()
   })
 })

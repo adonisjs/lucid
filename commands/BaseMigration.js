@@ -58,6 +58,21 @@ class BaseMigration extends Command {
       throw new Error('Cannot run migrations in production. Use --force flag to continue')
     }
   }
+
+  /**
+   * Executes the function when conditional
+   * is false
+   *
+   * @method execIfNot
+   *
+   * @param {Boolean} conditional
+   * @param {Function} fn
+   */
+  execIfNot (conditional, fn) {
+    if (!conditional) {
+      fn()
+    }
+  }
 }
 
 module.exports = BaseMigration

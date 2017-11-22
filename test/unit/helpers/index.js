@@ -191,7 +191,8 @@ module.exports = {
       db.schema.dropTable('countries'),
       db.schema.dropTable('categories'),
       db.schema.dropTable('sections'),
-      db.schema.dropTable('post_section')
+      db.schema.dropTable('post_section'),
+      db.schema.dropTable('followers')
     ])
   },
 

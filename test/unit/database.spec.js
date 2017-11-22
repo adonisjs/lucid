@@ -193,6 +193,95 @@ test.group('Database | QueryBuilder', (group) => {
     assert.equal(firstUser.username, 'virk')
     await this.database.truncate('users')
   })
+
+  test('aggregate functions', async (assert) => {
+    await this.database.insert({ user_id: 1, country_id: 1, profile_name: 'u1', likes: 5 }).into('profiles')
+    await this.database.insert({ user_id: 1, country_id: 2, profile_name: 'u2', likes: 10 }).into('profiles') // Intentional duplicate for testing distinct aggregates
+    await this.database.insert({ user_id: 1, country_id: 2, profile_name: 'u3', likes: 10 }).into('profiles')
+
+    let c1 = 0
+    let c2 = 0
+
+    let q = this.database.table('profiles').select('country_id').sum('likes as like_total').groupBy('country_id')
+
+    c1 = (await q)
+    c2 = await q.getCount()
+    assert.equal(c1.length, 2)
+    assert.equal(c2, 2, 'There should be 2 rows counted')
+    assert.equal(c1[0].country_id, 1)
+    assert.equal(c1[0].like_total, 5)
+    assert.equal(c1[1].country_id, 2)
+    assert.equal(c1[1].like_total, 20)
+
+    c1 = (await this.database.table('profiles').count('likes as total'))[0].total
+    c2 = await this.database.table('profiles').getCount()
+    assert.equal(c1, 3)
+    assert.equal(c2, 3)
+
+    c1 = (await this.database.table('profiles').countDistinct('likes as total'))[0].total
+    c2 = await this.database.table('profiles').getCountDistinct('likes')
+    assert.equal(c1, 2)
+    assert.equal(c2, 2)
+
+    c1 = (await this.database.table('profiles').avg('likes as total'))[0].total
+    c2 = await this.database.table('profiles').getAvg('likes')
+    assert.equal(c1, 25 / 3)
+    assert.equal(c2, 25 / 3)
+
+    c1 = (await this.database.table('profiles').avgDistinct('likes as total'))[0].total
+    c2 = await this.database.table('profiles').getAvgDistinct('likes')
+    assert.equal(c1, 15 / 2)
+    assert.equal(c2, 15 / 2)
+
+    try {
+      await this.database.table('profiles').getAvg()
+      assert.fail('success', 'exception')
+    } catch (err) {
+      assert.equal(err.message, "'getAvg' requires a column name.")
+    }
+
+    c1 = (await this.database.table('profiles').sum('likes as total'))[0].total
+    c2 = await this.database.table('profiles').getSum('likes')
+    assert.equal(c1, 25)
+    assert.equal(c2, 25)
+
+    c1 = (await this.database.table('profiles').sumDistinct('likes as total'))[0].total
+    c2 = await this.database.table('profiles').getSumDistinct('likes')
+    assert.equal(c1, 15)
+    assert.equal(c2, 15)
+
+    c1 = (await this.database.table('profiles').min('likes as total'))[0].total
+    c2 = await this.database.table('profiles').getMin('likes')
+    assert.equal(c1, 5)
+    assert.equal(c2, 5)
+
+    c1 = (await this.database.table('profiles').max('likes as total'))[0].total
+    c2 = await this.database.table('profiles').getMax('likes')
+    assert.equal(c1, 10)
+    assert.equal(c2, 10)
+  })
+
+  test('return the latest record from the database', async (assert) => {
+    const users = [
+      { username: 'virk' },
+      { username: 'romain' }
+    ]
+    await this.database.insert(users).into('users')
+
+    const user = await this.database.table('users').last()
+    assert.equal(user.username, 'romain')
+  })
+
+  test('return the latest record from the database via username field', async (assert) => {
+    const users = [
+      { username: 'romain' },
+      { username: 'virk' }
+    ]
+    await this.database.insert(users).into('users')
+
+    const user = await this.database.table('users').last('username')
+    assert.equal(user.username, 'virk')
+  })
 })
 
 test.group('Database | Manager', () => {

@@ -415,6 +415,12 @@ test.group('Relations | Belongs To', (group) => {
     user.username = 'virk'
     await user.save()
 
+    /**
+     * Sleep is required, so that lucid generates
+     * the updated_at timestamp
+     */
+    await helpers.sleep(1000)
+
     await profile.user().associate(user)
     assert.equal(profile.user_id, 1)
     assert.isFalse(profile.isNew)
@@ -423,7 +429,7 @@ test.group('Relations | Belongs To', (group) => {
     assert.equal(freshProfile.id, 1)
     assert.equal(freshProfile.user_id, 1)
     assert.equal(profileQuery.sql, helpers.formatQuery('update "profiles" set "updated_at" = ?, "user_id" = ? where "id" = ?'))
-  })
+  }).timeout(4000)
 
   test('persist parent record if not already persisted', async (assert) => {
     class User extends Model {

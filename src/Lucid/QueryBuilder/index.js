@@ -343,6 +343,44 @@ class QueryBuilder {
   }
 
   /**
+   * Returns the latest row from the database.
+   *
+   * @method last
+   * @async
+   *
+   * @param  {String} field
+   *
+   * @return {Model|Null}
+   */
+  async last (field = this.Model.primaryKey) {
+    /**
+     * Apply all the scopes before fetching
+     * data
+     */
+    this._applyScopes()
+
+    const row = await this.query.orderBy(field, 'desc').first()
+    if (!row) {
+      return null
+    }
+
+    const modelInstance = this._mapRowToInstance(row)
+
+    /**
+     * Eagerload relations when defined on query
+     */
+    if (_.size(this._eagerLoads)) {
+      await modelInstance.loadMany(this._eagerLoads)
+    }
+
+    if (this.Model.$hooks) {
+      await this.Model.$hooks.after.exec('find', modelInstance)
+    }
+
+    return modelInstance
+  }
+
+  /**
    * Throws an exception when unable to find the first
    * row for the built query
    *
@@ -389,9 +427,125 @@ class QueryBuilder {
     await this._eagerLoad(modelInstances)
 
     /**
+     * Pagination meta data
+     */
+    const pages = _.omit(result, ['data'])
+
+    /**
+     * Fire afterPaginate event
+     */
+    if (this.Model.$hooks) {
+      await this.Model.$hooks.after.exec('paginate', modelInstances, pages)
+    }
+
+    /**
      * Return an instance of active model serializer
      */
-    return new this.Model.Serializer(modelInstances, _.omit(result, ['data']))
+    return new this.Model.Serializer(modelInstances, pages)
+  }
+
+ /**
+  * Return a count of all model records.
+  *
+  * @method getCount
+  *
+  * @param  {String} columnName = '*'
+  *
+  * @return {Number}
+  */
+  getCount (columnName = '*') {
+    return this.query.getCount(columnName)
+  }
+
+  /**
+  * Return a distinct count of all model records.
+  *
+  * @method getCountDistinct
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getCountDistinct (columnName) {
+    return this.query.getCountDistinct(columnName)
+  }
+
+ /**
+  * Return the average of all values of columnName.
+  *
+  * @method getAvg
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getAvg (columnName) {
+    return this.query.getAvg(columnName)
+  }
+
+  /**
+  * Return the average of all distinct values of columnName.
+  *
+  * @method getAvgDistinct
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getAvgDistinct (columnName) {
+    return this.query.getAvgDistinct(columnName)
+  }
+
+  /**
+  * Return the minimum of all values of columnName.
+  *
+  * @method getMin
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getMin (columnName) {
+    return this.query.getMin(columnName)
+  }
+
+  /**
+  * Return the maximum of all values of columnName.
+  *
+  * @method getMax
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getMax (columnName) {
+    return this.query.getMax(columnName)
+  }
+
+ /**
+  * Return the sum of all values of columnName.
+  *
+  * @method getSum
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getSum (columnName) {
+    return this.query.getSum(columnName)
+  }
+
+ /**
+  * Return the sum of all distinct values of columnName.
+  *
+  * @method getSumDistinct
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getSumDistinct (columnName) {
+    return this.query.getSumDistinct(columnName)
   }
 
   /**
@@ -401,12 +555,21 @@ class QueryBuilder {
    * @method update
    * @async
    *
-   * @param  {Object} values
+   * @param  {Object|Model} valuesOrModelInstance
    *
    * @return {Promise}
    */
-  update (values) {
-    const valuesCopy = _.clone(values)
+  update (valuesOrModelInstance) {
+    /**
+     * If update receives the model instance, then it just picks the dirty
+     * fields and updates them
+     */
+    if (valuesOrModelInstance && valuesOrModelInstance instanceof this.Model === true) {
+      this._applyScopes()
+      return this.query.update(valuesOrModelInstance.dirty)
+    }
+
+    const valuesCopy = _.clone(valuesOrModelInstance)
     const fakeModel = new this.Model()
     fakeModel._setUpdatedAt(valuesCopy)
     fakeModel._formatDateFields(valuesCopy)
