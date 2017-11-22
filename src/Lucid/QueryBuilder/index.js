@@ -444,6 +444,110 @@ class QueryBuilder {
     return new this.Model.Serializer(modelInstances, pages)
   }
 
+ /**
+  * Return a count of all model records.
+  *
+  * @method getCount
+  *
+  * @param  {String} columnName = '*'
+  *
+  * @return {Number}
+  */
+  getCount (columnName = '*') {
+    return this.query.getCount(columnName)
+  }
+
+  /**
+  * Return a distinct count of all model records.
+  *
+  * @method getCountDistinct
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getCountDistinct (columnName) {
+    return this.query.getCountDistinct(columnName)
+  }
+
+ /**
+  * Return the average of all values of columnName.
+  *
+  * @method getAvg
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getAvg (columnName) {
+    return this.query.getAvg(columnName)
+  }
+
+  /**
+  * Return the average of all distinct values of columnName.
+  *
+  * @method getAvgDistinct
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getAvgDistinct (columnName) {
+    return this.query.getAvgDistinct(columnName)
+  }
+
+  /**
+  * Return the minimum of all values of columnName.
+  *
+  * @method getMin
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getMin (columnName) {
+    return this.query.getMin(columnName)
+  }
+
+  /**
+  * Return the maximum of all values of columnName.
+  *
+  * @method getMax
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getMax (columnName) {
+    return this.query.getMax(columnName)
+  }
+
+ /**
+  * Return the sum of all values of columnName.
+  *
+  * @method getSum
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getSum (columnName) {
+    return this.query.getSum(columnName)
+  }
+
+ /**
+  * Return the sum of all distinct values of columnName.
+  *
+  * @method getSumDistinct
+  *
+  * @param  {String} columnName
+  *
+  * @return {Number}
+  */
+  getSumDistinct (columnName) {
+    return this.query.getSumDistinct(columnName)
+  }
+
   /**
    * Bulk update data from query builder. This method will also
    * format all dates and set `updated_at` column

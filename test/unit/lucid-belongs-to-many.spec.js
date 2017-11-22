@@ -1715,7 +1715,7 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(postQuery.sql, helpers.formatQuery('select "posts".*, "post_user"."post_id" as "pivot_post_id", "post_user"."user_id" as "pivot_user_id" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" in (?, ?)'))
   })
 
-  test('do not select all rows for a counts query', async (assert) => {
+  test('test aggregates and aggregate helpers', async (assert) => {
     class Post extends Model {
     }
 
@@ -1732,12 +1732,63 @@ test.group('Relations | Belongs To Many', (group) => {
     await ioc.use('Database').table('posts').insert([{ id: 18, title: 'Adonis 101' }, { id: 19, title: 'Lucid 101' }])
     await ioc.use('Database').table('post_user').insert([
       { post_id: 18, user_id: 20 },
-      { post_id: 19, user_id: 20 }
+      { post_id: 19, user_id: 20 },
+      { post_id: 19, user_id: 20 }, // Intentional duplicate for distinct tests
+      { post_id: 19, user_id: 21 }
     ])
 
     const user = await User.find(20)
-    const postsCount = await user.posts().count('* as total')
-    assert.deepEqual(postsCount, [{ 'total': helpers.formatNumber(2) }])
+    let c = 0
+
+    // count
+    c = await user.posts().count('* as total')
+    assert.include(c[0], { 'pivot_user_id': 20, 'total': 3 })
+
+    c = await user.posts().getCount()
+    assert.equal(3, c)
+
+    // countDistinct
+    c = await user.posts().countDistinct('post_user.user_id as total')
+    assert.include(c[0], { 'pivot_user_id': 20, 'total': 1 })
+
+    c = await user.posts().getCountDistinct('pivot_user_id')
+    assert.equal(1, c)
+
+    // sum
+    c = await user.posts().sum('posts.id as total')
+    assert.include(c[0], { 'pivot_user_id': 20, 'total': 18 + 19 + 19 })
+    c = await user.posts().getSum('id')
+    assert.equal(18 + 19 + 19, c)
+
+    // sumDistinct
+    c = await user.posts().sumDistinct('posts.id as total')
+    assert.include(c[0], { 'pivot_user_id': 20, 'total': 18 + 19 })
+    c = await user.posts().getSumDistinct('id')
+    assert.equal(18 + 19, c)
+
+    // avg
+    c = await user.posts().avg('posts.id as total')
+    assert.include(c[0], { 'pivot_user_id': 20, 'total': (18 + 19 + 19) / 3 })
+    c = await user.posts().getAvg('id')
+    assert.equal((18 + 19 + 19) / 3, c)
+
+    // avgDistinct
+    c = await user.posts().avgDistinct('posts.id as total')
+    assert.include(c[0], { 'pivot_user_id': 20, 'total': (18 + 19) / 2 })
+    c = await user.posts().getAvgDistinct('id')
+    assert.equal((18 + 19) / 2, c)
+
+    // min
+    c = await user.posts().min('posts.id as total')
+    assert.include(c[0], { 'pivot_user_id': 20, 'total': 18 })
+    c = await user.posts().getMin('id')
+    assert.equal(18, c)
+
+    // max
+    c = await user.posts().max('posts.id as total')
+    assert.include(c[0], { 'pivot_user_id': 20, 'total': 19 })
+    c = await user.posts().getMax('id')
+    assert.equal(19, c)
   })
 
   test('count distinct on given field', async (assert) => {
@@ -1762,7 +1813,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const user = await User.find(20)
     const postsCount = await user.posts().countDistinct('post_user.user_id as total')
-    assert.deepEqual(postsCount, [{ 'total': helpers.formatNumber(1) }])
+    assert.include(postsCount[0], { 'total': helpers.formatNumber(1) })
   })
 
   test('withCount work fine with self relations', async (assert) => {

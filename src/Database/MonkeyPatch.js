@@ -132,6 +132,140 @@ KnexQueryBuilder.prototype.paginate = async function (page = 2, perPage = 20) {
 }
 
 /**
+ * Generates an aggregate function, that returns the aggregated result
+ * as a number.
+ *
+ * @method generateAggregate
+ *
+ * @param  {String}          aggregateOp
+ * @param  {String}          defaultColumnName
+ *
+ * @return {Number}
+ *
+ * @example
+ * ```js
+ * generateAggregate('count')
+ * ```
+ */
+function generateAggregate (aggregateOp, defaultColumnName = undefined) {
+  let funcName = `get${_.upperFirst(aggregateOp)}`
+
+  /**
+   * Do not re-add the method if exists
+   */
+  if (KnexQueryBuilder.prototype[funcName]) {
+    return
+  }
+
+  KnexQueryBuilder.prototype[funcName] = async function (columnName = defaultColumnName) {
+    if (!columnName) {
+      throw new Error(`'${funcName}' requires a column name.`)
+    }
+
+    const wrapper = new this.constructor(this.client)
+    const query = wrapper.from(this.as('__lucid'))[aggregateOp](`${columnName} as __lucid_aggregate`)
+    const results = await query
+    return results[0].__lucid_aggregate
+  }
+}
+
+/**
+ * Fetch and return a row count
+ *
+ * @method getCount
+ * @async
+ *
+ * @param  {String}   columnName = '*'
+ *
+ * @return {Number} The count of of rows in this query
+ */
+generateAggregate('count', '*')
+
+/**
+ * Fetch and return a distinct row count
+ *
+ * @method getCountDistinct
+ * @async
+ *
+ * @param  {String}   columnName
+ *
+ * @return {Number} The distinct count of rows in this query
+ */
+generateAggregate('countDistinct')
+
+/**
+ * Fetch and return the sum of all values in columnName
+ *
+ * @method getSum
+ * @async
+ *
+ * @param  {String}   columnName
+ *
+ * @return {Number} The sum of columnName
+ */
+generateAggregate('sum')
+
+/**
+ * Fetch and return the sum of all distinct values in columnName
+ *
+ * @method getSumDistinct
+ * @async
+ *
+ * @param  {String}   columnName
+ *
+ * @return {Number} The sum of distinct values in columnName
+ */
+generateAggregate('sumDistinct')
+
+/**
+ * Fetch and return the minimum of all values in columnName
+ *
+ * @method getMin
+ * @async
+ *
+ * @param  {String}   columnName
+ *
+ * @return {Number} The minimunm value of columnName
+ */
+generateAggregate('min')
+
+/**
+ * Fetch and return the maximum of all values in columnName
+ *
+ * @method getMax
+ * @async
+ *
+ * @param  {String}   columnName
+ *
+ * @return {Number} The maximunm value of columnName
+ */
+generateAggregate('max')
+
+/**
+ * Fetch and return the average of all values in columnName
+ *
+ * @method getAvg
+ * @async
+ *
+ * @param  {String}   columnName
+ *
+ * @return {Number} The average value of columnName
+ */
+generateAggregate('avg')
+
+/**
+ * Fetch and return the average of all distinct values in columnName
+ *
+ * @method getAvgDistinct
+ * @async
+ *
+ * @param  {String}   columnName
+ *
+ * @return {Number} The average of distinct values of columnName
+ */
+generateAggregate('avgDistinct')
+
+/**
  * Returns the latest row from the database.
  *
  * @method last
