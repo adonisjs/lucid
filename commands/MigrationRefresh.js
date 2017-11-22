@@ -24,6 +24,7 @@ class MigrationRefresh extends BaseMigration {
     return `
     migration:refresh
     { -f, --force: Forcefully run migrations in production }
+    { -s, --silent: Silent the migrations output }
     { --log: Log SQL queries instead of executing them }
     `
   }
@@ -50,13 +51,14 @@ class MigrationRefresh extends BaseMigration {
    * @param  {Object} args
    * @param  {Boolean} options.log
    * @param  {Boolean} options.force
+   * @param  {Boolean} options.silent
    *
    * @return {void|Array}
    */
-  async handle (args, { log, force }) {
+  async handle (args, { log, force, silent }) {
     this._validateState(force)
-    await ace.call('migration:reset', {}, { log, force })
-    await ace.call('migration:run', {}, { log, force })
+    await ace.call('migration:reset', {}, { log, force, silent })
+    await ace.call('migration:run', {}, { log, force, silent })
   }
 }
 

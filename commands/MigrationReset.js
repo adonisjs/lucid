@@ -25,6 +25,7 @@ class MigrationReset extends BaseMigration {
     return `
     migration:reset
     { -f, --force: Forcefully run migrations in production }
+    { -s, --silent: Silent the migrations output }
     { --log: Log SQL queries instead of executing them }
     `
   }
@@ -50,10 +51,11 @@ class MigrationReset extends BaseMigration {
    * @param  {Object} args
    * @param  {Boolean} options.log
    * @param  {Boolean} options.force
+   * @param  {Boolean} options.silent
    *
    * @return {void|Array}
    */
-  async handle (args, { log, force }) {
+  async handle (args, { log, force, silent }) {
     try {
       this._validateState(force)
 
@@ -64,7 +66,7 @@ class MigrationReset extends BaseMigration {
        * Tell user that there is nothing to migrate
        */
       if (status === 'skipped') {
-        this.info('Already at the last batch')
+        this.execIfNot(silent, () => this.info('Already at the last batch'))
       }
 
       /**
@@ -72,7 +74,7 @@ class MigrationReset extends BaseMigration {
        */
       if (status === 'completed' && !queries) {
         const endTime = process.hrtime(startTime)
-        migrated.forEach((name) => this.completed('rollback', `${name}.js`))
+        migrated.forEach((name) => this.execIfNot(silent, () => this.completed('rollback', `${name}.js`)))
         this.success(`Reset completed in ${prettyHrTime(endTime)}`)
       }
 
@@ -81,8 +83,8 @@ class MigrationReset extends BaseMigration {
        */
       if (queries) {
         _.each(queries, ({queries, name}) => {
-          console.log(this.chalk.magenta(`\n Queries for ${name}.js`))
-          _.each(queries, (query) => console.log(`  ${query}`))
+          this.execIfNot(silent, () => console.log(this.chalk.magenta(`\n Queries for ${name}.js`)))
+          _.each(queries, (query) => this.execIfNot(silent, () => console.log(`  ${query}`)))
           console.log('\n')
         })
       }

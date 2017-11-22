@@ -25,6 +25,7 @@ class MigrationRun extends BaseMigration {
     return `
     migration:run
     { -f, --force: Forcefully run migrations in production }
+    { -s, --silent: Silent the migrations output }
     { --log: Log SQL queries instead of executing them }
     `
   }
@@ -49,10 +50,12 @@ class MigrationRun extends BaseMigration {
    *
    * @param  {Object} args
    * @param  {Boolean} options.log
+   * @param  {Boolean} options.force
+   * @param  {Boolean} options.silent
    *
    * @return {void|Array}
    */
-  async handle (args, { log, force }) {
+  async handle (args, { log, force, silent }) {
     try {
       this._validateState(force)
 
@@ -63,7 +66,7 @@ class MigrationRun extends BaseMigration {
        * Tell user that there is nothing to migrate
        */
       if (status === 'skipped') {
-        this.info('Nothing to migrate')
+        this.execIfNot(silent, () => this.info('Nothing to migrate'))
       }
 
       /**
@@ -71,7 +74,7 @@ class MigrationRun extends BaseMigration {
        */
       if (status === 'completed' && !queries) {
         const endTime = process.hrtime(startTime)
-        migrated.forEach((name) => this.completed('migrate', `${name}.js`))
+        migrated.forEach((name) => this.execIfNot(silent, () => this.completed('migrate', `${name}.js`)))
         this.success(`Database migrated successfully in ${prettyHrTime(endTime)}`)
       }
 
@@ -80,8 +83,8 @@ class MigrationRun extends BaseMigration {
        */
       if (queries) {
         _.each(queries, ({queries, name}) => {
-          console.log(this.chalk.magenta(`\n Queries for ${name}.js`))
-          _.each(queries, (query) => console.log(`  ${query}`))
+          this.execIfNot(silent, () => console.log(this.chalk.magenta(`\n Queries for ${name}.js`)))
+          _.each(queries, (query) => this.execIfNot(silent, () => console.log(`  ${query}`)))
           console.log('\n')
         })
       }
@@ -91,6 +94,7 @@ class MigrationRun extends BaseMigration {
       }
     } catch (error) {
       console.log(error)
+      process.exit(1)
     }
   }
 }
