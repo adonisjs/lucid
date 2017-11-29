@@ -448,6 +448,29 @@ class Model extends BaseModel {
   }
 
   /**
+   * Deletes many rows of this model in parallel.
+   *
+   * @method deleteMany
+   *
+   * @param  {Array} ids
+   * @param  {Object} [trx]
+   *
+   * @return {Promise<Array>} Array of delete results
+   *
+   * @throws {InvalidArgumentException} If ids is not an array
+   */
+  static deleteMany (ids, trx) {
+    if (ids instanceof Array === false) {
+      throw GE
+        .InvalidArgumentException
+        .invalidParameter(`${this.name}.deleteMany expects an array of ids`, ids)
+    }
+    return Promise.all(ids.map((id) => this.find(id, trx))).then(instances => {
+      return Promise.all(instances.map((instance) => instance.delete(trx)))
+    })
+  }
+
+  /**
    * Deletes all rows of this model (truncate table).
    *
    * @method truncate
@@ -834,16 +857,27 @@ class Model extends BaseModel {
    * @method delete
    * @async
    *
+   * @param  {Object}  [trx]
+   *
    * @return {Boolean}
    */
-  async delete () {
+  async delete (trx) {
     /**
      * Executing before hooks
      */
     await this.constructor.$hooks.before.exec('delete', this)
 
-    const affected = await this.constructor
-      .query()
+    const query = this.constructor.query()
+
+    /**
+     * If trx is defined then use it for the save
+     * operation.
+     */
+    if (trx) {
+      query.transacting(trx)
+    }
+
+    const affected = await query
       .where(this.constructor.primaryKey, this.primaryKeyValue)
       .ignoreScopes()
       .delete()
@@ -887,11 +921,12 @@ class Model extends BaseModel {
    * @async
    *
    * @param  {String|Number} value
+   * @param  {Object}        [trx]
    *
    * @return {Model|Null}
    */
-  static find (value) {
-    return this.findBy(this.primaryKey, value)
+  static find (value, trx) {
+    return this.findBy(this.primaryKey, value, trx)
   }
 
   /**
@@ -922,8 +957,17 @@ class Model extends BaseModel {
    *
    * @return {Model|Null}
    */
-  static findBy (key, value) {
-    return this.query().where(key, value).first()
+  static findBy (key, value, trx) {
+    const query = this.query()
+    /**
+     * If trx is defined then use it for the save
+     * operation.
+     */
+    if (trx) {
+      query.transacting(trx)
+    }
+
+    return query.where(key, value).first()
   }
 
   /**

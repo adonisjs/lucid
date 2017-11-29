@@ -1268,6 +1268,49 @@ test.group('Model', (group) => {
     }
   })
 
+  test('should delete many', async (assert) => {
+    await ioc.use('Database').table('users').insert([{ id: 10, username: 'virk' }, { id: 20, username: 'nikk' }])
+
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    const results = await User.deleteMany([10, 20])
+    assert.isArray(results)
+    assert.isTrue(results[0])
+    assert.isTrue(results[1])
+  })
+
+  test('run delete hooks for all the models to be deleted via deleteMany', async (assert) => {
+    await ioc.use('Database').table('users').insert([{ id: 10, username: 'virk' }, { id: 20, username: 'nikk' }])
+
+    const stack = []
+
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addHook('beforeDelete', (ctx) => {
+      stack.push(ctx.username)
+    })
+
+    await User.deleteMany([10, 20])
+    assert.deepEqual(stack, ['virk', 'nikk'])
+  })
+
+  test('throw an exception when deleteMany doesn\'t recieves an array', async (assert) => {
+    assert.plan(1)
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    try {
+      await User.deleteMany(10)
+    } catch ({ message }) {
+      assert.equal(message, 'E_INVALID_PARAMETER: User.deleteMany expects an array of ids instead received number')
+    }
+  })
+
   test('throw exception when unable to find row', async (assert) => {
     assert.plan(1)
     class User extends Model {
@@ -1570,6 +1613,27 @@ test.group('Model', (group) => {
 
     const count = await ioc.use('Database').table('users').count('* as total')
     assert.deepEqual(count, [{ 'total': helpers.formatNumber(0) }])
+  })
+
+  test('deleteMany inside a transaction', async (assert) => {
+    await ioc.use('Database').table('users').insert([{ id: 10, username: 'virk' }, { id: 20, username: 'nikk' }])
+
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    const trx = await ioc.use('Database').beginTransaction()
+
+    try {
+      await User.deleteMany([10, 20], trx)
+      trx.rollback()
+    } catch (error) {
+      trx.rollback()
+      throw error
+    }
+
+    const count = await ioc.use('Database').table('users').count('* as total')
+    assert.deepEqual(count, [{ 'total': helpers.formatNumber(2) }])
   })
 
   test('define runtime visible fields', async (assert) => {
