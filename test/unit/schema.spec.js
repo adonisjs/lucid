@@ -216,7 +216,7 @@ test.group('Schema', (group) => {
     assert.isFalse(hasSchemaUsers)
   })
 
-  test('calling this.raw should not cause infinite loop lucid#212', async (assert) => {
+  test.failing('calling this.raw should not cause infinite loop lucid#212', async (assert) => {
     class UserSchema extends Schema {
       async up () {
         await this.raw('CREATE table schema_users (id int);')
@@ -227,5 +227,14 @@ test.group('Schema', (group) => {
     userSchema.up()
     const hasSchemaUsers = await ioc.use('Database').schema.hasTable('schema_users')
     assert.isTrue(hasSchemaUsers)
+  })
+
+  test('add deferred action for raw', (assert) => {
+    class UserSchema extends Schema {
+    }
+
+    const userSchema = new UserSchema(ioc.use('Database'))
+    userSchema.raw('CREATE table schema_users (id int);')
+    assert.deepEqual(userSchema._deferredActions, [{ name: 'raw', args: ['CREATE table schema_users (id int);'] }])
   })
 })
