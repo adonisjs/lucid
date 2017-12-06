@@ -235,7 +235,8 @@ class Schema {
    * @return {Object}
    */
   raw (statement) {
-    return this.schema.raw(statement)
+    this._deferredActions.push({ name: 'raw', args: [statement] })
+    return this
   }
 
   /**

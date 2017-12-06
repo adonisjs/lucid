@@ -1,3 +1,13 @@
+<a name="4.0.25"></a>
+## [4.0.25](https://github.com/adonisjs/adonis-lucid/compare/v4.0.24...v4.0.25) (2017-12-06)
+
+
+### Bug Fixes
+
+* **migrations:** add deferred action for raw method ([#251](https://github.com/adonisjs/adonis-lucid/issues/251)) ([c2b1f3d](https://github.com/adonisjs/adonis-lucid/commit/c2b1f3d))
+
+
+
 <a name="4.0.24"></a>
 ## [4.0.24](https://github.com/adonisjs/adonis-lucid/compare/v4.0.23...v4.0.24) (2017-11-22)
 
