@@ -566,7 +566,11 @@ class BelongsToMany extends BaseRelation {
    * @return {Object}
    */
   async eagerLoad (rows) {
-    this._eagerLoadFn(this.relatedQuery, this.foreignKey, this.mapValues(rows))
+    const mappedRows = this.mapValues(rows)
+    if (!mappedRows || !mappedRows.length) {
+      return this.group([])
+    }
+    this._eagerLoadFn(this.relatedQuery, this.foreignKey, mappedRows)
     const relatedInstances = await this.relatedQuery.fetch()
     return this.group(relatedInstances.rows)
   }
@@ -616,6 +620,7 @@ class BelongsToMany extends BaseRelation {
     const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
       const foreignKeyValue = relatedInstance.$sideLoaded[`pivot_${this.foreignKey}`]
       const existingRelation = _.find(result, (row) => row.identity === foreignKeyValue)
+      this._addPivotValuesAsRelation(relatedInstance)
 
       /**
        * If there is an existing relation, add row to

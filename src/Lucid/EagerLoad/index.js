@@ -122,7 +122,7 @@ class EagerLoad {
     const relationsKeys = _.keys(this._relations)
 
     /**
-     * Since all rows will become to the same user, we just need
+     * Since all rows will belongs to the same user, we just need
      * any one instance for reading some properties of the
      * instance.
      */

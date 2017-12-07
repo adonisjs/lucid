@@ -327,13 +327,7 @@ class QueryBuilder {
     }
 
     const modelInstance = this._mapRowToInstance(row)
-
-    /**
-     * Eagerload relations when defined on query
-     */
-    if (_.size(this._eagerLoads)) {
-      await modelInstance.loadMany(this._eagerLoads)
-    }
+    await this._eagerLoad([modelInstance])
 
     if (this.Model.$hooks) {
       await this.Model.$hooks.after.exec('find', modelInstance)
