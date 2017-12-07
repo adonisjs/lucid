@@ -233,6 +233,15 @@ test.group('Model', (group) => {
     assert.lengthOf(User.$hooks.after._handlers.create, 1)
   })
 
+  test('add hooks as an array', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addHook('beforeCreate', [function () {}, function () {}])
+    assert.lengthOf(User.$hooks.before._handlers.create, 2)
+  })
+
   test('throw exception when hook cycle is invalid', async (assert) => {
     class User extends Model {
     }
