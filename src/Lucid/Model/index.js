@@ -307,7 +307,7 @@ class Model extends BaseModel {
    * @param  {String} forEvent
    * @param  {Function|String} handler
    *
-   * @return {void}
+   * @chainable
    *
    * @static
    */
@@ -325,6 +325,7 @@ class Model extends BaseModel {
      * Add the handler
      */
     this.$hooks[cycle].addHandler(event, handler)
+    return this
   }
 
   /**
