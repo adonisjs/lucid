@@ -225,13 +225,13 @@ test.group('Database | QueryBuilder', (group) => {
 
     c1 = (await this.database.table('profiles').avg('likes as total'))[0].total
     c2 = await this.database.table('profiles').getAvg('likes')
-    assert.equal(c1, 25 / 3)
-    assert.equal(c2, 25 / 3)
+    assert.equal(parseInt(c1), parseInt(25 / 3))
+    assert.equal(parseInt(c2), parseInt(25 / 3))
 
     c1 = (await this.database.table('profiles').avgDistinct('likes as total'))[0].total
     c2 = await this.database.table('profiles').getAvgDistinct('likes')
-    assert.equal(c1, 15 / 2)
-    assert.equal(c2, 15 / 2)
+    assert.equal(parseInt(c1), parseInt(15 / 2))
+    assert.equal(parseInt(c2), parseInt(15 / 2))
 
     try {
       await this.database.table('profiles').getAvg()

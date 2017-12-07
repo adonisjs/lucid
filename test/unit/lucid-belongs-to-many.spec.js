@@ -1742,53 +1742,51 @@ test.group('Relations | Belongs To Many', (group) => {
 
     // count
     c = await user.posts().count('* as total')
-    assert.include(c[0], { 'pivot_user_id': 20, 'total': 3 })
-
+    assert.equal(c[0].total, 3)
     c = await user.posts().getCount()
-    assert.equal(3, c)
+    assert.equal(c, 3)
 
     // countDistinct
     c = await user.posts().countDistinct('post_user.user_id as total')
-    assert.include(c[0], { 'pivot_user_id': 20, 'total': 1 })
-
+    assert.equal(c[0].total, 1)
     c = await user.posts().getCountDistinct('pivot_user_id')
-    assert.equal(1, c)
+    assert.equal(c, 1)
 
     // sum
     c = await user.posts().sum('posts.id as total')
-    assert.include(c[0], { 'pivot_user_id': 20, 'total': 18 + 19 + 19 })
+    assert.equal(c[0].total, 18 + 19 + 19)
     c = await user.posts().getSum('id')
-    assert.equal(18 + 19 + 19, c)
+    assert.equal(c, 18 + 19 + 19)
 
     // sumDistinct
     c = await user.posts().sumDistinct('posts.id as total')
-    assert.include(c[0], { 'pivot_user_id': 20, 'total': 18 + 19 })
+    assert.equal(c[0].total, 18 + 19)
     c = await user.posts().getSumDistinct('id')
-    assert.equal(18 + 19, c)
+    assert.equal(c, 18 + 19)
 
     // avg
     c = await user.posts().avg('posts.id as total')
-    assert.include(c[0], { 'pivot_user_id': 20, 'total': (18 + 19 + 19) / 3 })
+    assert.equal(parseInt(c[0].total), parseInt((18 + 19 + 19) / 3))
     c = await user.posts().getAvg('id')
-    assert.equal((18 + 19 + 19) / 3, c)
+    assert.equal(parseInt(c), parseInt((18 + 19 + 19) / 3))
 
     // avgDistinct
     c = await user.posts().avgDistinct('posts.id as total')
-    assert.include(c[0], { 'pivot_user_id': 20, 'total': (18 + 19) / 2 })
+    assert.equal(parseInt(c[0].total), parseInt((18 + 19) / 2))
     c = await user.posts().getAvgDistinct('id')
-    assert.equal((18 + 19) / 2, c)
+    assert.equal(parseInt(c), parseInt((18 + 19) / 2))
 
     // min
     c = await user.posts().min('posts.id as total')
-    assert.include(c[0], { 'pivot_user_id': 20, 'total': 18 })
+    assert.equal(c[0].total, 18)
     c = await user.posts().getMin('id')
-    assert.equal(18, c)
+    assert.equal(c, 18)
 
     // max
     c = await user.posts().max('posts.id as total')
-    assert.include(c[0], { 'pivot_user_id': 20, 'total': 19 })
+    assert.equal(c[0].total, 19)
     c = await user.posts().getMax('id')
-    assert.equal(19, c)
+    assert.equal(c, 19)
   })
 
   test('count distinct on given field', async (assert) => {

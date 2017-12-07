@@ -24,6 +24,28 @@ const util = require('../../../lib/util')
 const CE = require('../../Exceptions')
 const PivotModel = require('../Model/PivotModel')
 
+const aggregates = [
+  'sum',
+  'sumDistinct',
+  'avg',
+  'avgDistinct',
+  'min',
+  'max',
+  'count',
+  'countDistinct'
+]
+
+const shortHandAggregates = [
+  'getSum',
+  'getSumDistinct',
+  'getAvg',
+  'getAvgDistinct',
+  'getMin',
+  'getMax',
+  'getCount',
+  'getCountDistinct'
+]
+
 /**
  * BelongsToMany class builds relationship between
  * two models with the help of pivot table/model
@@ -220,8 +242,21 @@ class BelongsToMany extends BaseRelation {
    * @private
    */
   _decorateQuery () {
-    this._validateRead()
     this._selectFields()
+    this._makeJoinQuery()
+    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+  }
+
+  /**
+   * Prepares the query to run an aggregate functions
+   *
+   * @method _prepareAggregate
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  _prepareAggregate () {
     this._makeJoinQuery()
     this.wherePivot(this.foreignKey, this.$primaryKeyValue)
   }
@@ -860,5 +895,22 @@ class BelongsToMany extends BaseRelation {
     return Promise.all(rows.map((relatedInstance) => this.create(relatedInstance, pivotCallback)))
   }
 }
+
+aggregates.forEach((method) => {
+  BaseRelation.prototype[method] = function (expression) {
+    this._validateRead()
+    this._prepareAggregate()
+    return this.relatedQuery[method](expression)
+  }
+})
+
+shortHandAggregates.forEach((method) => {
+  BaseRelation.prototype[method] = function (expression) {
+    this._validateRead()
+    this._selectFields()
+    this._prepareAggregate()
+    return this.relatedQuery[method](expression)
+  }
+})
 
 module.exports = BelongsToMany

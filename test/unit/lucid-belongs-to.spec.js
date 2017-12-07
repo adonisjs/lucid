@@ -538,8 +538,8 @@ test.group('Relations | Belongs To', (group) => {
     assert.equal(freshProfile.id, 1)
     assert.equal(freshProfile.user_id, null)
 
-    assert.equal(profileQuery.sql, helpers.formatQuery('update "profiles" set "updated_at" = ?, "user_id" = ? where "id" = ?'))
-    assert.isNull(profileQuery.bindings[1])
+    assert.equal(profileQuery.sql, helpers.formatQuery('update "profiles" set "user_id" = ?, "updated_at" = ? where "id" = ?'))
+    assert.isNull(profileQuery.bindings[0])
   })
 
   test('throw exception when trying to dissociate fresh models', async (assert) => {
