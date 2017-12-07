@@ -1979,4 +1979,29 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(results.last().$sideLoaded.following_count, 0)
     assert.equal(userQuery.sql, helpers.formatQuery(expectedQuery))
   })
+
+  test('sync pivot rows by dropping old and adding new', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.posts().attach([1])
+    await user.posts().sync([2])
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 1)
+    assert.equal(pivotValues[0].user_id, 1)
+    assert.equal(pivotValues[0].post_id, 2)
+  })
 })

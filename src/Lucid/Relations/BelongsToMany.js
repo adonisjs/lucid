@@ -713,7 +713,7 @@ class BelongsToMany extends BaseRelation {
    *
    * @method attach
    *
-   * @param  {Number|String|Array} relatedPrimaryKeyValue
+   * @param  {Number|String|Array} references
    * @param  {Function} [pivotCallback]
    *
    * @return {Promise}
@@ -791,6 +791,21 @@ class BelongsToMany extends BaseRelation {
       this._existingPivotInstances = []
     }
     return query.delete()
+  }
+
+  /**
+   * Calls `detach` and `attach` together.
+   *
+   * @method sync
+   *
+   * @param  {Number|String|Array} relatedPrimaryKeyValue
+   * @param  {Function} [pivotCallback]
+   *
+   * @return {void}
+   */
+  async sync (references, pivotCallback) {
+    await this.detach()
+    return this.attach(references, pivotCallback)
   }
 
   /**
@@ -896,6 +911,9 @@ class BelongsToMany extends BaseRelation {
   }
 }
 
+/**
+ * Adding all aggregate methods at once.
+ */
 aggregates.forEach((method) => {
   BaseRelation.prototype[method] = function (expression) {
     this._validateRead()
@@ -904,6 +922,9 @@ aggregates.forEach((method) => {
   }
 })
 
+/**
+ * Adding all short hand aggregate methods at once.
+ */
 shortHandAggregates.forEach((method) => {
   BaseRelation.prototype[method] = function (expression) {
     this._validateRead()
