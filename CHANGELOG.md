@@ -1,3 +1,20 @@
+<a name="4.1.0"></a>
+# [4.1.0](https://github.com/adonisjs/adonis-lucid/compare/v4.0.25...v4.1.0) (2017-12-07)
+
+
+### Bug Fixes
+
+* **eagerloading:** eagerloading with .first should behave same as .fetch ([9bcb09d](https://github.com/adonisjs/adonis-lucid/commit/9bcb09d))
+
+
+### Features
+
+* **addHook:** accept an array of hooks too ([6abaa6a](https://github.com/adonisjs/adonis-lucid/commit/6abaa6a))
+* **addHook:** return this to keep api chainable ([b5a9ef9](https://github.com/adonisjs/adonis-lucid/commit/b5a9ef9))
+* **belongstomany:** add sync method ([eea84ad](https://github.com/adonisjs/adonis-lucid/commit/eea84ad))
+
+
+
 <a name="4.0.25"></a>
 ## [4.0.25](https://github.com/adonisjs/adonis-lucid/compare/v4.0.24...v4.0.25) (2017-12-06)
 

@@ -192,7 +192,12 @@ class HasManyThrough extends BaseRelation {
    * @return {Object}
    */
   async eagerLoad (rows) {
-    this._eagerLoadFn(this.relatedQuery, this.foreignKey, this.mapValues(rows), {
+    const mappedRows = this.mapValues(rows)
+    if (!mappedRows || !mappedRows.length) {
+      return this.group([])
+    }
+
+    this._eagerLoadFn(this.relatedQuery, this.foreignKey, mappedRows, {
       foreignTable: this.$foreignTable,
       foreignKey: this.foreignKey
     })

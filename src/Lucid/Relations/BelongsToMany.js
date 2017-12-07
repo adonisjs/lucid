@@ -24,6 +24,28 @@ const util = require('../../../lib/util')
 const CE = require('../../Exceptions')
 const PivotModel = require('../Model/PivotModel')
 
+const aggregates = [
+  'sum',
+  'sumDistinct',
+  'avg',
+  'avgDistinct',
+  'min',
+  'max',
+  'count',
+  'countDistinct'
+]
+
+const shortHandAggregates = [
+  'getSum',
+  'getSumDistinct',
+  'getAvg',
+  'getAvgDistinct',
+  'getMin',
+  'getMax',
+  'getCount',
+  'getCountDistinct'
+]
+
 /**
  * BelongsToMany class builds relationship between
  * two models with the help of pivot table/model
@@ -220,8 +242,21 @@ class BelongsToMany extends BaseRelation {
    * @private
    */
   _decorateQuery () {
-    this._validateRead()
     this._selectFields()
+    this._makeJoinQuery()
+    this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+  }
+
+  /**
+   * Prepares the query to run an aggregate functions
+   *
+   * @method _prepareAggregate
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  _prepareAggregate () {
     this._makeJoinQuery()
     this.wherePivot(this.foreignKey, this.$primaryKeyValue)
   }
@@ -531,7 +566,11 @@ class BelongsToMany extends BaseRelation {
    * @return {Object}
    */
   async eagerLoad (rows) {
-    this._eagerLoadFn(this.relatedQuery, this.foreignKey, this.mapValues(rows))
+    const mappedRows = this.mapValues(rows)
+    if (!mappedRows || !mappedRows.length) {
+      return this.group([])
+    }
+    this._eagerLoadFn(this.relatedQuery, this.foreignKey, mappedRows)
     const relatedInstances = await this.relatedQuery.fetch()
     return this.group(relatedInstances.rows)
   }
@@ -581,6 +620,7 @@ class BelongsToMany extends BaseRelation {
     const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
       const foreignKeyValue = relatedInstance.$sideLoaded[`pivot_${this.foreignKey}`]
       const existingRelation = _.find(result, (row) => row.identity === foreignKeyValue)
+      this._addPivotValuesAsRelation(relatedInstance)
 
       /**
        * If there is an existing relation, add row to
@@ -678,7 +718,7 @@ class BelongsToMany extends BaseRelation {
    *
    * @method attach
    *
-   * @param  {Number|String|Array} relatedPrimaryKeyValue
+   * @param  {Number|String|Array} references
    * @param  {Function} [pivotCallback]
    *
    * @return {Promise}
@@ -756,6 +796,21 @@ class BelongsToMany extends BaseRelation {
       this._existingPivotInstances = []
     }
     return query.delete()
+  }
+
+  /**
+   * Calls `detach` and `attach` together.
+   *
+   * @method sync
+   *
+   * @param  {Number|String|Array} relatedPrimaryKeyValue
+   * @param  {Function} [pivotCallback]
+   *
+   * @return {void}
+   */
+  async sync (references, pivotCallback) {
+    await this.detach()
+    return this.attach(references, pivotCallback)
   }
 
   /**
@@ -860,5 +915,28 @@ class BelongsToMany extends BaseRelation {
     return Promise.all(rows.map((relatedInstance) => this.create(relatedInstance, pivotCallback)))
   }
 }
+
+/**
+ * Adding all aggregate methods at once.
+ */
+aggregates.forEach((method) => {
+  BaseRelation.prototype[method] = function (expression) {
+    this._validateRead()
+    this._prepareAggregate()
+    return this.relatedQuery[method](expression)
+  }
+})
+
+/**
+ * Adding all short hand aggregate methods at once.
+ */
+shortHandAggregates.forEach((method) => {
+  BaseRelation.prototype[method] = function (expression) {
+    this._validateRead()
+    this._selectFields()
+    this._prepareAggregate()
+    return this.relatedQuery[method](expression)
+  }
+})
 
 module.exports = BelongsToMany

@@ -5,13 +5,10 @@ const _ = require('lodash')
 
 module.exports = {
   formatQuery (query, connection) {
-    if (process.env.DB === 'sqlite' || process.env.DB === 'pg') {
-      return query
-    }
-
-    if (process.env.DB === 'mysql') {
+    if (process.env.DB === 'mysql' || process.env.DB === 'sqlite') {
       return query.replace(/"/g, '`')
     }
+    return query
   },
 
   addReturningStatement (query, field) {

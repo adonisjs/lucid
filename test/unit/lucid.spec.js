@@ -233,6 +233,15 @@ test.group('Model', (group) => {
     assert.lengthOf(User.$hooks.after._handlers.create, 1)
   })
 
+  test('add hooks as an array', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addHook('beforeCreate', [function () {}, function () {}])
+    assert.lengthOf(User.$hooks.before._handlers.create, 2)
+  })
+
   test('throw exception when hook cycle is invalid', async (assert) => {
     class User extends Model {
     }
@@ -346,10 +355,10 @@ test.group('Model', (group) => {
       helpers.formatQuery('insert into "users" ("created_at", "updated_at", "username") values (?, ?, ?)'),
       'id'
     ))
-    assert.equal(queries[1].sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ? where "id" = ?'))
-    assert.deepEqual(queries[1].bindings[1], 'nikk')
-    assert.equal(queries[2].sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ? where "id" = ?'))
-    assert.deepEqual(queries[2].bindings[1], 'virk')
+    assert.equal(queries[1].sql, helpers.formatQuery('update "users" set "username" = ?, "updated_at" = ? where "id" = ?'))
+    assert.deepEqual(queries[1].bindings[0], 'nikk')
+    assert.equal(queries[2].sql, helpers.formatQuery('update "users" set "username" = ?, "updated_at" = ? where "id" = ?'))
+    assert.deepEqual(queries[2].bindings[0], 'virk')
     assert.deepEqual(user.dirty, {})
   }).timeout(6000)
 
@@ -433,7 +442,7 @@ test.group('Model', (group) => {
     const user = users.first()
     user.username = 'nikk'
     await user.save()
-    assert.equal(userQuery.sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ? where "id" = ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('update "users" set "username" = ?, "updated_at" = ? where "id" = ?'))
   })
 
   test('call update hooks when updating model', async (assert) => {
@@ -1178,7 +1187,7 @@ test.group('Model', (group) => {
     user.username = 'nikk'
     await user.save()
 
-    assert.equal(userQuery.sql, helpers.formatQuery('update "users" set "updated_at" = ?, "username" = ? where "id" = ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('update "users" set "username" = ?, "updated_at" = ? where "id" = ?'))
   }).timeout(6000)
 
   test('should be able to delete the model instance', async (assert) => {

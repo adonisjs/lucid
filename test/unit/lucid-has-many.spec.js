@@ -142,7 +142,7 @@ test.group('Relations | Has Many', (group) => {
     assert.instanceOf(user.getRelated('cars'), VanillaSerializer)
     assert.equal(user.getRelated('cars').size(), 2)
     assert.deepEqual(user.getRelated('cars').rows.map((car) => car.$parent), ['User', 'User'])
-    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" = ?'))
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" in (?)'))
     assert.deepEqual(carQuery.bindings, helpers.formatBindings([1]))
   })
 
@@ -318,7 +318,7 @@ test.group('Relations | Has Many', (group) => {
     assert.equal(user.getRelated('cars').size(), 2)
     assert.equal(user.getRelated('cars').first().getRelated('parts').size(), 2)
     assert.equal(user.getRelated('cars').last().getRelated('parts').size(), 2)
-    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" = ?'))
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" in (?)'))
     assert.equal(partQuery.sql, helpers.formatQuery('select * from "parts" where "car_id" in (?, ?)'))
   })
 
@@ -363,7 +363,7 @@ test.group('Relations | Has Many', (group) => {
     assert.equal(user.getRelated('cars').size(), 2)
     assert.equal(user.getRelated('cars').first().getRelated('parts').size(), 1)
     assert.equal(user.getRelated('cars').last().getRelated('parts').size(), 1)
-    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" = ?'))
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" in (?)'))
     assert.equal(partQuery.sql, helpers.formatQuery('select * from "parts" where "part_name" = ? and "car_id" in (?, ?)'))
   })
 
@@ -410,7 +410,7 @@ test.group('Relations | Has Many', (group) => {
 
     assert.equal(user.getRelated('cars').size(), 1)
     assert.equal(user.getRelated('cars').first().getRelated('parts').size(), 1)
-    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "name" = ? and "user_id" = ?'))
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "name" = ? and "user_id" in (?)'))
     assert.equal(partQuery.sql, helpers.formatQuery('select * from "parts" where "part_name" = ? and "car_id" in (?)'))
   })
 
