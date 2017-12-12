@@ -920,7 +920,7 @@ class BelongsToMany extends BaseRelation {
  * Adding all aggregate methods at once.
  */
 aggregates.forEach((method) => {
-  BaseRelation.prototype[method] = function (expression) {
+  BelongsToMany.prototype[method] = function (expression) {
     this._validateRead()
     this._prepareAggregate()
     return this.relatedQuery[method](expression)
@@ -931,7 +931,7 @@ aggregates.forEach((method) => {
  * Adding all short hand aggregate methods at once.
  */
 shortHandAggregates.forEach((method) => {
-  BaseRelation.prototype[method] = function (expression) {
+  BelongsToMany.prototype[method] = function (expression) {
     this._validateRead()
     this._selectFields()
     this._prepareAggregate()
