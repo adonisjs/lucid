@@ -1,3 +1,13 @@
+<a name="4.1.1"></a>
+## [4.1.1](https://github.com/adonisjs/adonis-lucid/compare/v4.1.0...v4.1.1) (2017-12-12)
+
+
+### Bug Fixes
+
+* **belongsToMany:** typo in relation added methods on base relation ([e902760](https://github.com/adonisjs/adonis-lucid/commit/e902760)), closes [#258](https://github.com/adonisjs/adonis-lucid/issues/258)
+
+
+
 <a name="4.1.0"></a>
 # [4.1.0](https://github.com/adonisjs/adonis-lucid/compare/v4.0.25...v4.1.0) (2017-12-07)
 
