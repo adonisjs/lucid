@@ -140,16 +140,16 @@ class SeedDatabase extends Command {
 
       const endTime = process.hrtime(startTime)
       this.success(`Seeded database in ${prettyHrTime(endTime)}`)
-
-      /**
-       * Close the connection when seeder are executed and keep alive is
-       * not passed
-       */
-      if (!keepAlive) {
-        this.Database.close()
-      }
     } catch (error) {
       console.log(error)
+    }
+
+    /**
+     * Close the connection when seeder are executed and keep alive is
+     * not passed
+     */
+    if (!keepAlive) {
+      this.Database.close()
     }
   }
 }
