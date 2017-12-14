@@ -112,7 +112,7 @@ class DatabaseManager {
     connections = !Array.isArray(connections) ? [connections] : connections
     _.each(connections, (name) => {
       this._connectionPools[name].close()
-      this._connectionPools[name] = null
+      delete this._connectionPools[name]
     })
   }
 }
