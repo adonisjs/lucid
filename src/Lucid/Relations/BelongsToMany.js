@@ -725,7 +725,7 @@ class BelongsToMany extends BaseRelation {
    */
   async attach (references, pivotCallback = null) {
     await this._loadAndCachePivot()
-    const rows = references instanceof Array === false ? [references] : references
+    const rows = !Array.isArray(references) ? [references] : references
 
     return Promise.all(rows.map((row) => {
       const pivotInstance = this._getPivotInstance(row)
@@ -787,7 +787,7 @@ class BelongsToMany extends BaseRelation {
   detach (references) {
     const query = this.pivotQuery(false)
     if (references) {
-      const rows = references instanceof Array === false ? [references] : references
+      const rows = !Array.isArray(references) ? [references] : references
       query.whereIn(this.relatedForeignKey, rows)
       _.remove(this._existingPivotInstances, (pivotInstance) => {
         return _.includes(rows, pivotInstance[this.relatedForeignKey])
@@ -860,7 +860,7 @@ class BelongsToMany extends BaseRelation {
    * @return {void}
    */
   async saveMany (arrayOfRelatedInstances, pivotCallback) {
-    if (arrayOfRelatedInstances instanceof Array === false) {
+    if (!Array.isArray(arrayOfRelatedInstances)) {
       throw GE
         .InvalidArgumentException
         .invalidParameter('belongsToMany.saveMany expects an array of related model instances', arrayOfRelatedInstances)
@@ -905,7 +905,7 @@ class BelongsToMany extends BaseRelation {
    * @return {Array}
    */
   async createMany (rows, pivotCallback) {
-    if (rows instanceof Array === false) {
+    if (!Array.isArray(rows)) {
       throw GE
         .InvalidArgumentException
         .invalidParameter('belongsToMany.createMany expects an array of related model instances', rows)

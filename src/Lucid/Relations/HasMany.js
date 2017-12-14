@@ -187,7 +187,7 @@ class HasMany extends BaseRelation {
    * @return {Array}
    */
   async createMany (arrayOfPayload, trx) {
-    if (arrayOfPayload instanceof Array === false) {
+    if (!Array.isArray(arrayOfPayload)) {
       throw GE
         .InvalidArgumentException
         .invalidParameter('hasMany.createMany expects an array of values', arrayOfPayload)
@@ -208,7 +208,7 @@ class HasMany extends BaseRelation {
    * @return {Array}
    */
   async saveMany (arrayOfRelatedInstances, trx) {
-    if (arrayOfRelatedInstances instanceof Array === false) {
+    if (!Array.isArray(arrayOfRelatedInstances)) {
       throw GE
         .InvalidArgumentException
         .invalidParameter('hasMany.saveMany expects an array of related model instances', arrayOfRelatedInstances)

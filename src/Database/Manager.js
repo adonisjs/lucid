@@ -109,7 +109,7 @@ class DatabaseManager {
    */
   close (names) {
     let connections = names || _.keys(this._connectionPools)
-    connections = connections instanceof Array === false ? [connections] : connections
+    connections = !Array.isArray(connections) ? [connections] : connections
     _.each(connections, (name) => {
       this._connectionPools[name].close()
       this._connectionPools[name] = null

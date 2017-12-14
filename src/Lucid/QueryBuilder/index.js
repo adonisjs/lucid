@@ -262,7 +262,7 @@ class QueryBuilder {
      * Don't do anything when array is empty or value is not
      * an array
      */
-    const scopesToIgnore = scopes instanceof Array === true ? scopes : ['*']
+    const scopesToIgnore = Array.isArray(scopes) ? scopes : ['*']
     this._ignoreScopes = this._ignoreScopes.concat(scopesToIgnore)
     return this
   }
