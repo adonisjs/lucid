@@ -1743,7 +1743,7 @@ test.group('Model', (group) => {
     class User extends Model {
       static castDates (field, value) {
         const formattedValue = value.format('YYYY')
-        casting.push({ key, value: formattedValue })
+        casting.push({ key: field, value: formattedValue })
         return formattedValue
       }
     }

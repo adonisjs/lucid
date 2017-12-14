@@ -16,9 +16,10 @@ const { ioc } = require('@adonisjs/fold')
 const prettyHrTime = require('pretty-hrtime')
 
 class SeedDatabase extends Command {
-  constructor (Helpers) {
+  constructor (Helpers, Database) {
     super()
     this._seedsPath = Helpers.seedsPath()
+    this.Database = Database
   }
 
   /**
@@ -29,7 +30,7 @@ class SeedDatabase extends Command {
    * @return {Array}
    */
   static get inject () {
-    return ['Adonis/Src/Helpers']
+    return ['Adonis/Src/Helpers', 'Adonis/Src/Database']
   }
 
   /**
@@ -85,6 +86,7 @@ class SeedDatabase extends Command {
     return `
     seed
     { -f, --force: Forcefully seed database in production }
+    { -a, --keep-alive: Do not close database connection when seeder.run finishes }
     { --files=@value: Run only selected files }
     `
   }
@@ -110,10 +112,11 @@ class SeedDatabase extends Command {
    * @param  {Object} args
    * @param  {Boolean} options.force
    * @param  {String} options.files
+   * @param  {String} options.keepAlive
    *
    * @return {void|Array}
    */
-  async handle (args, { force, files }) {
+  async handle (args, { force, files, keepAlive }) {
     try {
       this._validateState(force)
 
@@ -137,6 +140,14 @@ class SeedDatabase extends Command {
 
       const endTime = process.hrtime(startTime)
       this.success(`Seeded database in ${prettyHrTime(endTime)}`)
+
+      /**
+       * Close the connection when seeder are executed and keep alive is
+       * not passed
+       */
+      if (!keepAlive) {
+        this.Database.close()
+      }
     } catch (error) {
       console.log(error)
     }
