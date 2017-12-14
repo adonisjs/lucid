@@ -170,6 +170,24 @@ module.exports = {
         table.boolean('has_blocked')
         table.timestamps()
         table.timestamp('deleted_at').nullable()
+      }),
+      db.schema.createTable('party_users', function (table) {
+        table.increments('id')
+        table.integer('party_id')
+        table.string('username')
+        table.timestamps()
+      }),
+      db.schema.createTable('teams', function (table) {
+        table.increments('id')
+        table.integer('party_id')
+        table.string('name')
+        table.timestamps()
+      }),
+      db.schema.createTable('team_user', function (table) {
+        table.increments('id')
+        table.integer('team_party_id')
+        table.integer('user_party_id')
+        table.timestamps()
       })
     ])
   },
@@ -189,7 +207,10 @@ module.exports = {
       db.schema.dropTable('categories'),
       db.schema.dropTable('sections'),
       db.schema.dropTable('post_section'),
-      db.schema.dropTable('followers')
+      db.schema.dropTable('followers'),
+      db.schema.dropTable('party_users'),
+      db.schema.dropTable('teams'),
+      db.schema.dropTable('team_user')
     ])
   },
 

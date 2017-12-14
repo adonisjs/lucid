@@ -840,7 +840,7 @@ class BelongsToMany extends BaseRelation {
     /**
      * Attach the pivot rows
      */
-    const pivotRows = await this.attach(relatedInstance.primaryKeyValue, pivotCallback)
+    const pivotRows = await this.attach(relatedInstance[this.relatedPrimaryKey], pivotCallback)
 
     /**
      * Set saved pivot row as a relationship
