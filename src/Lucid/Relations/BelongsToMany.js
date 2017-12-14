@@ -422,7 +422,7 @@ class BelongsToMany extends BaseRelation {
    * @chainable
    */
   pivotModel (pivotModel) {
-    this._PivotModel = pivotModel
+    this._PivotModel = use(pivotModel)
     return this
   }
 
