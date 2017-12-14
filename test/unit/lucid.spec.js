@@ -1736,4 +1736,26 @@ test.group('Model', (group) => {
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await User.query().paginate()
   })
+
+  test.failing('call castDate on a newly persisted model', async (assert) => {
+    const casting = []
+
+    class User extends Model {
+      static castDates (field, value) {
+        const formattedValue = value.format('YYYY')
+        casting.push({ key, value: formattedValue })
+        return formattedValue
+      }
+    }
+
+    User._bootIfNotBooted()
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+    const json = user.toJSON()
+
+    assert.equal(json.created_at, new Date().getFullYear())
+    assert.equal(json.updated_at, new Date().getFullYear())
+    assert.deepEqual(casting.map((field) => field.key), ['created_at', 'updated_at'])
+  })
 })
