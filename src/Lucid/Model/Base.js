@@ -245,6 +245,17 @@ class BaseModel {
   }
 
   /**
+   * Unfreezes the model allowing further modifications
+   *
+   * @method unfreeze
+   *
+   * @return {void}
+   */
+  unfreeze () {
+    this.$frozen = false
+  }
+
+  /**
    * Converts model instance toJSON using the serailizer
    * toJSON method
    *
