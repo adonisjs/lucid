@@ -550,7 +550,18 @@ test.group('Model', (group) => {
     await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
     assert.deepEqual(Object.keys(users.first().toObject()), [
-      'id', 'vid', 'country_id', 'manager_id', 'lead_id', 'username', 'email', 'updated_at', 'type', 'login_at', 'deleted_at'
+      'id',
+      'vid',
+      'country_id',
+      'manager_id',
+      'lead_id',
+      'age',
+      'username',
+      'email',
+      'updated_at',
+      'type',
+      'login_at',
+      'deleted_at'
     ])
   })
 
@@ -562,7 +573,7 @@ test.group('Model', (group) => {
       builder.where('deleted_at', null)
     })
 
-    const query = User.query().where('username', 'virk')._applyScopes().toSQL()
+    const query = User.query().where('username', 'virk').toSQL()
     assert.equal(query.sql, helpers.formatQuery('select * from "users" where "username" = ? and "deleted_at" is null'))
   })
 
@@ -590,7 +601,7 @@ test.group('Model', (group) => {
       builder.whereNot('login_at', null)
     }, 'loggedOnce')
 
-    const query = User.query().where('username', 'virk').ignoreScopes(['softDeletes'])._applyScopes().toSQL()
+    const query = User.query().where('username', 'virk').ignoreScopes(['softDeletes']).toSQL()
     assert.equal(query.sql, helpers.formatQuery('select * from "users" where "username" = ? and "login_at" is not null'))
   })
 
@@ -1769,5 +1780,124 @@ test.group('Model', (group) => {
     assert.equal(json.created_at, new Date().getFullYear())
     assert.equal(json.updated_at, new Date().getFullYear())
     assert.deepEqual(casting.map((field) => field.key), ['created_at', 'updated_at'])
+  })
+
+  test('call query scopes when getCount is called', async (assert) => {
+    let userQuery = null
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    User.onQuery(function (query) {
+      userQuery = query
+    })
+
+    await User.query().where('username', 'virk').getCount()
+    assert.equal(userQuery.sql, helpers.formatQuery('select count(*) as "__lucid_aggregate" from (select * from "users" where "username" = ? and "deleted_at" is null) as "__lucid"'))
+  })
+
+  test('call query scopes when count method is called', async (assert) => {
+    let userQuery = null
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    User.onQuery(function (query) {
+      userQuery = query
+    })
+
+    await User.query().where('username', 'virk').count('* as total')
+    assert.equal(userQuery.sql, helpers.formatQuery('select count(*) as "total" from "users" where "username" = ? and "deleted_at" is null'))
+  })
+
+  test('call query scopes when min method is called', async (assert) => {
+    let userQuery = null
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    User.onQuery(function (query) {
+      userQuery = query
+    })
+
+    await User.query().where('username', 'virk').min('age')
+    assert.equal(userQuery.sql, helpers.formatQuery('select min("age") from "users" where "username" = ? and "deleted_at" is null'))
+  })
+
+  test('calling ids should apply query scopes', async (assert) => {
+    let userQuery = null
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    User.onQuery(function (query) {
+      userQuery = query
+    })
+
+    await User.query().where('username', 'virk').ids()
+    assert.equal(userQuery.sql, helpers.formatQuery('select "id" from "users" where "username" = ? and "deleted_at" is null'))
+  })
+
+  test('calling pairs should apply query scopes', async (assert) => {
+    let userQuery = null
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    User.onQuery(function (query) {
+      userQuery = query
+    })
+
+    await User.query().where('username', 'virk').pair('id', 'username')
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "username" = ? and "deleted_at" is null'))
+  })
+
+  test('calling toString should apply query scopes', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    const userQuery = User.query().where('username', 'virk').toString()
+    assert.equal(userQuery, helpers.formatQuery('select * from "users" where "username" = \'virk\' and "deleted_at" is null'))
+  })
+
+  test('calling paginate should apply query scopes on count call too', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    User.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    await User.create({ username: 'virk', deleted_at: new Date() })
+    const result = await User.query().where('username', 'virk').paginate()
+
+    assert.equal(result.pages.total, helpers.formatNumber(0))
+    assert.deepEqual(result.rows, [])
   })
 })

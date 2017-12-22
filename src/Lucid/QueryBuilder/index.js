@@ -37,6 +37,39 @@ const proxyHandler = {
 }
 
 /**
+ * Aggregrates to be added to the query
+ * builder
+ */
+const aggregates = [
+  'sum',
+  'sumDistinct',
+  'avg',
+  'avgDistinct',
+  'min',
+  'max',
+  'count',
+  'countDistinct',
+  'getSum',
+  'getSumDistinct',
+  'getAvg',
+  'getAvgDistinct',
+  'getMin',
+  'getMax',
+  'getCount',
+  'getCountDistinct'
+]
+
+/**
+ * Query methods to be added to the
+ * query builder
+ */
+const queryMethods = [
+  'pluck',
+  'toSQL',
+  'toString'
+]
+
+/**
  * Query builder for the lucid models extended
  * by the @ref('Database') class.
  *
@@ -438,110 +471,6 @@ class QueryBuilder {
     return new this.Model.Serializer(modelInstances, pages)
   }
 
- /**
-  * Return a count of all model records.
-  *
-  * @method getCount
-  *
-  * @param  {String} columnName = '*'
-  *
-  * @return {Number}
-  */
-  getCount (columnName = '*') {
-    return this.query.getCount(columnName)
-  }
-
-  /**
-  * Return a distinct count of all model records.
-  *
-  * @method getCountDistinct
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getCountDistinct (columnName) {
-    return this.query.getCountDistinct(columnName)
-  }
-
- /**
-  * Return the average of all values of columnName.
-  *
-  * @method getAvg
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getAvg (columnName) {
-    return this.query.getAvg(columnName)
-  }
-
-  /**
-  * Return the average of all distinct values of columnName.
-  *
-  * @method getAvgDistinct
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getAvgDistinct (columnName) {
-    return this.query.getAvgDistinct(columnName)
-  }
-
-  /**
-  * Return the minimum of all values of columnName.
-  *
-  * @method getMin
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getMin (columnName) {
-    return this.query.getMin(columnName)
-  }
-
-  /**
-  * Return the maximum of all values of columnName.
-  *
-  * @method getMax
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getMax (columnName) {
-    return this.query.getMax(columnName)
-  }
-
- /**
-  * Return the sum of all values of columnName.
-  *
-  * @method getSum
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getSum (columnName) {
-    return this.query.getSum(columnName)
-  }
-
- /**
-  * Return the sum of all distinct values of columnName.
-  *
-  * @method getSumDistinct
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getSumDistinct (columnName) {
-    return this.query.getSumDistinct(columnName)
-  }
-
   /**
    * Bulk update data from query builder. This method will also
    * format all dates and set `updated_at` column
@@ -596,9 +525,8 @@ class QueryBuilder {
    *
    * @return {Array}
    */
-  async ids () {
-    const rows = await this.query
-    return rows.map((row) => row[this.Model.primaryKey])
+  ids () {
+    return this.pluck(this.Model.primaryKey)
   }
 
   /**
@@ -614,8 +542,10 @@ class QueryBuilder {
    * @return {Object}
    */
   async pair (lhs, rhs) {
-    const collection = await this.fetch()
-    return _.transform(collection.rows, (result, row) => {
+    this._applyScopes()
+
+    const rows = await this.query
+    return _.transform(rows, (result, row) => {
       result[row[lhs]] = row[rhs]
       return result
     }, {})
@@ -927,28 +857,6 @@ class QueryBuilder {
   }
 
   /**
-   * Returns the sql representation of query
-   *
-   * @method toSQL
-   *
-   * @return {Object}
-   */
-  toSQL () {
-    return this.query.toSQL()
-  }
-
-  /**
-   * Returns string representation of query
-   *
-   * @method toString
-   *
-   * @return {String}
-   */
-  toString () {
-    return this.query.toString()
-  }
-
-  /**
    * Define fields to be visible for a single
    * query.
    *
@@ -982,5 +890,12 @@ class QueryBuilder {
     return this
   }
 }
+
+aggregates.concat(queryMethods).forEach((method) => {
+  QueryBuilder.prototype[method] = function (...args) {
+    this._applyScopes()
+    return this.query[method](...args)
+  }
+})
 
 module.exports = QueryBuilder

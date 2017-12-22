@@ -163,8 +163,18 @@ function generateAggregate (aggregateOp, defaultColumnName = undefined) {
     }
 
     const wrapper = new this.constructor(this.client)
-    const query = wrapper.from(this.as('__lucid'))[aggregateOp](`${columnName} as __lucid_aggregate`)
-    const results = await query
+    const query = wrapper.from(this.as('__lucid'))
+
+    /**
+     * Copy events from the original query
+     */
+    query._events = this._events
+
+    /**
+     * Executing query chain
+     */
+    const results = await query[aggregateOp](`${columnName} as __lucid_aggregate`)
+
     return results[0].__lucid_aggregate
   }
 }

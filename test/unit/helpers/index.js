@@ -70,6 +70,7 @@ module.exports = {
         table.integer('country_id')
         table.integer('manager_id')
         table.integer('lead_id')
+        table.integer('age')
         table.string('username')
         table.string('email')
         table.timestamps()

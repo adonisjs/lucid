@@ -590,6 +590,17 @@ class BelongsToMany extends BaseRelation {
   }
 
   /**
+   * Fetch ids for the related model
+   *
+   * @method ids
+   *
+   * @return {Array}
+   */
+  ids () {
+    return this.pluck(`${this.$foreignTable}.${this.RelatedModel.primaryKey}`)
+  }
+
+  /**
    * Execute the query and setup pivot values
    * as a relation
    *
@@ -749,6 +760,7 @@ class BelongsToMany extends BaseRelation {
    */
   async delete () {
     const foreignKeyValues = await this.ids()
+
     const effectedRows = await this.RelatedModel
       .query()
       .whereIn(this.RelatedModel.primaryKey, foreignKeyValues)
