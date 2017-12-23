@@ -318,12 +318,13 @@ class BelongsToMany extends BaseRelation {
    *
    * @param  {Number|String}      value
    * @param  {Function}           [pivotCallback]
+   * @param  {Object}             [trx]
    *
    * @return {Object}                    Instance of pivot model
    *
    * @private
    */
-  async _attachSingle (value, pivotCallback) {
+  async _attachSingle (value, pivotCallback, trx) {
     /**
      * The relationship values
      *
@@ -357,7 +358,7 @@ class BelongsToMany extends BaseRelation {
       pivotCallback(pivotModel)
     }
 
-    await pivotModel.save()
+    await pivotModel.save(trx)
     return pivotModel
   }
 
@@ -391,11 +392,16 @@ class BelongsToMany extends BaseRelation {
    *
    * @private
    */
-  async _loadAndCachePivot () {
+  async _loadAndCachePivot (trx) {
     if (_.size(this._existingPivotInstances) === 0) {
-      this._existingPivotInstances = (await this
-          .pivotQuery().fetch()
-      ).rows
+      const query = this.pivotQuery()
+
+      if (trx) {
+        query.transacting(trx)
+      }
+
+      const result = await query.fetch()
+      this._existingPivotInstances = result.rows
     }
   }
 
@@ -736,16 +742,17 @@ class BelongsToMany extends BaseRelation {
    *
    * @param  {Number|String|Array} references
    * @param  {Function} [pivotCallback]
+   * @param  {trx} Transaction
    *
    * @return {Promise}
    */
-  async attach (references, pivotCallback = null) {
-    await this._loadAndCachePivot()
+  async attach (references, pivotCallback = null, trx) {
+    await this._loadAndCachePivot(trx)
     const rows = !Array.isArray(references) ? [references] : references
 
     return Promise.all(rows.map((row) => {
       const pivotInstance = this._getPivotInstance(row)
-      return pivotInstance ? Promise.resolve(pivotInstance) : this._attachSingle(row, pivotCallback)
+      return pivotInstance ? Promise.resolve(pivotInstance) : this._attachSingle(row, pivotCallback, trx)
     }))
   }
 
@@ -797,12 +804,14 @@ class BelongsToMany extends BaseRelation {
    * @method detach
    * @async
    *
-   * @param  {Array} references
+   * @param  {Array}  references
+   * @param  {Object} trx
    *
    * @return {Number}  The number of effected rows
    */
-  detach (references) {
+  detach (references, trx) {
     const query = this.pivotQuery(false)
+
     if (references) {
       const rows = !Array.isArray(references) ? [references] : references
       query.whereIn(this.relatedForeignKey, rows)
@@ -812,6 +821,14 @@ class BelongsToMany extends BaseRelation {
     } else {
       this._existingPivotInstances = []
     }
+
+    /**
+     * Wrap inside transaction if trx is passed
+     */
+    if (trx) {
+      query.transacting(trx)
+    }
+
     return query.delete()
   }
 
@@ -825,9 +842,9 @@ class BelongsToMany extends BaseRelation {
    *
    * @return {void}
    */
-  async sync (references, pivotCallback) {
-    await this.detach()
-    return this.attach(references, pivotCallback)
+  async sync (references, pivotCallback, trx) {
+    await this.detach(null, trx)
+    return this.attach(references, pivotCallback, trx)
   }
 
   /**

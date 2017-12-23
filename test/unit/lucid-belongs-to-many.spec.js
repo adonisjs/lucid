@@ -2165,4 +2165,122 @@ test.group('Relations | Belongs To Many', (group) => {
 
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where users.id = post_user.user_id and "posts"."deleted_at" is null)'))
   })
+
+  test('attach existing model inside transaction', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const trx = await ioc.use('Database').beginTransaction()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save(trx)
+
+    await user.posts().attach(1, null, trx)
+    trx.rollback()
+
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 0)
+  })
+
+  test('sync data inside a transaction', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const trx = await ioc.use('Database').beginTransaction()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save(trx)
+
+    await user.posts().sync(1, null, trx)
+    trx.rollback()
+
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 0)
+  })
+
+  test('attach data inside transaction using custom pivotModel', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    const trx = await ioc.use('Database').beginTransaction()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save(trx)
+
+    await user.posts().attach(1, null, trx)
+    trx.rollback()
+
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 0)
+  })
+
+  test('sync data inside transaction using custom pivotModel', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    const trx = await ioc.use('Database').beginTransaction()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save(trx)
+
+    await user.posts().sync(1, null, trx)
+    trx.rollback()
+
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 0)
+  })
 })

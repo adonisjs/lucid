@@ -142,9 +142,11 @@ class PivotModel extends BaseModel {
    * @method save
    * @async
    *
+   * @param {Object} trx
+   *
    * @return {void}
    */
-  async save () {
+  async save (trx) {
     /**
      * Set timestamps when user has defined them on pivot
      * relationship via `withTimestamps` method.
@@ -154,8 +156,13 @@ class PivotModel extends BaseModel {
       this.$attributes['updated_at'] = moment().format(DATE_FORMAT)
     }
 
-    const result = await this
-      .query(this.$table, this.$connection)
+    const query = this.query(this.$table, this.$connection)
+
+    if (trx) {
+      query.transacting(trx)
+    }
+
+    const result = await query
       .returning('id')
       .insert(this.$attributes)
 
