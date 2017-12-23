@@ -61,6 +61,20 @@ class Schema {
   }
 
   /**
+   * Select schema to be used with postgreSQL.
+   *
+   * @method withSchema
+   *
+   * @param {String} schema
+   *
+   * @chainable
+   */
+  withSchema (schema) {
+    this.schema.withSchema(schema)
+    return this
+  }
+
+  /**
    * Create a extension.
    *
    * NOTE: This action is deferred
