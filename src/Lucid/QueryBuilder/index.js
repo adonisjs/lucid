@@ -101,6 +101,14 @@ class QueryBuilder {
     this._ignoreScopes = []
 
     /**
+     * A flag to find if scopes has already
+     * been applied or not
+     *
+     * @type {Boolean}
+     */
+    this._scopesApplied = false
+
+    /**
      * Relations to be eagerloaded
      *
      * @type {Object}
@@ -171,6 +179,8 @@ class QueryBuilder {
     } else {
       this.query[method](relationInstance.relatedWhere())
     }
+
+    relationInstance.applyRelatedScopes()
   }
 
   /**
@@ -202,6 +212,18 @@ class QueryBuilder {
    * @private
    */
   _applyScopes () {
+    /**
+     * Do not apply if already applied
+     */
+    if (this._scopesApplied) {
+      return this
+    }
+
+    /**
+     * Setting flag to true
+     */
+    this._scopesApplied = true
+
     if (this._ignoreScopes.indexOf('*') > -1) {
       return this
     }
@@ -839,6 +861,7 @@ class QueryBuilder {
     if (!_.find(this.query._statements, (statement) => statement.grouping === 'columns')) {
       columns.push('*')
     }
+
     columns.push(relationInstance.relatedWhere(true, this._withCountCounter).as(asStatement))
 
     /**
@@ -852,6 +875,8 @@ class QueryBuilder {
      * Clear previously selected columns and set new
      */
     this.query.select(columns)
+
+    relationInstance.applyRelatedScopes()
 
     return this
   }

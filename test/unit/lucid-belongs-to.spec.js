@@ -848,4 +848,80 @@ test.group('Relations | Belongs To', (group) => {
 
     assert.equal(userQuery.sql, helpers.formatQuery(expectedQuery))
   })
+
+  test('apply global scope on related model when eagerloading', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    User.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 1 })
+
+    await Car.query().with('user').fetch()
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" in (?) and "deleted_at" is null'))
+  })
+
+  test('apply global scope on related model when called withCount', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    User.addGlobalScope(function (builder) {
+      builder.where(`${builder.Model.table}.deleted_at`, null)
+    })
+
+    let carQuery = null
+    Car.onQuery((query) => (carQuery = query))
+
+    await Car.query().withCount('user').fetch()
+
+    assert.equal(carQuery.sql, helpers.formatQuery('select *, (select count(*) from "users" where cars.user_id = users.id and "users"."deleted_at" is null) as "user_count" from "cars"'))
+  })
+
+  test('apply global scope on related model when called has', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    User.addGlobalScope(function (builder) {
+      builder.where(`${builder.Model.table}.deleted_at`, null)
+    })
+
+    let carQuery = null
+    Car.onQuery((query) => (carQuery = query))
+
+    await Car.query().has('user').fetch()
+
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where exists (select * from "users" where cars.user_id = users.id and "users"."deleted_at" is null)'))
+  })
 })

@@ -1,3 +1,4 @@
+
 'use strict'
 
 /*
@@ -1009,5 +1010,81 @@ test.group('Relations | Has Many', (group) => {
     assert.equal(results.rows[1].$sideLoaded.teamMembers_count, 0)
     assert.equal(results.last().$sideLoaded.teamMembers_count, 0)
     assert.equal(userQuery.sql, helpers.formatQuery(expectedQuery))
+  })
+
+  test('apply global scope on related model when eagerloading', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    Car.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    let carQuery = null
+    Car.onQuery((query) => (carQuery = query))
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await User.query().with('cars').fetch()
+
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" in (?, ?) and "deleted_at" is null'))
+  })
+
+  test('apply global scope on related model when called withCount', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    Car.addGlobalScope(function (builder) {
+      builder.where(`${builder.Model.table}.deleted_at`, null)
+    })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await User.query().withCount('cars').fetch()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "cars" where users.id = cars.user_id and "cars"."deleted_at" is null) as "cars_count" from "users"'))
+  })
+
+  test('apply global scope on related model when called has', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    Car.addGlobalScope(function (builder) {
+      builder.where(`${builder.Model.table}.deleted_at`, null)
+    })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await User.query().has('cars').fetch()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "cars" where users.id = cars.user_id and "cars"."deleted_at" is null)'))
   })
 })

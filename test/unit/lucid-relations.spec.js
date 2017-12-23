@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
 */
 
+require('../../lib/iocResolver').setFold(require('@adonisjs/fold'))
 const test = require('japa')
 const fs = require('fs-extra')
 const path = require('path')
@@ -1648,5 +1649,82 @@ test.group('Relations | HasOne', (group) => {
 
     assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "likes" = ? and "user_id" in (?, ?)'))
     assert.deepEqual(profileQuery.bindings, helpers.formatBindings([1, 1, 2]))
+  })
+
+  test('apply global scope on related model when eagerloading', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    Profile.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    let profileQuery = null
+    Profile.onQuery((query) => (profileQuery = query))
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    await User.query().with('profile').fetch()
+
+    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "user_id" in (?, ?) and "deleted_at" is null'))
+  })
+
+  test('apply global scope on related model when called withCount', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    Profile.addGlobalScope(function (builder) {
+      builder.where(`${builder.Model.table}.deleted_at`, null)
+    })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await User.query().withCount('profile').fetch()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where users.id = profiles.user_id and "profiles"."deleted_at" is null) as "profile_count" from "users"'))
+  })
+
+  test('apply global scope on related model when called has', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    Profile.addGlobalScope(function (builder) {
+      builder.where(`${builder.Model.table}.deleted_at`, null)
+    })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await User.query().has('profile').fetch()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where users.id = profiles.user_id and "profiles"."deleted_at" is null)'))
   })
 })

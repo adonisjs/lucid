@@ -110,6 +110,10 @@ class BelongsToMany extends BaseRelation {
       this._makeJoinQuery()
       this.whereInPivot(fk, values)
     }
+
+    this.relatedQuery.$relation.pivot = this._pivot
+    this.relatedQuery.$relation.relatedForeignKey = relatedForeignKey
+    this.relatedQuery.$relation.relatedPrimaryKey = relatedPrimaryKey
   }
 
   /**
