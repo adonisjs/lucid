@@ -12,6 +12,7 @@
 const _ = require('lodash')
 const moment = require('moment')
 const VanillaSerializer = require('../Serializers/Vanilla')
+const { ioc } = require('../../../lib/iocResolver')
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss'
 
 /**
@@ -118,6 +119,21 @@ class BaseModel {
    */
   static formatDates (key, value) {
     return moment(value).format(DATE_FORMAT)
+  }
+
+  /**
+   * Resolves the serializer for the current model.
+   *
+   * If serializer is a string, then it is resolved using
+   * the Ioc container, otherwise it is assumed that
+   * a `class` is returned.
+   *
+   * @method resolveSerializer
+   *
+   * @returns {Class}
+   */
+  static resolveSerializer () {
+    return typeof (this.Serializer) === 'string' ? ioc.use(this.Serializer) : this.Serializer
   }
 
   /**
@@ -264,7 +280,8 @@ class BaseModel {
    * @return {Object}
    */
   toJSON () {
-    return new this.constructor.Serializer(this, null, true).toJSON()
+    const Serializer = this.constructor.resolveSerializer()
+    return new Serializer(this, null, true).toJSON()
   }
 }
 

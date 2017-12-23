@@ -355,10 +355,8 @@ class QueryBuilder {
       await this.Model.$hooks.after.exec('fetch', modelInstances)
     }
 
-    /**
-     * Return an instance of active model serializer
-     */
-    return new this.Model.Serializer(modelInstances)
+    const Serializer = this.Model.resolveSerializer()
+    return new Serializer(modelInstances)
   }
 
   /**
@@ -490,7 +488,8 @@ class QueryBuilder {
     /**
      * Return an instance of active model serializer
      */
-    return new this.Model.Serializer(modelInstances, pages)
+    const Serializer = this.Model.resolveSerializer()
+    return new Serializer(modelInstances, pages)
   }
 
   /**
