@@ -60,10 +60,9 @@ class EagerLoad {
    * @private
    */
   _chainNested ({ relatedQuery }, nested) {
-    Object.entries(nested || {})
-      .forEach(([name, callback]) => {
-        relatedQuery.with(name, callback)
-      })
+    _.each(nested || {}, (callback, name) => {
+      relatedQuery.with(name, callback)
+    })
   }
 
   /**
