@@ -47,8 +47,12 @@ class Model extends BaseModel {
    * @static
    */
   static _bootIfNotBooted () {
-    if (!this.$booted) {
-      this.$booted = true
+    if (!this.$bootedBy) {
+      this.$bootedBy = []
+    }
+    
+    if (this.$bootedBy.indexOf(this.name) < 0) {
+      this.$bootedBy.push(this.name)
       this.boot()
     }
   }
