@@ -1727,4 +1727,90 @@ test.group('Relations | HasOne', (group) => {
 
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where users.id = profiles.user_id and "profiles"."deleted_at" is null)'))
   })
+
+  test('fetch nested relations with same root', async (assert) => {
+    class Car extends Model {
+    }
+
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      car () {
+        return this.hasOne(Car)
+      }
+
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    class Identity extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    [Car, Profile, User, Identity].forEach(model => {
+      model._bootIfNotBooted()
+    })
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
+    await ioc.use('Database').table('cars').insert({ user_id: 1, name: 'Peugeot', model: '307' })
+    await ioc.use('Database').table('identities').insert({ user_id: 1, is_active: true })
+
+    const identities = await Identity.query().with('user.car').with('user.profile').fetch()
+    const user = identities.first().getRelated('user')
+
+    assert.exists(user.getRelated('car'))
+    assert.exists(user.getRelated('profile'))
+  })
+
+  test('fetch deep nested relations with same root', async (assert) => {
+    class Part extends Model {
+    }
+
+    class Car extends Model {
+      parts () {
+        return this.hasMany(Part)
+      }
+    }
+
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      car () {
+        return this.hasOne(Car)
+      }
+
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    class Identity extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    [Car, Profile, User, Identity, Part].forEach(model => {
+      model._bootIfNotBooted()
+    })
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('profiles').insert({ user_id: 1, profile_name: 'virk', likes: 3 })
+    await ioc.use('Database').table('cars').insert({ user_id: 1, name: 'Peugeot', model: '307' })
+    await ioc.use('Database').table('identities').insert({ user_id: 1, is_active: true })
+    await ioc.use('Database').table('parts').insert({ car_id: 1, part_name: 'Wheel drive' })
+
+    const identities = await Identity.query().with('user.car').with('user.profile').with('user.car.parts').fetch()
+    const user = identities.first().getRelated('user')
+
+    assert.exists(user.getRelated('car'))
+    assert.exists(user.getRelated('profile'))
+    assert.exists(user.getRelated('car').getRelated('parts').first())
+  })
 })
