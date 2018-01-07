@@ -10,6 +10,7 @@
 */
 
 const _ = require('lodash')
+const QueryCompiler = require('knex/lib/query/compiler')
 
 const EagerLoad = require('../EagerLoad')
 const RelationsParser = require('../Relations/Parser')
@@ -90,6 +91,14 @@ class QueryBuilder {
      * Reference to query builder with pre selected table
      */
     this.query = this.db.table(table)
+
+    /**
+     * SubQuery to be pulled off the query builder. For now this is
+     * passed to the `where` closure.
+     */
+    this.query.subQuery = () => {
+      return this.Model.queryWithOutScopes()
+    }
 
     /**
      * Scopes to be ignored at runtime

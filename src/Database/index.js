@@ -10,6 +10,37 @@
 const knex = require('knex')
 const _ = require('lodash')
 
+const util = require('../../lib/util')
+const DatabaseFormatter = require('./Formatter')
+
+/**
+ * Patching the dialect `queryCompiler` method to return DatabaseFormatter
+ * instance, which is tailored to handle Lucid query builder too.
+ *
+ * @method patchDialectCompiler
+ *
+ * @param  {Object}             config
+ *
+ * @return {void}
+ */
+function patchDialectCompiler (config) {
+  const Dialect = util.getKnexDialect(config.client || config.dialect)
+
+  /**
+   * Do not patch dialect when already did
+   */
+  if (Dialect._queryCompilerNative) {
+    return
+  }
+
+  Dialect._queryCompilerNative = Dialect.prototype.queryCompiler
+  Dialect.prototype.queryCompiler = function (builder) {
+    const compiler = Dialect._queryCompilerNative.bind(this)(builder)
+    compiler.formatter = new DatabaseFormatter(this, builder)
+    return compiler
+  }
+}
+
 const proxyHandler = {
   get (target, name) {
     if (typeof (name) === 'symbol' || name === 'inspect') {
@@ -53,6 +84,7 @@ class Database {
     if (config.client === 'sqlite' || config.client === 'sqlite3') {
       config.useNullAsDefault = _.defaultTo(config.useNullAsDefault, true)
     }
+    patchDialectCompiler(config)
     this.knex = knex(config)
     this._globalTrx = null
     return new Proxy(this, proxyHandler)

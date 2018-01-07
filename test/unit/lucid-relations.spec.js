@@ -1813,4 +1813,31 @@ test.group('Relations | HasOne', (group) => {
     assert.exists(user.getRelated('profile'))
     assert.exists(user.getRelated('car').getRelated('parts').first())
   })
+
+  test('scope whereHas call', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
+
+    const users = await User.query().where(function (builder) {
+      builder.whereHas('profile')
+    }).fetch()
+
+    assert.equal(users.size(), 1)
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (exists (select * from "profiles" where users.id = profiles.user_id))'))
+  })
 })

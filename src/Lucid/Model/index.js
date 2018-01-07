@@ -212,6 +212,17 @@ class Model extends BaseModel {
   }
 
   /**
+   * Returns a query builder without any global scopes
+   *
+   * @method queryWithOutScopes
+   *
+   * @return {QueryBuilder}
+   */
+  static queryWithOutScopes () {
+    return this.query().ignoreScopes()
+  }
+
+  /**
    * Method to be called only once to boot
    * the model.
    *

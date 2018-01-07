@@ -1900,4 +1900,23 @@ test.group('Model', (group) => {
     assert.equal(result.pages.total, helpers.formatNumber(0))
     assert.deepEqual(result.rows, [])
   })
+
+  test('where method closure should have access to query builder instance', async (assert) => {
+    class User extends Model {
+      static scopeAdult (builder) {
+        builder.where('age', '>', 18)
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const queryBuilder = User.query()
+
+    const query = queryBuilder.where(function (builder) {
+      builder.adult()
+    }).toSQL()
+
+    assert.equal(query.sql, helpers.formatQuery('select * from "users" where ("age" > ?)'))
+    assert.deepEqual(query.bindings, helpers.formatBindings([18]))
+  })
 })
