@@ -25,11 +25,11 @@
   "homepage": "https://github.com/adonisjs/adonis-lucid#readme",
   "dependencies": {
     "@adonisjs/generic-exceptions": "^1.0.0",
-    "chance": "^1.0.12",
+    "chance": "^1.0.13",
     "debug": "^3.1.0",
     "knex": "^0.14.2",
     "lodash": "^4.17.4",
-    "moment": "^2.19.3",
+    "moment": "^2.20.1",
     "pluralize": "^7.0.0",
     "pretty-hrtime": "^1.0.3",
     "require-all": "^2.2.0"
@@ -45,8 +45,8 @@
     "japa": "^1.0.5",
     "japa-cli": "^1.0.1",
     "mysql": "^2.15.0",
-    "nyc": "^11.3.0",
-    "pg": "^7.4.0",
+    "nyc": "^11.4.1",
+    "pg": "^7.4.1",
     "sqlite3": "^3.1.13",
     "standard": "^10.0.3"
   },
