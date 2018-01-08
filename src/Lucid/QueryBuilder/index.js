@@ -10,7 +10,6 @@
 */
 
 const _ = require('lodash')
-const QueryCompiler = require('knex/lib/query/compiler')
 
 const EagerLoad = require('../EagerLoad')
 const RelationsParser = require('../Relations/Parser')

@@ -84,9 +84,10 @@ class Database {
     if (config.client === 'sqlite' || config.client === 'sqlite3') {
       config.useNullAsDefault = _.defaultTo(config.useNullAsDefault, true)
     }
-    patchDialectCompiler(config)
     this.knex = knex(config)
     this._globalTrx = null
+
+    patchDialectCompiler(config)
     return new Proxy(this, proxyHandler)
   }
 
