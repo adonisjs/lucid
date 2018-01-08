@@ -623,7 +623,7 @@ test.group('Relations | HasOne', (group) => {
 
     const users = await User.query().has('profile').fetch()
     assert.equal(users.size(), 1)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where users.id = profiles.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "users"."id" = "profiles"."user_id")'))
   })
 
   test('limit parent records based on nested childs', async (assert) => {
@@ -655,7 +655,7 @@ test.group('Relations | HasOne', (group) => {
 
     const users = await User.query().has('profile.picture').fetch()
     assert.equal(users.size(), 1)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where exists (select * from "pictures" where profiles.id = pictures.profile_id) and users.id = profiles.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where exists (select * from "pictures" where "profiles"."id" = "pictures"."profile_id") and "users"."id" = "profiles"."user_id")'))
   })
 
   test('return null when nested child query fails', async (assert) => {
@@ -686,7 +686,7 @@ test.group('Relations | HasOne', (group) => {
 
     const users = await User.query().has('profile.picture').fetch()
     assert.equal(users.size(), 0)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where exists (select * from "pictures" where profiles.id = pictures.profile_id) and users.id = profiles.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where exists (select * from "pictures" where "profiles"."id" = "pictures"."profile_id") and "users"."id" = "profiles"."user_id")'))
   })
 
   test('throw exception when has receives an invalid relationship', async (assert) => {
@@ -727,7 +727,7 @@ test.group('Relations | HasOne', (group) => {
 
     const users = await User.query().has('profile', '>', 1).fetch()
     assert.equal(users.size(), 0)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "profiles" where users.id = profiles.user_id) > ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "profiles" where "users"."id" = "profiles"."user_id") > ?'))
     assert.deepEqual(userQuery.bindings, helpers.formatBindings([1]))
   })
 
@@ -759,7 +759,7 @@ test.group('Relations | HasOne', (group) => {
 
     const users = await User.query().has('profile.picture', '>', 1).fetch()
     assert.equal(users.size(), 0)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where (select count(*) from "pictures" where profiles.id = pictures.profile_id) > ? and users.id = profiles.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where (select count(*) from "pictures" where "profiles"."id" = "pictures"."profile_id") > ? and "users"."id" = "profiles"."user_id")'))
     assert.deepEqual(userQuery.bindings, helpers.formatBindings([1]))
   })
 
@@ -792,7 +792,7 @@ test.group('Relations | HasOne', (group) => {
 
     const users = await User.query().has('profile').orHas('identity').fetch()
     assert.equal(users.size(), 1)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where users.id = profiles.user_id) or exists (select * from "identities" where users.id = identities.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "users"."id" = "profiles"."user_id") or exists (select * from "identities" where "users"."id" = "identities"."user_id")'))
   })
 
   test('apply has via query scope', async (assert) => {
@@ -820,7 +820,7 @@ test.group('Relations | HasOne', (group) => {
 
     const users = await User.query().hasProfile().fetch()
     assert.equal(users.size(), 1)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where users.id = profiles.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "users"."id" = "profiles"."user_id")'))
   })
 
   test('add more constraints to has via whereHas', async (assert) => {
@@ -846,7 +846,7 @@ test.group('Relations | HasOne', (group) => {
       builder.where('likes', '>', 2)
     }).fetch()
     assert.equal(users.size(), 1)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "likes" > ? and users.id = profiles.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "likes" > ? and "users"."id" = "profiles"."user_id")'))
   })
 
   test('add count constraints via whereHas', async (assert) => {
@@ -872,7 +872,7 @@ test.group('Relations | HasOne', (group) => {
       builder.where('likes', '>', 2)
     }, '=', 1).fetch()
     assert.equal(users.size(), 1)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "profiles" where "likes" > ? and users.id = profiles.user_id) = ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "profiles" where "likes" > ? and "users"."id" = "profiles"."user_id") = ?'))
   })
 
   test('add whereDoesHave constraint', async (assert) => {
@@ -899,7 +899,7 @@ test.group('Relations | HasOne', (group) => {
     }).fetch()
     assert.equal(users.size(), 1)
     assert.equal(users.first().username, 'nikk')
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where not exists (select * from "profiles" where "likes" > ? and users.id = profiles.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where not exists (select * from "profiles" where "likes" > ? and "users"."id" = "profiles"."user_id")'))
   })
 
   test('add orWhereHas constraint', async (assert) => {
@@ -936,7 +936,7 @@ test.group('Relations | HasOne', (group) => {
       builder.where('is_active', true)
     }).fetch()
     assert.equal(users.size(), 2)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "likes" > ? and users.id = profiles.user_id) or exists (select * from "identities" where "is_active" = ? and users.id = identities.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "likes" > ? and "users"."id" = "profiles"."user_id") or exists (select * from "identities" where "is_active" = ? and "users"."id" = "identities"."user_id")'))
   })
 
   test('add orWhereDoesntHave constraint', async (assert) => {
@@ -974,7 +974,7 @@ test.group('Relations | HasOne', (group) => {
     }).fetch()
     assert.equal(users.size(), 1)
     assert.equal(users.first().username, 'virk')
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "likes" > ? and users.id = profiles.user_id) or not exists (select * from "identities" where "is_active" = ? and users.id = identities.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "likes" > ? and "users"."id" = "profiles"."user_id") or not exists (select * from "identities" where "is_active" = ? and "users"."id" = "identities"."user_id")'))
   })
 
   test('eagerload and paginate via query builder', async (assert) => {
@@ -1025,7 +1025,7 @@ test.group('Relations | HasOne', (group) => {
     const users = await User.query().has('profile', '=', 1).paginate(1)
     assert.equal(users.size(), 1)
     assert.deepEqual(users.pages, { lastPage: 1, perPage: 20, total: helpers.formatNumber(1), page: 1 })
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "profiles" where users.id = profiles.user_id) = ? limit ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "profiles" where "users"."id" = "profiles"."user_id") = ? limit ?'))
   })
 
   test('return relation count', async (assert) => {
@@ -1051,7 +1051,7 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.size(), 2)
     assert.equal(users.first().profile_count, 1)
     assert.deepEqual(users.first().$sideLoaded, { profile_count: helpers.formatNumber(1) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where users.id = profiles.user_id) as "profile_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where "users"."id" = "profiles"."user_id") as "profile_count" from "users"'))
   })
 
   test('return relation count with paginate method', async (assert) => {
@@ -1077,7 +1077,7 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.size(), 2)
     assert.equal(users.first().profile_count, 1)
     assert.deepEqual(users.first().$sideLoaded, { profile_count: helpers.formatNumber(1) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where users.id = profiles.user_id) as "profile_count" from "users" limit ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where "users"."id" = "profiles"."user_id") as "profile_count" from "users" limit ?'))
   })
 
   test('return relation with paginate method', async (assert) => {
@@ -1130,7 +1130,7 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.size(), 2)
     assert.equal(users.first().my_profile, 1)
     assert.deepEqual(users.first().$sideLoaded, { my_profile: helpers.formatNumber(1) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where users.id = profiles.user_id) as "my_profile" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where "users"."id" = "profiles"."user_id") as "my_profile" from "users"'))
   })
 
   test('define callback with withCount', async (assert) => {
@@ -1158,7 +1158,7 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.size(), 2)
     assert.equal(users.first().profile_count, 0)
     assert.deepEqual(users.first().$sideLoaded, { profile_count: helpers.formatNumber(0) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where "likes" > ? and users.id = profiles.user_id) as "profile_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where "likes" > ? and "users"."id" = "profiles"."user_id") as "profile_count" from "users"'))
   })
 
   test('throw exception when trying to call withCount with nested relations', async (assert) => {
@@ -1216,7 +1216,7 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.first().getRelated('profile').picture_count, helpers.formatNumber(1))
     assert.deepEqual(users.first().getRelated('profile').$sideLoaded, { picture_count: helpers.formatNumber(1) })
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users"'))
-    assert.equal(profileQuery.sql, helpers.formatQuery('select *, (select count(*) from "pictures" where profiles.id = pictures.profile_id) as "picture_count" from "profiles" where "user_id" in (?, ?)'))
+    assert.equal(profileQuery.sql, helpers.formatQuery('select *, (select count(*) from "pictures" where "profiles"."id" = "pictures"."profile_id") as "picture_count" from "profiles" where "user_id" in (?, ?)'))
   })
 
   test('eagerload when calling first', async (assert) => {
@@ -1304,7 +1304,7 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.size(), 2)
     assert.equal(users.first().profile_count, 1)
     assert.deepEqual(users.first().$sideLoaded, { profile_count: helpers.formatNumber(1) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select "username", (select count(*) from "profiles" where users.id = profiles.user_id) as "profile_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select "username", (select count(*) from "profiles" where "users"."id" = "profiles"."user_id") as "profile_count" from "users"'))
   })
 
   test('orHas should work fine', async (assert) => {
@@ -1337,7 +1337,7 @@ test.group('Relations | HasOne', (group) => {
 
     const users = await User.query().has('cars').orHas('profile').fetch()
     assert.equal(users.size(), 2)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "cars" where users.id = cars.user_id) or exists (select * from "profiles" where users.id = profiles.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "cars" where "users"."id" = "cars"."user_id") or exists (select * from "profiles" where "users"."id" = "profiles"."user_id")'))
   })
 
   test('doesntHave should work fine', async (assert) => {
@@ -1362,7 +1362,7 @@ test.group('Relations | HasOne', (group) => {
     const users = await User.query().doesntHave('profile').fetch()
     assert.equal(users.size(), 1)
     assert.equal(users.first().username, 'nikk')
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where not exists (select * from "profiles" where users.id = profiles.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where not exists (select * from "profiles" where "users"."id" = "profiles"."user_id")'))
   })
 
   test('orDoesntHave should work fine', async (assert) => {
@@ -1399,7 +1399,7 @@ test.group('Relations | HasOne', (group) => {
     const users = await User.query().doesntHave('profile').orDoesntHave('cars').paginate()
     assert.equal(users.size(), 1)
     assert.equal(users.first().username, 'virk')
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where not exists (select * from "profiles" where users.id = profiles.user_id) or not exists (select * from "cars" where users.id = cars.user_id) limit ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where not exists (select * from "profiles" where "users"."id" = "profiles"."user_id") or not exists (select * from "cars" where "users"."id" = "cars"."user_id") limit ?'))
   })
 
   test('throw exception when trying to eagerload relation twice', async (assert) => {
@@ -1700,7 +1700,7 @@ test.group('Relations | HasOne', (group) => {
 
     await User.query().withCount('profile').fetch()
 
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where users.id = profiles.user_id and "profiles"."deleted_at" is null) as "profile_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where "users"."id" = "profiles"."user_id" and "profiles"."deleted_at" is null) as "profile_count" from "users"'))
   })
 
   test('apply global scope on related model when called has', async (assert) => {
@@ -1725,7 +1725,7 @@ test.group('Relations | HasOne', (group) => {
 
     await User.query().has('profile').fetch()
 
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where users.id = profiles.user_id and "profiles"."deleted_at" is null)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "profiles" where "users"."id" = "profiles"."user_id" and "profiles"."deleted_at" is null)'))
   })
 
   test('fetch nested relations with same root', async (assert) => {
@@ -1838,6 +1838,6 @@ test.group('Relations | HasOne', (group) => {
     }).fetch()
 
     assert.equal(users.size(), 1)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (exists (select * from "profiles" where users.id = profiles.user_id))'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (exists (select * from "profiles" where "users"."id" = "profiles"."user_id"))'))
   })
 })

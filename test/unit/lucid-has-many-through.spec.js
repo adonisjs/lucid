@@ -242,7 +242,7 @@ test.group('Relations | Has Many Through - Has Many ', (group) => {
     await ioc.use('Database').table('countries').insert({ name: 'India', id: 2 })
 
     await Country.query().has('posts').fetch()
-    assert.equal(countryQuery.sql, helpers.formatQuery('select * from "countries" where exists (select * from "posts" inner join "users" on "users"."id" = "posts"."user_id" where countries.id = users.country_id)'))
+    assert.equal(countryQuery.sql, helpers.formatQuery('select * from "countries" where exists (select * from "posts" inner join "users" on "users"."id" = "posts"."user_id" where "countries"."id" = "users"."country_id")'))
   })
 
   test('limit parent rows based upon child rows count', async (assert) => {
@@ -271,7 +271,7 @@ test.group('Relations | Has Many Through - Has Many ', (group) => {
     await ioc.use('Database').table('countries').insert({ name: 'India', id: 2 })
 
     await Country.query().has('posts', '>', 1).fetch()
-    assert.equal(countryQuery.sql, helpers.formatQuery('select * from "countries" where (select count(*) from "posts" inner join "users" on "users"."id" = "posts"."user_id" where countries.id = users.country_id) > ?'))
+    assert.equal(countryQuery.sql, helpers.formatQuery('select * from "countries" where (select count(*) from "posts" inner join "users" on "users"."id" = "posts"."user_id" where "countries"."id" = "users"."country_id") > ?'))
   })
 
   test('fetch only filtered parent rows', async (assert) => {
@@ -304,7 +304,7 @@ test.group('Relations | Has Many Through - Has Many ', (group) => {
     const countries = await Country.query().has('posts').fetch()
     assert.equal(countries.size(), 1)
     assert.equal(countries.first().name, 'India')
-    assert.equal(countryQuery.sql, helpers.formatQuery('select * from "countries" where exists (select * from "posts" inner join "users" on "users"."id" = "posts"."user_id" where countries.id = users.country_id)'))
+    assert.equal(countryQuery.sql, helpers.formatQuery('select * from "countries" where exists (select * from "posts" inner join "users" on "users"."id" = "posts"."user_id" where "countries"."id" = "users"."country_id")'))
   })
 
   test('paginate only filtered parent rows', async (assert) => {
@@ -337,7 +337,7 @@ test.group('Relations | Has Many Through - Has Many ', (group) => {
     const countries = await Country.query().has('posts').paginate()
     assert.equal(countries.size(), 1)
     assert.equal(countries.first().name, 'India')
-    assert.equal(countryQuery.sql, helpers.formatQuery('select * from "countries" where exists (select * from "posts" inner join "users" on "users"."id" = "posts"."user_id" where countries.id = users.country_id) limit ?'))
+    assert.equal(countryQuery.sql, helpers.formatQuery('select * from "countries" where exists (select * from "posts" inner join "users" on "users"."id" = "posts"."user_id" where "countries"."id" = "users"."country_id") limit ?'))
   })
 })
 

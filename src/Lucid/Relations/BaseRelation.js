@@ -230,6 +230,19 @@ class BaseRelation {
   load () {
     return this.fetch()
   }
+
+  /**
+   * Columnize dot notated column name using the formatter
+   *
+   * @method columnize
+   *
+   * @param  {String}  column
+   *
+   * @return {String}
+   */
+  columnize (column) {
+    return this.relatedQuery.formatter().columnize(column)
+  }
 }
 
 methodsList.forEach((method) => {

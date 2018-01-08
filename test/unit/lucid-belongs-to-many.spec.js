@@ -654,7 +654,8 @@ test.group('Relations | Belongs To Many', (group) => {
     const users = await User.query().has('posts').fetch()
     assert.equal(users.size(), 1)
     assert.equal(users.first().username, 'virk')
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where users.id = post_user.user_id)'))
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id")'))
   })
 
   test('limit parent records using has and count constraints', async (assert) => {
@@ -679,7 +680,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const users = await User.query().has('posts', '>', 1).fetch()
     assert.equal(users.size(), 0)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where users.id = post_user.user_id) > ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id") > ?'))
   })
 
   test('add extra constraints via whereHas', async (assert) => {
@@ -709,7 +710,7 @@ test.group('Relations | Belongs To Many', (group) => {
       builder.where('post_user.is_published', true)
     }).fetch()
     assert.equal(users.size(), 1)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."is_published" = ? and users.id = post_user.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."is_published" = ? and "users"."id" = "post_user"."user_id")'))
   })
 
   test('get related model count via withCount', async (assert) => {
@@ -740,7 +741,7 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(users.size(), 2)
     assert.deepEqual(users.first().$sideLoaded, { posts_count: helpers.formatNumber(2) })
     assert.deepEqual(users.last().$sideLoaded, { posts_count: helpers.formatNumber(1) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where users.id = post_user.user_id) as "posts_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id") as "posts_count" from "users"'))
   })
 
   test('get constraints to withCount', async (assert) => {
@@ -1851,7 +1852,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const results = await User.query().withCount('followers').fetch()
 
-    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where users.id = followers.user_id) as "followers_count" from "users"'
+    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where "users"."id" = "followers"."user_id") as "followers_count" from "users"'
 
     assert.equal(results.first().$sideLoaded.followers_count, 1)
     assert.equal(results.last().$sideLoaded.followers_count, 0)
@@ -1906,7 +1907,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const results = await User.query().withCount('followers').fetch()
 
-    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where users.id = followers.user_id) as "followers_count" from "users"'
+    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where "users"."id" = "followers"."user_id") as "followers_count" from "users"'
 
     assert.equal(results.first().$sideLoaded.followers_count, 2)
     assert.equal(results.rows[1].$sideLoaded.followers_count, 1)
@@ -1967,7 +1968,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const results = await User.query().withCount('following').withCount('followers').fetch()
 
-    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."user_id" where users.id = followers.follower_id) as "following_count", (select count(*) from "users" as "sj_1" inner join "followers" on "sj_1"."id" = "followers"."follower_id" where users.id = followers.user_id) as "followers_count" from "users"'
+    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."user_id" where "users"."id" = "followers"."follower_id") as "following_count", (select count(*) from "users" as "sj_1" inner join "followers" on "sj_1"."id" = "followers"."follower_id" where "users"."id" = "followers"."user_id") as "followers_count" from "users"'
 
     assert.equal(results.first().$sideLoaded.followers_count, 2)
     assert.equal(results.first().$sideLoaded.following_count, 0)
@@ -2138,7 +2139,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     await User.query().withCount('posts').fetch()
 
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where users.id = post_user.user_id and "posts"."deleted_at" is null) as "posts_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id" and "posts"."deleted_at" is null) as "posts_count" from "users"'))
   })
 
   test('apply global scope on related model when called has', async (assert) => {
@@ -2163,7 +2164,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     await User.query().has('posts').fetch()
 
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where users.id = post_user.user_id and "posts"."deleted_at" is null)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id" and "posts"."deleted_at" is null)'))
   })
 
   test('attach existing model inside transaction', async (assert) => {

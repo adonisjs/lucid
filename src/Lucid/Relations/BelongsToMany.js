@@ -117,21 +117,6 @@ class BelongsToMany extends BaseRelation {
   }
 
   /**
-   * The colums to be selected from the related
-   * query
-   *
-   * @method select
-   *
-   * @param  {Array} columns
-   *
-   * @chainable
-   */
-  select (columns) {
-    this._relatedFields = _.isArray(columns) ? columns : _.toArray(arguments)
-    return this
-  }
-
-  /**
    * Returns the pivot table name. The pivot model is
    * given preference over the default table name.
    *
@@ -419,6 +404,21 @@ class BelongsToMany extends BaseRelation {
    */
   _getPivotInstance (value) {
     return _.find(this._existingPivotInstances, (instance) => instance[this.relatedForeignKey] === value)
+  }
+
+  /**
+   * The colums to be selected from the related
+   * query
+   *
+   * @method select
+   *
+   * @param  {Array} columns
+   *
+   * @chainable
+   */
+  select (columns) {
+    this._relatedFields = _.isArray(columns) ? columns : _.toArray(arguments)
+    return this
   }
 
   /**
@@ -710,7 +710,10 @@ class BelongsToMany extends BaseRelation {
     }
 
     this._makeJoinQuery()
-    this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$pivotTable}.${this.foreignKey}`)
+
+    const lhs = this.columnize(`${this.$primaryTable}.${this.primaryKey}`)
+    const rhs = this.columnize(`${this.$pivotTable}.${this.foreignKey}`)
+    this.relatedQuery.whereRaw(`${lhs} = ${rhs}`)
 
     /**
      * Add count clause if count is required

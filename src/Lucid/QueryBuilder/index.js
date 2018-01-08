@@ -308,6 +308,17 @@ class QueryBuilder {
   }
 
   /**
+   * Access of query formatter
+   *
+   * @method formatter
+   *
+   * @return {Object}
+   */
+  formatter () {
+    return this.query.client.formatter()
+  }
+
+  /**
    * Instruct query builder to ignore all global
    * scopes.
    *
