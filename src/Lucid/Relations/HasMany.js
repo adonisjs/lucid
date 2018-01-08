@@ -12,6 +12,7 @@
 const _ = require('lodash')
 const GE = require('@adonisjs/generic-exceptions')
 const BaseRelation = require('./BaseRelation')
+const util = require('../../../lib/util')
 
 /**
  * HasMany relationship instance is used to define a
@@ -53,7 +54,7 @@ class HasMany extends BaseRelation {
    */
   mapValues (modelInstances) {
     return _.transform(modelInstances, (result, modelInstance) => {
-      if (modelInstance[this.primaryKey]) {
+      if (util.existy(modelInstance[this.primaryKey])) {
         result.push(modelInstance[this.primaryKey])
       }
       return result
@@ -71,7 +72,7 @@ class HasMany extends BaseRelation {
    * @return {Object} @multiple([key=String, values=Array, defaultValue=Null])
    */
   group (relatedInstances) {
-    const Serializer = this.RelatedModel.Serializer
+    const Serializer = this.RelatedModel.resolveSerializer()
 
     const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
       const foreignKeyValue = relatedInstance[this.foreignKey]
@@ -123,10 +124,15 @@ class HasMany extends BaseRelation {
     }
 
     const tableAlias = this.relatedTableAlias || this.$foreignTable
-    this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${tableAlias}.${this.foreignKey}`)
+
+    const lhs = this.columnize(`${this.$primaryTable}.${this.primaryKey}`)
+    const rhs = this.columnize(`${tableAlias}.${this.foreignKey}`)
+    this.relatedQuery.whereRaw(`${lhs} = ${rhs}`)
+
     if (count) {
       this.relatedQuery.count('*')
     }
+
     return this.relatedQuery.query
   }
 
@@ -187,7 +193,7 @@ class HasMany extends BaseRelation {
    * @return {Array}
    */
   async createMany (arrayOfPayload, trx) {
-    if (arrayOfPayload instanceof Array === false) {
+    if (!Array.isArray(arrayOfPayload)) {
       throw GE
         .InvalidArgumentException
         .invalidParameter('hasMany.createMany expects an array of values', arrayOfPayload)
@@ -208,7 +214,7 @@ class HasMany extends BaseRelation {
    * @return {Array}
    */
   async saveMany (arrayOfRelatedInstances, trx) {
-    if (arrayOfRelatedInstances instanceof Array === false) {
+    if (!Array.isArray(arrayOfRelatedInstances)) {
       throw GE
         .InvalidArgumentException
         .invalidParameter('hasMany.saveMany expects an array of related model instances', arrayOfRelatedInstances)

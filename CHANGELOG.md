@@ -1,3 +1,31 @@
+<a name="4.1.2"></a>
+## [4.1.2](https://github.com/adonisjs/adonis-lucid/compare/v4.1.1...v4.1.2) (2018-01-08)
+
+
+### Bug Fixes
+
+* use Array.isArray of instanceof ([892208b](https://github.com/adonisjs/adonis-lucid/commit/892208b)), closes [#262](https://github.com/adonisjs/adonis-lucid/issues/262)
+* **belongstomany:** add transaction support to attach,detach & sync ([d6fa6aa](https://github.com/adonisjs/adonis-lucid/commit/d6fa6aa)), closes [#244](https://github.com/adonisjs/adonis-lucid/issues/244)
+* **belongsToMany:** pick value of define key over primaryKeyValue ([7116c2b](https://github.com/adonisjs/adonis-lucid/commit/7116c2b)), closes [#246](https://github.com/adonisjs/adonis-lucid/issues/246)
+* **belongsToMany:** pivotModel should allow class and ioc container string ([80fc99c](https://github.com/adonisjs/adonis-lucid/commit/80fc99c)), closes [#254](https://github.com/adonisjs/adonis-lucid/issues/254)
+* **database:** database.close should remove connection on close ([874268a](https://github.com/adonisjs/adonis-lucid/commit/874268a))
+* **eagerloading:** fetch all nested relations ([#273](https://github.com/adonisjs/adonis-lucid/issues/273)) ([1a796cd](https://github.com/adonisjs/adonis-lucid/commit/1a796cd))
+* **querybuilder:** apply scopes for all query methods ([97bd2c3](https://github.com/adonisjs/adonis-lucid/commit/97bd2c3))
+* **querybuilder:** where closure should have model qb scope ([d52aa8d](https://github.com/adonisjs/adonis-lucid/commit/d52aa8d)), closes [#267](https://github.com/adonisjs/adonis-lucid/issues/267)
+* **queryscopes:** ensure query scopes are called with relations too ([4d25fcc](https://github.com/adonisjs/adonis-lucid/commit/4d25fcc)), closes [#261](https://github.com/adonisjs/adonis-lucid/issues/261)
+* **relations:** only ignore undefined and null values ([1f852be](https://github.com/adonisjs/adonis-lucid/commit/1f852be)), closes [#272](https://github.com/adonisjs/adonis-lucid/issues/272)
+* **schema:** add withSchema method to the schema builder ([5703a7c](https://github.com/adonisjs/adonis-lucid/commit/5703a7c))
+* **serializer:** resolve serializer return string via ioc container ([484a6c1](https://github.com/adonisjs/adonis-lucid/commit/484a6c1)), closes [#268](https://github.com/adonisjs/adonis-lucid/issues/268)
+* **whereRaw:** where raw formatter dot notated fields ([c7df200](https://github.com/adonisjs/adonis-lucid/commit/c7df200)), closes [#252](https://github.com/adonisjs/adonis-lucid/issues/252)
+
+
+### Features
+
+* **lucid:** allow to unfreeze model instance ([#266](https://github.com/adonisjs/adonis-lucid/issues/266)) ([1cacc58](https://github.com/adonisjs/adonis-lucid/commit/1cacc58))
+* **seed:** auto close db on when seeder finishes ([edd7640](https://github.com/adonisjs/adonis-lucid/commit/edd7640))
+
+
+
 <a name="4.1.1"></a>
 ## [4.1.1](https://github.com/adonisjs/adonis-lucid/compare/v4.1.0...v4.1.1) (2017-12-12)
 

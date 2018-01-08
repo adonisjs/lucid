@@ -12,6 +12,7 @@
 const _ = require('lodash')
 const BaseRelation = require('./BaseRelation')
 const CE = require('../../Exceptions')
+const util = require('../../../lib/util')
 
 /**
  * BelongsToMany class builds relationship between
@@ -174,7 +175,7 @@ class HasManyThrough extends BaseRelation {
    */
   mapValues (modelInstances) {
     return _.transform(modelInstances, (result, modelInstance) => {
-      if (modelInstance[this.primaryKey]) {
+      if (util.existy(modelInstance[this.primaryKey])) {
         result.push(modelInstance[this.primaryKey])
       }
       return result
@@ -217,7 +218,7 @@ class HasManyThrough extends BaseRelation {
    * @return {Object} @multiple([key=String, values=Array, defaultValue=Null])
    */
   group (relatedInstances) {
-    const Serializer = this.RelatedModel.Serializer
+    const Serializer = this.RelatedModel.resolveSerializer()
 
     const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
       const foreignKeyValue = relatedInstance.$sideLoaded[`through_${this.foreignKey}`]
@@ -254,7 +255,10 @@ class HasManyThrough extends BaseRelation {
    */
   relatedWhere (count) {
     this._makeJoinQuery()
-    this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$foreignTable}.${this.foreignKey}`)
+
+    const lhs = this.columnize(`${this.$primaryTable}.${this.primaryKey}`)
+    const rhs = this.columnize(`${this.$foreignTable}.${this.foreignKey}`)
+    this.relatedQuery.whereRaw(`${lhs} = ${rhs}`)
 
     /**
      * Add count clause if count is required

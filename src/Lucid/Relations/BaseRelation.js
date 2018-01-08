@@ -11,6 +11,7 @@
 
 const CE = require('../../Exceptions')
 const proxyGet = require('../../../lib/proxyGet')
+const util = require('../../../lib/util')
 
 const methodsList = [
   'increment',
@@ -62,6 +63,18 @@ class BaseRelation {
     this.primaryKey = primaryKey
     this.foreignKey = foreignKey
     this.relatedQuery = this.RelatedModel.query()
+
+    /**
+     * Storing relation meta-data on the
+     * query builder.
+     */
+    this.relatedQuery.$relation = {
+      name: this.constructor.name,
+      foreignKey: this.foreignKey,
+      primaryKey: this.primaryKey,
+      primaryTable: this.$primaryTable,
+      foreignTable: this.$foreignTable
+    }
 
     /**
      * this is default value to eagerload data, but users
@@ -169,9 +182,19 @@ class BaseRelation {
    * @private
    */
   _validateRead () {
-    if (!this.$primaryKeyValue || !this.parentInstance.$persisted) {
+    if (!util.existy(this.$primaryKeyValue) || !this.parentInstance.$persisted) {
       throw CE.RuntimeException.unSavedModel(this.parentInstance.constructor.name)
     }
+  }
+
+  /**
+   * Applies scopes on the related query. This is used when
+   * the related query is used as subquery.
+   *
+   * @method applyRelatedScopes
+   */
+  applyRelatedScopes () {
+    this.relatedQuery._applyScopes()
   }
 
   /**
@@ -207,6 +230,19 @@ class BaseRelation {
    */
   load () {
     return this.fetch()
+  }
+
+  /**
+   * Columnize dot notated column name using the formatter
+   *
+   * @method columnize
+   *
+   * @param  {String}  column
+   *
+   * @return {String}
+   */
+  columnize (column) {
+    return this.relatedQuery.formatter().columnize(column)
   }
 }
 

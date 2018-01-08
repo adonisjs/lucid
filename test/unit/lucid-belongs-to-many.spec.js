@@ -43,6 +43,9 @@ test.group('Relations | Belongs To Many', (group) => {
     await ioc.use('Adonis/Src/Database').table('posts').truncate()
     await ioc.use('Adonis/Src/Database').table('post_user').truncate()
     await ioc.use('Adonis/Src/Database').table('followers').truncate()
+    await ioc.use('Adonis/Src/Database').table('team_user').truncate()
+    await ioc.use('Adonis/Src/Database').table('party_users').truncate()
+    await ioc.use('Adonis/Src/Database').table('teams').truncate()
   })
 
   group.after(async () => {
@@ -651,7 +654,8 @@ test.group('Relations | Belongs To Many', (group) => {
     const users = await User.query().has('posts').fetch()
     assert.equal(users.size(), 1)
     assert.equal(users.first().username, 'virk')
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where users.id = post_user.user_id)'))
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id")'))
   })
 
   test('limit parent records using has and count constraints', async (assert) => {
@@ -676,7 +680,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const users = await User.query().has('posts', '>', 1).fetch()
     assert.equal(users.size(), 0)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where users.id = post_user.user_id) > ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id") > ?'))
   })
 
   test('add extra constraints via whereHas', async (assert) => {
@@ -706,7 +710,7 @@ test.group('Relations | Belongs To Many', (group) => {
       builder.where('post_user.is_published', true)
     }).fetch()
     assert.equal(users.size(), 1)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."is_published" = ? and users.id = post_user.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."is_published" = ? and "users"."id" = "post_user"."user_id")'))
   })
 
   test('get related model count via withCount', async (assert) => {
@@ -737,7 +741,7 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(users.size(), 2)
     assert.deepEqual(users.first().$sideLoaded, { posts_count: helpers.formatNumber(2) })
     assert.deepEqual(users.last().$sideLoaded, { posts_count: helpers.formatNumber(1) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where users.id = post_user.user_id) as "posts_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id") as "posts_count" from "users"'))
   })
 
   test('get constraints to withCount', async (assert) => {
@@ -1848,7 +1852,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const results = await User.query().withCount('followers').fetch()
 
-    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where users.id = followers.user_id) as "followers_count" from "users"'
+    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where "users"."id" = "followers"."user_id") as "followers_count" from "users"'
 
     assert.equal(results.first().$sideLoaded.followers_count, 1)
     assert.equal(results.last().$sideLoaded.followers_count, 0)
@@ -1903,7 +1907,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const results = await User.query().withCount('followers').fetch()
 
-    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where users.id = followers.user_id) as "followers_count" from "users"'
+    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where "users"."id" = "followers"."user_id") as "followers_count" from "users"'
 
     assert.equal(results.first().$sideLoaded.followers_count, 2)
     assert.equal(results.rows[1].$sideLoaded.followers_count, 1)
@@ -1964,7 +1968,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const results = await User.query().withCount('following').withCount('followers').fetch()
 
-    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."user_id" where users.id = followers.follower_id) as "following_count", (select count(*) from "users" as "sj_1" inner join "followers" on "sj_1"."id" = "followers"."follower_id" where users.id = followers.user_id) as "followers_count" from "users"'
+    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."user_id" where "users"."id" = "followers"."follower_id") as "following_count", (select count(*) from "users" as "sj_1" inner join "followers" on "sj_1"."id" = "followers"."follower_id" where "users"."id" = "followers"."user_id") as "followers_count" from "users"'
 
     assert.equal(results.first().$sideLoaded.followers_count, 2)
     assert.equal(results.first().$sideLoaded.following_count, 0)
@@ -2003,5 +2007,449 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.lengthOf(pivotValues, 1)
     assert.equal(pivotValues[0].user_id, 1)
     assert.equal(pivotValues[0].post_id, 2)
+  })
+
+  test('define pivot model via ioc container string', (assert) => {
+    class Post extends Model {
+    }
+
+    ioc.fake('App/Models/PostUser', () => {
+      class PostUser extends Model {
+      }
+      return PostUser
+    })
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel('App/Models/PostUser')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const user = new User()
+    const userPosts = user.posts()
+    assert.equal(userPosts.$pivotTable, 'post_users')
+  })
+
+  test('attach model via different primary key', async (assert) => {
+    class Team extends Model {
+    }
+
+    class User extends Model {
+      static get table () {
+        return 'party_users'
+      }
+
+      teams () {
+        return this.belongsToMany(Team, 'user_party_id', 'team_party_id', 'party_id', 'party_id')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Team._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    user.party_id = 20
+    await user.save()
+
+    await user.teams().attach(10)
+    const pivotValues = await ioc.use('Database').table('team_user')
+    assert.lengthOf(pivotValues, 1)
+    assert.equal(pivotValues[0].user_party_id, 20)
+    assert.equal(pivotValues[0].team_party_id, 10)
+  })
+
+  test('create and attach model via different primary key', async (assert) => {
+    class Team extends Model {
+    }
+
+    class User extends Model {
+      static get table () {
+        return 'party_users'
+      }
+
+      teams () {
+        return this.belongsToMany(Team, 'user_party_id', 'team_party_id', 'party_id', 'party_id')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Team._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    user.party_id = 20
+    await user.save()
+
+    await user.teams().create({ name: 'draculas', party_id: 10 })
+    const pivotValues = await ioc.use('Database').table('team_user')
+    assert.lengthOf(pivotValues, 1)
+    assert.equal(pivotValues[0].user_party_id, 20)
+    assert.equal(pivotValues[0].team_party_id, 10)
+  })
+
+  test('apply global scope on related model when eagerloading', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    Post.addGlobalScope(function (builder) {
+      builder.where(`${builder.Model.table}.deleted_at`, null)
+    })
+
+    let postQuery = null
+    Post.onQuery((query) => (postQuery = query))
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await User.query().with('posts').fetch()
+
+    assert.equal(postQuery.sql, helpers.formatQuery('select "posts".*, "post_user"."post_id" as "pivot_post_id", "post_user"."user_id" as "pivot_user_id" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" in (?, ?) and "posts"."deleted_at" is null'))
+  })
+
+  test('apply global scope on related model when called withCount', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    Post.addGlobalScope(function (builder) {
+      builder.where(`${builder.Model.table}.deleted_at`, null)
+    })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await User.query().withCount('posts').fetch()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id" and "posts"."deleted_at" is null) as "posts_count" from "users"'))
+  })
+
+  test('apply global scope on related model when called has', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    Post.addGlobalScope(function (builder) {
+      builder.where(`${builder.Model.table}.deleted_at`, null)
+    })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await User.query().has('posts').fetch()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id" and "posts"."deleted_at" is null)'))
+  })
+
+  test('attach existing model inside transaction', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const trx = await ioc.use('Database').beginTransaction()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save(trx)
+
+    await user.posts().attach(1, null, trx)
+    trx.rollback()
+
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 0)
+  })
+
+  test('sync data inside a transaction', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    const trx = await ioc.use('Database').beginTransaction()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save(trx)
+
+    await user.posts().sync(1, null, trx)
+    trx.rollback()
+
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 0)
+  })
+
+  test('attach data inside transaction using custom pivotModel', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    const trx = await ioc.use('Database').beginTransaction()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save(trx)
+
+    await user.posts().attach(1, null, trx)
+    trx.rollback()
+
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 0)
+  })
+
+  test('sync data inside transaction using custom pivotModel', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    const trx = await ioc.use('Database').beginTransaction()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save(trx)
+
+    await user.posts().sync(1, null, trx)
+    trx.rollback()
+
+    const pivotValues = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotValues, 0)
+  })
+
+  test('work fine when foreign key value is 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 1, title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 0 })
+
+    const user = await User.find(0)
+    const posts = await user.posts().fetch()
+    assert.equal(posts.first().getRelated('pivot').user_id, 0)
+  })
+
+  test('eagerload when foreign key value is 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 1, title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 0 })
+
+    const user = await User.query().with('posts').first()
+    assert.instanceOf(user.getRelated('posts').first(), Post)
+  })
+
+  test('save related when foreign key value is 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+
+    const user = await User.find(0)
+    await user.posts().create({ title: 'Adonis 101' })
+
+    const posts = await ioc.use('Database').table('posts')
+    assert.lengthOf(posts, 1)
+    assert.equal(posts[0].title, 'Adonis 101')
+
+    const pivotRow = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotRow, 1)
+    assert.equal(pivotRow[0].user_id, 0)
+    assert.equal(pivotRow[0].post_id, posts[0].id)
+  })
+
+  test('update related when foreign key value is 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 1, title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 0 })
+
+    const user = await User.find(0)
+    await user.posts().update({ title: 'Adonis 102' })
+
+    const posts = await ioc.use('Database').table('posts')
+    assert.equal(posts[0].title, 'Adonis 102')
+  })
+
+  test('serialize when foreign key is 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 1, title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 0 })
+
+    const user = await User.query().with('posts').first()
+    assert.equal(user.toJSON().posts[0].pivot.user_id, 0)
+  })
+
+  test('attach related when foreign key 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 1, title: 'Adonis 101' })
+
+    const user = await User.find(0)
+    await user.posts().attach([1])
+
+    const pivotRow = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotRow, 1)
+    assert.equal(pivotRow[0].user_id, 0)
+    assert.equal(pivotRow[0].post_id, 1)
+  })
+
+  test('detach related when foreign key 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 1, title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 0 })
+
+    const user = await User.find(0)
+    await user.posts().detach([1])
+
+    const posts = await ioc.use('Database').table('posts')
+    assert.lengthOf(posts, 1)
+
+    const pivotRow = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotRow, 0)
   })
 })

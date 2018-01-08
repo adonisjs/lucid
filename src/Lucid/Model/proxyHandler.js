@@ -24,7 +24,7 @@ const proxyHandler = exports = module.exports = {}
  * @param  {Mixed} value
  */
 proxyHandler.set = function (target, name, value) {
-  if (target.isDeleted && name !== 'frozen') {
+  if (target.isDeleted && name !== '$frozen') {
     throw CE.ModelException.deletedInstance(target.constructor.name)
   }
 

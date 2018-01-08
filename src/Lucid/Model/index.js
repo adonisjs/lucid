@@ -212,6 +212,17 @@ class Model extends BaseModel {
   }
 
   /**
+   * Returns a query builder without any global scopes
+   *
+   * @method queryWithOutScopes
+   *
+   * @return {QueryBuilder}
+   */
+  static queryWithOutScopes () {
+    return this.query().ignoreScopes()
+  }
+
+  /**
    * Method to be called only once to boot
    * the model.
    *
@@ -443,7 +454,7 @@ class Model extends BaseModel {
    * @throws {InvalidArgumentException} If payloadArray is not an array
    */
   static async createMany (payloadArray, trx) {
-    if (payloadArray instanceof Array === false) {
+    if (!Array.isArray(payloadArray)) {
       throw GE
         .InvalidArgumentException
         .invalidParameter(`${this.name}.createMany expects an array of values`, payloadArray)

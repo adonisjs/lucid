@@ -37,6 +37,39 @@ const proxyHandler = {
 }
 
 /**
+ * Aggregrates to be added to the query
+ * builder
+ */
+const aggregates = [
+  'sum',
+  'sumDistinct',
+  'avg',
+  'avgDistinct',
+  'min',
+  'max',
+  'count',
+  'countDistinct',
+  'getSum',
+  'getSumDistinct',
+  'getAvg',
+  'getAvgDistinct',
+  'getMin',
+  'getMax',
+  'getCount',
+  'getCountDistinct'
+]
+
+/**
+ * Query methods to be added to the
+ * query builder
+ */
+const queryMethods = [
+  'pluck',
+  'toSQL',
+  'toString'
+]
+
+/**
  * Query builder for the lucid models extended
  * by the @ref('Database') class.
  *
@@ -59,6 +92,14 @@ class QueryBuilder {
     this.query = this.db.table(table)
 
     /**
+     * SubQuery to be pulled off the query builder. For now this is
+     * passed to the `where` closure.
+     */
+    this.query.subQuery = () => {
+      return this.Model.queryWithOutScopes()
+    }
+
+    /**
      * Scopes to be ignored at runtime
      *
      * @type {Array}
@@ -66,6 +107,14 @@ class QueryBuilder {
      * @private
      */
     this._ignoreScopes = []
+
+    /**
+     * A flag to find if scopes has already
+     * been applied or not
+     *
+     * @type {Boolean}
+     */
+    this._scopesApplied = false
 
     /**
      * Relations to be eagerloaded
@@ -138,6 +187,8 @@ class QueryBuilder {
     } else {
       this.query[method](relationInstance.relatedWhere())
     }
+
+    relationInstance.applyRelatedScopes()
   }
 
   /**
@@ -169,6 +220,18 @@ class QueryBuilder {
    * @private
    */
   _applyScopes () {
+    /**
+     * Do not apply if already applied
+     */
+    if (this._scopesApplied) {
+      return this
+    }
+
+    /**
+     * Setting flag to true
+     */
+    this._scopesApplied = true
+
     if (this._ignoreScopes.indexOf('*') > -1) {
       return this
     }
@@ -245,6 +308,17 @@ class QueryBuilder {
   }
 
   /**
+   * Access of query formatter
+   *
+   * @method formatter
+   *
+   * @return {Object}
+   */
+  formatter () {
+    return this.query.client.formatter()
+  }
+
+  /**
    * Instruct query builder to ignore all global
    * scopes.
    *
@@ -262,7 +336,7 @@ class QueryBuilder {
      * Don't do anything when array is empty or value is not
      * an array
      */
-    const scopesToIgnore = scopes instanceof Array === true ? scopes : ['*']
+    const scopesToIgnore = Array.isArray(scopes) ? scopes : ['*']
     this._ignoreScopes = this._ignoreScopes.concat(scopesToIgnore)
     return this
   }
@@ -300,10 +374,8 @@ class QueryBuilder {
       await this.Model.$hooks.after.exec('fetch', modelInstances)
     }
 
-    /**
-     * Return an instance of active model serializer
-     */
-    return new this.Model.Serializer(modelInstances)
+    const Serializer = this.Model.resolveSerializer()
+    return new Serializer(modelInstances)
   }
 
   /**
@@ -435,111 +507,8 @@ class QueryBuilder {
     /**
      * Return an instance of active model serializer
      */
-    return new this.Model.Serializer(modelInstances, pages)
-  }
-
- /**
-  * Return a count of all model records.
-  *
-  * @method getCount
-  *
-  * @param  {String} columnName = '*'
-  *
-  * @return {Number}
-  */
-  getCount (columnName = '*') {
-    return this.query.getCount(columnName)
-  }
-
-  /**
-  * Return a distinct count of all model records.
-  *
-  * @method getCountDistinct
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getCountDistinct (columnName) {
-    return this.query.getCountDistinct(columnName)
-  }
-
- /**
-  * Return the average of all values of columnName.
-  *
-  * @method getAvg
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getAvg (columnName) {
-    return this.query.getAvg(columnName)
-  }
-
-  /**
-  * Return the average of all distinct values of columnName.
-  *
-  * @method getAvgDistinct
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getAvgDistinct (columnName) {
-    return this.query.getAvgDistinct(columnName)
-  }
-
-  /**
-  * Return the minimum of all values of columnName.
-  *
-  * @method getMin
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getMin (columnName) {
-    return this.query.getMin(columnName)
-  }
-
-  /**
-  * Return the maximum of all values of columnName.
-  *
-  * @method getMax
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getMax (columnName) {
-    return this.query.getMax(columnName)
-  }
-
- /**
-  * Return the sum of all values of columnName.
-  *
-  * @method getSum
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getSum (columnName) {
-    return this.query.getSum(columnName)
-  }
-
- /**
-  * Return the sum of all distinct values of columnName.
-  *
-  * @method getSumDistinct
-  *
-  * @param  {String} columnName
-  *
-  * @return {Number}
-  */
-  getSumDistinct (columnName) {
-    return this.query.getSumDistinct(columnName)
+    const Serializer = this.Model.resolveSerializer()
+    return new Serializer(modelInstances, pages)
   }
 
   /**
@@ -596,9 +565,8 @@ class QueryBuilder {
    *
    * @return {Array}
    */
-  async ids () {
-    const rows = await this.query
-    return rows.map((row) => row[this.Model.primaryKey])
+  ids () {
+    return this.pluck(this.Model.primaryKey)
   }
 
   /**
@@ -614,8 +582,10 @@ class QueryBuilder {
    * @return {Object}
    */
   async pair (lhs, rhs) {
-    const collection = await this.fetch()
-    return _.transform(collection.rows, (result, row) => {
+    this._applyScopes()
+
+    const rows = await this.query
+    return _.transform(rows, (result, row) => {
       result[row[lhs]] = row[rhs]
       return result
     }, {})
@@ -909,6 +879,7 @@ class QueryBuilder {
     if (!_.find(this.query._statements, (statement) => statement.grouping === 'columns')) {
       columns.push('*')
     }
+
     columns.push(relationInstance.relatedWhere(true, this._withCountCounter).as(asStatement))
 
     /**
@@ -923,29 +894,9 @@ class QueryBuilder {
      */
     this.query.select(columns)
 
+    relationInstance.applyRelatedScopes()
+
     return this
-  }
-
-  /**
-   * Returns the sql representation of query
-   *
-   * @method toSQL
-   *
-   * @return {Object}
-   */
-  toSQL () {
-    return this.query.toSQL()
-  }
-
-  /**
-   * Returns string representation of query
-   *
-   * @method toString
-   *
-   * @return {String}
-   */
-  toString () {
-    return this.query.toString()
   }
 
   /**
@@ -982,5 +933,12 @@ class QueryBuilder {
     return this
   }
 }
+
+aggregates.concat(queryMethods).forEach((method) => {
+  QueryBuilder.prototype[method] = function (...args) {
+    this._applyScopes()
+    return this.query[method](...args)
+  }
+})
 
 module.exports = QueryBuilder

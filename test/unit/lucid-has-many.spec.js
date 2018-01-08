@@ -1,3 +1,4 @@
+
 'use strict'
 
 /*
@@ -438,7 +439,7 @@ test.group('Relations | Has Many', (group) => {
 
     const user = await User.query().withCount('cars').first()
     assert.deepEqual(user.$sideLoaded, { cars_count: helpers.formatNumber(2) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "cars" where users.id = cars.user_id) as "cars_count" from "users" limit ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "cars" where "users"."id" = "cars"."user_id") as "cars_count" from "users" limit ?'))
   })
 
   test('filter parent based upon child', async (assert) => {
@@ -465,7 +466,7 @@ test.group('Relations | Has Many', (group) => {
 
     const users = await User.query().has('cars').fetch()
     assert.equal(users.size(), 1)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "cars" where users.id = cars.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "cars" where "users"."id" = "cars"."user_id")'))
   })
 
   test('define minimum count via has', async (assert) => {
@@ -493,7 +494,7 @@ test.group('Relations | Has Many', (group) => {
 
     const users = await User.query().has('cars', '>=', 2).fetch()
     assert.equal(users.size(), 1)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "cars" where users.id = cars.user_id) >= ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "cars" where "users"."id" = "cars"."user_id") >= ?'))
   })
 
   test('add additional constraints via where has', async (assert) => {
@@ -523,7 +524,7 @@ test.group('Relations | Has Many', (group) => {
       return builder.where('name', 'audi')
     }).fetch()
     assert.equal(users.size(), 2)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "cars" where "name" = ? and users.id = cars.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "cars" where "name" = ? and "users"."id" = "cars"."user_id")'))
   })
 
   test('add additional constraints and count constraints at same time', async (assert) => {
@@ -553,7 +554,7 @@ test.group('Relations | Has Many', (group) => {
       return builder.where('name', 'audi')
     }, '>', 1).fetch()
     assert.equal(users.size(), 0)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "cars" where "name" = ? and users.id = cars.user_id) > ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "cars" where "name" = ? and "users"."id" = "cars"."user_id") > ?'))
   })
 
   test('add orWhereHas clause', async (assert) => {
@@ -583,7 +584,7 @@ test.group('Relations | Has Many', (group) => {
       return builder.where('name', 'audi')
     }, '>', 1).orWhereHas('cars', (builder) => builder.where('name', 'mercedes')).fetch()
     assert.equal(users.size(), 1)
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "cars" where "name" = ? and users.id = cars.user_id) > ? or exists (select * from "cars" where "name" = ? and users.id = cars.user_id)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (select count(*) from "cars" where "name" = ? and "users"."id" = "cars"."user_id") > ? or exists (select * from "cars" where "name" = ? and "users"."id" = "cars"."user_id")'))
   })
 
   test('paginate records', async (assert) => {
@@ -1003,11 +1004,194 @@ test.group('Relations | Has Many', (group) => {
 
     const results = await User.query().withCount('teamMembers').fetch()
 
-    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" where users.id = sj_0.manager_id) as "teamMembers_count" from "users"'
+    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" where "users"."id" = "sj_0"."manager_id") as "teamMembers_count" from "users"'
 
     assert.equal(results.first().$sideLoaded.teamMembers_count, 2)
     assert.equal(results.rows[1].$sideLoaded.teamMembers_count, 0)
     assert.equal(results.last().$sideLoaded.teamMembers_count, 0)
     assert.equal(userQuery.sql, helpers.formatQuery(expectedQuery))
+  })
+
+  test('apply global scope on related model when eagerloading', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    Car.addGlobalScope(function (builder) {
+      builder.where('deleted_at', null)
+    })
+
+    let carQuery = null
+    Car.onQuery((query) => (carQuery = query))
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await User.query().with('cars').fetch()
+
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "user_id" in (?, ?) and "deleted_at" is null'))
+  })
+
+  test('apply global scope on related model when called withCount', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    Car.addGlobalScope(function (builder) {
+      builder.where(`${builder.Model.table}.deleted_at`, null)
+    })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await User.query().withCount('cars').fetch()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "cars" where "users"."id" = "cars"."user_id" and "cars"."deleted_at" is null) as "cars_count" from "users"'))
+  })
+
+  test('apply global scope on related model when called has', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    Car.addGlobalScope(function (builder) {
+      builder.where(`${builder.Model.table}.deleted_at`, null)
+    })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await User.query().has('cars').fetch()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "cars" where "users"."id" = "cars"."user_id" and "cars"."deleted_at" is null)'))
+  })
+
+  test('work fine when foreign key value is 0', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 0 })
+
+    const user = await User.find(0)
+    const cars = await user.cars().fetch()
+    assert.equal(cars.first().user_id, 0)
+  })
+
+  test('eagerload when foreign key value is 0', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 0 })
+
+    const user = await User.query().with('cars').first()
+    assert.instanceOf(user.getRelated('cars').first(), Car)
+  })
+
+  test('save related when foreign key value is 0', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+
+    const user = await User.find(0)
+    await user.cars().create({ name: 'E180', model: 'Mercedes' })
+
+    const cars = await ioc.use('Database').table('cars')
+    assert.lengthOf(cars, 1)
+    assert.equal(cars[0].user_id, 0)
+  })
+
+  test('update related when foreign key value is 0', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 0 })
+
+    const user = await User.find(0)
+    await user.cars().update({ name: 'S480' })
+
+    const cars = await ioc.use('Database').table('cars')
+    assert.equal(cars[0].name, 'S480')
+  })
+
+  test('serialize when foreign key is 0', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 0 })
+
+    const user = await User.query().with('cars').first()
+    assert.equal(user.toJSON().cars[0].user_id, 0)
   })
 })

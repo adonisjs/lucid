@@ -18,6 +18,7 @@
 
 const _ = require('lodash')
 const GE = require('@adonisjs/generic-exceptions')
+const { ioc } = require('../../../lib/iocResolver')
 
 const BaseRelation = require('./BaseRelation')
 const util = require('../../../lib/util')
@@ -109,21 +110,10 @@ class BelongsToMany extends BaseRelation {
       this._makeJoinQuery()
       this.whereInPivot(fk, values)
     }
-  }
 
-  /**
-   * The colums to be selected from the related
-   * query
-   *
-   * @method select
-   *
-   * @param  {Array} columns
-   *
-   * @chainable
-   */
-  select (columns) {
-    this._relatedFields = _.isArray(columns) ? columns : _.toArray(arguments)
-    return this
+    this.relatedQuery.$relation.pivot = this._pivot
+    this.relatedQuery.$relation.relatedForeignKey = relatedForeignKey
+    this.relatedQuery.$relation.relatedPrimaryKey = relatedPrimaryKey
   }
 
   /**
@@ -313,12 +303,13 @@ class BelongsToMany extends BaseRelation {
    *
    * @param  {Number|String}      value
    * @param  {Function}           [pivotCallback]
+   * @param  {Object}             [trx]
    *
    * @return {Object}                    Instance of pivot model
    *
    * @private
    */
-  async _attachSingle (value, pivotCallback) {
+  async _attachSingle (value, pivotCallback, trx) {
     /**
      * The relationship values
      *
@@ -352,7 +343,7 @@ class BelongsToMany extends BaseRelation {
       pivotCallback(pivotModel)
     }
 
-    await pivotModel.save()
+    await pivotModel.save(trx)
     return pivotModel
   }
 
@@ -386,11 +377,16 @@ class BelongsToMany extends BaseRelation {
    *
    * @private
    */
-  async _loadAndCachePivot () {
+  async _loadAndCachePivot (trx) {
     if (_.size(this._existingPivotInstances) === 0) {
-      this._existingPivotInstances = (await this
-          .pivotQuery().fetch()
-      ).rows
+      const query = this.pivotQuery()
+
+      if (trx) {
+        query.transacting(trx)
+      }
+
+      const result = await query.fetch()
+      this._existingPivotInstances = result.rows
     }
   }
 
@@ -411,6 +407,21 @@ class BelongsToMany extends BaseRelation {
   }
 
   /**
+   * The colums to be selected from the related
+   * query
+   *
+   * @method select
+   *
+   * @param  {Array} columns
+   *
+   * @chainable
+   */
+  select (columns) {
+    this._relatedFields = _.isArray(columns) ? columns : _.toArray(arguments)
+    return this
+  }
+
+  /**
    * Define a fully qualified model to be used for
    * making pivot table queries and using defining
    * pivot table settings.
@@ -422,7 +433,7 @@ class BelongsToMany extends BaseRelation {
    * @chainable
    */
   pivotModel (pivotModel) {
-    this._PivotModel = pivotModel
+    this._PivotModel = typeof (pivotModel) === 'string' ? ioc.use(pivotModel) : pivotModel
     return this
   }
 
@@ -488,7 +499,7 @@ class BelongsToMany extends BaseRelation {
    */
   mapValues (modelInstances) {
     return _.transform(modelInstances, (result, modelInstance) => {
-      if (modelInstance[this.primaryKey]) {
+      if (util.existy(modelInstance[this.primaryKey])) {
         result.push(modelInstance[this.primaryKey])
       }
       return result
@@ -589,6 +600,17 @@ class BelongsToMany extends BaseRelation {
   }
 
   /**
+   * Fetch ids for the related model
+   *
+   * @method ids
+   *
+   * @return {Array}
+   */
+  ids () {
+    return this.pluck(`${this.$foreignTable}.${this.RelatedModel.primaryKey}`)
+  }
+
+  /**
    * Execute the query and setup pivot values
    * as a relation
    *
@@ -615,7 +637,7 @@ class BelongsToMany extends BaseRelation {
    * @return {Object} @multiple([key=String, values=Array, defaultValue=Null])
    */
   group (relatedInstances) {
-    const Serializer = this.RelatedModel.Serializer
+    const Serializer = this.RelatedModel.resolveSerializer()
 
     const transformedValues = _.transform(relatedInstances, (result, relatedInstance) => {
       const foreignKeyValue = relatedInstance.$sideLoaded[`pivot_${this.foreignKey}`]
@@ -688,7 +710,10 @@ class BelongsToMany extends BaseRelation {
     }
 
     this._makeJoinQuery()
-    this.relatedQuery.whereRaw(`${this.$primaryTable}.${this.primaryKey} = ${this.$pivotTable}.${this.foreignKey}`)
+
+    const lhs = this.columnize(`${this.$primaryTable}.${this.primaryKey}`)
+    const rhs = this.columnize(`${this.$pivotTable}.${this.foreignKey}`)
+    this.relatedQuery.whereRaw(`${lhs} = ${rhs}`)
 
     /**
      * Add count clause if count is required
@@ -720,16 +745,17 @@ class BelongsToMany extends BaseRelation {
    *
    * @param  {Number|String|Array} references
    * @param  {Function} [pivotCallback]
+   * @param  {trx} Transaction
    *
    * @return {Promise}
    */
-  async attach (references, pivotCallback = null) {
-    await this._loadAndCachePivot()
-    const rows = references instanceof Array === false ? [references] : references
+  async attach (references, pivotCallback = null, trx) {
+    await this._loadAndCachePivot(trx)
+    const rows = !Array.isArray(references) ? [references] : references
 
     return Promise.all(rows.map((row) => {
       const pivotInstance = this._getPivotInstance(row)
-      return pivotInstance ? Promise.resolve(pivotInstance) : this._attachSingle(row, pivotCallback)
+      return pivotInstance ? Promise.resolve(pivotInstance) : this._attachSingle(row, pivotCallback, trx)
     }))
   }
 
@@ -748,6 +774,7 @@ class BelongsToMany extends BaseRelation {
    */
   async delete () {
     const foreignKeyValues = await this.ids()
+
     const effectedRows = await this.RelatedModel
       .query()
       .whereIn(this.RelatedModel.primaryKey, foreignKeyValues)
@@ -780,14 +807,16 @@ class BelongsToMany extends BaseRelation {
    * @method detach
    * @async
    *
-   * @param  {Array} references
+   * @param  {Array}  references
+   * @param  {Object} trx
    *
    * @return {Number}  The number of effected rows
    */
-  detach (references) {
+  detach (references, trx) {
     const query = this.pivotQuery(false)
+
     if (references) {
-      const rows = references instanceof Array === false ? [references] : references
+      const rows = !Array.isArray(references) ? [references] : references
       query.whereIn(this.relatedForeignKey, rows)
       _.remove(this._existingPivotInstances, (pivotInstance) => {
         return _.includes(rows, pivotInstance[this.relatedForeignKey])
@@ -795,6 +824,14 @@ class BelongsToMany extends BaseRelation {
     } else {
       this._existingPivotInstances = []
     }
+
+    /**
+     * Wrap inside transaction if trx is passed
+     */
+    if (trx) {
+      query.transacting(trx)
+    }
+
     return query.delete()
   }
 
@@ -808,9 +845,9 @@ class BelongsToMany extends BaseRelation {
    *
    * @return {void}
    */
-  async sync (references, pivotCallback) {
-    await this.detach()
-    return this.attach(references, pivotCallback)
+  async sync (references, pivotCallback, trx) {
+    await this.detach(null, trx)
+    return this.attach(references, pivotCallback, trx)
   }
 
   /**
@@ -839,7 +876,7 @@ class BelongsToMany extends BaseRelation {
     /**
      * Attach the pivot rows
      */
-    const pivotRows = await this.attach(relatedInstance.primaryKeyValue, pivotCallback)
+    const pivotRows = await this.attach(relatedInstance[this.relatedPrimaryKey], pivotCallback)
 
     /**
      * Set saved pivot row as a relationship
@@ -860,7 +897,7 @@ class BelongsToMany extends BaseRelation {
    * @return {void}
    */
   async saveMany (arrayOfRelatedInstances, pivotCallback) {
-    if (arrayOfRelatedInstances instanceof Array === false) {
+    if (!Array.isArray(arrayOfRelatedInstances)) {
       throw GE
         .InvalidArgumentException
         .invalidParameter('belongsToMany.saveMany expects an array of related model instances', arrayOfRelatedInstances)
@@ -905,7 +942,7 @@ class BelongsToMany extends BaseRelation {
    * @return {Array}
    */
   async createMany (rows, pivotCallback) {
-    if (rows instanceof Array === false) {
+    if (!Array.isArray(rows)) {
       throw GE
         .InvalidArgumentException
         .invalidParameter('belongsToMany.createMany expects an array of related model instances', rows)
