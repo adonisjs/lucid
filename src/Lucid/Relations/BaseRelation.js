@@ -11,6 +11,7 @@
 
 const CE = require('../../Exceptions')
 const proxyGet = require('../../../lib/proxyGet')
+const util = require('../../../lib/util')
 
 const methodsList = [
   'increment',
@@ -181,7 +182,7 @@ class BaseRelation {
    * @private
    */
   _validateRead () {
-    if (!this.$primaryKeyValue || !this.parentInstance.$persisted) {
+    if (!util.existy(this.$primaryKeyValue) || !this.parentInstance.$persisted) {
       throw CE.RuntimeException.unSavedModel(this.parentInstance.constructor.name)
     }
   }

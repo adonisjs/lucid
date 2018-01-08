@@ -504,6 +504,8 @@ test.group('Relations | Has Many Through - Belongs To Many', (group) => {
 
   group.afterEach(async () => {
     await ioc.use('Adonis/Src/Database').table('categories').truncate()
+    await ioc.use('Adonis/Src/Database').table('users').truncate()
+    await ioc.use('Adonis/Src/Database').table('countries').truncate()
     await ioc.use('Adonis/Src/Database').table('sections').truncate()
     await ioc.use('Adonis/Src/Database').table('posts').truncate()
     await ioc.use('Adonis/Src/Database').table('post_section').truncate()
@@ -718,5 +720,90 @@ test.group('Relations | Has Many Through - Belongs To Many', (group) => {
         deleted_at: null
       }
     ])
+  })
+
+  test('work fine when foreign key value is 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.hasMany(Post)
+      }
+    }
+
+    class Country extends Model {
+      posts () {
+        return this.manyThrough(User, 'posts')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Country._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('countries').insert({ name: 'India', id: 0 })
+    await ioc.use('Database').table('users').insert({ country_id: 0, id: 20, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ user_id: 20, title: 'Adonis 101' })
+
+    const country = await Country.find(0)
+    const posts = await country.posts().fetch()
+    assert.instanceOf(posts.first(), Post)
+  })
+
+  test('eagerload when foreign key value is 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.hasMany(Post)
+      }
+    }
+
+    class Country extends Model {
+      posts () {
+        return this.manyThrough(User, 'posts')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Country._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('countries').insert({ name: 'India', id: 0 })
+    await ioc.use('Database').table('users').insert({ country_id: 0, id: 20, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ user_id: 20, title: 'Adonis 101' })
+
+    const country = await Country.query().with('posts').first()
+    assert.instanceOf(country.getRelated('posts').first(), Post)
+  })
+
+  test('serialize when foreign key is 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.hasMany(Post)
+      }
+    }
+
+    class Country extends Model {
+      posts () {
+        return this.manyThrough(User, 'posts')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Country._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('countries').insert({ name: 'India', id: 0 })
+    await ioc.use('Database').table('users').insert({ country_id: 0, id: 20, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ user_id: 20, title: 'Adonis 101' })
+
+    const country = await Country.query().with('posts').first()
+    assert.equal(country.toJSON().posts[0].__meta__.through_country_id, 0)
   })
 })

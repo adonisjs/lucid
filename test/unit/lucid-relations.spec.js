@@ -1840,4 +1840,111 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.size(), 1)
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (exists (select * from "profiles" where "users"."id" = "profiles"."user_id"))'))
   })
+
+  test('work fine when foreign key value is 0', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert([{ id: 0, username: 'virk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 0, likes: 3 }])
+
+    const user = await User.find(0)
+    const profile = await user.profile().fetch()
+    assert.equal(profile.user_id, 0)
+  })
+
+  test('eagerload when foreign key value is 0', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert([{ id: 0, username: 'virk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 0, likes: 3 }])
+
+    const user = await User.query().with('profile').first()
+    assert.instanceOf(user.getRelated('profile'), Profile)
+  })
+
+  test('save related when foreign key value is 0', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert([{ id: 0, username: 'virk' }])
+
+    const user = await User.find(0)
+    await user.profile().create({ likes: 3 })
+
+    const profiles = await ioc.use('Database').table('profiles')
+    assert.lengthOf(profiles, 1)
+    assert.equal(profiles[0].user_id, 0)
+  })
+
+  test('update related when foreign key value is 0', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert([{ id: 0, username: 'virk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 0, likes: 3 }])
+
+    const user = await User.find(0)
+    await user.profile().update({ likes: 1 })
+
+    const profiles = await ioc.use('Database').table('profiles')
+    assert.equal(profiles[0].likes, 1)
+  })
+
+  test('serialize when foreign key is 0', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert([{ id: 0, username: 'virk' }])
+    await ioc.use('Database').table('profiles').insert([{ user_id: 0, likes: 3 }])
+
+    const user = await User.query().with('profile').first()
+    assert.equal(user.toJSON().profile.user_id, 0)
+  })
 })

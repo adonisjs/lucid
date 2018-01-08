@@ -2284,4 +2284,172 @@ test.group('Relations | Belongs To Many', (group) => {
     const pivotValues = await ioc.use('Database').table('post_user')
     assert.lengthOf(pivotValues, 0)
   })
+
+  test('work fine when foreign key value is 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 1, title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 0 })
+
+    const user = await User.find(0)
+    const posts = await user.posts().fetch()
+    assert.equal(posts.first().getRelated('pivot').user_id, 0)
+  })
+
+  test('eagerload when foreign key value is 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 1, title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 0 })
+
+    const user = await User.query().with('posts').first()
+    assert.instanceOf(user.getRelated('posts').first(), Post)
+  })
+
+  test('save related when foreign key value is 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+
+    const user = await User.find(0)
+    await user.posts().create({ title: 'Adonis 101' })
+
+    const posts = await ioc.use('Database').table('posts')
+    assert.lengthOf(posts, 1)
+    assert.equal(posts[0].title, 'Adonis 101')
+
+    const pivotRow = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotRow, 1)
+    assert.equal(pivotRow[0].user_id, 0)
+    assert.equal(pivotRow[0].post_id, posts[0].id)
+  })
+
+  test('update related when foreign key value is 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 1, title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 0 })
+
+    const user = await User.find(0)
+    await user.posts().update({ title: 'Adonis 102' })
+
+    const posts = await ioc.use('Database').table('posts')
+    assert.equal(posts[0].title, 'Adonis 102')
+  })
+
+  test('serialize when foreign key is 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 1, title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 0 })
+
+    const user = await User.query().with('posts').first()
+    assert.equal(user.toJSON().posts[0].pivot.user_id, 0)
+  })
+
+  test('attach related when foreign key 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 1, title: 'Adonis 101' })
+
+    const user = await User.find(0)
+    await user.posts().attach([1])
+
+    const pivotRow = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotRow, 1)
+    assert.equal(pivotRow[0].user_id, 0)
+    assert.equal(pivotRow[0].post_id, 1)
+  })
+
+  test('detach related when foreign key 0', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ id: 1, title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 0 })
+
+    const user = await User.find(0)
+    await user.posts().detach([1])
+
+    const posts = await ioc.use('Database').table('posts')
+    assert.lengthOf(posts, 1)
+
+    const pivotRow = await ioc.use('Database').table('post_user')
+    assert.lengthOf(pivotRow, 0)
+  })
 })

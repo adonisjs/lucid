@@ -1087,4 +1087,111 @@ test.group('Relations | Has Many', (group) => {
 
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "cars" where "users"."id" = "cars"."user_id" and "cars"."deleted_at" is null)'))
   })
+
+  test('work fine when foreign key value is 0', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 0 })
+
+    const user = await User.find(0)
+    const cars = await user.cars().fetch()
+    assert.equal(cars.first().user_id, 0)
+  })
+
+  test('eagerload when foreign key value is 0', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 0 })
+
+    const user = await User.query().with('cars').first()
+    assert.instanceOf(user.getRelated('cars').first(), Car)
+  })
+
+  test('save related when foreign key value is 0', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+
+    const user = await User.find(0)
+    await user.cars().create({ name: 'E180', model: 'Mercedes' })
+
+    const cars = await ioc.use('Database').table('cars')
+    assert.lengthOf(cars, 1)
+    assert.equal(cars[0].user_id, 0)
+  })
+
+  test('update related when foreign key value is 0', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 0 })
+
+    const user = await User.find(0)
+    await user.cars().update({ name: 'S480' })
+
+    const cars = await ioc.use('Database').table('cars')
+    assert.equal(cars[0].name, 'S480')
+  })
+
+  test('serialize when foreign key is 0', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 0 })
+
+    const user = await User.query().with('cars').first()
+    assert.equal(user.toJSON().cars[0].user_id, 0)
+  })
 })

@@ -924,4 +924,89 @@ test.group('Relations | Belongs To', (group) => {
 
     assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where exists (select * from "users" where "cars"."user_id" = "users"."id" and "users"."deleted_at" is null)'))
   })
+
+  test('work fine when foreign key value is 0', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 0 })
+
+    const car = await Car.find(1)
+    const user = await car.user().fetch()
+    assert.instanceOf(user, User)
+  })
+
+  test('eagerload when foreign key value is 0', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 0 })
+
+    const car = await Car.query().with('user').first()
+    assert.instanceOf(car.getRelated('user'), User)
+  })
+
+  test('associate related when foreign key value is 0', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: null })
+
+    const car = await Car.find(1)
+    const user = await User.find(0)
+    await car.user().associate(user)
+
+    const cars = await ioc.use('Database').table('cars')
+    assert.equal(cars[0].user_id, 0)
+  })
+
+  test('serialize when foreign key is 0', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 0, username: 'virk' })
+    await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 0 })
+
+    const car = await Car.query().with('user').first()
+    assert.equal(car.toJSON().user.id, 0)
+  })
 })

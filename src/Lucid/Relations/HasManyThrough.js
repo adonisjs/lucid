@@ -12,6 +12,7 @@
 const _ = require('lodash')
 const BaseRelation = require('./BaseRelation')
 const CE = require('../../Exceptions')
+const util = require('../../../lib/util')
 
 /**
  * BelongsToMany class builds relationship between
@@ -174,7 +175,7 @@ class HasManyThrough extends BaseRelation {
    */
   mapValues (modelInstances) {
     return _.transform(modelInstances, (result, modelInstance) => {
-      if (modelInstance[this.primaryKey]) {
+      if (util.existy(modelInstance[this.primaryKey])) {
         result.push(modelInstance[this.primaryKey])
       }
       return result

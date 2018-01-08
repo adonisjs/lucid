@@ -12,6 +12,7 @@
 const _ = require('lodash')
 const GE = require('@adonisjs/generic-exceptions')
 const BaseRelation = require('./BaseRelation')
+const util = require('../../../lib/util')
 
 /**
  * HasMany relationship instance is used to define a
@@ -53,7 +54,7 @@ class HasMany extends BaseRelation {
    */
   mapValues (modelInstances) {
     return _.transform(modelInstances, (result, modelInstance) => {
-      if (modelInstance[this.primaryKey]) {
+      if (util.existy(modelInstance[this.primaryKey])) {
         result.push(modelInstance[this.primaryKey])
       }
       return result

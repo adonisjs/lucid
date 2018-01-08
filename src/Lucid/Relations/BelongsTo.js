@@ -12,6 +12,7 @@
 const _ = require('lodash')
 const BaseRelation = require('./BaseRelation')
 const CE = require('../../Exceptions')
+const util = require('../../../lib/util')
 
 /**
  * The BelongsTo relationship defines a relation between
@@ -33,7 +34,7 @@ class BelongsTo extends BaseRelation {
       throw CE.RuntimeException.unSavedModel(this.parentInstance.constructor.name)
     }
 
-    if (!this.$primaryKeyValue) {
+    if (!util.existy(this.$primaryKeyValue)) {
       return null
     }
 
@@ -53,7 +54,7 @@ class BelongsTo extends BaseRelation {
    */
   mapValues (modelInstances) {
     return _.transform(modelInstances, (result, modelInstance) => {
-      if (modelInstance[this.primaryKey]) {
+      if (util.existy(modelInstance[this.primaryKey])) {
         result.push(modelInstance[this.primaryKey])
       }
       return result
