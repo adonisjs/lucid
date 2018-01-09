@@ -238,4 +238,42 @@ test.group('Schema', (group) => {
     userSchema.raw('CREATE table schema_users (id int);')
     assert.deepEqual(userSchema._deferredActions, [{ name: 'raw', args: ['CREATE table schema_users (id int);'] }])
   })
+
+  test('schedule a function to be called in sequence with schema statements', async (assert) => {
+    let users = null
+
+    class UserSchema extends Schema {
+      up () {
+        this.createTable('schema_users', (table) => {
+          table.increments()
+        })
+
+        this.schedule(async (trx) => {
+          users = await ioc.use('Database').transacting(trx).table('schema_users')
+        })
+      }
+    }
+
+    const userSchema = new UserSchema(ioc.use('Database'))
+    userSchema.up()
+    await userSchema.executeActions()
+    assert.deepEqual(users, [])
+  })
+
+  test('throw exception when function is not passed to schedule method', async (assert) => {
+    let users = null
+
+    class UserSchema extends Schema {
+      up () {
+        this.createTable('schema_users', (table) => {
+          table.increments()
+        })
+        this.schedule()
+      }
+    }
+
+    const userSchema = new UserSchema(ioc.use('Database'))
+    const fn = () => userSchema.up()
+    assert.throw(fn, 'E_INVALID_PARAMETER: this.schedule expects 1st argument to be a function')
+  })
 })
