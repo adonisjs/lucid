@@ -10,3 +10,4 @@ benchmarks
 bin
 out
 .nyc_output
+config

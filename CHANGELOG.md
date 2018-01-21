@@ -1,3 +1,14 @@
+<a name="4.1.3"></a>
+## [4.1.3](https://github.com/adonisjs/adonis-lucid/compare/v4.1.2...v4.1.3) (2018-01-21)
+
+
+### Features
+
+* **config:** add sample config file inside config dir ([c62bd5d](https://github.com/adonisjs/adonis-lucid/commit/c62bd5d))
+* **schema:** add schedule method to run arbitrary db commands ([fd225d8](https://github.com/adonisjs/adonis-lucid/commit/fd225d8)), closes [#53](https://github.com/adonisjs/adonis-lucid/issues/53)
+
+
+
 <a name="4.1.2"></a>
 ## [4.1.2](https://github.com/adonisjs/adonis-lucid/compare/v4.1.1...v4.1.2) (2018-01-08)
 

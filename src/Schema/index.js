@@ -9,6 +9,8 @@
  * file that was distributed with this source code.
 */
 
+const GE = require('@adonisjs/generic-exceptions')
+
 /**
  * The schema is used to define SQL table schemas. This makes
  * use of all the methods from http://knexjs.org/#Schema
@@ -254,6 +256,23 @@ class Schema {
   }
 
   /**
+   * Schedule a method to be executed in sequence with migrations
+   *
+   * @method schedule
+   *
+   * @param  {Function} fn
+   *
+   * @chainable
+   */
+  schedule (fn) {
+    if (typeof (fn) !== 'function') {
+      throw GE.InvalidArgumentException.invalidParameter(`this.schedule expects 1st argument to be a function`)
+    }
+    this._deferredActions.push({ name: 'schedule', args: [fn] })
+    return this
+  }
+
+  /**
    * Returns a boolean indicating if a table
    * already exists or not
    *
@@ -361,7 +380,11 @@ class Schema {
     const trx = await this.db.beginTransaction()
     for (let action of this._deferredActions) {
       try {
-        await trx.schema[action.name](...action.args)
+        if (action.name === 'schedule') {
+          await action.args[0](trx)
+        } else {
+          await trx.schema[action.name](...action.args)
+        }
       } catch (error) {
         trx.rollback()
         throw error
