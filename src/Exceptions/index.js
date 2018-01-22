@@ -18,6 +18,10 @@ const GE = require('@adonisjs/generic-exceptions')
  * @constructor
  */
 class RuntimeException extends GE.RuntimeException {
+  static get repo () {
+    return 'adonisjs/errors'
+  }
+
   /**
    * This exception is raised when user is trying to use an
    * undefined database connection
@@ -29,7 +33,7 @@ class RuntimeException extends GE.RuntimeException {
    * @return {Object}
    */
   static missingDatabaseConnection (name) {
-    return new this(`Missing database connection {${name}}. Make sure you define it inside config/database.js file`, 500, 'E_MISSING_DB_CONNECTION')
+    return new this(`Missing database connection {${name}}. Make sure you define it inside config/database.js file`, 500, 'E_MISSING_DB_CONNECTION', this.repo)
   }
 
   /**
@@ -43,7 +47,7 @@ class RuntimeException extends GE.RuntimeException {
    * @return {Object}
    */
   static unSavedModel (name) {
-    return new this(`Cannot process relation, since ${name} model is not persisted to database or relational value is undefined`, 500, 'E_UNSAVED_MODEL_INSTANCE')
+    return new this(`Cannot process relation, since ${name} model is not persisted to database or relational value is undefined`, 500, 'E_UNSAVED_MODEL_INSTANCE', this.repo)
   }
 
   /**
@@ -58,7 +62,7 @@ class RuntimeException extends GE.RuntimeException {
    * @return {Object}
    */
   static undefinedRelation (relation, name) {
-    return new this(`${relation} is not defined on ${name} model`, 500, 'E_INVALID_MODEL_RELATION')
+    return new this(`${relation} is not defined on ${name} model`, 500, 'E_INVALID_MODEL_RELATION', this.repo)
   }
 
   /**
@@ -75,7 +79,7 @@ class RuntimeException extends GE.RuntimeException {
    */
   static cannotNestRelation (relation, parent, method) {
     const message = `${method} does not allowed nested relations. Instead use .with('${parent}', (builder) => builder.${method}('${relation}'))`
-    return new this(message, 500, 'E_CANNOT_NEST_RELATION')
+    return new this(message, 500, 'E_CANNOT_NEST_RELATION', this.repo)
   }
 
   /**
@@ -89,7 +93,7 @@ class RuntimeException extends GE.RuntimeException {
    * @return {Object}
    */
   static overRidingRelation (relation) {
-    return new this(`Trying to eagerload ${relation} relationship twice`, 500, 'E_CANNOT_OVERRIDE_RELATION')
+    return new this(`Trying to eagerload ${relation} relationship twice`, 500, 'E_CANNOT_OVERRIDE_RELATION', this.repo)
   }
 
   /**
@@ -114,8 +118,12 @@ class RuntimeException extends GE.RuntimeException {
  * @constructor
  */
 class ModelException extends GE.LogicalException {
+  static get repo () {
+    return 'adonisjs/errors'
+  }
+
   static deletedInstance (name) {
-    return new this(`Cannot edit deleted model instance for ${name} model`, 500, 'E_DELETED_MODEL')
+    return new this(`Cannot edit deleted model instance for ${name} model`, 500, 'E_DELETED_MODEL', this.repo)
   }
 }
 
@@ -127,8 +135,12 @@ class ModelException extends GE.LogicalException {
  * @constructor
  */
 class ModelNotFoundException extends GE.LogicalException {
+  static get repo () {
+    return 'adonisjs/errors'
+  }
+
   static raise (name) {
-    return new this(`Cannot find database row for ${name} model`, 404, 'E_MISSING_DATABASE_ROW')
+    return new this(`Cannot find database row for ${name} model`, 404, 'E_MISSING_DATABASE_ROW', this.repo)
   }
 }
 
@@ -140,6 +152,10 @@ class ModelNotFoundException extends GE.LogicalException {
  * @constructor
  */
 class ModelRelationException extends GE.LogicalException {
+  static get repo () {
+    return 'adonisjs/errors'
+  }
+
   /**
    * This exception is raised when an unsupported method
    * is called on a model relation. Naturally `xxx` is
@@ -155,7 +171,7 @@ class ModelRelationException extends GE.LogicalException {
    * @return {Object}
    */
   static unSupportedMethod (method, relation) {
-    return new this(`${method} is not supported by ${relation} relation`, 500, 'E_INVALID_RELATION_METHOD')
+    return new this(`${method} is not supported by ${relation} relation`, 500, 'E_INVALID_RELATION_METHOD', this.repo)
   }
 
   /**
@@ -185,7 +201,7 @@ class ModelRelationException extends GE.LogicalException {
    * @return {Object}
    */
   static pivotModelIsDefined (method) {
-    return new this(`Cannot call ${method} since pivotModel has been defined`, 500, 'E_INVALID_RELATION_METHOD')
+    return new this(`Cannot call ${method} since pivotModel has been defined`, 500, 'E_INVALID_RELATION_METHOD', this.repo)
   }
 }
 

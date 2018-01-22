@@ -1556,7 +1556,7 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(postQuery.sql, helpers.formatQuery('update "posts" set "title" = ?, "updated_at" = ? where "id" in (?)'))
   })
 
-  test('throw exception when saveMany doesn\'t  receives an array', async (assert) => {
+  test('throw exception when saveMany doesn\'t receives an array', async (assert) => {
     assert.plan(1)
 
     class Post extends Model {
@@ -1580,11 +1580,11 @@ test.group('Relations | Belongs To Many', (group) => {
     try {
       await user.posts().saveMany(post)
     } catch ({ message }) {
-      assert.equal(message, 'E_INVALID_PARAMETER: belongsToMany.saveMany expects an array of related model instances instead received object')
+      assert.match(message, /E_INVALID_PARAMETER: belongsToMany.saveMany expects an array of related model instances instead received object/)
     }
   })
 
-  test('throw exception when createMany doesn\'t  receives an array', async (assert) => {
+  test('throw exception when createMany doesn\'t receives an array', async (assert) => {
     assert.plan(1)
 
     class Post extends Model {
@@ -1605,7 +1605,7 @@ test.group('Relations | Belongs To Many', (group) => {
     try {
       await user.posts().createMany({})
     } catch ({ message }) {
-      assert.equal(message, 'E_INVALID_PARAMETER: belongsToMany.createMany expects an array of related model instances instead received object')
+      assert.match(message, /E_INVALID_PARAMETER: belongsToMany.createMany expects an array of related model instances instead received object/)
     }
   })
 

@@ -132,7 +132,7 @@ test.group('Relations | HasOne', (group) => {
     try {
       await user.profile().fetch()
     } catch ({ message }) {
-      assert.equal(message, 'E_UNSAVED_MODEL_INSTANCE: Cannot process relation, since User model is not persisted to database or relational value is undefined')
+      assert.match(message, /^E_UNSAVED_MODEL_INSTANCE: Cannot process relation, since User model is not persisted to database or relational value is undefined/)
     }
   })
 
@@ -1427,7 +1427,7 @@ test.group('Relations | HasOne', (group) => {
     try {
       await user.load('cars')
     } catch ({ message }) {
-      assert.equal(message, 'E_CANNOT_OVERRIDE_RELATION: Trying to eagerload cars relationship twice')
+      assert.match(message, /^E_CANNOT_OVERRIDE_RELATION: Trying to eagerload cars relationship twice/)
     }
   })
 
