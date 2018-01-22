@@ -58,7 +58,9 @@ test.group('Schema', (group) => {
     const userSchema = new UserSchema(ioc.use('Database'))
     const fn = function () {}
     userSchema.createTable('users', fn)
-    assert.deepEqual(userSchema._deferredActions, [{ name: 'createTable', args: ['users', fn] }])
+
+    assert.lengthOf(userSchema._chains, 1)
+    assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'createTable', args: ['users', fn] }])
   })
 
   test('add deferred action for createTableIfNotExists', (assert) => {
@@ -67,16 +69,22 @@ test.group('Schema', (group) => {
     const userSchema = new UserSchema(ioc.use('Database'))
     const fn = function () {}
     userSchema.createIfNotExists('users', fn)
-    assert.deepEqual(userSchema._deferredActions, [{ name: 'createTableIfNotExists', args: ['users', fn] }])
+
+    assert.lengthOf(userSchema._chains, 1)
+    assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'createTableIfNotExists', args: ['users', fn] }])
   })
 
   test('add deferred action for renameTable', (assert) => {
     class UserSchema extends Schema {
     }
+
     const userSchema = new UserSchema(ioc.use('Database'))
     const fn = function () {}
+
     userSchema.renameTable('users', fn)
-    assert.deepEqual(userSchema._deferredActions, [{ name: 'renameTable', args: ['users', fn] }])
+
+    assert.lengthOf(userSchema._chains, 1)
+    assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'renameTable', args: ['users', fn] }])
   })
 
   test('add deferred action for table', (assert) => {
@@ -85,7 +93,9 @@ test.group('Schema', (group) => {
     const userSchema = new UserSchema(ioc.use('Database'))
     const fn = function () {}
     userSchema.alter('users', fn)
-    assert.deepEqual(userSchema._deferredActions, [{ name: 'table', args: ['users', fn] }])
+
+    assert.lengthOf(userSchema._chains, 1)
+    assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'table', args: ['users', fn] }])
   })
 
   test('add deferred action for dropTableIfExists', (assert) => {
@@ -93,7 +103,9 @@ test.group('Schema', (group) => {
     }
     const userSchema = new UserSchema(ioc.use('Database'))
     userSchema.dropIfExists('users')
-    assert.deepEqual(userSchema._deferredActions, [{ name: 'dropTableIfExists', args: ['users'] }])
+
+    assert.lengthOf(userSchema._chains, 1)
+    assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'dropTableIfExists', args: ['users'] }])
   })
 
   test('add deferred action for rename table', (assert) => {
@@ -101,7 +113,9 @@ test.group('Schema', (group) => {
     }
     const userSchema = new UserSchema(ioc.use('Database'))
     userSchema.rename('users', 'my_users')
-    assert.deepEqual(userSchema._deferredActions, [{ name: 'renameTable', args: ['users', 'my_users'] }])
+
+    assert.lengthOf(userSchema._chains, 1)
+    assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'renameTable', args: ['users', 'my_users'] }])
   })
 
   if (process.env.DB === 'pg') {
@@ -110,7 +124,9 @@ test.group('Schema', (group) => {
       }
       const userSchema = new UserSchema(ioc.use('Database'))
       userSchema.createExtension('postgis')
-      assert.deepEqual(userSchema._deferredActions, [{ name: 'createExtension', args: ['postgis'] }])
+
+      assert.lengthOf(userSchema._chains, 1)
+      assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'createExtension', args: ['postgis'] }])
     })
 
     test('add deferred action for createExtensionIfNotExists', (assert) => {
@@ -118,7 +134,9 @@ test.group('Schema', (group) => {
       }
       const userSchema = new UserSchema(ioc.use('Database'))
       userSchema.createExtensionIfNotExists('postgis')
-      assert.deepEqual(userSchema._deferredActions, [{ name: 'createExtensionIfNotExists', args: ['postgis'] }])
+
+      assert.lengthOf(userSchema._chains, 1)
+      assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'createExtensionIfNotExists', args: ['postgis'] }])
     })
 
     test('add deferred action for dropExtension', (assert) => {
@@ -126,7 +144,9 @@ test.group('Schema', (group) => {
       }
       const userSchema = new UserSchema(ioc.use('Database'))
       userSchema.dropExtension('postgis')
-      assert.deepEqual(userSchema._deferredActions, [{ name: 'dropExtension', args: ['postgis'] }])
+
+      assert.lengthOf(userSchema._chains, 1)
+      assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'dropExtension', args: ['postgis'] }])
     })
 
     test('add deferred action for dropExtensionIfExists', (assert) => {
@@ -134,7 +154,34 @@ test.group('Schema', (group) => {
       }
       const userSchema = new UserSchema(ioc.use('Database'))
       userSchema.dropExtensionIfExists('postgis')
-      assert.deepEqual(userSchema._deferredActions, [{ name: 'dropExtensionIfExists', args: ['postgis'] }])
+
+      assert.lengthOf(userSchema._chains, 1)
+      assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'dropExtensionIfExists', args: ['postgis'] }])
+    })
+
+    test('should be able to chain withSchema', (assert) => {
+      const fn = function () {}
+
+      class UserSchema extends Schema {
+        up () {
+          this
+            .withSchema('public')
+            .table('users', fn)
+        }
+      }
+
+      const userSchema = new UserSchema(ioc.use('Database'))
+      userSchema.up()
+
+      assert.lengthOf(userSchema._chains, 1)
+      assert.deepEqual(userSchema._chains[0]._deferredActions, [
+        {
+          name: 'withSchema', args: ['public']
+        },
+        {
+          name: 'table', args: ['users', fn]
+        }
+      ])
     })
   }
 
@@ -157,13 +204,17 @@ test.group('Schema', (group) => {
         })
       }
     }
+
     const userSchema = new UserSchema(ioc.use('Database'))
     userSchema.up()
+
     await userSchema.executeActions()
     const hasUsers = await userSchema.hasTable('schema_users')
     const hasProfile = await userSchema.hasTable('schema_profile')
+
     assert.isTrue(hasUsers)
     assert.isTrue(hasProfile)
+
     await ioc.use('Database').schema.dropTable('schema_users')
     await ioc.use('Database').schema.dropTable('schema_profile')
   })
@@ -183,6 +234,7 @@ test.group('Schema', (group) => {
 
     const userSchema = new UserSchema(ioc.use('Database'))
     userSchema.up()
+
     try {
       await userSchema.executeActions()
       assert.isFalse(true)
@@ -210,8 +262,10 @@ test.group('Schema', (group) => {
 
     const userSchema = new UserSchema(ioc.use('Database'))
     userSchema.up()
+
     const queries = await userSchema.executeActions(true)
     assert.lengthOf(queries, 2)
+
     const hasSchemaUsers = await ioc.use('Database').schema.hasTable('schema_users')
     assert.isFalse(hasSchemaUsers)
   })
@@ -219,14 +273,20 @@ test.group('Schema', (group) => {
   test('calling this.raw should not cause infinite loop lucid#212', async (assert) => {
     class UserSchema extends Schema {
       up () {
-        this.raw('CREATE table schema_users (id int);')
+        this
+          .raw('CREATE table schema_users (id int);')
+          .table('schema_users', (table) => {
+            table.string('username')
+          })
       }
     }
 
     const userSchema = new UserSchema(ioc.use('Database'))
     userSchema.up()
+
     await userSchema.executeActions()
-    const hasSchemaUsers = await ioc.use('Database').schema.hasTable('schema_users')
+    const hasSchemaUsers = await ioc.use('Database').schema.hasColumn('schema_users', 'id')
+
     assert.isTrue(hasSchemaUsers)
   })
 
@@ -236,7 +296,9 @@ test.group('Schema', (group) => {
 
     const userSchema = new UserSchema(ioc.use('Database'))
     userSchema.raw('CREATE table schema_users (id int);')
-    assert.deepEqual(userSchema._deferredActions, [{ name: 'raw', args: ['CREATE table schema_users (id int);'] }])
+
+    assert.lengthOf(userSchema._chains, 1)
+    assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'raw', args: ['CREATE table schema_users (id int);'] }])
   })
 
   test('schedule a function to be called in sequence with schema statements', async (assert) => {
@@ -255,14 +317,14 @@ test.group('Schema', (group) => {
     }
 
     const userSchema = new UserSchema(ioc.use('Database'))
+
     userSchema.up()
     await userSchema.executeActions()
+
     assert.deepEqual(users, [])
   })
 
   test('throw exception when function is not passed to schedule method', async (assert) => {
-    let users = null
-
     class UserSchema extends Schema {
       up () {
         this.createTable('schema_users', (table) => {
