@@ -172,4 +172,5 @@ class PivotModel extends BaseModel {
   }
 }
 
+PivotModel.boot()
 module.exports = PivotModel

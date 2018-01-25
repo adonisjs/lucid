@@ -1293,6 +1293,8 @@ test.group('Model', (group) => {
     class User extends Model {
     }
 
+    User._bootIfNotBooted()
+
     try {
       await User.findOrFail(1)
     } catch ({ message }) {
@@ -1305,6 +1307,8 @@ test.group('Model', (group) => {
     class User extends Model {
     }
 
+    User._bootIfNotBooted()
+
     try {
       await User.findByOrFail('username', 'virk')
     } catch ({ message }) {
@@ -1316,6 +1320,8 @@ test.group('Model', (group) => {
     assert.plan(1)
     class User extends Model {
     }
+
+    User._bootIfNotBooted()
 
     try {
       await User.firstOrFail()
@@ -1425,6 +1431,8 @@ test.group('Model', (group) => {
         super.boot()
       }
     }
+
+    User._bootIfNotBooted()
 
     const fn = () => User.addGlobalScope('foo')
     assert.throw(fn, 'E_INVALID_PARAMETER: Model.addGlobalScope expects a closure as first parameter')

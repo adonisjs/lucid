@@ -14,7 +14,7 @@ const test = require('japa')
 const fs = require('fs-extra')
 const path = require('path')
 const { ioc } = require('@adonisjs/fold')
-const { Config } = require('@adonisjs/sink')
+const { Config, setupResolver } = require('@adonisjs/sink')
 const moment = require('moment')
 
 const helpers = require('./helpers')
@@ -35,6 +35,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     await fs.ensureDir(path.join(__dirname, './tmp'))
     await helpers.createTables(ioc.use('Adonis/Src/Database'))
+    setupResolver()
   })
 
   group.afterEach(async () => {
@@ -111,6 +112,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     User._bootIfNotBooted()
     Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
 
     const user = new User()
     const userPosts = user.posts()
@@ -150,6 +152,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     User._bootIfNotBooted()
     Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
 
     const user = new User()
     const fn = () => user.posts()
@@ -171,6 +174,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     User._bootIfNotBooted()
     Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
 
     const user = new User()
     const fn = () => user.posts()
@@ -245,6 +249,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     User._bootIfNotBooted()
     Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
 
     const user = new User()
     const userPosts = user.posts()
@@ -833,6 +838,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     User._bootIfNotBooted()
     Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
 
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('posts').insert({ title: 'Adonis 101' })
@@ -2016,6 +2022,7 @@ test.group('Relations | Belongs To Many', (group) => {
     ioc.fake('App/Models/PostUser', () => {
       class PostUser extends Model {
       }
+      PostUser._bootIfNotBooted()
       return PostUser
     })
 
@@ -2451,5 +2458,161 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const pivotRow = await ioc.use('Database').table('post_user')
     assert.lengthOf(pivotRow, 0)
+  })
+
+  test('apply hooks from pivotModel when saving a new record', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+
+      static boot () {
+        super.boot()
+        this.addHook('beforeCreate', (modelInstance) => {
+          modelInstance.is_published = true
+        })
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const post = await user.posts().create({
+      title: 'Adonis 101'
+    })
+
+    const postUser = await ioc.use('Database').table('post_user').first()
+
+    assert.isOk(postUser.is_published)
+    assert.isOk(post.getRelated('pivot').is_published)
+  })
+
+  test('apply hooks from pivotModel when attach a new record', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+
+      static boot () {
+        super.boot()
+        this.addHook('beforeCreate', (modelInstance) => {
+          modelInstance.is_published = true
+        })
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.posts().attach([1])
+    const postUser = await ioc.use('Database').table('post_user').first()
+    assert.isOk(postUser.is_published)
+  })
+
+  test('apply global scopes when fetching related records', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+
+      static boot () {
+        super.boot()
+        this.addGlobalScope((query) => {
+          query.wherePivot('is_published', true)
+        })
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    let postsQuery = null
+    Post.onQuery((query) => (postsQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 1 })
+
+    const user = await User.find(1)
+    await user.posts().fetch()
+
+    assert.equal(helpers.formatQuery(postsQuery.sql), helpers.formatQuery('select "posts".*, "post_user"."post_id" as "pivot_post_id", "post_user"."user_id" as "pivot_user_id" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" = ? and "post_user"."is_published" = ?'))
+  })
+
+  test('apply global scopes when eagerloading related records', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+
+      static boot () {
+        super.boot()
+        this.addGlobalScope((query) => {
+          query.wherePivot('is_published', true)
+        })
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    let postsQuery = null
+    Post.onQuery((query) => (postsQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('posts').insert({ title: 'Adonis 101' })
+    await ioc.use('Database').table('post_user').insert({ post_id: 1, user_id: 1 })
+
+    await User.query().with('posts').first(1)
+
+    assert.equal(helpers.formatQuery(postsQuery.sql), helpers.formatQuery('select "posts".*, "post_user"."post_id" as "pivot_post_id", "post_user"."user_id" as "pivot_user_id" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" in (?) and "post_user"."is_published" = ?'))
   })
 })
