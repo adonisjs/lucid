@@ -728,15 +728,25 @@ class Model extends BaseModel {
    */
   toObject () {
     let evaluatedAttrs = _.transform(this.$attributes, (result, value, key) => {
+      const isMarkedAsDate = _.includes(this.constructor.dates, key)
+      const transformedValue = isMarkedAsDate && value ? moment(value) : value
+
       /**
-       * If value is an instance of moment and there is no getter defined
-       * for it, then cast it as a date.
+       * If key is not a date OR it's a date but model has a predefine getter
+       * for it, then pass the value to the getter.
+       *
+       * Also if the value is set to null or undefined, we pass it to the getter
+       * instead of casting it as a date.
        */
-      if (value instanceof moment && typeof (this[util.getGetterName(key)]) !== 'function') {
-        result[key] = this.constructor.castDates(key, value)
-      } else {
-        result[key] = this._getGetterValue(key, value)
+      if (!isMarkedAsDate || typeof (this[util.getGetterName(key)]) === 'function' || !transformedValue) {
+        result[key] = this._getGetterValue(key, transformedValue)
+        return result
       }
+
+      /**
+       * Otherwise cast the field as date
+       */
+      result[key] = this.constructor.castDates(key, transformedValue)
       return result
     }, {})
 
@@ -824,7 +834,6 @@ class Model extends BaseModel {
   newUp (row) {
     this.$persisted = true
     this.$attributes = row
-    this._convertDatesToMomentInstances()
     this._syncOriginals()
   }
 

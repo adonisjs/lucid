@@ -398,18 +398,6 @@ test.group('Model', (group) => {
     assert.instanceOf(users, VanillaSerializer)
   })
 
-  test('cast all dates to moment objects after fetch', async (assert) => {
-    class User extends Model {
-    }
-    User._bootIfNotBooted()
-    const user = new User()
-    user.username = 'virk'
-    await user.save()
-
-    const users = await User.query().fetch()
-    assert.instanceOf(users.first().created_at, moment)
-  })
-
   test('collection toJSON should call model toJSON and getters', async (assert) => {
     class User extends Model {
       getCreatedAt (date) {
@@ -1768,7 +1756,7 @@ test.group('Model', (group) => {
     await User.query().paginate()
   })
 
-  test.failing('call castDate on a newly persisted model', async (assert) => {
+  test('call castDate on a newly persisted model', async (assert) => {
     const casting = []
 
     class User extends Model {
