@@ -63,7 +63,14 @@ module.exports = {
   },
 
   createTables (db) {
-    return Promise.all([
+    const commands = []
+
+    if (process.env.DB === 'mysql') {
+      commands.push(db.schema.raw("SET GLOBAL sql_mode='NO_AUTO_VALUE_ON_ZERO'"))
+      commands.push(db.schema.raw("SET SESSION sql_mode='NO_AUTO_VALUE_ON_ZERO'"))
+    }
+
+    return Promise.all(commands.concat([
       db.schema.createTable('users', function (table) {
         table.increments()
         table.integer('vid')
@@ -190,7 +197,7 @@ module.exports = {
         table.integer('user_party_id')
         table.timestamps()
       })
-    ])
+    ]))
   },
 
   dropTables (db) {

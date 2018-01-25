@@ -196,7 +196,7 @@ test.group('Database | QueryBuilder', (group) => {
 
   test('aggregate functions', async (assert) => {
     await this.database.insert({ user_id: 1, country_id: 1, profile_name: 'u1', likes: 5 }).into('profiles')
-    await this.database.insert({ user_id: 1, country_id: 2, profile_name: 'u2', likes: 10 }).into('profiles') // Intentional duplicate for testing distinct aggregates
+    await this.database.insert({ user_id: 1, country_id: 2, profile_name: 'u2', likes: 10 }).into('profiles')
     await this.database.insert({ user_id: 1, country_id: 2, profile_name: 'u3', likes: 10 }).into('profiles')
 
     let c1 = 0
@@ -206,12 +206,16 @@ test.group('Database | QueryBuilder', (group) => {
 
     c1 = (await q)
     c2 = await q.getCount()
+
+    const firstRow = c1[0].country_id === 1 ? c1[0] : c1[1]
+    const secondRow = c1[0].country_id === 1 ? c1[1] : c1[0]
+
     assert.equal(c1.length, 2)
     assert.equal(c2, 2, 'There should be 2 rows counted')
-    assert.equal(c1[0].country_id, 1)
-    assert.equal(c1[0].like_total, 5)
-    assert.equal(c1[1].country_id, 2)
-    assert.equal(c1[1].like_total, 20)
+    assert.equal(firstRow.country_id, 1)
+    assert.equal(firstRow.like_total, helpers.formatNumber(5))
+    assert.equal(secondRow.country_id, 2)
+    assert.equal(secondRow.like_total, helpers.formatNumber(20))
 
     c1 = (await this.database.table('profiles').count('likes as total'))[0].total
     c2 = await this.database.table('profiles').getCount()
