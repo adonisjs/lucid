@@ -62,6 +62,36 @@ class SchemaChain {
   }
 
   /**
+   * Create a new schema.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method createSchema
+   *
+   * @param  {String}    schemaName
+   *
+   * @return {void}
+   */
+  createSchema (schemaName) {
+    this._deferredActions.push({ name: 'createSchema', args: [schemaName] })
+  }
+
+  /**
+   * Create a new schema if not already exists.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method createSchemaIfNotExists
+   *
+   * @param  {String}    schemaName
+   *
+   * @return {void}
+   */
+  createSchemaIfNotExists (schemaName) {
+    this._deferredActions.push({ name: 'createSchemaIfNotExists', args: [schemaName] })
+  }
+
+  /**
    * Create a new table.
    *
    * NOTE: This action is deferred
@@ -137,6 +167,36 @@ class SchemaChain {
    */
   dropExtensionIfExists (extensionName) {
     this._deferredActions.push({ name: 'dropExtensionIfExists', args: [extensionName] })
+  }
+
+  /**
+   * Drop existing schema.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method dropSchema
+   *
+   * @param  {String}    schemaName
+   *
+   * @return {void}
+   */
+  dropSchema (schemaName) {
+    this._deferredActions.push({ name: 'dropSchema', args: [schemaName] })
+  }
+
+  /**
+   * Drop existing schema only if exists.
+   *
+   * NOTE: This action is deferred
+   *
+   * @method dropSchemaIfExists
+   *
+   * @param  {String}    schemaName
+   *
+   * @return {void}
+   */
+  dropSchemaIfExists (schemaName) {
+    this._deferredActions.push({ name: 'dropSchemaIfExists', args: [schemaName] })
   }
 
   /**
