@@ -1,3 +1,22 @@
+<a name="5.0.0"></a>
+# [5.0.0](https://github.com/adonisjs/adonis-lucid/compare/v4.1.3...v5.0.0) (2018-01-31)
+
+
+### Bug Fixes
+
+* **belongsToMany:** apply pivotModel global scopes when defined ([4de8b0f](https://github.com/adonisjs/adonis-lucid/commit/4de8b0f)), closes [#261](https://github.com/adonisjs/adonis-lucid/issues/261)
+* **lucid:** format dates on newly create instance ([69a8da6](https://github.com/adonisjs/adonis-lucid/commit/69a8da6)), closes [#245](https://github.com/adonisjs/adonis-lucid/issues/245)
+* **schema:** fix issue around chaining `withSchema` ([f03c6b7](https://github.com/adonisjs/adonis-lucid/commit/f03c6b7)), closes [#282](https://github.com/adonisjs/adonis-lucid/issues/282)
+* **tests:** fix breaking tests in mysql & pg ([a59326c](https://github.com/adonisjs/adonis-lucid/commit/a59326c))
+
+
+### BREAKING CHANGES
+
+* **lucid:** If you have accessed the date properties directly on the model instance, then they
+will be string over moment instance now
+
+
+
 <a name="4.1.3"></a>
 ## [4.1.3](https://github.com/adonisjs/adonis-lucid/compare/v4.1.2...v4.1.3) (2018-01-21)
 
