@@ -68,6 +68,7 @@ class BelongsToMany extends BaseRelation {
      * @type {[type]}
      */
     this._PivotModel = null
+    this.scopesIterator = null
 
     /**
      * Settings related to pivot table only
@@ -109,6 +110,7 @@ class BelongsToMany extends BaseRelation {
       this._selectFields()
       this._makeJoinQuery()
       this.whereInPivot(fk, values)
+      this._applyScopes()
     }
 
     this.relatedQuery.$relation.pivot = this._pivot
@@ -152,6 +154,19 @@ class BelongsToMany extends BaseRelation {
    */
   _selectForPivot (field) {
     return `${this.$pivotTable}.${field} as pivot_${field}`
+  }
+
+  /**
+   * Applies global scopes when pivot model is defined
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  _applyScopes () {
+    if (this.scopesIterator) {
+      this.scopesIterator.execute(this)
+    }
   }
 
   /**
@@ -235,6 +250,7 @@ class BelongsToMany extends BaseRelation {
     this._selectFields()
     this._makeJoinQuery()
     this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    this._applyScopes()
   }
 
   /**
@@ -249,6 +265,7 @@ class BelongsToMany extends BaseRelation {
   _prepareAggregate () {
     this._makeJoinQuery()
     this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    this._applyScopes()
   }
 
   /**
@@ -434,6 +451,7 @@ class BelongsToMany extends BaseRelation {
    */
   pivotModel (pivotModel) {
     this._PivotModel = typeof (pivotModel) === 'string' ? ioc.use(pivotModel) : pivotModel
+    this.scopesIterator = this._PivotModel.$globalScopes.iterator()
     return this
   }
 

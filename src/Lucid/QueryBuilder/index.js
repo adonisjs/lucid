@@ -100,23 +100,6 @@ class QueryBuilder {
     }
 
     /**
-     * Scopes to be ignored at runtime
-     *
-     * @type {Array}
-     *
-     * @private
-     */
-    this._ignoreScopes = []
-
-    /**
-     * A flag to find if scopes has already
-     * been applied or not
-     *
-     * @type {Boolean}
-     */
-    this._scopesApplied = false
-
-    /**
      * Relations to be eagerloaded
      *
      * @type {Object}
@@ -154,6 +137,12 @@ class QueryBuilder {
      * @type {Number}
      */
     this._withCountCounter = -1
+
+    /**
+     * Reference to the global scopes iterator. A fresh instance
+     * needs to be used for each query
+     */
+    this.scopesIterator = this.Model.$globalScopes.iterator()
 
     return new Proxy(this, proxyHandler)
   }
@@ -220,28 +209,7 @@ class QueryBuilder {
    * @private
    */
   _applyScopes () {
-    /**
-     * Do not apply if already applied
-     */
-    if (this._scopesApplied) {
-      return this
-    }
-
-    /**
-     * Setting flag to true
-     */
-    this._scopesApplied = true
-
-    if (this._ignoreScopes.indexOf('*') > -1) {
-      return this
-    }
-
-    _(this.Model.$globalScopes)
-    .filter((scope) => this._ignoreScopes.indexOf(scope.name) <= -1)
-    .each((scope) => {
-      scope.callback(this)
-    })
-
+    this.scopesIterator.execute(this)
     return this
   }
 
@@ -332,12 +300,7 @@ class QueryBuilder {
    * @chainable
    */
   ignoreScopes (scopes) {
-    /**
-     * Don't do anything when array is empty or value is not
-     * an array
-     */
-    const scopesToIgnore = Array.isArray(scopes) ? scopes : ['*']
-    this._ignoreScopes = this._ignoreScopes.concat(scopesToIgnore)
+    this.scopesIterator.ignore(scopes)
     return this
   }
 

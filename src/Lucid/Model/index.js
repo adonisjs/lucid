@@ -15,9 +15,9 @@ const GE = require('@adonisjs/generic-exceptions')
 const { resolver, ioc } = require('../../../lib/iocResolver')
 
 const BaseModel = require('./Base')
-const Hooks = require('../Hooks')
 const QueryBuilder = require('../QueryBuilder')
 const EagerLoad = require('../EagerLoad')
+
 const { HasOne, HasMany, BelongsTo, BelongsToMany, HasManyThrough } = require('../Relations')
 
 const CE = require('../../Exceptions')
@@ -223,70 +223,6 @@ class Model extends BaseModel {
   }
 
   /**
-   * Method to be called only once to boot
-   * the model.
-   *
-   * NOTE: This is called automatically by the IoC
-   * container hooks when you make use of `use()`
-   * method.
-   *
-   * @method boot
-   *
-   * @return {void}
-   *
-   * @static
-   */
-  static boot () {
-    this.hydrate()
-    _.each(this.traits, (trait) => this.addTrait(trait))
-  }
-
-  /**
-   * Hydrates model static properties by re-setting
-   * them to their original value.
-   *
-   * @method hydrate
-   *
-   * @return {void}
-   *
-   * @static
-   */
-  static hydrate () {
-    /**
-     * Model hooks for different lifecycle
-     * events
-     *
-     * @type {Object}
-     */
-    this.$hooks = {
-      before: new Hooks(),
-      after: new Hooks()
-    }
-
-    /**
-     * List of global query listeners for the model.
-     *
-     * @type {Array}
-     */
-    this.$queryListeners = []
-
-    /**
-     * List of global query scopes. Chained before executing
-     * query builder queries.
-     */
-    this.$globalScopes = []
-
-    /**
-     * We use the default query builder class to run queries, but as soon
-     * as someone wants to add methods to the query builder via traits,
-     * we need an isolated copy of query builder class just for that
-     * model, so that the methods added via traits are not impacting
-     * other models.
-     */
-    this.QueryBuilder = null
-  }
-
-  /**
    * Define a query macro to be added to query builder.
    *
    * @method queryMacro
@@ -352,14 +288,11 @@ class Model extends BaseModel {
    *
    * @param  {Function}     callback
    * @param  {String}       [name = null]
+   *
+   * @chainable
    */
-  static addGlobalScope (callback, name = null) {
-    if (typeof (callback) !== 'function') {
-      throw GE
-        .InvalidArgumentException
-        .invalidParameter('Model.addGlobalScope expects a closure as first parameter', callback)
-    }
-    this.$globalScopes.push({ callback, name })
+  static addGlobalScope (callback, name) {
+    this.$globalScopes.add(callback, name)
     return this
   }
 
@@ -795,15 +728,25 @@ class Model extends BaseModel {
    */
   toObject () {
     let evaluatedAttrs = _.transform(this.$attributes, (result, value, key) => {
+      const isMarkedAsDate = _.includes(this.constructor.dates, key)
+      const transformedValue = isMarkedAsDate && value ? moment(value) : value
+
       /**
-       * If value is an instance of moment and there is no getter defined
-       * for it, then cast it as a date.
+       * If key is not a date OR it's a date but model has a predefine getter
+       * for it, then pass the value to the getter.
+       *
+       * Also if the value is set to null or undefined, we pass it to the getter
+       * instead of casting it as a date.
        */
-      if (value instanceof moment && typeof (this[util.getGetterName(key)]) !== 'function') {
-        result[key] = this.constructor.castDates(key, value)
-      } else {
-        result[key] = this._getGetterValue(key, value)
+      if (!isMarkedAsDate || typeof (this[util.getGetterName(key)]) === 'function' || !transformedValue) {
+        result[key] = this._getGetterValue(key, transformedValue)
+        return result
       }
+
+      /**
+       * Otherwise cast the field as date
+       */
+      result[key] = this.constructor.castDates(key, transformedValue)
       return result
     }, {})
 
@@ -891,7 +834,6 @@ class Model extends BaseModel {
   newUp (row) {
     this.$persisted = true
     this.$attributes = row
-    this._convertDatesToMomentInstances()
     this._syncOriginals()
   }
 

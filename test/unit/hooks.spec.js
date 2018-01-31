@@ -10,10 +10,11 @@
 */
 
 const test = require('japa')
-const Hooks = require('../../src/Lucid/Hooks')
-const helpers = require('./helpers')
 const { ioc } = require('@adonisjs/fold')
 const { setupResolver } = require('@adonisjs/sink')
+
+const Hooks = require('../../src/Lucid/Hooks')
+const helpers = require('./helpers')
 
 test.group('Hooks', (group) => {
   group.before(() => {
@@ -55,7 +56,7 @@ test.group('Hooks', (group) => {
     const hooks = new Hooks()
     hooks.addHandler('create', function () {}, 'hashPassword')
     const fn = () => hooks.removeHandler('create')
-    assert.throw(fn, 'E_MISSING_PARAMETER: Missing parameter name expected by Hook.removeHandler as 2nd parameter')
+    assert.throw(fn, /E_MISSING_PARAMETER: Missing parameter name expected by Hook.removeHandler method as 2nd parameter/)
   })
 
   test('it should remove all handlers', (assert) => {
