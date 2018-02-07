@@ -45,7 +45,7 @@ class LucidProvider extends ServiceProvider {
     this.app.bind('Adonis/Src/Model', (app) => require('../src/Lucid/Model'))
     this.app.alias('Adonis/Src/Model', 'Model')
   }
-  
+
   /**
    * Registering the factory class under
    * Adonis/Src/Factory namespace.
