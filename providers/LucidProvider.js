@@ -45,6 +45,21 @@ class LucidProvider extends ServiceProvider {
     this.app.bind('Adonis/Src/Model', (app) => require('../src/Lucid/Model'))
     this.app.alias('Adonis/Src/Model', 'Model')
   }
+  
+  /**
+   * Registering the factory class under
+   * Adonis/Src/Factory namespace.
+   *
+   * @method _registerFactory
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  _registerFactory () {
+    this.app.bind('Adonis/Src/Factory', () => require('../src/Factory'))
+    this.app.alias('Adonis/Src/Factory', 'Factory')
+  }
 
   /**
    * Register transactions trait under `Adonis/Traits/DatabaseTransactions`
@@ -91,6 +106,7 @@ class LucidProvider extends ServiceProvider {
   register () {
     this._registerDatabase()
     this._registerModel()
+    this._registerFactory()
     this._registerTransactionsTrait()
   }
 
