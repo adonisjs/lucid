@@ -283,7 +283,7 @@ class QueryBuilder {
    * @return {Object}
    */
   formatter () {
-    return this.query.client.formatter()
+    return this.query.client.formatter(this.query)
   }
 
   /**
