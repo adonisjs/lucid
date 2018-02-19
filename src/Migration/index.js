@@ -226,8 +226,8 @@ class Migration {
    */
   async _getDiff (names, direction = 'up', batch) {
     const schemas = direction === 'down'
-    ? await this._getAfterBatch(batch)
-    : await this.db.table(this._migrationsTable).pluck('name')
+      ? await this._getAfterBatch(batch)
+      : await this.db.table(this._migrationsTable).pluck('name')
 
     return direction === 'down' ? _.reverse(_.intersection(names, schemas)) : _.difference(names, schemas)
   }

@@ -40,8 +40,8 @@ class DatabaseFactory {
    */
   _getQueryBuilder () {
     return (this._connection
-    ? ioc.use('Adonis/Src/Database').connection(this._connection)
-    : ioc.use('Adonis/Src/Database')).table(this.tableName)
+      ? ioc.use('Adonis/Src/Database').connection(this._connection)
+      : ioc.use('Adonis/Src/Database')).table(this.tableName)
   }
 
   /**
