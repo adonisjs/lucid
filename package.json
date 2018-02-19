@@ -48,7 +48,7 @@
     "pg": "^7.4.1",
     "semver": "^5.5.0",
     "sqlite3": "^3.1.13",
-    "standard": "^10.0.3"
+    "standard": "^11.0.0"
   },
   "config": {
     "commitizen": {
