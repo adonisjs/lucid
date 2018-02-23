@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/lucid",
-  "version": "5.0.2",
+  "version": "5.0.3",
   "description": "SQL ORM built on top of Active Record pattern",
   "main": "index.js",
   "scripts": {
@@ -27,7 +27,7 @@
     "@adonisjs/generic-exceptions": "^2.0.0",
     "chance": "^1.0.13",
     "debug": "^3.1.0",
-    "knex": "^0.14.3",
+    "knex": "^0.14.4",
     "lodash": "^4.17.5",
     "moment": "^2.20.1",
     "pluralize": "^7.0.0",
@@ -48,7 +48,7 @@
     "pg": "^7.4.1",
     "semver": "^5.5.0",
     "sqlite3": "^3.1.13",
-    "standard": "^10.0.3"
+    "standard": "^11.0.0"
   },
   "config": {
     "commitizen": {

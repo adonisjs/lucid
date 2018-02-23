@@ -56,16 +56,16 @@ class ScopeIterator {
     }
 
     this._scopes
-    .filter((scope) => {
-      if (this._ignoreList.indexOf(scope.name) > -1) {
-        debug('ignoring scope %s', scope.name)
-        return false
-      }
-      return true
-    })
-    .forEach((scope) => {
-      scope.callback(builder)
-    })
+      .filter((scope) => {
+        if (this._ignoreList.indexOf(scope.name) > -1) {
+          debug('ignoring scope %s', scope.name)
+          return false
+        }
+        return true
+      })
+      .forEach((scope) => {
+        scope.callback(builder)
+      })
 
     /**
      * Cleaning up to avoid duplicate execution of

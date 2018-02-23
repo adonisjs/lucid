@@ -204,8 +204,8 @@ class Model extends BaseModel {
      */
     query.on('query', (builder) => {
       _(this.$queryListeners)
-      .filter((listener) => typeof (listener) === 'function')
-      .each((listener) => listener(builder))
+        .filter((listener) => typeof (listener) === 'function')
+        .each((listener) => listener(builder))
     })
 
     return query
@@ -463,10 +463,10 @@ class Model extends BaseModel {
    */
   _formatDateFields (values) {
     _(this.constructor.dates)
-    .filter((date) => {
-      return values[date] && typeof (this[util.getSetterName(date)]) !== 'function'
-    })
-    .each((date) => { values[date] = this.constructor.formatDates(date, values[date]) })
+      .filter((date) => {
+        return values[date] && typeof (this[util.getSetterName(date)]) !== 'function'
+      })
+      .each((date) => { values[date] = this.constructor.formatDates(date, values[date]) })
   }
 
   /**
@@ -1100,8 +1100,8 @@ class Model extends BaseModel {
      * the $parent.
      */
     _(value.rows)
-    .filter((val) => !!val)
-    .each((val) => (val.$parent = this.constructor.name))
+      .filter((val) => !!val)
+      .each((val) => (val.$parent = this.constructor.name))
   }
 
   /**
@@ -1285,7 +1285,7 @@ class Model extends BaseModel {
     }
   }
 
- /**
+  /**
   * Return a count of all model records.
   *
   * @method getCount
@@ -1311,7 +1311,7 @@ class Model extends BaseModel {
     return this.query().getCountDistinct(columnName)
   }
 
- /**
+  /**
   * Return the average of all values of columnName.
   *
   * @method getAvg
@@ -1337,7 +1337,7 @@ class Model extends BaseModel {
     return this.query().getAvgDistinct(columnName)
   }
 
- /**
+  /**
   * Return the minimum of all values of columnName.
   *
   * @method getMin
@@ -1350,7 +1350,7 @@ class Model extends BaseModel {
     return this.query().getMin(columnName)
   }
 
- /**
+  /**
   * Return the maximum of all values of columnName.
   *
   * @method getMax
@@ -1363,7 +1363,7 @@ class Model extends BaseModel {
     return this.query().getMax(columnName)
   }
 
- /**
+  /**
   * Return the sum of all values of columnName.
   *
   * @method getSum
@@ -1376,7 +1376,7 @@ class Model extends BaseModel {
     return this.query().getSum(columnName)
   }
 
- /**
+  /**
   * Return the sum of all distinct values of columnName.
   *
   * @method getSumDistinct

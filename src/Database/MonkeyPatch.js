@@ -17,8 +17,27 @@
 const _ = require('lodash')
 const KnexQueryBuilder = require('knex/lib/query/builder')
 const excludeAttrFromCount = ['order', 'columns', 'limit', 'offset']
+const util = require('../../lib/util')
 
 const _from = KnexQueryBuilder.prototype.from
+const _returning = KnexQueryBuilder.prototype.returning
+
+/**
+ * Override knex actual returning method and call the actual
+ * `returning` when client supports `returning`
+ *
+ * @method returning
+ *
+ * @param  {...Spread} args
+ *
+ * @chainable
+ */
+KnexQueryBuilder.prototype.returning = function (...args) {
+  if (util.supportsReturning(this.client.config.client)) {
+    return _returning.bind(this)(...args)
+  }
+  return this
+}
 
 /**
  * Facade over `knex.from` method to entertain the `prefix`
