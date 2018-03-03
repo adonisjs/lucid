@@ -61,7 +61,7 @@ class MigrationRefresh extends BaseMigration {
     this._validateState(force)
 
     if (keepAlive) {
-      this.migration.keepAlive();
+      this.migration.keepAlive()
     }
 
     await ace.call('migration:reset', {}, { log, force, silent })

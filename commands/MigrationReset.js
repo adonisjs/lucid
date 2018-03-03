@@ -62,7 +62,7 @@ class MigrationReset extends BaseMigration {
       this._validateState(force)
 
       if (keepAlive) {
-        this.migration.keepAlive();
+        this.migration.keepAlive()
       }
 
       const startTime = process.hrtime()

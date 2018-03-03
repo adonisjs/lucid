@@ -30,7 +30,7 @@ class Migration {
     this.db = Database
     this._migrationsTable = Config.get('database.migrationsTable', 'adonis_schema')
     this._lockTable = `${this._migrationsTable}_lock`
-    this.isKeepAliveEnabled = false;
+    this.isKeepAliveEnabled = false
   }
 
   /**
@@ -318,7 +318,7 @@ class Migration {
    * @return {void}
    */
   keepAlive (enabled = true) {
-    this.isKeepAliveEnabled = enabled;
+    this.isKeepAliveEnabled = enabled
   }
 
   /**

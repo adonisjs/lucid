@@ -24,7 +24,6 @@ class MigrationStatus extends BaseMigration {
     migration:status
     { -a, --keep-alive: Do not close the database connection }
     `
-
   }
 
   /**
@@ -49,10 +48,9 @@ class MigrationStatus extends BaseMigration {
    *
    * @return {void|Array}
    */
-  async handle (args, { keepAlive} ) {
-
+  async handle (args, {keepAlive}) {
     if (keepAlive) {
-      this.migration.keepAlive();
+      this.migration.keepAlive()
     }
 
     try {
