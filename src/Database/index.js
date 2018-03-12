@@ -183,7 +183,9 @@ class Database {
         .knex
         .transaction(function (trx) {
           resolve(trx)
-        }).catch(() => {})
+        }).catch(function (trx) {
+          reject(trx)
+        })
     })
   }
 
