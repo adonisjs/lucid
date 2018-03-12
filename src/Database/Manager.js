@@ -50,21 +50,27 @@ class DatabaseManager {
 
   /**
    * Creates a new database connection for the config defined inside
-   * `config/database` file. You just need to pass the key name or don't
-   * pass any name to use the default connection.
+   * `config/database` file or from a provided JSON object. You just
+   * need to pass the key name or don't pass any name to use the default
+   * connection. For JSON objects your object should have a key 'name'
+   * that defines the pool.
+   *
    *
    * Also this method will reuse and returns the existing connections.
    *
    * @method connection
    *
-   * @param  {String}   [name = Config.get('database.connection')]
+   * @param  {String | Object}   [name = Config.get('database.connection')]
    *
    * @return {Database}
    *
-   * @throws {missingDatabaseConnection} If connection is not defined in config file.
+   * @throws {missingDatabaseConnection} If a string is provided and the connection is not defined in config file.
    */
-  connection (name) {
-    name = name || this.Config.get('database.connection')
+  connection (conn) {
+    conn = conn || this.Config.get('database.connection')
+
+    let name = typeof conn === 'string' ? conn : conn['name']
+    let connectionSettings = typeof conn === 'string' ? this.Config.get(`database.${name}`) : conn
 
     /**
      * Return connection if part of connection pool already
@@ -73,11 +79,9 @@ class DatabaseManager {
       return this._connectionPools[name]
     }
 
-    const connectionSettings = this.Config.get(`database.${name}`)
     if (!connectionSettings) {
       throw CE.RuntimeException.missingDatabaseConnection(name)
     }
-
     this._connectionPools[name] = new Database(connectionSettings)
     return this._connectionPools[name]
   }
