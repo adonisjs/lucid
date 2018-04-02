@@ -1049,14 +1049,17 @@ class Model extends BaseModel {
   }
 
   /**
-   * Returns an array of ids.
+   * Returns an object of key/value pairs.
+   * This method will not eagerload relationships.
+   * The lhs field is the object key, and rhs is the value.
    *
-   * Note: this method doesn't allow eagerloading relations
-   *
-   * @method ids
+   * @method pair
    * @async
    *
-   * @return {Array}
+   * @param  {String} lhs
+   * @param  {String} rhs
+   *
+   * @return {Object}
    */
   static pair (lhs, rhs) {
     return this.query().pair(lhs, rhs)
