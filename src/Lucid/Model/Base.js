@@ -294,11 +294,13 @@ class BaseModel {
    *
    * @param  {Object} attributes
    *
-   * @return {void}
+   * @chainable
    */
   fill (attributes) {
     this.$attributes = {}
     this.merge(attributes)
+    
+    return this
   }
 
   /**
@@ -309,10 +311,12 @@ class BaseModel {
    *
    * @param  {Object} attributes
    *
-   * @return {void}
+   * @chainable
    */
   merge (attributes) {
     _.each(attributes, (value, key) => this.set(key, value))
+    
+    return this
   }
 
   /**
