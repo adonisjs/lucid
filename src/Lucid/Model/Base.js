@@ -294,11 +294,13 @@ class BaseModel {
    *
    * @param  {Object} attributes
    *
-   * @return {void}
+   * @chainable
    */
   fill (attributes) {
     this.$attributes = {}
     this.merge(attributes)
+
+    return this
   }
 
   /**
@@ -309,10 +311,28 @@ class BaseModel {
    *
    * @param  {Object} attributes
    *
-   * @return {void}
+   * @chainable
    */
   merge (attributes) {
     _.each(attributes, (value, key) => this.set(key, value))
+
+    return this
+  }
+
+  /**
+   * Instantiates the model and fill it with given attributes
+   * i.e: User.from({ email, password }).save()
+   *
+   * @method from
+   *
+   * @param  {Object} attributes
+   *
+   * @static
+   *
+   * @chainable
+   */
+  static from (attributes) {
+    return (new this()).fill(attributes)
   }
 
   /**

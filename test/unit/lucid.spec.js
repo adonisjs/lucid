@@ -173,6 +173,18 @@ test.group('Model', (group) => {
     assert.deepEqual(user.$attributes, { username: 'VIRK' })
   })
 
+  test('new model instance with given attributes is created using from', (assert) => {
+    class User extends Model {
+      setEmail (email) {
+        return email.toLowerCase()
+      }
+    }
+
+    const user = User.from({ email: 'TEST@test.com' })
+    assert.instanceOf(user, User)
+    assert.deepEqual(user.$attributes, { email: 'test@test.com' })
+  })
+
   test('save attributes to the database and update model state', async (assert) => {
     class User extends Model {
     }
