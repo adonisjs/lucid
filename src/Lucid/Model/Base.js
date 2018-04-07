@@ -299,7 +299,7 @@ class BaseModel {
   fill (attributes) {
     this.$attributes = {}
     this.merge(attributes)
-    
+
     return this
   }
 
@@ -315,7 +315,7 @@ class BaseModel {
    */
   merge (attributes) {
     _.each(attributes, (value, key) => this.set(key, value))
-    
+
     return this
   }
 
