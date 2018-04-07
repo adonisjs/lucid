@@ -320,6 +320,22 @@ class BaseModel {
   }
 
   /**
+   * Instantiates the model and fill it with given attributes
+   * i.e: User.from({ email, password }).save()
+   *
+   * @method from
+   *
+   * @param  {Object} attributes
+   *
+   * @static
+   *
+   * @chainable
+   */
+  static from (attributes) {
+    return (new this()).fill(attributes)
+  }
+
+  /**
    * Freezes the model instance for modifications
    *
    * @method freeze
