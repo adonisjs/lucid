@@ -40,7 +40,7 @@
     "@adonisjs/sink": "^1.0.16",
     "coveralls": "^3.0.0",
     "cz-conventional-changelog": "^2.1.0",
-    "fs-extra": "^5.0.0",
+    "fs-extra": "^6.0.0",
     "japa": "^1.0.6",
     "japa-cli": "^1.0.1",
     "mysql": "^2.15.0",
