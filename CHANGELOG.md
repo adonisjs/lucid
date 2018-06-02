@@ -1,3 +1,13 @@
+<a name="5.0.4"></a>
+## [5.0.4](https://github.com/adonisjs/adonis-lucid/compare/v5.0.3...v5.0.4) (2018-06-02)
+
+
+### Features
+
+* **migrations:** add keep-alive flag ([88423f9](https://github.com/adonisjs/adonis-lucid/commit/88423f9))
+
+
+
 <a name="5.0.3"></a>
 ## [5.0.3](https://github.com/adonisjs/adonis-lucid/compare/v5.0.2...v5.0.3) (2018-02-23)
 

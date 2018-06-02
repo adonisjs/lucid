@@ -28,6 +28,7 @@ class MirationRollback extends BaseMigration {
     { -f, --force: Forcefully run migrations in production }
     { -s, --silent: Silent the migrations output }
     { --log: Log SQL queries instead of executing them }
+    { -a, --keep-alive: Do not close the database connection }
     `
   }
 
@@ -54,14 +55,19 @@ class MirationRollback extends BaseMigration {
    * @param  {Boolean} options.force
    * @param  {Number} options.batch
    * @param  {Boolean} options.silent
+   * @param  {Boolean} options.keepAlive
    *
    * @return {void|Array}
    */
-  async handle (args, { log, force, batch, silent }) {
+  async handle (args, { log, force, batch, silent, keepAlive }) {
     try {
       batch = batch ? Number(batch) : null
 
       this._validateState(force)
+
+      if (keepAlive) {
+        this.migration.keepAlive()
+      }
 
       const startTime = process.hrtime()
       const { migrated, status, queries } = await this.migration.down(this._getSchemaFiles(), batch, log)

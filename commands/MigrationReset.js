@@ -27,6 +27,7 @@ class MigrationReset extends BaseMigration {
     { -f, --force: Forcefully run migrations in production }
     { -s, --silent: Silent the migrations output }
     { --log: Log SQL queries instead of executing them }
+    { -a, --keep-alive: Do not close the database connection }
     `
   }
 
@@ -52,12 +53,17 @@ class MigrationReset extends BaseMigration {
    * @param  {Boolean} options.log
    * @param  {Boolean} options.force
    * @param  {Boolean} options.silent
+   * @param  {Boolean} options.keepAlive
    *
    * @return {void|Array}
    */
-  async handle (args, { log, force, silent }) {
+  async handle (args, { log, force, silent, keepAlive }) {
     try {
       this._validateState(force)
+
+      if (keepAlive) {
+        this.migration.keepAlive()
+      }
 
       const startTime = process.hrtime()
       const { migrated, status, queries } = await this.migration.down(this._getSchemaFiles(), 0, log)

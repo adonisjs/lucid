@@ -30,6 +30,7 @@ class Migration {
     this.db = Database
     this._migrationsTable = Config.get('database.migrationsTable', 'adonis_schema')
     this._lockTable = `${this._migrationsTable}_lock`
+    this.isKeepAliveEnabled = false
   }
 
   /**
@@ -301,7 +302,23 @@ class Migration {
    */
   async _cleanup () {
     await this._removeLock()
-    this.db.close()
+
+    if (!this.isKeepAliveEnabled) {
+      this.db.close()
+    }
+  }
+
+  /**
+   * Enable or disable keepAlive, which prevents the database connection from being closed.
+   *
+   * @method keepAlive
+   *
+   * @param {boolean}enabled
+   *
+   * @return {void}
+   */
+  keepAlive (enabled = true) {
+    this.isKeepAliveEnabled = enabled
   }
 
   /**
@@ -456,7 +473,10 @@ class Migration {
       .table(this._migrationsTable)
       .orderBy('name')
 
-    this.db.close()
+    if (!this.isKeepAliveEnabled) {
+      this.db.close()
+    }
+
     return _.map(schemas, (schema, name) => {
       const migration = _.find(migrated, (mig) => mig.name === name)
       return {
