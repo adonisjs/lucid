@@ -1,5 +1,4 @@
-import * as knex from 'knex'
-import SchemaChain from './chain'
+import SchemaChain = require("./chain");
 
 /*
  * adonis-lucid
@@ -23,7 +22,7 @@ import SchemaChain from './chain'
  * @class Schema
  * @constructor
  */
-export class Schema {
+class Schema {
 
     db: any;
     private _chains: any[];
@@ -137,7 +136,7 @@ export class Schema {
   }
 }
 
-export interface Schema extends SchemaChain{}
+interface Schema extends SchemaChain{}
 
 /**
  * Copying all the chain method to the Schema prototype.
@@ -153,3 +152,5 @@ Object
       return chain
     }
   })
+
+export = Schema

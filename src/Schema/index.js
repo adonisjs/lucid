@@ -34,8 +34,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-var chain_1 = require("./chain");
+var SchemaChain = require("./chain");
 /*
  * adonis-lucid
  *
@@ -187,12 +186,11 @@ var Schema = /** @class */ (function () {
     };
     return Schema;
 }());
-exports.Schema = Schema;
 /**
  * Copying all the chain method to the Schema prototype.
  */
 Object
-    .getOwnPropertyNames(chain_1.default.prototype)
+    .getOwnPropertyNames(SchemaChain.prototype)
     .filter(function (method) { return method !== 'constructor'; })
     .forEach(function (method) {
     Schema.prototype[method] = function () {
@@ -200,10 +198,11 @@ Object
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        var chain = new chain_1.default();
+        var chain = new SchemaChain();
         chain[method].apply(chain, args);
         this._chains.push(chain);
         return chain;
     };
 });
+module.exports = Schema;
 //# sourceMappingURL=index.js.map

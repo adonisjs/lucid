@@ -329,4 +329,4 @@ class SchemaChain {
   }
 }
 
-export default SchemaChain
+export = SchemaChain
