@@ -808,8 +808,8 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const user = await User.query().with('posts').first()
     const json = user.toJSON()
-    assert.isTrue(moment(json.posts[0].pivot.created_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
-    assert.isTrue(moment(json.posts[0].pivot.updated_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.isTrue(moment(json.posts[0].pivot.created_at, 'YYYY-MM-DD HH:mm:ssZZ', true).isValid())
+    assert.isTrue(moment(json.posts[0].pivot.updated_at, 'YYYY-MM-DD HH:mm:ssZZ', true).isValid())
   })
 
   test('call pivotModel getters when casting timestamps', async (assert) => {
@@ -912,8 +912,8 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.lengthOf(pivotValues, 1)
     assert.equal(pivotValues[0].post_id, 1)
     assert.equal(pivotValues[0].user_id, 2)
-    assert.isTrue(moment(pivotValues[0].created_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
-    assert.isTrue(moment(pivotValues[0].updated_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.isTrue(moment(pivotValues[0].created_at, 'YYYY-MM-DD HH:mm:ssZZ', true).isValid())
+    assert.isTrue(moment(pivotValues[0].updated_at, 'YYYY-MM-DD HH:mm:ssZZ', true).isValid())
   })
 
   test('execute setters when pivotModel in play', async (assert) => {
@@ -956,7 +956,7 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(pivotValues[0].post_id, 1)
     assert.equal(pivotValues[0].user_id, 2)
     assert.isTrue(moment(pivotValues[0].created_at, 'YYYY-MM-DD', true).isValid())
-    assert.isTrue(moment(pivotValues[0].updated_at, 'YYYY-MM-DD HH:mm:ss', true).isValid())
+    assert.isTrue(moment(pivotValues[0].updated_at, 'YYYY-MM-DD HH:mm:ssZZ', true).isValid())
   })
 
   test('save pivot values to database', async (assert) => {

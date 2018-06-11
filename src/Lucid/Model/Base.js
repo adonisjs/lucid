@@ -15,7 +15,7 @@ const Hooks = require('../Hooks')
 const GlobalScopes = require('../GlobalScope')
 const VanillaSerializer = require('../Serializers/Vanilla')
 const { ioc } = require('../../../lib/iocResolver')
-const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss'
+const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ssZZ'
 
 /**
  * The base model to share attributes with Lucid
