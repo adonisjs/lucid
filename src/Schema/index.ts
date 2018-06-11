@@ -24,10 +24,10 @@ import SchemaChain = require("./chain");
  */
 class Schema {
 
-    db: any;
-    private _chains: any[];
+  db: any;
+  private _chains: any[];
 
-    constructor (Database) {
+  constructor (Database) {
     this.db = Database.connection((this.constructor as typeof Schema).connection)
     this._chains = []
   }
