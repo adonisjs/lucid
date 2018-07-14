@@ -126,8 +126,14 @@ KnexQueryBuilder.prototype.forPage = function (page = 1, perPage = 20) {
  *
  * @return {Object} @multiple([data=Array, page=Number, perPage=Number, total=Number, lastPage=Number])
  */
-KnexQueryBuilder.prototype.paginate = async function (page = 2, perPage = 20) {
+KnexQueryBuilder.prototype.paginate = async function (page = 1, perPage = 20) {
   const countByQuery = this.clone()
+
+  /**
+   * Force cast page and perPage to numbers
+   */
+  page = Number(page)
+  perPage = Number(perPage)
 
   /**
    * Remove statements that will make things bad with count
