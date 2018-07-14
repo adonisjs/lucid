@@ -7,3 +7,11 @@ out
 .nyc_output
 test/**/tmp
 test/functional/database
+.DS_STORE
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.log
+yarn.lock
+build
+dist
