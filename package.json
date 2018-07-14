@@ -9,7 +9,7 @@
     "test:cleanup": "rm -rf test/functional/database && rm -rf test/unit/tmp",
     "posttest": "npm run coverage",
     "test": "DB=sqlite nyc japa",
-    "test:win": "DB=sqlite ./node_modules/japa-cli/index.js",
+    "test:win": "node ./node_modules/japa-cli/index.js",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "commit": "git-cz",
     "lint": "standard"
