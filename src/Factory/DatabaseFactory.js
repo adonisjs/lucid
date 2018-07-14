@@ -21,9 +21,10 @@ const { ioc } = require('../../lib/iocResolver')
  * @constructor
  */
 class DatabaseFactory {
-  constructor (tableName, dataCallback) {
+  constructor (tableName, dataCallback, options={}) {
     this.tableName = tableName
     this.dataCallback = dataCallback
+    this.options = options
     this._returningColumn = null
     this._connection = null
   }
@@ -59,7 +60,8 @@ class DatabaseFactory {
    *
    * @private
    */
-  async _makeOne (index, data) {
+  async _makeOne (index, data, seed) {
+    if (seed) chancejs.mt.init_genrand(seed+index)
     const hash = await this.dataCallback(chancejs, index, data)
     const keys = _.keys(hash)
 
@@ -136,8 +138,8 @@ class DatabaseFactory {
    *
    * @return {Object}
    */
-  async make (data = {}, index = 0) {
-    return this._makeOne(index, data)
+  async make (data = {}, index = 0, seed=this.options.seed) {
+    return this._makeOne(index, data, seed)
   }
 
   /**
@@ -152,8 +154,8 @@ class DatabaseFactory {
    *
    * @return {Array}
    */
-  async makeMany (instances, data = {}) {
-    return Promise.all(_.map(_.range(instances), (index) => this.make(data, index)))
+  async makeMany (instances, data = {}, seed=this.options.seed) {
+    return Promise.all(_.map(_.range(instances), (index) => this.make(data, index, seed)))
   }
 
   /**
@@ -167,8 +169,8 @@ class DatabaseFactory {
    *
    * @return {Object}
    */
-  async create (data = {}, index = 0) {
-    const attributes = await this.make(data, index)
+  async create (data = {}, index = 0, seed=this.options.seed) {
+    const attributes = await this.make(data, index, seed)
     const query = this._getQueryBuilder().table(this.tableName)
 
     if (this._returningColumn) {
@@ -190,8 +192,8 @@ class DatabaseFactory {
    *
    * @return {Array}
    */
-  async createMany (numberOfRows, data = {}) {
-    return Promise.all(_.map(_.range(numberOfRows), (index) => this.create(data, index)))
+  async createMany (numberOfRows, data = {}, seed=this.options.seed) {
+    return Promise.all(_.map(_.range(numberOfRows), (index) => this.create(data, index, seed)))
   }
 
   /**
