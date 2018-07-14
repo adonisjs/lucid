@@ -1194,4 +1194,34 @@ test.group('Relations | Has Many', (group) => {
     const user = await User.query().with('cars').first()
     assert.equal(user.toJSON().cars[0].user_id, 0)
   })
+
+  test('get an array of ids for the related model', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    let carQuery = null
+    Car.onQuery((query) => (carQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('cars').insert([
+      { user_id: 1, name: 'merc', model: '1990', id: 1 },
+      { user_id: 1, name: 'audi', model: '2001', id: 2 },
+      { user_id: 2, name: 'audi', model: '2001', id: 3 }
+    ])
+
+    const user = await User.find(1)
+    const carIds = await user.cars().ids()
+    assert.deepEqual(carIds, [1, 2])
+    assert.equal(carQuery.sql, helpers.formatQuery('select "id" from "cars" where "user_id" = ?'))
+    assert.deepEqual(carQuery.bindings, helpers.formatBindings([1]))
+  })
 })
