@@ -62,8 +62,8 @@ test.group('Factory', (group) => {
 
   test('add a new blueprint', (assert) => {
     const fn = function () {}
-    Factory.blueprint('App/Model/User', fn)
-    assert.deepEqual(Factory._blueprints, [{ name: 'App/Model/User', callback: fn }])
+    Factory.blueprint('App/Model/User', fn, {})
+    assert.deepEqual(Factory._blueprints, [{ name: 'App/Model/User', callback: fn, options: {} }])
   })
 
   test('get model factory when accessing the blueprint', (assert) => {
