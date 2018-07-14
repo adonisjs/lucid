@@ -78,7 +78,8 @@ class BelongsToMany extends BaseRelation {
     this._pivot = {
       table: util.makePivotTableName(parentInstance.constructor.name, relatedModel.name),
       withTimestamps: false,
-      withFields: []
+      withFields: [],
+      pivotPrimaryKey: 'id'
     }
 
     this._relatedFields = []
@@ -349,6 +350,7 @@ class BelongsToMany extends BaseRelation {
       pivotModel.$table = this.$pivotTable
       pivotModel.$connection = this.RelatedModel.connection
       pivotModel.$withTimestamps = this._pivot.withTimestamps
+      pivotModel.$primaryKey = this._pivot.pivotPrimaryKey
     }
 
     /**
@@ -470,6 +472,25 @@ class BelongsToMany extends BaseRelation {
     }
 
     this._pivot.table = table
+    return this
+  }
+
+  /**
+   * Define the primary key to be selected for the
+   * pivot table.
+   *
+   * @method pivotPrimaryKey
+   *
+   * @param  {String}        key
+   *
+   * @chainable
+   */
+  pivotPrimaryKey (key) {
+    if (this._PivotModel) {
+      throw CE.ModelRelationException.pivotModelIsDefined('pivotPrimaryKey')
+    }
+
+    this._pivot.pivotPrimaryKey = key
     return this
   }
 

@@ -39,9 +39,11 @@ class PivotModel extends BaseModel {
   _instantiate () {
     super._instantiate()
     this.__setters__.push('$withTimestamps')
+    this.__setters__.push('$primaryKey')
     this.__setters__.push('$table')
     this.__setters__.push('$connection')
     this.$withTimestamps = false
+    this.$primaryKey = 'id'
   }
 
   /**
@@ -162,9 +164,11 @@ class PivotModel extends BaseModel {
       query.transacting(trx)
     }
 
-    const result = await query
-      .returning('id')
-      .insert(this.$attributes)
+    if (this.$primaryKey) {
+      query.returning(typeof (this.$primaryKey) === 'string' ? this.$primaryKey : 'id')
+    }
+
+    const result = await query.insert(this.$attributes)
 
     this.primaryKeyValue = result[0]
     this.$persisted = true

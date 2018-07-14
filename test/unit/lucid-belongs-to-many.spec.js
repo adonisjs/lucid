@@ -2616,4 +2616,28 @@ test.group('Relations | Belongs To Many', (group) => {
 
     assert.equal(helpers.formatQuery(postsQuery.sql), helpers.formatQuery('select "posts".*, "post_user"."post_id" as "pivot_post_id", "post_user"."user_id" as "pivot_user_id" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" in (?) and "post_user"."is_published" = ?'))
   })
+
+  test('on save do not add returning statement when withPrimaryKey is false (pg only)', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotPrimaryKey(false)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    let postsQuery = null
+    ioc.use('Database').on('query', (query) => (postsQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+
+    const user = await User.find(1)
+    await user.posts().create({ title: 'Adonis 101' })
+
+    assert.equal(postsQuery.sql, helpers.formatQuery('insert into "post_user" ("post_id", "user_id") values (?, ?)'))
+  })
 })
