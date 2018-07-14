@@ -21,7 +21,7 @@ const { ioc } = require('../../lib/iocResolver')
  * @constructor
  */
 class ModelFactory {
-  constructor (Model, dataCallback, options={}) {
+  constructor (Model, dataCallback, options = {}) {
     this.Model = Model
     this.dataCallback = dataCallback
     this.options = options
@@ -60,7 +60,7 @@ class ModelFactory {
    * @private
    */
   async _makeOne (index, data, seed) {
-    if (seed) chancejs.mt.init_genrand(seed+index)
+    if (seed) chancejs.mt.init_genrand(seed + index)
     const hash = await this.dataCallback(chancejs, index, data)
     const keys = _.keys(hash)
 
@@ -92,7 +92,7 @@ class ModelFactory {
    *
    * @return {Object}
    */
-  async make (data = {}, index = 0, seed=this.options.seed) {
+  async make (data = {}, index = 0, seed = this.options.seed) {
     const attributes = await this._makeOne(index, data, seed)
     return this._newup(attributes)
   }
@@ -109,7 +109,7 @@ class ModelFactory {
    *
    * @return {Array}
    */
-  async makeMany (instances, data = {}, seed=this.options.seed) {
+  async makeMany (instances, data = {}, seed = this.options.seed) {
     return Promise.all(_.map(_.range(instances), (index) => this.make(data, index, seed)))
   }
 
@@ -124,7 +124,7 @@ class ModelFactory {
    *
    * @return {Object}
    */
-  async create (data = {}, index = 0, seed=this.options.seed) {
+  async create (data = {}, index = 0, seed = this.options.seed) {
     const modelInstance = await this.make(data, index, seed)
     await modelInstance.save()
     return modelInstance
@@ -142,7 +142,7 @@ class ModelFactory {
    *
    * @return {Array}
    */
-  async createMany (numberOfRows, data = {}, seed=this.options.seed) {
+  async createMany (numberOfRows, data = {}, seed = this.options.seed) {
     return Promise.all(_.map(_.range(numberOfRows), (index) => this.create(data, index, seed)))
   }
 
