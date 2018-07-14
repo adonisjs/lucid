@@ -771,10 +771,17 @@ class BelongsToMany extends BaseRelation {
     await this._loadAndCachePivot(trx)
     const rows = !Array.isArray(references) ? [references] : references
 
-    return Promise.all(rows.map((row) => {
-      const pivotInstance = this._getPivotInstance(row)
-      return pivotInstance ? Promise.resolve(pivotInstance) : this._attachSingle(row, pivotCallback, trx)
-    }))
+    let attachedRows = []
+
+    for (let row of rows) {
+      let pivotInstance = this._getPivotInstance(row)
+      if (!pivotInstance) {
+        pivotInstance = await this._attachSingle(row, pivotCallback, trx)
+      }
+      attachedRows.push(pivotInstance)
+    }
+
+    return attachedRows
   }
 
   /**
@@ -922,7 +929,14 @@ class BelongsToMany extends BaseRelation {
     }
 
     await this._persistParentIfRequired()
-    return Promise.all(arrayOfRelatedInstances.map((relatedInstance) => this.save(relatedInstance, pivotCallback)))
+
+    const rows = []
+    for (let relatedInstance of arrayOfRelatedInstances) {
+      const row = await this.save(relatedInstance, pivotCallback)
+      rows.push(row)
+    }
+
+    return rows
   }
 
   /**
@@ -967,7 +981,14 @@ class BelongsToMany extends BaseRelation {
     }
 
     await this._persistParentIfRequired()
-    return Promise.all(rows.map((relatedInstance) => this.create(relatedInstance, pivotCallback)))
+
+    const savedRows = []
+    for (let relatedInstance of rows) {
+      const row = await this.create(relatedInstance, pivotCallback)
+      savedRows.push(row)
+    }
+
+    return savedRows
   }
 }
 

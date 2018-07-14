@@ -1119,7 +1119,7 @@ test.group('Relations | Belongs To Many', (group) => {
     await user.save()
 
     await user.posts().attach([1, 2, 3], (pivotModel) => (pivotModel.is_published = true))
-    const pivotValues = await ioc.use('Database').table('post_user')
+    const pivotValues = await ioc.use('Database').table('post_user').orderBy('id', 'asc')
     assert.lengthOf(pivotValues, 3)
     assert.equal(pivotValues[0].user_id, 1)
     assert.equal(pivotValues[0].post_id, 1)
@@ -1156,7 +1156,8 @@ test.group('Relations | Belongs To Many', (group) => {
         pivotModel.is_published = false
       }
     })
-    const pivotValues = await ioc.use('Database').table('post_user')
+    const pivotValues = await ioc.use('Database').table('post_user').orderBy('id', 'asc')
+
     assert.lengthOf(pivotValues, 3)
     assert.equal(pivotValues[0].user_id, 1)
     assert.equal(pivotValues[0].post_id, 1)

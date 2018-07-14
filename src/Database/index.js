@@ -223,8 +223,8 @@ class Database {
    *
    * @return {void}
    */
-  rollbackGlobalTransaction () {
-    this._globalTrx.rollback()
+  async rollbackGlobalTransaction () {
+    await this._globalTrx.rollback()
     this._globalTrx = null
   }
 
@@ -235,8 +235,8 @@ class Database {
    *
    * @return {void}
    */
-  commitGlobalTransaction () {
-    this._globalTrx.commit()
+  async commitGlobalTransaction () {
+    await this._globalTrx.commit()
     this._globalTrx = null
   }
 

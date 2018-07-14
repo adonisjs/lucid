@@ -392,7 +392,14 @@ class Model extends BaseModel {
         .InvalidArgumentException
         .invalidParameter(`${this.name}.createMany expects an array of values`, payloadArray)
     }
-    return Promise.all(payloadArray.map((payload) => this.create(payload, trx)))
+
+    const rows = []
+    for (let payload of payloadArray) {
+      const row = await this.create(payload, trx)
+      rows.push(row)
+    }
+
+    return rows
   }
 
   /**

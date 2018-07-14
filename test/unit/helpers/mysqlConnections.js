@@ -9,27 +9,30 @@
 module.exports = {
   default: {
     client: 'mysql',
+    version: '5.5',
     connection: {
-      user: 'root',
-      password: '',
+      user: 'virk',
+      password: 'virk',
       database: 'default'
     }
   },
 
   alternateConnection: {
     client: 'mysql',
+    version: '5.5',
     connection: {
-      user: 'root',
-      password: '',
+      user: 'virk',
+      password: 'virk',
       database: 'alternate'
     }
   },
 
   defaultPrefix: {
     client: 'mysql',
+    version: '5.5',
     connection: {
-      user: 'root',
-      password: '',
+      user: 'virk',
+      password: 'virk',
       database: 'default'
     },
     prefix: 'ad_'

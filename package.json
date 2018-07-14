@@ -27,27 +27,27 @@
     "@adonisjs/generic-exceptions": "^2.0.1",
     "chance": "^1.0.16",
     "debug": "^3.1.0",
-    "knex": "^0.14.6",
+    "knex": "^0.15.1",
     "lodash": "^4.17.10",
     "moment": "^2.22.2",
     "pluralize": "^7.0.0",
     "pretty-hrtime": "^1.0.3",
-    "require-all": "^2.2.0"
+    "require-all": "^3.0.0"
   },
   "devDependencies": {
     "@adonisjs/ace": "git+https://github.com/adonisjs/ace.git#dawn",
     "@adonisjs/fold": "^4.0.8",
     "@adonisjs/sink": "^1.0.16",
-    "coveralls": "^3.0.1",
+    "coveralls": "^3.0.2",
     "cz-conventional-changelog": "^2.1.0",
     "fs-extra": "^6.0.1",
     "japa": "^1.0.6",
     "japa-cli": "^1.0.1",
     "mysql": "^2.15.0",
-    "nyc": "^12.0.1",
+    "nyc": "^12.0.2",
     "pg": "^7.4.3",
     "semver": "^5.5.0",
-    "sqlite3": "^4.0.0",
+    "sqlite3": "^4.0.1",
     "standard": "^11.0.1"
   },
   "config": {

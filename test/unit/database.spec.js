@@ -78,7 +78,7 @@ test.group('Database | QueryBuilder', (group) => {
   test('commit transactions', async (assert) => {
     const trx = await this.database.beginTransaction()
     await trx.table('users').insert({ username: 'virk' })
-    trx.commit()
+    await trx.commit()
     const firstUser = await this.database.table('users').first()
     assert.equal(firstUser.username, 'virk')
     await this.database.truncate('users')
@@ -108,7 +108,7 @@ test.group('Database | QueryBuilder', (group) => {
     await this.database.table('users').insert({ username: 'virk' })
     const users = await this.database.table('users')
     assert.lengthOf(users, 1)
-    this.database.rollbackGlobalTransaction()
+    await this.database.rollbackGlobalTransaction()
     const usersAfterRollback = await this.database.table('users')
     assert.lengthOf(usersAfterRollback, 0)
   })
@@ -116,7 +116,7 @@ test.group('Database | QueryBuilder', (group) => {
   test('commit global transactions', async (assert) => {
     await this.database.beginGlobalTransaction()
     await this.database.table('users').insert({ username: 'virk' })
-    this.database.commitGlobalTransaction()
+    await this.database.commitGlobalTransaction()
     const users = await this.database.table('users')
     assert.lengthOf(users, 1)
     await this.database.truncate('users')
