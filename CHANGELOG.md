@@ -1,3 +1,39 @@
+<a name="6.0.0"></a>
+# [6.0.0](https://github.com/adonisjs/adonis-lucid/compare/v5.0.4...v6.0.0) (2018-07-18)
+
+
+### Bug Fixes
+
+* **database:** apply precision only when mysql ([c0b0aa0](https://github.com/adonisjs/adonis-lucid/commit/c0b0aa0))
+* **database:** fix fn.now to accept precision ([cae6df7](https://github.com/adonisjs/adonis-lucid/commit/cae6df7))
+* **lucid:** make bulk operations reliable by executing in sequence ([acb6ce7](https://github.com/adonisjs/adonis-lucid/commit/acb6ce7))
+* **paginate:** Database paginate cast page, perPage to numbers ([7eb7201](https://github.com/adonisjs/adonis-lucid/commit/7eb7201))
+
+
+### Features
+
+* **belongsToMany:** add option to disable pivotPrimaryKey ([0cb13bf](https://github.com/adonisjs/adonis-lucid/commit/0cb13bf)), closes [#287](https://github.com/adonisjs/adonis-lucid/issues/287)
+
+
+
+<a name="6.0.0"></a>
+# [6.0.0](https://github.com/adonisjs/adonis-lucid/compare/v5.0.4...v6.0.0) (2018-07-18)
+
+
+### Bug Fixes
+
+* **database:** apply precision only when mysql ([c0b0aa0](https://github.com/adonisjs/adonis-lucid/commit/c0b0aa0))
+* **database:** fix fn.now to accept precision ([cae6df7](https://github.com/adonisjs/adonis-lucid/commit/cae6df7))
+* **lucid:** make bulk operations reliable by executing in sequence ([acb6ce7](https://github.com/adonisjs/adonis-lucid/commit/acb6ce7))
+* **paginate:** Database paginate cast page, perPage to numbers ([7eb7201](https://github.com/adonisjs/adonis-lucid/commit/7eb7201))
+
+
+### Features
+
+* **belongsToMany:** add option to disable pivotPrimaryKey ([0cb13bf](https://github.com/adonisjs/adonis-lucid/commit/0cb13bf)), closes [#287](https://github.com/adonisjs/adonis-lucid/issues/287)
+
+
+
 <a name="5.0.4"></a>
 ## [5.0.4](https://github.com/adonisjs/adonis-lucid/compare/v5.0.3...v5.0.4) (2018-06-02)
 

@@ -1,8 +1,18 @@
 {
   "name": "@adonisjs/lucid",
-  "version": "5.0.4",
+  "version": "6.0.0",
   "description": "SQL ORM built on top of Active Record pattern",
   "main": "index.js",
+  "files": [
+    "commands",
+    "config",
+    "lib",
+    "providers",
+    "src",
+    "templates",
+    "instructions.js",
+    "instructions.md"
+  ],
   "scripts": {
     "mrm": "mrm --preset=@adonisjs/mrm-preset",
     "pretest": "npm run lint",
