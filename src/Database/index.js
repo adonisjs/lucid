@@ -146,7 +146,8 @@ class Database {
        * timestamps in MYSQL, the `fn.now()` breaks in knex.
        */
       now (precision = 4) {
-        return this.client.raw(`CURRENT_TIMESTAMP(${precision})`)
+        const isMySQL = this.client.config.client === 'mysql'
+        return this.client.raw(isMySQL ? `CURRENT_TIMESTAMP(${precision})` : 'CURRENT_TIMESTAMP')
       }
     }
   }
