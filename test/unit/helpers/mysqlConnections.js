@@ -9,7 +9,7 @@
 module.exports = {
   default: {
     client: 'mysql',
-    version: '5.5',
+    version: '5.7',
     connection: {
       user: 'virk',
       password: 'virk',
@@ -19,7 +19,7 @@ module.exports = {
 
   alternateConnection: {
     client: 'mysql',
-    version: '5.5',
+    version: '5.7',
     connection: {
       user: 'virk',
       password: 'virk',
@@ -29,7 +29,7 @@ module.exports = {
 
   defaultPrefix: {
     client: 'mysql',
-    version: '5.5',
+    version: '5.7',
     connection: {
       user: 'virk',
       password: 'virk',

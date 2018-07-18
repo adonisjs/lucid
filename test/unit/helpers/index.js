@@ -40,7 +40,7 @@ module.exports = {
     if (process.env.DB === 'mysql') {
       return _.cloneDeep({
         client: 'mysql',
-        version: '5.5',
+        version: '5.7',
         connection: {
           host: '127.0.0.1',
           user: 'virk',

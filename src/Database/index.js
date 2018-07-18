@@ -138,7 +138,17 @@ class Database {
    * @return {Object}
    */
   get fn () {
-    return this.knex.fn
+    return {
+      client: this.knex.client,
+      /**
+       * Knex should be fixing this method to allow `precision` to be
+       * passed when using fn.now(). With the seconds precision
+       * timestamps in MYSQL, the `fn.now()` breaks in knex.
+       */
+      now (precision = 4) {
+        return this.client.raw(`CURRENT_TIMESTAMP(${precision})`)
+      }
+    }
   }
 
   /**
