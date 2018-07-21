@@ -57,7 +57,7 @@ class Migration {
         table.increments()
         table.string('name')
         table.integer('batch')
-        table.timestamp('migration_time').defaultsTo(this.db.fn.now(6))
+        table.timestamp('migration_time').defaultsTo(this.db.fn.now())
       })
     }
   }
