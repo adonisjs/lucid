@@ -1,3 +1,14 @@
+<a name="6.0.1"></a>
+## [6.0.1](https://github.com/adonisjs/adonis-lucid/compare/v6.0.0...v6.0.1) (2018-07-21)
+
+
+### Bug Fixes
+
+* **belongsToMany:** make sure to scope query when fetching ids ([faf89c4](https://github.com/adonisjs/adonis-lucid/commit/faf89c4))
+* **migration:** remove fallback added for precision timestamp ([f5a6b33](https://github.com/adonisjs/adonis-lucid/commit/f5a6b33)), closes [#916](https://github.com/adonisjs/adonis-lucid/issues/916)
+
+
+
 <a name="6.0.0"></a>
 # [6.0.0](https://github.com/adonisjs/adonis-lucid/compare/v5.0.4...v6.0.0) (2018-07-18)
 
