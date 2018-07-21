@@ -2641,7 +2641,7 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(postsQuery.sql, helpers.formatQuery('insert into "post_user" ("post_id", "user_id") values (?, ?)'))
   })
 
-  test.failing('get an array of ids for the related model', async (assert) => {
+  test('get an array of ids for the related model', async (assert) => {
     class Post extends Model {
       users () {
         return this.belongsToMany(User)
@@ -2664,6 +2664,9 @@ test.group('Relations | Belongs To Many', (group) => {
     Post._bootIfNotBooted()
     PostUser._bootIfNotBooted()
 
+    let postsQuery = null
+    Post.onQuery((query) => postsQuery = query)
+
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await ioc.use('Database').table('posts').insert([
       { id: 1, title: 'Adonis 101' },
@@ -2677,6 +2680,9 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const user = await User.find(1)
     const postIds = await user.posts().ids()
+
+    assert.equal(postsQuery.sql, helpers.formatQuery('select "posts"."id" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" = ?'))
+
     assert.deepEqual(postIds, [1, 2])
   })
 })
