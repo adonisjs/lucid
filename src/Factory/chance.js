@@ -9,26 +9,31 @@
  * file that was distributed with this source code.
 */
 
-const chance = require('chance').Chance()
+const Chance = require('chance')
 const _ = require('lodash')
 
-/**
- * Adding custom mixins
- */
-chance.mixin({
-  username: function (length) {
-    length = length || 5
-    return chance.word({length})
-  },
+class Chancejs extends Chance {
+  constructor (seed = null) {
+    seed ? super(seed) : super()
 
-  password: function (length) {
-    length = length || 20
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    return _.map(_.range(length), () => {
-      return charset.charAt(Math.floor(Math.random() * charset.length))
-    }).join('')
+    /**
+     * Adding custom mixins
+     */
+    this.mixin({
+      username: function (length) {
+        length = length || 5
+        return this.word({length})
+      },
+
+      password: function (length) {
+        length = length || 20
+        const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        return _.map(_.range(length), () => {
+          return charset.charAt(Math.floor(Math.random() * charset.length))
+        }).join('')
+      }
+    })
   }
+}
 
-})
-
-module.exports = chance
+module.exports = Chancejs

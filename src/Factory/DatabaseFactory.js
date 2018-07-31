@@ -10,7 +10,7 @@
 */
 
 const _ = require('lodash')
-const chancejs = require('./chance')
+const Chance = require('./chance')
 const { ioc } = require('../../lib/iocResolver')
 
 /**
@@ -61,7 +61,7 @@ class DatabaseFactory {
    * @private
    */
   async _makeOne (index, data, seed) {
-    if (seed) chancejs.mt.init_genrand(seed + index)
+    const chancejs = seed ? new Chance(seed + index) : new Chance();
     const hash = await this.dataCallback(chancejs, index, data)
     const keys = _.keys(hash)
 
