@@ -43,6 +43,7 @@ const methodsList = [
   'delete',
   'update',
   'first',
+  'firstOrFail',
   'fetch',
   'toSQL',
   'toString'

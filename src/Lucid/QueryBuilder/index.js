@@ -23,6 +23,10 @@ const proxyHandler = {
   get: proxyGet('query', false, function (target, name) {
     const queryScope = util.makeScopeName(name)
 
+    if (name === 'then') {
+      throw new Error(`Make sure to call fetch to execute the query`)
+    }
+
     /**
      * if value is a local query scope and a function, please
      * execute it
@@ -66,6 +70,8 @@ const aggregates = [
 const queryMethods = [
   'pluck',
   'toSQL',
+  'increment',
+  'decrement',
   'toString'
 ]
 
@@ -475,6 +481,19 @@ class QueryBuilder {
   }
 
   /**
+   * Execute insert query
+   *
+   * @method insert
+   *
+   * @param  {Object} attributes
+   *
+   * @return {Array}
+   */
+  async insert (attributes) {
+    return this.query.insert(attributes)
+  }
+
+  /**
    * Bulk update data from query builder. This method will also
    * format all dates and set `updated_at` column
    *
@@ -518,6 +537,17 @@ class QueryBuilder {
   delete () {
     this._applyScopes()
     return this.query.delete()
+  }
+
+  /**
+   * Remove everything from table
+   *
+   * @method truncate
+   *
+   * @return {Number}
+   */
+  truncate () {
+    return this.query.truncate()
   }
 
   /**
