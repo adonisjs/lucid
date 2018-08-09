@@ -648,7 +648,7 @@ class BelongsToMany extends BaseRelation {
   ids () {
     this._validateRead()
     this._prepareAggregate()
-    return this.pluck(`${this.$foreignTable}.${this.RelatedModel.primaryKey}`)
+    return this.relatedQuery.pluck(`${this.$foreignTable}.${this.RelatedModel.primaryKey}`)
   }
 
   /**
