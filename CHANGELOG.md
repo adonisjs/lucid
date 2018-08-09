@@ -1,3 +1,20 @@
+<a name="6.1.0"></a>
+# [6.1.0](https://github.com/adonisjs/adonis-lucid/compare/v6.0.1...v6.1.0) (2018-08-09)
+
+
+### Bug Fixes
+
+* **querybuilder:** capture firstOrFail inside relationships ([6a5e0e7](https://github.com/adonisjs/adonis-lucid/commit/6a5e0e7))
+
+
+### BREAKING CHANGES
+
+* **querybuilder:** To avoid false negatives inside queries, Querybuilder forces to resolve the query
+using one of it's inbuilt methods. If `then` is triggered inside the prox, an exception will be
+raised
+
+
+
 <a name="6.0.1"></a>
 ## [6.0.1](https://github.com/adonisjs/adonis-lucid/compare/v6.0.0...v6.0.1) (2018-07-21)
 
