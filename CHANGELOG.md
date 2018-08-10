@@ -1,3 +1,13 @@
+<a name="6.1.1"></a>
+## [6.1.1](https://github.com/adonisjs/adonis-lucid/compare/v6.1.0...v6.1.1) (2018-08-10)
+
+
+### Bug Fixes
+
+* **dbtrait:** ensure await when rolling back transactions ([8813187](https://github.com/adonisjs/adonis-lucid/commit/8813187))
+
+
+
 <a name="6.1.0"></a>
 # [6.1.0](https://github.com/adonisjs/adonis-lucid/compare/v6.0.1...v6.1.0) (2018-08-09)
 
