@@ -24,7 +24,7 @@ module.exports = function (suite) {
     await use('Database').beginGlobalTransaction()
   })
 
-  suite.afterEach(() => {
-    use('Database').rollbackGlobalTransaction()
+  suite.afterEach(async () => {
+    await use('Database').rollbackGlobalTransaction()
   })
 }

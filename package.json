@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/lucid",
-  "version": "6.1.0",
+  "version": "6.1.1",
   "description": "SQL ORM built on top of Active Record pattern",
   "main": "index.js",
   "files": [
@@ -46,9 +46,9 @@
     "require-all": "^3.0.0"
   },
   "devDependencies": {
-    "@adonisjs/ace": "^5.0.3",
+    "@adonisjs/ace": "^5.0.4",
     "@adonisjs/fold": "^4.0.9",
-    "@adonisjs/mrm-preset": "^1.0.9",
+    "@adonisjs/mrm-preset": "^1.0.10",
     "@adonisjs/sink": "^1.0.16",
     "commitizen": "^2.10.1",
     "coveralls": "^3.0.2",
