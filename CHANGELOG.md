@@ -1,3 +1,13 @@
+<a name="6.1.2"></a>
+## [6.1.2](https://github.com/adonisjs/adonis-lucid/compare/v6.1.1...v6.1.2) (2018-08-24)
+
+
+### Bug Fixes
+
+* **relationship:** add last method ([24df5eb](https://github.com/adonisjs/adonis-lucid/commit/24df5eb))
+
+
+
 <a name="6.1.1"></a>
 ## [6.1.1](https://github.com/adonisjs/adonis-lucid/compare/v6.1.0...v6.1.1) (2018-08-10)
 
