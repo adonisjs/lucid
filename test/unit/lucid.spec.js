@@ -1600,6 +1600,54 @@ test.group('Model', (group) => {
     assert.deepEqual(count, [{ 'total': helpers.formatNumber(0) }])
   })
 
+  test('delete inside a commit transaction', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    const user = await User.create({ username: 'virk' })
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.isNew)
+
+    const trx = await ioc.use('Database').beginTransaction()
+
+    try {
+      await user.delete(trx)
+      trx.commit()
+    } catch (error) {
+      trx.commit()
+      throw error
+    }
+
+    const count = await ioc.use('Database').table('users').count('* as total')
+    assert.deepEqual(count, [{ 'total': helpers.formatNumber(0) }])
+  })
+
+  test('delete inside a rollback transaction', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    const user = await User.create({ username: 'virk' })
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.isNew)
+
+    const trx = await ioc.use('Database').beginTransaction()
+
+    try {
+      await user.delete(trx)
+      trx.rollback()
+    } catch (error) {
+      trx.rollback()
+      throw error
+    }
+
+    const count = await ioc.use('Database').table('users').count('* as total')
+    assert.deepEqual(count, [{ 'total': helpers.formatNumber(1) }])
+  })
+
   test('define runtime visible fields', async (assert) => {
     class User extends Model {
       static get visible () {

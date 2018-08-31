@@ -799,16 +799,27 @@ class Model extends BaseModel {
    * @method delete
    * @async
    *
+   * @param {Object} trx
+   *
    * @return {Boolean}
    */
-  async delete () {
+  async delete (trx) {
     /**
      * Executing before hooks
      */
     await this.constructor.$hooks.before.exec('delete', this)
 
-    const affected = await this.constructor
-      .query()
+    const query = this.constructor.query()
+
+    /**
+     * If trx is defined then use it for the delete
+     * operation.
+     */
+    if (trx) {
+      query.transacting(trx)
+    }
+
+    const affected = await query
       .where(this.constructor.primaryKey, this.primaryKeyValue)
       .ignoreScopes()
       .delete()
