@@ -173,10 +173,46 @@ test.group('Relations | Has Many', (group) => {
       builder.where('model', '>', '2000')
     }).fetch()
     const user = users.first()
+
     assert.equal(user.getRelated('cars').size(), 1)
     assert.equal(user.getRelated('cars').rows[0].name, 'audi')
     assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "model" > ? and "user_id" in (?)'))
     assert.deepEqual(carQuery.bindings, helpers.formatBindings(['2000', 1]))
+  })
+
+  test('add same table aggregation in constraints', async (assert) => {
+    class Car extends Model {
+    }
+
+    class User extends Model {
+      cars () {
+        return this.hasMany(Car)
+      }
+    }
+
+    Car._bootIfNotBooted()
+    User._bootIfNotBooted()
+
+    let carQuery = null
+    Car.onQuery((query) => (carQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('cars').insert([
+      { user_id: 1, name: 'merc', model: '1990' },
+      { user_id: 1, name: 'audi', model: '2001' }
+    ])
+
+    const users = await User.query().with('cars', (builder) => {
+      builder
+        .select('cars.*', ioc.use('Database').raw('count(`older_cars`.`id`) as older_cars_count'))
+        .joinRaw('left join cars older_cars on older_cars.model < cars.model')
+        .groupBy('cars.id')
+    }).fetch()
+    const user = users.first()
+    assert.equal(user.getRelated('cars').size(), 2)
+    assert.equal(user.getRelated('cars').rows[0].older_cars_count, '0')
+    assert.equal(user.getRelated('cars').rows[1].older_cars_count, '1')
+    assert.equal(carQuery.sql, helpers.formatQuery('select `cars`.*, count(`older_cars`.`id`) as older_cars_count from "cars" left join cars older_cars on older_cars.model < cars.model where `cars`.`user_id` in (?) group by `cars`.`id`'))
   })
 
   test('return serailizer instance when nothing exists', async (assert) => {
