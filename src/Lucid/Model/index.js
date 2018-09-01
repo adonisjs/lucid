@@ -954,9 +954,9 @@ class Model extends BaseModel {
       payload = whereClause
     }
 
-    const query = this.query();
+    const query = this.query()
 
-     /**
+    /**
      * If trx is defined then use it for operation
      */
     if (trx) {
