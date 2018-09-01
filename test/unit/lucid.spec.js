@@ -1693,6 +1693,29 @@ test.group('Model', (group) => {
     assert.equal(helpers.formatQuery(usersQuery.sql), helpers.formatQuery('select * from "users" where "username" = ? limit ?'))
   })
 
+  test('return existing row when found one using trx', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    let usersQuery = null
+    User.onQuery((query) => (usersQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'foo' })
+
+    const trx = await ioc.use('Database').beginTransaction()
+    const user = await User.findOrCreate({ username: 'foo' }, { username: 'virk' }, trx)
+    await trx.commit()
+
+    assert.isTrue(user.$persisted)
+    assert.equal(user.username, 'foo')
+    assert.equal(helpers.formatQuery(usersQuery.sql), helpers.formatQuery('select * from "users" where "username" = ? limit ?'))
+  })
+
   test('pass different payload for create', async (assert) => {
     class User extends Model {
     }
