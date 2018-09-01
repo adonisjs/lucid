@@ -1657,6 +1657,26 @@ test.group('Model', (group) => {
     assert.equal(user.username, 'foo')
   })
 
+  test('create a new row when unable to find one using trx', async (assert) => {
+    class User extends Model {
+      static boot () {
+        super.boot()
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    const count = await ioc.use('Database').table('users').count('* as total')
+    assert.equal(count[0].total, 0)
+
+    const trx = await ioc.use('Database').beginTransaction()
+    const user = await User.findOrCreate({ username: 'foo' }, { username: 'virk' }, trx)
+    await trx.commit()
+
+    assert.isTrue(user.$persisted)
+    assert.equal(user.username, 'virk')
+  })
+
   test('return existing row when found one', async (assert) => {
     class User extends Model {
     }
