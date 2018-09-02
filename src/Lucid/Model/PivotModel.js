@@ -13,7 +13,7 @@ const moment = require('moment')
 const _ = require('lodash')
 const BaseModel = require('./Base')
 const QueryBuilder = require('../QueryBuilder')
-const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss'
+const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ssZZ'
 
 /**
  * Pivot model is used when a pivot relationship
