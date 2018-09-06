@@ -67,7 +67,7 @@ class MigrationRefresh extends BaseMigration {
     }
 
     await ace.call('migration:reset', {}, { log, force, silent })
-    await ace.call('migration:run', {}, { log, force, silent, seed })
+    await ace.call('migration:run', {}, { log, force, silent, seed, keepAlive })
   }
 }
 
