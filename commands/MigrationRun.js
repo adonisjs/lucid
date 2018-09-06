@@ -12,6 +12,7 @@
 const BaseMigration = require('./BaseMigration')
 const _ = require('lodash')
 const prettyHrTime = require('pretty-hrtime')
+const ace = require('@adonisjs/ace')
 
 class MigrationRun extends BaseMigration {
   /**
@@ -26,6 +27,7 @@ class MigrationRun extends BaseMigration {
     migration:run
     { -f, --force: Forcefully run migrations in production }
     { -s, --silent: Silent the migrations output }
+    { --seed: Seed the database after migration finished }
     { --log: Log SQL queries instead of executing them }
     { -a, --keep-alive: Do not close the database connection }
     `
@@ -53,11 +55,12 @@ class MigrationRun extends BaseMigration {
    * @param  {Boolean} options.log
    * @param  {Boolean} options.force
    * @param  {Boolean} options.silent
+   * @param  {Boolean} options.seed
    * @param  {Boolean} options.keepAlive
    *
    * @return {void|Array}
    */
-  async handle (args, { log, force, silent, keepAlive }) {
+  async handle (args, { log, force, silent, seed, keepAlive }) {
     try {
       this._validateState(force)
 
@@ -93,6 +96,13 @@ class MigrationRun extends BaseMigration {
           _.each(queries, (query) => this.execIfNot(silent, () => console.log(`  ${query}`)))
           console.log('\n')
         })
+      }
+
+      /**
+       * If seed is passed, seed the DB after migration
+       */
+      if (seed) {
+        await ace.call('seed', {}, { keepAlive, force })
       }
 
       if (!this.viaAce) {
