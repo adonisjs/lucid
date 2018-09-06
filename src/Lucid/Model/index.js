@@ -817,6 +817,12 @@ class Model extends BaseModel {
      */
     if (trx) {
       query.transacting(trx)
+
+      // Override `rollback` method
+      // in order to `unfreeze` the model after the transaction
+      const rollback = trx.rollback
+      trx.rollback = () =>
+        rollback().then(() => this.unfreeze())
     }
 
     const affected = await query

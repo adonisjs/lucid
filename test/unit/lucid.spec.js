@@ -1622,6 +1622,10 @@ test.group('Model', (group) => {
 
     const count = await ioc.use('Database').table('users').count('* as total')
     assert.deepEqual(count, [{ 'total': helpers.formatNumber(0) }])
+
+    // ensure model is still frozen after transaction commit
+    assert.equal(user.$frozen, true)
+    assert.equal(user.isDeleted, true)
   })
 
   test('delete inside a rollback transaction', async (assert) => {
@@ -1646,6 +1650,10 @@ test.group('Model', (group) => {
 
     const count = await ioc.use('Database').table('users').count('* as total')
     assert.deepEqual(count, [{ 'total': helpers.formatNumber(1) }])
+
+    // ensure model is not frozen anymore as well
+    assert.equal(user.$frozen, false)
+    assert.equal(user.isDeleted, false)
   })
 
   test('define runtime visible fields', async (assert) => {
