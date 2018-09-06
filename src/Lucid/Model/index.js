@@ -954,10 +954,19 @@ class Model extends BaseModel {
       payload = whereClause
     }
 
+    const query = this.query()
+
+    /**
+     * If trx is defined then use it for operation
+     */
+    if (trx) {
+      query.transacting(trx)
+    }
+
     /**
      * Find a row using where clause
      */
-    const row = await this.query().where(whereClause).first()
+    const row = await query.where(whereClause).first()
     if (row) {
       return row
     }
