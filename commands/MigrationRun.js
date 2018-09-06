@@ -102,7 +102,7 @@ class MigrationRun extends BaseMigration {
        * If seed is passed, seed the DB after migration
        */
       if (seed) {
-        await ace.call('seed')
+        await ace.call('seed', {}, { keepAlive, force })
       }
 
       if (!this.viaAce) {
