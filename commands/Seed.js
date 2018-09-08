@@ -130,6 +130,7 @@ class SeedDatabase extends Command {
       }
 
       for (const file of _.keys(allFiles)) {
+        this.completed('seeding', file)
         const seedInstance = ioc.make(allFiles[file])
         if (typeof (seedInstance.run) === 'function') {
           await seedInstance.run()
