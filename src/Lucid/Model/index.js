@@ -651,9 +651,9 @@ class Model extends BaseModel {
      * Executing before hooks
      */
     await this.constructor.$hooks.before.exec('update', this)
-    let affected = 0
 
-    const query = this.constructor.query()
+    let affected = 0
+    let query = this.constructor.query()
 
     /**
      * If trx is defined then use it for the update
@@ -670,10 +670,22 @@ class Model extends BaseModel {
       this._setUpdatedAt(this.$attributes)
       this._formatDateFields(this.$attributes)
 
+      /**
+       * Build query using updatePrimaryKey if exists to
+       * handle composite primary keys
+       */
+      if (this.constructor.updatePrimaryKey && Array.isArray(this.constructor.updatePrimaryKey)) {
+        for (const key of this.constructor.updatePrimaryKey) {
+          query = query.where(key, this[key])
+        }
+      } else {
+        query = query.where(this.constructor.primaryKey, this.primaryKeyValue)
+      }
+
       affected = await query
-        .where(this.constructor.primaryKey, this.primaryKeyValue)
         .ignoreScopes()
         .update(this)
+
       /**
        * Sync originals to find a diff when updating for next time
        */
@@ -807,9 +819,21 @@ class Model extends BaseModel {
      */
     await this.constructor.$hooks.before.exec('delete', this)
 
-    const affected = await this.constructor
-      .query()
-      .where(this.constructor.primaryKey, this.primaryKeyValue)
+    let query = this.constructor.query()
+
+    /**
+     * Build query using deletePrimaryKey if exists to
+     * handle composite primary keys
+     */
+    if (this.constructor.deletePrimaryKey && Array.isArray(this.constructor.deletePrimaryKey)) {
+      for (const key of this.constructor.deletePrimaryKey) {
+        query = query.where(key, this[key])
+      }
+    } else {
+      query = query.where(this.constructor.primaryKey, this.primaryKeyValue)
+    }
+
+    const affected = await query
       .ignoreScopes()
       .delete()
 
