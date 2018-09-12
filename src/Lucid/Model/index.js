@@ -663,7 +663,9 @@ class Model extends BaseModel {
       query.transacting(trx)
     }
 
-    if (this.isDirty) {
+    const isDirty = this.isDirty
+
+    if (isDirty) {
       /**
        * Set proper timestamps
       */
@@ -674,16 +676,20 @@ class Model extends BaseModel {
         .where(this.constructor.primaryKey, this.primaryKeyValue)
         .ignoreScopes()
         .update(this)
-      /**
-       * Sync originals to find a diff when updating for next time
-       */
-      this._syncOriginals()
     }
 
     /**
      * Executing after hooks
      */
     await this.constructor.$hooks.after.exec('update', this)
+
+    if (isDirty) {
+      /**
+       * Sync originals to find a diff when updating for next time
+       */
+      this._syncOriginals()
+    }
+
     return !!affected
   }
 
