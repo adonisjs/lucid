@@ -424,7 +424,7 @@ class Model extends BaseModel {
    */
   get dirty () {
     return _.pickBy(this.$attributes, (value, key) => {
-      return _.isUndefined(this.$originalAttributes[key]) || this.$originalAttributes[key] !== value
+      return _.isUndefined(this.$originalAttributes[key]) || !_.isEqual(this.$originalAttributes[key], value)
     })
   }
 
