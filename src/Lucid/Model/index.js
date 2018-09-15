@@ -191,7 +191,7 @@ class Model extends BaseModel {
    *
    * @method query
    *
-   * @return {LucidQueryBuilder}
+   * @return {QueryBuilder}
    *
    * @static
    */
