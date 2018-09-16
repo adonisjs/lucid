@@ -663,9 +663,7 @@ class Model extends BaseModel {
       query.transacting(trx)
     }
 
-    const isDirty = this.isDirty
-
-    if (isDirty) {
+    if (this.isDirty) {
       /**
        * Set proper timestamps
       */
@@ -683,7 +681,7 @@ class Model extends BaseModel {
      */
     await this.constructor.$hooks.after.exec('update', this)
 
-    if (isDirty) {
+    if (this.isDirty) {
       /**
        * Sync originals to find a diff when updating for next time
        */
