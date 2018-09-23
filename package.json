@@ -17,7 +17,6 @@
     "mrm": "mrm --preset=@adonisjs/mrm-preset",
     "pretest": "npm run lint",
     "test:cleanup": "rm -rf test/functional/database && rm -rf test/unit/tmp",
-    "posttest": "npm run coverage",
     "test": "DB=sqlite nyc japa",
     "test:win": "node ./node_modules/japa-cli/index.js",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
