@@ -674,16 +674,20 @@ class Model extends BaseModel {
         .where(this.constructor.primaryKey, this.primaryKeyValue)
         .ignoreScopes()
         .update(this)
-      /**
-       * Sync originals to find a diff when updating for next time
-       */
-      this._syncOriginals()
     }
 
     /**
      * Executing after hooks
      */
     await this.constructor.$hooks.after.exec('update', this)
+
+    if (this.isDirty) {
+      /**
+       * Sync originals to find a diff when updating for next time
+       */
+      this._syncOriginals()
+    }
+
     return !!affected
   }
 
