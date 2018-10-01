@@ -130,6 +130,13 @@ KnexQueryBuilder.prototype.paginate = async function (page = 1, perPage = 20) {
   const countByQuery = this.clone()
 
   /**
+   * Copy the subQuery fn to the clone query. This will make sure
+   * that build uses the extended query builder methods on the
+   * cloned query too
+   */
+  countByQuery.subQuery = this.subQuery
+
+  /**
    * Force cast page and perPage to numbers
    */
   page = Number(page)

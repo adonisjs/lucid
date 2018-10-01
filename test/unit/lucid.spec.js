@@ -20,6 +20,7 @@ const { Config, setupResolver } = require('@adonisjs/sink')
 
 const helpers = require('./helpers')
 const Model = require('../../src/Lucid/Model')
+const QueryBuilder = require('../../src/Lucid/QueryBuilder')
 const DatabaseManager = require('../../src/Database/Manager')
 const VanillaSerializer = require('../../src/Lucid/Serializers/Vanilla')
 
@@ -1957,5 +1958,74 @@ test.group('Model', (group) => {
 
     assert.equal(query.sql, helpers.formatQuery('select * from "users" where ("age" > ?)'))
     assert.deepEqual(query.bindings, helpers.formatBindings([18]))
+  })
+
+  test('clone query builder', async (assert) => {
+    class User extends Model {
+      static scopeAdult (builder) {
+        builder.where('age', '>', 18)
+      }
+    }
+
+    User._bootIfNotBooted()
+    assert.instanceOf(User.query().clone(), QueryBuilder)
+  })
+
+  test('clone query builder must have same constraints', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    const query = User.query().where('username', 'virk')
+    const query1 = query.clone()
+
+    assert.instanceOf(query1, QueryBuilder)
+    assert.equal(query1.toSQL().sql, helpers.formatQuery('select * from "users" where "username" = ?'))
+  })
+
+  test('run whereHas inside cloned query', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    const query = User.query().clone().where(function () {
+      this.whereHas('profile')
+    })
+
+    assert.equal(query.toSQL().sql, helpers.formatQuery('select * from "users" where (exists (select * from "profiles" where "users"."id" = "profiles"."user_id"))'))
+  })
+
+  test('run whereHas with paginate', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    const user = await User.create({ username: 'virk' })
+    await user.profile().create({ profile_name: 'virk' })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await User.query().where(function () {
+      this.whereHas('profile')
+    }).paginate()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (exists (select * from "profiles" where "users"."id" = "profiles"."user_id")) limit ?'))
   })
 })
