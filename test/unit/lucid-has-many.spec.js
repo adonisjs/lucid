@@ -143,7 +143,7 @@ test.group('Relations | Has Many', (group) => {
     assert.instanceOf(user.getRelated('cars'), VanillaSerializer)
     assert.equal(user.getRelated('cars').size(), 2)
     assert.deepEqual(user.getRelated('cars').rows.map((car) => car.$parent), ['User', 'User'])
-    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where `cars`.`user_id` in (?)'))
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "cars"."user_id" in (?)'))
     assert.deepEqual(carQuery.bindings, helpers.formatBindings([1]))
   })
 
@@ -176,7 +176,7 @@ test.group('Relations | Has Many', (group) => {
 
     assert.equal(user.getRelated('cars').size(), 1)
     assert.equal(user.getRelated('cars').rows[0].name, 'audi')
-    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "model" > ? and `cars`.`user_id` in (?)'))
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "model" > ? and "cars"."user_id" in (?)'))
     assert.deepEqual(carQuery.bindings, helpers.formatBindings(['2000', 1]))
   })
 
@@ -204,7 +204,7 @@ test.group('Relations | Has Many', (group) => {
 
     const users = await User.query().with('cars', (builder) => {
       builder
-        .select('cars.*', ioc.use('Database').raw('count(`older_cars`.`id`) as older_cars_count'))
+        .select('cars.*', ioc.use('Database').raw('count("older_cars"."id") as older_cars_count'))
         .joinRaw('left join cars older_cars on older_cars.model < cars.model')
         .groupBy('cars.id')
     }).fetch()
@@ -212,7 +212,7 @@ test.group('Relations | Has Many', (group) => {
     assert.equal(user.getRelated('cars').size(), 2)
     assert.equal(user.getRelated('cars').rows[0].older_cars_count, '0')
     assert.equal(user.getRelated('cars').rows[1].older_cars_count, '1')
-    assert.equal(carQuery.sql, helpers.formatQuery('select `cars`.*, count(`older_cars`.`id`) as older_cars_count from "cars" left join cars older_cars on older_cars.model < cars.model where `cars`.`user_id` in (?) group by `cars`.`id`'))
+    assert.equal(carQuery.sql, helpers.formatQuery('select "cars".*, count("older_cars"."id") as older_cars_count from "cars" left join cars older_cars on older_cars.model < cars.model where "cars"."user_id" in (?) group by "cars"."id"'))
   })
 
   test('return serailizer instance when nothing exists', async (assert) => {
@@ -235,7 +235,7 @@ test.group('Relations | Has Many', (group) => {
     const users = await User.query().with('cars').fetch()
     const user = users.first()
     assert.equal(user.getRelated('cars').size(), 0)
-    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where `cars`.`user_id` in (?)'))
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "cars"."user_id" in (?)'))
     assert.deepEqual(carQuery.bindings, helpers.formatBindings([1]))
   })
 
@@ -355,8 +355,8 @@ test.group('Relations | Has Many', (group) => {
     assert.equal(user.getRelated('cars').size(), 2)
     assert.equal(user.getRelated('cars').first().getRelated('parts').size(), 2)
     assert.equal(user.getRelated('cars').last().getRelated('parts').size(), 2)
-    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where `cars`.`user_id` in (?)'))
-    assert.equal(partQuery.sql, helpers.formatQuery('select * from "parts" where `parts`.`car_id` in (?, ?)'))
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "cars"."user_id" in (?)'))
+    assert.equal(partQuery.sql, helpers.formatQuery('select * from "parts" where "parts"."car_id" in (?, ?)'))
   })
 
   test('add query constraint to nested query', async (assert) => {
@@ -400,8 +400,8 @@ test.group('Relations | Has Many', (group) => {
     assert.equal(user.getRelated('cars').size(), 2)
     assert.equal(user.getRelated('cars').first().getRelated('parts').size(), 1)
     assert.equal(user.getRelated('cars').last().getRelated('parts').size(), 1)
-    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where `cars`.`user_id` in (?)'))
-    assert.equal(partQuery.sql, helpers.formatQuery('select * from "parts" where "part_name" = ? and `parts`.`car_id` in (?, ?)'))
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "cars"."user_id" in (?)'))
+    assert.equal(partQuery.sql, helpers.formatQuery('select * from "parts" where "part_name" = ? and "parts"."car_id" in (?, ?)'))
   })
 
   test('add query constraint to child and grand child query', async (assert) => {
@@ -447,8 +447,8 @@ test.group('Relations | Has Many', (group) => {
 
     assert.equal(user.getRelated('cars').size(), 1)
     assert.equal(user.getRelated('cars').first().getRelated('parts').size(), 1)
-    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "name" = ? and `cars`.`user_id` in (?)'))
-    assert.equal(partQuery.sql, helpers.formatQuery('select * from "parts" where "part_name" = ? and `parts`.`car_id` in (?)'))
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "name" = ? and "cars"."user_id" in (?)'))
+    assert.equal(partQuery.sql, helpers.formatQuery('select * from "parts" where "part_name" = ? and "parts"."car_id" in (?)'))
   })
 
   test('get relation count', async (assert) => {
@@ -1071,7 +1071,7 @@ test.group('Relations | Has Many', (group) => {
     await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await User.query().with('cars').fetch()
 
-    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where `cars`.`user_id` in (?, ?) and "deleted_at" is null'))
+    assert.equal(carQuery.sql, helpers.formatQuery('select * from "cars" where "cars"."user_id" in (?, ?) and "deleted_at" is null'))
   })
 
   test('apply global scope on related model when called withCount', async (assert) => {
