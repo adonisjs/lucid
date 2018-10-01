@@ -18,6 +18,7 @@
     "pretest": "npm run lint",
     "test:cleanup": "rm -rf test/functional/database && rm -rf test/unit/tmp",
     "test:sqlite": "DB=sqlite node japaFile.js",
+    "test:win": "node japaFile.js",
     "test:mysql": "DB=mysql node japaFile.js",
     "test": "nyc npm run test:sqlite && npm run test:mysql",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
