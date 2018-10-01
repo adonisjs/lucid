@@ -17,8 +17,7 @@
     "mrm": "mrm --preset=@adonisjs/mrm-preset",
     "pretest": "npm run lint",
     "test:cleanup": "rm -rf test/functional/database && rm -rf test/unit/tmp",
-    "test": "DB=sqlite nyc japa",
-    "test:win": "node ./node_modules/japa-cli/index.js",
+    "test": "DB=sqlite nyc node japaFile.js",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "commit": "git-cz",
     "lint": "standard"
@@ -36,33 +35,33 @@
   "dependencies": {
     "@adonisjs/generic-exceptions": "^2.0.1",
     "chance": "^1.0.16",
-    "debug": "^3.1.0",
+    "debug": "^4.0.1",
     "knex": "^0.15.2",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.11",
     "moment": "^2.22.2",
     "pluralize": "^7.0.0",
     "pretty-hrtime": "^1.0.3",
     "require-all": "^3.0.0"
   },
   "devDependencies": {
-    "@adonisjs/ace": "^5.0.4",
+    "@adonisjs/ace": "^5.0.7",
     "@adonisjs/fold": "^4.0.9",
-    "@adonisjs/mrm-preset": "^1.0.11",
-    "@adonisjs/sink": "^1.0.16",
+    "@adonisjs/mrm-preset": "^1.0.13",
+    "@adonisjs/sink": "^1.0.17",
     "commitizen": "^2.10.1",
     "coveralls": "^3.0.2",
     "cz-conventional-changelog": "^2.1.0",
     "fs-extra": "^7.0.0",
-    "japa": "^1.0.6",
+    "japa": "^2.0.3",
     "japa-cli": "^1.0.1",
     "mrm": "^1.2.1",
     "mysql": "^2.16.0",
-    "nyc": "^12.0.2",
+    "nyc": "^13.0.1",
     "pg": "^7.4.3",
     "pkg-ok": "^2.2.0",
     "semver": "^5.5.1",
     "sqlite3": "^4.0.2",
-    "standard": "^11.0.1"
+    "standard": "^12.0.1"
   },
   "config": {
     "commitizen": {
@@ -75,8 +74,7 @@
       "lib"
     ],
     "exclude": [
-      "test",
-      "japaFile.js"
+      "test"
     ]
   },
   "standard": {

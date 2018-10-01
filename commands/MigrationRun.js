@@ -91,7 +91,7 @@ class MigrationRun extends BaseMigration {
        * If there are queries in the result, just log them
        */
       if (queries) {
-        _.each(queries, ({queries, name}) => {
+        _.each(queries, ({ queries, name }) => {
           this.execIfNot(silent, () => console.log(this.chalk.magenta(`\n Queries for ${name}.js`)))
           _.each(queries, (query) => this.execIfNot(silent, () => console.log(`  ${query}`)))
           console.log('\n')

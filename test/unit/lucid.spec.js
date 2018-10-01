@@ -491,7 +491,7 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-    await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await User.query().where('username', 'virk').update({ login_at: new Date() })
     const users = await ioc.use('Database').table('users').orderBy('id', 'asc')
     assert.equal(moment(users[0].updated_at).format('YYYY-MM-DD'), moment().format('YYYY-MM-DD'))
@@ -509,7 +509,7 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-    await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
     assert.equal(users.first().toObject().full_name, 'Mr. virk')
   })
@@ -522,7 +522,7 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-    await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
     assert.deepEqual(Object.keys(users.first().toObject()), ['created_at'])
   })
@@ -535,7 +535,7 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-    await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').fetch()
     assert.deepEqual(Object.keys(users.first().toObject()), [
       'id',
@@ -1608,7 +1608,7 @@ test.group('Model', (group) => {
     }
 
     User._bootIfNotBooted()
-    await ioc.use('Database').table('users').insert([{username: 'virk'}, { username: 'nikk' }])
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     const users = await User.query().where('username', 'virk').setVisible(['created_at', 'id']).fetch()
     assert.deepEqual(Object.keys(users.first().toObject()), ['created_at', 'id'])
   })
