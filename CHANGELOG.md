@@ -1,3 +1,23 @@
+<a name="6.1.3"></a>
+## [6.1.3](https://github.com/adonisjs/adonis-lucid/compare/v6.1.2...v6.1.3) (2018-10-01)
+
+
+### Bug Fixes
+
+* **database:** pagination counts query must use the subQuery of extended query builder ([b613b64](https://github.com/adonisjs/adonis-lucid/commit/b613b64)), closes [#378](https://github.com/adonisjs/adonis-lucid/issues/378)
+* **database:** run database.raw on global transaction if exists ([a51ebe1](https://github.com/adonisjs/adonis-lucid/commit/a51ebe1)), closes [#374](https://github.com/adonisjs/adonis-lucid/issues/374)
+* **model:** merge dirty attributes after the hooks have been called ([6bff452](https://github.com/adonisjs/adonis-lucid/commit/6bff452))
+* **model:** use lodash isEqual to check if a model is dirty ([#384](https://github.com/adonisjs/adonis-lucid/issues/384)) ([88fe6ea](https://github.com/adonisjs/adonis-lucid/commit/88fe6ea))
+* **query:** prefix table name to avoid ambiguous columns ([55fffb9](https://github.com/adonisjs/adonis-lucid/commit/55fffb9))
+
+
+### Features
+
+* **commands:** allow seeding db from migration run and refresh ([23dc3eb](https://github.com/adonisjs/adonis-lucid/commit/23dc3eb))
+* **transaction:** add support for transactions in findOrCreate ([1e7b2a8](https://github.com/adonisjs/adonis-lucid/commit/1e7b2a8))
+
+
+
 <a name="6.1.2"></a>
 ## [6.1.2](https://github.com/adonisjs/adonis-lucid/compare/v6.1.1...v6.1.2) (2018-08-24)
 

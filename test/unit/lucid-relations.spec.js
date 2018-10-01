@@ -458,7 +458,7 @@ test.group('Relations | HasOne', (group) => {
     assert.instanceOf(result.rows[1].getRelated('profile'), Profile)
     assert.equal(result.rows[0].getRelated('profile').profile_name, 'virk')
     assert.equal(result.rows[1].getRelated('profile').profile_name, 'nikk')
-    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "user_id" in (?, ?)'))
+    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "profiles"."user_id" in (?, ?)'))
   })
 
   test('modify query builder when fetching relationships', async (assert) => {
@@ -490,7 +490,7 @@ test.group('Relations | HasOne', (group) => {
     assert.instanceOf(result.rows[0].getRelated('profile'), Profile)
     assert.isNull(result.rows[1].getRelated('profile'))
     assert.equal(result.rows[0].getRelated('profile').profile_name, 'virk')
-    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "likes" > ? and "user_id" in (?, ?)'))
+    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "likes" > ? and "profiles"."user_id" in (?, ?)'))
   })
 
   test('fetch nested relationships', async (assert) => {
@@ -524,8 +524,8 @@ test.group('Relations | HasOne', (group) => {
 
     const user = await User.query().with('profile.picture').fetch()
     assert.instanceOf(user.first().getRelated('profile').getRelated('picture'), Picture)
-    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "user_id" in (?)'))
-    assert.equal(pictureQuery.sql, helpers.formatQuery('select * from "pictures" where "profile_id" in (?)'))
+    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "profiles"."user_id" in (?)'))
+    assert.equal(pictureQuery.sql, helpers.formatQuery('select * from "pictures" where "pictures"."profile_id" in (?)'))
   })
 
   test('add runtime constraints on nested relationships', async (assert) => {
@@ -561,8 +561,8 @@ test.group('Relations | HasOne', (group) => {
       builder.where('storage_path', '/bar')
     }).fetch()
     assert.isNull(user.first().getRelated('profile').getRelated('picture'))
-    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "user_id" in (?)'))
-    assert.equal(pictureQuery.sql, helpers.formatQuery('select * from "pictures" where "storage_path" = ? and "profile_id" in (?)'))
+    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "profiles"."user_id" in (?)'))
+    assert.equal(pictureQuery.sql, helpers.formatQuery('select * from "pictures" where "storage_path" = ? and "pictures"."profile_id" in (?)'))
   })
 
   test('add runtime constraints on child relationships and not grandchild', async (assert) => {
@@ -598,7 +598,7 @@ test.group('Relations | HasOne', (group) => {
       builder.where('likes', '>', 3).with('picture')
     }).fetch()
     assert.isNull(user.first().getRelated('profile'))
-    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "likes" > ? and "user_id" in (?)'))
+    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "likes" > ? and "profiles"."user_id" in (?)'))
     assert.isNull(pictureQuery)
   })
 
@@ -1216,7 +1216,7 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.first().getRelated('profile').picture_count, helpers.formatNumber(1))
     assert.deepEqual(users.first().getRelated('profile').$sideLoaded, { picture_count: helpers.formatNumber(1) })
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users"'))
-    assert.equal(profileQuery.sql, helpers.formatQuery('select *, (select count(*) from "pictures" where "profiles"."id" = "pictures"."profile_id") as "picture_count" from "profiles" where "user_id" in (?, ?)'))
+    assert.equal(profileQuery.sql, helpers.formatQuery('select *, (select count(*) from "pictures" where "profiles"."id" = "pictures"."profile_id") as "picture_count" from "profiles" where "profiles"."user_id" in (?, ?)'))
   })
 
   test('eagerload when calling first', async (assert) => {
@@ -1675,7 +1675,7 @@ test.group('Relations | HasOne', (group) => {
 
     await User.query().with('profile').fetch()
 
-    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "user_id" in (?, ?) and "deleted_at" is null'))
+    assert.equal(profileQuery.sql, helpers.formatQuery('select * from "profiles" where "profiles"."user_id" in (?, ?) and "deleted_at" is null'))
   })
 
   test('apply global scope on related model when called withCount', async (assert) => {

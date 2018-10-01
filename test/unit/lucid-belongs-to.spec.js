@@ -156,7 +156,7 @@ test.group('Relations | Belongs To', (group) => {
     assert.equal(profiles.size(), 1)
     assert.instanceOf(profiles.first().getRelated('user'), User)
     assert.equal(profiles.first().getRelated('user').username, 'nikk')
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" in (?)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "users"."id" in (?)'))
     assert.deepEqual(userQuery.bindings, helpers.formatBindings([2]))
   })
 
@@ -189,7 +189,7 @@ test.group('Relations | Belongs To', (group) => {
     assert.equal(profiles.first().getRelated('user').username, 'nikk')
     assert.instanceOf(profiles.last().getRelated('user'), User)
     assert.equal(profiles.last().getRelated('user').username, 'virk')
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" in (?, ?)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "users"."id" in (?, ?)'))
     assert.deepEqual(userQuery.bindings, helpers.formatBindings([2, 1]))
   })
 
@@ -639,7 +639,7 @@ test.group('Relations | Belongs To', (group) => {
 
     await Car.query().with('user').fetch()
 
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" in (?)'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "users"."id" in (?)'))
     assert.deepEqual(userQuery.bindings, helpers.formatBindings([1]))
   })
 
@@ -872,7 +872,7 @@ test.group('Relations | Belongs To', (group) => {
     await ioc.use('Database').table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 1 })
 
     await Car.query().with('user').fetch()
-    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "id" in (?) and "deleted_at" is null'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where "users"."id" in (?) and "deleted_at" is null'))
   })
 
   test('apply global scope on related model when called withCount', async (assert) => {

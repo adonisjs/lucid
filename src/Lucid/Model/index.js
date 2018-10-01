@@ -191,7 +191,7 @@ class Model extends BaseModel {
    *
    * @method query
    *
-   * @return {LucidQueryBuilder}
+   * @return {QueryBuilder}
    *
    * @static
    */
@@ -424,7 +424,7 @@ class Model extends BaseModel {
    */
   get dirty () {
     return _.pickBy(this.$attributes, (value, key) => {
-      return _.isUndefined(this.$originalAttributes[key]) || this.$originalAttributes[key] !== value
+      return _.isUndefined(this.$originalAttributes[key]) || !_.isEqual(this.$originalAttributes[key], value)
     })
   }
 
@@ -674,16 +674,20 @@ class Model extends BaseModel {
         .where(this.constructor.primaryKey, this.primaryKeyValue)
         .ignoreScopes()
         .update(this)
-      /**
-       * Sync originals to find a diff when updating for next time
-       */
-      this._syncOriginals()
     }
 
     /**
      * Executing after hooks
      */
     await this.constructor.$hooks.after.exec('update', this)
+
+    if (this.isDirty) {
+      /**
+       * Sync originals to find a diff when updating for next time
+       */
+      this._syncOriginals()
+    }
+
     return !!affected
   }
 
@@ -954,10 +958,19 @@ class Model extends BaseModel {
       payload = whereClause
     }
 
+    const query = this.query()
+
+    /**
+     * If trx is defined then use it for operation
+     */
+    if (trx) {
+      query.transacting(trx)
+    }
+
     /**
      * Find a row using where clause
      */
-    const row = await this.query().where(whereClause).first()
+    const row = await query.where(whereClause).first()
     if (row) {
       return row
     }
