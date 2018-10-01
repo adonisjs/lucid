@@ -17,7 +17,9 @@
     "mrm": "mrm --preset=@adonisjs/mrm-preset",
     "pretest": "npm run lint",
     "test:cleanup": "rm -rf test/functional/database && rm -rf test/unit/tmp",
-    "test": "DB=sqlite nyc node japaFile.js",
+    "test:sqlite": "DB=sqlite node japaFile.js",
+    "test:mysql": "DB=mysql node japaFile.js",
+    "test": "nyc npm run test:sqlite && npm run test:mysql",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "commit": "git-cz",
     "lint": "standard"

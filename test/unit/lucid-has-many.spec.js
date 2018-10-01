@@ -204,7 +204,7 @@ test.group('Relations | Has Many', (group) => {
 
     const users = await User.query().with('cars', (builder) => {
       builder
-        .select('cars.*', ioc.use('Database').raw('count("older_cars"."id") as older_cars_count'))
+        .select('cars.*', ioc.use('Database').raw(helpers.formatQuery('count("older_cars"."id") as older_cars_count')))
         .joinRaw('left join cars older_cars on older_cars.model < cars.model')
         .groupBy('cars.id')
     }).fetch()

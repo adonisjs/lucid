@@ -43,8 +43,8 @@ module.exports = {
         version: '5.7',
         connection: {
           host: '127.0.0.1',
-          user: 'virk',
-          password: 'virk',
+          user: 'travis',
+          password: '',
           database: 'testing_lucid'
         }
       })
