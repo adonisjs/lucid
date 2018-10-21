@@ -151,11 +151,11 @@ KnexQueryBuilder.prototype.paginate = async function (page = 1, perPage = 20) {
   })
 
   const counts = await countByQuery.count('* as total')
-  const total = _.get(counts, '0.total', '0')
+  const total = _.get(counts, '0.total', 0)
   const data = total === 0 ? [] : await this.forPage(page, perPage)
 
   return {
-    total: total,
+    total: String(total),
     perPage: perPage,
     page: page,
     lastPage: Math.ceil(total / perPage),
