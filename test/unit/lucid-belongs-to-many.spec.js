@@ -2685,4 +2685,49 @@ test.group('Relations | Belongs To Many', (group) => {
 
     assert.deepEqual(postIds, [1, 2])
   })
+
+  test.failing('get an array of titles for the related model', async (assert) => {
+    class Post extends Model {
+      users () {
+        return this.belongsToMany(User)
+      }
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    let postsQuery = null
+    Post.onQuery((query) => (postsQuery = query))
+
+    await ioc.use('Database').table('users').insert({ username: 'virk' })
+    await ioc.use('Database').table('posts').insert([
+      { id: 1, title: 'Adonis 101' },
+      { id: 2, title: 'Adonis 102' },
+      { id: 3, title: 'Adonis 103' }
+    ])
+    await ioc.use('Database').table('post_user').insert([
+      { post_id: 1, user_id: 1 },
+      { post_id: 2, user_id: 1 }
+    ])
+
+    const user = await User.find(1)
+    const postTitles = await user.posts().pluck('title')
+
+    assert.equal(postsQuery.sql, helpers.formatQuery('select "posts"."title" from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "post_user"."user_id" = ?'))
+
+    assert.deepEqual(postTitles, ['Adonis 101', 'Adonis 102'])
+  })
 })
