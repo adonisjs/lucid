@@ -159,6 +159,46 @@ test.group('Schema', (group) => {
       assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'dropExtensionIfExists', args: ['postgis'] }])
     })
 
+    test('add deferred action for createSchema', (assert) => {
+      class UserSchema extends Schema {
+      }
+      const userSchema = new UserSchema(ioc.use('Database'))
+      userSchema.createSchema('postgis')
+
+      assert.lengthOf(userSchema._chains, 1)
+      assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'createSchema', args: ['postgis'] }])
+    })
+
+    test('add deferred action for createSchemaIfNotExists', (assert) => {
+      class UserSchema extends Schema {
+      }
+      const userSchema = new UserSchema(ioc.use('Database'))
+      userSchema.createSchemaIfNotExists('postgis')
+
+      assert.lengthOf(userSchema._chains, 1)
+      assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'createSchemaIfNotExists', args: ['postgis'] }])
+    })
+
+    test('add deferred action for dropSchema', (assert) => {
+      class UserSchema extends Schema {
+      }
+      const userSchema = new UserSchema(ioc.use('Database'))
+      userSchema.dropSchema('postgis')
+
+      assert.lengthOf(userSchema._chains, 1)
+      assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'dropSchema', args: ['postgis'] }])
+    })
+
+    test('add deferred action for dropSchemaIfExists', (assert) => {
+      class UserSchema extends Schema {
+      }
+      const userSchema = new UserSchema(ioc.use('Database'))
+      userSchema.dropSchemaIfExists('postgis')
+
+      assert.lengthOf(userSchema._chains, 1)
+      assert.deepEqual(userSchema._chains[0]._deferredActions, [{ name: 'dropSchemaIfExists', args: ['postgis'] }])
+    })
+
     test('should be able to chain withSchema', (assert) => {
       const fn = function () {}
 
