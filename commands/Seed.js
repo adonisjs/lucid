@@ -14,6 +14,7 @@ const requireAll = require('require-all')
 const _ = require('lodash')
 const { ioc } = require('@adonisjs/fold')
 const prettyHrTime = require('pretty-hrtime')
+const path = require('path')
 
 class SeedDatabase extends Command {
   constructor (Helpers, Database) {
@@ -50,7 +51,7 @@ class SeedDatabase extends Command {
           return fileName
         }
 
-        return _.find(selectedFiles, (file) => file.trim().endsWith(fileName))
+        return _.find(selectedFiles, file => fileName === path.basename(file))
       }
     })
   }
@@ -122,7 +123,7 @@ class SeedDatabase extends Command {
 
       const startTime = process.hrtime()
 
-      files = typeof (files) === 'string' ? files.split(',') : null
+      files = typeof (files) === 'string' ? files.split(',').map(file => file.trim()) : null
       const allFiles = this._getSeedFiles(files)
 
       if (!_.size(allFiles)) {

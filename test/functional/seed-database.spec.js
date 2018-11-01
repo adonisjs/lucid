@@ -140,6 +140,32 @@ test.group('Seed Database', (group) => {
     assert.deepEqual(global.stack, ['foo'])
   })
 
+  test('run only proper files', async (assert) => {
+    ace.addCommand(Seed)
+    global.stack = []
+
+    await fs.outputFile(path.join(__dirname, 'database/seeds/barfoo.js'), `
+      class Seed {
+        run () {
+          (global).stack.push('barfoo')
+        }
+      }
+      module.exports = Seed
+    `)
+
+    await fs.outputFile(path.join(__dirname, 'database/seeds/foo.js'), `
+      class Seed {
+        run () {
+          (global).stack.push('foo')
+        }
+      }
+      module.exports = Seed
+    `)
+
+    await ace.call('seed', {}, { files: 'barfoo.js' })
+    assert.deepEqual(global.stack, ['barfoo'])
+  })
+
   test('run only js files', async (assert) => {
     ace.addCommand(Seed)
     global.stack = []
