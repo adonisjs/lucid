@@ -25,7 +25,9 @@ class MigrationRefresh extends BaseMigration {
     migration:refresh
     { -f, --force: Forcefully run migrations in production }
     { -s, --silent: Silent the migrations output }
+    { --seed: Seed the database after migration finished }
     { --log: Log SQL queries instead of executing them }
+    { -a, --keep-alive: Do not close the database connection }
     `
   }
 
@@ -52,13 +54,20 @@ class MigrationRefresh extends BaseMigration {
    * @param  {Boolean} options.log
    * @param  {Boolean} options.force
    * @param  {Boolean} options.silent
+   * @param  {Boolean} options.seed
+   * @param  {Boolean} options.keepAlive
    *
    * @return {void|Array}
    */
-  async handle (args, { log, force, silent }) {
+  async handle (args, { log, force, silent, seed, keepAlive }) {
     this._validateState(force)
+
+    if (keepAlive) {
+      this.migration.keepAlive()
+    }
+
     await ace.call('migration:reset', {}, { log, force, silent })
-    await ace.call('migration:run', {}, { log, force, silent })
+    await ace.call('migration:run', {}, { log, force, silent, seed, keepAlive })
   }
 }
 

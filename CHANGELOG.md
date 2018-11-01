@@ -1,3 +1,156 @@
+<a name="6.1.3"></a>
+## [6.1.3](https://github.com/adonisjs/adonis-lucid/compare/v6.1.2...v6.1.3) (2018-10-01)
+
+
+### Bug Fixes
+
+* **database:** pagination counts query must use the subQuery of extended query builder ([b613b64](https://github.com/adonisjs/adonis-lucid/commit/b613b64)), closes [#378](https://github.com/adonisjs/adonis-lucid/issues/378)
+* **database:** run database.raw on global transaction if exists ([a51ebe1](https://github.com/adonisjs/adonis-lucid/commit/a51ebe1)), closes [#374](https://github.com/adonisjs/adonis-lucid/issues/374)
+* **model:** merge dirty attributes after the hooks have been called ([6bff452](https://github.com/adonisjs/adonis-lucid/commit/6bff452))
+* **model:** use lodash isEqual to check if a model is dirty ([#384](https://github.com/adonisjs/adonis-lucid/issues/384)) ([88fe6ea](https://github.com/adonisjs/adonis-lucid/commit/88fe6ea))
+* **query:** prefix table name to avoid ambiguous columns ([55fffb9](https://github.com/adonisjs/adonis-lucid/commit/55fffb9))
+
+
+### Features
+
+* **commands:** allow seeding db from migration run and refresh ([23dc3eb](https://github.com/adonisjs/adonis-lucid/commit/23dc3eb))
+* **transaction:** add support for transactions in findOrCreate ([1e7b2a8](https://github.com/adonisjs/adonis-lucid/commit/1e7b2a8))
+
+
+
+<a name="6.1.2"></a>
+## [6.1.2](https://github.com/adonisjs/adonis-lucid/compare/v6.1.1...v6.1.2) (2018-08-24)
+
+
+### Bug Fixes
+
+* **relationship:** add last method ([24df5eb](https://github.com/adonisjs/adonis-lucid/commit/24df5eb))
+
+
+
+<a name="6.1.1"></a>
+## [6.1.1](https://github.com/adonisjs/adonis-lucid/compare/v6.1.0...v6.1.1) (2018-08-10)
+
+
+### Bug Fixes
+
+* **dbtrait:** ensure await when rolling back transactions ([8813187](https://github.com/adonisjs/adonis-lucid/commit/8813187))
+
+
+
+<a name="6.1.0"></a>
+# [6.1.0](https://github.com/adonisjs/adonis-lucid/compare/v6.0.1...v6.1.0) (2018-08-09)
+
+
+### Bug Fixes
+
+* **querybuilder:** capture firstOrFail inside relationships ([6a5e0e7](https://github.com/adonisjs/adonis-lucid/commit/6a5e0e7))
+
+
+### BREAKING CHANGES
+
+* **querybuilder:** To avoid false negatives inside queries, Querybuilder forces to resolve the query
+using one of it's inbuilt methods. If `then` is triggered inside the prox, an exception will be
+raised
+
+
+
+<a name="6.0.1"></a>
+## [6.0.1](https://github.com/adonisjs/adonis-lucid/compare/v6.0.0...v6.0.1) (2018-07-21)
+
+
+### Bug Fixes
+
+* **belongsToMany:** make sure to scope query when fetching ids ([faf89c4](https://github.com/adonisjs/adonis-lucid/commit/faf89c4))
+* **migration:** remove fallback added for precision timestamp ([f5a6b33](https://github.com/adonisjs/adonis-lucid/commit/f5a6b33)), closes [#916](https://github.com/adonisjs/adonis-lucid/issues/916)
+
+
+
+<a name="6.0.0"></a>
+# [6.0.0](https://github.com/adonisjs/adonis-lucid/compare/v5.0.4...v6.0.0) (2018-07-18)
+
+
+### Bug Fixes
+
+* **database:** apply precision only when mysql ([c0b0aa0](https://github.com/adonisjs/adonis-lucid/commit/c0b0aa0))
+* **database:** fix fn.now to accept precision ([cae6df7](https://github.com/adonisjs/adonis-lucid/commit/cae6df7))
+* **lucid:** make bulk operations reliable by executing in sequence ([acb6ce7](https://github.com/adonisjs/adonis-lucid/commit/acb6ce7))
+* **paginate:** Database paginate cast page, perPage to numbers ([7eb7201](https://github.com/adonisjs/adonis-lucid/commit/7eb7201))
+
+
+### Features
+
+* **belongsToMany:** add option to disable pivotPrimaryKey ([0cb13bf](https://github.com/adonisjs/adonis-lucid/commit/0cb13bf)), closes [#287](https://github.com/adonisjs/adonis-lucid/issues/287)
+
+
+
+<a name="6.0.0"></a>
+# [6.0.0](https://github.com/adonisjs/adonis-lucid/compare/v5.0.4...v6.0.0) (2018-07-18)
+
+
+### Bug Fixes
+
+* **database:** apply precision only when mysql ([c0b0aa0](https://github.com/adonisjs/adonis-lucid/commit/c0b0aa0))
+* **database:** fix fn.now to accept precision ([cae6df7](https://github.com/adonisjs/adonis-lucid/commit/cae6df7))
+* **lucid:** make bulk operations reliable by executing in sequence ([acb6ce7](https://github.com/adonisjs/adonis-lucid/commit/acb6ce7))
+* **paginate:** Database paginate cast page, perPage to numbers ([7eb7201](https://github.com/adonisjs/adonis-lucid/commit/7eb7201))
+
+
+### Features
+
+* **belongsToMany:** add option to disable pivotPrimaryKey ([0cb13bf](https://github.com/adonisjs/adonis-lucid/commit/0cb13bf)), closes [#287](https://github.com/adonisjs/adonis-lucid/issues/287)
+
+
+
+<a name="5.0.4"></a>
+## [5.0.4](https://github.com/adonisjs/adonis-lucid/compare/v5.0.3...v5.0.4) (2018-06-02)
+
+
+### Features
+
+* **migrations:** add keep-alive flag ([88423f9](https://github.com/adonisjs/adonis-lucid/commit/88423f9))
+
+
+
+<a name="5.0.3"></a>
+## [5.0.3](https://github.com/adonisjs/adonis-lucid/compare/v5.0.2...v5.0.3) (2018-02-23)
+
+
+
+<a name="5.0.2"></a>
+## [5.0.2](https://github.com/adonisjs/adonis-lucid/compare/v5.0.1...v5.0.2) (2018-02-09)
+
+
+### Bug Fixes
+
+* **querybuilder:** pass builder to formatter instance ([882e1cb](https://github.com/adonisjs/adonis-lucid/commit/882e1cb)), closes [#294](https://github.com/adonisjs/adonis-lucid/issues/294)
+
+
+
+<a name="5.0.1"></a>
+## [5.0.1](https://github.com/adonisjs/adonis-lucid/compare/v5.0.0...v5.0.1) (2018-02-07)
+
+
+
+<a name="5.0.0"></a>
+# [5.0.0](https://github.com/adonisjs/adonis-lucid/compare/v4.1.3...v5.0.0) (2018-01-31)
+
+
+### Bug Fixes
+
+* **belongsToMany:** apply pivotModel global scopes when defined ([4de8b0f](https://github.com/adonisjs/adonis-lucid/commit/4de8b0f)), closes [#261](https://github.com/adonisjs/adonis-lucid/issues/261)
+* **lucid:** format dates on newly create instance ([69a8da6](https://github.com/adonisjs/adonis-lucid/commit/69a8da6)), closes [#245](https://github.com/adonisjs/adonis-lucid/issues/245)
+* **schema:** fix issue around chaining `withSchema` ([f03c6b7](https://github.com/adonisjs/adonis-lucid/commit/f03c6b7)), closes [#282](https://github.com/adonisjs/adonis-lucid/issues/282)
+* **tests:** fix breaking tests in mysql & pg ([a59326c](https://github.com/adonisjs/adonis-lucid/commit/a59326c))
+
+
+### BREAKING CHANGES
+
+* **lucid:** If you have accessed the date properties directly on the model instance, then they
+will be string over moment instance now
+
+
+
 <a name="4.1.3"></a>
 ## [4.1.3](https://github.com/adonisjs/adonis-lucid/compare/v4.1.2...v4.1.3) (2018-01-21)
 

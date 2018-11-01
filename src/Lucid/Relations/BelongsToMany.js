@@ -68,6 +68,7 @@ class BelongsToMany extends BaseRelation {
      * @type {[type]}
      */
     this._PivotModel = null
+    this.scopesIterator = null
 
     /**
      * Settings related to pivot table only
@@ -77,7 +78,8 @@ class BelongsToMany extends BaseRelation {
     this._pivot = {
       table: util.makePivotTableName(parentInstance.constructor.name, relatedModel.name),
       withTimestamps: false,
-      withFields: []
+      withFields: [],
+      pivotPrimaryKey: 'id'
     }
 
     this._relatedFields = []
@@ -109,6 +111,7 @@ class BelongsToMany extends BaseRelation {
       this._selectFields()
       this._makeJoinQuery()
       this.whereInPivot(fk, values)
+      this._applyScopes()
     }
 
     this.relatedQuery.$relation.pivot = this._pivot
@@ -152,6 +155,19 @@ class BelongsToMany extends BaseRelation {
    */
   _selectForPivot (field) {
     return `${this.$pivotTable}.${field} as pivot_${field}`
+  }
+
+  /**
+   * Applies global scopes when pivot model is defined
+   *
+   * @return {void}
+   *
+   * @private
+   */
+  _applyScopes () {
+    if (this.scopesIterator) {
+      this.scopesIterator.execute(this)
+    }
   }
 
   /**
@@ -235,6 +251,7 @@ class BelongsToMany extends BaseRelation {
     this._selectFields()
     this._makeJoinQuery()
     this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    this._applyScopes()
   }
 
   /**
@@ -249,6 +266,7 @@ class BelongsToMany extends BaseRelation {
   _prepareAggregate () {
     this._makeJoinQuery()
     this.wherePivot(this.foreignKey, this.$primaryKeyValue)
+    this._applyScopes()
   }
 
   /**
@@ -332,6 +350,7 @@ class BelongsToMany extends BaseRelation {
       pivotModel.$table = this.$pivotTable
       pivotModel.$connection = this.RelatedModel.connection
       pivotModel.$withTimestamps = this._pivot.withTimestamps
+      pivotModel.$primaryKey = this._pivot.pivotPrimaryKey
     }
 
     /**
@@ -434,6 +453,7 @@ class BelongsToMany extends BaseRelation {
    */
   pivotModel (pivotModel) {
     this._PivotModel = typeof (pivotModel) === 'string' ? ioc.use(pivotModel) : pivotModel
+    this.scopesIterator = this._PivotModel.$globalScopes.iterator()
     return this
   }
 
@@ -452,6 +472,25 @@ class BelongsToMany extends BaseRelation {
     }
 
     this._pivot.table = table
+    return this
+  }
+
+  /**
+   * Define the primary key to be selected for the
+   * pivot table.
+   *
+   * @method pivotPrimaryKey
+   *
+   * @param  {String}        key
+   *
+   * @chainable
+   */
+  pivotPrimaryKey (key) {
+    if (this._PivotModel) {
+      throw CE.ModelRelationException.pivotModelIsDefined('pivotPrimaryKey')
+    }
+
+    this._pivot.pivotPrimaryKey = key
     return this
   }
 
@@ -607,7 +646,9 @@ class BelongsToMany extends BaseRelation {
    * @return {Array}
    */
   ids () {
-    return this.pluck(`${this.$foreignTable}.${this.RelatedModel.primaryKey}`)
+    this._validateRead()
+    this._prepareAggregate()
+    return this.relatedQuery.pluck(`${this.$foreignTable}.${this.RelatedModel.primaryKey}`)
   }
 
   /**
@@ -753,10 +794,17 @@ class BelongsToMany extends BaseRelation {
     await this._loadAndCachePivot(trx)
     const rows = !Array.isArray(references) ? [references] : references
 
-    return Promise.all(rows.map((row) => {
-      const pivotInstance = this._getPivotInstance(row)
-      return pivotInstance ? Promise.resolve(pivotInstance) : this._attachSingle(row, pivotCallback, trx)
-    }))
+    let attachedRows = []
+
+    for (let row of rows) {
+      let pivotInstance = this._getPivotInstance(row)
+      if (!pivotInstance) {
+        pivotInstance = await this._attachSingle(row, pivotCallback, trx)
+      }
+      attachedRows.push(pivotInstance)
+    }
+
+    return attachedRows
   }
 
   /**
@@ -904,7 +952,14 @@ class BelongsToMany extends BaseRelation {
     }
 
     await this._persistParentIfRequired()
-    return Promise.all(arrayOfRelatedInstances.map((relatedInstance) => this.save(relatedInstance, pivotCallback)))
+
+    const rows = []
+    for (let relatedInstance of arrayOfRelatedInstances) {
+      const row = await this.save(relatedInstance, pivotCallback)
+      rows.push(row)
+    }
+
+    return rows
   }
 
   /**
@@ -949,7 +1004,14 @@ class BelongsToMany extends BaseRelation {
     }
 
     await this._persistParentIfRequired()
-    return Promise.all(rows.map((relatedInstance) => this.create(relatedInstance, pivotCallback)))
+
+    const savedRows = []
+    for (let relatedInstance of rows) {
+      const row = await this.create(relatedInstance, pivotCallback)
+      savedRows.push(row)
+    }
+
+    return savedRows
   }
 }
 

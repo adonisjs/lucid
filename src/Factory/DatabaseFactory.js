@@ -39,9 +39,9 @@ class DatabaseFactory {
    * @private
    */
   _getQueryBuilder () {
-    return (this._connection
-    ? ioc.use('Adonis/Src/Database').connection(this._connection)
-    : ioc.use('Adonis/Src/Database')).table(this.tableName)
+    return this._connection
+      ? ioc.use('Adonis/Src/Database').connection(this._connection)
+      : ioc.use('Adonis/Src/Database')
   }
 
   /**
@@ -169,7 +169,7 @@ class DatabaseFactory {
    */
   async create (data = {}, index = 0) {
     const attributes = await this.make(data, index)
-    const query = this._getQueryBuilder()
+    const query = this._getQueryBuilder().table(this.tableName)
 
     if (this._returningColumn) {
       query.returning(this._returningColumn)
@@ -191,7 +191,14 @@ class DatabaseFactory {
    * @return {Array}
    */
   async createMany (numberOfRows, data = {}) {
-    return Promise.all(_.map(_.range(numberOfRows), (index) => this.create(data, index)))
+    const rows = []
+
+    for (let index of _.range(numberOfRows)) {
+      const row = await this.create(data, index)
+      rows.push(row)
+    }
+
+    return rows
   }
 
   /**
@@ -203,7 +210,7 @@ class DatabaseFactory {
    * @return {Number}
    */
   async reset () {
-    return this._getQueryBuilder().truncate()
+    return this._getQueryBuilder().table(this.tableName).truncate()
   }
 }
 

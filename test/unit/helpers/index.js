@@ -40,9 +40,10 @@ module.exports = {
     if (process.env.DB === 'mysql') {
       return _.cloneDeep({
         client: 'mysql',
+        version: '5.7',
         connection: {
           host: '127.0.0.1',
-          user: 'root',
+          user: 'travis',
           password: '',
           database: 'testing_lucid'
         }
@@ -63,7 +64,14 @@ module.exports = {
   },
 
   createTables (db) {
-    return Promise.all([
+    const commands = []
+
+    if (process.env.DB === 'mysql') {
+      commands.push(db.schema.raw("SET GLOBAL sql_mode='NO_AUTO_VALUE_ON_ZERO'"))
+      commands.push(db.schema.raw("SET SESSION sql_mode='NO_AUTO_VALUE_ON_ZERO'"))
+    }
+
+    return Promise.all(commands.concat([
       db.schema.createTable('users', function (table) {
         table.increments()
         table.integer('vid')
@@ -190,7 +198,7 @@ module.exports = {
         table.integer('user_party_id')
         table.timestamps()
       })
-    ])
+    ]))
   },
 
   dropTables (db) {

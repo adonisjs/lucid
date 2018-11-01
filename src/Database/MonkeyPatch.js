@@ -17,8 +17,27 @@
 const _ = require('lodash')
 const KnexQueryBuilder = require('knex/lib/query/builder')
 const excludeAttrFromCount = ['order', 'columns', 'limit', 'offset']
+const util = require('../../lib/util')
 
 const _from = KnexQueryBuilder.prototype.from
+const _returning = KnexQueryBuilder.prototype.returning
+
+/**
+ * Override knex actual returning method and call the actual
+ * `returning` when client supports `returning`
+ *
+ * @method returning
+ *
+ * @param  {...Spread} args
+ *
+ * @chainable
+ */
+KnexQueryBuilder.prototype.returning = function (...args) {
+  if (util.supportsReturning(this.client.config.client)) {
+    return _returning.bind(this)(...args)
+  }
+  return this
+}
 
 /**
  * Facade over `knex.from` method to entertain the `prefix`
@@ -107,8 +126,21 @@ KnexQueryBuilder.prototype.forPage = function (page = 1, perPage = 20) {
  *
  * @return {Object} @multiple([data=Array, page=Number, perPage=Number, total=Number, lastPage=Number])
  */
-KnexQueryBuilder.prototype.paginate = async function (page = 2, perPage = 20) {
+KnexQueryBuilder.prototype.paginate = async function (page = 1, perPage = 20) {
   const countByQuery = this.clone()
+
+  /**
+   * Copy the subQuery fn to the clone query. This will make sure
+   * that build uses the extended query builder methods on the
+   * cloned query too
+   */
+  countByQuery.subQuery = this.subQuery
+
+  /**
+   * Force cast page and perPage to numbers
+   */
+  page = Number(page)
+  perPage = Number(perPage)
 
   /**
    * Remove statements that will make things bad with count

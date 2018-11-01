@@ -23,6 +23,10 @@ const proxyHandler = {
   get: proxyGet('query', false, function (target, name) {
     const queryScope = util.makeScopeName(name)
 
+    if (name === 'then') {
+      throw new Error(`Make sure to call fetch to execute the query`)
+    }
+
     /**
      * if value is a local query scope and a function, please
      * execute it
@@ -66,6 +70,8 @@ const aggregates = [
 const queryMethods = [
   'pluck',
   'toSQL',
+  'increment',
+  'decrement',
   'toString'
 ]
 
@@ -79,6 +85,8 @@ const queryMethods = [
 class QueryBuilder {
   constructor (Model, connection) {
     this.Model = Model
+    this.connectionString = connection
+
     const table = this.Model.prefix ? `${this.Model.prefix}${this.Model.table}` : this.Model.table
 
     /**
@@ -98,23 +106,6 @@ class QueryBuilder {
     this.query.subQuery = () => {
       return this.Model.queryWithOutScopes()
     }
-
-    /**
-     * Scopes to be ignored at runtime
-     *
-     * @type {Array}
-     *
-     * @private
-     */
-    this._ignoreScopes = []
-
-    /**
-     * A flag to find if scopes has already
-     * been applied or not
-     *
-     * @type {Boolean}
-     */
-    this._scopesApplied = false
 
     /**
      * Relations to be eagerloaded
@@ -154,6 +145,12 @@ class QueryBuilder {
      * @type {Number}
      */
     this._withCountCounter = -1
+
+    /**
+     * Reference to the global scopes iterator. A fresh instance
+     * needs to be used for each query
+     */
+    this.scopesIterator = this.Model.$globalScopes.iterator()
 
     return new Proxy(this, proxyHandler)
   }
@@ -220,28 +217,7 @@ class QueryBuilder {
    * @private
    */
   _applyScopes () {
-    /**
-     * Do not apply if already applied
-     */
-    if (this._scopesApplied) {
-      return this
-    }
-
-    /**
-     * Setting flag to true
-     */
-    this._scopesApplied = true
-
-    if (this._ignoreScopes.indexOf('*') > -1) {
-      return this
-    }
-
-    _(this.Model.$globalScopes)
-    .filter((scope) => this._ignoreScopes.indexOf(scope.name) <= -1)
-    .each((scope) => {
-      scope.callback(this)
-    })
-
+    this.scopesIterator.execute(this)
     return this
   }
 
@@ -315,7 +291,7 @@ class QueryBuilder {
    * @return {Object}
    */
   formatter () {
-    return this.query.client.formatter()
+    return this.query.client.formatter(this.query)
   }
 
   /**
@@ -332,12 +308,7 @@ class QueryBuilder {
    * @chainable
    */
   ignoreScopes (scopes) {
-    /**
-     * Don't do anything when array is empty or value is not
-     * an array
-     */
-    const scopesToIgnore = Array.isArray(scopes) ? scopes : ['*']
-    this._ignoreScopes = this._ignoreScopes.concat(scopesToIgnore)
+    this.scopesIterator.ignore(scopes)
     return this
   }
 
@@ -512,6 +483,19 @@ class QueryBuilder {
   }
 
   /**
+   * Execute insert query
+   *
+   * @method insert
+   *
+   * @param  {Object} attributes
+   *
+   * @return {Array}
+   */
+  async insert (attributes) {
+    return this.query.insert(attributes)
+  }
+
+  /**
    * Bulk update data from query builder. This method will also
    * format all dates and set `updated_at` column
    *
@@ -555,6 +539,17 @@ class QueryBuilder {
   delete () {
     this._applyScopes()
     return this.query.delete()
+  }
+
+  /**
+   * Remove everything from table
+   *
+   * @method truncate
+   *
+   * @return {Number}
+   */
+  truncate () {
+    return this.query.truncate()
   }
 
   /**
@@ -931,6 +926,28 @@ class QueryBuilder {
   setHidden (fields) {
     this._hiddenFields = fields
     return this
+  }
+
+  /**
+   * Create a clone of Query builder
+   *
+   * @method clone
+   *
+   * @return {QueryBuilde}
+   */
+  clone () {
+    const clonedQuery = new QueryBuilder(this.Model, this.connectionString)
+    clonedQuery.query = this.query.clone()
+    clonedQuery.query.subQuery = this.query.subQuery
+
+    clonedQuery._eagerLoads = this._eagerLoads
+    clonedQuery._sideLoaded = this._sideLoaded
+    clonedQuery._visibleFields = this._visibleFields
+    clonedQuery._hiddenFields = this._hiddenFields
+    clonedQuery._withCountCounter = this._withCountCounter
+    clonedQuery.scopesIterator = this.scopesIterator
+
+    return clonedQuery
   }
 }
 

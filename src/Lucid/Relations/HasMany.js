@@ -200,7 +200,14 @@ class HasMany extends BaseRelation {
     }
 
     await this._persistParentIfRequired(trx)
-    return Promise.all(arrayOfPayload.map((payload) => this.create(payload, trx)))
+
+    const savedRows = []
+    for (let payload of arrayOfPayload) {
+      const row = await this.create(payload, trx)
+      savedRows.push(row)
+    }
+
+    return savedRows
   }
 
   /**
@@ -221,7 +228,14 @@ class HasMany extends BaseRelation {
     }
 
     await this._persistParentIfRequired(trx)
-    return Promise.all(arrayOfRelatedInstances.map((relatedInstance) => this.save(relatedInstance, trx)))
+
+    const savedRows = []
+    for (let relatedInstance of arrayOfRelatedInstances) {
+      const row = await this.save(relatedInstance, trx)
+      savedRows.push(row)
+    }
+
+    return savedRows
   }
 }
 

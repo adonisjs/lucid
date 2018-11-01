@@ -58,7 +58,7 @@ test.group('Factory', (group) => {
         throw error
       }
     }
-  }).timeout(0)
+  })
 
   test('add a new blueprint', (assert) => {
     const fn = function () {}

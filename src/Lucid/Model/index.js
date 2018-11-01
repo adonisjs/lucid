@@ -15,9 +15,9 @@ const GE = require('@adonisjs/generic-exceptions')
 const { resolver, ioc } = require('../../../lib/iocResolver')
 
 const BaseModel = require('./Base')
-const Hooks = require('../Hooks')
 const QueryBuilder = require('../QueryBuilder')
 const EagerLoad = require('../EagerLoad')
+
 const { HasOne, HasMany, BelongsTo, BelongsToMany, HasManyThrough } = require('../Relations')
 
 const CE = require('../../Exceptions')
@@ -191,7 +191,7 @@ class Model extends BaseModel {
    *
    * @method query
    *
-   * @return {LucidQueryBuilder}
+   * @return {QueryBuilder}
    *
    * @static
    */
@@ -204,8 +204,8 @@ class Model extends BaseModel {
      */
     query.on('query', (builder) => {
       _(this.$queryListeners)
-      .filter((listener) => typeof (listener) === 'function')
-      .each((listener) => listener(builder))
+        .filter((listener) => typeof (listener) === 'function')
+        .each((listener) => listener(builder))
     })
 
     return query
@@ -220,70 +220,6 @@ class Model extends BaseModel {
    */
   static queryWithOutScopes () {
     return this.query().ignoreScopes()
-  }
-
-  /**
-   * Method to be called only once to boot
-   * the model.
-   *
-   * NOTE: This is called automatically by the IoC
-   * container hooks when you make use of `use()`
-   * method.
-   *
-   * @method boot
-   *
-   * @return {void}
-   *
-   * @static
-   */
-  static boot () {
-    this.hydrate()
-    _.each(this.traits, (trait) => this.addTrait(trait))
-  }
-
-  /**
-   * Hydrates model static properties by re-setting
-   * them to their original value.
-   *
-   * @method hydrate
-   *
-   * @return {void}
-   *
-   * @static
-   */
-  static hydrate () {
-    /**
-     * Model hooks for different lifecycle
-     * events
-     *
-     * @type {Object}
-     */
-    this.$hooks = {
-      before: new Hooks(),
-      after: new Hooks()
-    }
-
-    /**
-     * List of global query listeners for the model.
-     *
-     * @type {Array}
-     */
-    this.$queryListeners = []
-
-    /**
-     * List of global query scopes. Chained before executing
-     * query builder queries.
-     */
-    this.$globalScopes = []
-
-    /**
-     * We use the default query builder class to run queries, but as soon
-     * as someone wants to add methods to the query builder via traits,
-     * we need an isolated copy of query builder class just for that
-     * model, so that the methods added via traits are not impacting
-     * other models.
-     */
-    this.QueryBuilder = null
   }
 
   /**
@@ -352,14 +288,11 @@ class Model extends BaseModel {
    *
    * @param  {Function}     callback
    * @param  {String}       [name = null]
+   *
+   * @chainable
    */
-  static addGlobalScope (callback, name = null) {
-    if (typeof (callback) !== 'function') {
-      throw GE
-        .InvalidArgumentException
-        .invalidParameter('Model.addGlobalScope expects a closure as first parameter', callback)
-    }
-    this.$globalScopes.push({ callback, name })
+  static addGlobalScope (callback, name) {
+    this.$globalScopes.add(callback, name)
     return this
   }
 
@@ -459,7 +392,14 @@ class Model extends BaseModel {
         .InvalidArgumentException
         .invalidParameter(`${this.name}.createMany expects an array of values`, payloadArray)
     }
-    return Promise.all(payloadArray.map((payload) => this.create(payload, trx)))
+
+    const rows = []
+    for (let payload of payloadArray) {
+      const row = await this.create(payload, trx)
+      rows.push(row)
+    }
+
+    return rows
   }
 
   /**
@@ -484,7 +424,7 @@ class Model extends BaseModel {
    */
   get dirty () {
     return _.pickBy(this.$attributes, (value, key) => {
-      return _.isUndefined(this.$originalAttributes[key]) || this.$originalAttributes[key] !== value
+      return _.isUndefined(this.$originalAttributes[key]) || !_.isEqual(this.$originalAttributes[key], value)
     })
   }
 
@@ -530,10 +470,10 @@ class Model extends BaseModel {
    */
   _formatDateFields (values) {
     _(this.constructor.dates)
-    .filter((date) => {
-      return values[date] && typeof (this[util.getSetterName(date)]) !== 'function'
-    })
-    .each((date) => { values[date] = this.constructor.formatDates(date, values[date]) })
+      .filter((date) => {
+        return values[date] && typeof (this[util.getSetterName(date)]) !== 'function'
+      })
+      .each((date) => { values[date] = this.constructor.formatDates(date, values[date]) })
   }
 
   /**
@@ -734,16 +674,20 @@ class Model extends BaseModel {
         .where(this.constructor.primaryKey, this.primaryKeyValue)
         .ignoreScopes()
         .update(this)
-      /**
-       * Sync originals to find a diff when updating for next time
-       */
-      this._syncOriginals()
     }
 
     /**
      * Executing after hooks
      */
     await this.constructor.$hooks.after.exec('update', this)
+
+    if (this.isDirty) {
+      /**
+       * Sync originals to find a diff when updating for next time
+       */
+      this._syncOriginals()
+    }
+
     return !!affected
   }
 
@@ -795,15 +739,25 @@ class Model extends BaseModel {
    */
   toObject () {
     let evaluatedAttrs = _.transform(this.$attributes, (result, value, key) => {
+      const isMarkedAsDate = _.includes(this.constructor.dates, key)
+      const transformedValue = isMarkedAsDate && value ? moment(value) : value
+
       /**
-       * If value is an instance of moment and there is no getter defined
-       * for it, then cast it as a date.
+       * If key is not a date OR it's a date but model has a predefine getter
+       * for it, then pass the value to the getter.
+       *
+       * Also if the value is set to null or undefined, we pass it to the getter
+       * instead of casting it as a date.
        */
-      if (value instanceof moment && typeof (this[util.getGetterName(key)]) !== 'function') {
-        result[key] = this.constructor.castDates(key, value)
-      } else {
-        result[key] = this._getGetterValue(key, value)
+      if (!isMarkedAsDate || typeof (this[util.getGetterName(key)]) === 'function' || !transformedValue) {
+        result[key] = this._getGetterValue(key, transformedValue)
+        return result
       }
+
+      /**
+       * Otherwise cast the field as date
+       */
+      result[key] = this.constructor.castDates(key, transformedValue)
       return result
     }, {})
 
@@ -891,7 +845,6 @@ class Model extends BaseModel {
   newUp (row) {
     this.$persisted = true
     this.$attributes = row
-    this._convertDatesToMomentInstances()
     this._syncOriginals()
   }
 
@@ -1005,10 +958,19 @@ class Model extends BaseModel {
       payload = whereClause
     }
 
+    const query = this.query()
+
+    /**
+     * If trx is defined then use it for operation
+     */
+    if (trx) {
+      query.transacting(trx)
+    }
+
     /**
      * Find a row using where clause
      */
-    const row = await this.query().where(whereClause).first()
+    const row = await query.where(whereClause).first()
     if (row) {
       return row
     }
@@ -1107,14 +1069,17 @@ class Model extends BaseModel {
   }
 
   /**
-   * Returns an array of ids.
+   * Returns an object of key/value pairs.
+   * This method will not eagerload relationships.
+   * The lhs field is the object key, and rhs is the value.
    *
-   * Note: this method doesn't allow eagerloading relations
-   *
-   * @method ids
+   * @method pair
    * @async
    *
-   * @return {Array}
+   * @param  {String} lhs
+   * @param  {String} rhs
+   *
+   * @return {Object}
    */
   static pair (lhs, rhs) {
     return this.query().pair(lhs, rhs)
@@ -1158,8 +1123,8 @@ class Model extends BaseModel {
      * the $parent.
      */
     _(value.rows)
-    .filter((val) => !!val)
-    .each((val) => (val.$parent = this.constructor.name))
+      .filter((val) => !!val)
+      .each((val) => (val.$parent = this.constructor.name))
   }
 
   /**
@@ -1343,7 +1308,7 @@ class Model extends BaseModel {
     }
   }
 
- /**
+  /**
   * Return a count of all model records.
   *
   * @method getCount
@@ -1369,7 +1334,7 @@ class Model extends BaseModel {
     return this.query().getCountDistinct(columnName)
   }
 
- /**
+  /**
   * Return the average of all values of columnName.
   *
   * @method getAvg
@@ -1395,7 +1360,7 @@ class Model extends BaseModel {
     return this.query().getAvgDistinct(columnName)
   }
 
- /**
+  /**
   * Return the minimum of all values of columnName.
   *
   * @method getMin
@@ -1408,7 +1373,7 @@ class Model extends BaseModel {
     return this.query().getMin(columnName)
   }
 
- /**
+  /**
   * Return the maximum of all values of columnName.
   *
   * @method getMax
@@ -1421,7 +1386,7 @@ class Model extends BaseModel {
     return this.query().getMax(columnName)
   }
 
- /**
+  /**
   * Return the sum of all values of columnName.
   *
   * @method getSum
@@ -1434,7 +1399,7 @@ class Model extends BaseModel {
     return this.query().getSum(columnName)
   }
 
- /**
+  /**
   * Return the sum of all distinct values of columnName.
   *
   * @method getSumDistinct

@@ -26,6 +26,14 @@ test.group('Database | QueryBuilder', (group) => {
     await helpers.createTables(this.database)
   })
 
+  group.afterEach(async () => {
+    await Promise.all([
+      this.database.truncate('users'),
+      this.database.truncate('profiles'),
+      this.database.truncate('my_users')
+    ])
+  })
+
   group.after(async () => {
     await helpers.dropTables(this.database)
     this.database.close()
@@ -78,10 +86,9 @@ test.group('Database | QueryBuilder', (group) => {
   test('commit transactions', async (assert) => {
     const trx = await this.database.beginTransaction()
     await trx.table('users').insert({ username: 'virk' })
-    trx.commit()
+    await trx.commit()
     const firstUser = await this.database.table('users').first()
     assert.equal(firstUser.username, 'virk')
-    await this.database.truncate('users')
   })
 
   test('rollback transactions', async (assert) => {
@@ -100,7 +107,6 @@ test.group('Database | QueryBuilder', (group) => {
     await this.database.table('users').insert({ username: 'virk' })
     const users = await this.database.table('users')
     assert.lengthOf(users, 1)
-    await this.database.truncate('users')
   })
 
   test('create global transactions', async (assert) => {
@@ -108,7 +114,7 @@ test.group('Database | QueryBuilder', (group) => {
     await this.database.table('users').insert({ username: 'virk' })
     const users = await this.database.table('users')
     assert.lengthOf(users, 1)
-    this.database.rollbackGlobalTransaction()
+    await this.database.rollbackGlobalTransaction()
     const usersAfterRollback = await this.database.table('users')
     assert.lengthOf(usersAfterRollback, 0)
   })
@@ -116,10 +122,9 @@ test.group('Database | QueryBuilder', (group) => {
   test('commit global transactions', async (assert) => {
     await this.database.beginGlobalTransaction()
     await this.database.table('users').insert({ username: 'virk' })
-    this.database.commitGlobalTransaction()
+    await this.database.commitGlobalTransaction()
     const users = await this.database.table('users')
     assert.lengthOf(users, 1)
-    await this.database.truncate('users')
   })
 
   test('destroy database connection', async (assert) => {
@@ -191,12 +196,11 @@ test.group('Database | QueryBuilder', (group) => {
     })
     const firstUser = await this.database.table('users').first()
     assert.equal(firstUser.username, 'virk')
-    await this.database.truncate('users')
   })
 
   test('aggregate functions', async (assert) => {
     await this.database.insert({ user_id: 1, country_id: 1, profile_name: 'u1', likes: 5 }).into('profiles')
-    await this.database.insert({ user_id: 1, country_id: 2, profile_name: 'u2', likes: 10 }).into('profiles') // Intentional duplicate for testing distinct aggregates
+    await this.database.insert({ user_id: 1, country_id: 2, profile_name: 'u2', likes: 10 }).into('profiles')
     await this.database.insert({ user_id: 1, country_id: 2, profile_name: 'u3', likes: 10 }).into('profiles')
 
     let c1 = 0
@@ -206,12 +210,16 @@ test.group('Database | QueryBuilder', (group) => {
 
     c1 = (await q)
     c2 = await q.getCount()
+
+    const firstRow = c1[0].country_id === 1 ? c1[0] : c1[1]
+    const secondRow = c1[0].country_id === 1 ? c1[1] : c1[0]
+
     assert.equal(c1.length, 2)
     assert.equal(c2, 2, 'There should be 2 rows counted')
-    assert.equal(c1[0].country_id, 1)
-    assert.equal(c1[0].like_total, 5)
-    assert.equal(c1[1].country_id, 2)
-    assert.equal(c1[1].like_total, 20)
+    assert.equal(firstRow.country_id, 1)
+    assert.equal(firstRow.like_total, helpers.formatNumber(5))
+    assert.equal(secondRow.country_id, 2)
+    assert.equal(secondRow.like_total, helpers.formatNumber(20))
 
     c1 = (await this.database.table('profiles').count('likes as total'))[0].total
     c2 = await this.database.table('profiles').getCount()
@@ -281,6 +289,32 @@ test.group('Database | QueryBuilder', (group) => {
 
     const user = await this.database.table('users').last('username')
     assert.equal(user.username, 'virk')
+  })
+
+  test('run raw query inside global transactions', async (assert) => {
+    try {
+      await this.database.beginGlobalTransaction()
+      await this.database.table('users').insert({ username: 'virk' })
+      const users = await this.database.raw('select * from users')
+      assert.exists(users)
+      await this.database.rollbackGlobalTransaction()
+    } catch (error) {
+      await this.database.rollbackGlobalTransaction()
+      throw error
+    }
+  })
+
+  test('run raw query as a subquery global transactions', async (assert) => {
+    try {
+      await this.database.beginGlobalTransaction()
+      await this.database.table('users').insert({ username: 'virk' })
+      const users = await this.database.select(this.database.raw('count(*) as users_count'))
+      assert.exists(users)
+      await this.database.rollbackGlobalTransaction()
+    } catch (error) {
+      await this.database.rollbackGlobalTransaction()
+      throw error
+    }
   })
 })
 

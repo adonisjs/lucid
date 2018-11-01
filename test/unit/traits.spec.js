@@ -259,7 +259,7 @@ test.group('Traits', (group) => {
     class FooTrait {
       register (ctx, options) {
         assert.deepEqual(ctx, User)
-        assert.deepEqual(options, {foo: 1})
+        assert.deepEqual(options, { foo: 1 })
       }
     }
 
@@ -270,7 +270,7 @@ test.group('Traits', (group) => {
     class User extends Model {
       static boot () {
         super.boot()
-        this.addTrait('@provider:FooTrait', {foo: 1})
+        this.addTrait('@provider:FooTrait', { foo: 1 })
       }
     }
 
@@ -283,8 +283,8 @@ test.group('Traits', (group) => {
         super.boot()
         this.addTrait((ctx, options) => {
           assert.deepEqual(ctx, User)
-          assert.deepEqual(options, {foo: 1})
-        }, {foo: 1})
+          assert.deepEqual(options, { foo: 1 })
+        }, { foo: 1 })
       }
     }
 

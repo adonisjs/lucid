@@ -10,35 +10,25 @@
 const knex = require('knex')
 const _ = require('lodash')
 
-const util = require('../../lib/util')
-const DatabaseFormatter = require('./Formatter')
+const KnexFormatter = require('knex/lib/formatter')
 
-/**
- * Patching the dialect `queryCompiler` method to return DatabaseFormatter
- * instance, which is tailored to handle Lucid query builder too.
- *
- * @method patchDialectCompiler
- *
- * @param  {Object}             config
- *
- * @return {void}
- */
-function patchDialectCompiler (config) {
-  const Dialect = util.getKnexDialect(config.client || config.dialect)
+KnexFormatter.prototype.compileCallback = function (callback, method) {
+  /**
+   * subQuery is set by Lucid model query builder, since that querybuilder
+   * has more methods then a regular query builder.
+   */
+  const builder = typeof (this.builder.subQuery) === 'function'
+    ? this.builder.subQuery()
+    : this.client.queryBuilder()
 
   /**
-   * Do not patch dialect when already did
+   * All this code is a copy/paste from Knex
    */
-  if (Dialect._queryCompilerNative) {
-    return
-  }
+  callback.call(builder, builder)
+  const compiler = this.client.queryCompiler(builder)
+  compiler.formatter = this
 
-  Dialect._queryCompilerNative = Dialect.prototype.queryCompiler
-  Dialect.prototype.queryCompiler = function (builder) {
-    const compiler = Dialect._queryCompilerNative.bind(this)(builder)
-    compiler.formatter = new DatabaseFormatter(this, builder)
-    return compiler
-  }
+  return compiler.toSQL(method || builder._method || 'select')
 }
 
 const proxyHandler = {
@@ -81,13 +71,15 @@ const proxyHandler = {
  */
 class Database {
   constructor (config) {
+    this.connectionClient = config.client
+
     if (config.client === 'sqlite' || config.client === 'sqlite3') {
       config.useNullAsDefault = _.defaultTo(config.useNullAsDefault, true)
     }
+
     this.knex = knex(config)
     this._globalTrx = null
 
-    patchDialectCompiler(config)
     return new Proxy(this, proxyHandler)
   }
 
@@ -159,7 +151,7 @@ class Database {
    * @return {String}
    */
   raw (...args) {
-    return this.knex.raw(...args)
+    return this._globalTrx ? this._globalTrx.raw(...args) : this.knex.raw(...args)
   }
 
   /**
@@ -231,8 +223,8 @@ class Database {
    *
    * @return {void}
    */
-  rollbackGlobalTransaction () {
-    this._globalTrx.rollback()
+  async rollbackGlobalTransaction () {
+    await this._globalTrx.rollback()
     this._globalTrx = null
   }
 
@@ -243,8 +235,8 @@ class Database {
    *
    * @return {void}
    */
-  commitGlobalTransaction () {
-    this._globalTrx.commit()
+  async commitGlobalTransaction () {
+    await this._globalTrx.commit()
     this._globalTrx = null
   }
 

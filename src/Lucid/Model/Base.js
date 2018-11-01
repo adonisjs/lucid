@@ -11,6 +11,8 @@
 
 const _ = require('lodash')
 const moment = require('moment')
+const Hooks = require('../Hooks')
+const GlobalScopes = require('../GlobalScope')
 const VanillaSerializer = require('../Serializers/Vanilla')
 const { ioc } = require('../../../lib/iocResolver')
 const DATE_FORMAT = 'YYYY-MM-DD HH:mm:ss'
@@ -156,6 +158,70 @@ class BaseModel {
    */
   static castDates (key, value) {
     return value.format(DATE_FORMAT)
+  }
+
+  /**
+   * Method to be called only once to boot
+   * the model.
+   *
+   * NOTE: This is called automatically by the IoC
+   * container hooks when you make use of `use()`
+   * method.
+   *
+   * @method boot
+   *
+   * @return {void}
+   *
+   * @static
+   */
+  static boot () {
+    this.hydrate()
+    _.each(this.traits, (trait) => this.addTrait(trait))
+  }
+
+  /**
+   * Hydrates model static properties by re-setting
+   * them to their original value.
+   *
+   * @method hydrate
+   *
+   * @return {void}
+   *
+   * @static
+   */
+  static hydrate () {
+    /**
+     * Model hooks for different lifecycle
+     * events
+     *
+     * @type {Object}
+     */
+    this.$hooks = {
+      before: new Hooks(),
+      after: new Hooks()
+    }
+
+    /**
+     * List of global query listeners for the model.
+     *
+     * @type {Array}
+     */
+    this.$queryListeners = []
+
+    /**
+     * List of global query scopes. Chained before executing
+     * query builder queries.
+     */
+    this.$globalScopes = new GlobalScopes()
+
+    /**
+     * We use the default query builder class to run queries, but as soon
+     * as someone wants to add methods to the query builder via traits,
+     * we need an isolated copy of query builder class just for that
+     * model, so that the methods added via traits are not impacting
+     * other models.
+     */
+    this.QueryBuilder = null
   }
 
   /**
