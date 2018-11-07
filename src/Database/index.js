@@ -90,7 +90,7 @@ class Database {
    *
    * @method on
    *
-   * @param  {Strign}   event
+   * @param  {String}   event
    * @param  {Function} callback
    *
    * @chainable
