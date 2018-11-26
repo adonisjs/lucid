@@ -49,7 +49,7 @@ npm run
 
 1. Lint your code using standardJs. Run `npm run lint` command to check if there are any linting errors.
 2. Make sure you write tests for all the changes/bug fixes.
-3. Also you can write **regression tests**, which shows that something is failing but doesn't breaks the build. Which is actually a nice way to show that something fails. Regression tests are written using `test.failing()` method.
+3. Also you can write **regression tests**, which shows that something is failing but doesn't break the build. Which is actually a nice way to show that something fails. Regression tests are written using `test.failing()` method.
 4. Make sure all the tests are passing on `travis` and `appveyor`.
 
 ### General Practices
