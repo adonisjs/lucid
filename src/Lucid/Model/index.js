@@ -519,7 +519,7 @@ class Model extends BaseModel {
    * Sets `created_at` column on the values object.
    *
    * Note: This method will mutate the original object
-   * by adding a new key/value pair.
+   * by adding a new key/value pair if undefined.
    *
    * @method _setCreatedAt
    *
@@ -529,7 +529,7 @@ class Model extends BaseModel {
    */
   _setCreatedAt (values) {
     const createdAtColumn = this.constructor.createdAtColumn
-    if (createdAtColumn) {
+    if (createdAtColumn && !values[createdAtColumn]) {
       values[createdAtColumn] = this._getSetterValue(createdAtColumn, new Date())
     }
   }
