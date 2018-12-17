@@ -546,9 +546,9 @@ class Model extends BaseModel {
    *
    * @private
    */
-  _setUpdatedAt (values) {
+  _setUpdatedAt (values, onInsert) {
     const updatedAtColumn = this.constructor.updatedAtColumn
-    if (updatedAtColumn) {
+    if (updatedAtColumn && ((onInsert && !values[updatedAtColumn]) || !onInsert)) {
       values[updatedAtColumn] = this._getSetterValue(updatedAtColumn, new Date())
     }
   }
@@ -593,7 +593,7 @@ class Model extends BaseModel {
      * Set timestamps
      */
     this._setCreatedAt(this.$attributes)
-    this._setUpdatedAt(this.$attributes)
+    this._setUpdatedAt(this.$attributes, true)
     this._formatDateFields(this.$attributes)
 
     const query = this.constructor.query()
