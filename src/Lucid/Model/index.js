@@ -546,7 +546,7 @@ class Model extends BaseModel {
    *
    * @private
    */
-  _setUpdatedAt (values, onInsert) {
+  _setUpdatedAt (values) {
     const updatedAtColumn = this.constructor.updatedAtColumn
     if (updatedAtColumn && !this.dirty[updatedAtColumn]) {
       values[updatedAtColumn] = this._getSetterValue(updatedAtColumn, new Date())
