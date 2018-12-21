@@ -518,6 +518,16 @@ class QueryBuilder {
 
     const valuesCopy = _.clone(valuesOrModelInstance)
     const fakeModel = new this.Model()
+
+    /**
+     * Here we fill attributes on the model, so that the logic to
+     * find if `updated_at` should be set or not can be
+     * evaluated by the model instance.
+     *
+     * For this model instance relies on `dirty` values.
+     */
+    fakeModel.fill(valuesCopy)
+
     fakeModel._setUpdatedAt(valuesCopy)
     fakeModel._formatDateFields(valuesCopy)
 
