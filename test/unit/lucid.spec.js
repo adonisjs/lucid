@@ -2028,4 +2028,44 @@ test.group('Model', (group) => {
 
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (exists (select * from "profiles" where "users"."id" = "profiles"."user_id")) limit ?'))
   })
+
+  test('do not set created_at when explicitly set in values', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    const createdAt = moment().subtract('1', 'day').format('YYYY-MM-DD HH:mm:ss')
+
+    const user = await User.create({ username: 'virk', created_at: createdAt })
+    await user.reload()
+
+    assert.equal(user.created_at, createdAt)
+  })
+
+  test('do not set updated_at when explicitly set in values', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    const updatedAt = moment().subtract('1', 'day').format('YYYY-MM-DD HH:mm:ss')
+
+    const user = await User.create({ username: 'virk', updated_at: updatedAt })
+    await user.reload()
+
+    assert.equal(user.updated_at, updatedAt)
+  })
+
+  test('do not set updated_at when calling update on query builder', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+    const updatedAt = moment().subtract('1', 'day').format('YYYY-MM-DD HH:mm:ss')
+
+    const user = await User.create({ username: 'virk' })
+    await User.query().where('username', 'virk').update({ updated_at: updatedAt })
+    await user.reload()
+
+    assert.equal(user.updated_at, updatedAt)
+  })
 })
