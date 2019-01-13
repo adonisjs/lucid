@@ -195,7 +195,7 @@ class Model extends BaseModel {
    *
    * @static
    */
-  static query () {
+  static query (trx) {
     const query = new (this.QueryBuilder || QueryBuilder)(this, this.connection)
 
     /**
@@ -207,6 +207,13 @@ class Model extends BaseModel {
         .filter((listener) => typeof (listener) === 'function')
         .each((listener) => listener(builder))
     })
+
+    /**
+     * If trx is defined then use it.
+     */
+    if (trx) {
+      query.transacting(trx)
+    }
 
     return query
   }
@@ -367,11 +374,12 @@ class Model extends BaseModel {
    * @async
    *
    * @param  {String} field
+   * @param  {Object} trx
    *
    * @return {Model|Null}
    */
-  static last (field = this.primaryKey) {
-    return this.query().last(field)
+  static last (field = this.primaryKey, trx) {
+    return this.query(trx).last(field)
   }
 
   /**
@@ -407,10 +415,12 @@ class Model extends BaseModel {
    *
    * @method truncate
    *
+   * @param  {Object} trx
+   *
    * @return {Promise<void>}
    */
-  static truncate () {
-    const query = this.query()
+  static truncate (trx) {
+    const query = this.query(trx)
     return query.truncate()
   }
 
@@ -596,15 +606,7 @@ class Model extends BaseModel {
     this._setUpdatedAt(this.$attributes)
     this._formatDateFields(this.$attributes)
 
-    const query = this.constructor.query()
-
-    /**
-     * If trx is defined then use it for the save
-     * operation.
-     */
-    if (trx) {
-      query.transacting(trx)
-    }
+    const query = this.constructor.query(trx)
 
     /**
      * Execute query
@@ -653,15 +655,7 @@ class Model extends BaseModel {
     await this.constructor.$hooks.before.exec('update', this)
     let affected = 0
 
-    const query = this.constructor.query()
-
-    /**
-     * If trx is defined then use it for the update
-     * operation.
-     */
-    if (trx) {
-      query.transacting(trx)
-    }
+    const query = this.constructor.query(trx)
 
     if (this.isDirty) {
       /**
@@ -805,14 +799,14 @@ class Model extends BaseModel {
    *
    * @return {Boolean}
    */
-  async delete () {
+  async delete (trx) {
     /**
      * Executing before hooks
      */
     await this.constructor.$hooks.before.exec('delete', this)
 
     const affected = await this.constructor
-      .query()
+      .query(trx)
       .where(this.constructor.primaryKey, this.primaryKeyValue)
       .ignoreScopes()
       .delete()
@@ -858,8 +852,8 @@ class Model extends BaseModel {
    *
    * @return {Model|Null}
    */
-  static find (value) {
-    return this.findBy(this.primaryKey, value)
+  static find (value, trx) {
+    return this.findBy(this.primaryKey, value, trx)
   }
 
   /**
@@ -875,8 +869,8 @@ class Model extends BaseModel {
    *
    * @throws {ModelNotFoundException} If unable to find row
    */
-  static findOrFail (value) {
-    return this.findByOrFail(this.primaryKey, value)
+  static findOrFail (value, trx) {
+    return this.findByOrFail(this.primaryKey, value, trx)
   }
 
   /**
@@ -887,11 +881,12 @@ class Model extends BaseModel {
    *
    * @param  {String} key
    * @param  {String|Number} value
+   * @param  {Object} trx
    *
    * @return {Model|Null}
    */
-  static findBy (key, value) {
-    return this.query().where(key, value).first()
+  static findBy (key, value, trx) {
+    return this.query(trx).where(key, value).first()
   }
 
   /**
@@ -903,13 +898,14 @@ class Model extends BaseModel {
    *
    * @param  {String}     key
    * @param  {String|Number}     value
+   * @param  {Object} trx
    *
    * @return {Model}
    *
    * @throws {ModelNotFoundException} If unable to find row
    */
-  static findByOrFail (key, value) {
-    return this.query().where(key, value).firstOrFail()
+  static findByOrFail (key, value, trx) {
+    return this.query(trx).where(key, value).firstOrFail()
   }
 
   /**
@@ -919,10 +915,12 @@ class Model extends BaseModel {
    * @method first
    * @async
    *
+   * @param  {Object} trx
+   *
    * @return {Model|Null}
    */
-  static first () {
-    return this.query().orderBy(this.primaryKey, 'asc').first()
+  static first (trx) {
+    return this.query(trx).orderBy(this.primaryKey, 'asc').first()
   }
 
   /**
@@ -936,8 +934,8 @@ class Model extends BaseModel {
    *
    * @throws {ModelNotFoundException} If unable to find row
    */
-  static firstOrFail () {
-    return this.query().orderBy(this.primaryKey, 'asc').firstOrFail()
+  static firstOrFail (trx) {
+    return this.query(trx).orderBy(this.primaryKey, 'asc').firstOrFail()
   }
 
   /**
@@ -958,14 +956,7 @@ class Model extends BaseModel {
       payload = whereClause
     }
 
-    const query = this.query()
-
-    /**
-     * If trx is defined then use it for operation
-     */
-    if (trx) {
-      query.transacting(trx)
-    }
+    const query = this.query(trx)
 
     /**
      * Find a row using where clause
@@ -989,10 +980,11 @@ class Model extends BaseModel {
    *
    * @param  {Object}  whereClause
    * @param  {Object}  payload
+   * @param  {Object} trx
    *
    * @return {Model}
    */
-  static async findOrNew (whereClause, payload) {
+  static async findOrNew (whereClause, payload, trx) {
     if (!payload) {
       payload = whereClause
     }
@@ -1000,7 +992,7 @@ class Model extends BaseModel {
     /**
      * Find a row using where clause
      */
-    const row = await this.query().where(whereClause).first()
+    const row = await this.query(trx).where(whereClause).first()
     if (row) {
       return row
     }
@@ -1020,10 +1012,12 @@ class Model extends BaseModel {
    * @method all
    * @async
    *
+   * @param  {Object} trx
+   *
    * @return {Collection}
    */
-  static all () {
-    return this.query().fetch()
+  static all (trx) {
+    return this.query(trx).fetch()
   }
 
   /**
@@ -1036,8 +1030,8 @@ class Model extends BaseModel {
    *
    * @return {Collection}
    */
-  static pick (limit = 1) {
-    return this.query().pick(limit)
+  static pick (limit = 1, trx) {
+    return this.query(trx).pick(limit)
   }
 
   /**
@@ -1047,11 +1041,12 @@ class Model extends BaseModel {
    * @async
    *
    * @param  {Number}    [limit = 1]
+   * @param  {Object} trx
    *
    * @return {Collection}
    */
-  static pickInverse (limit = 1) {
-    return this.query().pickInverse(limit)
+  static pickInverse (limit = 1, trx) {
+    return this.query(trx).pickInverse(limit)
   }
 
   /**
@@ -1062,9 +1057,11 @@ class Model extends BaseModel {
    * @method ids
    * @async
    *
+   * @param  {Object} trx
+   *
    * @return {Array}
    */
-  static ids () {
+  static ids (trx) {
     return this.query().ids()
   }
 
@@ -1078,11 +1075,12 @@ class Model extends BaseModel {
    *
    * @param  {String} lhs
    * @param  {String} rhs
+   * @param  {Object} trx
    *
    * @return {Object}
    */
-  static pair (lhs, rhs) {
-    return this.query().pair(lhs, rhs)
+  static pair (lhs, rhs, trx) {
+    return this.query(trx).pair(lhs, rhs)
   }
 
   /**
@@ -1152,11 +1150,12 @@ class Model extends BaseModel {
    *
    * @param  {String}   relation
    * @param  {Function} callback
+   * @param  {Object} trx
    *
    * @return {void}
    */
-  async load (relation, callback) {
-    const eagerLoad = new EagerLoad({ [relation]: callback })
+  async load (relation, callback, trx) {
+    const eagerLoad = new EagerLoad({ [relation]: callback }, trx)
     const result = await eagerLoad.loadForOne(this)
     _.each(result, (values, name) => this.setRelated(name, values))
   }
@@ -1169,11 +1168,12 @@ class Model extends BaseModel {
    * @async
    *
    * @param  {Object} eagerLoadMap
+   * @param  {Object} trx
    *
    * @return {void}
    */
-  async loadMany (eagerLoadMap) {
-    const eagerLoad = new EagerLoad(eagerLoadMap)
+  async loadMany (eagerLoadMap, trx) {
+    const eagerLoad = new EagerLoad(eagerLoadMap, trx)
     const result = await eagerLoad.loadForOne(this)
     _.each(result, (values, name) => this.setRelated(name, values))
   }
@@ -1292,13 +1292,13 @@ class Model extends BaseModel {
    *
    * @return {void}
    */
-  async reload () {
+  async reload (trx) {
     if (this.$frozen) {
       throw GE.RuntimeException.invoke('Cannot reload a deleted model instance')
     }
 
     if (!this.isNew) {
-      const newInstance = await this.constructor.find(this.primaryKeyValue)
+      const newInstance = await this.constructor.find(this.primaryKeyValue, trx)
       if (!newInstance) {
         throw GE
           .RuntimeException
@@ -1314,11 +1314,12 @@ class Model extends BaseModel {
   * @method getCount
   *
   * @param  {String} columnName = '*'
+  * @param  {Object} trx
   *
   * @return {Number}
   */
-  static async getCount (columnName = '*') {
-    return this.query().getCount(columnName)
+  static async getCount (columnName = '*', trx) {
+    return this.query(trx).getCount(columnName)
   }
 
   /**
@@ -1327,11 +1328,12 @@ class Model extends BaseModel {
   * @method getCountDistinct
   *
   * @param  {String} columnName
+  * @param  {Object} trx
   *
   * @return {Number}
   */
-  static async getCountDistinct (columnName) {
-    return this.query().getCountDistinct(columnName)
+  static async getCountDistinct (columnName, trx) {
+    return this.query(trx).getCountDistinct(columnName)
   }
 
   /**
@@ -1340,11 +1342,12 @@ class Model extends BaseModel {
   * @method getAvg
   *
   * @param  {String} columnName
+  * @param  {Object} trx
   *
   * @return {Number}
   */
-  static async getAvg (columnName) {
-    return this.query().getAvg(columnName)
+  static async getAvg (columnName, trx) {
+    return this.query(trx).getAvg(columnName)
   }
 
   /**
@@ -1353,11 +1356,12 @@ class Model extends BaseModel {
   * @method getAvgDistinct
   *
   * @param  {String} columnName
+  * @param  {Object} trx
   *
   * @return {Number}
   */
-  static async getAvgDistinct (columnName) {
-    return this.query().getAvgDistinct(columnName)
+  static async getAvgDistinct (columnName, trx) {
+    return this.query(trx).getAvgDistinct(columnName)
   }
 
   /**
@@ -1366,11 +1370,12 @@ class Model extends BaseModel {
   * @method getMin
   *
   * @param  {String} columnName
+  * @param  {Object} trx
   *
   * @return {Number}
   */
-  static async getMin (columnName) {
-    return this.query().getMin(columnName)
+  static async getMin (columnName, trx) {
+    return this.query(trx).getMin(columnName)
   }
 
   /**
@@ -1379,11 +1384,12 @@ class Model extends BaseModel {
   * @method getMax
   *
   * @param  {String} columnName
+  * @param  {Object} trx
   *
   * @return {Number}
   */
-  static async getMax (columnName) {
-    return this.query().getMax(columnName)
+  static async getMax (columnName, trx) {
+    return this.query(trx).getMax(columnName)
   }
 
   /**
@@ -1392,11 +1398,12 @@ class Model extends BaseModel {
   * @method getSum
   *
   * @param  {String} columnName
+  * @param  {Object} trx
   *
   * @return {Number}
   */
-  static async getSum (columnName) {
-    return this.query().getSum(columnName)
+  static async getSum (columnName, trx) {
+    return this.query(trx).getSum(columnName)
   }
 
   /**
@@ -1405,11 +1412,12 @@ class Model extends BaseModel {
   * @method getSumDistinct
   *
   * @param  {String} columnName
+  * @param  {Object} trx
   *
   * @return {Number}
   */
-  static async getSumDistinct (columnName) {
-    return this.query().getSumDistinct(columnName)
+  static async getSumDistinct (columnName, trx) {
+    return this.query(trx).getSumDistinct(columnName)
   }
 }
 module.exports = Model

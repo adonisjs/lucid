@@ -22,8 +22,9 @@ const RelationsParser = require('../Relations/Parser')
  * @constructor
  */
 class EagerLoad {
-  constructor (relations) {
+  constructor (relations, trx) {
     this._relations = RelationsParser.parseRelations(relations)
+    this._trx = trx
   }
 
   /**
@@ -34,12 +35,18 @@ class EagerLoad {
    *
    * @param  {Object}     relationInstance
    * @param  {Function}   callback
-   *
+   * @param  {Transaction} trx
    * @return {void}
    *
    * @private
    */
-  _applyRuntimeConstraints (relationInstance, callback) {
+  _applyRuntimeConstraints (relationInstance, callback, trx) {
+    /**
+     * If trx is defined then use it.
+     */
+    if (trx) {
+      relationInstance.relatedQuery.transacting(trx)
+    }
     if (typeof (callback) === 'function') {
       callback(relationInstance)
     }
@@ -76,7 +83,7 @@ class EagerLoad {
    *
    * @return {Object}
    */
-  async loadForOne (modelInstance) {
+  async loadForOne (modelInstance, trx = this._trx) {
     const relationsKeys = _.keys(this._relations)
 
     /**
@@ -85,7 +92,7 @@ class EagerLoad {
     const queries = _.map(this._relations, (attributes, relation) => {
       RelationsParser.validateRelationExistence(modelInstance, relation)
       const relationInstance = RelationsParser.getRelatedInstance(modelInstance, relation)
-      this._applyRuntimeConstraints(relationInstance, attributes.callback)
+      this._applyRuntimeConstraints(relationInstance, attributes.callback, trx)
       this._chainNested(relationInstance, attributes.nested)
       return relationInstance.load()
     })
@@ -114,10 +121,11 @@ class EagerLoad {
    * @method load
    *
    * @param  {Array} modelInstances
+   * @param  {Transaction} trx
    *
    * @return {void}
    */
-  async load (modelInstances) {
+  async load (modelInstances, trx = this._trx) {
     const relationsKeys = _.keys(this._relations)
 
     /**
@@ -133,7 +141,7 @@ class EagerLoad {
     const queries = _.map(this._relations, (attributes, relation) => {
       RelationsParser.validateRelationExistence(modelInstance, relation)
       const relationInstance = RelationsParser.getRelatedInstance(modelInstance, relation)
-      this._applyRuntimeConstraints(relationInstance, attributes.callback)
+      this._applyRuntimeConstraints(relationInstance, attributes.callback, trx)
       this._chainNested(relationInstance, attributes.nested)
       return relationInstance.eagerLoad(modelInstances)
     })

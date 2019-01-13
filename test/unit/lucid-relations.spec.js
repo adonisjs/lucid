@@ -15,6 +15,7 @@ const fs = require('fs-extra')
 const path = require('path')
 const { ioc } = require('@adonisjs/fold')
 const { Config } = require('@adonisjs/sink')
+const { TimeoutError } = require('tarn')
 
 const helpers = require('./helpers')
 const Model = require('../../src/Lucid/Model')
@@ -1946,5 +1947,77 @@ test.group('Relations | HasOne', (group) => {
 
     const user = await User.query().with('profile').first()
     assert.equal(user.toJSON().profile.user_id, 0)
+  })
+
+  test('load relation inside the context of a transaction', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    let car = null
+    let error = null
+    try {
+      await ioc.use('Database').transaction(async (trx) => {
+        await trx.table('users').insert({ username: 'virk' })
+        await trx.table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 1 })
+        car = await Car.query(trx).select(['id', 'name', 'user_id']).where('id', 1).first()
+        await car.load('user', null, trx)
+      })
+    } catch (e) {
+      error = e
+    }
+
+    assert.equal(error, null)
+    assert.instanceOf(car.$relations.user, User)
+    assert.equal(car.$relations.user.$attributes.id, 1)
+  })
+
+  test('does not load relation inside the context of a transaction', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    let userQuery = null
+    let carQuery = null
+    User.onQuery((query) => (userQuery = query))
+    Car.onQuery((query) => (carQuery = query))
+    let car = null
+    let error = null
+    try {
+      await ioc.use('Database').transaction(async (trx) => {
+        await trx.table('users').insert({ username: 'virk' })
+        await trx.table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 1 })
+        car = await Car.query(trx).select(['id', 'name', 'user_id']).where('id', 1).first()
+        await car.load('user')
+      })
+    } catch (e) {
+      error = e
+    }
+    const json = car.toJSON()
+    assert.deepEqual(json, {
+      id: 1,
+      name: 'E180',
+      user_id: 1
+    })
+    assert.equal(userQuery, null)
+    assert.equal(error.name, TimeoutError.name)
+    assert.equal(carQuery.sql, helpers.formatQuery('select "id", "name", "user_id" from "cars" where "id" = ? limit ?'))
+    assert.deepEqual(carQuery.bindings, helpers.formatBindings([1, 1]))
   })
 })
