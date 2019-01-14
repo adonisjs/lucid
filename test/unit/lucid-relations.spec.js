@@ -15,7 +15,6 @@ const fs = require('fs-extra')
 const path = require('path')
 const { ioc } = require('@adonisjs/fold')
 const { Config } = require('@adonisjs/sink')
-const { TimeoutError } = require('tarn')
 
 const helpers = require('./helpers')
 const Model = require('../../src/Lucid/Model')
