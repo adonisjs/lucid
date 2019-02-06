@@ -182,7 +182,7 @@ test.group('Relations | HasOne', (group) => {
     await user.save()
     await ioc.use('Database').table('profiles').insert({ user_id: user.id, profile_name: 'virk', likes: 3 })
     await user.profile().increment('likes', 1)
-    assert.equal(profileQuery.sql, helpers.formatQuery('update "profiles" set "likes" = "likes" + 1 where "user_id" = ?'))
+    assert.equal(profileQuery.sql, helpers.formatQuery('update "profiles" set "likes" = "likes" + ? where "user_id" = ?'))
   })
 
   test('eagerload and set relation on model instance', async (assert) => {
