@@ -216,6 +216,25 @@ test.group('Factory', (group) => {
     assert.isTrue(users[1].$persisted)
   })
 
+  test('throw exception when not passing a number as first argument to createMany', async (assert) => {
+    Factory.blueprint('App/Model/User', () => {
+      return {
+        username: 'virk'
+      }
+    })
+
+    class User extends Model {
+    }
+
+    ioc.fake('App/Model/User', () => {
+      User._bootIfNotBooted()
+      return User
+    })
+
+    const fn = () => Factory.model('App/Model/User').createMany({ username: 'romain' })
+    assert.throw(fn, 'E_INVALID_PARAMETER: ModelFactory.createMany() expects the number of rows as first argument')
+  })
+
   test('throw exception when factory blueprint doesn\'t have a callback', async (assert) => {
     const fn = () => Factory.blueprint('App/Model/User')
     assert.throw(fn, 'E_INVALID_PARAMETER: Factory.blueprint expects a callback as 2nd parameter')
@@ -267,6 +286,24 @@ test.group('Factory', (group) => {
     })
     await Factory.model('App/Model/User').makeMany(2, { username: 'virk' })
     assert.deepEqual(stack, [{ username: 'virk' }, { username: 'virk' }])
+  })
+
+  test('throw exception when not passing a number as first argument to makeMany', async (assert) => {
+    class User extends Model {}
+
+    ioc.fake('App/Model/User', () => {
+      User._bootIfNotBooted()
+      return User
+    })
+
+    Factory.blueprint('App/Model/User', () => {
+      return {
+        username: 'virk'
+      }
+    })
+
+    const fn = () => Factory.model('App/Model/User').makeMany({ username: 'romain' })
+    assert.throw(fn, 'E_INVALID_PARAMETER: ModelFactory.makeMany() expects the number of instances as first argument')
   })
 
   test('get data object for table', async (assert) => {

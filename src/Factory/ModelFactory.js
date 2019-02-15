@@ -9,6 +9,7 @@
  * file that was distributed with this source code.
 */
 
+const GE = require('@adonisjs/generic-exceptions')
 const _ = require('lodash')
 const chancejs = require('./chance')
 const { ioc } = require('../../lib/iocResolver')
@@ -108,6 +109,12 @@ class ModelFactory {
    * @return {Array}
    */
   async makeMany (instances, data = {}) {
+    if (typeof (instances) !== 'number'){
+      throw GE
+        .InvalidArgumentException
+        .invalidParameter('ModelFactory.makeMany() expects the number of instances as first argument', instances)
+    }
+
     return Promise.all(_.map(_.range(instances), (index) => this.make(data, index)))
   }
 
@@ -141,6 +148,12 @@ class ModelFactory {
    * @return {Array}
    */
   async createMany (numberOfRows, data = {}) {
+    if (typeof (numberOfRows) !== 'number'){
+      throw GE
+        .InvalidArgumentException
+        .invalidParameter('ModelFactory.createMany() expects the number of rows as first argument', numberOfRows)
+    }
+
     return Promise.all(_.map(_.range(numberOfRows), (index) => this.create(data, index)))
   }
 
