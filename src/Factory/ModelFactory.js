@@ -109,7 +109,7 @@ class ModelFactory {
    * @return {Array}
    */
   async makeMany (instances, data = {}) {
-    if (typeof (instances) !== 'number'){
+    if (typeof (instances) !== 'number') {
       throw GE
         .InvalidArgumentException
         .invalidParameter('ModelFactory.makeMany() expects the number of instances as first argument', instances)
@@ -148,7 +148,7 @@ class ModelFactory {
    * @return {Array}
    */
   async createMany (numberOfRows, data = {}) {
-    if (typeof (numberOfRows) !== 'number'){
+    if (typeof (numberOfRows) !== 'number') {
       throw GE
         .InvalidArgumentException
         .invalidParameter('ModelFactory.createMany() expects the number of rows as first argument', numberOfRows)
