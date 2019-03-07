@@ -231,8 +231,11 @@ test.group('Factory', (group) => {
       return User
     })
 
-    const fn = () => Factory.model('App/Model/User').createMany({ username: 'romain' })
-    assert.throw(fn, 'E_INVALID_PARAMETER: ModelFactory.createMany() expects the number of rows as first argument')
+    try {
+      await Factory.model('App/Model/User').createMany({ username: 'romain' })
+    } catch ({ message }) {
+      assert.match(message, /E_INVALID_PARAMETER: ModelFactory.createMany() expects the number of rows as first argument/)
+    }
   })
 
   test('throw exception when factory blueprint doesn\'t have a callback', async (assert) => {
@@ -302,8 +305,11 @@ test.group('Factory', (group) => {
       }
     })
 
-    const fn = () => Factory.model('App/Model/User').makeMany({ username: 'romain' })
-    assert.throw(fn, 'E_INVALID_PARAMETER: ModelFactory.makeMany() expects the number of instances as first argument')
+    try {
+      await Factory.model('App/Model/User').makeMany({ username: 'romain' })
+    } catch ({ message }) {
+      assert.match(message, /E_INVALID_PARAMETER: ModelFactory.makeMany() expects the number of instances as first argument/)
+    }
   })
 
   test('get data object for table', async (assert) => {
