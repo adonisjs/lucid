@@ -1264,7 +1264,7 @@ test.group('Model', (group) => {
     assert.deepEqual(stack, ['virk', 'nikk'])
   })
 
-  test('throw an exception when createMany doesn\'t recieves an array', async (assert) => {
+  test('throw an exception when createMany doesn\'t receive an array', async (assert) => {
     assert.plan(1)
     class User extends Model {
     }

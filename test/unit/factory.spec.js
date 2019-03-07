@@ -217,6 +217,7 @@ test.group('Factory', (group) => {
   })
 
   test('throw exception when not passing a number as first argument to createMany', async (assert) => {
+    assert.plan(1)
     Factory.blueprint('App/Model/User', () => {
       return {
         username: 'virk'
@@ -292,6 +293,7 @@ test.group('Factory', (group) => {
   })
 
   test('throw exception when not passing a number as first argument to makeMany', async (assert) => {
+    assert.plan(1)
     class User extends Model {}
 
     ioc.fake('App/Model/User', () => {
