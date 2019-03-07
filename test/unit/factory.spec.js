@@ -234,7 +234,7 @@ test.group('Factory', (group) => {
     try {
       await Factory.model('App/Model/User').createMany({ username: 'romain' })
     } catch ({ message }) {
-      assert.match(message, /E_INVALID_PARAMETER: ModelFactory.createMany() expects the number of rows as first argument/)
+      assert.match(message, /^E_INVALID_PARAMETER: ModelFactory.createMany() expects the number of rows as first argument/)
     }
   })
 
@@ -308,7 +308,7 @@ test.group('Factory', (group) => {
     try {
       await Factory.model('App/Model/User').makeMany({ username: 'romain' })
     } catch ({ message }) {
-      assert.match(message, /E_INVALID_PARAMETER: ModelFactory.makeMany() expects the number of instances as first argument/)
+      assert.match(message, /^E_INVALID_PARAMETER: ModelFactory.makeMany() expects the number of instances as first argument/)
     }
   })
 
