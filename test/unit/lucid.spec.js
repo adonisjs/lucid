@@ -2039,7 +2039,7 @@ test.group('Model', (group) => {
     const user = await User.create({ username: 'virk', created_at: createdAt })
     await user.reload()
 
-    assert.equal(user.created_at, createdAt)
+    assert.equal(helpers.formatTime(user.created_at), helpers.formatTime(createdAt))
   })
 
   test('do not set updated_at when explicitly set in values', async (assert) => {
@@ -2052,7 +2052,7 @@ test.group('Model', (group) => {
     const user = await User.create({ username: 'virk', updated_at: updatedAt })
     await user.reload()
 
-    assert.equal(user.updated_at, updatedAt)
+    assert.equal(helpers.formatTime(user.updated_at), helpers.formatTime(updatedAt))
   })
 
   test('do not set updated_at when calling update on query builder', async (assert) => {
@@ -2066,6 +2066,6 @@ test.group('Model', (group) => {
     await User.query().where('username', 'virk').update({ updated_at: updatedAt })
     await user.reload()
 
-    assert.equal(user.updated_at, updatedAt)
+    assert.equal(helpers.formatTime(user.updated_at), helpers.formatTime(updatedAt))
   })
 })
