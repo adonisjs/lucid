@@ -196,7 +196,7 @@ class BaseRelation {
    * @method applyRelatedScopes
    */
   applyRelatedScopes () {
-    this.relatedQuery._applyScopes()
+    this._applyScopes()
   }
 
   /**

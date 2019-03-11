@@ -2685,4 +2685,67 @@ test.group('Relations | Belongs To Many', (group) => {
 
     assert.deepEqual(postIds, [1, 2])
   })
+
+  test('apply global scope on pivate model when called withCount', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    PostUser.addGlobalScope(function (builder) {
+      builder.where(`${builder.$pivotModel.table}.deleted_at`, null)
+    })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+    await User.query().withCount('posts').fetch()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id" and "post_user"."deleted_at" is null) as "posts_count" from "users"'))
+  })
+
+  test('apply global scope on pivot model when called has', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    PostUser.addGlobalScope(function (builder) {
+      builder.where(`${builder.$pivotModel.table}.deleted_at`, null)
+    })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await User.query().has('posts').fetch()
+
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id" and "post_user"."deleted_at" is null)'))
+  })
 })
