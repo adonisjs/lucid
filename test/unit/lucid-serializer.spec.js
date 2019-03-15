@@ -275,4 +275,32 @@ test.group('Relations | Serializer', (group) => {
     assert.equal(users.nth(1).username, 'nikk')
     assert.isNull(users.nth(2))
   })
+
+  test('custom serializer toJSON fn receive arguments', async (assert) => {
+    let firstArg
+    let secondArg
+
+    class CustomSerializer {
+      toJSON (arg1, arg2) {
+        firstArg = arg1
+        secondArg = arg2
+      }
+    }
+
+    class User extends Model {
+      static get Serializer () {
+        return CustomSerializer
+      }
+    }
+
+    User._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert([{ username: 'virk' }])
+    const user = await User.first()
+
+    user.toJSON('virk', 'nikk')
+
+    assert.equal(firstArg, 'virk')
+    assert.equal(secondArg, 'nikk')
+  })
 })
