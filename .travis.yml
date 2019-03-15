@@ -3,8 +3,14 @@ node_js:
   - node
   - 8.0.0
 sudo: false
+services:
+  - mysql
+before_install:
+  - mysql -e 'CREATE DATABASE testing_lucid;'
 install:
   - npm install
+after_script:
+  - npm run coverage
 notifications:
   slack:
     secure: >-

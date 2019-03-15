@@ -93,7 +93,7 @@ class BaseRelation {
      * @return {void}
      */
     this._eagerLoadFn = function (query, fk, values) {
-      query.whereIn(fk, values)
+      query.whereIn(`${this.RelatedModel.table}.${fk}`, values)
     }
 
     /**
@@ -196,7 +196,7 @@ class BaseRelation {
    * @method applyRelatedScopes
    */
   applyRelatedScopes () {
-    this.relatedQuery._applyScopes()
+    this._applyScopes()
   }
 
   /**

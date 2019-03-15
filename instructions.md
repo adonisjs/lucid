@@ -52,7 +52,7 @@ After this all queries will be wrapped inside a transaction.
 
 ## Environment Variables
 
-The configuration file `config/database.js` references **environment variables** from `.env` file. Make sure to set them accordingly for development and prodiction envorinment. 
+The configuration file `config/database.js` references **environment variables** from `.env` file. Make sure to set them accordingly for development and production environment. 
 
 ```
 DB_CONNECTION=sqlite

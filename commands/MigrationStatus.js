@@ -48,7 +48,7 @@ class MigrationStatus extends BaseMigration {
    *
    * @return {void|Array}
    */
-  async handle (args, {keepAlive}) {
+  async handle (args, { keepAlive }) {
     if (keepAlive) {
       this.migration.keepAlive()
     }

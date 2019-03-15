@@ -165,7 +165,7 @@ class Migration {
    * @private
    */
   _addForBatch (name, batch) {
-    return this.db.table(this._migrationsTable).insert({name, batch})
+    return this.db.table(this._migrationsTable).insert({ name, batch })
   }
 
   /**

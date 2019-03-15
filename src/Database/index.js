@@ -90,7 +90,7 @@ class Database {
    *
    * @method on
    *
-   * @param  {Strign}   event
+   * @param  {String}   event
    * @param  {Function} callback
    *
    * @chainable
@@ -151,7 +151,7 @@ class Database {
    * @return {String}
    */
   raw (...args) {
-    return this.knex.raw(...args)
+    return this._globalTrx ? this._globalTrx.raw(...args) : this.knex.raw(...args)
   }
 
   /**

@@ -85,6 +85,8 @@ const queryMethods = [
 class QueryBuilder {
   constructor (Model, connection) {
     this.Model = Model
+    this.connectionString = connection
+
     const table = this.Model.prefix ? `${this.Model.prefix}${this.Model.table}` : this.Model.table
 
     /**
@@ -516,6 +518,16 @@ class QueryBuilder {
 
     const valuesCopy = _.clone(valuesOrModelInstance)
     const fakeModel = new this.Model()
+
+    /**
+     * Here we fill attributes on the model, so that the logic to
+     * find if `updated_at` should be set or not can be
+     * evaluated by the model instance.
+     *
+     * For this model instance relies on `dirty` values.
+     */
+    fakeModel.fill(valuesCopy)
+
     fakeModel._setUpdatedAt(valuesCopy)
     fakeModel._formatDateFields(valuesCopy)
 
@@ -924,6 +936,28 @@ class QueryBuilder {
   setHidden (fields) {
     this._hiddenFields = fields
     return this
+  }
+
+  /**
+   * Create a clone of Query builder
+   *
+   * @method clone
+   *
+   * @return {QueryBuilde}
+   */
+  clone () {
+    const clonedQuery = new QueryBuilder(this.Model, this.connectionString)
+    clonedQuery.query = this.query.clone()
+    clonedQuery.query.subQuery = this.query.subQuery
+
+    clonedQuery._eagerLoads = this._eagerLoads
+    clonedQuery._sideLoaded = this._sideLoaded
+    clonedQuery._visibleFields = this._visibleFields
+    clonedQuery._hiddenFields = this._hiddenFields
+    clonedQuery._withCountCounter = this._withCountCounter
+    clonedQuery.scopesIterator = this.scopesIterator
+
+    return clonedQuery
   }
 }
 

@@ -191,7 +191,7 @@ class Model extends BaseModel {
    *
    * @method query
    *
-   * @return {LucidQueryBuilder}
+   * @return {QueryBuilder}
    *
    * @static
    */
@@ -424,7 +424,7 @@ class Model extends BaseModel {
    */
   get dirty () {
     return _.pickBy(this.$attributes, (value, key) => {
-      return _.isUndefined(this.$originalAttributes[key]) || this.$originalAttributes[key] !== value
+      return _.isUndefined(this.$originalAttributes[key]) || !_.isEqual(this.$originalAttributes[key], value)
     })
   }
 
@@ -529,7 +529,7 @@ class Model extends BaseModel {
    */
   _setCreatedAt (values) {
     const createdAtColumn = this.constructor.createdAtColumn
-    if (createdAtColumn) {
+    if (createdAtColumn && !values[createdAtColumn]) {
       values[createdAtColumn] = this._getSetterValue(createdAtColumn, new Date())
     }
   }
@@ -548,7 +548,7 @@ class Model extends BaseModel {
    */
   _setUpdatedAt (values) {
     const updatedAtColumn = this.constructor.updatedAtColumn
-    if (updatedAtColumn) {
+    if (updatedAtColumn && !this.dirty[updatedAtColumn]) {
       values[updatedAtColumn] = this._getSetterValue(updatedAtColumn, new Date())
     }
   }
@@ -674,16 +674,20 @@ class Model extends BaseModel {
         .where(this.constructor.primaryKey, this.primaryKeyValue)
         .ignoreScopes()
         .update(this)
-      /**
-       * Sync originals to find a diff when updating for next time
-       */
-      this._syncOriginals()
     }
 
     /**
      * Executing after hooks
      */
     await this.constructor.$hooks.after.exec('update', this)
+
+    if (this.isDirty) {
+      /**
+       * Sync originals to find a diff when updating for next time
+       */
+      this._syncOriginals()
+    }
+
     return !!affected
   }
 

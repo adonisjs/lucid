@@ -120,6 +120,18 @@ class BelongsToMany extends BaseRelation {
   }
 
   /**
+   * Returns reference to pivot model (if attached) otherwise
+   * returns `null`.
+   *
+   * @attribute $pivotModel
+   *
+   * @return {Model|null}
+   */
+  get $pivotModel () {
+    return this._PivotModel
+  }
+
+  /**
    * Returns the pivot table name. The pivot model is
    * given preference over the default table name.
    *
@@ -167,6 +179,8 @@ class BelongsToMany extends BaseRelation {
   _applyScopes () {
     if (this.scopesIterator) {
       this.scopesIterator.execute(this)
+    } else {
+      this.relatedQuery._applyScopes()
     }
   }
 

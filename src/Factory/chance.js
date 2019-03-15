@@ -18,7 +18,7 @@ const _ = require('lodash')
 chance.mixin({
   username: function (length) {
     length = length || 5
-    return chance.word({length})
+    return chance.word({ length })
   },
 
   password: function (length) {

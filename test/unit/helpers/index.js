@@ -2,6 +2,7 @@
 
 const path = require('path')
 const _ = require('lodash')
+const moment = require('moment')
 
 module.exports = {
   formatQuery (query, connection) {
@@ -9,6 +10,14 @@ module.exports = {
       return query.replace(/"/g, '`')
     }
     return query
+  },
+
+  formatTime (value) {
+    if (process.env.DB === 'mysql') {
+      return moment(value).toISOString()
+    }
+
+    return value
   },
 
   addReturningStatement (query, field) {
@@ -43,8 +52,8 @@ module.exports = {
         version: '5.7',
         connection: {
           host: '127.0.0.1',
-          user: 'virk',
-          password: 'virk',
+          user: 'travis',
+          password: '',
           database: 'testing_lucid'
         }
       })

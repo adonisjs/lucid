@@ -1,0 +1,18 @@
+version: '2'
+services:
+  mysql:
+    image: mysql:5.7
+    expose:
+      - '3306'
+    ports:
+      - '3306:3306'
+    restart: 'always'
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: ''
+      MYSQL_ROOT_PASSWORD: 'root'
+      MYSQL_USER: 'travis'
+      MYSQL_PASSWORD: ''
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: 'testing_lucid'
+    volumes:
+      - ./mysqldata:/var/lib/mysql
