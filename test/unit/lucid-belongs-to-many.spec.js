@@ -2748,4 +2748,193 @@ test.group('Relations | Belongs To Many', (group) => {
 
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where exists (select * from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id" and "post_user"."deleted_at" is null)'))
   })
+
+  test('hide \'pivot\' attribute when added \'$pivot\' into hidden field list', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get hidden () {
+        return ['$pivot']
+      }
+
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+          .pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 2, username: 'virk' })
+    await ioc.use('Database').table('posts').insert([{ title: 'Adonis 101' }, { title: 'Lucid 101' }])
+    await ioc.use('Database').table('post_user').insert([
+      { post_id: 1, user_id: 2, is_published: true },
+      { post_id: 2, user_id: 2 }
+    ])
+
+    const user = await User.find(2)
+    const userPosts = await user.posts().fetch()
+
+    assert.notProperty(userPosts.toJSON()[0], 'pivot')
+    assert.notProperty(userPosts.toJSON()[1], 'pivot')
+  })
+
+  test('hide \'pivot\' attribute when passed false to \'pivotAttribute()\' in relationship', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+          .pivotModel(PostUser)
+          .pivotAttribute(false)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 2, username: 'virk' })
+    await ioc.use('Database').table('posts').insert([{ title: 'Adonis 101' }, { title: 'Lucid 101' }])
+    await ioc.use('Database').table('post_user').insert([
+      { post_id: 1, user_id: 2, is_published: true },
+      { post_id: 2, user_id: 2 }
+    ])
+
+    const user = await User.find(2)
+    const userPosts = await user.posts().fetch()
+
+    assert.notProperty(userPosts.toJSON()[0], 'pivot')
+    assert.notProperty(userPosts.toJSON()[1], 'pivot')
+  })
+
+  test('hide \'pivot\' attribute when return false on \'pivotAttribute()\' static method in pivot model', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+
+      static get pivotAttribute () {
+        return false
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+          .pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 2, username: 'virk' })
+    await ioc.use('Database').table('posts').insert([{ title: 'Adonis 101' }, { title: 'Lucid 101' }])
+    await ioc.use('Database').table('post_user').insert([
+      { post_id: 1, user_id: 2, is_published: true },
+      { post_id: 2, user_id: 2 }
+    ])
+
+    const user = await User.find(2)
+    const userPosts = await user.posts().fetch()
+
+    assert.notProperty(userPosts.toJSON()[0], 'pivot')
+    assert.notProperty(userPosts.toJSON()[1], 'pivot')
+  })
+
+  test('rename \'pivot\' attribute when passed string to \'.pivotAttribute()\' in relationship', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+          .pivotModel(PostUser)
+          .pivotAttribute('renamed_pivot')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 2, username: 'virk' })
+    await ioc.use('Database').table('posts').insert([{ title: 'Adonis 101' }, { title: 'Lucid 101' }])
+    await ioc.use('Database').table('post_user').insert([
+      { post_id: 1, user_id: 2, is_published: true },
+      { post_id: 2, user_id: 2 }
+    ])
+
+    const user = await User.find(2)
+    const userPosts = await user.posts().fetch()
+
+    assert.property(userPosts.toJSON()[0], 'renamed_pivot')
+    assert.property(userPosts.toJSON()[1], 'renamed_pivot')
+  })
+
+  test('rename \'pivot\' attribute when returns string on \'pivotAttribute()\' static method in pivot model', async (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+      static get pivotAttribute () {
+        return 'renamed_pivot'
+      }
+
+      static get table () {
+        return 'post_user'
+      }
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+          .pivotModel(PostUser)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert({ id: 2, username: 'virk' })
+    await ioc.use('Database').table('posts').insert([{ title: 'Adonis 101' }, { title: 'Lucid 101' }])
+    await ioc.use('Database').table('post_user').insert([
+      { post_id: 1, user_id: 2, is_published: true },
+      { post_id: 2, user_id: 2 }
+    ])
+
+    const user = await User.find(2)
+    const userPosts = await user.posts().fetch()
+
+    assert.property(userPosts.toJSON()[0], 'renamed_pivot')
+    assert.property(userPosts.toJSON()[1], 'renamed_pivot')
+  })
 })
