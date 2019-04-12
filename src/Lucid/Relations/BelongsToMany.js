@@ -354,7 +354,7 @@ class BelongsToMany extends BaseRelation {
      *
      * @link https://github.com/adonisjs/adonis-lucid/issues/366
      */
-    if (!this._isHiddenPivotKey(pivotModel)) {
+    if (!this._isHiddenPivotAttribute(pivotModel)) {
       pivotModel.newUp(pivotAttributes)
       row.setRelated(this.$pivotAttribute, pivotModel)
     }
@@ -367,7 +367,7 @@ class BelongsToMany extends BaseRelation {
    * This method resolve enhancement of "Issue #366":
    * @link https://github.com/adonisjs/adonis-lucid/issues/366
    *
-   * @method  _isHiddenPivotKey
+   * @method  _isHiddenPivotAttribute
    *
    * @param   {Object}  pivotModel
    *
@@ -375,7 +375,7 @@ class BelongsToMany extends BaseRelation {
    *
    * @private
    */
-  _isHiddenPivotKey (pivotModel) {
+  _isHiddenPivotAttribute (pivotModel) {
     /**
      * Get hidden field list.
      *
