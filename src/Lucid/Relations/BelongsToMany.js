@@ -383,10 +383,6 @@ class BelongsToMany extends BaseRelation {
      */
     let hidden = _.get(pivotModel, '$hidden', [])
 
-    if (hidden.length === 0 && _.hasIn(pivotModel, 'constructor.hidden')) {
-      hidden = pivotModel.constructor.hidden
-    }
-
     return (
       (_.isArray(hidden) && hidden.includes('$pivot') === true) ||
       this.$pivotAttribute === false

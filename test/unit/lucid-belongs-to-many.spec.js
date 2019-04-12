@@ -2961,4 +2961,26 @@ test.group('Relations | Belongs To Many', (group) => {
     const userPosts = user.posts()
     assert.equal(userPosts.$pivotAttribute, 'pivot')
   })
+
+  test('throw exception when pivotModel is defined and calling pivotPrimaryKey', (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).pivotModel(PostUser).pivotPrimaryKey('key')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    const user = new User()
+    const fn = () => user.posts()
+    assert.throw(fn, 'E_INVALID_RELATION_METHOD: Cannot call pivotPrimaryKey since pivotModel has been defined')
+  })
 })
