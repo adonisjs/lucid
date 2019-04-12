@@ -2961,5 +2961,4 @@ test.group('Relations | Belongs To Many', (group) => {
     const userPosts = user.posts()
     assert.equal(userPosts.$pivotAttribute, 'pivot')
   })
-
 })
