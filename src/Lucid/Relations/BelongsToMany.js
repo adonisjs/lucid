@@ -168,14 +168,12 @@ class BelongsToMany extends BaseRelation {
     let pivotAttribute = this._pivot.pivotAttribute
 
     if (this._PivotModel && !_.isUndefined(this._PivotModel.pivotAttribute)) {
-      const attribute = this._PivotModel.pivotAttribute
+      pivotAttribute = this._PivotModel.pivotAttribute
+    }
 
-      // Is `true`. set default value `pivot`.
-      if (attribute === true) {
-        pivotAttribute = 'pivot'
-      } else {
-        pivotAttribute = attribute
-      }
+    // Is `true`. set default value `pivot`.
+    if (pivotAttribute === true) {
+      pivotAttribute = 'pivot'
     }
 
     return pivotAttribute

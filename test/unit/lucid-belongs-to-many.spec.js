@@ -2937,4 +2937,29 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.property(userPosts.toJSON()[0], 'renamed_pivot')
     assert.property(userPosts.toJSON()[1], 'renamed_pivot')
   })
+
+  test('expect pivot attribute name is \'pivot\' when passing true to \'.pivotAttribute()\' in relationship.', (assert) => {
+    class Post extends Model {
+    }
+
+    class PostUser extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post)
+          .pivotModel(PostUser)
+          .pivotAttribute(true)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+    PostUser._bootIfNotBooted()
+
+    const user = new User()
+    const userPosts = user.posts()
+    assert.equal(userPosts.$pivotAttribute, 'pivot')
+  })
+
 })
