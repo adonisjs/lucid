@@ -47,6 +47,17 @@ test.group('Validator | Unique', (group) => {
     assert.equal(result, 'validation passed')
   })
 
+  test('throw error when row is found with case sensitivity as third argument', async (assert) => {
+    assert.plan(1)
+    const validator = new Validator(this.database)
+    await this.database.table('users').insert({ username: 'foo' })
+    try {
+      await validator.unique({ username: 'Foo' }, 'username', message, ['users', 'username', 'caseSensitivity'], _.get)
+    } catch (error) {
+      assert.equal(error, 'unique validation failed')
+    }
+  })
+
   test('skip validation when data does not have field', async (assert) => {
     const validator = new Validator(this.database)
     const result = await validator.unique({}, 'email', message, ['users'], _.get)
@@ -70,5 +81,16 @@ test.group('Validator | Unique', (group) => {
     const args = ['users', 'username', 'id', 1]
     const result = await validator.unique({ username: 'foo' }, 'username', message, args, _.get)
     assert.equal(result, 'validation passed')
+  })
+
+  test('throw error on validation when row is not found with case sensitivity and when whereNot key/value pairs are passed', async (assert) => {
+    assert.plan(1)
+    const validator = new Validator(this.database)
+    await this.database.table('users').insert({ username: 'foo' })
+    try {
+      await validator.unique({ username: 'Foo' }, 'username', message, ['users', 'username', 'id', 5, 'caseSensitivity'], _.get)
+    } catch (error) {
+      assert.equal(error, 'unique validation failed')
+    }
   })
 })

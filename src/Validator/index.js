@@ -1,12 +1,11 @@
 'use strict'
-
 /*
- * adonis-lucid
- *
- * (c) Harminder Virk <virk@adonisjs.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
+  * adonis-lucid
+  *
+  * (c) Harminder Virk <virk@adonisjs.com>
+  *
+  * For the full copyright and license information, please view the LICENSE
+  * file that was distributed with this source code.
 */
 
 /**
@@ -37,6 +36,8 @@ class ValidatorRules {
    * email: 'unique:users' // define table
    * email: 'unique:users,user_email' // define table + field
    * email: 'unique:users,user_email,id:1' // where id !== 1
+   * email: 'unique:users,user_email,caseSensitive'
+   * email: 'unique:users,user_email,id:1,caseSensitive
    *
    * // Via new rule method
    * email: [rule('unique', ['users', 'user_email', 'id', 1])]
@@ -58,12 +59,21 @@ class ValidatorRules {
       /**
        * Extracting values of the args array
        */
-      const [ table, fieldName, ignoreKey, ignoreValue ] = args
+      const [ table, fieldName, ignoreKey, ignoreValue, caseSensitivity ] = args
+      let caseSensitivityOnThird
+      if (args.length === 3) {
+        caseSensitivityOnThird = ignoreKey
+      }
 
       /**
        * Base query to select where key=value
        */
-      const query = this.Database.table(table).where(fieldName || field, value)
+      let query = ''
+      if (caseSensitivity || caseSensitivityOnThird) {
+        query = this.Database.table(table).whereRaw(`LOWER(${fieldName || field}) = ?`, [value.toLowerCase()])
+      } else {
+        query = this.Database.table(table).where(fieldName || field, value)
+      }
 
       /**
        * If a ignore key and value is defined, then add a whereNot clause
