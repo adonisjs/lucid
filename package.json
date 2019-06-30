@@ -36,7 +36,7 @@
   },
   "homepage": "https://github.com/adonisjs/adonis-lucid#readme",
   "dependencies": {
-    "@adonisjs/generic-exceptions": "^2.0.1",
+    "@adonisjs/generic-exceptions": "^3.0.1",
     "chance": "^1.0.18",
     "debug": "^4.1.1",
     "knex": "^0.16.3",
