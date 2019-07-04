@@ -23,7 +23,9 @@
     "test": "nyc npm run test:sqlite && npm run test:mysql",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "commit": "git-cz",
-    "lint": "standard"
+    "lint": "standard",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -44,7 +46,8 @@
     "moment": "^2.24.0",
     "pluralize": "^7.0.0",
     "pretty-hrtime": "^1.0.3",
-    "require-all": "^3.0.0"
+    "require-all": "^3.0.0",
+    "snyk": "^1.189.0"
   },
   "devDependencies": {
     "@adonisjs/ace": "^5.0.7",
@@ -84,5 +87,6 @@
     "globals": [
       "use"
     ]
-  }
+  },
+  "snyk": true
 }
