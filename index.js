@@ -52,6 +52,15 @@ class Ioc {
 
 class Resolver {
   forDir () {
+    return {
+      resolveFunc (binding) {
+        return {
+          instance: null,
+          isClosure: true,
+          method: binding
+        }
+      }
+    }
   }
 }
 
