@@ -106,4 +106,61 @@ test.group('Database', (group) => {
     await user.save()
     assert.deepEqual(stack, ['beforeCreate called'])
   })
+
+  test('use traits', async (assert) => {
+    const stack = []
+
+    const trait = function (Model) {
+      stack.push('registered trait')
+
+      Model.newAdminUser = function () {
+        let m = new Model()
+        m.isAdmin = true
+
+        stack.push('static method called')
+        return m
+      }
+
+      Model.prototype.printUsername = function () {
+        stack.push('instance method called')
+      }
+
+      Model.addHook('beforeCreate', async () => {
+        stack.push('beforeCreate called')
+      })
+
+      Model.queryMacro('whereAdmin', function (value) {
+        stack.push('queryMacro called')
+        this.where('isAdmin', true)
+        return this
+      })
+    }
+
+    class User extends Model {
+      static boot () {
+        super.boot()
+        this.addTrait(trait)
+      }
+
+      profile () {
+        return this.hasOne(Models.get('Profile'))
+      }
+    }
+
+    Models.add('User', User)
+    const user = new (Models.get('User'))()
+    user.username = 'virk'
+    await user.save()
+
+    const admin = Models.get('User').newAdminUser()
+    admin.printUsername()
+
+    Models.get('User').query().whereAdmin()
+
+    assert.deepEqual(stack, ['registered trait',
+      'beforeCreate called',
+      'static method called',
+      'instance method called',
+      'queryMacro called'])
+  })
 })
