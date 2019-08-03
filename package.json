@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/adonisjs/adonis-lucid#readme",
   "dependencies": {
+    "@poppinss/utils": "^1.0.4",
     "knex": "^0.19.1",
     "ts-essentials": "^3.0.0",
     "utility-types": "^3.7.0"

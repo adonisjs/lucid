@@ -12,6 +12,7 @@
 declare module '@ioc:Adonis/Addons/Database' {
   import * as knex from 'knex'
   import { Pool } from 'tarn'
+  import { EventEmitter } from 'events'
 
   import { DatabaseQueryBuilderContract } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
@@ -191,31 +192,56 @@ declare module '@ioc:Adonis/Addons/Database' {
   export type DatabaseConfigContract = { connection: string } & { [key: string]: ConnectionConfigContract }
 
   /**
+   * The shape of a connection within the connection manager
+   */
+  type ConnectionManagerConnectionNode = {
+    name: string,
+    config: ConnectionConfigContract,
+    connection?: ConnectionContract,
+    state: 'idle' | 'open' | 'closed',
+  }
+
+  /**
    * Connection manager to manage one or more database
    * connections.
    */
-  export interface ConnectionManagerContract {
-    connections: Map<string, ConnectionContract>
-    add (connectionName: string, config: ConnectionConfigContract): void,
-    connect (connectionName: string): void,
-    get (connectionName: string): ConnectionContract,
-    has (connectionName: string): boolean,
-    close (connectionName: string): Promise<void>,
-    closeAll (): Promise<void>,
+  export interface ConnectionManagerContract extends EventEmitter {
+    connections: Map<string, ConnectionManagerConnectionNode>
+
+    on (event: 'connect', callback: (connection: ConnectionContract) => void)
+    on (event: 'disconnect', callback: (connection: ConnectionContract) => void)
+
+    add (connectionName: string, config: ConnectionConfigContract): void
+    connect (connectionName: string): void
+    get (connectionName: string): ConnectionManagerConnectionNode | undefined
+    has (connectionName: string): boolean
+    isConnected (connectionName: string): boolean
+
+    close (connectionName: string, release?: boolean): Promise<void>
+    closeAll (release?: boolean): Promise<void>
+    release (connectionName: string): Promise<void>
   }
 
   /**
    * Connection represents a single knex instance with inbuilt
    * pooling capabilities.
    */
-  export interface ConnectionContract {
+  export interface ConnectionContract extends EventEmitter {
     client?: knex,
     pool: null | Pool<any>,
     name: string,
     config: ConnectionConfigContract,
-    readonly EVENTS: ['open', 'close', 'close:error'],
-    open (): void,
-    close (): void,
+
+    /**
+     * List of emitted events
+     */
+    on (event: 'connect', callback: (connection: ConnectionContract) => void)
+    on (event: 'error', callback: (connection: ConnectionContract, error: Error) => void)
+    on (event: 'disconnect', callback: (connection: ConnectionContract) => void)
+    on (event: 'disconnect:error', callback: (connection: ConnectionContract, error: Error) => void)
+
+    connect (): void,
+    disconnect (): Promise<void>,
   }
 
   export interface DatabaseContract {
