@@ -26,11 +26,6 @@ export class Connection extends EventEmitter implements ConnectionContract {
    */
   public client?: knex
 
-  /**
-   * List of events emitted by this class
-   */
-  public readonly EVENTS: ['open', 'close', 'close:error']
-
   constructor (public name: string, public config: ConnectionConfigContract) {
     super()
   }
@@ -46,7 +41,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
        * when `min` resources inside the pool are set to `0`.
        */
       if (this.pool!.numFree() === 0 && this.pool!.numUsed() === 0) {
-        this.close()
+        this.disconnect()
       }
     })
 
@@ -56,7 +51,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
      */
     this.pool!.on('poolDestroySuccess', () => {
       this.client = undefined
-      this.emit('close')
+      this.emit('disconnect', this)
       this.removeAllListeners()
     })
   }
@@ -71,13 +66,13 @@ export class Connection extends EventEmitter implements ConnectionContract {
   /**
    * Opens the connection by creating knex instance
    */
-  public open () {
+  public connect () {
     try {
       this.client = knex(this.config)
       this._monitorPoolResources()
-      this.emit('open')
+      this.emit('connect', this)
     } catch (error) {
-      this.emit('error', error)
+      this.emit('error', error, this)
       throw error
     }
   }
@@ -89,12 +84,12 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * In case of error this method will emit `close:error` event followed
    * by the `close` event.
    */
-  public async close (): Promise<void> {
+  public async disconnect (): Promise<void> {
     if (this.client) {
       try {
         await this.client!.destroy()
       } catch (error) {
-        this.emit('close:error', error)
+        this.emit('disconnect:error', error, this)
       }
     }
   }

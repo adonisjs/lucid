@@ -12,30 +12,38 @@
 import * as test from 'japa'
 import { MysqlConfigContract } from '@ioc:Adonis/Addons/Database'
 
-import { getConfig } from '../test-helpers'
+import { getConfig, setup, cleanup } from '../test-helpers'
 import { Connection } from '../src/Connection'
 
-test.group('Connection', () => {
-  test('do not instantiate knex unless open is called', (assert) => {
+test.group('Connection', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  test('do not instantiate knex unless connect is called', (assert) => {
     const connection = new Connection('primary', getConfig())
     assert.isUndefined(connection.client)
   })
 
-  test('instantiate knex when open is invoked', async (assert, done) => {
+  test('instantiate knex when connect is invoked', async (assert, done) => {
     const connection = new Connection('primary', getConfig())
-    connection.on('open', () => {
+    connection.on('connect', () => {
       assert.isDefined(connection.client)
       assert.equal(connection.pool!.numUsed(), 0)
       done()
     })
 
-    connection.open()
+    connection.connect()
   })
 
-  test('on close destroy knex', async (assert) => {
+  test('on disconnect destroy knex', async (assert) => {
     const connection = new Connection('primary', getConfig())
-    connection.open()
-    await connection.close()
+    connection.connect()
+    await connection.disconnect()
     assert.isUndefined(connection.client)
   })
 
@@ -47,31 +55,31 @@ test.group('Connection', () => {
       },
     }))
 
-    connection.open()
+    connection.connect()
     await connection.client!.raw('select 1+1 as result')
 
-    connection.on('close', () => {
+    connection.on('disconnect', () => {
       assert.isUndefined(connection.client)
       done()
     })
   })
 
-  test('on close emit close event', async (assert, done) => {
+  test('on disconnect emit disconnect event', async (assert, done) => {
     const connection = new Connection('primary', getConfig())
-    connection.open()
+    connection.connect()
 
-    connection.on('close', () => {
+    connection.on('disconnect', () => {
       assert.isUndefined(connection.client)
       done()
     })
 
-    await connection.close()
+    await connection.disconnect()
   })
 
   test('raise error when unable to make connection', (assert) => {
     const connection = new Connection('primary', Object.assign({}, getConfig(), { client: null }))
 
-    const fn = () => connection.open()
+    const fn = () => connection.connect()
     assert.throw(fn, /knex: Required configuration option/)
   })
 })
@@ -84,7 +92,7 @@ if (process.env.DB === 'mysql') {
       config.connection.typeCast = false
 
       const connection = new Connection('primary', config)
-      connection.open()
+      connection.connect()
 
       assert.equal(connection.client!['_context'].client.constructor.name, 'Client_MySQL')
       assert.equal(connection.client!['_context'].client.config.connection.charset, 'utf-8')

@@ -1,0 +1,188 @@
+/*
+* @adonisjs/lucid
+*
+* (c) Harminder Virk <virk@adonisjs.com>
+*
+* For the full copyright and license information, please view the LICENSE
+* file that was distributed with this source code.
+*/
+
+/// <reference path="../../adonis-typings/database.ts" />
+
+import { EventEmitter } from 'events'
+import { Exception } from '@poppinss/utils'
+
+import {
+  ConnectionConfigContract,
+  ConnectionContract,
+  ConnectionManagerContract,
+} from '@ioc:Adonis/Addons/Database'
+
+import { Connection } from '../Connection'
+
+/**
+ * Connection class manages a given database connection. Internally it uses
+ * knex to build the database connection with appropriate database
+ * driver.
+ */
+export class ConnectionManager extends EventEmitter implements ConnectionManagerContract {
+  public connections: ConnectionManagerContract['connections'] = new Map()
+
+  /**
+   * Monitors a given connection by listening for lifecycle events
+   */
+  private _monitorConnection (connection: ConnectionContract) {
+    /**
+     * Listens for disconnect to set the connection state and cleanup
+     * memory
+     */
+    connection.on('disconnect', ($connection) => {
+      const internalConnection = this.get($connection.name)
+
+      /**
+       * This will be false, when connection was released at the
+       * time of closing
+       */
+      if (!internalConnection) {
+        return
+      }
+
+      this.emit('disconnect', $connection)
+      delete internalConnection.connection
+      internalConnection.state = 'closed'
+    })
+
+    /**
+     * Listens for connect to set the connection state to open
+     */
+    connection.on('connect', ($connection) => {
+      const internalConnection = this.get($connection.name)
+      if (!internalConnection) {
+        return
+      }
+
+      this.emit('connect', $connection)
+      internalConnection.state = 'open'
+    })
+  }
+
+  /**
+   * Add a named connection with it's configuration. Make sure to call `connect`
+   * before using the connection to make database queries.
+   */
+  public add (connectionName: string, config: ConnectionConfigContract): void {
+    /**
+     * Raise an exception when someone is trying to re-add the same connection. We
+     * should not silently avoid this scanerio, since there is a valid use case
+     * in which the config has been changed and someone wants to re-add the
+     * connection with new config. In that case, they must
+     *
+     * 1. Close and release the old connection
+     * 2. Then add the new connection
+     */
+    if (this.isConnected(connectionName)) {
+      throw new Exception(
+        `Attempt to add duplicate connection ${connectionName} failed`,
+        500,
+        'E_DUPLICATE_DB_CONNECTION',
+      )
+    }
+
+    this.connections.set(connectionName, {
+      name: connectionName,
+      config: config,
+      state: 'idle',
+    })
+  }
+
+  /**
+   * Connect to the database using config for a given named connection
+   */
+  public connect (connectionName: string): void {
+    const connection = this.connections.get(connectionName)
+    if (!connection) {
+      throw new Exception(
+        `Cannot connect to unregisted connection ${connectionName}`,
+        500,
+        'E_MISSING_DB_CONNECTION_CONFIG',
+      )
+    }
+
+    /**
+     * Do not do anything when `connection` property already exists, since it will
+     * always be set to `undefined` for a closed connection
+     */
+    if (connection.connection) {
+      return
+    }
+
+    /**
+     * Create a new connection and monitor it's state
+     */
+    connection.connection = new Connection(connection.name, connection.config)
+    this._monitorConnection(connection.connection)
+    connection.connection.connect()
+  }
+
+  /**
+   * Returns the connection node for a given named connection
+   */
+  public get (connectionName: string) {
+    return this.connections.get(connectionName)
+  }
+
+  /**
+   * Returns a boolean telling if we have connection details for
+   * a given named connection. This method doesn't tell if
+   * connection is connected or not.
+   */
+  public has (connectionName: string) {
+    return this.connections.has(connectionName)
+  }
+
+  /**
+   * Returns a boolean telling if connection has been established
+   * with the database or not
+   */
+  public isConnected (connectionName: string) {
+    if (!this.has(connectionName)) {
+      return false
+    }
+
+    const connection = this.get(connectionName)!
+    return (!!connection.connection && connection.state === 'open')
+  }
+
+  /**
+   * Closes a given connection and can optionally release it from the
+   * tracking list
+   */
+  public async close (connectioName: string, release: boolean = false) {
+    if (this.isConnected(connectioName)) {
+      await this.get(connectioName)!.connection!.disconnect()
+    }
+
+    if (release) {
+      await this.release(connectioName)
+    }
+  }
+
+  /**
+   * Close all tracked connections
+   */
+  public async closeAll (release: boolean = false) {
+    await Promise.all(Array.from(this.connections.keys()).map((name) => this.close(name, release)))
+  }
+
+  /**
+   * Release a connection. This will disconnect the connection
+   * and will delete it from internal list
+   */
+  public async release (connectionName: string) {
+    if (this.isConnected(connectionName)) {
+      await this.close(connectionName, true)
+    } else {
+      this.connections.delete(connectionName)
+    }
+  }
+}
