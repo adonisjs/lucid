@@ -1,0 +1,8 @@
+{
+  "extends": [
+    "@adonisjs/mrm-preset/_tslint"
+  ],
+  "rules": {
+    "await-promise": true
+  }
+}

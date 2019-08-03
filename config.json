@@ -1,12 +1,11 @@
 {
   "core": true,
-  "ts": false,
+  "ts": true,
   "license": "MIT",
   "services": [
-    "travis",
     "appveyor",
-    "coveralls"
+    "circleci"
   ],
   "appveyorUsername": "thetutlage",
-  "minNodeVersion": "8.0.0"
+  "minNodeVersion": "10.15.3"
 }
