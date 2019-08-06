@@ -9,10 +9,10 @@
 
 declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   import { Dictionary } from 'ts-essentials'
-  import { JoinCallback, Sql } from 'knex'
+  import { JoinCallback, Sql, Raw } from 'knex'
 
   /**
-   * A known set of values allowed when defining different
+   * A known set of values allowed when defining values for different
    * clauses
    */
   type StrictValues =
@@ -28,7 +28,13 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     | RawContract
 
   /**
-   * Output of raw query builder
+   * Allowing a generic value along with raw query instance or a subquery
+   * instance
+   */
+  type ValueWithSubQueries<T extends any> = T | ChainableContract<any> | RawContract
+
+  /**
+   * Shape of raw query instance
    */
   interface RawContract {
     wrap (before: string, after: string): this
@@ -40,9 +46,9 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
    * Shape of raw query builder
    */
   interface RawBuilderContract {
-    (value: string): RawContract
-    (sql: string, ...bindings: StrictValues[]): RawContract
-    (sql: string, bindings: StrictValues[]): RawContract
+    (sql: string): RawContract
+    (sql: string, bindings: { [key: string]: Exclude<StrictValues, RawContract> }): RawContract
+    (sql: string, bindings: Exclude<StrictValues, RawContract>[]): RawContract
   }
 
   /**
@@ -50,17 +56,17 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
    * the existing query builder chain instead of `RawContract`
    */
   interface RawQueryBuilderContract<Builder extends ChainableContract> {
-    (value: string): Builder
-    (sql: string, ...bindings: StrictValues[]): Builder
-    (sql: string, bindings: StrictValues[]): Builder
+    (sql: string): Builder
+    (sql: string, bindings: { [key: string]: Exclude<StrictValues, RawContract> }): Builder
+    (sql: string, bindings: Exclude<StrictValues, RawContract>[]): Builder
+    (sql: RawContract): Builder
   }
 
   /**
-   * Where callback function to write wrapped where
-   * statements
+   * Query callback is used to write wrapped queries.
    */
-  type WhereCallback<Builder extends ChainableContract> = (
-    (this: Builder, builder: Builder) => void
+  type QueryCallback<Builder extends ChainableContract> = (
+    (builder: Builder) => void
   )
 
   /**
@@ -68,7 +74,10 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
    * The models query builder may have a different signature all
    * together.
    */
-  interface DatabaseQueryBuilderSelect<Record, Result extends any = Record> {
+  interface DatabaseQueryBuilderSelect<
+    Record extends Dictionary<StrictValues, string>,
+    Result extends any = Record
+  > {
     /**
      * Selecting named columns as array
      */
@@ -81,14 +90,17 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
 
     /**
      * Selecting columns as a dictionary with key as the alias and value is
-     * the original column
+     * the original column. When aliases are defined, the return output
+     * will have the alias columns and not the original one's
      */
     <K extends keyof Record, Alias extends string, Columns extends Dictionary<K, Alias>> (
       columns: Columns,
     ): DatabaseQueryBuilderContract<Record, { [AliasKey in keyof Columns]: Record[Columns[AliasKey]] }>
 
     /**
-     * Selecting columns as array
+     * String fallback when columns to be selected aren't derived from
+     * record. Here we allow subqueries, raw queries or an array
+     * of strings.
      */
     (columns: (string | ChainableContract<any> | RawContract)[]): DatabaseQueryBuilderContract<Record, any>
 
@@ -106,16 +118,19 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   /**
    * Possible signatures for adding a where clause
    */
-  interface Where<Builder extends ChainableContract, Record> {
+  interface Where<
+    Builder extends ChainableContract,
+    Record extends Dictionary<StrictValues, string>,
+  > {
+    /**
+     * Callback for wrapped clauses
+     */
+    (callback: QueryCallback<Builder>): Builder
+
     /**
      * Passing an object of named key/value pair
      */
     (clause: Partial<Record>): Builder
-
-    /**
-     * Callback for wrapped clauses
-     */
-    (callback: WhereCallback<Builder>): Builder
 
     /**
      * Key/value pair with the same value type, a subquery or
@@ -123,7 +138,7 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
      */
     <K extends keyof Record> (
       key: K,
-      value: Record[K] | ChainableContract<any> | RawContract,
+      value: ValueWithSubQueries<Record[K]>,
     ): Builder
 
     /**
@@ -132,35 +147,101 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     <K extends keyof Record> (
       key: K,
       operator: string,
-      value: Record[K] | ChainableContract<any> | RawContract,
+      value: ValueWithSubQueries<Record[K]>,
     ): Builder
   }
 
   /**
-   * Possible signatures for adding where In clause.
-   * @todo: Implement 2d array support
+   * Possible signatures for adding where in clause.
    */
-  interface WhereIn<Builder extends ChainableContract, Record> {
+  interface WhereIn<
+    Builder extends ChainableContract,
+    Record extends Dictionary<StrictValues, string>,
+  > {
     /**
-     * Key/value pair with key being a named literal value and array
-     * of same types, a subquery or a raw query
+     * A named column as the key and an array of values including a literal
+     * value, a raw query or a sub query.
      */
     <K extends keyof Record> (
       key: K,
-      value: (Record[K] | ChainableContract<any> | RawContract)[],
+      value: ValueWithSubQueries<Record[K]>[],
     ): Builder
 
     /**
-     * Key/value pair with key being a named literal value
-     * and value is a callback
+     * A named column as the key along with a sub query. The subquery must yield
+     * an array of values to be valid at runtime
      */
-    <K extends keyof Record> (key: K, callback: WhereCallback<Builder>): Builder
+    <K extends keyof Record> (key: K, subquery: ChainableContract<any>): Builder
+
+    /**
+     * A named column as the key along with a query callback. The query callback
+     * must yield an array of values to be valid at runtime.
+     */
+    <K extends keyof Record> (key: K, callback: QueryCallback<Builder>): Builder
+
+    /**
+     * Accepting multiple columns and 2d array of values. The values must be
+     * a nested array of literal values, a raw query or a subquery.
+     *
+     * Since Typescript doesn't have support for Variadic arguments, we need to
+     * create multiple generics to support major use cases.
+     */
+    <K extends (keyof Record)[], A extends K[0]> (
+      key: [A],
+      value: [ValueWithSubQueries<Record[A]>][],
+    ): Builder
+
+    /**
+     * two columns and their mapped values
+     */
+    <K extends (keyof Record)[], A extends K[0], B extends K[1]> (
+      key: [A, B],
+      value: [ValueWithSubQueries<Record[A]>, ValueWithSubQueries<Record[B]>][],
+    ): Builder
+
+    /**
+     * three columns and their mapped values
+     */
+    <K extends (keyof Record)[], A extends K[0], B extends K[1], C extends K[2]> (
+      key: [A, B, C],
+      value: [
+        ValueWithSubQueries<Record[A]>,
+        ValueWithSubQueries<Record[B]>,
+        ValueWithSubQueries<Record[C]>
+      ][],
+    ): Builder
+
+    /**
+     * four columns and their mapped values
+     */
+    <K extends (keyof Record)[], A extends K[0], B extends K[1], C extends K[2], D extends K[3]> (
+      key: [A, B, C, D],
+      value: [
+        ValueWithSubQueries<Record[A]>,
+        ValueWithSubQueries<Record[B]>,
+        ValueWithSubQueries<Record[C]>,
+        ValueWithSubQueries<Record[D]>
+      ][],
+    ): Builder
+
+    /**
+     * A subquery with an array of typed keys
+     */
+    <K extends keyof Record> (key: K[], subquery: ChainableContract<any>): Builder
+
+    /**
+     * Typed array of columns, with untyped values
+     */
+    <K extends keyof Record> (key: K[], value: (StrictValues | ChainableContract<any>)[][]): Builder
   }
 
   /**
    * Possible signatures for adding whereNull clause.
    */
-  interface WhereNull<Builder extends ChainableContract, Record> {
+  interface WhereNull<
+    Builder extends ChainableContract,
+    Record extends Dictionary<StrictValues, string>,
+  > {
     <K extends keyof Record> (key: K): Builder
   }
 
@@ -168,42 +249,30 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
    * Possibles signatures for adding a where exists clause
    */
   interface WhereExists<Builder extends ChainableContract> {
-    (callback: WhereCallback<Builder> | ChainableContract<any>): Builder
+    (callback: QueryCallback<Builder> | ChainableContract<any>): Builder
   }
 
   /**
    * Possibles signatures for adding a where between clause
    */
-  interface WhereBetween<Builder extends ChainableContract, Record> {
+  interface WhereBetween<
+    Builder extends ChainableContract,
+    Record extends Dictionary<StrictValues, string>,
+  > {
     /**
-     * Allowing a named key with values of similar data type or a raw
-     * query/subquery
+     * Typed column with an tuple of a literal value, a raw query or
+     * a sub query
      */
     <K extends keyof Record> (key: K, value: [
-      Record[K] | RawContract | ChainableContract<any>,
-      Record[K] | RawContract | ChainableContract<any>,
+      ValueWithSubQueries<Record[K]>,
+      ValueWithSubQueries<Record[K]>,
     ]): Builder
   }
 
   /**
    * Possibles signatures for a raw where clause.
    */
-  interface WhereRaw<Builder extends ChainableContract, Record> {
-    /**
-     * Passing a raw sql with an array of values
-     */
-    (sql: string, bindings: (StrictValues | ChainableContract<any>)[]): Builder
-
-    /**
-     * Passing a raw sql with a key/value pair of values. Where key
-     * is the subsitutes in the sql query.
-     */
-    (sql: string, bindings: { [key: string]: (StrictValues | ChainableContract<any>) }): Builder
-
-    /**
-     * Output of raw query
-     */
-    (raw: RawContract): Builder
+  interface WhereRaw<Builder extends ChainableContract> extends RawQueryBuilderContract<Builder> {
   }
 
   /**
@@ -220,7 +289,7 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
      * Defining the join table with primary and secondary columns
      * to match, where secondary column is output of a raw query
      */
-    (table: string, primaryColumn: string, raw: RawBuilderContract): Builder
+    (table: string, primaryColumn: string, raw: RawContract): Builder
 
     /**
      * Defining the join table with primary and secondary columns
@@ -229,14 +298,8 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     (table: string, primaryColumn: string, operator: string, secondaryColumn: string): Builder
 
     /**
-     * Defining the join table with primary and secondary columns
-     * to match with a custom operator, where secondary column is
-     * output of a raw query
-     */
-    (table: string, primaryColumn: string, operator: string, raw: RawBuilderContract): Builder
-
-    /**
-     * Join with a callback
+     * Join with a callback. The callback receives an array of join class from
+     * knex directly.
      */
     (table: string, callback: JoinCallback): Builder
   }
@@ -244,14 +307,16 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   /**
    * Possible signatures for a raw join
    */
-  interface JoinRaw<Builder extends ChainableContract> {
-    (tableName: string, binding?: StrictValues): Builder
+  interface JoinRaw<Builder extends ChainableContract> extends RawQueryBuilderContract<Builder> {
   }
 
   /**
    * Possible signatures for a distinct clause
    */
-  interface Distinct<Builder extends ChainableContract, Record> {
+  interface Distinct<
+    Builder extends ChainableContract,
+    Record extends Dictionary<StrictValues, string>,
+  > {
     /**
      * Named keys
      */
@@ -263,12 +328,12 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     <K extends keyof Record> (...columns: K[]): Builder
 
     /**
-     * An array of strings
+     * An array of untyped strings
      */
     (columns: string[]): Builder
 
     /**
-     * Spread of strings
+     * Spread of untyped strings
      */
     (...columns: string[]): Builder
 
@@ -279,14 +344,17 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   }
 
   /**
-   * The signatures are same as distinct method. For subqueries and
+   * The signatures are same as the `distinct` method. For subqueries and
    * raw queries, one must use `groupByRaw`.
    */
-  interface GroupBy<Builder extends ChainableContract, Record> extends Distinct<Builder, Record> {
+  interface GroupBy<
+    Builder extends ChainableContract,
+    Record extends Dictionary<StrictValues, string>,
+  > extends Distinct<Builder, Record> {
   }
 
   /**
-   * GroupByRaw is same as RawQueryBuilderContract
+   * GroupByRaw is same as `RawQueryBuilderContract`
    */
   interface GroupByRaw<Builder extends ChainableContract> extends RawQueryBuilderContract<Builder> {
   }
@@ -294,7 +362,10 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   /**
    * Possible signatures for orderBy method.
    */
-  interface OrderBy<Builder extends ChainableContract, Record> {
+  interface OrderBy<
+    Builder extends ChainableContract,
+    Record extends Dictionary<StrictValues, string>,
+  > {
     /**
      * Order by a named column and optional direction
      */
@@ -308,22 +379,22 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     /**
      * Order by multiple named columns and custom direction for each of them
      */
-    <K extends keyof Record> (columns: { column: K, direction?: 'asc' | 'desc' }[]): Builder
+    <K extends keyof Record> (columns: { column: K, order?: 'asc' | 'desc' }[]): Builder
 
     /**
-     * Order by a column and optional direction
+     * Order by an untyped column and optional direction
      */
     (column: string, direction?: 'asc' | 'desc'): Builder
 
     /**
-     * Order by multiple columns with default direction
+     * Order by multiple untyped columns with default direction
      */
     (columns: string[]): Builder
 
     /**
-     * Order by multiple columns and custom direction for each of them
+     * Order by untyped multiple columns and custom direction for each of them
      */
-    (columns: { column: string, direction?: 'asc' | 'desc' }[]): Builder
+    (columns: { column: string, order?: 'asc' | 'desc' }[]): Builder
   }
 
   /**
@@ -339,12 +410,12 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     /**
      * A single callback with optional wrap
      */
-    (callback: WhereCallback<Builder>, wrap?: boolean): Builder
+    (callback: QueryCallback<Builder>, wrap?: boolean): Builder
 
     /**
      * An array of multiple callbacks
      */
-    (callbacks: WhereCallback<Builder>[], wrap?: boolean): Builder
+    (callbacks: QueryCallback<Builder>[], wrap?: boolean): Builder
 
     /**
      * A single subquery or a raw query
@@ -368,46 +439,119 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   interface Intersect<Builder extends ChainableContract> extends Union<Builder> {}
 
   /**
-   * Possible signatures for the `returning` method when called on
-   * the insert query builder.
+   * Possible signatures for having clause
    */
-  interface InsertReturning<Record> {
+  interface Having<
+    Builder extends ChainableContract,
+    Record extends Dictionary<StrictValues, string>,
+  > extends RawQueryBuilderContract<Builder> {
     /**
-     * Mark return columns as a single array of value type for the given
-     * key
+     * A subquery callback
      */
-    <K extends keyof Record> (
-      column: K,
-    ): InsertQueryBuilderContract<Record, [Record[K]] | [number]>
+    (callback: QueryCallback<Builder>): Builder
 
     /**
-     * Mark return columns as an array of key/value pair with correct types.
+     * A typed key, comparison operator along with a literal value, a raw
+     * query or a subquery.
      */
     <K extends keyof Record> (
-      columns: K[],
-    ): InsertQueryBuilderContract<Record, ([{ [P in K]: Record[P] }] | [number])>
+      key: K,
+      operator: string,
+      value: ValueWithSubQueries<Record[K]>,
+    ): Builder
+
+    /**
+     * An untyped key, comparison operator along with a literal value, a raw
+     * query or a subquery.
+     *
+     * We support untyped keys, since having clause can reference an alias field
+     * as well.
+     */
+    (
+      key: string,
+      operator: string,
+      value: StrictValues | ChainableContract<any>,
+    ): Builder
   }
 
   /**
-   * Possible signatures for an insert query
+   * Possible signatures for `having in` clause.
    */
-  interface Insert<Record, ReturnColumns> {
+  interface HavingIn<
+    Builder extends ChainableContract,
+    Record extends Dictionary<StrictValues, string>,
+  > {
     /**
-     * Accepts an object of named key/value pair and returns an array
-     * of Generic return columns.
+     * A typed key, along with an array of literal values, a raw queries or
+     * subqueries.
      */
-    <K extends keyof Record> (columns: { [P in K]: Record[P] }): Promise<ReturnColumns>
+    <K extends keyof Record> (key: K, value: ValueWithSubQueries<Record[K]>[]): Builder
+
+    /**
+     * An untyped key, along with an array of literal values, a raw queries or
+     * subqueries.
+     */
+    <K extends keyof Record> (key: string, value: StrictValues[]): Builder
+
+    /**
+     * A typed key, along with a query callback
+     */
+    <K extends keyof Record> (key: K, callback: QueryCallback<Builder>): Builder
   }
 
   /**
-   * Possible signatures for doing Bulk insert
+   * Possible signatures for `having null` clause
    */
-  interface BatchInsert<Record, ReturnColumns> {
+  interface HavingNull<
+    Builder extends ChainableContract,
+    Record extends Dictionary<StrictValues, string>,
+  > extends WhereNull<Builder, Record> {
     /**
-     * Accepts an array of object of named key/value pair and returns an array
-     * of Generic return columns.
+     * Supporting untyped keys, since having clause can refer alias columns as well.
      */
-    <K extends keyof Record> (values: { [P in K]: Record[P] }[]): Promise<ReturnColumns>
+    (key: string): Builder
+  }
+
+  /**
+   * Possible signatures for `having exists` clause
+   */
+  interface HavingExists<Builder extends ChainableContract> {
+    /**
+     * A query callback or a sub query
+     */
+    (callback: QueryCallback<Builder> | ChainableContract<any>): Builder
+  }
+
+  /**
+   * Possible signatures for having between
+   */
+  interface HavingBetween<
+    Builder extends ChainableContract,
+    Record extends Dictionary<StrictValues, string>,
+  > {
+    /**
+     * A typed key, along with a tuple of literal values, raw queries or
+     * sub queries.
+     */
+    <K extends keyof Record> (key: K, value: [
+      ValueWithSubQueries<Record[K]>,
+      ValueWithSubQueries<Record[K]>,
+    ]): Builder
+
+    /**
+     * An utyped key, along with a tuple of literal values, raw queries or
+     * sub queries.
+     */
+    (key: string, value: [
+      StrictValues | ChainableContract<any>,
+      StrictValues | ChainableContract<any>,
+    ]): Builder
+  }
+
+  /**
+   * Possibles signatures for a raw where clause.
+   */
+  interface HavingRaw<Builder extends ChainableContract, Record> extends RawQueryBuilderContract<Builder> {
   }
 
   /**
@@ -432,7 +576,7 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
    * methods to execute a query.
    */
   export interface ChainableContract <
-    Record extends Dictionary<any, string> = Dictionary<any, string>,
+    Record extends Dictionary<StrictValues, string> = Dictionary<StrictValues, string>,
   > {
     from (table: string): this
     from (table: Dictionary<string, string>): this
@@ -477,9 +621,9 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     orWhereNotBetween: WhereBetween<this, Record>
     andWhereNotBetween: WhereBetween<this, Record>
 
-    whereRaw: WhereRaw<this, Record>
-    orWhereRaw: WhereRaw<this, Record>
-    andWhereRaw: WhereRaw<this, Record>
+    whereRaw: WhereRaw<this>
+    orWhereRaw: WhereRaw<this>
+    andWhereRaw: WhereRaw<this>
 
     join: Join<this>
     innerJoin: Join<this>
@@ -491,6 +635,46 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     crossJoin: Join<this>
     joinRaw: JoinRaw<this>
 
+    having: Having<this, Record>
+    orHaving: Having<this, Record>
+    andHaving: Having<this, Record>
+
+    havingIn: HavingIn<this, Record>
+    orHavingIn: HavingIn<this, Record>
+    andHavingIn: HavingIn<this, Record>
+
+    havingNotIn: HavingIn<this, Record>
+    orHavingNotIn: HavingIn<this, Record>
+    andHavingNotIn: HavingIn<this, Record>
+
+    havingNull: HavingNull<this, Record>
+    orHavingNull: HavingNull<this, Record>
+    andHavingNull: HavingNull<this, Record>
+
+    havingNotNull: HavingNull<this, Record>
+    orHavingNotNull: HavingNull<this, Record>
+    andHavingNotNull: HavingNull<this, Record>
+
+    havingExists: HavingExists<this>
+    orHavingExists: HavingExists<this>
+    andHavingExists: HavingExists<this>
+
+    havingNotExists: HavingExists<this>
+    orHavingNotExists: HavingExists<this>
+    andHavingNotExists: HavingExists<this>
+
+    havingBetween: HavingBetween<this, Record>
+    orHavingBetween: HavingBetween<this, Record>
+    andHavingBetween: HavingBetween<this, Record>
+
+    havingNotBetween: HavingBetween<this, Record>
+    orHavingNotBetween: HavingBetween<this, Record>
+    andHavingNotBetween: HavingBetween<this, Record>
+
+    havingRaw: HavingRaw<this, Record>
+    orHavingRaw: HavingRaw<this, Record>
+    andHavingRaw: HavingRaw<this, Record>
+
     distinct: Distinct<this, Record>
 
     groupBy: GroupBy<this, Record>
@@ -499,13 +683,85 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     orderBy: OrderBy<this, Record>
     orderByRaw: OrderByRaw<this>
 
-    offset (offset: number): this
-    limit (limit: number): this
-
     union: Union<this>
     unionAll: UnionAll<this>
 
     intersect: Intersect<this>
+
+    offset (offset: number): this
+    limit (limit: number): this
+
+    clearSelect (): this
+    clearWhere (): this
+    clearOrder (): this
+    clearHaving (): this
+
+    forUpdate (...tableNames: string[]): this
+    forShare (...tableNames: string[]): this
+
+    skipLocked (): this
+    noWait (): this
+
+    toSQL (): Sql
+  }
+
+  /**
+   * Database query builder interface. Some of the methods on the Database
+   * query builder and Model query builder will behave differently.
+   */
+  export interface DatabaseQueryBuilderContract <
+    Record extends Dictionary<StrictValues, string> = Dictionary<StrictValues, string>,
+    Result extends any = Record,
+  > extends ChainableContract<Record> {
+    select: DatabaseQueryBuilderSelect<Record, Result>,
+
+    /**
+     * Returns the first row
+     */
+    first (): Result
+  }
+
+  /**
+   * Possible signatures for the `returning` method when called on
+   * the insert query builder.
+   */
+  interface InsertReturning<Record extends Dictionary<StrictValues, string>> {
+    /**
+     * Mark return columns as a single array of value type for the given
+     * key
+     */
+    <K extends keyof Record> (
+      column: K,
+    ): InsertQueryBuilderContract<Record, [Record[K]] | [number]>
+
+    /**
+     * Mark return columns as an array of key/value pair with correct types.
+     */
+    <K extends keyof Record> (
+      columns: K[],
+    ): InsertQueryBuilderContract<Record, ([{ [P in K]: Record[P] }] | [number])>
+  }
+
+  /**
+   * Possible signatures for an insert query
+   */
+  interface Insert<Record, ReturnColumns> {
+    /**
+     * Accepts an object of named key/value pair and returns an array
+     * of Generic return columns.
+     */
+    <K extends keyof Record> (columns: { [P in K]: Record[P] }): Promise<ReturnColumns>
+  }
+
+  /**
+   * Possible signatures for doing Bulk insert
+   */
+  interface BatchInsert<Record, ReturnColumns> {
+    /**
+     * Accepts an array of object of named key/value pair and returns an array
+     * of Generic return columns.
+     */
+    <K extends keyof Record> (values: { [P in K]: Record[P] }[]): Promise<ReturnColumns>
   }
 
   /**
@@ -513,7 +769,7 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
    * using `returning` method
    */
   export interface InsertQueryBuilderContract <
-    Record extends Dictionary<any, string> = Dictionary<any, string>,
+    Record extends Dictionary<StrictValues, string> = Dictionary<StrictValues, string>,
     ReturnColumns extends any[] = number[]
   > {
     /**
@@ -533,21 +789,5 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
      * `ReturnColumns` and return an array of it. COMPLEX 🤷
      */
     batchInsert: BatchInsert<Record, ReturnColumns[0][]>
-  }
-
-  /**
-   * Database query builder interface. Some of the methods on the Database
-   * query builder and Model query builder will behave differently.
-   */
-  export interface DatabaseQueryBuilderContract <
-    Record extends Dictionary<any, string> = Dictionary<any, string>,
-    Result extends any = Record,
-  > extends ChainableContract<Record> {
-    select: DatabaseQueryBuilderSelect<Record, Result>,
-
-    /**
-     * Returns the first row
-     */
-    first (): Result
   }
 }
