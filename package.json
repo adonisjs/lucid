@@ -30,14 +30,13 @@
   "dependencies": {
     "@poppinss/utils": "^1.0.4",
     "knex": "^0.19.1",
-    "ts-essentials": "^3.0.0",
-    "utility-types": "^3.7.0"
+    "ts-essentials": "^3.0.0"
   },
   "devDependencies": {
     "@adonisjs/mrm-preset": "^2.0.3",
     "@poppinss/dev-utils": "^1.0.0",
     "@types/dotenv": "^6.1.1",
-    "@types/node": "^12.6.8",
+    "@types/node": "^12.6.9",
     "clone": "^2.1.2",
     "commitizen": "^4.0.3",
     "cz-conventional-changelog": "^3.0.2",
