@@ -1,0 +1,963 @@
+/*
+ * @adonisjs/lucid
+ *
+ * (c) Harminder Virk <virk@adonisjs.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+*/
+
+/// <reference path="../../adonis-typings/database.ts" />
+
+import * as knex from 'knex'
+import { ChainableContract, QueryCallback } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
+import { RawQueryBuilder } from '../RawQueryBuilder'
+
+/**
+ * Function to transform the query callbacks and passing them the right
+ * instance
+ */
+type DBQueryCallback = (userFn: QueryCallback<ChainableContract>) => ((builder: knex.QueryBuilder) => void)
+
+export class BaseQueryBuilder implements ChainableContract {
+  constructor (
+    protected $knexBuilder: knex.QueryBuilder,
+    private _queryCallback: DBQueryCallback,
+  ) {}
+
+  /**
+   * Transforms the value to something that knex can internally understand and
+   * handle. It includes.
+   *
+   * 1. Returning the `knexBuilder` for sub queries.
+   * 2. Returning the `knexBuilder` for raw queries.
+   * 3. Wrapping callbacks, so that the end user receives an instance Lucid query
+   *    builder and not knex query builder.
+   */
+  private _transformValue (value: any) {
+    if (value instanceof BaseQueryBuilder) {
+      return value.$knexBuilder
+    }
+
+    if (typeof (value) === 'function') {
+      return this._queryCallback(value)
+    }
+
+    return this._transformRaw(value)
+  }
+
+  /**
+   * Returns the underlying knex raw query builder for Lucid raw
+   * query builder
+   */
+  private _transformRaw (value: any) {
+    if (value instanceof RawQueryBuilder) {
+      return value['$knexBuilder']
+    }
+
+    return value
+  }
+
+  /**
+   * Select table for the query. Re-calling this method multiple times will
+   * use the last selected table
+   */
+  public from (table: any): this {
+    this.$knexBuilder.from(table)
+    return this
+  }
+
+  /**
+   * Add a `where` clause
+   */
+  public where (key: any, operator?: any, value?: any): this {
+    if (value) {
+      this.$knexBuilder.where(key, operator, this._transformValue(value))
+    } else if (operator) {
+      this.$knexBuilder.where(key, this._transformValue(operator))
+    } else {
+      this.$knexBuilder.where(this._transformValue(key))
+    }
+
+    return this
+  }
+
+  /**
+   * Add a `or where` clause
+   */
+  public orWhere (key: any, operator?: any, value?: any): this {
+    if (value) {
+      this.$knexBuilder.orWhere(key, operator, this._transformValue(value))
+    } else if (operator) {
+      this.$knexBuilder.orWhere(key, this._transformValue(operator))
+    } else {
+      this.$knexBuilder.orWhere(this._transformValue(key))
+    }
+
+    return this
+  }
+
+  /**
+   * Alias for `where`
+   */
+  public andWhere (key: any, operator?: any, value?: any): this {
+    return this.where(key, operator, value)
+  }
+
+  /**
+   * Adding `where not` clause
+   */
+  public whereNot (key: any, operator?: any, value?: any): this {
+    if (value) {
+      this.$knexBuilder.whereNot(key, operator, this._transformValue(value))
+    } else if (operator) {
+      this.$knexBuilder.whereNot(key, this._transformValue(operator))
+    } else {
+      this.$knexBuilder.whereNot(this._transformValue(key))
+    }
+
+    return this
+  }
+
+  /**
+   * Adding `or where not` clause
+   */
+  public orWhereNot (key: any, operator?: any, value?: any): this {
+    if (value) {
+      this.$knexBuilder.orWhereNot(key, operator, this._transformValue(value))
+    } else if (operator) {
+      this.$knexBuilder.orWhereNot(key, this._transformValue(operator))
+    } else {
+      this.$knexBuilder.orWhereNot(this._transformValue(key))
+    }
+
+    return this
+  }
+
+  /**
+   * Alias for [[whereNot]]
+   */
+  public andWhereNot (key: any, operator?: any, value?: any): this {
+    return this.whereNot(key, operator, value)
+  }
+
+  /**
+   * Adding a `where in` clause
+   */
+  public whereIn (key: any, value: any): this {
+    value = Array.isArray(value)
+      ? value.map((one) => this._transformValue(one))
+      : this._transformValue(value)
+
+    this.$knexBuilder.whereIn(key, value)
+    return this
+  }
+
+  /**
+   * Adding a `or where in` clause
+   */
+  public orWhereIn (key: any, value: any): this {
+    value = Array.isArray(value)
+      ? value.map((one) => this._transformValue(one))
+      : this._transformValue(value)
+
+    this.$knexBuilder.orWhereIn(key, value)
+    return this
+  }
+
+  /**
+   * Alias for [[whereIn]]
+   */
+  public andWhereIn (key: any, value: any): this {
+    return this.whereIn(key, value)
+  }
+
+  /**
+   * Adding a `where not in` clause
+   */
+  public whereNotIn (key: any, value: any): this {
+    value = Array.isArray(value)
+      ? value.map((one) => this._transformValue(one))
+      : this._transformValue(value)
+
+    this.$knexBuilder.whereNotIn(key, value)
+    return this
+  }
+
+  /**
+   * Adding a `or where not in` clause
+   */
+  public orWhereNotIn (key: any, value: any): this {
+    value = Array.isArray(value)
+      ? value.map((one) => this._transformValue(one))
+      : this._transformValue(value)
+
+    this.$knexBuilder.orWhereNotIn(key, value)
+    return this
+  }
+
+  /**
+   * Alias for [[whereNotIn]]
+   */
+  public andWhereNotIn (key: any, value: any): this {
+    return this.whereNotIn(key, value)
+  }
+
+  /**
+   * Adding `where not null` clause
+   */
+  public whereNull (key: any): this {
+    this.$knexBuilder.whereNull(key)
+    return this
+  }
+
+  /**
+   * Adding `or where not null` clause
+   */
+  public orWhereNull (key: any): this {
+    this.$knexBuilder.orWhereNull(key)
+    return this
+  }
+
+  /**
+   * Alias for [[whereNull]]
+   */
+  public andWhereNull (key: any): this {
+    return this.whereNull(key)
+  }
+
+  /**
+   * Adding `where not null` clause
+   */
+  public whereNotNull (key: any): this {
+    this.$knexBuilder.whereNotNull(key)
+    return this
+  }
+
+  /**
+   * Adding `or where not null` clause
+   */
+  public orWhereNotNull (key: any): this {
+    this.$knexBuilder.orWhereNotNull(key)
+    return this
+  }
+
+  /**
+   * Alias for [[whereNotNull]]
+   */
+  public andWhereNotNull (key: any): this {
+    return this.whereNotNull(key)
+  }
+
+  /**
+   * Add a `where exists` clause
+   */
+  public whereExists (value: any) {
+    this.$knexBuilder.whereExists(this._transformValue(value))
+    return this
+  }
+
+  /**
+   * Add a `or where exists` clause
+   */
+  public orWhereExists (value: any) {
+    this.$knexBuilder.orWhereExists(this._transformValue(value))
+    return this
+  }
+
+  /**
+   * Alias for [[whereExists]]
+   */
+  public andWhereExists (value: any) {
+    return this.whereExists(value)
+  }
+
+  /**
+   * Add a `where not exists` clause
+   */
+  public whereNotExists (value: any) {
+    this.$knexBuilder.whereNotExists(this._transformValue(value))
+    return this
+  }
+
+  /**
+   * Add a `or where not exists` clause
+   */
+  public orWhereNotExists (value: any) {
+    this.$knexBuilder.orWhereNotExists(this._transformValue(value))
+    return this
+  }
+
+  /**
+   * Alias for [[whereNotExists]]
+   */
+  public andWhereNotExists (value: any) {
+    return this.whereNotExists(value)
+  }
+
+  /**
+   * Add where between clause
+   */
+  public whereBetween (key: any, value: any): this {
+    this.$knexBuilder.whereBetween(key, value.map((one) => this._transformValue(one)))
+    return this
+  }
+
+  /**
+   * Add where between clause
+   */
+  public orWhereBetween (key: any, value: any): this {
+    this.$knexBuilder.orWhereBetween(key, value.map((one) => this._transformValue(one)))
+    return this
+  }
+
+  /**
+   * Alias for [[whereBetween]]
+   */
+  public andWhereBetween (key: any, value: any): this {
+    return this.whereBetween(key, value)
+  }
+
+  /**
+   * Add where between clause
+   */
+  public whereNotBetween (key: any, value: any): this {
+    this.$knexBuilder.whereNotBetween(key, value.map((one) => this._transformValue(one)))
+    return this
+  }
+
+  /**
+   * Add where between clause
+   */
+  public orWhereNotBetween (key: any, value: any): this {
+    this.$knexBuilder.orWhereNotBetween(key, value.map((one) => this._transformValue(one)))
+    return this
+  }
+
+  /**
+   * Alias for [[whereNotBetween]]
+   */
+  public andWhereNotBetween (key: any, value: any): this {
+    return this.whereNotBetween(key, value)
+  }
+
+  /**
+   * Adding a where clause using raw sql
+   */
+  public whereRaw (sql: any, bindings?: any): this {
+    if (bindings) {
+      this.$knexBuilder.whereRaw(sql, bindings)
+    } else {
+      this.$knexBuilder.whereRaw(this._transformRaw(sql))
+    }
+
+    return this
+  }
+
+  /**
+   * Adding a or where clause using raw sql
+   */
+  public orWhereRaw (sql: any, bindings?: any): this {
+    if (bindings) {
+      this.$knexBuilder.orWhereRaw(sql, bindings)
+    } else {
+      this.$knexBuilder.orWhereRaw(this._transformRaw(sql))
+    }
+    return this
+  }
+
+  /**
+   * Alias for [[whereRaw]]
+   */
+  public andWhereRaw (sql: any, bindings?: any): this {
+    return this.whereRaw(sql, bindings)
+  }
+
+  /**
+   * Add a join clause
+   */
+  public join (table: any, first: any, operator?: any, second?: any): this {
+    if (second) {
+      this.$knexBuilder.join(table, first, operator, this._transformRaw(second))
+    } else if (operator) {
+      this.$knexBuilder.join(table, first, this._transformRaw(operator))
+    } else {
+      this.$knexBuilder.join(table, this._transformRaw(first))
+    }
+
+    return this
+  }
+
+  /**
+   * Add an inner join clause
+   */
+  public innerJoin (table: any, first: any, operator?: any, second?: any): this {
+    if (second) {
+      this.$knexBuilder.innerJoin(table, first, operator, this._transformRaw(second))
+    } else if (operator) {
+      this.$knexBuilder.innerJoin(table, first, this._transformRaw(operator))
+    } else {
+      this.$knexBuilder.innerJoin(table, this._transformRaw(first))
+    }
+
+    return this
+  }
+
+  /**
+   * Add a left join clause
+   */
+  public leftJoin (table: any, first: any, operator?: any, second?: any): this {
+    if (second) {
+      this.$knexBuilder.leftJoin(table, first, operator, this._transformRaw(second))
+    } else if (operator) {
+      this.$knexBuilder.leftJoin(table, first, this._transformRaw(operator))
+    } else {
+      this.$knexBuilder.leftJoin(table, this._transformRaw(first))
+    }
+
+    return this
+  }
+
+  /**
+   * Add a left outer join clause
+   */
+  public leftOuterJoin (table: any, first: any, operator?: any, second?: any): this {
+    if (second) {
+      this.$knexBuilder.leftOuterJoin(table, first, operator, this._transformRaw(second))
+    } else if (operator) {
+      this.$knexBuilder.leftOuterJoin(table, first, this._transformRaw(operator))
+    } else {
+      this.$knexBuilder.leftOuterJoin(table, this._transformRaw(first))
+    }
+
+    return this
+  }
+
+  /**
+   * Add a right join clause
+   */
+  public rightJoin (table: any, first: any, operator?: any, second?: any): this {
+    if (second) {
+      this.$knexBuilder.rightJoin(table, first, operator, this._transformRaw(second))
+    } else if (operator) {
+      this.$knexBuilder.rightJoin(table, first, this._transformRaw(operator))
+    } else {
+      this.$knexBuilder.rightJoin(table, this._transformRaw(first))
+    }
+
+    return this
+  }
+
+  /**
+   * Add a right outer join clause
+   */
+  public rightOuterJoin (table: any, first: any, operator?: any, second?: any): this {
+    if (second) {
+      this.$knexBuilder.rightOuterJoin(table, first, operator, this._transformRaw(second))
+    } else if (operator) {
+      this.$knexBuilder.rightOuterJoin(table, first, this._transformRaw(operator))
+    } else {
+      this.$knexBuilder.rightOuterJoin(table, this._transformRaw(first))
+    }
+
+    return this
+  }
+
+  /**
+   * Add a full outer join clause
+   */
+  public fullOuterJoin (table: any, first: any, operator?: any, second?: any): this {
+    if (second) {
+      this.$knexBuilder.fullOuterJoin(table, first, operator, this._transformRaw(second))
+    } else if (operator) {
+      this.$knexBuilder.fullOuterJoin(table, first, this._transformRaw(operator))
+    } else {
+      this.$knexBuilder.fullOuterJoin(table, this._transformRaw(first))
+    }
+
+    return this
+  }
+
+  /**
+   * Add a cross join clause
+   */
+  public crossJoin (table: any, first: any, operator?: any, second?: any): this {
+    if (second) {
+      this.$knexBuilder.crossJoin(table, first, operator, this._transformRaw(second))
+    } else if (operator) {
+      this.$knexBuilder.crossJoin(table, first, this._transformRaw(operator))
+    } else {
+      this.$knexBuilder.crossJoin(table, this._transformRaw(first))
+    }
+
+    return this
+  }
+
+  /**
+   * Add join clause as a raw query
+   */
+  public joinRaw (sql: any, bindings?: any) {
+    if (bindings) {
+      this.$knexBuilder.joinRaw(sql, bindings)
+    } else {
+      this.$knexBuilder.joinRaw(this._transformRaw(sql))
+    }
+
+    return this
+  }
+
+  /**
+   * Adds a having clause. The having clause breaks for `postgreSQL` when
+   * referencing alias columns, since PG doesn't support alias columns
+   * being referred within `having` clause. The end user has to
+   * use raw queries in this case.
+   */
+  public having (key: any, operator?: any, value?: any): this {
+    if (value) {
+      this.$knexBuilder.having(key, operator, this._transformValue(value))
+    } else if (operator) {
+      /**
+       * @todo: The having method in Knex is badly implemented. They only accept
+       * an instance of raw query and not `sql` and `bindings`, however everywhere
+       * else they accept `sql`, `bindings` and instance of raw query together.
+       *
+       * So we need to transform the `sql` and `bindings` to a raw query instance.
+       */
+      this.$knexBuilder.having(key, this._transformValue(operator))
+    } else {
+      this.$knexBuilder.having(this._transformValue(key))
+    }
+
+    return this
+  }
+
+  /**
+   * Adds or having clause. The having clause breaks for `postgreSQL` when
+   * referencing alias columns, since PG doesn't support alias columns
+   * being referred within `having` clause. The end user has to
+   * use raw queries in this case.
+   */
+  public orHaving (key: any, operator?: any, value?: any): this {
+    if (value) {
+      this.$knexBuilder.orHaving(key, operator, this._transformValue(value))
+    } else if (operator) {
+      /**
+       * @todo: The having method in Knex is badly implemented. They only accept
+       * an instance of raw query and not `sql` and `bindings`, however everywhere
+       * else they accept `sql`, `bindings` and instance of raw query together.
+       *
+       * So we need to transform the `sql` and `bindings` to a raw query instance.
+       */
+      this.$knexBuilder.orHaving(key, this._transformValue(operator))
+    } else {
+      this.$knexBuilder.orHaving(this._transformValue(key))
+    }
+
+    return this
+  }
+
+  /**
+   * Alias for [[having]]
+   */
+  public andHaving (key: any, operator?: any, value?: any): this {
+    return this.having(key, operator, value)
+  }
+
+  /**
+   * Adding having in clause to the query
+   */
+  public havingIn (key: any, value: any): this {
+    value = Array.isArray(value)
+      ? value.map((one) => this._transformValue(one))
+      : this._transformValue(value)
+
+    this.$knexBuilder.havingIn(key, value)
+    return this
+  }
+
+  /**
+   * Adding or having in clause to the query
+   */
+  public orHavingIn (key: any, value: any): this {
+    value = Array.isArray(value)
+      ? value.map((one) => this._transformValue(one))
+      : this._transformValue(value)
+
+    this.$knexBuilder['orHavingIn'](key, value)
+    return this
+  }
+
+  /**
+   * Alias for [[havingIn]]
+   */
+  public andHavingIn (key: any, value: any) {
+    return this.havingIn(key, value)
+  }
+
+  /**
+   * Adding having not in clause to the query
+   */
+  public havingNotIn (key: any, value: any): this {
+    value = Array.isArray(value)
+      ? value.map((one) => this._transformValue(one))
+      : this._transformValue(value)
+
+    this.$knexBuilder['havingNotIn'](key, value)
+    return this
+  }
+
+  /**
+   * Adding or having not in clause to the query
+   */
+  public orHavingNotIn (key: any, value: any): this {
+    value = Array.isArray(value)
+      ? value.map((one) => this._transformValue(one))
+      : this._transformValue(value)
+
+    this.$knexBuilder['orHavingNotIn'](key, value)
+    return this
+  }
+
+  /**
+   * Alias for [[havingNotIn]]
+   */
+  public andHavingNotIn (key: any, value: any) {
+    return this.havingNotIn(key, value)
+  }
+
+  /**
+   * Adding having null clause
+   */
+  public havingNull (key: any): this {
+    this.$knexBuilder['havingNull'](key)
+    return this
+  }
+
+  /**
+   * Adding or having null clause
+   */
+  public orHavingNull (key: any): this {
+    this.$knexBuilder['orHavingNull'](key)
+    return this
+  }
+
+  /**
+   * Alias for [[havingNull]] clause
+   */
+  public andHavingNull (key: any): this {
+    return this.havingNull(key)
+  }
+
+  /**
+   * Adding having not null clause
+   */
+  public havingNotNull (key: any): this {
+    this.$knexBuilder['havingNotNull'](key)
+    return this
+  }
+
+  /**
+   * Adding or having not null clause
+   */
+  public orHavingNotNull (key: any): this {
+    this.$knexBuilder['orHavingNotNull'](key)
+    return this
+  }
+
+  /**
+   * Alias for [[havingNotNull]] clause
+   */
+  public andHavingNotNull (key: any): this {
+    return this.havingNotNull(key)
+  }
+
+  /**
+   * Adding `having exists` clause
+   */
+  public havingExists (value: any): this {
+    this.$knexBuilder['havingExists'](this._transformValue(value))
+    return this
+  }
+
+  /**
+   * Adding `or having exists` clause
+   */
+  public orHavingExists (value: any): this {
+    this.$knexBuilder['orHavingExists'](this._transformValue(value))
+    return this
+  }
+
+  /**
+   * Alias for [[havingExists]]
+   */
+  public andHavingExists (value: any): this {
+    return this.havingExists(value)
+  }
+
+    /**
+   * Adding `having not exists` clause
+   */
+  public havingNotExists (value: any): this {
+    this.$knexBuilder['havingNotExists'](this._transformValue(value))
+    return this
+  }
+
+  /**
+   * Adding `or having not exists` clause
+   */
+  public orHavingNotExists (value: any): this {
+    this.$knexBuilder['orHavingNotExists'](this._transformValue(value))
+    return this
+  }
+
+  /**
+   * Alias for [[havingNotExists]]
+   */
+  public andHavingNotExists (value: any): this {
+    return this.havingNotExists(value)
+  }
+
+  /**
+   * Adding `having between` clause
+   */
+  public havingBetween (key: any, value: any): this {
+    this.$knexBuilder.havingBetween(key, value.map((one) => this._transformValue(one)))
+    return this
+  }
+
+  /**
+   * Adding `or having between` clause
+   */
+  public orHavingBetween (key: any, value: any): this {
+    this.$knexBuilder.orHavingBetween(key, value.map((one) => this._transformValue(one)))
+    return this
+  }
+
+  /**
+   * Alias for [[havingBetween]]
+   */
+  public andHavingBetween (key: any, value: any): this {
+    return this.havingBetween(key, value)
+  }
+
+  /**
+   * Adding `having not between` clause
+   */
+  public havingNotBetween (key: any, value: any): this {
+    this.$knexBuilder.havingNotBetween(key, value.map((one) => this._transformValue(one)))
+    return this
+  }
+
+  /**
+   * Adding `or having not between` clause
+   */
+  public orHavingNotBetween (key: any, value: any): this {
+    this.$knexBuilder.orHavingNotBetween(key, value.map((one) => this._transformValue(one)))
+    return this
+  }
+
+  /**
+   * Alias for [[havingNotBetween]]
+   */
+  public andHavingNotBetween (key: any, value: any): this {
+    return this.havingNotBetween(key, value)
+  }
+
+  /**
+   * Adding a where clause using raw sql
+   */
+  public havingRaw (sql: any, bindings?: any): this {
+    if (bindings) {
+      this.$knexBuilder.havingRaw(sql, bindings)
+    } else {
+      this.$knexBuilder.havingRaw(this._transformRaw(sql))
+    }
+
+    return this
+  }
+
+  /**
+   * Adding a where clause using raw sql
+   */
+  public orHavingRaw (sql: any, bindings?: any): this {
+    if (bindings) {
+      this.$knexBuilder.orHavingRaw(sql, bindings)
+    } else {
+      this.$knexBuilder.orHavingRaw(this._transformRaw(sql))
+    }
+
+    return this
+  }
+
+  /**
+   * Alias for [[havingRaw]]
+   */
+  public andHavingRaw (sql: any, bindings?: any): this {
+    return this.havingRaw(sql, bindings)
+  }
+
+  /**
+   * Add distinct clause
+   */
+  public distinct (...columns: any[]): this {
+    this.$knexBuilder.distinct(...columns)
+    return this
+  }
+
+  /**
+   * Add group by clause
+   */
+  public groupBy (...columns: any[]): this {
+    this.$knexBuilder.groupBy(...columns)
+    return this
+  }
+
+  /**
+   * Add group by clause as a raw query
+   */
+  public groupByRaw (sql: any, bindings?: any): this {
+    if (bindings) {
+      this.$knexBuilder.groupByRaw(sql, bindings)
+    } else {
+      this.$knexBuilder.groupByRaw(this._transformRaw(sql))
+    }
+
+    return this
+  }
+
+  /**
+   * Add order by clause
+   */
+  public orderBy (column: any, direction?: any): this {
+    this.$knexBuilder.orderBy(column, direction)
+    return this
+  }
+
+  /**
+   * Add order by clause as a raw query
+   */
+  public orderByRaw (sql: any, bindings?: any): this {
+    if (bindings) {
+      this.$knexBuilder.orderByRaw(sql, bindings)
+    } else {
+      this.$knexBuilder.orderByRaw(this._transformRaw(sql))
+    }
+
+    return this
+  }
+
+  /**
+   * Define select offset
+   */
+  public offset (value: number): this {
+    this.$knexBuilder.offset(value)
+    return this
+  }
+
+  /**
+   * Define results limit
+   */
+  public limit (value: number): this {
+    this.$knexBuilder.limit(value)
+    return this
+  }
+
+  /**
+   * Define union queries
+   */
+  public union (queries: any, wrap?: boolean): this {
+    queries = Array.isArray(queries)
+      ? queries.map((one) => this._transformValue(one))
+      : this._transformValue(queries)
+
+    wrap ? this.$knexBuilder.union(queries, wrap) : this.$knexBuilder.union(queries)
+    return this
+  }
+
+  /**
+   * Define union all queries
+   */
+  public unionAll (queries: any, wrap?: boolean): this {
+    queries = Array.isArray(queries)
+      ? queries.map((one) => this._transformValue(one))
+      : this._transformValue(queries)
+
+    wrap ? this.$knexBuilder.unionAll(queries, wrap) : this.$knexBuilder.unionAll(queries)
+    return this
+  }
+
+  /**
+   * Define intersect queries
+   */
+  public intersect (queries: any, wrap?: boolean): this {
+    queries = Array.isArray(queries)
+      ? queries.map((one) => this._transformValue(one))
+      : this._transformValue(queries)
+
+    wrap ? this.$knexBuilder.intersect(queries, wrap) : this.$knexBuilder.intersect(queries)
+    return this
+  }
+
+  public clearSelect (): this {
+    this.$knexBuilder.clearSelect()
+    return this
+  }
+
+  public clearWhere (): this {
+    this.$knexBuilder.clearWhere()
+    return this
+  }
+
+  public clearOrder (): this {
+    this.$knexBuilder.clearOrder()
+    return this
+  }
+
+  public clearHaving (): this {
+    this.$knexBuilder.clearHaving()
+    return this
+  }
+
+  /**
+   * Specify `FOR UPDATE` lock mode for a given
+   * query
+   */
+  public forUpdate (...tableNames: string[]): this {
+    this.$knexBuilder.forUpdate(...tableNames)
+
+    return this
+  }
+
+  /**
+   * Specify `FOR SHARE` lock mode for a given
+   * query
+   */
+  public forShare (...tableNames: string[]): this {
+    this.$knexBuilder.forShare(...tableNames)
+
+    return this
+  }
+
+  /**
+   * Skip locked rows
+   */
+  public skipLocked (): this {
+    this.$knexBuilder.skipLocked()
+    return this
+  }
+
+  /**
+   * Fail when query wants a locked row
+   */
+  public noWait (): this {
+    this.$knexBuilder.noWait()
+    return this
+  }
+
+  /**
+   * Get SQL representation of the constructed query
+   */
+  public toSQL () {
+    return this.$knexBuilder.toSQL()
+  }
+}

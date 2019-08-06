@@ -4,11 +4,20 @@ services:
     image: mysql:5.7
     restart: always
     environment:
-      MYSQL_DATABASE: 'lucid'
-      MYSQL_USER: 'virk'
-      MYSQL_PASSWORD: 'password'
-      MYSQL_ROOT_PASSWORD: 'password'
+      MYSQL_DATABASE: lucid
+      MYSQL_USER: virk
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: password
     ports:
       - '3306:3306'
     expose:
       - '3306'
+  pg:
+    image: postgres:11
+    restart: always
+    environment:
+      POSTGRES_DB: lucid
+      POSTGRES_USER: virk
+      POSTGRES_PASSWORD: password
+    ports:
+      - 5432:5432

@@ -1,22 +1,26 @@
-// import * as Knex from 'knex'
+import * as Knex from 'knex'
 // // import { join } from 'path'
-// // import { DatabaseQueryBuilderContract } from '@ioc:Adonis/Addons/Database'
+import { DatabaseQueryBuilderContract } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
-// const knex = Knex({
-//   client: 'pg',
-//   connection: {
-//     host: '0.0.0.0',
-//     user: 'virk',
-//     password: '',
-//     database: 'directory-service',
-//   },
-//   pool: {
-//     min: 0,
-//     max: 5,
-//     idleTimeoutMillis: 30000,
-//   },
-//   useNullAsDefault: true,
-// })
+const knex = Knex({
+  client: 'pg',
+  connection: {
+    host: '0.0.0.0',
+    user: 'virk',
+    password: '',
+    database: 'directory-service',
+  },
+  pool: {
+    min: 0,
+    max: 5,
+    idleTimeoutMillis: 30000,
+  },
+  useNullAsDefault: true,
+})
+
+knex()
+  .from('foo')
+  .havingIn('f', ['a'])
 
 // // let i = 0;
 // knex['_context'].client.pool.on('destroySuccess', _eventId => {
@@ -131,14 +135,7 @@
 // // class Post extends BaseModel {
 // // }
 
-// // const foo: DatabaseQueryBuilderContract<{ username: string, age: number }>
-// // const b = foo
-// //   .select('*')
-// //   .select({
-// //     'a': 'username',
-// //     'age': 'age',
-// //   }).first()
-
-// // async function foo () {
-// //   const a = User.query().select(['username', 'age']).first()
-// // }
+const foo: DatabaseQueryBuilderContract<{ username: string, age: number, email: string }> = {}
+foo.whereIn(['username', 'age', 'email'], [
+  ['foo', 22, 'a'], ['bar', 22, 'a'], ['virk', 22, 'a'],
+])
