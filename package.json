@@ -5,7 +5,10 @@
   "scripts": {
     "mrm": "mrm --preset=@adonisjs/mrm-preset",
     "pretest": "npm run lint",
-    "test": "node japaFile.js",
+    "test:sqlite": "DB=sqlite node japaFile.js",
+    "test:mysql": "DB=mysql node japaFile.js",
+    "test:pg": "DB=pg node japaFile.js",
+    "test": "npm run test:sqlite && npm run test:mysql && npm run test:pg",
     "prepublishOnly": "npm run build",
     "lint": "tslint --project tsconfig.json",
     "clean": "del build",

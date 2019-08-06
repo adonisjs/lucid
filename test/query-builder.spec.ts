@@ -2640,67 +2640,69 @@ test.group('Query Builder | forShare', (group) => {
   })
 })
 
-test.group('Query Builder | noWait', (group) => {
-  group.before(async () => {
-    await setup()
+if (['pg', 'mysql'].includes(process.env.DB!)) {
+  test.group('Query Builder | noWait', (group) => {
+    group.before(async () => {
+      await setup()
+    })
+
+    group.after(async () => {
+      await cleanup()
+    })
+
+    test('add no wait instruction to the query', (assert) => {
+      const connection = new Connection('primary', getConfig())
+      connection.connect()
+
+      const db = getQueryBuilder(connection)
+      const { sql, bindings } = db
+        .from('users')
+        .forShare()
+        .noWait()
+        .toSQL()
+
+      const { sql: knexSql, bindings: knexBindings } = connection.client!
+        .from('users')
+        .forShare()
+        .noWait()
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+    })
   })
 
-  group.after(async () => {
-    await cleanup()
+  test.group('Query Builder | skipLocked', (group) => {
+    group.before(async () => {
+      await setup()
+    })
+
+    group.after(async () => {
+      await cleanup()
+    })
+
+    test('add skip locked instruction to the query', (assert) => {
+      const connection = new Connection('primary', getConfig())
+      connection.connect()
+
+      const db = getQueryBuilder(connection)
+      const { sql, bindings } = db
+        .from('users')
+        .forShare()
+        .skipLocked()
+        .toSQL()
+
+      const { sql: knexSql, bindings: knexBindings } = connection.client!
+        .from('users')
+        .forShare()
+        .skipLocked()
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+    })
   })
-
-  test('add no wait instruction to the query', (assert) => {
-    const connection = new Connection('primary', getConfig())
-    connection.connect()
-
-    const db = getQueryBuilder(connection)
-    const { sql, bindings } = db
-      .from('users')
-      .forShare()
-      .noWait()
-      .toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = connection.client!
-      .from('users')
-      .forShare()
-      .noWait()
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-  })
-})
-
-test.group('Query Builder | skipLocked', (group) => {
-  group.before(async () => {
-    await setup()
-  })
-
-  group.after(async () => {
-    await cleanup()
-  })
-
-  test('add skip locked instruction to the query', (assert) => {
-    const connection = new Connection('primary', getConfig())
-    connection.connect()
-
-    const db = getQueryBuilder(connection)
-    const { sql, bindings } = db
-      .from('users')
-      .forShare()
-      .skipLocked()
-      .toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = connection.client!
-      .from('users')
-      .forShare()
-      .skipLocked()
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-  })
-})
+}
 
 test.group('Query Builder | having', (group) => {
   group.before(async () => {
