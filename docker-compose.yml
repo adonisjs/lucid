@@ -1,6 +1,14 @@
-version: '3.3'
+version: '3.4'
 services:
-  db:
+  test:
+    build:
+      context: .
+      target: build-deps
+    links:
+      - mysql
+      - pg
+    command: ["npm", "run", "test:docker"]
+  mysql:
     image: mysql:5.7
     restart: always
     environment:
