@@ -555,6 +555,14 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   }
 
   /**
+   * Possible signatures for defining table
+   */
+  interface Table<Builder> {
+    (table: string): Builder
+    (table: Dictionary<string, string>): Builder
+  }
+
+  /**
    * Possible signatures for performing an update
    */
   interface Update<Record, ReturnColumns> {
@@ -578,8 +586,7 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   export interface ChainableContract <
     Record extends Dictionary<StrictValues, string> = Dictionary<StrictValues, string>,
   > {
-    from (table: string): this
-    from (table: Dictionary<string, string>): this
+    from: Table<this>
 
     where: Where<this, Record>
     orWhere: Where<this, Record>
@@ -703,6 +710,7 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     noWait (): this
 
     toSQL (): Sql
+    toString (): string
   }
 
   /**
@@ -745,23 +753,44 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   /**
    * Possible signatures for an insert query
    */
-  interface Insert<Record, ReturnColumns> {
+  interface Insert<
+    Record extends Dictionary<StrictValues, string>,
+    ReturnColumns extends any[]
+  > {
     /**
-     * Accepts an object of named key/value pair and returns an array
-     * of Generic return columns.
+     * Defers the `insert` to `exec` method
      */
-    <K extends keyof Record> (columns: { [P in K]: Record[P] }): Promise<ReturnColumns>
+    <K extends keyof Record> (
+      columns: { [P in K]: Record[P] },
+      defer: true,
+    ): InsertQueryBuilderContract<Record, ReturnColumns>
+
+    /**
+     * Performs the insert right away when defer is not defined or is set to false
+     */
+    <K extends keyof Record> (columns: { [P in K]: Record[P] }, defer?: boolean): Promise<ReturnColumns>
   }
 
   /**
-   * Possible signatures for doing Bulk insert
+   * Possible signatures for doing multiple inserts in a single query
    */
-  interface BatchInsert<Record, ReturnColumns> {
+  interface MultiInsert<
+    Record extends Dictionary<StrictValues, string>,
+    ReturnColumns extends any[]
+  > {
+    /**
+     * Defers the `insert` to `exec` method
+     */
+    <K extends keyof Record> (
+      values: { [P in K]: Record[P] }[],
+      defer: true,
+    ): InsertQueryBuilderContract<Record, ReturnColumns>
+
     /**
      * Accepts an array of object of named key/value pair and returns an array
      * of Generic return columns.
      */
-    <K extends keyof Record> (values: { [P in K]: Record[P] }[]): Promise<ReturnColumns>
+    <K extends keyof Record> (values: { [P in K]: Record[P] }[], defer?: boolean): Promise<ReturnColumns>
   }
 
   /**
@@ -772,6 +801,8 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     Record extends Dictionary<StrictValues, string> = Dictionary<StrictValues, string>,
     ReturnColumns extends any[] = number[]
   > {
+    table: Table<this>
+
     /**
      * Define returning columns
      */
@@ -784,10 +815,18 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
 
     /**
      * In single insert, we always know that one item inside an array is returned, so
-     * instead of using `val[]`, we make use of `[val]`. However, in `batchInsert`,
+     * instead of using `val[]`, we make use of `[val]`. However, in `multiInsert`,
      * we need the `val[]`. So that's why, we pick the insert item of the
      * `ReturnColumns` and return an array of it. COMPLEX 🤷
      */
-    batchInsert: BatchInsert<Record, ReturnColumns[0][]>
+    multiInsert: MultiInsert<Record, ReturnColumns[0][]>
+
+    /**
+     * Execute the insert
+     */
+    exec (): Promise<ReturnColumns>
+
+    toSQL (): Sql
+    toString (): string
   }
 }

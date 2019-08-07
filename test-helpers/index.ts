@@ -13,9 +13,14 @@ import { join } from 'path'
 import * as dotenv from 'dotenv'
 import { Filesystem } from '@poppinss/dev-utils'
 import { ConnectionConfigContract, ConnectionContract } from '@ioc:Adonis/Addons/Database'
-import { DatabaseQueryBuilderContract, RawContract } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
+import {
+  DatabaseQueryBuilderContract,
+  RawContract,
+  InsertQueryBuilderContract,
+} from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
 import { DatabaseQueryBuilder } from '../src/Database'
+import { InsertQueryBuilder } from '../src/InsertQueryBuilder'
 import { RawQueryBuilder } from '../src/RawQueryBuilder'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
@@ -97,4 +102,13 @@ export function getRawQueryBuilder (connection: ConnectionContract, sql: string,
   return new RawQueryBuilder(
     bindings ? connection.client!.raw(sql, bindings) : connection.client!.raw(sql),
   ) as unknown as RawContract
+}
+
+/**
+ * Returns query builder instance for a given connection
+ */
+export function getInsertBuilder (connection: ConnectionContract) {
+  return new InsertQueryBuilder(
+    connection.client!.queryBuilder(),
+  ) as unknown as InsertQueryBuilderContract
 }

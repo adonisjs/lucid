@@ -19,6 +19,9 @@ import { RawQueryBuilder } from '../RawQueryBuilder'
  */
 type DBQueryCallback = (userFn: QueryCallback<ChainableContract>) => ((builder: knex.QueryBuilder) => void)
 
+/**
+ * Base query builder exposes the API for constructing SQL queries.
+ */
 export class BaseQueryBuilder implements ChainableContract {
   constructor (
     protected $knexBuilder: knex.QueryBuilder,
@@ -959,5 +962,12 @@ export class BaseQueryBuilder implements ChainableContract {
    */
   public toSQL () {
     return this.$knexBuilder.toSQL()
+  }
+
+  /**
+   * Returns string representation of the query
+   */
+  public toString () {
+    return this.$knexBuilder.toString()
   }
 }
