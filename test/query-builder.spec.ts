@@ -3765,3 +3765,1001 @@ test.group('Query Builder | clearHaving', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 })
+
+test.group('Query Builder | count', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  test('count all rows', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .count('*', 'total')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .count('*', { as: 'total' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('count multiple rows', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .count({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .count({ u: 'username', e: 'email' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('count by raw query', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .count(getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]), 'u')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .count({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('count by subquery', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .count(getQueryBuilder(connection).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .count({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('count by raw query on multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .count({
+        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .count({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('count by subquery on multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .count({
+        u: getQueryBuilder(connection).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .count({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})
+
+test.group('Query Builder | countDistinct', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  test('count all rows', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .countDistinct('*', 'total')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .countDistinct('*', { as: 'total' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('count multiple rows', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .countDistinct({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .countDistinct({ u: 'username', e: 'email' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('count by raw query', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .countDistinct(
+        getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        'u',
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .countDistinct({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('count by subquery', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .countDistinct(getQueryBuilder(connection).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .countDistinct({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('count by raw query on multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .countDistinct({
+        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .countDistinct({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('count by subquery on multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .countDistinct({
+        u: getQueryBuilder(connection).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .countDistinct({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})
+
+test.group('Query Builder | min', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  test('use min function', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .min('*', 'smallest')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .min('*', { as: 'smallest' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use min function for multiple times', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .min({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .min({ u: 'username', e: 'email' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use raw queries to compute min', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .min(
+        getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        'u',
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .min({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use subqueries to compute min', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .min(getQueryBuilder(connection).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .min({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use raw query to compute min with multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .min({
+        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .min({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use subquery to compute min with multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .min({
+        u: getQueryBuilder(connection).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .min({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})
+
+test.group('Query Builder | max', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  test('use max function', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .max('*', 'biggest')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .max('*', { as: 'biggest' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use max function for multiple times', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .max({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .max({ u: 'username', e: 'email' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use raw queries to compute max', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .max(
+        getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        'u',
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .max({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use subqueries to compute max', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .max(getQueryBuilder(connection).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .max({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use raw query to compute max with multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .max({
+        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .max({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use subquery to compute max with multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .max({
+        u: getQueryBuilder(connection).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .max({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})
+
+test.group('Query Builder | sum', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  test('use sum function', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .sum('*', 'total')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .sum('*', { as: 'total' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use sum function for multiple times', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .sum({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .sum({ u: 'username', e: 'email' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use raw queries to compute sum', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .sum(
+        getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        'u',
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .sum({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use subqueries to compute sum', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .sum(getQueryBuilder(connection).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .sum({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use raw query to compute sum with multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .sum({
+        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .sum({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use subquery to compute sum with multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .sum({
+        u: getQueryBuilder(connection).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .sum({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})
+
+test.group('Query Builder | avg', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  test('use avg function', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .avg('*', 'avg')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .avg('*', { as: 'avg' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use avg function for multiple times', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .avg({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .avg({ u: 'username', e: 'email' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use raw queries to compute avg', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .avg(
+        getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        'u',
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .avg({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use subqueries to compute avg', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .avg(getQueryBuilder(connection).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .avg({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use raw query to compute avg with multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .avg({
+        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .avg({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use subquery to compute avg with multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .avg({
+        u: getQueryBuilder(connection).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .avg({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})
+
+test.group('Query Builder | avgDistinct', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  test('use avgDistinct function', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .avgDistinct('*', 'avgDistinct')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .avgDistinct('*', { as: 'avgDistinct' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use avgDistinct function for multiple times', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .avgDistinct({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .avgDistinct({ u: 'username', e: 'email' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use raw queries to compute avgDistinct', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .avgDistinct(
+        getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        'u',
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .avgDistinct({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use subqueries to compute avgDistinct', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .avgDistinct(getQueryBuilder(connection).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .avgDistinct({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use raw query to compute avgDistinct with multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .avgDistinct({
+        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .avgDistinct({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('use subquery to compute avgDistinct with multiple columns', (assert) => {
+    const connection = new Connection('primary', getConfig())
+    connection.connect()
+
+    const db = getQueryBuilder(connection)
+    const { sql, bindings } = db
+      .from('users')
+      .avgDistinct({
+        u: getQueryBuilder(connection).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .avgDistinct({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})

@@ -11,6 +11,12 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   import { Dictionary } from 'ts-essentials'
   import { JoinCallback, Sql, Raw } from 'knex'
 
+  export interface Registery {
+    Count: number,
+  }
+
+  type OneOrMany<T extends any> = T | T[]
+
   /**
    * A known set of values allowed when defining values for different
    * clauses
@@ -357,6 +363,56 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
    * GroupByRaw is same as `RawQueryBuilderContract`
    */
   interface GroupByRaw<Builder extends ChainableContract> extends RawQueryBuilderContract<Builder> {
+  }
+
+  /**
+   * Possible signatures for aggregate functions. It will append
+   * to the pre existing result
+   */
+  interface Aggregate <
+    Record extends Dictionary<StrictValues, string>,
+    Result extends any = Record,
+  > {
+    /**
+     * Accepting a typed column with the alias for the count. Unlike knex
+     * we enforce the alias, otherwise the output highly varies based
+     * upon the driver in use
+     */
+    <K extends keyof Record, Alias extends string>(
+      column: OneOrMany<K>,
+      alias: Alias,
+    ): DatabaseQueryBuilderContract<Record, (Result & Dictionary<Registery['Count'], Alias>)>
+
+    /**
+     * Accepting an object for multiple counts in a single query. Again
+     * aliases are enforced for consistency.
+     */
+    <
+      K extends keyof Record,
+      Alias extends string,
+      Columns extends Dictionary<OneOrMany<K>, Alias>,
+    >(
+      columns: Columns,
+    ): DatabaseQueryBuilderContract<Record, (Result & { [AliasKey in keyof Columns]: Registery['Count'] })>
+
+    /**
+     * Accepting an un typed column with the alias for the count.
+     */
+    <Alias extends string>(
+      column: OneOrMany<ValueWithSubQueries<string>>,
+      alias: Alias,
+    ): DatabaseQueryBuilderContract<Record, (Result & Dictionary<Registery['Count'], Alias>)>
+
+    /**
+     * Accepting an object for multiple counts in a single query. Again
+     * aliases are enforced for consistency
+     */
+    <
+      Alias extends string,
+      Columns extends Dictionary<OneOrMany<ValueWithSubQueries<string>>, Alias>,
+    >(
+      columns: Columns,
+    ): DatabaseQueryBuilderContract<Record, (Result & { [AliasKey in keyof Columns]: Registery['Count'] })>
   }
 
   /**
@@ -720,8 +776,16 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   export interface DatabaseQueryBuilderContract <
     Record extends Dictionary<StrictValues, string> = Dictionary<StrictValues, string>,
     Result extends any = Record,
-  > extends ChainableContract<Record> {
+  > extends ChainableContract<Record>, Promise<Result[]> {
     select: DatabaseQueryBuilderSelect<Record, Result>,
+
+    count: Aggregate<Record, Result>,
+    countDistinct: Aggregate<Record, Result>,
+    min: Aggregate<Record, Result>,
+    max: Aggregate<Record, Result>,
+    sum: Aggregate<Record, Result>,
+    avg: Aggregate<Record, Result>,
+    avgDistinct: Aggregate<Record, Result>,
 
     /**
      * Returns the first row
