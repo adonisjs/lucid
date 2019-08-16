@@ -20,6 +20,7 @@ import {
   RawContract,
   InsertQueryBuilderContract,
   DatabaseQueryBuilderContract,
+  QueryClientContract,
 } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
 import { RawQueryBuilder } from '../src/QueryBuilder/Raw'
@@ -118,10 +119,10 @@ export async function resetTables () {
 /**
  * Returns query builder instance for a given connection
  */
-export function getQueryBuilder (connection: ConnectionContract) {
+export function getQueryBuilder (client: QueryClientContract) {
   return new DatabaseQueryBuilder(
-    connection.getWriteClient().queryBuilder(),
-    connection,
+    client.getWriteClient().queryBuilder(),
+    client,
   ) as unknown as DatabaseQueryBuilderContract
 }
 
@@ -130,7 +131,7 @@ export function getQueryBuilder (connection: ConnectionContract) {
  */
 export function getRawQueryBuilder (connection: ConnectionContract, sql: string, bindings?: any[]) {
   return new RawQueryBuilder(
-    bindings ? connection.getWriteClient().raw(sql, bindings) : connection.getWriteClient().raw(sql),
+    bindings ? connection.client!.raw(sql, bindings) : connection.client!.raw(sql),
   ) as unknown as RawContract
 }
 
@@ -138,9 +139,7 @@ export function getRawQueryBuilder (connection: ConnectionContract, sql: string,
  * Returns query builder instance for a given connection
  */
 export function getInsertBuilder (connection: ConnectionContract) {
-  return new InsertQueryBuilder(
-    connection.getWriteClient().queryBuilder(),
-  ) as unknown as InsertQueryBuilderContract
+  return new InsertQueryBuilder(connection.client!.queryBuilder()) as unknown as InsertQueryBuilderContract
 }
 
 /**

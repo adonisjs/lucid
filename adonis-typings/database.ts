@@ -323,7 +323,10 @@ declare module '@ioc:Adonis/Addons/Database' {
    * Connection represents a single knex instance with inbuilt
    * pooling capabilities.
    */
-  export interface ConnectionContract extends EventEmitter, QueryClientContract {
+  export interface ConnectionContract extends EventEmitter {
+    client?: knex,
+    readClient?: knex,
+
     /**
      * Read/write connection pools
      */
@@ -357,5 +360,11 @@ declare module '@ioc:Adonis/Addons/Database' {
      * Disconnect knex
      */
     disconnect (): Promise<void>,
+
+    /**
+     * Returns an instance of a given client. A sticky client
+     * always uses the write connection for all queries
+     */
+    getClient (sticky?: boolean): QueryClientContract,
   }
 }

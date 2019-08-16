@@ -15,21 +15,9 @@ import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
 import { LoggerContract } from '@poppinss/logger'
 import { patchKnex } from 'knex-dynamic-connection'
-import { resolveClientNameWithAliases } from 'knex/lib/helpers'
 
 import { ConnectionConfigContract, ConnectionContract } from '@ioc:Adonis/Addons/Database'
-
-import {
-  DatabaseQueryBuilderContract,
-  RawContract,
-  InsertQueryBuilderContract,
-  TransactionClientContract,
-} from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
-
-import { Transaction } from '../Transaction'
-import { RawQueryBuilder } from '../QueryBuilder/Raw'
-import { InsertQueryBuilder } from '../QueryBuilder/Insert'
-import { DatabaseQueryBuilder } from '../QueryBuilder/Database'
+import { QueryClient } from '../QueryClient'
 
 /**
  * Connection class manages a given database connection. Internally it uses
@@ -41,23 +29,13 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Reference to knex. The instance is created once the `open`
    * method is invoked
    */
-  private _client?: knex
+  public client?: knex
 
   /**
    * Read client when read/write replicas are defined in the config, otherwise
    * it is a reference to the `client`.
    */
-  private _readClient?: knex
-
-  /**
-   * Not a transaction client
-   */
-  public isTransaction = false
-
-  /**
-   * The name of the dialect in use
-   */
-  public dialect = resolveClientNameWithAliases(this.config.client)
+  public readClient?: knex
 
   /**
    * Config for one or more read replicas. Only exists, when replicas are
@@ -83,7 +61,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Raises exception when client or readClient are not defined
    */
   private _ensureClients () {
-    if (!this._client || !this._readClient) {
+    if (!this.client || !this.readClient) {
       throw new Exception('Connection is not in ready state. Make sure to call .connect first')
     }
   }
@@ -116,8 +94,8 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Cleanup references
    */
   private _cleanup () {
-    this._client = undefined
-    this._readClient = undefined
+    this.client = undefined
+    this.readClient = undefined
     this._readReplicas = []
   }
 
@@ -254,8 +232,8 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Creates the write connection
    */
   private _setupWriteConnection () {
-    this._client = knex(this._getWriteConfig())
-    patchKnex(this._client, this._writeConfigResolver.bind(this))
+    this.client = knex(this._getWriteConfig())
+    patchKnex(this.client, this._writeConfigResolver.bind(this))
   }
 
   /**
@@ -264,20 +242,21 @@ export class Connection extends EventEmitter implements ConnectionContract {
    */
   private _setupReadConnection () {
     if (!this._hasReadWriteReplicas()) {
-      this._readClient = this._client
+      this.readClient = this.client
       return
     }
 
     this._logger.trace({ connection: this.name }, 'setting up read/write replicas')
-    this._readClient = knex(this._getReadConfig())
-    patchKnex(this._readClient, this._readConfigResolver.bind(this))
+
+    this.readClient = knex(this._getReadConfig())
+    patchKnex(this.readClient, this._readConfigResolver.bind(this))
   }
 
   /**
    * Returns the pool instance for the given connection
    */
   public get pool (): null | Pool<any> {
-    return this._client ? this._client.client.pool : null
+    return this.client ? this.client.client.pool : null
   }
 
   /**
@@ -285,7 +264,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * not in use, then read/write pools are same.
    */
   public get readPool (): null | Pool<any> {
-    return this._readClient ? this._readClient.client.pool : null
+    return this.readClient ? this.readClient.client.pool : null
   }
 
   /**
@@ -316,9 +295,9 @@ export class Connection extends EventEmitter implements ConnectionContract {
     /**
      * Disconnect write client
      */
-    if (this._client) {
+    if (this.client) {
       try {
-        await this._client.destroy()
+        await this.client.destroy()
       } catch (error) {
         this.emit('disconnect:error', error, this)
       }
@@ -328,9 +307,9 @@ export class Connection extends EventEmitter implements ConnectionContract {
      * Disconnect read client when it exists and both clients
      * aren't same
      */
-    if (this._readClient && this._readClient !== this._client) {
+    if (this.readClient && this.readClient !== this.client) {
       try {
-        await this._readClient.destroy()
+        await this.readClient.destroy()
       } catch (error) {
         this.emit('disconnect:error', error, this)
       }
@@ -338,88 +317,11 @@ export class Connection extends EventEmitter implements ConnectionContract {
   }
 
   /**
-   * Returns the read client
+   * Returns an instance for a query client that using this connection. Setting
+   * `sticky=true` will use the write connection for reads
    */
-  public getReadClient () {
+  public getClient (sticky = false) {
     this._ensureClients()
-    return this._readClient!
-  }
-
-  /**
-   * Returns the write client
-   */
-  public getWriteClient () {
-    this._ensureClients()
-    return this._client!
-  }
-
-  /**
-   * Truncate table
-   */
-  public async truncate (table: string): Promise<void> {
-    this._ensureClients()
-    await this._client!.select(table).truncate()
-  }
-
-  /**
-   * Get information for a table columns
-   */
-  public async columnsInfo (table: string, column?: string): Promise<any> {
-    this._ensureClients()
-    const query = this._client!.select(table)
-    const result = await (column ? query.columnInfo(column) : query.columnInfo())
-    return result
-  }
-
-  /**
-   * Returns an instance of a transaction. Each transaction will
-   * query and hold a single connection for all queries.
-   */
-  public async transaction (): Promise<TransactionClientContract> {
-    this._ensureClients()
-    const trx = await this._client!.transaction()
-    return new Transaction(trx, this.dialect)
-  }
-
-  /**
-   * Returns instance of a query builder for selecting, updating
-   * or deleting rows
-   */
-  public query (): DatabaseQueryBuilderContract {
-    this._ensureClients()
-    return new DatabaseQueryBuilder(this._client!.queryBuilder(), this)
-  }
-
-  /**
-   * Returns instance of a query builder for inserting rows
-   */
-  public insertQuery (): InsertQueryBuilderContract {
-    this._ensureClients()
-    return new InsertQueryBuilder(this._client!.queryBuilder(), this)
-  }
-
-  /**
-   * Returns instance of raw query builder
-   */
-  public raw (sql: any, bindings?: any): RawContract {
-    this._ensureClients()
-    return new RawQueryBuilder(this._client!.raw(sql, bindings))
-  }
-
-  /**
-   * Returns instance of a query builder and selects the table
-   */
-  public from (table: any): DatabaseQueryBuilderContract {
-    this._ensureClients()
-    return this.query().from(table)
-  }
-
-  /**
-   * Returns instance of a query builder and selects the table
-   * for an insert query
-   */
-  public table (table: any): InsertQueryBuilderContract {
-    this._ensureClients()
-    return this.insertQuery().table(table)
+    return sticky ? new QueryClient(this.client!) : new QueryClient(this.client!, this.readClient!)
   }
 }

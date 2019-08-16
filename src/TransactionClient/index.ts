@@ -26,7 +26,10 @@ import { DatabaseQueryBuilder } from '../QueryBuilder/Database'
  * Transaction uses a dedicated connection from the connection pool
  * and executes queries inside a given transaction.
  */
-export class Transaction implements TransactionClientContract {
+export class TransactionClient implements TransactionClientContract {
+  /**
+   * Always true
+   */
   public isTransaction: true = true
 
   constructor (public knexClient: knex.Transaction, public dialect: string) {
@@ -91,7 +94,7 @@ export class Transaction implements TransactionClientContract {
    */
   public async transaction (): Promise<TransactionClientContract> {
     const trx = await this.knexClient.transaction()
-    return new Transaction(trx, this.dialect)
+    return new TransactionClient(trx, this.dialect)
   }
 
   /**
