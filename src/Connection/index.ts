@@ -322,6 +322,12 @@ export class Connection extends EventEmitter implements ConnectionContract {
    */
   public getClient (mode?: 'read' | 'write') {
     this._ensureClients()
+    this._logger.trace(
+      { connection: this.name },
+      `creating query client in %s mode`,
+      [mode || 'dual'],
+    )
+
     if (!mode) {
       return new QueryClient('dual', this.client!, this.readClient!)
     }
