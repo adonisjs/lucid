@@ -12,7 +12,7 @@
 import * as test from 'japa'
 
 import { Connection } from '../src/Connection'
-import { getConfig, setup, cleanup, getInsertBuilder } from '../test-helpers'
+import { getConfig, setup, cleanup, getInsertBuilder, getLogger } from '../test-helpers'
 
 test.group('Query Builder | from', (group) => {
   group.before(async () => {
@@ -24,13 +24,13 @@ test.group('Query Builder | from', (group) => {
   })
 
   test('perform insert', (assert) => {
-    const connection = new Connection('primary', getConfig())
+    const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
     const db = getInsertBuilder(connection)
-    const { sql, bindings } = db.table('users').insert({ username: 'virk' }, true).toSQL()
+    const { sql, bindings } = db.table('users').insert({ username: 'virk' }).toSQL()
 
-    const { sql: knexSql, bindings: knexBindings } = connection.client!
+    const { sql: knexSql, bindings: knexBindings } = connection.getWriteClient()
       .from('users')
       .insert({ username: 'virk' })
       .toSQL()
@@ -40,16 +40,16 @@ test.group('Query Builder | from', (group) => {
   })
 
   test('perform multi insert', (assert) => {
-    const connection = new Connection('primary', getConfig())
+    const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
     const db = getInsertBuilder(connection)
     const { sql, bindings } = db
       .table('users')
-      .multiInsert([{ username: 'virk' }, { username: 'nikk' }], true)
+      .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
       .toSQL()
 
-    const { sql: knexSql, bindings: knexBindings } = connection.client!
+    const { sql: knexSql, bindings: knexBindings } = connection.getWriteClient()
       .from('users')
       .insert([{ username: 'virk' }, { username: 'nikk' }])
       .toSQL()
@@ -59,17 +59,17 @@ test.group('Query Builder | from', (group) => {
   })
 
   test('define returning columns', (assert) => {
-    const connection = new Connection('primary', getConfig())
+    const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
     const db = getInsertBuilder(connection)
     const { sql, bindings } = db
       .table('users')
       .returning(['id', 'username'])
-      .multiInsert([{ username: 'virk' }, { username: 'nikk' }], true)
+      .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
       .toSQL()
 
-    const { sql: knexSql, bindings: knexBindings } = connection.client!
+    const { sql: knexSql, bindings: knexBindings } = connection.getWriteClient()
       .from('users')
       .returning(['id', 'username'])
       .insert([{ username: 'virk' }, { username: 'nikk' }])

@@ -12,7 +12,24 @@
 import { Pool } from 'tarn'
 import * as knex from 'knex'
 import { EventEmitter } from 'events'
+import { Exception } from '@poppinss/utils'
+import { LoggerContract } from '@poppinss/logger'
+import { patchKnex } from 'knex-dynamic-connection'
+import { resolveClientNameWithAliases } from 'knex/lib/helpers'
+
 import { ConnectionConfigContract, ConnectionContract } from '@ioc:Adonis/Addons/Database'
+
+import {
+  DatabaseQueryBuilderContract,
+  RawContract,
+  InsertQueryBuilderContract,
+  TransactionClientContract,
+} from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
+
+import { Transaction } from '../Transaction'
+import { RawQueryBuilder } from '../QueryBuilder/Raw'
+import { InsertQueryBuilder } from '../QueryBuilder/Insert'
+import { DatabaseQueryBuilder } from '../QueryBuilder/Database'
 
 /**
  * Connection class manages a given database connection. Internally it uses
@@ -24,43 +41,251 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Reference to knex. The instance is created once the `open`
    * method is invoked
    */
-  public client?: knex
+  private _client?: knex
 
-  constructor (public name: string, public config: ConnectionConfigContract) {
+  /**
+   * Read client when read/write replicas are defined in the config, otherwise
+   * it is a reference to the `client`.
+   */
+  private _readClient?: knex
+
+  /**
+   * Not a transaction client
+   */
+  public isTransaction = false
+
+  /**
+   * The name of the dialect in use
+   */
+  public dialect = resolveClientNameWithAliases(this.config.client)
+
+  /**
+   * Config for one or more read replicas. Only exists, when replicas are
+   * defined
+   */
+  private _readReplicas: any[] = []
+
+  /**
+   * The round robin counter for reading config
+   */
+  private _roundRobinCounter = 0
+
+  constructor (
+    public name: string,
+    public config: ConnectionConfigContract,
+    private _logger: LoggerContract,
+  ) {
     super()
+    this._validateConfig()
   }
 
   /**
-   * Does cleanup by removing knex reference and removing
-   * all listeners
+   * Raises exception when client or readClient are not defined
+   */
+  private _ensureClients () {
+    if (!this._client || !this._readClient) {
+      throw new Exception('Connection is not in ready state. Make sure to call .connect first')
+    }
+  }
+
+  /**
+   * Validates the config to ensure that read/write replicas are defined
+   * properly.
+   */
+  private _validateConfig () {
+    if (this.config.replicas) {
+      if (!this.config.replicas.read || !this.config.replicas.write) {
+        throw new Exception(
+          'Make sure to define read/write replicas or use connection property',
+          500,
+          'E_INCOMPLETE_REPLICAS_CONFIG',
+        )
+      }
+
+      if (!this.config.replicas.read.connection || !this.config.replicas.read.connection) {
+        throw new Exception(
+          'Make sure to define connection property inside read/write replicas',
+          500,
+          'E_INVALID_REPLICAS_CONFIG',
+        )
+      }
+    }
+  }
+
+  /**
+   * Cleanup references
+   */
+  private _cleanup () {
+    this._client = undefined
+    this._readClient = undefined
+    this._readReplicas = []
+  }
+
+  /**
+   * Does cleanup by removing knex reference and removing all listeners.
+   * For the same of simplicity, we get rid of both read and write
+   * clients, when anyone of them disconnects.
    */
   private _monitorPoolResources () {
-    this.pool!.on('destroySuccess', () => {
-      /**
-       * Force close when `numUsed` and `numFree` both are zero. This happens
-       * when `min` resources inside the pool are set to `0`.
-       */
-      if (this.pool!.numFree() === 0 && this.pool!.numUsed() === 0) {
-        this.disconnect()
-      }
-    })
-
     /**
      * Pool has destroyed and hence we must cleanup resources
      * as well.
      */
     this.pool!.on('poolDestroySuccess', () => {
-      this.client = undefined
+      this._logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
+      this._cleanup()
       this.emit('disconnect', this)
       this.removeAllListeners()
     })
+
+    if (this.readPool !== this.pool) {
+      this._logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
+      this.readPool!.on('poolDestroySuccess', () => {
+        this._cleanup()
+        this.emit('disconnect', this)
+        this.removeAllListeners()
+      })
+    }
+  }
+
+  /**
+   * Returns a boolean telling if config has read/write
+   * connection settings vs a single connection
+   * object.
+   */
+  private _hasReadWriteReplicas (): boolean {
+    return !!(this.config.replicas && this.config.replicas.read && this.config.replicas.write)
+  }
+
+  /**
+   * Returns normalized config object for write replica to be
+   * used by knex
+   */
+  private _getWriteConfig (): knex.Config {
+    if (!this.config.replicas) {
+      return this.config
+    }
+
+    const { replicas, ...config } = this.config
+
+    /**
+     * Give preference to the replica write connection when and merge values from
+     * the main connection object when defined.
+     */
+    if (typeof (replicas.write.connection) === 'string' || typeof (config.connection) === 'string') {
+      config.connection = replicas.write.connection
+    } else {
+      config.connection = Object.assign({}, config.connection, replicas.write.connection)
+    }
+
+    /**
+     * Add pool to the config when pool config defined on main connection
+     * or the write replica
+     */
+    if (config.pool || replicas.write.pool) {
+      config.pool = Object.assign({}, config.pool, replicas.write.pool)
+    }
+
+    return config as knex.Config
+  }
+
+  /**
+   * Returns the config for read replicas.
+   */
+  private _getReadConfig (): knex.Config {
+    if (!this.config.replicas) {
+      return this.config
+    }
+
+    const { replicas, ...config } = this.config
+
+    /**
+     * Reading replicas and storing them as a reference, so that we
+     * can pick a config from replicas as round robin.
+     */
+    this._readReplicas = (replicas.read.connection as Array<any>).map((one) => {
+      if (typeof (one) === 'string' || typeof (config.connection) === 'string') {
+        return one
+      } else {
+        return Object.assign({}, config.connection, one)
+      }
+    })
+
+    /**
+     * Add database property on the main connection, since knexjs needs it
+     * internally
+     */
+    config.connection = {
+      database: this._readReplicas[0].database,
+    }
+
+    /**
+     * Add pool to the config when pool config defined on main connection
+     * or the read replica
+     */
+    if (config.pool || replicas.read.pool) {
+      config.pool = Object.assign({}, config.pool, replicas.read.pool)
+    }
+
+    return config as knex.Config
+  }
+
+  /**
+   * Resolves connection config for the writer connection
+   */
+  private _writeConfigResolver (originalConfig: ConnectionConfigContract) {
+    return originalConfig.connection
+  }
+
+  /**
+   * Resolves connection config for the reader connection
+   */
+  private _readConfigResolver (originalConfig: ConnectionConfigContract) {
+    if (!this._readReplicas.length) {
+      return originalConfig.connection
+    }
+
+    const index = this._roundRobinCounter++ % this._readReplicas.length
+    this._logger.trace({ connection: this.name }, `round robin using host at ${index} index`)
+    return this._readReplicas[index]
+  }
+
+  /**
+   * Creates the write connection
+   */
+  private _setupWriteConnection () {
+    this._client = knex(this._getWriteConfig())
+    patchKnex(this._client, this._writeConfigResolver.bind(this))
+  }
+
+  /**
+   * Creates the read connection. If there aren't any replicas in use, then
+   * it will use reference the write client
+   */
+  private _setupReadConnection () {
+    if (!this._hasReadWriteReplicas()) {
+      this._readClient = this._client
+      return
+    }
+
+    this._logger.trace({ connection: this.name }, 'setting up read/write replicas')
+    this._readClient = knex(this._getReadConfig())
+    patchKnex(this._readClient, this._readConfigResolver.bind(this))
   }
 
   /**
    * Returns the pool instance for the given connection
    */
   public get pool (): null | Pool<any> {
-    return this.client ? this.client['_context'].client.pool : null
+    return this._client ? this._client.client.pool : null
+  }
+
+  /**
+   * Returns the pool instance for the read connection. When replicas are
+   * not in use, then read/write pools are same.
+   */
+  public get readPool (): null | Pool<any> {
+    return this._readClient ? this._readClient.client.pool : null
   }
 
   /**
@@ -68,7 +293,8 @@ export class Connection extends EventEmitter implements ConnectionContract {
    */
   public connect () {
     try {
-      this.client = knex(this.config)
+      this._setupWriteConnection()
+      this._setupReadConnection()
       this._monitorPoolResources()
       this.emit('connect', this)
     } catch (error) {
@@ -85,12 +311,115 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * by the `close` event.
    */
   public async disconnect (): Promise<void> {
-    if (this.client) {
+    this._logger.trace({ connection: this.name }, 'destroying connection')
+
+    /**
+     * Disconnect write client
+     */
+    if (this._client) {
       try {
-        await this.client!.destroy()
+        await this._client.destroy()
       } catch (error) {
         this.emit('disconnect:error', error, this)
       }
     }
+
+    /**
+     * Disconnect read client when it exists and both clients
+     * aren't same
+     */
+    if (this._readClient && this._readClient !== this._client) {
+      try {
+        await this._readClient.destroy()
+      } catch (error) {
+        this.emit('disconnect:error', error, this)
+      }
+    }
+  }
+
+  /**
+   * Returns the read client
+   */
+  public getReadClient () {
+    this._ensureClients()
+    return this._readClient!
+  }
+
+  /**
+   * Returns the write client
+   */
+  public getWriteClient () {
+    this._ensureClients()
+    return this._client!
+  }
+
+  /**
+   * Truncate table
+   */
+  public async truncate (table: string): Promise<void> {
+    this._ensureClients()
+    await this._client!.select(table).truncate()
+  }
+
+  /**
+   * Get information for a table columns
+   */
+  public async columnsInfo (table: string, column?: string): Promise<any> {
+    this._ensureClients()
+    const query = this._client!.select(table)
+    const result = await (column ? query.columnInfo(column) : query.columnInfo())
+    return result
+  }
+
+  /**
+   * Returns an instance of a transaction. Each transaction will
+   * query and hold a single connection for all queries.
+   */
+  public async transaction (): Promise<TransactionClientContract> {
+    this._ensureClients()
+    const trx = await this._client!.transaction()
+    return new Transaction(trx, this.dialect)
+  }
+
+  /**
+   * Returns instance of a query builder for selecting, updating
+   * or deleting rows
+   */
+  public query (): DatabaseQueryBuilderContract {
+    this._ensureClients()
+    return new DatabaseQueryBuilder(this._client!.queryBuilder(), this)
+  }
+
+  /**
+   * Returns instance of a query builder for inserting rows
+   */
+  public insertQuery (): InsertQueryBuilderContract {
+    this._ensureClients()
+    return new InsertQueryBuilder(this._client!.queryBuilder(), this)
+  }
+
+  /**
+   * Returns instance of raw query builder
+   */
+  public raw (sql: any, bindings?: any): RawContract {
+    this._ensureClients()
+    return new RawQueryBuilder(this._client!.raw(sql, bindings))
+  }
+
+  /**
+   * Returns instance of a query builder and selects the table
+   */
+  public from (table: any): DatabaseQueryBuilderContract {
+    this._ensureClients()
+    return this.query().from(table)
+  }
+
+  /**
+   * Returns instance of a query builder and selects the table
+   * for an insert query
+   */
+  public table (table: any): InsertQueryBuilderContract {
+    this._ensureClients()
+    return this.insertQuery().table(table)
   }
 }

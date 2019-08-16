@@ -11,6 +11,7 @@
 
 import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
+import { LoggerContract } from '@poppinss/logger'
 
 import {
   ConnectionConfigContract,
@@ -18,15 +19,19 @@ import {
   ConnectionManagerContract,
 } from '@ioc:Adonis/Addons/Database'
 
-import { Connection } from '../Connection'
+import { Connection } from './index'
 
 /**
- * Connection class manages a given database connection. Internally it uses
- * knex to build the database connection with appropriate database
- * driver.
+ * Connection manager job is to manage multiple named connections. You can add any number
+ * or connections by registering their config only once and then make use of `connect`
+ * and `close` methods to create and destroy db connections.
  */
 export class ConnectionManager extends EventEmitter implements ConnectionManagerContract {
   public connections: ConnectionManagerContract['connections'] = new Map()
+
+  constructor (private _logger: LoggerContract) {
+    super()
+  }
 
   /**
    * Monitors a given connection by listening for lifecycle events
@@ -48,6 +53,8 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
       }
 
       this.emit('disconnect', $connection)
+      this._logger.trace({ connection: internalConnection.name }, 'disconnecting connection inside manager')
+
       delete internalConnection.connection
       internalConnection.state = 'closed'
     })
@@ -88,6 +95,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
       )
     }
 
+    this._logger.trace({ connection: connectionName }, 'adding new connection to the manager')
     this.connections.set(connectionName, {
       name: connectionName,
       config: config,
@@ -104,22 +112,21 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
       throw new Exception(
         `Cannot connect to unregisted connection ${connectionName}`,
         500,
-        'E_MISSING_DB_CONNECTION_CONFIG',
+        'E_UNMANAGED_DB_CONNECTION',
       )
     }
 
     /**
-     * Do not do anything when `connection` property already exists, since it will
-     * always be set to `undefined` for a closed connection
+     * Ignore when the there is already a connection.
      */
-    if (connection.connection) {
+    if (this.isConnected(connection.name)) {
       return
     }
 
     /**
      * Create a new connection and monitor it's state
      */
-    connection.connection = new Connection(connection.name, connection.config)
+    connection.connection = new Connection(connection.name, connection.config, this._logger)
     this._monitorConnection(connection.connection)
     connection.connection.connect()
   }
@@ -157,13 +164,13 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
    * Closes a given connection and can optionally release it from the
    * tracking list
    */
-  public async close (connectioName: string, release: boolean = false) {
-    if (this.isConnected(connectioName)) {
-      await this.get(connectioName)!.connection!.disconnect()
+  public async close (connectionName: string, release: boolean = false) {
+    if (this.isConnected(connectionName)) {
+      await this.get(connectionName)!.connection!.disconnect()
     }
 
     if (release) {
-      await this.release(connectioName)
+      await this.release(connectionName)
     }
   }
 

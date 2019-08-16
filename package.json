@@ -9,7 +9,7 @@
     "test:mysql": "DB=mysql node japaFile.js",
     "test:pg": "DB=pg node japaFile.js",
     "test:docker": "npm run test:sqlite && npm run test:mysql && npm run test:pg",
-    "test": "docker-compose build && docker-compose run --rm test",
+    "test": "docker-compose -f docker-compose.yml -f docker-compose-test.yml build && docker-compose -f docker-compose.yml -f docker-compose-test.yml run --rm test",
     "prepublishOnly": "npm run build",
     "lint": "tslint --project tsconfig.json",
     "clean": "del build",
@@ -28,26 +28,28 @@
   },
   "homepage": "https://github.com/adonisjs/adonis-lucid#readme",
   "dependencies": {
+    "@poppinss/logger": "^1.1.2",
     "@poppinss/utils": "^1.0.4",
     "knex": "^0.19.1",
-    "ts-essentials": "^3.0.0"
+    "knex-dynamic-connection": "^1.0.0",
+    "ts-essentials": "^3.0.1"
   },
   "devDependencies": {
     "@adonisjs/mrm-preset": "^2.0.3",
     "@poppinss/dev-utils": "^1.0.0",
     "@types/dotenv": "^6.1.1",
-    "@types/node": "^12.6.9",
+    "@types/node": "^12.7.1",
     "clone": "^2.1.2",
     "commitizen": "^4.0.3",
     "cz-conventional-changelog": "^3.0.2",
     "del-cli": "^2.0.0",
     "doctoc": "^1.4.0",
     "dotenv": "^8.0.0",
-    "husky": "^3.0.2",
+    "husky": "^3.0.3",
     "japa": "^2.0.10",
     "mrm": "^1.2.2",
     "mysql": "^2.17.1",
-    "pg": "^7.12.0",
+    "pg": "^7.12.1",
     "pkg-ok": "^2.3.1",
     "sqlite3": "^4.0.9",
     "ts-node": "^8.3.0",
@@ -83,5 +85,9 @@
     "commitizen": {
       "path": "cz-conventional-changelog"
     }
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "keywords": []
 }
