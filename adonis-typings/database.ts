@@ -10,22 +10,27 @@
 /// <reference path="./querybuilder.ts" />
 
 declare module '@ioc:Adonis/Addons/Database' {
-  import * as knex from 'knex'
   import { Pool } from 'tarn'
+  import * as knex from 'knex'
   import { EventEmitter } from 'events'
 
-  import { DatabaseQueryBuilderContract } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
+  import {
+    DatabaseQueryBuilderContract,
+    InsertQueryBuilderContract,
+    RawBuilderContract,
+    QueryClientContract,
+  } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
   /**
    * Connection node used by majority of database
    * clients
    */
   type SharedConnectionNode = {
-    host: string,
-    user: string,
-    password: string,
-    database: string,
-    port: number,
+    host?: string,
+    user?: string,
+    password?: string,
+    database?: string,
+    port?: number,
   }
 
   /**
@@ -63,6 +68,7 @@ declare module '@ioc:Adonis/Addons/Database' {
       filename: string,
       mode?: any,
     },
+    replicas?: never,
   }
 
   /**
@@ -72,22 +78,34 @@ declare module '@ioc:Adonis/Addons/Database' {
    * Knex forwards all config options to the driver directly. So feel
    * free to define them (let us know, in case any options are missing)
    */
+  type MysqlConnectionNode = {
+    socketPath?: string,
+    localAddress?: string,
+    charset?: string,
+    timezone?: string,
+    stringifyObjects?: boolean,
+    insecureAuth?: boolean,
+    typeCast?: boolean,
+    supportBigNumbers?: boolean,
+    bigNumberStrings?: boolean,
+    dateStrings?: boolean | string[],
+    flags?: string,
+    ssl?: any,
+  }
+
   export type MysqlConfigContract = SharedConfigNode & {
     client: 'mysql',
     version?: string,
-    connection: SharedConnectionNode & {
-      socketPath?: string,
-      localAddress?: string,
-      charset?: string,
-      timezone?: string,
-      stringifyObjects?: boolean,
-      insecureAuth?: boolean,
-      typeCast?: boolean,
-      supportBigNumbers?: boolean,
-      bigNumberStrings?: boolean,
-      dateStrings?: boolean | string[],
-      flags?: string,
-      ssl?: any,
+    connection?: SharedConnectionNode & MysqlConnectionNode,
+    replicas?: {
+      write: {
+        connection: MysqlConfigContract['connection'],
+        pool?: MysqlConfigContract['pool'],
+      }
+      read: {
+        connection: MysqlConfigContract['connection'][],
+        pool?: MysqlConfigContract['pool'],
+      },
     },
   }
 
@@ -116,7 +134,17 @@ declare module '@ioc:Adonis/Addons/Database' {
     client: 'pg' | 'postgres' | 'postgresql',
     version?: string,
     returning?: string,
-    connection: string | SharedConnectionNode,
+    connection?: string | SharedConnectionNode,
+    replicas?: {
+      write: {
+        connection: PostgreConfigContract['connection'],
+        pool?: PostgreConfigContract['pool'],
+      }
+      read: {
+        connection: PostgreConfigContract['connection'][],
+        pool?: PostgreConfigContract['pool'],
+      },
+    },
     searchPath?: string[],
   }
 
@@ -139,18 +167,30 @@ declare module '@ioc:Adonis/Addons/Database' {
    * config values.
    * https://oracle.github.io/node-oracledb/doc/api.html#oracledbproperties
    */
+  type OracleConnectionNode = {
+    autoCommit?: boolean,
+    connectionClass?: string,
+    edition?: string,
+    externalAuth?: boolean,
+    fetchArraySize?: number,
+    fetchAsBuffer?: any[],
+    lobPrefetchSize?: number,
+    maxRows?: number,
+    oracleClientVersion?: number,
+  }
+
   export type OracleConfigContract = SharedConfigNode & {
     client: 'oracledb',
-    connection: SharedConnectionNode & {
-      autoCommit?: boolean,
-      connectionClass?: string,
-      edition?: string,
-      externalAuth?: boolean,
-      fetchArraySize?: number,
-      fetchAsBuffer?: any[],
-      lobPrefetchSize?: number,
-      maxRows?: number,
-      oracleClientVersion?: number,
+    connection?: SharedConnectionNode & OracleConnectionNode,
+    replicas?: {
+      write: {
+        connection: OracleConfigContract['connection'],
+        pool?: OracleConfigContract['pool'],
+      }
+      read: {
+        connection: OracleConfigContract['connection'][],
+        pool?: OracleConfigContract['pool'],
+      },
     },
     fetchAsString?: any[],
   }
@@ -162,14 +202,26 @@ declare module '@ioc:Adonis/Addons/Database' {
    * Knex forwards all config options to the driver directly. So feel
    * free to define them (let us know, in case any options are missing)
    */
+  type MssqlConnectionNode = {
+    domain?: string,
+    connectionTimeout?: number,
+    requestTimeout?: number,
+    parseJSON?: boolean,
+  }
+
   export type MssqlConfigContract = SharedConfigNode & {
     client: 'mssql',
     version?: string,
-    connection: SharedConnectionNode & {
-      domain?: string,
-      connectionTimeout?: number,
-      requestTimeout?: number,
-      parseJSON?: boolean,
+    connection?: SharedConnectionNode & MssqlConnectionNode,
+    replicas?: {
+      write: {
+        connection: MssqlConfigContract['connection'],
+        pool?: MssqlConfigContract['pool'],
+      }
+      read: {
+        connection: MssqlConfigContract['connection'][],
+        pool?: MssqlConfigContract['pool'],
+      },
     },
   }
 
@@ -206,19 +258,64 @@ declare module '@ioc:Adonis/Addons/Database' {
    * connections.
    */
   export interface ConnectionManagerContract extends EventEmitter {
+    /**
+     * List of registered connection. You must check the connection state
+     * to understand, if it is connected or not
+     */
     connections: Map<string, ConnectionManagerConnectionNode>
 
-    on (event: 'connect', callback: (connection: ConnectionContract) => void)
-    on (event: 'disconnect', callback: (connection: ConnectionContract) => void)
+    /**
+     * Everytime a connection is created
+     */
+    on (event: 'connect', callback: (connection: ConnectionContract) => void): this
 
+    /**
+     * Everytime a connection leaves
+     */
+    on (event: 'disconnect', callback: (connection: ConnectionContract) => void): this
+
+    /**
+     * Add a new connection to the list of managed connection. You must call
+     * connect seperately to instantiate a connection instance
+     */
     add (connectionName: string, config: ConnectionConfigContract): void
+
+    /**
+     * Instantiate a connection. It is a noop, when connection for the given
+     * name is already instantiated
+     */
     connect (connectionName: string): void
+
+    /**
+     * Get connection node
+     */
     get (connectionName: string): ConnectionManagerConnectionNode | undefined
+
+    /**
+     * Find if a connection name is managed by the manager or not
+     */
     has (connectionName: string): boolean
+
+    /**
+     * Find if a managed connection is instantiated or not
+     */
     isConnected (connectionName: string): boolean
 
+    /**
+     * Close a given connection. This is also kill the underlying knex connection
+     * pool
+     */
     close (connectionName: string, release?: boolean): Promise<void>
+
+    /**
+     * Close all managed connections
+     */
     closeAll (release?: boolean): Promise<void>
+
+    /**
+     * Release a given connection. Releasing a connection means, you will have to
+     * re-add it using the `add` method
+     */
     release (connectionName: string): Promise<void>
   }
 
@@ -226,26 +323,39 @@ declare module '@ioc:Adonis/Addons/Database' {
    * Connection represents a single knex instance with inbuilt
    * pooling capabilities.
    */
-  export interface ConnectionContract extends EventEmitter {
-    client?: knex,
+  export interface ConnectionContract extends EventEmitter, QueryClientContract {
+    /**
+     * Read/write connection pools
+     */
     pool: null | Pool<any>,
+    readPool: null | Pool<any>,
+
+    /**
+     * Name of the connection
+     */
     name: string,
+
+    /**
+     * Untouched config
+     */
     config: ConnectionConfigContract,
 
     /**
      * List of emitted events
      */
-    on (event: 'connect', callback: (connection: ConnectionContract) => void)
-    on (event: 'error', callback: (connection: ConnectionContract, error: Error) => void)
-    on (event: 'disconnect', callback: (connection: ConnectionContract) => void)
-    on (event: 'disconnect:error', callback: (connection: ConnectionContract, error: Error) => void)
+    on (event: 'connect', callback: (connection: ConnectionContract) => void): this
+    on (event: 'error', callback: (connection: ConnectionContract, error: Error) => void): this
+    on (event: 'disconnect', callback: (connection: ConnectionContract) => void): this
+    on (event: 'disconnect:error', callback: (connection: ConnectionContract, error: Error) => void): this
 
+    /**
+     * Make knex connection
+     */
     connect (): void,
-    disconnect (): Promise<void>,
-  }
 
-  export interface DatabaseContract {
-    query (): DatabaseQueryBuilderContract,
-    from: DatabaseQueryBuilderContract['from'],
+    /**
+     * Disconnect knex
+     */
+    disconnect (): Promise<void>,
   }
 }

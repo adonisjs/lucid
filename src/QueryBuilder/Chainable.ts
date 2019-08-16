@@ -11,7 +11,8 @@
 
 import * as knex from 'knex'
 import { ChainableContract, QueryCallback } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
-import { RawQueryBuilder } from '../RawQueryBuilder'
+
+import { RawQueryBuilder } from './Raw'
 
 /**
  * Function to transform the query callbacks and passing them the right
@@ -20,13 +21,29 @@ import { RawQueryBuilder } from '../RawQueryBuilder'
 type DBQueryCallback = (userFn: QueryCallback<ChainableContract>) => ((builder: knex.QueryBuilder) => void)
 
 /**
- * Base query builder exposes the API for constructing SQL queries.
+ * The chainable query builder to consturct SQL queries for selecting, updating and
+ * deleting records.
+ *
+ * The API internally uses the knex query builder. However, many of methods may have
+ * different API.
  */
-export class BaseQueryBuilder implements ChainableContract {
+export abstract class Chainable implements ChainableContract {
   constructor (
     protected $knexBuilder: knex.QueryBuilder,
     private _queryCallback: DBQueryCallback,
   ) {}
+
+  /**
+   * Returns the value pair for the `whereBetween` clause
+   */
+  private _getBetweenPair (value: any[]): any {
+    const [lhs, rhs] = value
+    if (!lhs || !rhs) {
+      throw new Error('Invalid array for whereBetween value')
+    }
+
+    return [this.$transformValue(lhs), this.$transformValue(rhs)]
+  }
 
   /**
    * Transforms the value to something that knex can internally understand and
@@ -38,15 +55,27 @@ export class BaseQueryBuilder implements ChainableContract {
    *    builder and not knex query builder.
    */
   protected $transformValue (value: any) {
-    if (value instanceof BaseQueryBuilder) {
+    if (value instanceof Chainable) {
       return value.$knexBuilder
     }
 
     if (typeof (value) === 'function') {
-      return this._queryCallback(value)
+      return this.$transformCallback(value)
     }
 
     return this.$transformRaw(value)
+  }
+
+  /**
+   * Transforms the user callback to something that knex
+   * can internally process
+   */
+  protected $transformCallback (value: any) {
+    if (typeof (value) === 'function') {
+      return this._queryCallback(value)
+    }
+
+    return value
   }
 
   /**
@@ -66,7 +95,7 @@ export class BaseQueryBuilder implements ChainableContract {
    * use the last selected table
    */
   public from (table: any): this {
-    this.$knexBuilder.from(table)
+    this.$knexBuilder.from(this.$transformCallback(table))
     return this
   }
 
@@ -79,7 +108,11 @@ export class BaseQueryBuilder implements ChainableContract {
     } else if (operator) {
       this.$knexBuilder.where(key, this.$transformValue(operator))
     } else {
-      this.$knexBuilder.where(this.$transformValue(key))
+      /**
+       * Only callback is allowed as a standalone param. One must use `whereRaw`
+       * for raw/sub queries. This is our limitation to have consistent API
+       */
+      this.$knexBuilder.where(this.$transformCallback(key))
     }
 
     return this
@@ -94,7 +127,7 @@ export class BaseQueryBuilder implements ChainableContract {
     } else if (operator) {
       this.$knexBuilder.orWhere(key, this.$transformValue(operator))
     } else {
-      this.$knexBuilder.orWhere(this.$transformValue(key))
+      this.$knexBuilder.orWhere(this.$transformCallback(key))
     }
 
     return this
@@ -116,7 +149,7 @@ export class BaseQueryBuilder implements ChainableContract {
     } else if (operator) {
       this.$knexBuilder.whereNot(key, this.$transformValue(operator))
     } else {
-      this.$knexBuilder.whereNot(this.$transformValue(key))
+      this.$knexBuilder.whereNot(this.$transformCallback(key))
     }
 
     return this
@@ -131,7 +164,7 @@ export class BaseQueryBuilder implements ChainableContract {
     } else if (operator) {
       this.$knexBuilder.orWhereNot(key, this.$transformValue(operator))
     } else {
-      this.$knexBuilder.orWhereNot(this.$transformValue(key))
+      this.$knexBuilder.orWhereNot(this.$transformCallback(key))
     }
 
     return this
@@ -301,8 +334,8 @@ export class BaseQueryBuilder implements ChainableContract {
   /**
    * Add where between clause
    */
-  public whereBetween (key: any, value: any): this {
-    this.$knexBuilder.whereBetween(key, value.map((one) => this.$transformValue(one)))
+  public whereBetween (key: any, value: [any, any]): this {
+    this.$knexBuilder.whereBetween(key, this._getBetweenPair(value))
     return this
   }
 
@@ -310,7 +343,7 @@ export class BaseQueryBuilder implements ChainableContract {
    * Add where between clause
    */
   public orWhereBetween (key: any, value: any): this {
-    this.$knexBuilder.orWhereBetween(key, value.map((one) => this.$transformValue(one)))
+    this.$knexBuilder.orWhereBetween(key, this._getBetweenPair(value))
     return this
   }
 
@@ -325,7 +358,7 @@ export class BaseQueryBuilder implements ChainableContract {
    * Add where between clause
    */
   public whereNotBetween (key: any, value: any): this {
-    this.$knexBuilder.whereNotBetween(key, value.map((one) => this.$transformValue(one)))
+    this.$knexBuilder.whereNotBetween(key, this._getBetweenPair(value))
     return this
   }
 
@@ -333,7 +366,7 @@ export class BaseQueryBuilder implements ChainableContract {
    * Add where between clause
    */
   public orWhereNotBetween (key: any, value: any): this {
-    this.$knexBuilder.orWhereNotBetween(key, value.map((one) => this.$transformValue(one)))
+    this.$knexBuilder.orWhereNotBetween(key, this._getBetweenPair(value))
     return this
   }
 
@@ -519,16 +552,9 @@ export class BaseQueryBuilder implements ChainableContract {
     if (value) {
       this.$knexBuilder.having(key, operator, this.$transformValue(value))
     } else if (operator) {
-      /**
-       * @todo: The having method in Knex is badly implemented. They only accept
-       * an instance of raw query and not `sql` and `bindings`, however everywhere
-       * else they accept `sql`, `bindings` and instance of raw query together.
-       *
-       * So we need to transform the `sql` and `bindings` to a raw query instance.
-       */
       this.$knexBuilder.having(key, this.$transformValue(operator))
     } else {
-      this.$knexBuilder.having(this.$transformValue(key))
+      this.$knexBuilder.having(this.$transformCallback(key))
     }
 
     return this
@@ -544,16 +570,9 @@ export class BaseQueryBuilder implements ChainableContract {
     if (value) {
       this.$knexBuilder.orHaving(key, operator, this.$transformValue(value))
     } else if (operator) {
-      /**
-       * @todo: The having method in Knex is badly implemented. They only accept
-       * an instance of raw query and not `sql` and `bindings`, however everywhere
-       * else they accept `sql`, `bindings` and instance of raw query together.
-       *
-       * So we need to transform the `sql` and `bindings` to a raw query instance.
-       */
       this.$knexBuilder.orHaving(key, this.$transformValue(operator))
     } else {
-      this.$knexBuilder.orHaving(this.$transformValue(key))
+      this.$knexBuilder.orHaving(this.$transformCallback(key))
     }
 
     return this
@@ -724,7 +743,7 @@ export class BaseQueryBuilder implements ChainableContract {
    * Adding `having between` clause
    */
   public havingBetween (key: any, value: any): this {
-    this.$knexBuilder.havingBetween(key, value.map((one) => this.$transformValue(one)))
+    this.$knexBuilder.havingBetween(key, this._getBetweenPair(value))
     return this
   }
 
@@ -732,7 +751,7 @@ export class BaseQueryBuilder implements ChainableContract {
    * Adding `or having between` clause
    */
   public orHavingBetween (key: any, value: any): this {
-    this.$knexBuilder.orHavingBetween(key, value.map((one) => this.$transformValue(one)))
+    this.$knexBuilder.orHavingBetween(key, this._getBetweenPair(value))
     return this
   }
 
@@ -747,7 +766,7 @@ export class BaseQueryBuilder implements ChainableContract {
    * Adding `having not between` clause
    */
   public havingNotBetween (key: any, value: any): this {
-    this.$knexBuilder.havingNotBetween(key, value.map((one) => this.$transformValue(one)))
+    this.$knexBuilder.havingNotBetween(key, this._getBetweenPair(value))
     return this
   }
 
@@ -755,7 +774,7 @@ export class BaseQueryBuilder implements ChainableContract {
    * Adding `or having not between` clause
    */
   public orHavingNotBetween (key: any, value: any): this {
-    this.$knexBuilder.orHavingNotBetween(key, value.map((one) => this.$transformValue(one)))
+    this.$knexBuilder.orHavingNotBetween(key, this._getBetweenPair(value))
     return this
   }
 
@@ -901,21 +920,33 @@ export class BaseQueryBuilder implements ChainableContract {
     return this
   }
 
+  /**
+   * Clear select columns
+   */
   public clearSelect (): this {
     this.$knexBuilder.clearSelect()
     return this
   }
 
+  /**
+   * Clear where clauses
+   */
   public clearWhere (): this {
     this.$knexBuilder.clearWhere()
     return this
   }
 
+  /**
+   * Clear order by
+   */
   public clearOrder (): this {
     this.$knexBuilder.clearOrder()
     return this
   }
 
+  /**
+   * Clear having
+   */
   public clearHaving (): this {
     this.$knexBuilder.clearHaving()
     return this
@@ -958,16 +989,34 @@ export class BaseQueryBuilder implements ChainableContract {
   }
 
   /**
-   * Get SQL representation of the constructed query
+   * Define `with` CTE
    */
-  public toSQL () {
-    return this.$knexBuilder.toSQL()
+  public with (alias: any, query: any): this {
+    this.$knexBuilder.with(alias, query)
+    return this
   }
 
   /**
-   * Returns string representation of the query
+   * Define `with` CTE with recursive keyword
    */
-  public toString () {
-    return this.$knexBuilder.toString()
+  public withRecursive (alias: any, query: any): this {
+    this.$knexBuilder.withRecursive(alias, query)
+    return this
+  }
+
+  /**
+   * Define schema for the table
+   */
+  public withSchema (schema: any): this {
+    this.$knexBuilder.withSchema(schema)
+    return this
+  }
+
+  /**
+   * Define table alias
+   */
+  public as (alias: any): this {
+    this.$knexBuilder.as(alias)
+    return this
   }
 }

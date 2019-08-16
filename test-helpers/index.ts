@@ -10,18 +10,21 @@
 /// <reference path="../adonis-typings/database.ts" />
 
 import { join } from 'path'
+import * as knex from 'knex'
 import * as dotenv from 'dotenv'
+import { FakeLogger } from '@poppinss/logger'
 import { Filesystem } from '@poppinss/dev-utils'
+
 import { ConnectionConfigContract, ConnectionContract } from '@ioc:Adonis/Addons/Database'
 import {
-  DatabaseQueryBuilderContract,
   RawContract,
   InsertQueryBuilderContract,
+  DatabaseQueryBuilderContract,
 } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
-import { DatabaseQueryBuilder } from '../src/Database'
-import { InsertQueryBuilder } from '../src/InsertQueryBuilder'
-import { RawQueryBuilder } from '../src/RawQueryBuilder'
+import { RawQueryBuilder } from '../src/QueryBuilder/Raw'
+import { InsertQueryBuilder } from '../src/QueryBuilder/Insert'
+import { DatabaseQueryBuilder } from '../src/QueryBuilder/Database'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
 dotenv.config()
@@ -75,6 +78,19 @@ export async function setup () {
   if (process.env.DB === 'sqlite') {
     await fs.ensureRoot()
   }
+
+  const db = knex(getConfig())
+
+  const hasTable = await db.schema.hasTable('users')
+  if (!hasTable) {
+    await db.schema.createTable('users', (table) => {
+      table.increments()
+      table.string('username')
+      table.timestamps()
+    })
+  }
+
+  await db.destroy()
 }
 
 /**
@@ -83,7 +99,20 @@ export async function setup () {
 export async function cleanup () {
   if (process.env.DB === 'sqlite') {
     await fs.cleanup()
+    return
   }
+
+  const db = knex(getConfig())
+  await db.schema.dropTableIfExists('users')
+  await db.destroy()
+}
+
+/**
+ * Reset database tables
+ */
+export async function resetTables () {
+  const db = knex(getConfig())
+  await db.table('users').truncate()
 }
 
 /**
@@ -91,7 +120,8 @@ export async function cleanup () {
  */
 export function getQueryBuilder (connection: ConnectionContract) {
   return new DatabaseQueryBuilder(
-    connection.client!.queryBuilder(),
+    connection.getWriteClient().queryBuilder(),
+    connection,
   ) as unknown as DatabaseQueryBuilderContract
 }
 
@@ -100,7 +130,7 @@ export function getQueryBuilder (connection: ConnectionContract) {
  */
 export function getRawQueryBuilder (connection: ConnectionContract, sql: string, bindings?: any[]) {
   return new RawQueryBuilder(
-    bindings ? connection.client!.raw(sql, bindings) : connection.client!.raw(sql),
+    bindings ? connection.getWriteClient().raw(sql, bindings) : connection.getWriteClient().raw(sql),
   ) as unknown as RawContract
 }
 
@@ -109,6 +139,17 @@ export function getRawQueryBuilder (connection: ConnectionContract, sql: string,
  */
 export function getInsertBuilder (connection: ConnectionContract) {
   return new InsertQueryBuilder(
-    connection.client!.queryBuilder(),
+    connection.getWriteClient().queryBuilder(),
   ) as unknown as InsertQueryBuilderContract
+}
+
+/**
+ * Returns fake logger instance
+ */
+export function getLogger () {
+  return new FakeLogger({
+    enabled: true,
+    name: 'lucid',
+    level: 'info',
+  })
 }

@@ -11,8 +11,8 @@
 
 import * as test from 'japa'
 
-import { getConfig, setup, cleanup } from '../test-helpers'
-import { ConnectionManager } from '../src/ConnectionManager'
+import { ConnectionManager } from '../src/Connection/Manager'
+import { getConfig, setup, cleanup, getLogger } from '../test-helpers'
 
 test.group('ConnectionManager', (group) => {
   group.before(async () => {
@@ -24,7 +24,7 @@ test.group('ConnectionManager', (group) => {
   })
 
   test('do not connect until connect is called', (assert) => {
-    const manager = new ConnectionManager()
+    const manager = new ConnectionManager(getLogger())
     manager.add('primary', getConfig())
 
     assert.isTrue(manager.has('primary'))
@@ -32,7 +32,7 @@ test.group('ConnectionManager', (group) => {
   })
 
   test('connect and set its state to open', async (assert) => {
-    const manager = new ConnectionManager()
+    const manager = new ConnectionManager(getLogger())
     manager.add('primary', getConfig())
     manager.connect('primary')
 
@@ -41,7 +41,7 @@ test.group('ConnectionManager', (group) => {
   })
 
   test('on disconnect set state to closed', async (assert) => {
-    const manager = new ConnectionManager()
+    const manager = new ConnectionManager(getLogger())
     manager.add('primary', getConfig())
     manager.connect('primary')
 
@@ -51,7 +51,7 @@ test.group('ConnectionManager', (group) => {
   })
 
   test('raise exception when attempt to add a duplication connection', async (assert) => {
-    const manager = new ConnectionManager()
+    const manager = new ConnectionManager(getLogger())
     manager.add('primary', getConfig())
     manager.connect('primary')
 
@@ -60,7 +60,7 @@ test.group('ConnectionManager', (group) => {
   })
 
   test('patch config when connection is not in open state', async (assert) => {
-    const manager = new ConnectionManager()
+    const manager = new ConnectionManager(getLogger())
     manager.add('primary', getConfig())
     manager.connect('primary')
 
@@ -71,7 +71,7 @@ test.group('ConnectionManager', (group) => {
   })
 
   test('ignore multiple calls to `connect` on a single connection', async () => {
-    const manager = new ConnectionManager()
+    const manager = new ConnectionManager(getLogger())
     manager.add('primary', getConfig())
     manager.connect('primary')
 
@@ -85,7 +85,7 @@ test.group('ConnectionManager', (group) => {
   test('releasing a connection must close it first', async (assert) => {
     assert.plan(2)
 
-    const manager = new ConnectionManager()
+    const manager = new ConnectionManager(getLogger())
     manager.add('primary', getConfig())
     manager.connect('primary')
 
