@@ -15,10 +15,12 @@ declare module '@ioc:Adonis/Addons/Database' {
   import { EventEmitter } from 'events'
 
   import {
-    DatabaseQueryBuilderContract,
-    InsertQueryBuilderContract,
+    RawContract,
     RawBuilderContract,
     QueryClientContract,
+    TransactionClientContract,
+    InsertQueryBuilderContract,
+    DatabaseQueryBuilderContract,
   } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
   /**
@@ -241,7 +243,10 @@ declare module '@ioc:Adonis/Addons/Database' {
   /**
    * Shape of config inside the database config file
    */
-  export type DatabaseConfigContract = { connection: string } & { [key: string]: ConnectionConfigContract }
+  export type DatabaseConfigContract = {
+    connection: string,
+    connections: { [key: string]: ConnectionConfigContract },
+  }
 
   /**
    * The shape of a connection within the connection manager
@@ -380,11 +385,14 @@ declare module '@ioc:Adonis/Addons/Database' {
   export interface DatabaseContract {
     primaryConnectionName: string,
     getRawConnection: ConnectionManagerContract['get']
+    manager: ConnectionManagerContract,
 
     connection (connectionName: string): QueryClientContract
-    query: QueryClientContract['query']
-    insertQuery: QueryClientContract['insertQuery']
-    from: QueryClientContract['from']
-    table: QueryClientContract['table']
+    query (mode?: 'read' | 'write'): DatabaseQueryBuilderContract
+    insertQuery (): InsertQueryBuilderContract
+    from (table: string): DatabaseQueryBuilderContract
+    table (table: string): InsertQueryBuilderContract
+    transaction (): Promise<TransactionClientContract>
+    raw (sql: string, bindings?: any, mode?: 'read' | 'write'): RawContract
   }
 }
