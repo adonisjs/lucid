@@ -32,6 +32,18 @@ export class InsertQueryBuilder implements InsertQueryBuilderContract {
    * this process.
    */
   private _getQueryClient () {
+    /**
+     * Do not use custom client when knex builder is using transaction
+     * client
+     */
+    if (this.$knexBuilder['client']['transacting']) {
+      return
+    }
+
+    /**
+     * Return undefined when no parent client is defined or dialect
+     * is sqlite
+     */
     if (!this._client || this._client.dialect === 'sqlite3') {
       return
     }

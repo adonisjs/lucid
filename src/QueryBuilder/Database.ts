@@ -10,6 +10,8 @@
 /// <reference path="../../adonis-typings/database.ts" />
 
 import * as knex from 'knex'
+import { Exception } from '@poppinss/utils'
+
 import {
   DatabaseQueryBuilderContract,
   QueryCallback,
@@ -41,11 +43,33 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   }
 
   /**
+   * Ensures that we are not executing `update` or `del` when using read only
+   * client
+   */
+  private _ensureCanPerformWrites () {
+    if (this._client && this._client.mode === 'read') {
+      throw new Exception('Updates and deletes cannot be performed in read mode')
+    }
+  }
+
+  /**
    * Returns the client to be used for the query. This method relies on the
    * query method and will choose the read or write connection whenever
    * required.
    */
   private _getQueryClient () {
+    /**
+     * Do not use custom client when knex builder is using transaction
+     * client
+     */
+    if (this.$knexBuilder['client']['transacting']) {
+      return
+    }
+
+    /**
+     * Return undefined when no parent client is defined or dialect
+     * is sqlite
+     */
     if (!this._client || this._client.dialect === 'sqlite3') {
       return
     }
@@ -165,6 +189,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Delete rows under the current query
    */
   public del (): this {
+    this._ensureCanPerformWrites()
     this.$knexBuilder.del()
     return this
   }
@@ -188,6 +213,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Perform update
    */
   public update (columns: any): this {
+    this._ensureCanPerformWrites()
     this.$knexBuilder.update(columns)
     return this
   }

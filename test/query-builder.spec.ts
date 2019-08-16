@@ -12,7 +12,15 @@
 import * as test from 'japa'
 import { Connection } from '../src/Connection'
 import { DatabaseQueryBuilder } from '../src/QueryBuilder/Database'
-import { getConfig, setup, cleanup, getQueryBuilder, getRawQueryBuilder, getLogger } from '../test-helpers'
+import {
+  getConfig,
+  setup,
+  cleanup,
+  getQueryBuilder,
+  getRawQueryBuilder,
+  getLogger,
+  getInsertBuilder,
+} from '../test-helpers'
 
 if (process.env.DB !== 'sqlite') {
   test.group('Query Builder | client', (group) => {
@@ -70,6 +78,40 @@ if (process.env.DB !== 'sqlite') {
 
       db.from('users').del()
       db['_getQueryClient']()
+    })
+
+    test('use transaction client when query is used inside a transaction', async (assert) => {
+      assert.plan(1)
+      const connection = new Connection('primary', getConfig(), getLogger())
+      connection.connect()
+      const client = connection.getClient()
+      const db = getQueryBuilder(client)
+
+      client.getReadClient = function getReadClient () {
+        throw new Error('Never expected to reach here')
+      }
+
+      const trx = await client.transaction()
+      db.select('*').from('users').useTransaction(trx)
+
+      assert.isUndefined(db['_getQueryClient']())
+    })
+
+    test('use transaction client when insert query is used inside a transaction', async (assert) => {
+      assert.plan(1)
+      const connection = new Connection('primary', getConfig(), getLogger())
+      connection.connect()
+      const client = connection.getClient()
+      const db = getInsertBuilder(client)
+
+      client.getReadClient = function getReadClient () {
+        throw new Error('Never expected to reach here')
+      }
+
+      const trx = await client.transaction()
+      db.table('users').useTransaction(trx)
+
+      assert.isUndefined(db['_getQueryClient']())
     })
   })
 }

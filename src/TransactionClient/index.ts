@@ -32,6 +32,12 @@ export class TransactionClient implements TransactionClientContract {
    */
   public isTransaction: true = true
 
+  /**
+   * Transactions are always in write mode, since they always needs
+   * the primary connection
+   */
+  public mode: 'dual' = 'dual'
+
   constructor (public knexClient: knex.Transaction, public dialect: string) {
   }
 

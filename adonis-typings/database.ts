@@ -370,6 +370,21 @@ declare module '@ioc:Adonis/Addons/Database' {
      * Returns an instance of a given client. A sticky client
      * always uses the write connection for all queries
      */
-    getClient (sticky?: boolean): QueryClientContract,
+    getClient (mode?: 'write' | 'read'): QueryClientContract,
+  }
+
+  /**
+   * Database contract serves as the main API to interact with multiple
+   * database connections
+   */
+  export interface DatabaseContract {
+    primaryConnectionName: string,
+    getRawConnection: ConnectionManagerContract['get']
+
+    connection (connectionName: string): QueryClientContract
+    query: QueryClientContract['query']
+    insertQuery: QueryClientContract['insertQuery']
+    from: QueryClientContract['from']
+    table: QueryClientContract['table']
   }
 }

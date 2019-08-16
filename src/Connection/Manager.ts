@@ -117,7 +117,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
     const connection = this.connections.get(connectionName)
     if (!connection) {
       throw new Exception(
-        `Cannot connect to unregisted connection ${connectionName}`,
+        `Cannot connect to unregistered connection ${connectionName}`,
         500,
         'E_UNMANAGED_DB_CONNECTION',
       )
