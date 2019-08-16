@@ -71,6 +71,13 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
       this.emit('connect', $connection)
       internalConnection.state = 'open'
     })
+
+    /**
+     * Listens for error event to proxy it to the client
+     */
+    connection.on('error', ($connection, error) => {
+      this.emit('error', $connection, error)
+    })
   }
 
   /**
