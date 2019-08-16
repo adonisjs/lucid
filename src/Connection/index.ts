@@ -320,8 +320,16 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Returns an instance for a query client that using this connection. Setting
    * `sticky=true` will use the write connection for reads
    */
-  public getClient (sticky = false) {
+  public getClient (mode?: 'read' | 'write') {
     this._ensureClients()
-    return sticky ? new QueryClient(this.client!) : new QueryClient(this.client!, this.readClient!)
+    if (!mode) {
+      return new QueryClient('dual', this.client!, this.readClient!)
+    }
+
+    if (mode === 'read') {
+      return new QueryClient('read', undefined, this.readClient!)
+    }
+
+    return new QueryClient('write', this.client!)
   }
 }

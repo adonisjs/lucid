@@ -138,8 +138,10 @@ export function getRawQueryBuilder (connection: ConnectionContract, sql: string,
 /**
  * Returns query builder instance for a given connection
  */
-export function getInsertBuilder (connection: ConnectionContract) {
-  return new InsertQueryBuilder(connection.client!.queryBuilder()) as unknown as InsertQueryBuilderContract
+export function getInsertBuilder (client: QueryClientContract) {
+  return new InsertQueryBuilder(
+    client.getWriteClient().queryBuilder(),
+  ) as unknown as InsertQueryBuilderContract
 }
 
 /**

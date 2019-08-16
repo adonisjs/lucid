@@ -934,6 +934,11 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     dialect: string
 
     /**
+     * The client mode in which it is execute queries
+     */
+    mode: 'dual' | 'write' | 'read'
+
+    /**
      * Returns the read and write clients
      */
     getReadClient (): knex | knex.Transaction

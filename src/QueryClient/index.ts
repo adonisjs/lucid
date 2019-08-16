@@ -17,6 +17,8 @@ import {
   InsertQueryBuilderContract,
   DatabaseQueryBuilderContract,
 } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
+
+import { Exception } from '@poppinss/utils'
 import { resolveClientNameWithAliases } from 'knex/lib/helpers'
 
 import { TransactionClient } from '../TransactionClient'
@@ -37,9 +39,44 @@ export class QueryClient implements QueryClientContract {
   /**
    * The name of the dialect in use
    */
-  public dialect = resolveClientNameWithAliases(this._client.client.config)
+  public dialect: string
 
-  constructor (private _client: knex, private _readClient?: knex) {
+  constructor (
+    public mode: 'dual' | 'write' | 'read',
+    private _client?: knex,
+    private _readClient?: knex,
+  ) {
+    this._validateMode()
+    this.dialect = resolveClientNameWithAliases(this._getAvailableClient().client.config)
+  }
+
+  /**
+   * Returns any of the available clients, giving preference to the
+   * write client.
+   *
+   * One client will always exists, otherwise instantiation of this
+   * class will fail.
+   */
+  private _getAvailableClient () {
+    return (this._client || this._readClient)!
+  }
+
+  /**
+   * Validates the modes against the provided clients to ensure that class is
+   * constructed as expected.
+   */
+  private _validateMode () {
+    if (this.mode === 'dual' && (!this._client || !this._readClient)) {
+      throw new Exception('Read and write both clients are required in dual mode')
+    }
+
+    if (this.mode === 'write' && (!this._client || this._readClient)) {
+      throw new Exception('Write client is required in write mode, without the read client')
+    }
+
+    if (this.mode === 'read' && (this._client || !this._readClient)) {
+      throw new Exception('Read client is required in read mode, without the write client')
+    }
   }
 
   /**
@@ -47,28 +84,40 @@ export class QueryClient implements QueryClientContract {
    * an instance of [[QueryClient]] with a sticky write client.
    */
   public getReadClient () {
-    return this._readClient || this._client
+    if (this.mode === 'read' || this.mode === 'dual') {
+      return this._readClient!
+    }
+
+    return this._client!
   }
 
   /**
    * Returns the write client
    */
   public getWriteClient () {
-    return this._client
+    if (this.mode === 'write' || this.mode === 'dual') {
+      return this._client!
+    }
+
+    throw new Exception(
+      'Write client is not available for query client instantiated in read mode',
+      500,
+      'E_RUNTIME_EXCEPTION',
+    )
   }
 
   /**
    * Truncate table
    */
   public async truncate (table: string): Promise<void> {
-    await this._client.select(table).truncate()
+    await this.getWriteClient().select(table).truncate()
   }
 
   /**
    * Get information for a table columns
    */
   public async columnsInfo (table: string, column?: string): Promise<any> {
-    const query = this._client.select(table)
+    const query = this.getWriteClient().select(table)
     const result = await (column ? query.columnInfo(column) : query.columnInfo())
     return result
   }
@@ -78,7 +127,7 @@ export class QueryClient implements QueryClientContract {
    * query and hold a single connection for all queries.
    */
   public async transaction (): Promise<TransactionClientContract> {
-    const trx = await this._client.transaction()
+    const trx = await this.getWriteClient().transaction()
     return new TransactionClient(trx, this.dialect)
   }
 
@@ -87,21 +136,21 @@ export class QueryClient implements QueryClientContract {
    * or deleting rows
    */
   public query (): DatabaseQueryBuilderContract {
-    return new DatabaseQueryBuilder(this._client.queryBuilder(), this)
+    return new DatabaseQueryBuilder(this._getAvailableClient().queryBuilder(), this)
   }
 
   /**
    * Returns instance of a query builder for inserting rows
    */
   public insertQuery (): InsertQueryBuilderContract {
-    return new InsertQueryBuilder(this._client.queryBuilder(), this)
+    return new InsertQueryBuilder(this.getWriteClient().queryBuilder(), this)
   }
 
   /**
    * Returns instance of raw query builder
    */
   public raw (sql: any, bindings?: any): RawContract {
-    return new RawQueryBuilder(this._client.raw(sql, bindings))
+    return new RawQueryBuilder(this._getAvailableClient().raw(sql, bindings))
   }
 
   /**
