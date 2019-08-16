@@ -275,6 +275,11 @@ declare module '@ioc:Adonis/Addons/Database' {
     on (event: 'disconnect', callback: (connection: ConnectionContract) => void): this
 
     /**
+     * When error is received on a given connection
+     */
+    on (event: 'error', callback: (connection: ConnectionContract, error: Error) => void): this
+
+    /**
      * Add a new connection to the list of managed connection. You must call
      * connect seperately to instantiate a connection instance
      */
