@@ -30,7 +30,7 @@ test.group('Query Builder | from', (group) => {
     const db = getInsertBuilder(connection)
     const { sql, bindings } = db.table('users').insert({ username: 'virk' }).toSQL()
 
-    const { sql: knexSql, bindings: knexBindings } = connection.getWriteClient()
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
       .from('users')
       .insert({ username: 'virk' })
       .toSQL()
@@ -49,7 +49,7 @@ test.group('Query Builder | from', (group) => {
       .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
       .toSQL()
 
-    const { sql: knexSql, bindings: knexBindings } = connection.getWriteClient()
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
       .from('users')
       .insert([{ username: 'virk' }, { username: 'nikk' }])
       .toSQL()
@@ -69,7 +69,7 @@ test.group('Query Builder | from', (group) => {
       .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
       .toSQL()
 
-    const { sql: knexSql, bindings: knexBindings } = connection.getWriteClient()
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
       .from('users')
       .returning(['id', 'username'])
       .insert([{ username: 'virk' }, { username: 'nikk' }])

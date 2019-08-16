@@ -86,13 +86,13 @@ test.group('Connection | setup', (group) => {
 
   test('do not instantiate knex unless connect is called', (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
-    assert.isUndefined(connection['_client'])
+    assert.isUndefined(connection.client)
   })
 
   test('instantiate knex when connect is invoked', async (assert, done) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.on('connect', () => {
-      assert.isDefined(connection.getWriteClient())
+      assert.isDefined(connection.client!)
       assert.equal(connection.pool!.numUsed(), 0)
       done()
     })
@@ -105,7 +105,7 @@ test.group('Connection | setup', (group) => {
     connection.connect()
     await connection.disconnect()
 
-    assert.isUndefined(connection['_client'])
+    assert.isUndefined(connection.client)
     assert.isUndefined(connection['_readClient'])
   })
 
@@ -114,7 +114,7 @@ test.group('Connection | setup', (group) => {
     connection.connect()
 
     connection.on('disconnect', () => {
-      assert.isUndefined(connection['_client'])
+      assert.isUndefined(connection.client)
       done()
     })
 
@@ -143,14 +143,14 @@ if (process.env.DB === 'mysql') {
       const connection = new Connection('primary', config, getLogger())
       connection.connect()
 
-      assert.equal(connection.getWriteClient()['_context'].client.constructor.name, 'Client_MySQL')
-      assert.equal(connection.getWriteClient()['_context'].client.config.connection.charset, 'utf-8')
-      assert.equal(connection.getWriteClient()['_context'].client.config.connection.typeCast, false)
+      assert.equal(connection.client!['_context'].client.constructor.name, 'Client_MySQL')
+      assert.equal(connection.client!['_context'].client.config.connection.charset, 'utf-8')
+      assert.equal(connection.client!['_context'].client.config.connection.typeCast, false)
     })
   })
 }
 
-test.group('Connection | query', (group) => {
+test.group('Connection | queryClient', (group) => {
   group.before(async () => {
     await setup()
   })
@@ -163,7 +163,7 @@ test.group('Connection | query', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const results = await connection.query().from('users')
+    const results = await connection.getClient().query().from('users')
     assert.isArray(results)
     assert.lengthOf(results, 0)
 
@@ -174,9 +174,9 @@ test.group('Connection | query', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    await connection.insertQuery().table('users').insert({ username: 'virk' })
+    await connection.getClient().insertQuery().table('users').insert({ username: 'virk' })
 
-    const results = await connection.query().from('users')
+    const results = await connection.getClient().query().from('users')
     assert.isArray(results)
     assert.lengthOf(results, 1)
     assert.equal(results[0].username, 'virk')
@@ -190,9 +190,9 @@ test.group('Connection | query', (group) => {
 
     const command = process.env.DB === 'sqlite' ? `DELETE FROM users;` : 'TRUNCATE users;'
 
-    await connection.insertQuery().table('users').insert({ username: 'virk' })
-    await connection.raw(command).exec()
-    const results = await connection.query().from('users')
+    await connection.getClient().insertQuery().table('users').insert({ username: 'virk' })
+    await connection.getClient().raw(command).exec()
+    const results = await connection.getClient().query().from('users')
     assert.isArray(results)
     assert.lengthOf(results, 0)
 
@@ -203,11 +203,11 @@ test.group('Connection | query', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const trx = await connection.transaction()
+    const trx = await connection.getClient().transaction()
     await trx.insertQuery().table('users').insert({ username: 'virk' })
     await trx.rollback()
 
-    const results = await connection.query().from('users')
+    const results = await connection.getClient().query().from('users')
 
     assert.isArray(results)
     assert.lengthOf(results, 0)
