@@ -90,6 +90,13 @@ export class InsertQueryBuilder implements InsertQueryBuilderContract {
    * Define returning columns for the insert query
    */
   public returning (column: any): any {
+    /**
+     * Do not chain `returning` in sqlite3 to avoid knex warnings
+     */
+    if (this._client && this._client.dialect === 'sqlite3') {
+      return this
+    }
+
     this.$knexBuilder.returning(column)
     return this
   }

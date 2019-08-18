@@ -227,6 +227,13 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Define returning columns
    */
   public returning (columns: any): this {
+    /**
+     * Do not chain `returning` in sqlite3 to avoid knex warnings
+     */
+    if (this._client && this._client.dialect === 'sqlite3') {
+      return this
+    }
+
     this.$knexBuilder.returning(columns)
     return this
   }
