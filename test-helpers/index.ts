@@ -13,6 +13,7 @@ import { join } from 'path'
 import * as knex from 'knex'
 import * as dotenv from 'dotenv'
 import { FakeLogger } from '@poppinss/logger'
+import { Profiler } from '@poppinss/profiler'
 import { Filesystem } from '@poppinss/dev-utils'
 
 import { ConnectionConfigContract } from '@ioc:Adonis/Addons/Database'
@@ -156,4 +157,11 @@ export function getLogger () {
     name: 'lucid',
     level: 'info',
   })
+}
+
+/**
+ * Returns profiler instance
+ */
+export function getProfiler () {
+  return new Profiler({ enabled: false })
 }

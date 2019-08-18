@@ -13,6 +13,7 @@ declare module '@ioc:Adonis/Addons/Database' {
   import { Pool } from 'tarn'
   import * as knex from 'knex'
   import { EventEmitter } from 'events'
+  import { ProfilerRowContract } from '@poppinss/profiler'
 
   import {
     RawContract,
@@ -389,12 +390,27 @@ declare module '@ioc:Adonis/Addons/Database' {
     getRawConnection: ConnectionManagerContract['get']
     manager: ConnectionManagerContract,
 
-    connection (connectionName: string): QueryClientContract
-    query (mode?: 'read' | 'write'): DatabaseQueryBuilderContract
-    insertQuery (): InsertQueryBuilderContract
+    connection (
+      connectionName: string,
+      options?: Partial<{ mode: 'read' | 'write', profiler: ProfilerRowContract }>,
+    ): QueryClientContract
+
+    query (
+      options?: Partial<{ mode: 'read' | 'write', profiler: ProfilerRowContract }>,
+    ): DatabaseQueryBuilderContract
+
+    insertQuery (
+      options?: Partial<{ profiler: ProfilerRowContract }>,
+    ): InsertQueryBuilderContract
+
     from (table: string): DatabaseQueryBuilderContract
     table (table: string): InsertQueryBuilderContract
     transaction (): Promise<TransactionClientContract>
-    raw (sql: string, bindings?: any, mode?: 'read' | 'write'): RawContract
+
+    raw (
+      sql: string,
+      bindings?: any,
+      options?: Partial<{ mode: 'read' | 'write', profiler: ProfilerRowContract }>,
+    ): RawContract
   }
 }

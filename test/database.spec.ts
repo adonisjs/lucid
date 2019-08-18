@@ -12,7 +12,7 @@
 import * as test from 'japa'
 
 import { Database } from '../src/Database'
-import { getConfig, setup, cleanup, getLogger } from '../test-helpers'
+import { getConfig, setup, cleanup, getLogger, getProfiler } from '../test-helpers'
 
 test.group('Database', (group) => {
   group.before(async () => {
@@ -29,7 +29,7 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger())
+    const db = new Database(config, getLogger(), getProfiler())
 
     assert.isDefined(db.manager.connections.get('primary'))
     assert.equal(db.manager.connections.get('primary')!.state, 'idle')
@@ -44,7 +44,7 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger())
+    const db = new Database(config, getLogger(), getProfiler())
     db.manager.on('connect', (connection) => {
       assert.equal(connection.name, 'primary')
     })
@@ -61,7 +61,7 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger())
+    const db = new Database(config, getLogger(), getProfiler())
     db.manager.on('connect', (connection) => {
       assert.equal(connection.name, 'primary')
     })
@@ -78,8 +78,8 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger())
-    const client = db.connection('primary::write')
+    const db = new Database(config, getLogger(), getProfiler())
+    const client = db.connection('primary', { mode: 'write' })
 
     assert.equal(client.mode, 'write')
     await db.manager.closeAll()
@@ -93,8 +93,8 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger())
-    const client = db.connection('primary::read')
+    const db = new Database(config, getLogger(), getProfiler())
+    const client = db.connection('primary', { mode: 'read' })
 
     assert.equal(client.mode, 'read')
     await db.manager.closeAll()
@@ -106,7 +106,7 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger())
+    const db = new Database(config, getLogger(), getProfiler())
     const trx = await db.transaction()
 
     assert.equal(trx.mode, 'dual')
@@ -122,7 +122,7 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger())
+    const db = new Database(config, getLogger(), getProfiler())
     const result = await db.raw('select 1 + 1')
     assert.isDefined(result)
     await db.manager.closeAll()
@@ -134,8 +134,8 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger())
-    const result = await db.raw('select 1 + 1', [], 'read')
+    const db = new Database(config, getLogger(), getProfiler())
+    const result = await db.raw('select 1 + 1', [], { mode: 'read' })
     assert.isDefined(result)
     await db.manager.closeAll()
   })
@@ -146,8 +146,8 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger())
-    const result = await db.raw('select 1 + 1', [], 'write')
+    const db = new Database(config, getLogger(), getProfiler())
+    const result = await db.raw('select 1 + 1', [], { mode: 'write' })
     assert.isDefined(result)
     await db.manager.closeAll()
   })

@@ -20,7 +20,8 @@ export class DatabaseServiceProvider {
     this.$container.singleton('Adonis/Addons/Database', () => {
       const config = this.$container.use('Adonis/Core/Config').get('database', {})
       const Logger = this.$container.use('Adonis/Core/Logger')
-      return new Database(config, Logger)
+      const Profiler = this.$container.use('Adonis/Core/Profiler')
+      return new Database(config, Logger, Profiler)
     })
   }
 }
