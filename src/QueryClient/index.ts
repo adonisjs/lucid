@@ -58,7 +58,7 @@ export class QueryClient implements QueryClientContract {
     public mode: 'dual' | 'write' | 'read',
     private _connection: ConnectionContract,
   ) {
-    this.dialect = resolveClientNameWithAliases(this._getAvailableClient().client.config)
+    this.dialect = resolveClientNameWithAliases(this._getAvailableClient().client.config.client)
   }
 
   /**

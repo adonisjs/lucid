@@ -14,7 +14,7 @@ import * as test from 'japa'
 import { Connection } from '../src/Connection'
 import { getConfig, setup, cleanup, getInsertBuilder, getLogger } from '../test-helpers'
 
-test.group('Query Builder | from', (group) => {
+test.group('Query Builder | insert', (group) => {
   group.before(async () => {
     await setup()
   })
