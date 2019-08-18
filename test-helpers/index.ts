@@ -15,7 +15,7 @@ import * as dotenv from 'dotenv'
 import { FakeLogger } from '@poppinss/logger'
 import { Filesystem } from '@poppinss/dev-utils'
 
-import { ConnectionConfigContract, ConnectionContract } from '@ioc:Adonis/Addons/Database'
+import { ConnectionConfigContract } from '@ioc:Adonis/Addons/Database'
 import {
   RawContract,
   InsertQueryBuilderContract,
@@ -129,9 +129,11 @@ export function getQueryBuilder (client: QueryClientContract) {
 /**
  * Returns raw query builder instance for a given connection
  */
-export function getRawQueryBuilder (connection: ConnectionContract, sql: string, bindings?: any[]) {
+export function getRawQueryBuilder (client: QueryClientContract, sql: string, bindings?: any[]) {
+  const writeClient = client.getWriteClient()
   return new RawQueryBuilder(
-    bindings ? connection.client!.raw(sql, bindings) : connection.client!.raw(sql),
+    bindings ? writeClient.raw(sql, bindings) : writeClient.raw(sql),
+    client,
   ) as unknown as RawContract
 }
 
@@ -141,6 +143,7 @@ export function getRawQueryBuilder (connection: ConnectionContract, sql: string,
 export function getInsertBuilder (client: QueryClientContract) {
   return new InsertQueryBuilder(
     client.getWriteClient().queryBuilder(),
+    client,
   ) as unknown as InsertQueryBuilderContract
 }
 

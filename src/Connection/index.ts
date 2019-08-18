@@ -38,6 +38,16 @@ export class Connection extends EventEmitter implements ConnectionContract {
   public readClient?: knex
 
   /**
+   * A boolean to know if connection operates on read/write
+   * replicas
+   */
+  public hasReadWriteReplicas: boolean = !!(
+    this.config.replicas &&
+    this.config.replicas.read &&
+    this.config.replicas.write
+  )
+
+  /**
    * Config for one or more read replicas. Only exists, when replicas are
    * defined
    */
@@ -97,6 +107,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
     this.client = undefined
     this.readClient = undefined
     this._readReplicas = []
+    this._roundRobinCounter = 0
   }
 
   /**
@@ -124,15 +135,6 @@ export class Connection extends EventEmitter implements ConnectionContract {
         this.removeAllListeners()
       })
     }
-  }
-
-  /**
-   * Returns a boolean telling if config has read/write
-   * connection settings vs a single connection
-   * object.
-   */
-  private _hasReadWriteReplicas (): boolean {
-    return !!(this.config.replicas && this.config.replicas.read && this.config.replicas.write)
   }
 
   /**
@@ -241,7 +243,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * it will use reference the write client
    */
   private _setupReadConnection () {
-    if (!this._hasReadWriteReplicas()) {
+    if (!this.hasReadWriteReplicas) {
       this.readClient = this.client
       return
     }
@@ -322,20 +324,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    */
   public getClient (mode?: 'read' | 'write') {
     this._ensureClients()
-    this._logger.trace(
-      { connection: this.name },
-      `creating query client in %s mode`,
-      [mode || 'dual'],
-    )
-
-    if (!mode) {
-      return new QueryClient('dual', this.client!, this.readClient!)
-    }
-
-    if (mode === 'read') {
-      return new QueryClient('read', undefined, this.readClient!)
-    }
-
-    return new QueryClient('write', this.client!)
+    this._logger.trace({ connection: this.name }, 'creating query client in %s mode', [mode || 'dual'])
+    return new QueryClient(mode || 'dual', this)
   }
 }

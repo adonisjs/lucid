@@ -337,6 +337,8 @@ declare module '@ioc:Adonis/Addons/Database' {
     client?: knex,
     readClient?: knex,
 
+    hasReadWriteReplicas: boolean,
+
     /**
      * Read/write connection pools
      */

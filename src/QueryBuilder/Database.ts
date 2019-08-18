@@ -20,7 +20,7 @@ import {
  } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
 import { Chainable } from './Chainable'
-import { executeQuery } from '../utils'
+import { executeQuery, isInTransaction } from '../utils'
 
 /**
  * Wrapping the user function for a query callback and give them
@@ -53,24 +53,33 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   }
 
   /**
+   * Raises exception when client is not defined
+   */
+  private _ensureClient () {
+    if (!this._client) {
+      throw new Exception('Cannot execute query without query client', 500, 'E_PROGRAMMING_EXCEPTION')
+    }
+  }
+
+  /**
    * Returns the client to be used for the query. This method relies on the
    * query method and will choose the read or write connection whenever
    * required.
    */
   private _getQueryClient () {
     /**
-     * Do not use custom client when knex builder is using transaction
-     * client
+     * Return undefined when no parent client is defined or dialect
+     * is sqlite
      */
-    if (this.$knexBuilder['client']['transacting']) {
+    if (this._client!.dialect === 'sqlite3') {
       return
     }
 
     /**
-     * Return undefined when no parent client is defined or dialect
-     * is sqlite
+     * Use transaction client directly, since it preloads the
+     * connection
      */
-    if (!this._client || this._client.dialect === 'sqlite3') {
+    if (isInTransaction(this.$knexBuilder, this._client!)) {
       return
     }
 
@@ -78,10 +87,23 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
      * Use write client for updates and deletes
      */
     if (['update', 'del'].includes(this.$knexBuilder['_method'])) {
-      return this._client.getWriteClient().client
+      return this._client!.getWriteClient().client
     }
 
-    return this._client.getReadClient().client
+    return this._client!.getReadClient().client
+  }
+
+  /**
+   * Returns the profiler data
+   */
+  private _getProfilerData () {
+    if (!this._client!.profiler) {
+      return {}
+    }
+
+    return {
+      connection: this._client!.connectionName,
+    }
   }
 
   /**
@@ -269,7 +291,14 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Executes the query
    */
   public async exec (): Promise<any> {
-    const result = await executeQuery(this.$knexBuilder, this._getQueryClient())
+    this._ensureClient()
+
+    const result = await executeQuery(
+      this.$knexBuilder,
+      this._getQueryClient(),
+      this._client!.profiler,
+      this._getProfilerData(),
+    )
     return result
   }
 

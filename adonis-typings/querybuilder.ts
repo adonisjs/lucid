@@ -10,6 +10,7 @@
 declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   import * as knex from 'knex'
   import { Dictionary } from 'ts-essentials'
+  import { ProfilerRowContract } from '@poppinss/profiler'
 
   /**
    * The types for values for the aggregates. We need this coz of
@@ -924,6 +925,11 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
    */
   interface QueryClientContract {
     /**
+     * Custom profiler to time queries
+     */
+    profiler?: ProfilerRowContract
+
+    /**
      * Tells if client is a transaction client or not
      */
     isTransaction: boolean
@@ -937,6 +943,12 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
      * The client mode in which it is execute queries
      */
     mode: 'dual' | 'write' | 'read'
+
+    /**
+     * The name of the connnection from which the client
+     * was originated
+     */
+    connectionName: string
 
     /**
      * Returns the read and write clients

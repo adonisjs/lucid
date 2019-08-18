@@ -27,11 +27,7 @@ test.group('Query client', (group) => {
     connection.connect()
 
     const client = connection.getClient()
-
     assert.equal(client.mode, 'dual')
-    assert.isDefined(client['_client'])
-    assert.isDefined(client['_readClient'])
-
     await connection.disconnect()
   })
 
@@ -40,11 +36,7 @@ test.group('Query client', (group) => {
     connection.connect()
 
     const client = connection.getClient('read')
-
     assert.equal(client.mode, 'read')
-    assert.isUndefined(client['_client'])
-    assert.isDefined(client['_readClient'])
-
     await connection.disconnect()
   })
 
@@ -53,11 +45,7 @@ test.group('Query client', (group) => {
     connection.connect()
 
     const client = connection.getClient('write')
-
     assert.equal(client.mode, 'write')
-    assert.isDefined(client['_client'])
-    assert.isUndefined(client['_readClient'])
-
     await connection.disconnect()
   })
 })
