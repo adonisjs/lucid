@@ -10,6 +10,7 @@
 /// <reference path="../../adonis-typings/database.ts" />
 
 import * as knex from 'knex'
+import { ProfilerRowContract } from '@poppinss/profiler'
 import { TransactionClientContract } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
 import {
@@ -38,7 +39,16 @@ export class TransactionClient implements TransactionClientContract {
    */
   public mode: 'dual' = 'dual'
 
-  constructor (public knexClient: knex.Transaction, public dialect: string) {
+  /**
+   * The profiler to be used for profiling queries
+   */
+  public profiler?: ProfilerRowContract
+
+  constructor (
+    public knexClient: knex.Transaction,
+    public dialect: string,
+    public connectionName: string,
+  ) {
   }
 
   /**
@@ -85,14 +95,14 @@ export class TransactionClient implements TransactionClientContract {
    * Get a new query builder instance
    */
   public query (): DatabaseQueryBuilderContract {
-    return new DatabaseQueryBuilder(this.knexClient.queryBuilder())
+    return new DatabaseQueryBuilder(this.knexClient.queryBuilder(), this)
   }
 
   /**
    * Get a new insert query builder instance
    */
   public insertQuery (): InsertQueryBuilderContract {
-    return new InsertQueryBuilder(this.knexClient.queryBuilder())
+    return new InsertQueryBuilder(this.knexClient.queryBuilder(), this)
   }
 
   /**
@@ -100,14 +110,14 @@ export class TransactionClient implements TransactionClientContract {
    */
   public async transaction (): Promise<TransactionClientContract> {
     const trx = await this.knexClient.transaction()
-    return new TransactionClient(trx, this.dialect)
+    return new TransactionClient(trx, this.dialect, this.connectionName)
   }
 
   /**
    * Execute raw query on transaction
    */
   public raw (sql: any, bindings?: any): RawContract {
-    return new RawQueryBuilder(this.knexClient.raw(sql, bindings))
+    return new RawQueryBuilder(this.knexClient.raw(sql, bindings), this)
   }
 
   /**

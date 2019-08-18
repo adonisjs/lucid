@@ -10,19 +10,30 @@
 /// <reference path="../../adonis-typings/database.ts" />
 
 import * as knex from 'knex'
+import { Exception } from '@poppinss/utils'
+
 import {
   InsertQueryBuilderContract,
   TransactionClientContract,
   QueryClientContract,
 } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
-import { executeQuery } from '../utils'
+import { executeQuery, isInTransaction } from '../utils'
 
 /**
  * Exposes the API for performing SQL inserts
  */
 export class InsertQueryBuilder implements InsertQueryBuilderContract {
   constructor (protected $knexBuilder: knex.QueryBuilder, private _client?: QueryClientContract) {
+  }
+
+  /**
+   * Raises exception when client is not defined
+   */
+  private _ensureClient () {
+    if (!this._client) {
+      throw new Exception('Cannot execute query without query client', 500, 'E_PROGRAMMING_EXCEPTION')
+    }
   }
 
   /**
@@ -33,25 +44,38 @@ export class InsertQueryBuilder implements InsertQueryBuilderContract {
    */
   private _getQueryClient () {
     /**
-     * Do not use custom client when knex builder is using transaction
-     * client
+     * Return undefined when no parent client is defined or dialect
+     * is sqlite
      */
-    if (this.$knexBuilder['client']['transacting']) {
+    if (this._client!.dialect === 'sqlite3') {
       return
     }
 
     /**
-     * Return undefined when no parent client is defined or dialect
-     * is sqlite
+     * Use transaction client directly, since it preloads the
+     * connection
      */
-    if (!this._client || this._client.dialect === 'sqlite3') {
+    if (isInTransaction(this.$knexBuilder, this._client!)) {
       return
     }
 
     /**
      * Always use write client for write queries
      */
-    return this._client.getWriteClient().client
+    return this._client!.getWriteClient().client
+  }
+
+  /**
+   * Returns the profiler data
+   */
+  private _getProfilerData () {
+    if (!this._client!.profiler) {
+      return {}
+    }
+
+    return {
+      connection: this._client!.connectionName,
+    }
   }
 
   /**
@@ -127,7 +151,14 @@ export class InsertQueryBuilder implements InsertQueryBuilderContract {
    * Executes the query
    */
   public async exec (): Promise<any> {
-    const result = await executeQuery(this.$knexBuilder, this._getQueryClient())
+    this._ensureClient()
+
+    const result = await executeQuery(
+      this.$knexBuilder,
+      this._getQueryClient(),
+      this._client!.profiler,
+      this._getProfilerData(),
+    )
     return result
   }
 

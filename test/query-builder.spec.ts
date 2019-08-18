@@ -41,7 +41,7 @@ if (process.env.DB !== 'sqlite') {
 
       client.getReadClient = function getReadClient () {
         assert.isTrue(true)
-        return this._client
+        return this._connection.client
       }
 
       db.select('*').from('users')
@@ -57,7 +57,7 @@ if (process.env.DB !== 'sqlite') {
 
       client.getWriteClient = function getWriteClient () {
         assert.isTrue(true)
-        return this._client
+        return this._connection.client
       }
 
       db.from('users').update('username', 'virk')
@@ -73,7 +73,7 @@ if (process.env.DB !== 'sqlite') {
 
       client.getWriteClient = function getWriteClient () {
         assert.isTrue(true)
-        return this._client
+        return this._connection.client
       }
 
       db.from('users').del()
@@ -109,6 +109,40 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const trx = await client.transaction()
+      db.table('users').useTransaction(trx)
+
+      assert.isUndefined(db['_getQueryClient']())
+    })
+
+    test('use transaction client when query is issued from transaction client', async (assert) => {
+      assert.plan(1)
+      const connection = new Connection('primary', getConfig(), getLogger())
+      connection.connect()
+      const client = connection.getClient()
+
+      client.getReadClient = function getReadClient () {
+        throw new Error('Never expected to reach here')
+      }
+
+      const trx = await client.transaction()
+      const db = trx.query()
+
+      db.select('*').from('users')
+      assert.isUndefined(db['_getQueryClient']())
+    })
+
+    test('use transaction client when insert query is issued from transaction client', async (assert) => {
+      assert.plan(1)
+      const connection = new Connection('primary', getConfig(), getLogger())
+      connection.connect()
+      const client = connection.getClient()
+
+      const trx = await client.transaction()
+      trx.getReadClient = function getReadClient () {
+        throw new Error('Never expected to reach here')
+      }
+
+      const db = trx.insertQuery()
       db.table('users').useTransaction(trx)
 
       assert.isUndefined(db['_getQueryClient']())
@@ -242,7 +276,7 @@ test.group('Query Builder | where', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .where('age', '>', getRawQueryBuilder(connection, 'select min_age from ages limit 1;'))
+      .where('age', '>', getRawQueryBuilder(connection.getClient(), 'select min_age from ages limit 1;'))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -394,7 +428,7 @@ test.group('Query Builder | whereNot', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .whereNot('age', '>', getRawQueryBuilder(connection, 'select min_age from ages limit 1;'))
+      .whereNot('age', '>', getRawQueryBuilder(connection.getClient(), 'select min_age from ages limit 1;'))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -534,7 +568,7 @@ test.group('Query Builder | whereIn', (group) => {
     const { sql, bindings } = db
       .from('users')
       .whereIn('username', [
-        getRawQueryBuilder(connection, `select ${ref('id')} from ${ref('accounts')}`),
+        getRawQueryBuilder(connection.getClient(), `select ${ref('id')} from ${ref('accounts')}`),
       ])
       .toSQL()
 
@@ -1105,8 +1139,8 @@ test.group('Query Builder | whereBetween', (group) => {
     const { sql, bindings } = db
       .from('users')
       .whereBetween('age', [
-        getRawQueryBuilder(connection, 'select min_age from ages;'),
-        getRawQueryBuilder(connection, 'select max_age from ages;'),
+        getRawQueryBuilder(connection.getClient(), 'select min_age from ages;'),
+        getRawQueryBuilder(connection.getClient(), 'select max_age from ages;'),
       ])
       .toSQL()
 
@@ -1149,8 +1183,8 @@ test.group('Query Builder | whereBetween', (group) => {
     const { sql, bindings } = db
       .from('users')
       .orWhereBetween('age', [
-        getRawQueryBuilder(connection, 'select min_age from ages;'),
-        getRawQueryBuilder(connection, 'select max_age from ages;'),
+        getRawQueryBuilder(connection.getClient(), 'select min_age from ages;'),
+        getRawQueryBuilder(connection.getClient(), 'select max_age from ages;'),
       ])
       .toSQL()
 
@@ -1203,8 +1237,8 @@ test.group('Query Builder | whereNotBetween', (group) => {
     const { sql, bindings } = db
       .from('users')
       .whereNotBetween('age', [
-        getRawQueryBuilder(connection, 'select min_age from ages;'),
-        getRawQueryBuilder(connection, 'select max_age from ages;'),
+        getRawQueryBuilder(connection.getClient(), 'select min_age from ages;'),
+        getRawQueryBuilder(connection.getClient(), 'select max_age from ages;'),
       ])
       .toSQL()
 
@@ -1247,8 +1281,8 @@ test.group('Query Builder | whereNotBetween', (group) => {
     const { sql, bindings } = db
       .from('users')
       .orWhereNotBetween('age', [
-        getRawQueryBuilder(connection, 'select min_age from ages;'),
-        getRawQueryBuilder(connection, 'select max_age from ages;'),
+        getRawQueryBuilder(connection.getClient(), 'select min_age from ages;'),
+        getRawQueryBuilder(connection.getClient(), 'select max_age from ages;'),
       ])
       .toSQL()
 
@@ -1338,7 +1372,7 @@ test.group('Query Builder | whereRaw', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .whereRaw(getRawQueryBuilder(connection, 'select id from accounts;'))
+      .whereRaw(getRawQueryBuilder(connection.getClient(), 'select id from accounts;'))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -1449,7 +1483,7 @@ test.group('Query Builder | join', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .join('profiles', 'profiles.type', getRawQueryBuilder(connection, '?', ['social']))
+      .join('profiles', 'profiles.type', getRawQueryBuilder(connection.getClient(), '?', ['social']))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -1539,7 +1573,7 @@ test.group('Query Builder | innerJoin', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .innerJoin('profiles', 'profiles.type', getRawQueryBuilder(connection, '?', ['social']))
+      .innerJoin('profiles', 'profiles.type', getRawQueryBuilder(connection.getClient(), '?', ['social']))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -1629,7 +1663,7 @@ test.group('Query Builder | leftJoin', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .leftJoin('profiles', 'profiles.type', getRawQueryBuilder(connection, '?', ['social']))
+      .leftJoin('profiles', 'profiles.type', getRawQueryBuilder(connection.getClient(), '?', ['social']))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -1719,7 +1753,7 @@ test.group('Query Builder | leftOuterJoin', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .leftOuterJoin('profiles', 'profiles.type', getRawQueryBuilder(connection, '?', ['social']))
+      .leftOuterJoin('profiles', 'profiles.type', getRawQueryBuilder(connection.getClient(), '?', ['social']))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -1809,7 +1843,7 @@ test.group('Query Builder | rightJoin', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .rightJoin('profiles', 'profiles.type', getRawQueryBuilder(connection, '?', ['social']))
+      .rightJoin('profiles', 'profiles.type', getRawQueryBuilder(connection.getClient(), '?', ['social']))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -1899,7 +1933,7 @@ test.group('Query Builder | rightOuterJoin', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .rightOuterJoin('profiles', 'profiles.type', getRawQueryBuilder(connection, '?', ['social']))
+      .rightOuterJoin('profiles', 'profiles.type', getRawQueryBuilder(connection.getClient(), '?', ['social']))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -1989,7 +2023,7 @@ test.group('Query Builder | fullOuterJoin', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .fullOuterJoin('profiles', 'profiles.type', getRawQueryBuilder(connection, '?', ['social']))
+      .fullOuterJoin('profiles', 'profiles.type', getRawQueryBuilder(connection.getClient(), '?', ['social']))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -2079,7 +2113,7 @@ test.group('Query Builder | crossJoin', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .crossJoin('profiles', 'profiles.type', getRawQueryBuilder(connection, '?', ['social']))
+      .crossJoin('profiles', 'profiles.type', getRawQueryBuilder(connection.getClient(), '?', ['social']))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -2127,7 +2161,7 @@ test.group('Query Builder | joinRaw', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .joinRaw(getRawQueryBuilder(connection, 'natural full join table1'))
+      .joinRaw(getRawQueryBuilder(connection.getClient(), 'natural full join table1'))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -2439,7 +2473,7 @@ test.group('Query Builder | union', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .union(getRawQueryBuilder(connection, 'select * from users where first_name is null'))
+      .union(getRawQueryBuilder(connection.getClient(), 'select * from users where first_name is null'))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -2500,7 +2534,7 @@ test.group('Query Builder | union', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .union([getRawQueryBuilder(connection, 'select * from users where first_name is null')])
+      .union([getRawQueryBuilder(connection.getClient(), 'select * from users where first_name is null')])
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -2571,7 +2605,7 @@ test.group('Query Builder | unionAll', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .unionAll(getRawQueryBuilder(connection, 'select * from users where first_name is null'))
+      .unionAll(getRawQueryBuilder(connection.getClient(), 'select * from users where first_name is null'))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -2632,7 +2666,7 @@ test.group('Query Builder | unionAll', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .unionAll([getRawQueryBuilder(connection, 'select * from users where first_name is null')])
+      .unionAll([getRawQueryBuilder(connection.getClient(), 'select * from users where first_name is null')])
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -2867,7 +2901,7 @@ test.group('Query Builder | having', (group) => {
       .having(
         'user_id',
         '=',
-        getRawQueryBuilder(connection, `(select ${ref('user_id')} from ${ref('accounts')})`),
+        getRawQueryBuilder(connection.getClient(), `(select ${ref('user_id')} from ${ref('accounts')})`),
       )
       .toSQL()
 
@@ -2918,7 +2952,7 @@ test.group('Query Builder | having', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .havingRaw(getRawQueryBuilder(connection, 'sum(likes) > ?', [200]))
+      .havingRaw(getRawQueryBuilder(connection.getClient(), 'sum(likes) > ?', [200]))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -3006,7 +3040,7 @@ test.group('Query Builder | havingIn', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .havingIn('id', [getRawQueryBuilder(connection, 'select id from accounts')])
+      .havingIn('id', [getRawQueryBuilder(connection.getClient(), 'select id from accounts')])
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -3117,7 +3151,7 @@ test.group('Query Builder | havingNotIn', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .havingNotIn('id', [getRawQueryBuilder(connection, 'select id from accounts')])
+      .havingNotIn('id', [getRawQueryBuilder(connection.getClient(), 'select id from accounts')])
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -3472,8 +3506,8 @@ test.group('Query Builder | havingBetween', (group) => {
     const { sql, bindings } = db
       .from('users')
       .havingBetween('id', [
-        getRawQueryBuilder(connection, 'select min(id) from users;'),
-        getRawQueryBuilder(connection, 'select max(id) from users;'),
+        getRawQueryBuilder(connection.getClient(), 'select min(id) from users;'),
+        getRawQueryBuilder(connection.getClient(), 'select max(id) from users;'),
       ])
       .toSQL()
 
@@ -3572,8 +3606,8 @@ test.group('Query Builder | havingNotBetween', (group) => {
     const { sql, bindings } = db
       .from('users')
       .havingNotBetween('id', [
-        getRawQueryBuilder(connection, 'select min(id) from users;'),
-        getRawQueryBuilder(connection, 'select max(id) from users;'),
+        getRawQueryBuilder(connection.getClient(), 'select min(id) from users;'),
+        getRawQueryBuilder(connection.getClient(), 'select max(id) from users;'),
       ])
       .toSQL()
 
@@ -3709,7 +3743,7 @@ test.group('Query Builder | havingRaw', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .havingRaw(getRawQueryBuilder(connection, 'select id from accounts;'))
+      .havingRaw(getRawQueryBuilder(connection.getClient(), 'select id from accounts;'))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -3921,7 +3955,7 @@ test.group('Query Builder | count', (group) => {
     const db = getQueryBuilder(connection.getClient())
     const { sql, bindings } = db
       .from('users')
-      .count(getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]), 'u')
+      .count(getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]), 'u')
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -3964,7 +3998,7 @@ test.group('Query Builder | count', (group) => {
     const { sql, bindings } = db
       .from('users')
       .count({
-        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        u: getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]),
         e: 'email',
       })
       .toSQL()
@@ -4062,7 +4096,7 @@ test.group('Query Builder | countDistinct', (group) => {
     const { sql, bindings } = db
       .from('users')
       .countDistinct(
-        getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]),
         'u',
       )
       .toSQL()
@@ -4107,7 +4141,7 @@ test.group('Query Builder | countDistinct', (group) => {
     const { sql, bindings } = db
       .from('users')
       .countDistinct({
-        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        u: getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]),
         e: 'email',
       })
       .toSQL()
@@ -4205,7 +4239,7 @@ test.group('Query Builder | min', (group) => {
     const { sql, bindings } = db
       .from('users')
       .min(
-        getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]),
         'u',
       )
       .toSQL()
@@ -4250,7 +4284,7 @@ test.group('Query Builder | min', (group) => {
     const { sql, bindings } = db
       .from('users')
       .min({
-        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        u: getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]),
         e: 'email',
       })
       .toSQL()
@@ -4348,7 +4382,7 @@ test.group('Query Builder | max', (group) => {
     const { sql, bindings } = db
       .from('users')
       .max(
-        getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]),
         'u',
       )
       .toSQL()
@@ -4393,7 +4427,7 @@ test.group('Query Builder | max', (group) => {
     const { sql, bindings } = db
       .from('users')
       .max({
-        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        u: getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]),
         e: 'email',
       })
       .toSQL()
@@ -4491,7 +4525,7 @@ test.group('Query Builder | sum', (group) => {
     const { sql, bindings } = db
       .from('users')
       .sum(
-        getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]),
         'u',
       )
       .toSQL()
@@ -4536,7 +4570,7 @@ test.group('Query Builder | sum', (group) => {
     const { sql, bindings } = db
       .from('users')
       .sum({
-        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        u: getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]),
         e: 'email',
       })
       .toSQL()
@@ -4634,7 +4668,7 @@ test.group('Query Builder | avg', (group) => {
     const { sql, bindings } = db
       .from('users')
       .avg(
-        getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]),
         'u',
       )
       .toSQL()
@@ -4679,7 +4713,7 @@ test.group('Query Builder | avg', (group) => {
     const { sql, bindings } = db
       .from('users')
       .avg({
-        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        u: getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]),
         e: 'email',
       })
       .toSQL()
@@ -4777,7 +4811,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     const { sql, bindings } = db
       .from('users')
       .avgDistinct(
-        getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]),
         'u',
       )
       .toSQL()
@@ -4822,7 +4856,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     const { sql, bindings } = db
       .from('users')
       .avgDistinct({
-        u: getRawQueryBuilder(connection, 'select * from profiles where is_verified = ?', [true]),
+        u: getRawQueryBuilder(connection.getClient(), 'select * from profiles where is_verified = ?', [true]),
         e: 'email',
       })
       .toSQL()

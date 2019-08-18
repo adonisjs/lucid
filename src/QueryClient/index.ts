@@ -10,6 +10,10 @@
 /// <reference path="../../adonis-typings/database.ts" />
 
 import * as knex from 'knex'
+import { Exception } from '@poppinss/utils'
+import { ProfilerRowContract } from '@poppinss/profiler'
+import { resolveClientNameWithAliases } from 'knex/lib/helpers'
+
 import {
   RawContract,
   QueryClientContract,
@@ -18,8 +22,7 @@ import {
   DatabaseQueryBuilderContract,
 } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
-import { Exception } from '@poppinss/utils'
-import { resolveClientNameWithAliases } from 'knex/lib/helpers'
+import { ConnectionContract } from '@ioc:Adonis/Addons/Database'
 
 import { TransactionClient } from '../TransactionClient'
 import { RawQueryBuilder } from '../QueryBuilder/Raw'
@@ -41,12 +44,20 @@ export class QueryClient implements QueryClientContract {
    */
   public dialect: string
 
+  /**
+   * The profiler to be used for profiling queries
+   */
+  public profiler?: ProfilerRowContract
+
+  /**
+   * Name of the connection in use
+   */
+  public connectionName = this._connection.name
+
   constructor (
     public mode: 'dual' | 'write' | 'read',
-    private _client?: knex,
-    private _readClient?: knex,
+    private _connection: ConnectionContract,
   ) {
-    this._validateMode()
     this.dialect = resolveClientNameWithAliases(this._getAvailableClient().client.config)
   }
 
@@ -58,45 +69,27 @@ export class QueryClient implements QueryClientContract {
    * class will fail.
    */
   private _getAvailableClient () {
-    return (this._client || this._readClient)!
-  }
-
-  /**
-   * Validates the modes against the provided clients to ensure that class is
-   * constructed as expected.
-   */
-  private _validateMode () {
-    if (this.mode === 'dual' && (!this._client || !this._readClient)) {
-      throw new Exception('Read and write both clients are required in dual mode')
-    }
-
-    if (this.mode === 'write' && (!this._client || this._readClient)) {
-      throw new Exception('Write client is required in write mode, without the read client')
-    }
-
-    if (this.mode === 'read' && (this._client || !this._readClient)) {
-      throw new Exception('Read client is required in read mode, without the write client')
-    }
+    return this._connection.client!
   }
 
   /**
    * Returns the read client. The readClient is optional, since we can get
    * an instance of [[QueryClient]] with a sticky write client.
    */
-  public getReadClient () {
+  public getReadClient (): knex {
     if (this.mode === 'read' || this.mode === 'dual') {
-      return this._readClient!
+      return this._connection.readClient!
     }
 
-    return this._client!
+    return this._connection.client!
   }
 
   /**
    * Returns the write client
    */
-  public getWriteClient () {
+  public getWriteClient (): knex {
     if (this.mode === 'write' || this.mode === 'dual') {
-      return this._client!
+      return this._connection.client!
     }
 
     throw new Exception(
@@ -128,7 +121,7 @@ export class QueryClient implements QueryClientContract {
    */
   public async transaction (): Promise<TransactionClientContract> {
     const trx = await this.getWriteClient().transaction()
-    return new TransactionClient(trx, this.dialect)
+    return new TransactionClient(trx, this.dialect, this.connectionName)
   }
 
   /**
@@ -150,7 +143,7 @@ export class QueryClient implements QueryClientContract {
    * Returns instance of raw query builder
    */
   public raw (sql: any, bindings?: any): RawContract {
-    return new RawQueryBuilder(this._getAvailableClient().raw(sql, bindings))
+    return new RawQueryBuilder(this._getAvailableClient().raw(sql, bindings), this)
   }
 
   /**
