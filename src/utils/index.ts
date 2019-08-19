@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/database.ts" />
 
 import * as knex from 'knex'
-import { ProfilerRowContract } from '@poppinss/profiler'
+import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
 import { ProfilerActionContract } from '@poppinss/profiler/build/src/Contracts'
 import { QueryClientContract } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
@@ -20,7 +20,7 @@ import { QueryClientContract } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
  */
 function getProfilerAction (
   builder: knex.QueryBuilder | knex.Raw,
-  profiler?: ProfilerRowContract,
+  profiler?: ProfilerRowContract | ProfilerContract,
   profilerData?: any,
 ) {
   if (!profiler) {
@@ -63,7 +63,7 @@ export function isInTransaction (
 export async function executeQuery (
   builder: knex.QueryBuilder | knex.Raw,
   knexClient?: knex,
-  profiler?: ProfilerRowContract,
+  profiler?: ProfilerRowContract | ProfilerContract,
   profilerData?: any,
 ) {
   let action = getProfilerAction(builder, profiler, profilerData)
