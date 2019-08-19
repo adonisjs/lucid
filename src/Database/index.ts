@@ -67,12 +67,12 @@ export class Database implements DatabaseContract {
    */
   public connection (
     connection: string = this.primaryConnectionName,
-    options?: Partial<{ mode: 'read' | 'write', profiler: ProfilerRowContract }>,
+    options?: Partial<{ mode: 'read' | 'write', profiler: ProfilerRowContract | ProfilerContract }>,
   ) {
     options = options || {}
 
     if (!options.profiler) {
-      options.profiler = this._profiler.create('')
+      options.profiler = this._profiler
     }
 
     /**

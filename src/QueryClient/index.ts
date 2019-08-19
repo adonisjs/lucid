@@ -11,7 +11,7 @@
 
 import * as knex from 'knex'
 import { Exception } from '@poppinss/utils'
-import { ProfilerRowContract } from '@poppinss/profiler'
+import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
 import { resolveClientNameWithAliases } from 'knex/lib/helpers'
 
 import {
@@ -47,7 +47,7 @@ export class QueryClient implements QueryClientContract {
   /**
    * The profiler to be used for profiling queries
    */
-  public profiler?: ProfilerRowContract
+  public profiler?: ProfilerRowContract | ProfilerContract
 
   /**
    * Name of the connection in use
@@ -121,7 +121,10 @@ export class QueryClient implements QueryClientContract {
    */
   public async transaction (): Promise<TransactionClientContract> {
     const trx = await this.getWriteClient().transaction()
-    return new TransactionClient(trx, this.dialect, this.connectionName)
+    const transaction = new TransactionClient(trx, this.dialect, this.connectionName)
+    transaction.profiler = this.profiler
+
+    return transaction
   }
 
   /**

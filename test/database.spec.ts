@@ -151,4 +151,72 @@ test.group('Database', (group) => {
     assert.isDefined(result)
     await db.manager.closeAll()
   })
+
+  test('pass profiler to query client', async (assert) => {
+    const config = {
+      connection: 'primary',
+      connections: { primary: getConfig() },
+    }
+
+    const profiler = getProfiler()
+    const db = new Database(config, getLogger(), profiler)
+    const client = db.connection('primary')
+    assert.deepEqual(client.profiler, profiler)
+
+    await db.manager.closeAll()
+  })
+
+  test('pass custom profiler to query client', async (assert) => {
+    const config = {
+      connection: 'primary',
+      connections: { primary: getConfig() },
+    }
+
+    const profiler = getProfiler()
+    const row = profiler.create('scoped')
+
+    const db = new Database(config, getLogger(), profiler)
+    const client = db.connection('primary', { profiler: row })
+    assert.deepEqual(client.profiler, row)
+
+    await db.manager.closeAll()
+  })
+
+  test('forward profiler to transaction client', async (assert) => {
+    const config = {
+      connection: 'primary',
+      connections: { primary: getConfig() },
+    }
+
+    const profiler = getProfiler()
+
+    const db = new Database(config, getLogger(), profiler)
+    const client = db.connection('primary')
+    const trx = await client.transaction()
+    assert.equal(trx.profiler, profiler)
+
+    await trx.rollback()
+    await db.manager.closeAll()
+  })
+
+  test('forward profiler to nested transaction client', async (assert) => {
+    const config = {
+      connection: 'primary',
+      connections: { primary: getConfig() },
+    }
+
+    const profiler = getProfiler()
+
+    const db = new Database(config, getLogger(), profiler)
+    const client = db.connection('primary')
+    const trx = await client.transaction()
+    const trx1 = await trx.transaction()
+
+    assert.equal(trx.profiler, profiler)
+    assert.equal(trx1.profiler, profiler)
+
+    await trx1.rollback()
+    await trx.rollback()
+    await db.manager.closeAll()
+  })
 })

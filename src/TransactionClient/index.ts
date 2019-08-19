@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/database.ts" />
 
 import * as knex from 'knex'
-import { ProfilerRowContract } from '@poppinss/profiler'
+import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
 import { TransactionClientContract } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
 import {
@@ -42,7 +42,7 @@ export class TransactionClient implements TransactionClientContract {
   /**
    * The profiler to be used for profiling queries
    */
-  public profiler?: ProfilerRowContract
+  public profiler?: ProfilerRowContract | ProfilerContract
 
   constructor (
     public knexClient: knex.Transaction,
@@ -110,7 +110,9 @@ export class TransactionClient implements TransactionClientContract {
    */
   public async transaction (): Promise<TransactionClientContract> {
     const trx = await this.knexClient.transaction()
-    return new TransactionClient(trx, this.dialect, this.connectionName)
+    const transaction = new TransactionClient(trx, this.dialect, this.connectionName)
+    transaction.profiler = this.profiler
+    return transaction
   }
 
   /**
