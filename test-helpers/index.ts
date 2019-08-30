@@ -24,9 +24,9 @@ import {
   QueryClientContract,
 } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
-import { RawQueryBuilder } from '../src/QueryBuilder/Raw'
-import { InsertQueryBuilder } from '../src/QueryBuilder/Insert'
-import { DatabaseQueryBuilder } from '../src/QueryBuilder/Database'
+import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
+import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
+import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
 dotenv.config()

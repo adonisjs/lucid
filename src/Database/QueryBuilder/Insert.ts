@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../adonis-typings/database.ts" />
+/// <reference path="../../../adonis-typings/database.ts" />
 
 import * as knex from 'knex'
 import { Exception } from '@poppinss/utils'
@@ -18,7 +18,7 @@ import {
   QueryClientContract,
 } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
-import { executeQuery, isInTransaction } from '../utils'
+import { executeQuery, isInTransaction } from '../../utils'
 
 /**
  * Exposes the API for performing SQL inserts

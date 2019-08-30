@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../adonis-typings/database.ts" />
+/// <reference path="../../../adonis-typings/database.ts" />
 
 import * as knex from 'knex'
 import { ChainableContract, QueryCallback } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
