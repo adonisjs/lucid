@@ -17,7 +17,7 @@ import { LoggerContract } from '@poppinss/logger'
 import { patchKnex } from 'knex-dynamic-connection'
 
 import { ConnectionConfigContract, ConnectionContract } from '@ioc:Adonis/Addons/Database'
-import { QueryClient } from '../QueryClient'
+import { QueryClient } from '../Database/QueryClient'
 
 /**
  * Connection class manages a given database connection. Internally it uses

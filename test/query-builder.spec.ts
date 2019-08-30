@@ -11,7 +11,7 @@
 
 import * as test from 'japa'
 import { Connection } from '../src/Connection'
-import { DatabaseQueryBuilder } from '../src/QueryBuilder/Database'
+import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
 import {
   getConfig,
   setup,

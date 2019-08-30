@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../adonis-typings/database.ts" />
+/// <reference path="../../../adonis-typings/database.ts" />
 
 import * as knex from 'knex'
 import { Exception } from '@poppinss/utils'
@@ -20,7 +20,7 @@ import {
  } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
 import { Chainable } from './Chainable'
-import { executeQuery, isInTransaction } from '../utils'
+import { executeQuery, isInTransaction } from '../../utils'
 
 /**
  * Wrapping the user function for a query callback and give them
