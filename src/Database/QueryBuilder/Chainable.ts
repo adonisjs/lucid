@@ -9,7 +9,7 @@
 
 /// <reference path="../../../adonis-typings/database.ts" />
 
-import * as knex from 'knex'
+import knex from 'knex'
 import { ChainableContract, QueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 import { RawQueryBuilder } from './Raw'

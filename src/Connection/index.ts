@@ -9,8 +9,8 @@
 
 /// <reference path="../../adonis-typings/database.ts" />
 
+import knex from 'knex'
 import { Pool } from 'tarn'
-import * as knex from 'knex'
 import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
 import { LoggerContract } from '@poppinss/logger'

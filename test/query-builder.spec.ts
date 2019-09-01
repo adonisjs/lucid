@@ -9,7 +9,7 @@
 
 /// <reference path="../adonis-typings/database.ts" />
 
-import * as test from 'japa'
+import test from 'japa'
 import { Connection } from '../src/Connection'
 import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
 import {

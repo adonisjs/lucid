@@ -9,7 +9,7 @@
 
 /// <reference path="../../../adonis-typings/database.ts" />
 
-import * as knex from 'knex'
+import knex from 'knex'
 import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
 
