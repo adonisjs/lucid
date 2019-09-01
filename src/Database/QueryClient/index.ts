@@ -9,7 +9,7 @@
 
 /// <reference path="../../../adonis-typings/database.ts" />
 
-import * as knex from 'knex'
+import knex from 'knex'
 import { Exception } from '@poppinss/utils'
 import { resolveClientNameWithAliases } from 'knex/lib/helpers'
 import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'

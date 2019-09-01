@@ -10,8 +10,8 @@
 /// <reference path="../adonis-typings/database.ts" />
 
 import { join } from 'path'
-import * as knex from 'knex'
-import * as dotenv from 'dotenv'
+import knex from 'knex'
+import dotenv from 'dotenv'
 import { FakeLogger } from '@poppinss/logger'
 import { Profiler } from '@poppinss/profiler'
 import { Filesystem } from '@poppinss/dev-utils'

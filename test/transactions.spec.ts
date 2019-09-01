@@ -9,7 +9,7 @@
 
 /// <reference path="../adonis-typings/database.ts" />
 
-import * as test from 'japa'
+import test from 'japa'
 
 import { Connection } from '../src/Connection'
 import { getConfig, setup, cleanup, resetTables, getLogger } from '../test-helpers'
