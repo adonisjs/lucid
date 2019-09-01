@@ -10,7 +10,7 @@
 /// <reference path="../../../adonis-typings/database.ts" />
 
 import * as knex from 'knex'
-import { ChainableContract, QueryCallback } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
+import { ChainableContract, QueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 import { RawQueryBuilder } from './Raw'
 
@@ -29,7 +29,7 @@ type DBQueryCallback = (userFn: QueryCallback<ChainableContract>) => ((builder: 
  */
 export abstract class Chainable implements ChainableContract {
   constructor (
-    protected $knexBuilder: knex.QueryBuilder,
+    public $knexBuilder: knex.QueryBuilder, // Needs to be public for Executable trait
     private _queryCallback: DBQueryCallback,
   ) {}
 
@@ -88,6 +88,14 @@ export abstract class Chainable implements ChainableContract {
     }
 
     return value
+  }
+
+  /**
+   * Define columns for selection
+   */
+  public select (): this {
+    this.$knexBuilder.select(...arguments)
+    return this
   }
 
   /**

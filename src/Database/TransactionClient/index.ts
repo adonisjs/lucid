@@ -10,14 +10,8 @@
 /// <reference path="../../../adonis-typings/database.ts" />
 
 import * as knex from 'knex'
+import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
-import { TransactionClientContract } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
-
-import {
-  RawContract,
-  InsertQueryBuilderContract,
-  DatabaseQueryBuilderContract,
-} from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
 
 import { RawQueryBuilder } from '../QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../QueryBuilder/Insert'
@@ -94,14 +88,14 @@ export class TransactionClient implements TransactionClientContract {
   /**
    * Get a new query builder instance
    */
-  public query (): DatabaseQueryBuilderContract {
+  public query (): any {
     return new DatabaseQueryBuilder(this.knexClient.queryBuilder(), this)
   }
 
   /**
    * Get a new insert query builder instance
    */
-  public insertQuery (): InsertQueryBuilderContract {
+  public insertQuery (): any {
     return new InsertQueryBuilder(this.knexClient.queryBuilder(), this)
   }
 
@@ -118,21 +112,21 @@ export class TransactionClient implements TransactionClientContract {
   /**
    * Execute raw query on transaction
    */
-  public raw (sql: any, bindings?: any): RawContract {
+  public raw (sql: any, bindings?: any): any {
     return new RawQueryBuilder(this.knexClient.raw(sql, bindings), this)
   }
 
   /**
    * Same as [[Transaction.query]] but also selects the table
    */
-  public from (table: any): DatabaseQueryBuilderContract {
+  public from (table: any): any {
     return this.query().from(table)
   }
 
   /**
    * Same as [[Transaction.insertTable]] but also selects the table
    */
-  public table (table: any): InsertQueryBuilderContract {
+  public table (table: any): any {
     return this.insertQuery().table(table)
   }
 

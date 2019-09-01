@@ -11,27 +11,26 @@
 
 import * as knex from 'knex'
 import { Exception } from '@poppinss/utils'
-import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
 import { resolveClientNameWithAliases } from 'knex/lib/helpers'
+import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
 
 import {
-  RawContract,
+  ConnectionContract,
   QueryClientContract,
   TransactionClientContract,
-  InsertQueryBuilderContract,
-  DatabaseQueryBuilderContract,
-} from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
+} from '@ioc:Adonis/Lucid/Database'
 
-import { ConnectionContract } from '@ioc:Adonis/Addons/Database'
-
-import { TransactionClient } from '../TransactionClient'
 import { RawQueryBuilder } from '../QueryBuilder/Raw'
+import { TransactionClient } from '../TransactionClient'
 import { InsertQueryBuilder } from '../QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../QueryBuilder/Database'
 
 /**
  * Query client exposes the API to fetch instance of different query builders
  * to perform queries on a selection connection.
+ *
+ * Many of the methods returns `any`, since this class is type casted to an interface,
+ * it doesn't real matter what are the return types from this class
  */
 export class QueryClient implements QueryClientContract {
   /**
@@ -58,18 +57,7 @@ export class QueryClient implements QueryClientContract {
     public mode: 'dual' | 'write' | 'read',
     private _connection: ConnectionContract,
   ) {
-    this.dialect = resolveClientNameWithAliases(this._getAvailableClient().client.config.client)
-  }
-
-  /**
-   * Returns any of the available clients, giving preference to the
-   * write client.
-   *
-   * One client will always exists, otherwise instantiation of this
-   * class will fail.
-   */
-  private _getAvailableClient () {
-    return this._connection.client!
+    this.dialect = resolveClientNameWithAliases(this._connection.config.client)
   }
 
   /**
@@ -131,28 +119,28 @@ export class QueryClient implements QueryClientContract {
    * Returns instance of a query builder for selecting, updating
    * or deleting rows
    */
-  public query (): DatabaseQueryBuilderContract {
-    return new DatabaseQueryBuilder(this._getAvailableClient().queryBuilder(), this)
+  public query (): any {
+    return new DatabaseQueryBuilder(this._connection.client!.queryBuilder(), this)
   }
 
   /**
    * Returns instance of a query builder for inserting rows
    */
-  public insertQuery (): InsertQueryBuilderContract {
+  public insertQuery (): any {
     return new InsertQueryBuilder(this.getWriteClient().queryBuilder(), this)
   }
 
   /**
    * Returns instance of raw query builder
    */
-  public raw (sql: any, bindings?: any): RawContract {
-    return new RawQueryBuilder(this._getAvailableClient().raw(sql, bindings), this)
+  public raw (sql: any, bindings?: any): any {
+    return new RawQueryBuilder(this._connection.client!.raw(sql, bindings), this)
   }
 
   /**
    * Returns instance of a query builder and selects the table
    */
-  public from (table: any): DatabaseQueryBuilderContract {
+  public from (table: any): any {
     return this.query().from(table)
   }
 
@@ -160,7 +148,7 @@ export class QueryClient implements QueryClientContract {
    * Returns instance of a query builder and selects the table
    * for an insert query
    */
-  public table (table: any): InsertQueryBuilderContract {
+  public table (table: any): any {
     return this.insertQuery().table(table)
   }
 }

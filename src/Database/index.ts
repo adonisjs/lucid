@@ -11,13 +11,14 @@
 
 import { Exception } from '@poppinss/utils'
 import { LoggerContract } from '@poppinss/logger'
-import { ProfilerContract, ProfilerRowContract } from '@poppinss/profiler'
+import { ProfilerContract } from '@poppinss/profiler'
 
 import {
   ConnectionManagerContract,
   DatabaseConfigContract,
+  DatabaseClientOptions,
   DatabaseContract,
-} from '@ioc:Adonis/Addons/Database'
+} from '@ioc:Adonis/Lucid/Database'
 
 import { ConnectionManager } from '../Connection/Manager'
 
@@ -65,10 +66,7 @@ export class Database implements DatabaseContract {
   /**
    * Returns the query client for a given connection
    */
-  public connection (
-    connection: string = this.primaryConnectionName,
-    options?: Partial<{ mode: 'read' | 'write', profiler: ProfilerRowContract | ProfilerContract }>,
-  ) {
+  public connection (connection: string = this.primaryConnectionName, options?: DatabaseClientOptions) {
     options = options || {}
 
     if (!options.profiler) {
@@ -113,7 +111,7 @@ export class Database implements DatabaseContract {
   /**
    * Returns query builder. Optionally one can define the mode as well
    */
-  public query (options?: Partial<{ mode: 'read' | 'write', profiler: ProfilerRowContract }>) {
+  public query (options?: DatabaseClientOptions) {
     return this.connection(this.primaryConnectionName, options).query()
   }
 
@@ -122,7 +120,7 @@ export class Database implements DatabaseContract {
    * hence it doesn't matter, since in both `dual` and `write` mode,
    * the `write` connection is always used.
    */
-  public insertQuery (options?: Partial<{ mode: 'read' | 'write', profiler: ProfilerRowContract }>) {
+  public insertQuery (options?: DatabaseClientOptions) {
     return this.connection(this.primaryConnectionName, options).insertQuery()
   }
 
@@ -153,11 +151,7 @@ export class Database implements DatabaseContract {
    * defined the `read/write` mode in which to execute the
    * query
    */
-  public raw (
-    sql: string,
-    bindings?: any,
-    options?: Partial<{ mode: 'read' | 'write', profiler: ProfilerRowContract }>,
-  ) {
+  public raw (sql: string, bindings?: any, options?: DatabaseClientOptions) {
     return this.connection(this.primaryConnectionName, options).raw(sql, bindings)
   }
 }
