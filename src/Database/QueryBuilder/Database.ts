@@ -11,16 +11,17 @@
 
 import * as knex from 'knex'
 import { Exception } from '@poppinss/utils'
+import { trait } from '@poppinss/traits'
 
 import {
   DatabaseQueryBuilderContract,
   QueryCallback,
-  TransactionClientContract,
-  QueryClientContract,
- } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
+} from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+
+import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { Chainable } from './Chainable'
-import { executeQuery, isInTransaction } from '../../utils'
+import { Executable, ExecutableConstrutor } from '../Traits/Executable'
 
 /**
  * Wrapping the user function for a query callback and give them
@@ -37,8 +38,9 @@ function queryCallback (userFn: QueryCallback<DatabaseQueryBuilderContract>) {
  * Database query builder exposes the API to construct and run queries for selecting,
  * updating and deleting records.
  */
+@trait<ExecutableConstrutor>(Executable)
 export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuilderContract {
-  constructor (builder: knex.QueryBuilder, private _client?: QueryClientContract) {
+  constructor (builder: knex.QueryBuilder, public client?: QueryClientContract) {
     super(builder, queryCallback)
   }
 
@@ -47,62 +49,8 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * client
    */
   private _ensureCanPerformWrites () {
-    if (this._client && this._client.mode === 'read') {
+    if (this.client && this.client.mode === 'read') {
       throw new Exception('Updates and deletes cannot be performed in read mode')
-    }
-  }
-
-  /**
-   * Raises exception when client is not defined
-   */
-  private _ensureClient () {
-    if (!this._client) {
-      throw new Exception('Cannot execute query without query client', 500, 'E_PROGRAMMING_EXCEPTION')
-    }
-  }
-
-  /**
-   * Returns the client to be used for the query. This method relies on the
-   * query method and will choose the read or write connection whenever
-   * required.
-   */
-  private _getQueryClient () {
-    /**
-     * Return undefined when no parent client is defined or dialect
-     * is sqlite
-     */
-    if (this._client!.dialect === 'sqlite3') {
-      return
-    }
-
-    /**
-     * Use transaction client directly, since it preloads the
-     * connection
-     */
-    if (isInTransaction(this.$knexBuilder, this._client!)) {
-      return
-    }
-
-    /**
-     * Use write client for updates and deletes
-     */
-    if (['update', 'del'].includes(this.$knexBuilder['_method'])) {
-      return this._client!.getWriteClient().client
-    }
-
-    return this._client!.getReadClient().client
-  }
-
-  /**
-   * Returns the profiler data
-   */
-  private _getProfilerData () {
-    if (!this._client!.profiler) {
-      return {}
-    }
-
-    return {
-      connection: this._client!.connectionName,
     }
   }
 
@@ -123,14 +71,6 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
     }
 
     return { [alias]: this.$transformValue(columns) }
-  }
-
-  /**
-   * Define columns for selection
-   */
-  public select (): this {
-    this.$knexBuilder.select(...arguments)
-    return this
   }
 
   /**
@@ -220,7 +160,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Clone the current query builder
    */
   public clone (): DatabaseQueryBuilder {
-    return new DatabaseQueryBuilder(this.$knexBuilder.clone(), this._client)
+    return new DatabaseQueryBuilder(this.$knexBuilder.clone(), this.client)
   }
 
   /**
@@ -230,7 +170,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
     /**
      * Do not chain `returning` in sqlite3 to avoid knex warnings
      */
-    if (this._client && this._client.dialect === 'sqlite3') {
+    if (this.client && this.client.dialect === 'sqlite3') {
       return this
     }
 
@@ -252,88 +192,27 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * will implicitly set a `limit` on the query
    */
   public async first (): Promise<any> {
-    const result = await this.limit(1).exec()
+    const result = await this.limit(1)['exec']()
     return result[0] || null
   }
 
   /**
-   * Required when Promises are extended
+   * Returns the client to be used for the query. This method relies on the
+   * query method and will choose the read or write connection whenever
+   * required.
+   *
+   * This method is invoked by the `Executable` Trait, only when actually
+   * query isn't using the transaction
    */
-  public get [Symbol.toStringTag] () {
-    return this.constructor.name
-  }
+  public getQueryClient () {
+    /**
+     * Use write client for updates and deletes
+     */
+    if (['update', 'del'].includes(this.$knexBuilder['_method'])) {
+      this._ensureCanPerformWrites()
+      return this.client!.getWriteClient().client
+    }
 
-  /**
-   * Turn on/off debugging for this query
-   */
-  public debug (debug: boolean): this {
-    this.$knexBuilder.debug(debug)
-    return this
-  }
-
-  /**
-   * Define query timeout
-   */
-  public timeout (time: number, options?: { cancel: boolean }): this {
-    this.$knexBuilder['timeout'](time, options)
-    return this
-  }
-
-  /**
-   * Use transaction connection
-   */
-  public useTransaction (trx: TransactionClientContract): this {
-    this.$knexBuilder.transacting(trx.knexClient)
-    return this
-  }
-
-  /**
-   * Returns SQL query as a string
-   */
-  public toQuery (): string {
-    return this.$knexBuilder.toQuery()
-  }
-
-  /**
-   * Executes the query
-   */
-  public async exec (): Promise<any> {
-    this._ensureClient()
-
-    const result = await executeQuery(
-      this.$knexBuilder,
-      this._getQueryClient(),
-      this._client!.profiler,
-      this._getProfilerData(),
-    )
-    return result
-  }
-
-  /**
-   * Get sql representation of the query
-   */
-  public toSQL (): knex.Sql {
-    return this.$knexBuilder.toSQL()
-  }
-
-  /**
-   * Implementation of `then` for the promise API
-   */
-  public then (resolve: any, reject?: any): any {
-    return this.exec().then(resolve, reject)
-  }
-
-  /**
-   * Implementation of `catch` for the promise API
-   */
-  public catch (reject: any): any {
-    return this.exec().catch(reject)
-  }
-
-  /**
-   * Implementation of `finally` for the promise API
-   */
-  public finally (fullfilled: any) {
-    return this.exec().finally(fullfilled)
+    return this.client!.getReadClient().client
   }
 }

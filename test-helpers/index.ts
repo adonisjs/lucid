@@ -16,13 +16,16 @@ import { FakeLogger } from '@poppinss/logger'
 import { Profiler } from '@poppinss/profiler'
 import { Filesystem } from '@poppinss/dev-utils'
 
-import { ConnectionConfigContract } from '@ioc:Adonis/Addons/Database'
+import {
+  ConnectionConfigContract,
+  QueryClientContract,
+  ExcutableQueryBuilderContract,
+} from '@ioc:Adonis/Lucid/Database'
 import {
   RawContract,
   InsertQueryBuilderContract,
   DatabaseQueryBuilderContract,
-  QueryClientContract,
-} from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
+} from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
@@ -124,7 +127,7 @@ export function getQueryBuilder (client: QueryClientContract) {
   return new DatabaseQueryBuilder(
     client.getWriteClient().queryBuilder(),
     client,
-  ) as unknown as DatabaseQueryBuilderContract
+  ) as unknown as DatabaseQueryBuilderContract & ExcutableQueryBuilderContract<any>
 }
 
 /**
@@ -135,7 +138,7 @@ export function getRawQueryBuilder (client: QueryClientContract, sql: string, bi
   return new RawQueryBuilder(
     bindings ? writeClient.raw(sql, bindings) : writeClient.raw(sql),
     client,
-  ) as unknown as RawContract
+  ) as unknown as RawContract & ExcutableQueryBuilderContract<any>
 }
 
 /**
@@ -145,7 +148,7 @@ export function getInsertBuilder (client: QueryClientContract) {
   return new InsertQueryBuilder(
     client.getWriteClient().queryBuilder(),
     client,
-  ) as unknown as InsertQueryBuilderContract
+  ) as unknown as InsertQueryBuilderContract & ExcutableQueryBuilderContract<any>
 }
 
 /**

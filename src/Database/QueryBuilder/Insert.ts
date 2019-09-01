@@ -10,30 +10,19 @@
 /// <reference path="../../../adonis-typings/database.ts" />
 
 import * as knex from 'knex'
-import { Exception } from '@poppinss/utils'
+import { trait } from '@poppinss/traits'
 
-import {
-  InsertQueryBuilderContract,
-  TransactionClientContract,
-  QueryClientContract,
-} from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
+import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { InsertQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
-import { executeQuery, isInTransaction } from '../../utils'
+import { Executable, ExecutableConstrutor } from '../Traits/Executable'
 
 /**
  * Exposes the API for performing SQL inserts
  */
+@trait<ExecutableConstrutor>(Executable)
 export class InsertQueryBuilder implements InsertQueryBuilderContract {
-  constructor (protected $knexBuilder: knex.QueryBuilder, private _client?: QueryClientContract) {
-  }
-
-  /**
-   * Raises exception when client is not defined
-   */
-  private _ensureClient () {
-    if (!this._client) {
-      throw new Exception('Cannot execute query without query client', 500, 'E_PROGRAMMING_EXCEPTION')
-    }
+  constructor (public $knexBuilder: knex.QueryBuilder, public client?: QueryClientContract) {
   }
 
   /**
@@ -42,40 +31,11 @@ export class InsertQueryBuilder implements InsertQueryBuilderContract {
    * self defining the connection, so that we can discover any bugs during
    * this process.
    */
-  private _getQueryClient () {
-    /**
-     * Return undefined when no parent client is defined or dialect
-     * is sqlite
-     */
-    if (this._client!.dialect === 'sqlite3') {
-      return
-    }
-
-    /**
-     * Use transaction client directly, since it preloads the
-     * connection
-     */
-    if (isInTransaction(this.$knexBuilder, this._client!)) {
-      return
-    }
-
+  public getQueryClient () {
     /**
      * Always use write client for write queries
      */
-    return this._client!.getWriteClient().client
-  }
-
-  /**
-   * Returns the profiler data
-   */
-  private _getProfilerData () {
-    if (!this._client!.profiler) {
-      return {}
-    }
-
-    return {
-      connection: this._client!.connectionName,
-    }
+    return this.client!.getWriteClient().client
   }
 
   /**
@@ -93,7 +53,7 @@ export class InsertQueryBuilder implements InsertQueryBuilderContract {
     /**
      * Do not chain `returning` in sqlite3 to avoid knex warnings
      */
-    if (this._client && this._client.dialect === 'sqlite3') {
+    if (this.client && this.client.dialect === 'sqlite3') {
       return this
     }
 
@@ -114,86 +74,5 @@ export class InsertQueryBuilder implements InsertQueryBuilderContract {
    */
   public multiInsert (columns: any): this {
     return this.insert(columns)
-  }
-
-  /**
-   * Required when Promises are extended
-   */
-  public get [Symbol.toStringTag] () {
-    return this.constructor.name
-  }
-
-  /**
-   * Turn on/off debugging for this query
-   */
-  public debug (debug: boolean): this {
-    this.$knexBuilder.debug(debug)
-    return this
-  }
-
-  /**
-   * Define query timeout
-   */
-  public timeout (time: number, options?: { cancel: boolean }): this {
-    this.$knexBuilder['timeout'](time, options)
-    return this
-  }
-
-  /**
-   * Use transaction connection
-   */
-  public useTransaction (trx: TransactionClientContract): this {
-    this.$knexBuilder.transacting(trx.knexClient)
-    return this
-  }
-
-  /**
-   * Returns SQL query as a string
-   */
-  public toQuery (): string {
-    return this.$knexBuilder.toQuery()
-  }
-
-  /**
-   * Executes the query
-   */
-  public async exec (): Promise<any> {
-    this._ensureClient()
-
-    const result = await executeQuery(
-      this.$knexBuilder,
-      this._getQueryClient(),
-      this._client!.profiler,
-      this._getProfilerData(),
-    )
-    return result
-  }
-
-  /**
-   * Get sql representation of the query
-   */
-  public toSQL (): knex.Sql {
-    return this.$knexBuilder.toSQL()
-  }
-
-  /**
-   * Implementation of `then` for the promise API
-   */
-  public then (resolve: any, reject?: any): any {
-    return this.exec().then(resolve, reject)
-  }
-
-  /**
-   * Implementation of `catch` for the promise API
-   */
-  public catch (reject: any): any {
-    return this.exec().catch(reject)
-  }
-
-  /**
-   * Implementation of `finally` for the promise API
-   */
-  public finally (fullfilled: any) {
-    return this.exec().finally(fullfilled)
   }
 }

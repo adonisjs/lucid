@@ -15,8 +15,8 @@ import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
 import { LoggerContract } from '@poppinss/logger'
 import { patchKnex } from 'knex-dynamic-connection'
+import { ConnectionConfigContract, ConnectionContract } from '@ioc:Adonis/Lucid/Database'
 
-import { ConnectionConfigContract, ConnectionContract } from '@ioc:Adonis/Addons/Database'
 import { QueryClient } from '../Database/QueryClient'
 
 /**

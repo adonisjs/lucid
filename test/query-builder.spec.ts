@@ -45,7 +45,7 @@ if (process.env.DB !== 'sqlite') {
       }
 
       db.select('*').from('users')
-      db['_getQueryClient']()
+      db['getQueryClient']()
     })
 
     test('use write client for update', (assert) => {
@@ -61,7 +61,7 @@ if (process.env.DB !== 'sqlite') {
       }
 
       db.from('users').update('username', 'virk')
-      db['_getQueryClient']()
+      db['getQueryClient']()
     })
 
     test('use write client for delete', (assert) => {
@@ -77,11 +77,10 @@ if (process.env.DB !== 'sqlite') {
       }
 
       db.from('users').del()
-      db['_getQueryClient']()
+      db['getQueryClient']()
     })
 
-    test('use transaction client when query is used inside a transaction', async (assert) => {
-      assert.plan(1)
+    test('use transaction client when query is used inside a transaction', async () => {
       const connection = new Connection('primary', getConfig(), getLogger())
       connection.connect()
       const client = connection.getClient()
@@ -92,13 +91,11 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const trx = await client.transaction()
-      db.select('*').from('users').useTransaction(trx)
-
-      assert.isUndefined(db['_getQueryClient']())
+      await db.select('*').from('users').useTransaction(trx).exec()
+      await trx.commit()
     })
 
-    test('use transaction client when insert query is used inside a transaction', async (assert) => {
-      assert.plan(1)
+    test('use transaction client when insert query is used inside a transaction', async () => {
       const connection = new Connection('primary', getConfig(), getLogger())
       connection.connect()
       const client = connection.getClient()
@@ -109,13 +106,11 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const trx = await client.transaction()
-      db.table('users').useTransaction(trx)
-
-      assert.isUndefined(db['_getQueryClient']())
+      await db.table('users').useTransaction(trx).insert({ username: 'virk' }).exec()
+      await trx.rollback()
     })
 
-    test('use transaction client when query is issued from transaction client', async (assert) => {
-      assert.plan(1)
+    test('use transaction client when query is issued from transaction client', async () => {
       const connection = new Connection('primary', getConfig(), getLogger())
       connection.connect()
       const client = connection.getClient()
@@ -125,14 +120,11 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const trx = await client.transaction()
-      const db = trx.query()
-
-      db.select('*').from('users')
-      assert.isUndefined(db['_getQueryClient']())
+      await trx.query().select('*').from('users').exec()
+      await trx.commit()
     })
 
-    test('use transaction client when insert query is issued from transaction client', async (assert) => {
-      assert.plan(1)
+    test('use transaction client when insert query is issued from transaction client', async () => {
       const connection = new Connection('primary', getConfig(), getLogger())
       connection.connect()
       const client = connection.getClient()
@@ -142,10 +134,8 @@ if (process.env.DB !== 'sqlite') {
         throw new Error('Never expected to reach here')
       }
 
-      const db = trx.insertQuery()
-      db.table('users').useTransaction(trx)
-
-      assert.isUndefined(db['_getQueryClient']())
+      await trx.insertQuery().table('users').insert({ username: 'virk' }).exec()
+      await trx.commit()
     })
   })
 }

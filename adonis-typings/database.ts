@@ -9,20 +9,151 @@
 
 /// <reference path="./querybuilder.ts" />
 
-declare module '@ioc:Adonis/Addons/Database' {
+declare module '@ioc:Adonis/Lucid/Database' {
   import { Pool } from 'tarn'
   import * as knex from 'knex'
   import { EventEmitter } from 'events'
-  import { ProfilerRowContract } from '@poppinss/profiler'
+  import { Dictionary } from 'ts-essentials'
+  import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
 
   import {
     RawContract,
-    RawBuilderContract,
-    QueryClientContract,
-    TransactionClientContract,
-    InsertQueryBuilderContract,
     DatabaseQueryBuilderContract,
-  } from '@ioc:Adonis/Addons/DatabaseQueryBuilder'
+    InsertQueryBuilderContract,
+    StrictValuesWithoutRaw,
+    SelectTable,
+    Table,
+  } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+
+  /**
+   * A executable query builder will always have these methods on it.
+   */
+  interface ExcutableQueryBuilderContract<Result extends any> extends Promise<Result> {
+    debug (debug: boolean): this
+    timeout (time: number, options?: { cancel: boolean }): this
+    useTransaction (trx: TransactionClientContract): this
+    toQuery (): string
+    exec (): Promise<Result>
+    toSQL (): knex.Sql
+  }
+
+  /**
+   * Shape of the query client, that is used to retrive instances
+   * of query builder
+   */
+  interface QueryClientContract {
+    /**
+     * Custom profiler to time queries
+     */
+    profiler?: ProfilerRowContract | ProfilerContract
+
+    /**
+     * Tells if client is a transaction client or not
+     */
+    isTransaction: boolean
+
+    /**
+     * The database dialect in use
+     */
+    dialect: string
+
+    /**
+     * The client mode in which it is execute queries
+     */
+    mode: 'dual' | 'write' | 'read'
+
+    /**
+     * The name of the connnection from which the client
+     * was originated
+     */
+    connectionName: string
+
+    /**
+     * Returns the read and write clients
+     */
+    getReadClient (): knex<any, any> | knex.Transaction<any, any>
+    getWriteClient (): knex<any, any> | knex.Transaction<any, any>
+
+    /**
+     * Get new query builder instance for select, update and
+     * delete calls
+     */
+    query<
+      Record extends any = any,
+      Result extends any = any,
+    > (): DatabaseQueryBuilderContract<Record, Result> & ExcutableQueryBuilderContract<Result>,
+
+    /**
+     * Get new query builder instance inserts
+     */
+    insertQuery<
+      Record extends any = any,
+      ReturnColumns extends any = any[]
+    > (): InsertQueryBuilderContract<Record, ReturnColumns> & ExcutableQueryBuilderContract<ReturnColumns>,
+
+    /**
+     * Get raw query builder instance
+     */
+    raw<
+      Result extends any = any
+    > (
+      sql: string,
+      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw,
+    ): RawContract & ExcutableQueryBuilderContract<Result>
+
+    /**
+     * Truncate a given table
+     */
+    truncate (table: string): Promise<void>,
+
+    /**
+     * Returns columns info for a given table
+     */
+    columnsInfo (table: string): Promise<{ [column: string]: knex.ColumnInfo }>,
+    columnsInfo (table: string, column: string): Promise<knex.ColumnInfo>,
+
+    /**
+     * Same as `query()`, but also selects the table for the query. The `from` method
+     * doesn't allow defining the return type and one must use `query` to define
+     * that.
+     */
+    from: SelectTable<DatabaseQueryBuilderContract & ExcutableQueryBuilderContract<any>>,
+
+    /**
+     * Same as `insertQuery()`, but also selects the table for the query. The `table`
+     * method doesn't allow defining the return type and one must use `insertQuery`
+     * to define that.
+     */
+    table: Table<InsertQueryBuilderContract & ExcutableQueryBuilderContract<any>>,
+
+    /**
+     * Get instance of transaction client
+     */
+    transaction (): Promise<TransactionClientContract>,
+  }
+
+  /**
+   * The shape of transaction client to run queries under a given
+   * transaction on a single connection
+   */
+  interface TransactionClientContract extends QueryClientContract {
+    knexClient: knex.Transaction,
+
+    /**
+     * Is transaction completed or not
+     */
+    isCompleted: boolean,
+
+    /**
+     * Commit transaction
+     */
+    commit (): Promise<void>,
+
+    /**
+     * Rollback transaction
+     */
+    rollback (): Promise<void>
+  }
 
   /**
    * Connection node used by majority of database
@@ -338,6 +469,9 @@ declare module '@ioc:Adonis/Addons/Database' {
     client?: knex,
     readClient?: knex,
 
+    /**
+     * Property to find if explicit read/write is enabled
+     */
     hasReadWriteReplicas: boolean,
 
     /**
@@ -381,36 +515,86 @@ declare module '@ioc:Adonis/Addons/Database' {
     getClient (mode?: 'write' | 'read'): QueryClientContract,
   }
 
+  type DatabaseClientOptions = Partial<{
+    mode: 'read' | 'write',
+    profiler: ProfilerRowContract | ProfilerContract,
+  }>
+
   /**
    * Database contract serves as the main API to interact with multiple
    * database connections
    */
   export interface DatabaseContract {
+    /**
+     * Name of the primary connection defined inside `config/database.ts`
+     * file
+     */
     primaryConnectionName: string,
-    getRawConnection: ConnectionManagerContract['get']
+
+    /**
+     * Reference to the connection manager
+     */
     manager: ConnectionManagerContract,
 
-    connection (
-      connectionName: string,
-      options?: Partial<{ mode: 'read' | 'write', profiler: ProfilerRowContract }>,
-    ): QueryClientContract
+    /**
+     * Returns the raw connection instance
+     */
+    getRawConnection: ConnectionManagerContract['get'],
 
-    query (
-      options?: Partial<{ mode: 'read' | 'write', profiler: ProfilerRowContract }>,
-    ): DatabaseQueryBuilderContract
+    /**
+     * Get query client for a given connection. Optionally one can also define
+     * the mode of the connection and profiler row
+     */
+    connection (connectionName: string, options?: DatabaseClientOptions): QueryClientContract
 
-    insertQuery (
-      options?: Partial<{ profiler: ProfilerRowContract }>,
-    ): InsertQueryBuilderContract
+    /**
+     * Get query builder instance for a given connection.
+     */
+    query<
+      Record extends any = any,
+      Result extends any = any,
+    > (
+      options?: DatabaseClientOptions,
+    ): DatabaseQueryBuilderContract<Record, Result> & ExcutableQueryBuilderContract<Result>,
 
-    from (table: string): DatabaseQueryBuilderContract
-    table (table: string): InsertQueryBuilderContract
-    transaction (): Promise<TransactionClientContract>
+    /**
+     * Get insert query builder instance for a given connection.
+     */
+    insertQuery<
+      Record extends any = any,
+      ReturnColumns extends any = any
+    > (
+      options?: DatabaseClientOptions,
+    ): InsertQueryBuilderContract<Record, ReturnColumns[]> & ExcutableQueryBuilderContract<ReturnColumns[]>,
 
-    raw (
+    /**
+     * Get raw query builder instance
+     */
+    raw<
+      Result extends any = any
+    > (
       sql: string,
-      bindings?: any,
-      options?: Partial<{ mode: 'read' | 'write', profiler: ProfilerRowContract }>,
-    ): RawContract
+      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[],
+      options?: DatabaseClientOptions,
+    ): RawContract & ExcutableQueryBuilderContract<Result>
+
+    /**
+     * Selects a table on the default connection by instantiating a new query
+     * builder instance. This method provides no control over the client
+     * mode and one must use `query` for that
+     */
+    from: QueryClientContract['from']
+
+    /**
+     * Selects a table on the default connection by instantiating a new query
+     * builder instance. This method provides no control over the client
+     * mode and one must use `insertQuery` for that
+     */
+    table: QueryClientContract['table']
+
+    /**
+     * Start a new transaction
+     */
+    transaction (): Promise<TransactionClientContract>
   }
 }

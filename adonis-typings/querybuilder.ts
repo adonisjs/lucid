@@ -7,7 +7,7 @@
 * file that was distributed with this source code.
 */
 
-declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
+declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   import * as knex from 'knex'
   import { Dictionary } from 'ts-essentials'
   import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
@@ -35,7 +35,7 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
    * A known set of values allowed when defining values for different
    * clauses
    */
-  type StrictValues =
+  export type StrictValues =
     | string
     | number
     | boolean
@@ -47,24 +47,16 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     | Buffer
     | RawContract
 
-  /**
-   * Shape of raw query builder. The builder is a method used to build
-   * raw queries.
-   */
-  interface RawBuilderContract {
-    (sql: string): RawContract
-    (sql: string, bindings: { [key: string]: Exclude<StrictValues, RawContract> }): RawContract
-    (sql: string, bindings: Exclude<StrictValues, RawContract>[]): RawContract
-  }
+  export type StrictValuesWithoutRaw = Exclude<StrictValues, RawContract>
 
   /**
    * A builder method to allow raw queries. However, the return type is the
    * instance of current query builder. This is used for `.{verb}Raw` methods.
    */
-  interface RawQueryBuilderContract<Builder extends ChainableContract> {
+  interface RawQueryFn<Builder extends ChainableContract> {
     (sql: string): Builder
-    (sql: string, bindings: { [key: string]: Exclude<StrictValues, RawContract> }): Builder
-    (sql: string, bindings: Exclude<StrictValues, RawContract>[]): Builder
+    (sql: string, bindings: { [key: string]: StrictValuesWithoutRaw }): Builder
+    (sql: string, bindings: StrictValuesWithoutRaw[]): Builder
     (sql: RawContract): Builder
   }
 
@@ -375,8 +367,8 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
    * result set. Unlike knex, we force defining aliases for each aggregate.
    */
   interface Aggregate <
+    Builder extends ChainableContract,
     Record extends Dictionary<any, string>,
-    Result extends any,
   > {
     /**
      * Accepting a typed column with the alias for the count. Unlike knex
@@ -386,7 +378,7 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     <K extends keyof Record, Alias extends string>(
       column: OneOrMany<K>,
       alias: Alias,
-    ): DatabaseQueryBuilderContract<Record, Dictionary<AggregatesRegistry['Count'], Alias>>
+    ): Builder
 
     /**
      * Accepting an object for multiple counts in a single query. Again
@@ -398,7 +390,7 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
       Columns extends Dictionary<OneOrMany<K>, Alias>,
     >(
       columns: Columns,
-    ): DatabaseQueryBuilderContract<Record, { [AliasKey in keyof Columns]: AggregatesRegistry['Count'] }>
+    ): Builder
 
     /**
      * Accepting an un typed column with the alias for the count.
@@ -406,7 +398,7 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     <Alias extends string>(
       column: OneOrMany<ValueWithSubQueries<string>>,
       alias: Alias,
-    ): DatabaseQueryBuilderContract<Record, Dictionary<AggregatesRegistry['Count'], Alias>>
+    ): Builder
 
     /**
      * Accepting an object for multiple counts in a single query. Again
@@ -417,7 +409,7 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
       Columns extends Dictionary<OneOrMany<ValueWithSubQueries<string>>, Alias>,
     >(
       columns: Columns,
-    ): DatabaseQueryBuilderContract<Record, { [AliasKey in keyof Columns]: AggregatesRegistry['Count'] }>
+    ): Builder
   }
 
   /**
@@ -674,18 +666,6 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   }
 
   /**
-   * A executable query builder will always have these methods on it.
-   */
-  interface ExcutableQueryBuilderContract<Result> extends Promise<Result> {
-    debug (debug: boolean): this
-    timeout (time: number, options?: { cancel: boolean }): this
-    useTransaction (trx: TransactionClientContract): this
-    toQuery (): string
-    exec (): Promise<Result>
-    toSQL (): knex.Sql
-  }
-
-  /**
    * Possible signatures for an insert query
    */
   interface Insert<
@@ -714,6 +694,7 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     Record extends Dictionary<any, string> = Dictionary<StrictValues, string>,
   > {
     from: SelectTable<this>
+    select: DatabaseQueryBuilderSelect<this, Record>
 
     where: Where<this, Record>
     orWhere: Where<this, Record>
@@ -755,9 +736,9 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     orWhereNotBetween: WhereBetween<this, Record>
     andWhereNotBetween: WhereBetween<this, Record>
 
-    whereRaw: RawQueryBuilderContract<this>
-    orWhereRaw: RawQueryBuilderContract<this>
-    andWhereRaw: RawQueryBuilderContract<this>
+    whereRaw: RawQueryFn<this>
+    orWhereRaw: RawQueryFn<this>
+    andWhereRaw: RawQueryFn<this>
 
     join: Join<this>
     innerJoin: Join<this>
@@ -767,7 +748,7 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     rightOuterJoin: Join<this>
     fullOuterJoin: Join<this>
     crossJoin: Join<this>
-    joinRaw: RawQueryBuilderContract<this>
+    joinRaw: RawQueryFn<this>
 
     having: Having<this, Record>
     orHaving: Having<this, Record>
@@ -805,17 +786,17 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
     orHavingNotBetween: HavingBetween<this, Record>
     andHavingNotBetween: HavingBetween<this, Record>
 
-    havingRaw: RawQueryBuilderContract<this>
-    orHavingRaw: RawQueryBuilderContract<this>
-    andHavingRaw: RawQueryBuilderContract<this>
+    havingRaw: RawQueryFn<this>
+    orHavingRaw: RawQueryFn<this>
+    andHavingRaw: RawQueryFn<this>
 
     distinct: Distinct<this, Record>
 
     groupBy: GroupBy<this, Record>
-    groupByRaw: RawQueryBuilderContract<this>
+    groupByRaw: RawQueryFn<this>
 
     orderBy: OrderBy<this, Record>
-    orderByRaw: RawQueryBuilderContract<this>
+    orderByRaw: RawQueryFn<this>
 
     union: Union<this>
     unionAll: UnionAll<this>
@@ -844,30 +825,21 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
   }
 
   /**
-   * Database query builder interface. Some of the methods on the Database
-   * query builder and Model query builder will behave differently.
+   * Shape of the raw query that can also be passed as a value to
+   * other queries
    */
+  interface RawContract {
+    wrap (before: string, after: string): this
+  }
+
+  /**
+   * Database query builder interface. It will use the `Executable` trait
+   * and hence must be typed properly for that.
+  */
   export interface DatabaseQueryBuilderContract <
     Record extends Dictionary<any, string> = Dictionary<any, string>,
     Result extends any = Record,
-  > extends ChainableContract<Record>, ExcutableQueryBuilderContract<Result[]> {
-    select: DatabaseQueryBuilderSelect<this, Record>
-
-    /**
-     * Aggregates
-     */
-    count: Aggregate<Record, Result>
-    countDistinct: Aggregate<Record, Result>
-    min: Aggregate<Record, Result>
-    max: Aggregate<Record, Result>
-    sum: Aggregate<Record, Result>
-    avg: Aggregate<Record, Result>
-    avgDistinct: Aggregate<Record, Result>
-
-    returning: Returning<this, Record>
-    update: Update<this, Record>
-    increment: Counter<this, Record>
-    decrement: Counter<this, Record>
+  > extends ChainableContract<Record> {
     del (): this
 
     /**
@@ -882,15 +854,34 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
      * Execute and get first result
      */
     first (): Promise<Result | null>
+
+    /**
+     * Aggregates
+     */
+    count: Aggregate<this, Record>
+    countDistinct: Aggregate<this, Record>
+    min: Aggregate<this, Record>
+    max: Aggregate<this, Record>
+    sum: Aggregate<this, Record>
+    avg: Aggregate<this, Record>
+    avgDistinct: Aggregate<this, Record>
+
+    /**
+     * Mutations
+     */
+    update: Update<this, Record>
+    increment: Counter<this, Record>
+    decrement: Counter<this, Record>
   }
 
   /**
-   * Insert query builder to perform database inserts
+   * Insert query builder to perform database inserts. It will use the
+   * `Executable` trait and hence must be typed property for that.
    */
   export interface InsertQueryBuilderContract<
     Record extends Dictionary<any, string> = Dictionary<StrictValues, string>,
-    ReturnColumns extends any[] = any[]
-  > extends ExcutableQueryBuilderContract<ReturnColumns> {
+    ReturnColumns extends any = any[]
+  > {
     /**
      * Table for the insert query
      */
@@ -910,115 +901,5 @@ declare module '@ioc:Adonis/Addons/DatabaseQueryBuilder' {
      * Inserting multiple columns at once
      */
     multiInsert: MultiInsert<this, Record>
-  }
-
-  /**
-   * Shape of raw query instance
-   */
-  interface RawContract extends ExcutableQueryBuilderContract<any> {
-    wrap (before: string, after: string): this
-  }
-
-  /**
-   * Shape of the query client, that is used to retrive instances
-   * of query builder
-   */
-  interface QueryClientContract {
-    /**
-     * Custom profiler to time queries
-     */
-    profiler?: ProfilerRowContract | ProfilerContract
-
-    /**
-     * Tells if client is a transaction client or not
-     */
-    isTransaction: boolean
-
-    /**
-     * The database dialect in use
-     */
-    dialect: string
-
-    /**
-     * The client mode in which it is execute queries
-     */
-    mode: 'dual' | 'write' | 'read'
-
-    /**
-     * The name of the connnection from which the client
-     * was originated
-     */
-    connectionName: string
-
-    /**
-     * Returns the read and write clients
-     */
-    getReadClient (): knex | knex.Transaction
-    getWriteClient (): knex | knex.Transaction
-
-    /**
-     * Get new query builder instance for select, update and
-     * delete calls
-     */
-    query (): DatabaseQueryBuilderContract,
-
-    /**
-     * Get new query builder instance inserts
-     */
-    insertQuery (): InsertQueryBuilderContract,
-
-    /**
-     * Get raw query builder instance
-     */
-    raw: RawBuilderContract,
-
-    /**
-     * Truncate a given table
-     */
-    truncate (table: string): Promise<void>,
-
-    /**
-     * Returns columns info for a given table
-     */
-    columnsInfo (table: string): Promise<{ [column: string]: knex.ColumnInfo }>,
-    columnsInfo (table: string, column: string): Promise<knex.ColumnInfo>,
-
-    /**
-     * Same as `query()`, but also selects the table for the query
-     */
-    from: DatabaseQueryBuilderContract['from'],
-
-    /**
-     * Same as `insertQuery()`, but also selects the table for the query
-     */
-    table: InsertQueryBuilderContract['table'],
-
-    /**
-     * Get instance of transaction client
-     */
-    transaction (): Promise<TransactionClientContract>,
-  }
-
-  /**
-   * The shape of transaction client to run queries under a given
-   * transaction on a single connection
-   */
-  interface TransactionClientContract extends QueryClientContract {
-    knexClient: knex.Transaction,
-
-    /**
-     * Is transaction completed or not
-     */
-    isCompleted: boolean,
-
-    /**
-     * Commit transaction
-     */
-    commit (): Promise<void>,
-
-    /**
-     * Rollback transaction
-     */
-    rollback (): Promise<void>
   }
 }

@@ -30,6 +30,7 @@
   "dependencies": {
     "@poppinss/logger": "^1.1.2",
     "@poppinss/profiler": "^1.1.0",
+    "@poppinss/traits": "^1.0.0",
     "@poppinss/utils": "^1.0.4",
     "knex": "^0.19.2",
     "knex-dynamic-connection": "^1.0.0",

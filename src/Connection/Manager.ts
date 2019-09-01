@@ -14,10 +14,10 @@ import { Exception } from '@poppinss/utils'
 import { LoggerContract } from '@poppinss/logger'
 
 import {
-  ConnectionConfigContract,
   ConnectionContract,
+  ConnectionConfigContract,
   ConnectionManagerContract,
-} from '@ioc:Adonis/Addons/Database'
+} from '@ioc:Adonis/Lucid/Database'
 
 import { Connection } from './index'
 
