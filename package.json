@@ -18,12 +18,13 @@
     "test:pg": "DB=pg node japaFile.js",
     "test:docker": "npm run test:sqlite && npm run test:mysql && npm run test:pg",
     "test": "docker-compose -f docker-compose.yml -f docker-compose-test.yml build && docker-compose -f docker-compose.yml -f docker-compose-test.yml run --rm test",
-    "prepublishOnly": "npm run build",
     "lint": "tslint --project tsconfig.json",
     "clean": "del build",
     "compile": "npm run lint && npm run clean && tsc",
     "build": "npm run compile",
-    "commit": "git-cz"
+    "commit": "git-cz",
+    "release": "np",
+    "version": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -64,8 +65,8 @@
     "japa": "^3.0.0",
     "mrm": "^1.2.2",
     "mysql": "^2.17.1",
+    "np": "^5.0.3",
     "pg": "^7.12.1",
-    "pkg-ok": "^2.3.1",
     "sqlite3": "^4.1.0",
     "ts-node": "^8.3.0",
     "tslint": "^5.19.0",
@@ -101,5 +102,9 @@
   "keywords": [],
   "adonisjs": {
     "instructions": "./build/instructions.js"
+  },
+  "np": {
+    "contents": ".",
+    "anyBranch": true
   }
 }
