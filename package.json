@@ -47,6 +47,7 @@
     "@adonisjs/core": "2.x.x"
   },
   "devDependencies": {
+    "@adonisjs/fold": "^6.1.5",
     "@adonisjs/mrm-preset": "^2.1.0",
     "@adonisjs/sink": "^2.1.5",
     "@poppinss/application": "^1.0.10",
