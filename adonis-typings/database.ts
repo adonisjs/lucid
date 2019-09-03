@@ -28,7 +28,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   /**
    * A executable query builder will always have these methods on it.
    */
-  interface ExcutableQueryBuilderContract<Result extends any> extends Promise<Result> {
+  export interface ExcutableQueryBuilderContract<Result extends any> extends Promise<Result> {
     debug (debug: boolean): this
     timeout (time: number, options?: { cancel: boolean }): this
     useTransaction (trx: TransactionClientContract): this
@@ -41,7 +41,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Shape of the query client, that is used to retrive instances
    * of query builder
    */
-  interface QueryClientContract {
+  export interface QueryClientContract {
     /**
      * Custom profiler to time queries
      */
@@ -136,7 +136,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * The shape of transaction client to run queries under a given
    * transaction on a single connection
    */
-  interface TransactionClientContract extends QueryClientContract {
+  export interface TransactionClientContract extends QueryClientContract {
     knexClient: knex.Transaction,
 
     /**
@@ -516,7 +516,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Options when retrieving new query client from the database
    * query builder
    */
-  type DatabaseClientOptions = Partial<{
+  export type DatabaseClientOptions = Partial<{
     mode: 'read' | 'write',
     profiler: ProfilerRowContract | ProfilerContract,
   }>
