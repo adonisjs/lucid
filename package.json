@@ -108,6 +108,7 @@
   },
   "np": {
     "contents": ".",
-    "anyBranch": true
+    "anyBranch": true,
+    "yolo": true
   }
 }
