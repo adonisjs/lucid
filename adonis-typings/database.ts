@@ -10,8 +10,8 @@
 /// <reference path="./querybuilder.ts" />
 
 declare module '@ioc:Adonis/Lucid/Database' {
+  import knex from 'knex'
   import { Pool } from 'tarn'
-  import * as knex from 'knex'
   import { EventEmitter } from 'events'
   import { Dictionary } from 'ts-essentials'
   import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
@@ -226,7 +226,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
     flags?: string,
     ssl?: any,
   }
-
   export type MysqlConfigContract = SharedConfigNode & {
     client: 'mysql',
     version?: string,
@@ -312,7 +311,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
     maxRows?: number,
     oracleClientVersion?: number,
   }
-
   export type OracleConfigContract = SharedConfigNode & {
     client: 'oracledb',
     connection?: SharedConnectionNode & OracleConnectionNode,
@@ -342,7 +340,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
     requestTimeout?: number,
     parseJSON?: boolean,
   }
-
   export type MssqlConfigContract = SharedConfigNode & {
     client: 'mssql',
     version?: string,
@@ -515,6 +512,10 @@ declare module '@ioc:Adonis/Lucid/Database' {
     getClient (mode?: 'write' | 'read'): QueryClientContract,
   }
 
+  /**
+   * Options when retrieving new query client from the database
+   * query builder
+   */
   type DatabaseClientOptions = Partial<{
     mode: 'read' | 'write',
     profiler: ProfilerRowContract | ProfilerContract,
@@ -545,7 +546,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Get query client for a given connection. Optionally one can also define
      * the mode of the connection and profiler row
      */
-    connection (connectionName: string, options?: DatabaseClientOptions): QueryClientContract
+    connection (connectionName?: string, options?: DatabaseClientOptions): QueryClientContract
 
     /**
      * Get query builder instance for a given connection.
@@ -597,4 +598,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      */
     transaction (): Promise<TransactionClientContract>
   }
+
+  const Database: DatabaseContract
+  export default Database
 }

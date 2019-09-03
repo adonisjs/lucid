@@ -17,7 +17,7 @@ export class DatabaseServiceProvider {
    * Register database binding
    */
   public register () {
-    this.$container.singleton('Adonis/Addons/Database', () => {
+    this.$container.singleton('Adonis/Lucid/Database', () => {
       const config = this.$container.use('Adonis/Core/Config').get('database', {})
       const Logger = this.$container.use('Adonis/Core/Logger')
       const Profiler = this.$container.use('Adonis/Core/Profiler')
