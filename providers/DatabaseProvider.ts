@@ -9,7 +9,7 @@
 
 import { Database } from '../src/Database'
 
-export class DatabaseServiceProvider {
+export default class DatabaseServiceProvider {
   constructor (protected $container: any) {
   }
 
