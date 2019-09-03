@@ -13,14 +13,6 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
 
   /**
-   * The types for values for the aggregates. We need this coz of
-   * the history with bigints in Javascript
-   */
-  export interface AggregatesRegistry {
-    Count: number,
-  }
-
-  /**
    * Get one or many of a generic
    */
   type OneOrMany<T> = T | T[]
