@@ -11,7 +11,7 @@ import { join } from 'path'
 import sinkStatic from '@adonisjs/sink'
 import { ApplicationContract } from '@poppinss/application'
 
-export function instructions (
+export default function instructions (
   projectRoot: string,
   application: ApplicationContract,
   { TemplateFile, EnvFile, kleur }: typeof sinkStatic,
