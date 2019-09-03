@@ -80,7 +80,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      */
     query<
       Record extends any = any,
-      Result extends any = any,
+      Result extends any = Record,
     > (): DatabaseQueryBuilderContract<Record, Result> & ExcutableQueryBuilderContract<Result>,
 
     /**
@@ -88,8 +88,9 @@ declare module '@ioc:Adonis/Lucid/Database' {
      */
     insertQuery<
       Record extends any = any,
-      ReturnColumns extends any = any[]
-    > (): InsertQueryBuilderContract<Record, ReturnColumns> & ExcutableQueryBuilderContract<ReturnColumns>,
+      ReturnColumns extends any = Record
+    > (
+    ): InsertQueryBuilderContract<Record, ReturnColumns[]> & ExcutableQueryBuilderContract<ReturnColumns[]>,
 
     /**
      * Get raw query builder instance
@@ -553,7 +554,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      */
     query<
       Record extends any = any,
-      Result extends any = any,
+      Result extends any = Record,
     > (
       options?: DatabaseClientOptions,
     ): DatabaseQueryBuilderContract<Record, Result> & ExcutableQueryBuilderContract<Result>,
@@ -563,7 +564,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      */
     insertQuery<
       Record extends any = any,
-      ReturnColumns extends any = any
+      ReturnColumns extends any = Record
     > (
       options?: DatabaseClientOptions,
     ): InsertQueryBuilderContract<Record, ReturnColumns[]> & ExcutableQueryBuilderContract<ReturnColumns[]>,
