@@ -12,7 +12,7 @@
 import knex from 'knex'
 import { Exception } from '@poppinss/utils'
 import { resolveClientNameWithAliases } from 'knex/lib/helpers'
-import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
+import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 import {
   ConnectionContract,

@@ -10,8 +10,8 @@
 /// <reference path="../../adonis-typings/database.ts" />
 
 import { Exception } from '@poppinss/utils'
-import { LoggerContract } from '@poppinss/logger'
-import { ProfilerContract } from '@poppinss/profiler'
+import { LoggerContract } from '@ioc:Adonis/Core/Logger'
+import { ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 import {
   ConnectionManagerContract,

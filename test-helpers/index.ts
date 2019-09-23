@@ -12,8 +12,8 @@
 import knex from 'knex'
 import dotenv from 'dotenv'
 import { join } from 'path'
-import { FakeLogger } from '@poppinss/logger'
-import { Profiler } from '@poppinss/profiler'
+import { FakeLogger } from '@adonisjs/logger/build/standalone'
+import { Profiler } from '@adonisjs/profiler/build/standalone'
 import { Filesystem } from '@poppinss/dev-utils'
 
 import {

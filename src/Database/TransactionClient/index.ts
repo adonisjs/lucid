@@ -11,7 +11,7 @@
 
 import knex from 'knex'
 import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
+import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 import { RawQueryBuilder } from '../QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../QueryBuilder/Insert'

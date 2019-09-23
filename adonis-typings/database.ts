@@ -14,7 +14,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   import { Pool } from 'tarn'
   import { EventEmitter } from 'events'
   import { Dictionary } from 'ts-essentials'
-  import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
+  import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
   import {
     RawContract,

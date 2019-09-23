@@ -2,5 +2,9 @@
   "extends": "./node_modules/@adonisjs/mrm-preset/_tsconfig",
   "compilerOptions": {
     "experimentalDecorators": true
-  }
+  },
+  "files": [
+    "./node_modules/@adonisjs/profiler/build/adonis-typings/profiler.d.ts",
+    "./node_modules/@adonisjs/logger/build/adonis-typings/logger.d.ts"
+  ]
 }
