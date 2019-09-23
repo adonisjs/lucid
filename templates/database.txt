@@ -1,5 +1,5 @@
 /**
- * Config source: https://git.io/fjS7M
+ * Config source: https://git.io/JesV9
  *
  * Feel free to let us know via PR, if you find something broken in this config
  * file.
@@ -20,7 +20,7 @@ const databaseConfig: DatabaseConfigContract = {
   | file.
   |
   */
-  connection: Env.get('DB_CONNECTION', 'sqlite'),
+  connection: Env.get('DB_CONNECTION', 'sqlite') as string,
 
   connections: {
     /*
@@ -39,7 +39,7 @@ const databaseConfig: DatabaseConfigContract = {
       connection: {
         filename: Application.tmpPath('db.sqlite3'),
       },
-      useNullAsDefault: true
+      useNullAsDefault: true,
     },
 
     /*
@@ -56,11 +56,11 @@ const databaseConfig: DatabaseConfigContract = {
     mysql: {
       client: 'mysql',
       connection: {
-        host?: Env.get('DB_HOST', '127.0.0.1'),
-        port?: Env.get('DB_PORT', 3306) as number,
-        user?: Env.get('DB_USER', 'lucid'),
-        password?: Env.get('DB_PASSWORD', 'lucid'),
-        database?: Env.get('DB_NAME', 'lucid'),
+        host: Env.get('DB_HOST', '127.0.0.1') as string,
+        port: Number(Env.get('DB_PORT', 3306)),
+        user: Env.get('DB_USER', 'lucid') as string,
+        password: Env.get('DB_PASSWORD', 'lucid') as string,
+        database: Env.get('DB_NAME', 'lucid') as string,
       },
     },
 
@@ -78,14 +78,14 @@ const databaseConfig: DatabaseConfigContract = {
     pg: {
       client: 'pg',
       connection: {
-        host?: Env.get('DB_HOST', '127.0.0.1'),
-        port?: Env.get('DB_PORT', 5432) as number,
-        user?: Env.get('DB_USER', 'lucid'),
-        password?: Env.get('DB_PASSWORD', 'lucid'),
-        database?: Env.get('DB_NAME', 'lucid'),
+        host: Env.get('DB_HOST', '127.0.0.1') as string,
+        port: Number(Env.get('DB_PORT', 5432)),
+        user: Env.get('DB_USER', 'lucid') as string,
+        password: Env.get('DB_PASSWORD', 'lucid') as string,
+        database: Env.get('DB_NAME', 'lucid') as string,
       },
-    }
-  }
+    },
+  },
 }
 
 export default databaseConfig
