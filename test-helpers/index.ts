@@ -9,9 +9,9 @@
 
 /// <reference path="../adonis-typings/database.ts" />
 
-import { join } from 'path'
 import knex from 'knex'
 import dotenv from 'dotenv'
+import { join } from 'path'
 import { FakeLogger } from '@poppinss/logger'
 import { Profiler } from '@poppinss/profiler'
 import { Filesystem } from '@poppinss/dev-utils'
@@ -30,6 +30,7 @@ import {
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
+import { Database } from '../src/Database/index'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
 dotenv.config()
@@ -167,4 +168,13 @@ export function getLogger () {
  */
 export function getProfiler () {
   return new Profiler({ enabled: false })
+}
+
+export function getDb () {
+  const config = {
+    connection: 'primary',
+    connections: { primary: getConfig() },
+  }
+
+  return new Database(config, getLogger(), getProfiler())
 }
