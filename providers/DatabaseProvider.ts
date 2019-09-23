@@ -8,9 +8,11 @@
 */
 
 import { IocContract } from '@adonisjs/fold'
+
 import { Database } from '../src/Database'
-import { BaseModel } from '../src/Orm/BaseModel'
+import { Adapter } from '../src/Orm/Adapter'
 import { column } from '../src/Orm/Decorators'
+import { BaseModel } from '../src/Orm/BaseModel'
 
 export default class DatabaseServiceProvider {
   constructor (protected $container: IocContract) {
@@ -28,6 +30,12 @@ export default class DatabaseServiceProvider {
     })
 
     this.$container.singleton('Adonis/Lucid/Orm', () => {
+      /**
+       * Attaching adapter to the base model. Each model is allowed to define
+       * a different adapter.
+       */
+      BaseModel.$adapter = new Adapter(this.$container.use('Adonis/Lucid/Database'))
+
       return {
         BaseModel,
         column,
