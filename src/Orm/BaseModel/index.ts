@@ -17,7 +17,7 @@ import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Orm'
 
 @StaticImplements<ModelConstructorContract>()
-export abstract class BaseModel extends BaseDataModel implements ModelContract {
+export class BaseModel extends BaseDataModel implements ModelContract {
   /**
    * Whether or not to rely on database to return the primaryKey
    * value. If this is set to false, then the user must provide

@@ -101,13 +101,41 @@ declare module '@ioc:Adonis/Lucid/Orm' {
       Instance extends ModelContract,
     > (this: new () => Instance): OrmQueryBuilder<Model, Instance>
 
-    $createFromAdapterResult (result?: any, sideloadAttributes?: string[]): null | ModelContract
-    $createMultipleFromAdapterResult (results: any[], sideloadAttributes?: string[]): ModelContract[]
-  }
+    /**
+     * Creates model instance from the adapter result
+     */
+    $createFromAdapterResult<T extends ModelContract> (
+      this: new () => T,
+      result?: any,
+      sideloadAttributes?: string[],
+    ): null | T
 
-  export const BaseModel: ModelConstructorContract & {
+    /**
+     * Creates multiple model instances from the adapter result
+     */
+    $createMultipleFromAdapterResult<T extends ModelContract> (
+      this: new () => T,
+      results: any[],
+      sideloadAttributes?: string[],
+    ): T[]
+
+    /**
+     * Fetch row for a key/value pair
+     */
+    findBy<T extends ModelContract> (
+      this: new () => T,
+      key: string,
+      value: any,
+    ): Promise<null | T>
+
+    /**
+     * Fetch all rows
+     */
+    findAll<T extends ModelContract> (this: new () => T): Promise<T[]>
+
     new (): ModelContract,
   }
 
+  export const BaseModel: ModelConstructorContract
   export const column: typeof baseColumn
 }
