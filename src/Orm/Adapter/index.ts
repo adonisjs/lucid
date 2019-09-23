@@ -10,63 +10,79 @@
 /// <reference path="../../../adonis-typings/orm.ts" />
 /// <reference path="../../../adonis-typings/database.ts" />
 
-// import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
-// import { AdapterContract, ModelContract } from '@ioc:Adonis/Lucid/Orm'
+import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
+import { AdapterContract, ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Orm'
 
-// /**
-//  * Adapter to execute queries for a given model. Please note that adapters
-//  * are stateless and only one instance of adapter is used across the
-//  * app, so make sure not to store any state.
-//  */
-// export class Adapter implements AdapterContract {
-//   constructor (private _db: DatabaseContract) {}
+/**
+ * Adapter exposes the API to make database queries and constructor
+ * model instances from it.
+ */
+export class Adapter implements AdapterContract {
+  constructor (private _db: DatabaseContract) {
+  }
 
-//   public async insert (model: ModelContract, attributes: any): Promise<void> {
-//     const modelConstructor = model.$getConstructor()
+  /**
+   * Find a given row and construct model instance from it
+   */
+  public async find (
+    modelConstructor: ModelConstructorContract,
+    key: string,
+    value: any,
+  ): Promise<ModelContract | null> {
+    const client = this._db.connection(modelConstructor.$connection)
 
-//     /**
-//      * Pulling the query client for a given connection.
-//      */
-//     const client = this._db.connection(modelConstructor.$connection)
+    const result = await client
+      .query()
+      .select('*')
+      .from(modelConstructor.$table)
+      .where(key, value)
+      .limit(1)
 
-//     *
-//      * Letting model give us the insert query. This enables the end user
-//      * to add some constraints to the query builder before returning
-//      * it back to us
+    return modelConstructor.$createFromAdapterResult(result[0])
+  }
 
-//     const query = modelConstructor.$getSaveQuery(client, 'insert')
+  /**
+   * Returns an array of models by making a select query
+   */
+  public async findAll (modelConstructor: ModelConstructorContract): Promise<ModelContract[]> {
+    const client = this._db.connection(modelConstructor.$connection)
 
-//     /**
-//      * Execute the query
-//      */
-//     const result = await query.insert(attributes)
+    const results = await client.query().select('*').from(modelConstructor.$table)
+    return modelConstructor.$createMultipleFromAdapterResult(results)
+  }
 
-//     /**
-//      * Set id when increments is true
-//      */
-//     if (modelConstructor.$increments) {
-//       model.$consumeAdapterResult({ [modelConstructor.$primaryKey]: result[0] })
-//     }
-//   }
+  /**
+   * Perform insert query on a given model instance
+   */
+  public async insert (instance: ModelContract, attributes: any) {
+    const modelConstructor = instance.constructor as unknown as ModelConstructorContract
+    const client = this._db.connection(modelConstructor.$connection)
+    const query = instance.$getQueryFor('insert', client)
 
-//   public async update (model: ModelContract, dirty: any): Promise<void> {
-//     const modelConstructor = model.$getConstructor()
+    const result = await query.insert(attributes)
+    if (modelConstructor.$increments) {
+      instance.$consumeAdapterResult({ [modelConstructor.$primaryKey]: result[0] })
+    }
+  }
 
-//     /**
-//      * Pulling the query client for a given connection.
-//      */
-//     const client = this._db.connection(modelConstructor.$connection)
+  /**
+   * Perform update query on a given model instance
+   */
+  public async update (instance: ModelContract, dirty: any) {
+    const modelConstructor = instance.constructor as unknown as ModelConstructorContract
+    const client = this._db.connection(modelConstructor.$connection)
+    const query = instance.$getQueryFor('update', client)
 
-//     /**
-//      * Letting model give us the insert query. This enables the end user
-//      * to add some constraints to the query builder before returning
-//      * it back to us
-//      */
-//     const query = modelConstructor.$getSaveQuery(client, 'update')
+    await query.update(dirty)
+  }
 
-//     /**
-//      * Execute the query
-//      */
-//     await query.update(dirty)
-//   }
-// }
+  /**
+   * Perform delete query on a given model instance
+   */
+  public async delete (instance: ModelContract) {
+    const modelConstructor = instance.constructor as unknown as ModelConstructorContract
+    const client = this._db.connection(modelConstructor.$connection)
+    const query = instance.$getQueryFor('delete', client)
+    await query.del()
+  }
+}

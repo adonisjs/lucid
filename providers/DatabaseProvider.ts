@@ -7,10 +7,13 @@
  * file that was distributed with this source code.
 */
 
+import { IocContract } from '@adonisjs/fold'
 import { Database } from '../src/Database'
+import { BaseModel } from '../src/Orm/BaseModel'
+import { column } from '../src/Orm/Decorators'
 
 export default class DatabaseServiceProvider {
-  constructor (protected $container: any) {
+  constructor (protected $container: IocContract) {
   }
 
   /**
@@ -22,6 +25,13 @@ export default class DatabaseServiceProvider {
       const Logger = this.$container.use('Adonis/Core/Logger')
       const Profiler = this.$container.use('Adonis/Core/Profiler')
       return new Database(config, Logger, Profiler)
+    })
+
+    this.$container.singleton('Adonis/Lucid/Orm', () => {
+      return {
+        BaseModel,
+        column,
+      }
     })
   }
 }
