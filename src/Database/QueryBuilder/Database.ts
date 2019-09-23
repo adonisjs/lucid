@@ -21,7 +21,7 @@ import {
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { Chainable } from './Chainable'
-import { Executable, ExecutableConstrutor } from '../Traits/Executable'
+import { Executable, ExecutableConstructor } from '../Traits/Executable'
 
 /**
  * Wrapping the user function for a query callback and give them
@@ -38,7 +38,7 @@ function queryCallback (userFn: QueryCallback<DatabaseQueryBuilderContract>) {
  * Database query builder exposes the API to construct and run queries for selecting,
  * updating and deleting records.
  */
-@trait<ExecutableConstrutor>(Executable)
+@trait<ExecutableConstructor>(Executable)
 export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuilderContract {
   constructor (builder: knex.QueryBuilder, public client?: QueryClientContract) {
     super(builder, queryCallback)

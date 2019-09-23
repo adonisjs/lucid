@@ -22,10 +22,11 @@ import {
 /**
  * Enforcing constructor on the destination class
  */
-export type ExecutableConstrutor<T = {
+export type ExecutableConstructor<T = {
   $knexBuilder: knex.Raw | knex.QueryBuilder,
   getQueryClient: () => undefined | knex,
   client?: QueryClientContract,
+  wrapQueryResults?: (results: any[]) => any[],
 }> = { new (...args: any[]): T }
 
 /**
@@ -36,6 +37,7 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
   protected $knexBuilder: knex.QueryBuilder | knex.Raw
   protected client: QueryClientContract
   protected getQueryClient: () => undefined | knex
+  protected wrapQueryResults?: (results: any[]) => any[]
 
   /**
    * Returns the profiler action
@@ -183,7 +185,12 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
      * Executing the query with a custom knex client when it exits
      */
     const knexClient = this.getQueryClient()
-    return knexClient ? this._executeQueryWithCustomConnection(knexClient) : this._executeQuery()
+
+    const result = await (knexClient
+      ? this._executeQueryWithCustomConnection(knexClient)
+      : this._executeQuery())
+
+    return typeof (this.wrapQueryResults) === 'function' ? this.wrapQueryResults(result) : result
   }
 
   /**

@@ -88,15 +88,22 @@ export class TransactionClient implements TransactionClientContract {
   /**
    * Get a new query builder instance
    */
+  public knexQuery (): knex.QueryBuilder {
+    return this.knexClient.queryBuilder()
+  }
+
+  /**
+   * Get a new query builder instance
+   */
   public query (): any {
-    return new DatabaseQueryBuilder(this.knexClient.queryBuilder(), this)
+    return new DatabaseQueryBuilder(this.knexQuery(), this)
   }
 
   /**
    * Get a new insert query builder instance
    */
   public insertQuery (): any {
-    return new InsertQueryBuilder(this.knexClient.queryBuilder(), this)
+    return new InsertQueryBuilder(this.knexQuery(), this)
   }
 
   /**

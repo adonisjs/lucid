@@ -116,11 +116,18 @@ export class QueryClient implements QueryClientContract {
   }
 
   /**
+   * Returns the knex query builder instance
+   */
+  public knexQuery (): knex.QueryBuilder {
+    return this._connection.client!.queryBuilder()
+  }
+
+  /**
    * Returns instance of a query builder for selecting, updating
    * or deleting rows
    */
   public query (): any {
-    return new DatabaseQueryBuilder(this._connection.client!.queryBuilder(), this)
+    return new DatabaseQueryBuilder(this.knexQuery(), this)
   }
 
   /**

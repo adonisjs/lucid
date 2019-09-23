@@ -159,6 +159,7 @@ test.group('BaseModel', (group) => {
     )
 
     const users = await User.findAll()
+
     assert.lengthOf(users, 2)
     assert.instanceOf(users[0], User)
     assert.instanceOf(users[1], User)

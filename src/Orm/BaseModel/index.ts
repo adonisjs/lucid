@@ -14,7 +14,7 @@ import snakeCase from 'snake-case'
 import { BaseModel as BaseDataModel, StaticImplements } from '@poppinss/data-models'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Orm'
+import { ModelConstructorContract, ModelContract, AdapterContract } from '@ioc:Adonis/Lucid/Orm'
 
 @StaticImplements<ModelConstructorContract>()
 export class BaseModel extends BaseDataModel implements ModelContract {
@@ -41,7 +41,13 @@ export class BaseModel extends BaseDataModel implements ModelContract {
    */
   public static $connection?: string
 
+  public static $adapter: AdapterContract
+
+  /**
+   * Returns the model query instance for the given model
+   */
   public static query (): any {
+    return this.$adapter.query(this)
   }
 
   /**

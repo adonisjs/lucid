@@ -13,12 +13,32 @@
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import { AdapterContract, ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Orm'
 
+import { ModelQueryBuilder } from '../QueryBuilder'
+
 /**
  * Adapter exposes the API to make database queries and constructor
  * model instances from it.
  */
 export class Adapter implements AdapterContract {
   constructor (private _db: DatabaseContract) {
+  }
+
+  /**
+   * Returns the query client based upon the model instance
+   */
+  private _getModelClient (modelConstructor: ModelConstructorContract) {
+    return this._db.connection(modelConstructor.$connection)
+  }
+
+  /**
+   * Returns the model query builder instance for a given model
+   */
+  public query (modelConstructor: ModelConstructorContract): any {
+    const client = this._getModelClient(modelConstructor)
+    const query = client.knexQuery()
+    query.table(modelConstructor.$table)
+
+    return new ModelQueryBuilder(query, modelConstructor, client)
   }
 
   /**
@@ -29,26 +49,18 @@ export class Adapter implements AdapterContract {
     key: string,
     value: any,
   ): Promise<ModelContract | null> {
-    const client = this._db.connection(modelConstructor.$connection)
-
-    const result = await client
-      .query()
+    return this
+      .query(modelConstructor)
       .select('*')
-      .from(modelConstructor.$table)
       .where(key, value)
-      .limit(1)
-
-    return modelConstructor.$createFromAdapterResult(result[0])
+      .first()
   }
 
   /**
    * Returns an array of models by making a select query
    */
   public async findAll (modelConstructor: ModelConstructorContract): Promise<ModelContract[]> {
-    const client = this._db.connection(modelConstructor.$connection)
-
-    const results = await client.query().select('*').from(modelConstructor.$table)
-    return modelConstructor.$createMultipleFromAdapterResult(results)
+    return this.query(modelConstructor).select('*').exec()
   }
 
   /**
@@ -56,7 +68,7 @@ export class Adapter implements AdapterContract {
    */
   public async insert (instance: ModelContract, attributes: any) {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    const client = this._db.connection(modelConstructor.$connection)
+    const client = this._getModelClient(modelConstructor)
     const query = instance.$getQueryFor('insert', client)
 
     const result = await query.insert(attributes)
@@ -70,7 +82,7 @@ export class Adapter implements AdapterContract {
    */
   public async update (instance: ModelContract, dirty: any) {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    const client = this._db.connection(modelConstructor.$connection)
+    const client = this._getModelClient(modelConstructor)
     const query = instance.$getQueryFor('update', client)
 
     await query.update(dirty)
@@ -81,7 +93,7 @@ export class Adapter implements AdapterContract {
    */
   public async delete (instance: ModelContract) {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    const client = this._db.connection(modelConstructor.$connection)
+    const client = this._getModelClient(modelConstructor)
     const query = instance.$getQueryFor('delete', client)
     await query.del()
   }

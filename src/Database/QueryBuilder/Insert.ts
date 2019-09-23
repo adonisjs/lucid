@@ -15,12 +15,12 @@ import { trait } from '@poppinss/traits'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { InsertQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
-import { Executable, ExecutableConstrutor } from '../Traits/Executable'
+import { Executable, ExecutableConstructor } from '../Traits/Executable'
 
 /**
  * Exposes the API for performing SQL inserts
  */
-@trait<ExecutableConstrutor>(Executable)
+@trait<ExecutableConstructor>(Executable)
 export class InsertQueryBuilder implements InsertQueryBuilderContract {
   constructor (public $knexBuilder: knex.QueryBuilder, public client?: QueryClientContract) {
   }

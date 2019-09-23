@@ -21,16 +21,21 @@ import {
   QueryClientContract,
   ExcutableQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Database'
+
 import {
   RawContract,
   InsertQueryBuilderContract,
   DatabaseQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
+import { ModelConstructorContract } from '@ioc:Adonis/Lucid/Orm'
+
+import { Adapter } from '../src/Orm/Adapter'
+import { BaseModel } from '../src/Orm/BaseModel'
+import { Database } from '../src/Database/index'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
-import { Database } from '../src/Database/index'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
 dotenv.config()
@@ -170,6 +175,9 @@ export function getProfiler () {
   return new Profiler({ enabled: false })
 }
 
+/**
+ * Returns the database instance
+ */
 export function getDb () {
   const config = {
     connection: 'primary',
@@ -177,4 +185,16 @@ export function getDb () {
   }
 
   return new Database(config, getLogger(), getProfiler())
+}
+
+/**
+ * Returns the orm adapter
+ */
+export function ormAdapter () {
+  return new Adapter(getDb())
+}
+
+export function getBaseModel (adapter: Adapter) {
+  BaseModel.$adapter = adapter
+  return BaseModel as unknown as ModelConstructorContract
 }
