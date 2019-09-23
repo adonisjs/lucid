@@ -19,21 +19,8 @@ import {
 } from '@ioc:Adonis/Lucid/Orm'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { QueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-
 import { Chainable } from '../../Database/QueryBuilder/Chainable'
 import { Executable, ExecutableConstructor } from '../../Database/Traits/Executable'
-
-/**
- * Wrapping the user function for a query callback and give them
- * a new instance of the `DatabaseQueryBuilder` and not
- * knex.QueryBuilder
- */
-function queryCallback (userFn: QueryCallback<ModelQueryBuilderContract<ModelConstructorContract>>) {
-  return (builder: knex.QueryBuilder) => {
-    userFn(new ModelQueryBuilder(builder))
-  }
-}
 
 /**
  * Database query builder exposes the API to construct and run queries for selecting,
@@ -45,10 +32,14 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 > {
   constructor (
     builder: knex.QueryBuilder,
-    public model?: ModelConstructorContract,
+    public model: ModelConstructorContract,
     public client?: QueryClientContract,
   ) {
-    super(builder, queryCallback)
+    super(builder, (userFn) => {
+      return (builder) => {
+        userFn(new ModelQueryBuilder(builder, this.model))
+      }
+    })
   }
 
   /**

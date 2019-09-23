@@ -5,6 +5,6 @@ class User extends BaseModel {
 }
 
 const user = User.query().then((a) => {
-  a.username.toLocaleLowerCase()
+  a[0].username.toLocaleLowerCase()
 })
 console.log(user)
