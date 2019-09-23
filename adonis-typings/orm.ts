@@ -12,8 +12,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   import { QueryClientContract, ExcutableQueryBuilderContract } from '@ioc:Adonis/Lucid/Database'
 
   import {
+    ChainableContract,
     InsertQueryBuilderContract,
-    DatabaseQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
   import {
@@ -25,18 +25,27 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   } from '@poppinss/data-models'
 
   /**
-   * Orm query builder will have extras methods on top of Database query builder
+   * Model query builder will have extras methods on top of Database query builder
    */
-  export interface OrmQueryBuilder<
-    Record extends any,
-    Result extends any,
-  > extends DatabaseQueryBuilderContract<Record, Result>, ExcutableQueryBuilderContract<Result> {
+  export interface ModelQueryBuilderContract<
+    Model extends ModelConstructorContract,
+  > extends ChainableContract<Model['refs']> {
+    model?: Model,
+
+    /**
+     * Execute and get first result
+     */
+    first (): Promise<InstanceType<Model> | null>
   }
 
   /**
    * The shape of query adapter
    */
   export interface AdapterContract extends DataModelAdapterContract {
+    query<
+      T extends ModelConstructorContract
+    > (model: T): ModelQueryBuilderContract<T> & ExcutableQueryBuilderContract<InstanceType<T>>,
+
     insert (instance: ModelContract, attributes: any): Promise<void>
     update (instance: ModelContract, dirty: any): Promise<void>
     delete (instance: ModelContract): Promise<void>
@@ -72,6 +81,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
    * Shape of base model static properties
    */
   export interface ModelConstructorContract extends DataModelConstructorContract {
+    $adapter: AdapterContract,
+
     /**
      * The database connection to use
      */
@@ -99,41 +110,45 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     query<
       Model extends ModelConstructorContract,
       Instance extends ModelContract,
-    > (this: new () => Instance): OrmQueryBuilder<Model, Instance>
+    > (
+      this: new () => Instance,
+    ): ModelQueryBuilderContract<Model> & ExcutableQueryBuilderContract<Instance[]>
 
     /**
      * Creates model instance from the adapter result
      */
-    $createFromAdapterResult<T extends ModelContract> (
-      this: new () => T,
+    $createFromAdapterResult<Instance extends ModelContract> (
+      this: new () => Instance,
       result?: any,
       sideloadAttributes?: string[],
-    ): null | T
+    ): null | Instance
 
     /**
      * Creates multiple model instances from the adapter result
      */
-    $createMultipleFromAdapterResult<T extends ModelContract> (
-      this: new () => T,
+    $createMultipleFromAdapterResult<Instance extends ModelContract> (
+      this: new () => Instance,
       results: any[],
       sideloadAttributes?: string[],
-    ): T[]
+    ): Instance[]
 
     /**
      * Fetch row for a key/value pair
      */
-    findBy<T extends ModelContract> (
-      this: new () => T,
+    findBy<Instance extends ModelContract> (
+      this: new () => Instance,
       key: string,
       value: any,
-    ): Promise<null | T>
+    ): Promise<null | Instance>
 
     /**
      * Fetch all rows
      */
-    findAll<T extends ModelContract> (this: new () => T): Promise<T[]>
+    findAll<Instance extends ModelContract> (
+      this: new () => Instance,
+    ): Promise<Instance[]>
 
-    new (): ModelContract,
+    new (): ModelContract
   }
 
   export const BaseModel: ModelConstructorContract

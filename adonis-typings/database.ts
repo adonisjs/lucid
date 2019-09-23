@@ -75,6 +75,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
     getWriteClient (): knex<any, any> | knex.Transaction<any, any>
 
     /**
+     * Returns the knex query builder instance
+     */
+    knexQuery (): knex.QueryBuilder
+
+    /**
      * Get new query builder instance for select, update and
      * delete calls
      */
