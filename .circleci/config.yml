@@ -11,7 +11,7 @@ jobs:
       - setup_remote_docker
       - run:
           name: Run tests
-          command: docker-compose -f docker-compose.yml -f docker-compose-test.yml run -e "ENV_PATH=.env.testing" --rm test
+          command: docker-compose -f docker-compose.yml -f docker-compose-test.yml run --rm test
 workflows:
   version: 2.1
   workflow:
