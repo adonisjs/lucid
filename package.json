@@ -9,6 +9,7 @@
     "build/providers",
     "build/templates"
   ],
+  "typings": "./build/adonis-typings/index.d.ts",
   "scripts": {
     "mrm": "mrm --preset=@adonisjs/mrm-preset",
     "pretest": "npm run lint",
