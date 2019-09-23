@@ -11,7 +11,7 @@
 
 import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
-import { LoggerContract } from '@poppinss/logger'
+import { LoggerContract } from '@ioc:Adonis/Core/Logger'
 
 import {
   ConnectionContract,

@@ -10,7 +10,7 @@
 declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   import * as knex from 'knex'
   import { Dictionary } from 'ts-essentials'
-  import { ProfilerRowContract, ProfilerContract } from '@poppinss/profiler'
+  import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
   /**
    * Get one or many of a generic

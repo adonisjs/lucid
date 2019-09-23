@@ -11,7 +11,7 @@
 
 import knex from 'knex'
 import { Exception } from '@poppinss/utils'
-import { ProfilerActionContract } from '@poppinss/profiler/build/src/Contracts'
+import { ProfilerActionContract } from '@ioc:Adonis/Core/Profiler'
 
 import {
   QueryClientContract,
