@@ -178,7 +178,8 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
       || this.client.isTransaction
       || this.$knexBuilder['client'].transacting
     ) {
-      return this._executeQuery()
+      const result = await this._executeQuery()
+      return typeof (this.wrapQueryResults) === 'function' ? this.wrapQueryResults(result) : result
     }
 
     /**
