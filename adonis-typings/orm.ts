@@ -30,7 +30,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   export interface ModelQueryBuilderContract<
     Model extends ModelConstructorContract,
   > extends ChainableContract<Model['refs']> {
-    model?: Model,
+    model: Model,
 
     /**
      * Execute and get first result
