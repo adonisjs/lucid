@@ -11,7 +11,7 @@ import { IocContract } from '@adonisjs/fold'
 
 import { Database } from '../src/Database'
 import { Adapter } from '../src/Orm/Adapter'
-import { column } from '../src/Orm/Decorators'
+import { column, computed } from '../src/Orm/Decorators'
 import { BaseModel } from '../src/Orm/BaseModel'
 
 export default class DatabaseServiceProvider {
@@ -39,6 +39,7 @@ export default class DatabaseServiceProvider {
       return {
         BaseModel,
         column,
+        computed,
       }
     })
   }
