@@ -14,7 +14,12 @@ import snakeCase from 'snake-case'
 import { BaseModel as BaseDataModel, StaticImplements } from '@poppinss/data-models'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ModelConstructorContract, ModelContract, AdapterContract } from '@ioc:Adonis/Lucid/Orm'
+import {
+  ModelOptions,
+  ModelContract,
+  AdapterContract,
+  ModelConstructorContract,
+} from '@ioc:Adonis/Lucid/Orm'
 
 @StaticImplements<ModelConstructorContract>()
 export class BaseModel extends BaseDataModel implements ModelContract {
@@ -37,17 +42,23 @@ export class BaseModel extends BaseDataModel implements ModelContract {
   public static refs: any
 
   /**
-   * A custom connection to use for queries
+   * A custom connection to use for queries. The connection defined on
+   * query builder is preferred over the model connection
    */
   public static $connection?: string
 
+  /**
+   * The adapter to be used for making database queries. In theory the
+   * adapter can load data from anywhere and models doesn't care
+   * about that
+   */
   public static $adapter: AdapterContract
 
   /**
    * Returns the model query instance for the given model
    */
-  public static query (): any {
-    return this.$adapter.query(this)
+  public static query (options?: ModelOptions): any {
+    return this.$adapter.query(this, options)
   }
 
   /**

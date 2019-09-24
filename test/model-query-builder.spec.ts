@@ -73,4 +73,50 @@ test.group('Model query builder', (group) => {
     assert.instanceOf(users[0], User)
     assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
   })
+
+  test('use custom connection when passed to the query', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.$boot()
+    const db = getDb()
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const users = await User.query({ connection: 'secondary' }).where('username', 'virk')
+    assert.lengthOf(users, 1)
+    assert.instanceOf(users[0], User)
+    assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
+    assert.deepEqual(users[0].$options, { connection: 'secondary' })
+  })
+
+  test('pass sideloaded attributes to the model instance', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.$boot()
+    const db = getDb()
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const users = await User
+      .query({ connection: 'secondary' })
+      .where('username', 'virk')
+      .sideload({ loggedInUser: { id: 1 } })
+
+    assert.lengthOf(users, 1)
+    assert.instanceOf(users[0], User)
+    assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
+    assert.deepEqual(users[0].$sideloaded, { loggedInUser: { id: 1 } })
+  })
 })

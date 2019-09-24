@@ -10,6 +10,7 @@
 declare module '@ioc:Adonis/Lucid/Orm' {
   import knex from 'knex'
   import { QueryClientContract, ExcutableQueryBuilderContract } from '@ioc:Adonis/Lucid/Database'
+  import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
   import {
     ChainableContract,
@@ -22,7 +23,17 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     ModelConstructorContract as DataModelConstructorContract,
     ModelContract as DataModelContract,
     column as baseColumn,
+    ModelObject,
   } from '@poppinss/data-models'
+
+  /**
+   * Options that can be passed to all the queries executed on a
+   * given model
+   */
+  export type ModelOptions = {
+    connection?: string,
+    profiler?: ProfilerContract | ProfilerRowContract,
+  }
 
   /**
    * Model query builder will have extras methods on top of Database query builder
@@ -30,7 +41,24 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   export interface ModelQueryBuilderContract<
     Model extends ModelConstructorContract,
   > extends ChainableContract<Model['refs']> {
-    model: Model,
+    model: Model
+
+    /**
+     * A copy of options based to the query builder
+     */
+    options?: ModelOptions
+
+    /**
+     * A custom set of sideloaded properties defined on the query
+     * builder, this will be passed to the model instance created
+     * by the query builder
+     */
+    sideload (value: ModelObject): this
+
+    /**
+     * The connection name used by the model query builder
+     */
+    connection: string
 
     /**
      * Execute and get first result
@@ -42,13 +70,18 @@ declare module '@ioc:Adonis/Lucid/Orm' {
    * The shape of query adapter
    */
   export interface AdapterContract extends DataModelAdapterContract {
-    query<
-      T extends ModelConstructorContract
-    > (model: T): ModelQueryBuilderContract<T> & ExcutableQueryBuilderContract<InstanceType<T>>,
+    query<T extends ModelConstructorContract> (
+      model: T,
+      options?: ModelOptions,
+    ): ModelQueryBuilderContract<T> & ExcutableQueryBuilderContract<InstanceType<T>>,
 
     insert (instance: ModelContract, attributes: any): Promise<void>
     update (instance: ModelContract, dirty: any): Promise<void>
     delete (instance: ModelContract): Promise<void>
+
+    /**
+     * Use `query` builder to pass model options to the query builder
+     */
     find (model: ModelConstructorContract, key: string, value: any): Promise<ModelContract | null>
     findAll (model: ModelConstructorContract): Promise<ModelContract[]>
   }
@@ -57,6 +90,16 @@ declare module '@ioc:Adonis/Lucid/Orm' {
    * Shape of base model
    */
   export interface ModelContract extends DataModelContract {
+    save (): Promise<void>
+    delete (): Promise<void>
+
+    /**
+     * Options defined on the model instance. When a model is fetched using with
+     * custom query options, then we also stick them on the model instances, so
+     * that they are continue using the same options for subsequent requests.
+     */
+    $options?: ModelOptions
+
     /**
      * Gives an option to the end user to define constraints for update, insert
      * and delete queries. Since the query builder for these queries aren't
@@ -112,6 +155,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
       Instance extends ModelContract,
     > (
       this: new () => Instance,
+      options?: ModelOptions,
     ): ModelQueryBuilderContract<Model> & ExcutableQueryBuilderContract<Instance[]>
 
     /**
@@ -119,8 +163,9 @@ declare module '@ioc:Adonis/Lucid/Orm' {
      */
     $createFromAdapterResult<Instance extends ModelContract> (
       this: new () => Instance,
-      result?: any,
-      sideloadAttributes?: string[],
+      result?: ModelObject,
+      sideloadAttributes?: ModelObject,
+      options?: ModelOptions,
     ): null | Instance
 
     /**
@@ -128,8 +173,9 @@ declare module '@ioc:Adonis/Lucid/Orm' {
      */
     $createMultipleFromAdapterResult<Instance extends ModelContract> (
       this: new () => Instance,
-      results: any[],
-      sideloadAttributes?: string[],
+      results: ModelObject[],
+      sideloadAttributes?: ModelObject,
+      options?: ModelOptions,
     ): Instance[]
 
     /**
@@ -139,6 +185,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
       this: new () => Instance,
       key: string,
       value: any,
+      options?: ModelOptions,
     ): Promise<null | Instance>
 
     /**
@@ -146,6 +193,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
      */
     findAll<Instance extends ModelContract> (
       this: new () => Instance,
+      options?: ModelOptions,
     ): Promise<Instance[]>
 
     new (): ModelContract
