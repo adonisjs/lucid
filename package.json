@@ -41,7 +41,7 @@
     "@adonisjs/application": "^1.0.14",
     "@adonisjs/logger": "^1.1.6",
     "@adonisjs/profiler": "^1.2.4",
-    "@poppinss/data-models": "^2.0.0",
+    "@poppinss/data-models": "^2.0.1",
     "@poppinss/traits": "^1.0.0",
     "@poppinss/utils": "^2.0.0",
     "knex": "^0.19.4",
