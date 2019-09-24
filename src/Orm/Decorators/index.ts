@@ -7,4 +7,4 @@
 * file that was distributed with this source code.
 */
 
-export { column } from '@poppinss/data-models'
+export { column, computed } from '@poppinss/data-models'

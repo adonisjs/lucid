@@ -23,6 +23,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     ModelConstructorContract as DataModelConstructorContract,
     ModelContract as DataModelContract,
     column as baseColumn,
+    computed as baseComputed,
     ModelObject,
   } from '@poppinss/data-models'
 
@@ -201,4 +202,5 @@ declare module '@ioc:Adonis/Lucid/Orm' {
 
   export const BaseModel: ModelConstructorContract
   export const column: typeof baseColumn
+  export const computed: typeof baseComputed
 }
