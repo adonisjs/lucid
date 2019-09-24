@@ -11,7 +11,12 @@
 /// <reference path="../../../adonis-typings/database.ts" />
 
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
-import { AdapterContract, ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Orm'
+import {
+  ModelOptions,
+  ModelContract,
+  AdapterContract,
+  ModelConstructorContract,
+} from '@ioc:Adonis/Lucid/Orm'
 
 import { ModelQueryBuilder } from '../QueryBuilder'
 
@@ -26,19 +31,21 @@ export class Adapter implements AdapterContract {
   /**
    * Returns the query client based upon the model instance
    */
-  private _getModelClient (modelConstructor: ModelConstructorContract) {
-    return this._db.connection(modelConstructor.$connection)
+  private _getModelClient (modelConstructor: ModelConstructorContract, options?: ModelOptions) {
+    const connection = options && options.connection || modelConstructor.$connection
+    const profiler = options && options.profiler
+    return this._db.connection(connection, { profiler })
   }
 
   /**
    * Returns the model query builder instance for a given model
    */
-  public query (modelConstructor: ModelConstructorContract): any {
-    const client = this._getModelClient(modelConstructor)
+  public query (modelConstructor: ModelConstructorContract, options?: ModelOptions): any {
+    const client = this._getModelClient(modelConstructor, options)
     const query = client.knexQuery()
     query.table(modelConstructor.$table)
 
-    return new ModelQueryBuilder(query, modelConstructor, client)
+    return new ModelQueryBuilder(query, modelConstructor, options, client)
   }
 
   /**
@@ -68,7 +75,7 @@ export class Adapter implements AdapterContract {
    */
   public async insert (instance: ModelContract, attributes: any) {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    const client = this._getModelClient(modelConstructor)
+    const client = this._getModelClient(modelConstructor, instance.$options)
     const query = instance.$getQueryFor('insert', client)
 
     const result = await query.insert(attributes)
@@ -82,7 +89,7 @@ export class Adapter implements AdapterContract {
    */
   public async update (instance: ModelContract, dirty: any) {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    const client = this._getModelClient(modelConstructor)
+    const client = this._getModelClient(modelConstructor, instance.$options)
     const query = instance.$getQueryFor('update', client)
 
     await query.update(dirty)
@@ -93,7 +100,7 @@ export class Adapter implements AdapterContract {
    */
   public async delete (instance: ModelContract) {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    const client = this._getModelClient(modelConstructor)
+    const client = this._getModelClient(modelConstructor, instance.$options)
     const query = instance.$getQueryFor('delete', client)
     await query.del()
   }

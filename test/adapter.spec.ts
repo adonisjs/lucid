@@ -8,10 +8,8 @@
 */
 
 import test from 'japa'
-import { BaseModel } from '../src/Orm/BaseModel'
 import { column } from '../src/Orm/Decorators'
-import { setup, cleanup, getDb, resetTables } from '../test-helpers'
-import { Adapter } from '../src/Orm/Adapter'
+import { setup, cleanup, getDb, resetTables, getBaseModel, ormAdapter } from '../test-helpers'
 
 test.group('BaseModel', (group) => {
   group.before(async () => {
@@ -27,7 +25,7 @@ test.group('BaseModel', (group) => {
   })
 
   test('make insert call using a model', async (assert) => {
-    const adapter = new Adapter(getDb())
+    const BaseModel = getBaseModel(ormAdapter())
 
     class User extends BaseModel {
       public static $table = 'users'
@@ -38,8 +36,8 @@ test.group('BaseModel', (group) => {
       @column()
       public username: string
     }
+
     User.$boot()
-    User.$adapter = adapter
 
     const user = new User()
     user.username = 'virk'
@@ -52,7 +50,7 @@ test.group('BaseModel', (group) => {
   })
 
   test('make update call using a model', async (assert) => {
-    const adapter = new Adapter(getDb())
+    const BaseModel = getBaseModel(ormAdapter())
 
     class User extends BaseModel {
       public static $table = 'users'
@@ -64,7 +62,6 @@ test.group('BaseModel', (group) => {
       public username: string
     }
     User.$boot()
-    User.$adapter = adapter
 
     const user = new User()
     user.username = 'virk'
@@ -84,7 +81,7 @@ test.group('BaseModel', (group) => {
 
   test('make delete call using a model', async (assert) => {
     const db = getDb()
-    const adapter = new Adapter(db)
+    const BaseModel = getBaseModel(ormAdapter())
 
     class User extends BaseModel {
       public static $table = 'users'
@@ -96,7 +93,6 @@ test.group('BaseModel', (group) => {
       public username: string
     }
     User.$boot()
-    User.$adapter = adapter
 
     const user = new User()
     user.username = 'virk'
@@ -116,7 +112,7 @@ test.group('BaseModel', (group) => {
 
   test('get model instance using the find call', async (assert) => {
     const db = getDb()
-    const adapter = new Adapter(db)
+    const BaseModel = getBaseModel(ormAdapter())
 
     class User extends BaseModel {
       public static $table = 'users'
@@ -128,7 +124,6 @@ test.group('BaseModel', (group) => {
       public username: string
     }
     User.$boot()
-    User.$adapter = adapter
 
     const [id] = await db.table('users').returning('id').insert({ username: 'virk' })
 
@@ -140,7 +135,7 @@ test.group('BaseModel', (group) => {
 
   test('get array of model instances using the findAll call', async (assert) => {
     const db = getDb()
-    const adapter = new Adapter(db)
+    const BaseModel = getBaseModel(ormAdapter())
 
     class User extends BaseModel {
       public static $table = 'users'
@@ -152,7 +147,6 @@ test.group('BaseModel', (group) => {
       public username: string
     }
     User.$boot()
-    User.$adapter = adapter
 
     await db.table('users').returning('id').multiInsert(
       [{ username: 'virk' }, { username: 'nikk' }],

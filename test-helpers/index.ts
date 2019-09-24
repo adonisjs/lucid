@@ -181,7 +181,10 @@ export function getProfiler () {
 export function getDb () {
   const config = {
     connection: 'primary',
-    connections: { primary: getConfig() },
+    connections: {
+      primary: getConfig(),
+      secondary: getConfig(),
+    },
   }
 
   return new Database(config, getLogger(), getProfiler())

@@ -14,6 +14,7 @@ import knex from 'knex'
 import { trait } from '@poppinss/traits'
 
 import {
+  ModelOptions,
   ModelConstructorContract,
   ModelQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Orm'
@@ -30,9 +31,15 @@ import { Executable, ExecutableConstructor } from '../../Database/Traits/Executa
 export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderContract<
   ModelConstructorContract
 > {
+  /**
+   * Sideloaded attributes that will be passed to the model instances
+   */
+  private _sideloaded = {}
+
   constructor (
     builder: knex.QueryBuilder,
     public model: ModelConstructorContract,
+    public options?: ModelOptions,
     public client?: QueryClientContract,
   ) {
     super(builder, (userFn) => {
@@ -43,10 +50,26 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
-   * Wraps the query result to model instances
+   * Set sideloaded properties to be passed to the model instance
+   */
+  public sideload (value: any) {
+    this._sideloaded = value
+    return this
+  }
+
+  /**
+   * Returns the connection name used by the query client
+   */
+  public get connection () {
+    return this.client!.connectionName
+  }
+
+  /**
+   * Wraps the query result to model instances. This method is invoked by the
+   * Executable trait.
    */
   public wrapQueryResults (rows: any[]): any[] {
-    return this.model!.$createMultipleFromAdapterResult(rows)
+    return this.model!.$createMultipleFromAdapterResult(rows, this._sideloaded, this.options)
   }
 
   /**
