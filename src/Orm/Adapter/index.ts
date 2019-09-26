@@ -7,8 +7,7 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../adonis-typings/orm.ts" />
-/// <reference path="../../../adonis-typings/database.ts" />
+/// <reference path="../../../adonis-typings/index.ts" />
 
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import {
@@ -16,9 +15,7 @@ import {
   ModelContract,
   AdapterContract,
   ModelConstructorContract,
-} from '@ioc:Adonis/Lucid/Orm'
-
-import { ModelQueryBuilder } from '../QueryBuilder'
+} from '@ioc:Adonis/Lucid/Model'
 
 /**
  * Adapter exposes the API to make database queries and constructor
@@ -42,32 +39,7 @@ export class Adapter implements AdapterContract {
    */
   public query (modelConstructor: ModelConstructorContract, options?: ModelOptions): any {
     const client = this._getModelClient(modelConstructor, options)
-    const query = client.knexQuery()
-    query.table(modelConstructor.$table)
-
-    return new ModelQueryBuilder(query, modelConstructor, options, client)
-  }
-
-  /**
-   * Find a given row and construct model instance from it
-   */
-  public async find (
-    modelConstructor: ModelConstructorContract,
-    key: string,
-    value: any,
-  ): Promise<ModelContract | null> {
-    return this
-      .query(modelConstructor)
-      .select('*')
-      .where(key, value)
-      .first()
-  }
-
-  /**
-   * Returns an array of models by making a select query
-   */
-  public async findAll (modelConstructor: ModelConstructorContract): Promise<ModelContract[]> {
-    return this.query(modelConstructor).select('*').exec()
+    return client.modelQuery(modelConstructor)
   }
 
   /**

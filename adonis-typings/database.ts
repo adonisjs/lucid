@@ -17,13 +17,15 @@ declare module '@ioc:Adonis/Lucid/Database' {
   import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
   import {
-    RawContract,
-    DatabaseQueryBuilderContract,
-    InsertQueryBuilderContract,
-    StrictValuesWithoutRaw,
-    SelectTable,
     Table,
+    SelectTable,
+    RawContract,
+    StrictValuesWithoutRaw,
+    InsertQueryBuilderContract,
+    DatabaseQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+
+  import { ModelConstructorContract, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
 
   /**
    * A executable query builder will always have these methods on it.
@@ -73,6 +75,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
      */
     getReadClient (): knex<any, any> | knex.Transaction<any, any>
     getWriteClient (): knex<any, any> | knex.Transaction<any, any>
+
+    /**
+     * Returns the query builder for a given model
+     */
+    modelQuery<T extends ModelConstructorContract> (model: T): ModelQueryBuilderContract<T>
 
     /**
      * Returns the knex query builder instance
@@ -510,12 +517,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Disconnect knex
      */
     disconnect (): Promise<void>,
-
-    /**
-     * Returns an instance of a given client. A sticky client
-     * always uses the write connection for all queries
-     */
-    getClient (mode?: 'write' | 'read'): QueryClientContract,
   }
 
   /**

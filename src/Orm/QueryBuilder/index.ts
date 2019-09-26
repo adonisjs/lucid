@@ -7,21 +7,22 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../adonis-typings/database.ts" />
-/// <reference path="../../../adonis-typings/orm.ts" />
+/// <reference path="../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
 import { trait } from '@poppinss/traits'
+import { Exception } from '@poppinss/utils'
 
 import {
   ModelOptions,
+  RelationContract,
   ModelConstructorContract,
   ModelQueryBuilderContract,
-} from '@ioc:Adonis/Lucid/Orm'
+} from '@ioc:Adonis/Lucid/Model'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { Chainable } from '../../Database/QueryBuilder/Chainable'
-import { Executable, ExecutableConstructor } from '../../Database/Traits/Executable'
+import { Executable, ExecutableConstructor } from '../../Traits/Executable'
 
 /**
  * Database query builder exposes the API to construct and run queries for selecting,
@@ -36,17 +37,43 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    */
   private _sideloaded = {}
 
+  /**
+   * A copy of defined preloads on the model instance
+   */
+  private _preloads: {
+    relation: RelationContract,
+    callback?: (builder: ModelQueryBuilderContract<any>) => void,
+  }[] = []
+
   constructor (
     builder: knex.QueryBuilder,
     public model: ModelConstructorContract,
+    public client: QueryClientContract,
     public options?: ModelOptions,
-    public client?: QueryClientContract,
   ) {
     super(builder, (userFn) => {
       return (builder) => {
-        userFn(new ModelQueryBuilder(builder, this.model))
+        userFn(new ModelQueryBuilder(builder, this.model, this.client, this.options))
       }
     })
+    builder.table(model.$table)
+  }
+
+  /**
+   * Wraps the query result to model instances. This method is invoked by the
+   * Executable trait.
+   */
+  public async afterExecute (rows: any[]): Promise<any[]> {
+    const modelInstances = this.model.$createMultipleFromAdapterResult(
+      rows,
+      this._sideloaded,
+      this.options,
+    )
+
+    await Promise.all(this._preloads.map((one) => {
+      return one.relation.exec(modelInstances, this.options, one.callback)
+    }))
+    return modelInstances
   }
 
   /**
@@ -65,20 +92,32 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
-   * Wraps the query result to model instances. This method is invoked by the
-   * Executable trait.
-   */
-  public wrapQueryResults (rows: any[]): any[] {
-    return this.model!.$createMultipleFromAdapterResult(rows, this._sideloaded, this.options)
-  }
-
-  /**
    * Fetch and return first results from the results set. This method
    * will implicitly set a `limit` on the query
    */
   public async first (): Promise<any> {
     const result = await this.limit(1)['exec']()
     return result[0] || null
+  }
+
+  /**
+   * Define a relationship to be preloaded
+   */
+  public preload (
+    relationName: string,
+    callback?: (builder: ModelQueryBuilderContract<any>) => void,
+  ): this {
+    const relation = this.model.$getRelation(relationName)
+
+    /**
+     * Undefined relationship
+     */
+    if (!relation) {
+      throw new Exception(`${relationName} is not defined as a relationship on ${this.model.name} model`)
+    }
+
+    this._preloads.push({ relation, callback })
+    return this
   }
 
   /**

@@ -11,6 +11,7 @@
 
 import test from 'japa'
 import { Connection } from '../src/Connection'
+import { QueryClient } from '../src/QueryClient'
 import { getConfig, setup, cleanup, getLogger } from '../test-helpers'
 
 test.group('Query client', (group) => {
@@ -26,7 +27,7 @@ test.group('Query client', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const client = connection.getClient()
+    const client = new QueryClient('dual', connection)
     assert.equal(client.mode, 'dual')
     await connection.disconnect()
   })
@@ -35,7 +36,7 @@ test.group('Query client', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const client = connection.getClient('read')
+    const client = new QueryClient('read', connection)
     assert.equal(client.mode, 'read')
     await connection.disconnect()
   })
@@ -44,7 +45,7 @@ test.group('Query client', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const client = connection.getClient('write')
+    const client = new QueryClient('write', connection)
     assert.equal(client.mode, 'write')
     await connection.disconnect()
   })
@@ -62,7 +63,7 @@ test.group('Query client | dual mode', (group) => {
   test('perform select queries in dual mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = connection.getClient()
+    const client = new QueryClient('dual', connection)
 
     const results = await client.query().from('users')
     assert.isArray(results)
@@ -74,7 +75,7 @@ test.group('Query client | dual mode', (group) => {
   test('perform insert queries in dual mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = connection.getClient()
+    const client = new QueryClient('dual', connection)
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     const results = await client.query().from('users')
@@ -89,7 +90,7 @@ test.group('Query client | dual mode', (group) => {
   test('perform raw queries in dual mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = connection.getClient()
+    const client = new QueryClient('dual', connection)
 
     const command = process.env.DB === 'sqlite' ? `DELETE FROM users;` : 'TRUNCATE users;'
 
@@ -106,7 +107,7 @@ test.group('Query client | dual mode', (group) => {
   test('perform queries inside a transaction in dual mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = connection.getClient()
+    const client = new QueryClient('dual', connection)
 
     const trx = await client.transaction()
     await trx.insertQuery().table('users').insert({ username: 'virk' })
@@ -133,7 +134,7 @@ test.group('Query client | read mode', (group) => {
   test('perform select queries in read mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = connection.getClient('read')
+    const client = new QueryClient('read', connection)
 
     const results = await client.query().from('users')
     assert.isArray(results)
@@ -145,7 +146,7 @@ test.group('Query client | read mode', (group) => {
   test('raise error when attempting to perform insert in read mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = connection.getClient('read')
+    const client = new QueryClient('read', connection)
 
     const fn = () => client.insertQuery()
     assert.throw(fn, 'Write client is not available for query client instantiated in read mode')
@@ -156,7 +157,7 @@ test.group('Query client | read mode', (group) => {
   test('perform raw queries in read mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = connection.getClient('read')
+    const client = new QueryClient('read', connection)
 
     const result = await client.raw('SELECT 1 + 1').exec()
     assert.isDefined(result)
@@ -169,7 +170,7 @@ test.group('Query client | read mode', (group) => {
 
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = connection.getClient('read')
+    const client = new QueryClient('read', connection)
 
     try {
       await client.transaction()
@@ -196,7 +197,7 @@ test.group('Query client | write mode', (group) => {
   test('perform select queries in write mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = connection.getClient('write')
+    const client = new QueryClient('write', connection)
 
     const results = await client.query().from('users')
     assert.isArray(results)
@@ -208,7 +209,7 @@ test.group('Query client | write mode', (group) => {
   test('perform insert queries in write mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = connection.getClient('write')
+    const client = new QueryClient('write', connection)
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     const results = await client.query().from('users')
@@ -223,7 +224,7 @@ test.group('Query client | write mode', (group) => {
   test('perform raw queries in write mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = connection.getClient('write')
+    const client = new QueryClient('write', connection)
 
     const command = process.env.DB === 'sqlite' ? `DELETE FROM users;` : 'TRUNCATE users;'
 
@@ -240,7 +241,7 @@ test.group('Query client | write mode', (group) => {
   test('perform queries inside a transaction in write mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = connection.getClient('write')
+    const client = new QueryClient('write', connection)
 
     const trx = await client.transaction()
     await trx.insertQuery().table('users').insert({ username: 'virk' })

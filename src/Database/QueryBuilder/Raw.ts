@@ -15,14 +15,14 @@ import { trait } from '@poppinss/traits'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { RawContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
-import { Executable, ExecutableConstructor } from '../Traits/Executable'
+import { Executable, ExecutableConstructor } from '../../Traits/Executable'
 
 /**
  * Exposes the API to execute raw queries
  */
 @trait<ExecutableConstructor>(Executable)
 export class RawQueryBuilder implements RawContract {
-  constructor (public $knexBuilder: knex.Raw, public client?: QueryClientContract) {
+  constructor (public $knexBuilder: knex.Raw, public client: QueryClientContract) {
   }
 
   /**

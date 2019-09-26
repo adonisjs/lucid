@@ -12,6 +12,7 @@
 import test from 'japa'
 
 import { Connection } from '../src/Connection'
+import { QueryClient } from '../src/QueryClient'
 import { getConfig, setup, cleanup, resetTables, getLogger } from '../test-helpers'
 
 test.group('Transaction | query', (group) => {
@@ -31,7 +32,7 @@ test.group('Transaction | query', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = await connection.getClient().transaction()
+    const db = await new QueryClient('dual', connection).transaction()
     const results = await db.query().from('users')
     await db.commit()
 
@@ -43,11 +44,11 @@ test.group('Transaction | query', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = await connection.getClient().transaction()
+    const db = await new QueryClient('dual', connection).transaction()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.commit()
 
-    const results = await connection.getClient().query().from('users')
+    const results = await new QueryClient('dual', connection).query().from('users')
     assert.isArray(results)
     assert.lengthOf(results, 1)
     assert.equal(results[0].username, 'virk')
@@ -57,11 +58,11 @@ test.group('Transaction | query', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = await connection.getClient().transaction()
+    const db = await new QueryClient('dual', connection).transaction()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.rollback()
 
-    const results = await connection.getClient().query().from('users')
+    const results = await new QueryClient('dual', connection).query().from('users')
     assert.isArray(results)
     assert.lengthOf(results, 0)
   })
@@ -73,7 +74,7 @@ test.group('Transaction | query', (group) => {
     /**
      * Transaction 1
      */
-    const db = await connection.getClient().transaction()
+    const db = await new QueryClient('dual', connection).transaction()
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
     /**
@@ -92,7 +93,7 @@ test.group('Transaction | query', (group) => {
      */
     await db.commit()
 
-    const results = await connection.getClient().query().from('users')
+    const results = await new QueryClient('dual', connection).query().from('users')
     assert.isArray(results)
     assert.lengthOf(results, 1)
     assert.equal(results[0].username, 'virk')

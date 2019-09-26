@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../adonis-typings/database.ts" />
+/// <reference path="../../adonis-typings/index.ts" />
 
 import knex from 'knex'
 import { Exception } from '@poppinss/utils'
@@ -25,8 +25,9 @@ import {
 export type ExecutableConstructor<T = {
   $knexBuilder: knex.Raw | knex.QueryBuilder,
   getQueryClient: () => undefined | knex,
-  client?: QueryClientContract,
-  wrapQueryResults?: (results: any[]) => any[],
+  client: QueryClientContract,
+  beforeExecute?: () => Promise<void>,
+  afterExecute?: (results: any[]) => Promise<any[]>,
 }> = { new (...args: any[]): T }
 
 /**
@@ -37,7 +38,8 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
   protected $knexBuilder: knex.QueryBuilder | knex.Raw
   protected client: QueryClientContract
   protected getQueryClient: () => undefined | knex
-  protected wrapQueryResults?: (results: any[]) => any[]
+  protected beforeExecute?: () => Promise<void>
+  protected afterExecute?: (results: any[]) => Promise<any[]>
 
   /**
    * Returns the profiler action
@@ -161,12 +163,21 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
    * Executes the query
    */
   public async exec (): Promise<any> {
+    let result: any
+
     /**
      * Raise exception when client is missing, since we need one to execute
      * the query
      */
     if (!this.client) {
       throw new Exception('Cannot execute query without query client', 500, 'E_RUNTIME_EXCEPTION')
+    }
+
+    /**
+     * Execute before handler if exists
+     */
+    if (typeof (this.beforeExecute) === 'function') {
+      await this.beforeExecute()
     }
 
     /**
@@ -178,20 +189,24 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
       || this.client.isTransaction
       || this.$knexBuilder['client'].transacting
     ) {
-      const result = await this._executeQuery()
-      return typeof (this.wrapQueryResults) === 'function' ? this.wrapQueryResults(result) : result
+      result = await this._executeQuery()
+    } else {
+      const knexClient = this.getQueryClient()
+      if (knexClient) {
+        result = await this._executeQueryWithCustomConnection(knexClient)
+      } else {
+        result = await this._executeQuery()
+      }
     }
 
     /**
-     * Executing the query with a custom knex client when it exits
+     * Execute after handler if exists
      */
-    const knexClient = this.getQueryClient()
+    if (typeof (this.afterExecute) === 'function') {
+      result = await this.afterExecute(result)
+    }
 
-    const result = await (knexClient
-      ? this._executeQueryWithCustomConnection(knexClient)
-      : this._executeQuery())
-
-    return typeof (this.wrapQueryResults) === 'function' ? this.wrapQueryResults(result) : result
+    return result
   }
 
   /**

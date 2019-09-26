@@ -17,8 +17,6 @@ import { patchKnex } from 'knex-dynamic-connection'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
 import { ConnectionConfigContract, ConnectionContract } from '@ioc:Adonis/Lucid/Database'
 
-import { QueryClient } from '../Database/QueryClient'
-
 /**
  * Connection class manages a given database connection. Internally it uses
  * knex to build the database connection with appropriate database
@@ -65,15 +63,6 @@ export class Connection extends EventEmitter implements ConnectionContract {
   ) {
     super()
     this._validateConfig()
-  }
-
-  /**
-   * Raises exception when client or readClient are not defined
-   */
-  private _ensureClients () {
-    if (!this.client || !this.readClient) {
-      throw new Exception('Connection is not in ready state. Make sure to call .connect first')
-    }
   }
 
   /**
@@ -270,6 +259,14 @@ export class Connection extends EventEmitter implements ConnectionContract {
   }
 
   /**
+   * Returns a boolean indicating if the connection is ready for making
+   * database queries. If not, one must call `connect`.
+   */
+  public get ready (): boolean {
+    return !!(this.client || this.readClient)
+  }
+
+  /**
    * Opens the connection by creating knex instance
    */
   public connect () {
@@ -316,15 +313,5 @@ export class Connection extends EventEmitter implements ConnectionContract {
         this.emit('disconnect:error', error, this)
       }
     }
-  }
-
-  /**
-   * Returns an instance for a query client that using this connection. Setting
-   * `sticky=true` will use the write connection for reads
-   */
-  public getClient (mode?: 'read' | 'write') {
-    this._ensureClients()
-    this._logger.trace({ connection: this.name }, 'creating query client in %s mode', [mode || 'dual'])
-    return new QueryClient(mode || 'dual', this)
   }
 }

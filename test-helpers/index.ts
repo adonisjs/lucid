@@ -17,8 +17,9 @@ import { Profiler } from '@adonisjs/profiler/build/standalone'
 import { Filesystem } from '@poppinss/dev-utils'
 
 import {
-  ConnectionConfigContract,
+  ConnectionContract,
   QueryClientContract,
+  ConnectionConfigContract,
   ExcutableQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Database'
 
@@ -28,10 +29,11 @@ import {
   DatabaseQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
-import { ModelConstructorContract } from '@ioc:Adonis/Lucid/Orm'
+import { ModelConstructorContract, ModelContract, AdapterContract } from '@ioc:Adonis/Lucid/Model'
 
 import { Adapter } from '../src/Orm/Adapter'
 import { BaseModel } from '../src/Orm/BaseModel'
+import { QueryClient } from '../src/QueryClient'
 import { Database } from '../src/Database/index'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
@@ -92,11 +94,21 @@ export async function setup () {
 
   const db = knex(getConfig())
 
-  const hasTable = await db.schema.hasTable('users')
-  if (!hasTable) {
+  const hasUsersTable = await db.schema.hasTable('users')
+  if (!hasUsersTable) {
     await db.schema.createTable('users', (table) => {
       table.increments()
       table.string('username')
+      table.timestamps()
+    })
+  }
+
+  const hasProfilesTable = await db.schema.hasTable('profiles')
+  if (!hasProfilesTable) {
+    await db.schema.createTable('profiles', (table) => {
+      table.increments()
+      table.integer('user_id')
+      table.string('display_name')
       table.timestamps()
     })
   }
@@ -115,6 +127,7 @@ export async function cleanup () {
 
   const db = knex(getConfig())
   await db.schema.dropTableIfExists('users')
+  await db.schema.dropTableIfExists('profiles')
   await db.destroy()
 }
 
@@ -124,6 +137,17 @@ export async function cleanup () {
 export async function resetTables () {
   const db = knex(getConfig())
   await db.table('users').truncate()
+  await db.table('profiles').truncate()
+}
+
+/**
+ * Returns the query client typed to it's interface
+ */
+export function getQueryClient (
+  connection: ConnectionContract,
+  mode?: 'read' | 'write',
+): QueryClientContract {
+  return new QueryClient(mode || 'dual', connection) as QueryClientContract
 }
 
 /**
@@ -197,7 +221,96 @@ export function ormAdapter () {
   return new Adapter(getDb())
 }
 
-export function getBaseModel (adapter: Adapter) {
+/**
+ * Returns the base model with the adapter attached to it
+ */
+export function getBaseModel (adapter: AdapterContract) {
   BaseModel.$adapter = adapter
   return BaseModel as unknown as ModelConstructorContract
+}
+
+/**
+ * Fake adapter implementation
+ */
+export class FakeAdapter implements AdapterContract {
+  public operations: any[] = []
+
+  private _handlers: any = {
+    insert: null,
+    update: null,
+    find: null,
+    delete: null,
+    findAll: null,
+  }
+
+  private _invokeHandler (
+    action: keyof FakeAdapter['_handlers'],
+    model: ModelContract | ModelConstructorContract,
+    options?: any,
+  ) {
+    if (typeof (this._handlers[action]) === 'function') {
+      return this._handlers[action](model, options)
+    }
+  }
+
+  public query (): any {
+  }
+
+  public on (action: 'insert', handler: ((model: ModelContract) => void)): void
+  public on (action: 'update', handler: ((model: ModelContract) => void)): void
+  public on (action: 'delete', handler: ((model: ModelContract) => void)): void
+  public on (action: 'find', handler: ((model: ModelConstructorContract, options?: any) => void)): void
+  public on (action: 'findAll', handler: ((model: ModelConstructorContract, options?: any) => void)): void
+  public on (
+    action: string,
+    handler: ((model: ModelContract) => void) | ((model: ModelConstructorContract) => void),
+  ): void {
+    this._handlers[action] = handler
+  }
+
+  public async insert (instance: ModelContract, attributes: any) {
+    this.operations.push({ type: 'insert', instance, attributes })
+    return this._invokeHandler('insert', instance)
+  }
+
+  public async delete (instance: ModelContract) {
+    this.operations.push({ type: 'delete', instance })
+    return this._invokeHandler('delete', instance)
+  }
+
+  public async update (instance: ModelContract, attributes: any) {
+    this.operations.push({ type: 'update', instance, attributes })
+    return this._invokeHandler('update', instance)
+  }
+
+  public async find (model: ModelConstructorContract, key: string, value: any, options?: any) {
+    const payload: any = { type: 'find', model, key, value }
+    if (options) {
+      payload.options = options
+    }
+
+    this.operations.push(payload)
+    return this._invokeHandler('find', model, options)
+  }
+
+  public async findAll (model: ModelConstructorContract, options?: any) {
+    const payload: any = { type: 'findAll', model }
+    if (options) {
+      payload.options = options
+    }
+
+    this.operations.push(payload)
+    return this._invokeHandler('findAll', model, options)
+  }
+}
+
+/**
+ * Converts a map to an object
+ */
+export function mapToObj<T extends any> (value: Map<any, any>): T {
+  let obj = {} as T
+  value.forEach((value, key) => {
+    obj[key] = value
+  })
+  return obj
 }
