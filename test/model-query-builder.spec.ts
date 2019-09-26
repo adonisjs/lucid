@@ -10,7 +10,7 @@
 import test from 'japa'
 import { column } from '../src/Orm/Decorators'
 import { ModelQueryBuilder } from '../src/Orm/QueryBuilder'
-import { getBaseModel, ormAdapter, getDb, setup, cleanup, resetTables } from '../test-helpers'
+import { getBaseModel, ormAdapter, getDb, setup, cleanup, resetTables, getProfiler } from '../test-helpers'
 
 test.group('Model query builder', (group) => {
   group.before(async () => {
@@ -74,7 +74,7 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
   })
 
-  test('use custom connection when passed to the query', async (assert) => {
+  test('pass custom connection to the model instance', async (assert) => {
     const BaseModel = getBaseModel(ormAdapter())
     class User extends BaseModel {
       @column({ primary: true })
@@ -92,7 +92,7 @@ test.group('Model query builder', (group) => {
     assert.lengthOf(users, 1)
     assert.instanceOf(users[0], User)
     assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
-    assert.deepEqual(users[0].$options, { connection: 'secondary' })
+    assert.deepEqual(users[0].$options!.connection, 'secondary')
   })
 
   test('pass sideloaded attributes to the model instance', async (assert) => {
@@ -118,5 +118,27 @@ test.group('Model query builder', (group) => {
     assert.instanceOf(users[0], User)
     assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
     assert.deepEqual(users[0].$sideloaded, { loggedInUser: { id: 1 } })
+  })
+
+  test('pass custom profiler to the model instance', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.$boot()
+    const db = getDb()
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const profiler = getProfiler()
+    const users = await User.query({ profiler }).where('username', 'virk')
+    assert.lengthOf(users, 1)
+    assert.instanceOf(users[0], User)
+    assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
+    assert.deepEqual(users[0].$options!.profiler, profiler)
   })
 })

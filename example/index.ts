@@ -1,10 +1,14 @@
 import { BaseModel } from '@ioc:Adonis/Lucid/Orm'
 
-class User extends BaseModel {
-  public username: string
+class Profile extends BaseModel {
 }
 
-const user = User.query().then((a) => {
-  a[0].username.toLocaleLowerCase()
-})
-console.log(user)
+class User extends BaseModel {
+  public username: string
+
+  public profile: Profile
+}
+
+const user = new User()
+const profile = user.$getRelated('profile')
+console.log(profile)

@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../adonis-typings/database.ts" />
+/// <reference path="../../adonis-typings/index.ts" />
 
 import knex from 'knex'
 import { Exception } from '@poppinss/utils'
@@ -20,10 +20,11 @@ import {
   TransactionClientContract,
 } from '@ioc:Adonis/Lucid/Database'
 
-import { RawQueryBuilder } from '../QueryBuilder/Raw'
+import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { TransactionClient } from '../TransactionClient'
-import { InsertQueryBuilder } from '../QueryBuilder/Insert'
-import { DatabaseQueryBuilder } from '../QueryBuilder/Database'
+import { RawQueryBuilder } from '../Database/QueryBuilder/Raw'
+import { InsertQueryBuilder } from '../Database/QueryBuilder/Insert'
+import { DatabaseQueryBuilder } from '../Database/QueryBuilder/Database'
 
 /**
  * Query client exposes the API to fetch instance of different query builders
@@ -110,8 +111,12 @@ export class QueryClient implements QueryClientContract {
   public async transaction (): Promise<TransactionClientContract> {
     const trx = await this.getWriteClient().transaction()
     const transaction = new TransactionClient(trx, this.dialect, this.connectionName)
-    transaction.profiler = this.profiler
 
+    /**
+     * Always make sure to pass the profiler down to the transaction
+     * client as well
+     */
+    transaction.profiler = this.profiler
     return transaction
   }
 
@@ -120,6 +125,18 @@ export class QueryClient implements QueryClientContract {
    */
   public knexQuery (): knex.QueryBuilder {
     return this._connection.client!.queryBuilder()
+  }
+
+  /**
+   * Returns a query builder instance for a given model. The `connection`
+   * and `profiler` is passed down to the model, so that it continue
+   * using the same options
+   */
+  public modelQuery (model: any): any {
+    return new ModelQueryBuilder(this.knexQuery(), model, this, {
+      connection: this.connectionName,
+      profiler: this.profiler,
+    })
   }
 
   /**

@@ -12,7 +12,7 @@
 import test from 'japa'
 
 import { Connection } from '../src/Connection'
-import { getConfig, setup, cleanup, getInsertBuilder, getLogger } from '../test-helpers'
+import { getConfig, setup, cleanup, getInsertBuilder, getLogger, getQueryClient } from '../test-helpers'
 
 test.group('Query Builder | insert', (group) => {
   group.before(async () => {
@@ -27,7 +27,7 @@ test.group('Query Builder | insert', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getInsertBuilder(connection.getClient())
+    const db = getInsertBuilder(getQueryClient(connection))
     const { sql, bindings } = db.table('users').insert({ username: 'virk' }).toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -43,7 +43,7 @@ test.group('Query Builder | insert', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getInsertBuilder(connection.getClient())
+    const db = getInsertBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .table('users')
       .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
@@ -62,7 +62,7 @@ test.group('Query Builder | insert', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getInsertBuilder(connection.getClient())
+    const db = getInsertBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .table('users')
       .returning(['id', 'username'])

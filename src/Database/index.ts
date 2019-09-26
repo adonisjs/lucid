@@ -14,12 +14,13 @@ import { LoggerContract } from '@ioc:Adonis/Core/Logger'
 import { ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 import {
-  ConnectionManagerContract,
-  DatabaseConfigContract,
-  DatabaseClientOptions,
   DatabaseContract,
+  DatabaseClientOptions,
+  DatabaseConfigContract,
+  ConnectionManagerContract,
 } from '@ioc:Adonis/Lucid/Database'
 
+import { QueryClient } from '../QueryClient'
 import { ConnectionManager } from '../Connection/Manager'
 
 /**
@@ -66,7 +67,10 @@ export class Database implements DatabaseContract {
   /**
    * Returns the query client for a given connection
    */
-  public connection (connection: string = this.primaryConnectionName, options?: DatabaseClientOptions) {
+  public connection (
+    connection: string = this.primaryConnectionName,
+    options?: DatabaseClientOptions,
+  ) {
     options = options || {}
 
     if (!options.profiler) {
@@ -88,23 +92,21 @@ export class Database implements DatabaseContract {
     /**
      * Fetching connection for the given name
      */
-    const rawConnection = this.manager.get(connection)!.connection!
+    const rawConnection = this.getRawConnection(connection)!.connection!
 
     /**
      * Generating query client for a given connection and setting appropriate
      * mode on it
      */
+    this._logger.trace({ connection }, 'creating query client in %s mode', [options.mode || 'dual'])
     const queryClient = options.mode
-      ? rawConnection.getClient(options.mode as ('read' | 'write'))
-      : rawConnection.getClient()
+      ? new QueryClient(options.mode, rawConnection)
+      : new QueryClient('dual', rawConnection)
 
     /**
      * Passing profiler to the query client for profiling queries
      */
-    if (options.profiler) {
-      queryClient.profiler = options.profiler
-    }
-
+    queryClient.profiler = options.profiler
     return queryClient
   }
 

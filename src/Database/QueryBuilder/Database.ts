@@ -10,18 +10,14 @@
 /// <reference path="../../../adonis-typings/database.ts" />
 
 import knex from 'knex'
-import { Exception } from '@poppinss/utils'
 import { trait } from '@poppinss/traits'
-
-import {
-  DatabaseQueryBuilderContract,
-  QueryCallback,
-} from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { Exception } from '@poppinss/utils'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { DatabaseQueryBuilderContract, QueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 import { Chainable } from './Chainable'
-import { Executable, ExecutableConstructor } from '../Traits/Executable'
+import { Executable, ExecutableConstructor } from '../../Traits/Executable'
 
 /**
  * Wrapping the user function for a query callback and give them
@@ -30,7 +26,15 @@ import { Executable, ExecutableConstructor } from '../Traits/Executable'
  */
 function queryCallback (userFn: QueryCallback<DatabaseQueryBuilderContract>) {
   return (builder: knex.QueryBuilder) => {
-    userFn(new DatabaseQueryBuilder(builder))
+    /**
+     * Sub queries don't need the client, since client is used to execute the query
+     * and subqueries are not executed seperately. That's why we just pass
+     * an empty object.
+     *
+     * Other option is to have this method for each instance of the class, but this
+     * is waste of resources.
+     */
+    userFn(new DatabaseQueryBuilder(builder, {} as any))
   }
 }
 
@@ -40,7 +44,7 @@ function queryCallback (userFn: QueryCallback<DatabaseQueryBuilderContract>) {
  */
 @trait<ExecutableConstructor>(Executable)
 export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuilderContract {
-  constructor (builder: knex.QueryBuilder, public client?: QueryClientContract) {
+  constructor (builder: knex.QueryBuilder, public client: QueryClientContract) {
     super(builder, queryCallback)
   }
 

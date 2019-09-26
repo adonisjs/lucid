@@ -7,15 +7,16 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../adonis-typings/database.ts" />
+/// <reference path="../../adonis-typings/index.ts" />
 
 import knex from 'knex'
 import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
-import { RawQueryBuilder } from '../QueryBuilder/Raw'
-import { InsertQueryBuilder } from '../QueryBuilder/Insert'
-import { DatabaseQueryBuilder } from '../QueryBuilder/Database'
+import { ModelQueryBuilder } from '../Orm/QueryBuilder'
+import { RawQueryBuilder } from '../Database/QueryBuilder/Raw'
+import { InsertQueryBuilder } from '../Database/QueryBuilder/Insert'
+import { DatabaseQueryBuilder } from '../Database/QueryBuilder/Database'
 
 /**
  * Transaction uses a dedicated connection from the connection pool
@@ -93,6 +94,18 @@ export class TransactionClient implements TransactionClientContract {
   }
 
   /**
+   * Returns a query builder instance for a given model. The `connection`
+   * and `profiler` is passed down to the model, so that it continue
+   * using the same options
+   */
+  public modelQuery (model: any): any {
+    return new ModelQueryBuilder(this.knexQuery(), model, this, {
+      connection: this.connectionName,
+      profiler: this.profiler,
+    })
+  }
+
+  /**
    * Get a new query builder instance
    */
   public query (): any {
@@ -112,6 +125,10 @@ export class TransactionClient implements TransactionClientContract {
   public async transaction (): Promise<TransactionClientContract> {
     const trx = await this.knexClient.transaction()
     const transaction = new TransactionClient(trx, this.dialect, this.connectionName)
+
+    /**
+     * Always make sure to pass the profiler down the chain
+     */
     transaction.profiler = this.profiler
     return transaction
   }

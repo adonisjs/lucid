@@ -11,7 +11,7 @@ import test from 'japa'
 import { column } from '../src/Orm/Decorators'
 import { setup, cleanup, getDb, resetTables, getBaseModel, ormAdapter } from '../test-helpers'
 
-test.group('BaseModel', (group) => {
+test.group('Adapter', (group) => {
   group.before(async () => {
     await setup()
   })
