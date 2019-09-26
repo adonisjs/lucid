@@ -291,4 +291,227 @@ test.group('Model | Has one', (group) => {
 
     assert.isNull(user!.profile)
   })
+
+  test('preload nested relations', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class Identity extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public profileId: number
+
+      @column()
+      public identityName: string
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @hasOne({ relatedModel: () => Identity })
+      public identity: Identity
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasOne({ relatedModel: () => Profile })
+      public profile: Profile
+    }
+
+    const db = getDb()
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('profiles').insert([
+      {
+        user_id: 1,
+        display_name: 'virk',
+      },
+      {
+        user_id: 2,
+        display_name: 'nikk',
+      },
+    ])
+
+     await db.insertQuery().table('identities').insert([
+      {
+        profile_id: 1,
+        identity_name: 'virk',
+      },
+      {
+        profile_id: 2,
+        identity_name: 'nikk',
+      },
+    ])
+
+    User.$boot()
+
+    const user = await User.query()
+      .preload('profile.identity')
+      .where('username', 'virk')
+      .first()
+
+    assert.instanceOf(user!.profile, Profile)
+    assert.instanceOf(user!.profile!.identity, Identity)
+  })
+
+  test('preload nested relations with primary relation repeating twice', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class Identity extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public profileId: number
+
+      @column()
+      public identityName: string
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @hasOne({ relatedModel: () => Identity })
+      public identity: Identity
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasOne({ relatedModel: () => Profile })
+      public profile: Profile
+    }
+
+    const db = getDb()
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('profiles').insert([
+      {
+        user_id: 1,
+        display_name: 'virk',
+      },
+      {
+        user_id: 2,
+        display_name: 'nikk',
+      },
+    ])
+
+     await db.insertQuery().table('identities').insert([
+      {
+        profile_id: 1,
+        identity_name: 'virk',
+      },
+      {
+        profile_id: 2,
+        identity_name: 'nikk',
+      },
+    ])
+
+    User.$boot()
+
+    const query = User.query()
+      .preload('profile')
+      .preload('profile.identity')
+      .where('username', 'virk')
+
+    const user = await query.first()
+    assert.instanceOf(user!.profile, Profile)
+    assert.instanceOf(user!.profile!.identity, Identity)
+    assert.lengthOf(Object.keys(query['_preloads']), 1)
+    assert.property(query['_preloads'], 'profile')
+    assert.lengthOf(query['_preloads'].profile.relation._preloads, 1)
+    assert.equal(query['_preloads'].profile.relation._preloads[0].relationName, 'identity')
+  })
+
+  test('pass main query options down the chain', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class Identity extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public profileId: number
+
+      @column()
+      public identityName: string
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @hasOne({ relatedModel: () => Identity })
+      public identity: Identity
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasOne({ relatedModel: () => Profile })
+      public profile: Profile
+    }
+
+    const db = getDb()
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('profiles').insert([
+      {
+        user_id: 1,
+        display_name: 'virk',
+      },
+      {
+        user_id: 2,
+        display_name: 'nikk',
+      },
+    ])
+
+     await db.insertQuery().table('identities').insert([
+      {
+        profile_id: 1,
+        identity_name: 'virk',
+      },
+      {
+        profile_id: 2,
+        identity_name: 'nikk',
+      },
+    ])
+
+    User.$boot()
+
+    const query = User.query({ connection: 'secondary' })
+      .preload('profile')
+      .preload('profile.identity')
+      .where('username', 'virk')
+
+    const user = await query.first()
+    assert.instanceOf(user!.profile, Profile)
+    assert.instanceOf(user!.profile!.identity, Identity)
+
+    assert.equal(user!.$options!.connection, 'secondary')
+    assert.equal(user!.profile.$options!.connection, 'secondary')
+    assert.equal(user!.profile.identity.$options!.connection, 'secondary')
+  })
 })

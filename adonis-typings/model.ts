@@ -92,9 +92,10 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * Interface to be implemented by all relationship types
    */
   export interface RelationContract {
-    type: AvailableRelations,
-    serializeAs: string,
-    relatedModel (): ModelConstructorContract,
+    type: AvailableRelations
+    serializeAs: string
+    relatedModel (): ModelConstructorContract
+    preload (relation: string, callback?: (builder: ModelQueryBuilderContract<any>) => void): this
     exec (
       model: ModelContract | ModelContract[],
       options?: ModelOptions,

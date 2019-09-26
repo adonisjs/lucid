@@ -113,6 +113,16 @@ export async function setup () {
     })
   }
 
+  const hasIdentitiesTable = await db.schema.hasTable('identities')
+  if (!hasIdentitiesTable) {
+    await db.schema.createTable('identities', (table) => {
+      table.increments()
+      table.integer('profile_id')
+      table.string('identity_name')
+      table.timestamps()
+    })
+  }
+
   await db.destroy()
 }
 
@@ -128,6 +138,7 @@ export async function cleanup () {
   const db = knex(getConfig())
   await db.schema.dropTableIfExists('users')
   await db.schema.dropTableIfExists('profiles')
+  await db.schema.dropTableIfExists('identities')
   await db.destroy()
 }
 
@@ -138,6 +149,7 @@ export async function resetTables () {
   const db = knex(getConfig())
   await db.table('users').truncate()
   await db.table('profiles').truncate()
+  await db.table('identities').truncate()
 }
 
 /**

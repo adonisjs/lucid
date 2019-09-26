@@ -41,9 +41,11 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * A copy of defined preloads on the model instance
    */
   private _preloads: {
-    relation: RelationContract,
-    callback?: (builder: ModelQueryBuilderContract<any>) => void,
-  }[] = []
+    [name: string]: {
+      relation: RelationContract,
+      callback?: (builder: ModelQueryBuilderContract<any>) => void,
+    },
+  } = {}
 
   constructor (
     builder: knex.QueryBuilder,
@@ -70,8 +72,9 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
       this.options,
     )
 
-    await Promise.all(this._preloads.map((one) => {
-      return one.relation.exec(modelInstances, this.options, one.callback)
+    await Promise.all(Object.keys(this._preloads).map((name) => {
+      const relation = this._preloads[name]
+      return relation.relation.exec(modelInstances, this.options, relation.callback)
     }))
     return modelInstances
   }
@@ -107,16 +110,25 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     relationName: string,
     callback?: (builder: ModelQueryBuilderContract<any>) => void,
   ): this {
-    const relation = this.model.$getRelation(relationName)
+    const relations = relationName.split('.')
+    const primary = relations.shift()!
+    const relation = this.model.$getRelation(primary)
 
     /**
      * Undefined relationship
      */
     if (!relation) {
-      throw new Exception(`${relationName} is not defined as a relationship on ${this.model.name} model`)
+      throw new Exception(`${primary} is not defined as a relationship on ${this.model.name} model`)
     }
 
-    this._preloads.push({ relation, callback })
+    const payload = this._preloads[primary] || { relation }
+    if (!relations.length) {
+      payload.callback = callback
+    } else {
+      payload.relation.preload(relations.join('.'), callback)
+    }
+
+    this._preloads[primary] = payload
     return this
   }
 
