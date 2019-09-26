@@ -62,6 +62,11 @@ export class HasOne implements RelationContract {
    */
   private _isValid: boolean = false
 
+  /**
+   * Preloads to pass to the query builder
+   */
+  private _preloads: { relationName: string, callback?: any }[] = []
+
   constructor (
     private _relationName: string,
     private _options: Partial<BaseRelationNode>,
@@ -163,6 +168,14 @@ export class HasOne implements RelationContract {
   }
 
   /**
+   * Takes preloads that we want to pass to the related query builder
+   */
+  public preload (relationName: string, callback?: (builder: ModelQueryBuilderContract<any>) => void) {
+    this._preloads.push({ relationName, callback })
+    return this
+  }
+
+  /**
    * Execute hasOne and set the relationship on model(s)
    */
   public async exec (
@@ -171,6 +184,12 @@ export class HasOne implements RelationContract {
     userCallback?: (builder: ModelQueryBuilderContract<any>) => void,
   ) {
     const query = this.relatedModel().query(options)
+
+    /**
+     * Pass preloads to the query builder
+     */
+    this._preloads.forEach(({ relationName, callback }) => query.preload(relationName, callback))
+
     if (typeof (userCallback) === 'function') {
       userCallback(query)
     }
