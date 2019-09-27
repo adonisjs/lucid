@@ -435,8 +435,8 @@ test.group('Model | Has one', (group) => {
     assert.instanceOf(user!.profile!.identity, Identity)
     assert.lengthOf(Object.keys(query['_preloads']), 1)
     assert.property(query['_preloads'], 'profile')
-    assert.lengthOf(query['_preloads'].profile.relation._preloads, 1)
-    assert.equal(query['_preloads'].profile.relation._preloads[0].relationName, 'identity')
+    assert.lengthOf(query['_preloads'].profile.children, 1)
+    assert.equal(query['_preloads'].profile.children[0].relationName, 'identity')
   })
 
   test('pass main query options down the chain', async (assert) => {

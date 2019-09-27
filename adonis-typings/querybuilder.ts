@@ -363,18 +363,15 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     Record extends Dictionary<any, string>,
   > {
     /**
-     * Accepting a typed column with the alias for the count. Unlike knex
-     * we enforce the alias, otherwise the output highly varies based
-     * upon the driver in use
+     * Accepting a typed column with the alias for the count.
      */
     <K extends keyof Record, Alias extends string>(
       column: OneOrMany<K>,
-      alias: Alias,
+      alias?: Alias,
     ): Builder
 
     /**
-     * Accepting an object for multiple counts in a single query. Again
-     * aliases are enforced for consistency.
+     * Accepting an object for multiple counts in a single query.
      */
     <
       K extends keyof Record,
@@ -389,12 +386,11 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
      */
     <Alias extends string>(
       column: OneOrMany<ValueWithSubQueries<string>>,
-      alias: Alias,
+      alias?: Alias,
     ): Builder
 
     /**
-     * Accepting an object for multiple counts in a single query. Again
-     * aliases are enforced for consistency
+     * Accepting an object for multiple counts in a single query.
      */
     <
       Alias extends string,

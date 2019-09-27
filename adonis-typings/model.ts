@@ -88,6 +88,13 @@ declare module '@ioc:Adonis/Lucid/Model' {
 
   export type AvailableRelations = 'hasOne'
 
+  type ModelExecuteableQueryBuilder = ModelQueryBuilderContract<any> & ExcutableQueryBuilderContract<any>
+
+  /**
+   * Callback accepted by the preload method
+   */
+  export type PreloadCallback = (builder: ModelExecuteableQueryBuilder) => void
+
   /**
    * Interface to be implemented by all relationship types
    */
@@ -95,12 +102,10 @@ declare module '@ioc:Adonis/Lucid/Model' {
     type: AvailableRelations
     serializeAs: string
     relatedModel (): ModelConstructorContract
-    preload (relation: string, callback?: (builder: ModelQueryBuilderContract<any>) => void): this
-    exec (
-      model: ModelContract | ModelContract[],
-      options?: ModelOptions,
-      callback?: (builder: ModelQueryBuilderContract<any>) => void,
-    ): Promise<void>
+    getQuery (model: ModelContract, options?: ModelOptions): ModelExecuteableQueryBuilder
+    getEagerQuery (models: ModelContract[], options?: ModelOptions): ModelExecuteableQueryBuilder
+    setRelated (model: ModelContract, related?: ModelContract | null): void
+    setRelatedMany (models: ModelContract[], related: ModelContract[]): void
   }
 
   /**
@@ -136,7 +141,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Define relationships to be preloaded
      */
-    preload (relation: string, callback?: (builder: ModelQueryBuilderContract<any>) => void): this
+    preload (relation: string, callback?: PreloadCallback): this
   }
 
   /**
