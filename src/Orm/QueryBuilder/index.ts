@@ -15,6 +15,8 @@ import { Exception } from '@poppinss/utils'
 
 import {
   ModelOptions,
+  ModelContract,
+  PreloadCallback,
   RelationContract,
   ModelConstructorContract,
   ModelQueryBuilderContract,
@@ -29,8 +31,7 @@ import { Executable, ExecutableConstructor } from '../../Traits/Executable'
  * updating and deleting records.
  */
 @trait<ExecutableConstructor>(Executable)
-export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderContract<
-  ModelConstructorContract
+export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderContract<ModelConstructorContract
 > {
   /**
    * Sideloaded attributes that will be passed to the model instances
@@ -43,7 +44,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   private _preloads: {
     [name: string]: {
       relation: RelationContract,
-      callback?: (builder: ModelQueryBuilderContract<any>) => void,
+      callback?: PreloadCallback,
+      children: { relationName: string, callback?: PreloadCallback }[],
     },
   } = {}
 
@@ -62,6 +64,60 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
+  * Parses the relation name string for nested relations. Nested relations
+  * can be defined using the dot notation.
+  */
+  private _parseRelationName (relationName: string, callback?: PreloadCallback) {
+    const relations = relationName.split('.')
+    const primary = relations.shift()!
+    const relation = this.model.$getRelation(primary)
+
+    /**
+     * Undefined relationship
+     */
+    if (!relation) {
+      throw new Exception(`${primary} is not defined as a relationship on ${this.model.name} model`)
+    }
+
+    return {
+      primary,
+      relation,
+      children: relations.length ? { relationName: relations.join(''), callback } : null,
+      callback: relations.length ? null : callback,
+    }
+  }
+
+  /**
+   * Process preloaded relationship
+   */
+  private async _processRelation (models: ModelContract[], name: string) {
+    const relation = this._preloads[name]
+    const query = relation.relation.getEagerQuery(models, this.options)
+
+    /**
+     * Pass nested preloads
+     */
+    relation.children.forEach(({ relationName, callback }) => query.preload(relationName, callback))
+
+    /**
+     * Invoke callback when defined
+     */
+    if (typeof (relation.callback) === 'function') {
+      relation.callback(query)
+    }
+
+    /**
+     * Execute query
+     */
+    const result = await query.exec()
+
+    /**
+     * Set relationships on models
+     */
+    relation.relation.setRelatedMany(models, result)
+  }
+
+  /**
    * Wraps the query result to model instances. This method is invoked by the
    * Executable trait.
    */
@@ -73,9 +129,9 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     )
 
     await Promise.all(Object.keys(this._preloads).map((name) => {
-      const relation = this._preloads[name]
-      return relation.relation.exec(modelInstances, this.options, relation.callback)
+      return this._processRelation(modelInstances, name)
     }))
+
     return modelInstances
   }
 
@@ -106,26 +162,14 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Define a relationship to be preloaded
    */
-  public preload (
-    relationName: string,
-    callback?: (builder: ModelQueryBuilderContract<any>) => void,
-  ): this {
-    const relations = relationName.split('.')
-    const primary = relations.shift()!
-    const relation = this.model.$getRelation(primary)
+  public preload (relationName: string, userCallback?: PreloadCallback): this {
+    const { primary, relation, children, callback } = this._parseRelationName(relationName, userCallback)
 
-    /**
-     * Undefined relationship
-     */
-    if (!relation) {
-      throw new Exception(`${primary} is not defined as a relationship on ${this.model.name} model`)
-    }
-
-    const payload = this._preloads[primary] || { relation }
-    if (!relations.length) {
-      payload.callback = callback
+    const payload = this._preloads[primary] || { relation, children: [] }
+    if (children) {
+      payload.children.push(children)
     } else {
-      payload.relation.preload(relations.join('.'), callback)
+      payload.callback = callback!
     }
 
     this._preloads[primary] = payload

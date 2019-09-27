@@ -15,7 +15,6 @@ import {
   RelationContract,
   BaseRelationNode,
   ModelConstructorContract,
-  ModelQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { camelCase, snakeCase, uniq } from 'lodash'
@@ -61,11 +60,6 @@ export class HasOne implements RelationContract {
    * A flag to know if model keys valid for executing database queries or not
    */
   private _isValid: boolean = false
-
-  /**
-   * Preloads to pass to the query builder
-   */
-  private _preloads: { relationName: string, callback?: any }[] = []
 
   constructor (
     private _relationName: string,
@@ -142,17 +136,6 @@ export class HasOne implements RelationContract {
   }
 
   /**
-   * Sets the related model instances
-   */
-  private _setRelated (model: ModelContract, related?: ModelContract | null) {
-    if (!related) {
-      return
-    }
-
-    model.$setRelated(this._relationName as keyof typeof model, related)
-  }
-
-  /**
    * Raises exception when value for the local key is missing on the model instance. This will
    * make the query fail
    */
@@ -168,57 +151,59 @@ export class HasOne implements RelationContract {
   }
 
   /**
-   * Takes preloads that we want to pass to the related query builder
+   * Returns query for the relationship with applied constraints
    */
-  public preload (relationName: string, callback?: (builder: ModelQueryBuilderContract<any>) => void) {
-    this._preloads.push({ relationName, callback })
-    return this
+  public getQuery (parent: ModelContract, options?: ModelOptions) {
+    const value = parent[this.localKey]
+
+    return this.relatedModel()
+      .query(options)
+      .where(this.foreignAdapterKey, this._ensureValue(value))
   }
 
   /**
-   * Execute hasOne and set the relationship on model(s)
+   * Returns query for the relationship with applied constraints for
+   * eagerloading
    */
-  public async exec (
-    parentInstances: ModelContract | ModelContract[],
-    options?: ModelOptions,
-    userCallback?: (builder: ModelQueryBuilderContract<any>) => void,
-  ) {
-    const query = this.relatedModel().query(options)
+  public getEagerQuery (parents: ModelContract[], options?: ModelOptions) {
+    const values = uniq(parents.map((parentInstance) => {
+      return this._ensureValue(parentInstance[this.localKey])
+    }))
 
+    return this.relatedModel()
+      .query(options)
+      .whereIn(this.foreignAdapterKey, values)
+  }
+
+  /**
+   * Sets the related model instance
+   */
+  public setRelated (model: ModelContract, related?: ModelContract | null) {
+    if (!related) {
+      return
+    }
+
+    model.$setRelated(this._relationName as keyof typeof model, related)
+  }
+
+  /**
+   * Set many related instances
+   */
+  public setRelatedMany (models: ModelContract[], related: ModelContract[]) {
     /**
-     * Pass preloads to the query builder
+     * Instead of looping over the model instances, we loop over the related model instances, since
+     * it can improve performance in some case. For example:
+     *
+     * - There are 10 parentInstances and we all of them to have one related instance, in
+     *   this case we run 10 iterations.
+     * - There are 10 parentInstances and 8 of them have related instance, in this case we run 8
+     *   iterations vs 10.
      */
-    this._preloads.forEach(({ relationName, callback }) => query.preload(relationName, callback))
-
-    if (typeof (userCallback) === 'function') {
-      userCallback(query)
-    }
-
-    if (Array.isArray(parentInstances)) {
-      const values = uniq(parentInstances.map((parentInstance) => {
-        return this._ensureValue(parentInstance[this.localKey])
-      }))
-      const result = await query.whereIn(this.foreignAdapterKey, values).exec()
-
-      /**
-       * Instead of looping over the model instances, we loop over the related model instances, since
-       * it can improve performance in some case. For example:
-       *
-       * - There are 10 parentInstances and we all of them to have one related instance, in
-       *   this case we run 10 iterations.
-       * - There are 10 parentInstances and 8 of them have related instance, in this case we run 8
-       *   iterations vs 10.
-       */
-      result.forEach((one) => {
-        const related = parentInstances.find((model) => model[this.localKey] === one[this.foreignKey])
-        if (related) {
-          this._setRelated(related, one)
-        }
-      })
-    } else {
-      const value = parentInstances[this.localKey]
-      const result = await query.where(this.foreignAdapterKey, this._ensureValue(value)).first()
-      this._setRelated(parentInstances, result)
-    }
+    related.forEach((one) => {
+      const relation = models.find((model) => model[this.localKey] === one[this.foreignKey])
+      if (relation) {
+        this.setRelated(relation, one)
+      }
+    })
   }
 }

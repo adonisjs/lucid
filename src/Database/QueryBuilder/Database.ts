@@ -71,7 +71,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
     }
 
     if (!alias) {
-      throw new Error('Aggregate function needs an alias as 2nd argument')
+      return alias
     }
 
     return { [alias]: this.$transformValue(columns) }
