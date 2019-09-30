@@ -11,8 +11,8 @@ import { IocContract } from '@adonisjs/fold'
 
 import { Database } from '../src/Database'
 import { Adapter } from '../src/Orm/Adapter'
-import { column, computed } from '../src/Orm/Decorators'
 import { BaseModel } from '../src/Orm/BaseModel'
+import { column, computed } from '../src/Orm/Decorators'
 
 export default class DatabaseServiceProvider {
   constructor (protected $container: IocContract) {
@@ -41,6 +41,12 @@ export default class DatabaseServiceProvider {
         column,
         computed,
       }
+    })
+  }
+
+  public boot () {
+    this.$container.with(['Adonis/Core/HealthCheck', 'Adonis/Lucid/Database'], (HealthCheck) => {
+      HealthCheck.addChecker('lucid', 'Adonis/Lucid/Database')
     })
   }
 }

@@ -142,21 +142,79 @@ test.group('Connection | setup', (group) => {
     const fn = () => connection.connect()
     assert.throw(fn, /knex: Required configuration option/)
   })
+
+  if (process.env.DB === 'mysql') {
+    test.group('Connection | setup mysql', () => {
+      test('pass user config to mysql driver', async (assert) => {
+        const config = getConfig() as MysqlConfigContract
+        config.connection!.charset = 'utf-8'
+        config.connection!.typeCast = false
+
+        const connection = new Connection('primary', config, getLogger())
+        connection.connect()
+
+        assert.equal(connection.client!['_context'].client.constructor.name, 'Client_MySQL')
+        assert.equal(connection.client!['_context'].client.config.connection.charset, 'utf-8')
+        assert.equal(connection.client!['_context'].client.config.connection.typeCast, false)
+      })
+    })
+  }
 })
 
-if (process.env.DB === 'mysql') {
-  test.group('Connection | setup mysql', () => {
-    test('pass user config to mysql driver', async (assert) => {
-      const config = getConfig() as MysqlConfigContract
-      config.connection!.charset = 'utf-8'
-      config.connection!.typeCast = false
+test.group('Health Checks', (group) => {
+  group.before(async () => {
+    await setup()
+  })
 
-      const connection = new Connection('primary', config, getLogger())
-      connection.connect()
+  group.after(async () => {
+    await cleanup()
+  })
 
-      assert.equal(connection.client!['_context'].client.constructor.name, 'Client_MySQL')
-      assert.equal(connection.client!['_context'].client.config.connection.charset, 'utf-8')
-      assert.equal(connection.client!['_context'].client.config.connection.typeCast, false)
+  test('get healthcheck report for healthy connection', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const report = await connection.getReport()
+    assert.deepEqual(report, {
+      connection: 'primary',
+      message: 'Connection is healthy',
+      error: null,
     })
   })
-}
+
+  if (process.env.DB !== 'sqlite') {
+    test('get healthcheck report for un-healthy connection', async (assert) => {
+      const connection = new Connection('primary', Object.assign({}, getConfig(), {
+        connection: {
+          host: 'bad-host',
+        },
+      }), getLogger())
+      connection.connect()
+
+      const report = await connection.getReport()
+      assert.equal(report.message, 'Unable to reach the database server')
+      assert.equal(report.error!.errno, 'ENOTFOUND')
+    }).timeout(0)
+
+    test('get healthcheck report for un-healthy read host', async (assert) => {
+      const connection = new Connection('primary', Object.assign({}, getConfig(), {
+        replicas: {
+          write: {
+            connection: getConfig().connection,
+          },
+          read: {
+            connection: [
+              getConfig().connection,
+              Object.assign({}, getConfig().connection, { host: 'bad-host' }),
+            ],
+          },
+        },
+      }), getLogger())
+      connection.connect()
+
+      const report = await connection.getReport()
+      assert.equal(report.message, 'Unable to reach one of the read hosts')
+      assert.equal(report.error!.errno, 'ENOTFOUND')
+    }).timeout(0)
+  }
+})

@@ -190,4 +190,33 @@ test.group('ConnectionManager', (group) => {
     manager.patch('primary', getConfig())
     manager.connect('primary')
   })
+
+  test('get health check report for connections that has enabled health checks', async (assert) => {
+    const manager = new ConnectionManager(getLogger())
+    manager.add('primary', Object.assign({}, getConfig(), { healthCheck: true }))
+    manager.add('secondary', Object.assign({}, getConfig(), { healthCheck: true }))
+    manager.add('secondary-copy', Object.assign({}, getConfig(), { healthCheck: false }))
+
+    const report = await manager.report()
+    assert.equal(report.health.healthy, true)
+    assert.equal(report.health.message, 'All connections are healthy')
+    assert.lengthOf(report.meta, 2)
+    assert.deepEqual(report.meta.map(({ connection }) => connection), ['primary', 'secondary'])
+  })
+
+  test('get health check report when one of the connection is unhealthy', async (assert) => {
+    const manager = new ConnectionManager(getLogger())
+    manager.add('primary', Object.assign({}, getConfig(), { healthCheck: true }))
+    manager.add('secondary', Object.assign({}, getConfig(), {
+      healthCheck: true,
+      connection: { host: 'bad-host' },
+    }))
+    manager.add('secondary-copy', Object.assign({}, getConfig(), { healthCheck: false }))
+
+    const report = await manager.report()
+    assert.equal(report.health.healthy, false)
+    assert.equal(report.health.message, 'One or more connections are not healthy')
+    assert.lengthOf(report.meta, 2)
+    assert.deepEqual(report.meta.map(({ connection }) => connection), ['primary', 'secondary'])
+  }).timeout(0)
 })

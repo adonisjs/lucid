@@ -15,7 +15,7 @@ import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
 import { patchKnex } from 'knex-dynamic-connection'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
-import { ConnectionConfigContract, ConnectionContract } from '@ioc:Adonis/Lucid/Database'
+import { ConnectionConfigContract, ConnectionContract, ReportNode } from '@ioc:Adonis/Lucid/Database'
 
 /**
  * Connection class manages a given database connection. Internally it uses
@@ -244,6 +244,53 @@ export class Connection extends EventEmitter implements ConnectionContract {
   }
 
   /**
+   * Checks all the read hosts by running a query on them. Stops
+   * after first error.
+   */
+  private async _checkReadHosts () {
+    const configCopy = Object.assign({}, this.config)
+    let error: any = null
+
+    for (let _replica of this._readReplicas) {
+      configCopy.connection = this._readConfigResolver(this.config)
+      this._logger.trace({ connection: this.name }, 'spawing health check read connection')
+      const client = knex(configCopy)
+
+      try {
+        await client.raw('SELECT 1 + 1 AS result')
+      } catch (err) {
+        error = err
+      }
+
+      /**
+       * Cleanup client connection
+       */
+      await client.destroy()
+      this._logger.trace({ connection: this.name }, 'destroying health check read connection')
+
+      /**
+       * Return early when there is an error
+       */
+      if (error) {
+        break
+      }
+    }
+
+    return error
+  }
+
+  /**
+   * Checks for the write host
+   */
+  private async _checkWriteHost () {
+    try {
+      await this.client!.raw('SELECT 1 + 1 AS result')
+    } catch (error) {
+      return error
+    }
+  }
+
+  /**
    * Returns the pool instance for the given connection
    */
   public get pool (): null | Pool<any> {
@@ -312,6 +359,26 @@ export class Connection extends EventEmitter implements ConnectionContract {
       } catch (error) {
         this.emit('disconnect:error', error, this)
       }
+    }
+  }
+
+  /**
+   * Returns the healthcheck report for the connection
+   */
+  public async getReport (): Promise<ReportNode> {
+    const error = await this._checkWriteHost()
+    let readError: Error | undefined
+
+    if (!error && this.hasReadWriteReplicas) {
+      readError = await this._checkReadHosts()
+    }
+
+    return {
+      connection: this.name,
+      message: readError
+        ? 'Unable to reach one of the read hosts'
+        : (error ? 'Unable to reach the database server' : 'Connection is healthy'),
+      error: error || readError || null,
     }
   }
 }
