@@ -160,6 +160,19 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
+   * Fetch and return first results from the results set. This method
+   * will implicitly set a `limit` on the query
+   */
+  public async firstOrFail (): Promise<any> {
+    const result = await this.limit(1)['exec']()
+    if (!result.length) {
+      throw new Error('Row not found')
+    }
+
+    return result[0]
+  }
+
+  /**
    * Define a relationship to be preloaded
    */
   public preload (relationName: string, userCallback?: PreloadCallback): this {
