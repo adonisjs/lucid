@@ -11,7 +11,16 @@
 
 import test from 'japa'
 import { column, computed, hasOne } from '../../src/Orm/Decorators'
-import { FakeAdapter, getBaseModel, ormAdapter, mapToObj } from '../../test-helpers'
+import {
+  getDb,
+  cleanup,
+  setup,
+  mapToObj,
+  ormAdapter,
+  resetTables,
+  FakeAdapter,
+  getBaseModel,
+} from '../../test-helpers'
 
 test.group('Base model | boot', () => {
   test('compute table name from model name', async (assert) => {
@@ -501,7 +510,7 @@ test.group('Base Model | persist', () => {
   })
 })
 
-test.group('Base Model | fetch', () => {
+test.group('Base Model | create from adapter results', () => {
   test('create model instance using $createFromAdapterResult method', async (assert) => {
     const BaseModel = getBaseModel(ormAdapter())
 
@@ -1181,5 +1190,199 @@ test.group('Base Model | relations', () => {
         username: 'virk',
       },
     })
+  })
+})
+
+test.group('Base Model | fetch', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('find using the primary key', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    const db = getDb()
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.find(1)
+
+    assert.instanceOf(user, User)
+    assert.equal(user!.$primaryKeyValue, 1)
+  })
+
+  test('raise exception when row is not found', async (assert) => {
+    assert.plan(1)
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    try {
+      await User.findOrFail(1)
+    } catch ({ message }) {
+      assert.equal(message, 'E_ROW_NOT_FOUND: Row not found')
+    }
+  })
+
+  test('find many using the primary key', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    const db = getDb()
+    await db.insertQuery().table('users').multiInsert([
+      { username: 'virk' },
+      { username: 'nikk' },
+    ])
+
+    const users = await User.findMany([1, 2])
+    assert.lengthOf(users, 2)
+    assert.equal(users[0].$primaryKeyValue, 2)
+    assert.equal(users[1].$primaryKeyValue, 1)
+  })
+
+  test('return the existing row when search criteria matches', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    const db = getDb()
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.firstOrSave({ username: 'virk' })
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.isTrue(user.$persisted)
+    assert.instanceOf(user, User)
+    assert.equal(user!.$primaryKeyValue, 1)
+  })
+
+  test('create new row when search criteria doesn\'t match', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    const db = getDb()
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.firstOrSave({ username: 'nikk' }, { email: 'nikk@gmail.com' })
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 2)
+    assert.instanceOf(user, User)
+
+    assert.equal(user!.$primaryKeyValue, 2)
+    assert.isTrue(user.$persisted)
+    assert.equal(user!.email, 'nikk@gmail.com')
+    assert.equal(user!.username, 'nikk')
+  })
+
+  test('return the existing row when search criteria matches using firstOrNew', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    const db = getDb()
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.firstOrNew({ username: 'virk' })
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.instanceOf(user, User)
+    assert.isTrue(user.$persisted)
+    assert.equal(user!.$primaryKeyValue, 1)
+  })
+
+  test('instantiate new row when search criteria doesn\'t match using firstOrNew', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    const db = getDb()
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.firstOrNew({ username: 'nikk' }, { email: 'nikk@gmail.com' })
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.instanceOf(user, User)
+
+    assert.isUndefined(user!.$primaryKeyValue)
+    assert.isFalse(user.$persisted)
+    assert.equal(user!.email, 'nikk@gmail.com')
+    assert.equal(user!.username, 'nikk')
   })
 })
