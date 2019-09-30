@@ -7,10 +7,11 @@
 * file that was distributed with this source code.
 */
 
-import test from 'japa'
+/// <reference path="../../adonis-typings/index.ts" />
 
-import { column, computed, hasOne } from '../src/Orm/Decorators'
-import { FakeAdapter, getBaseModel, ormAdapter, mapToObj } from '../test-helpers'
+import test from 'japa'
+import { column, computed, hasOne } from '../../src/Orm/Decorators'
+import { FakeAdapter, getBaseModel, ormAdapter, mapToObj } from '../../test-helpers'
 
 test.group('Base model | boot', () => {
   test('compute table name from model name', async (assert) => {

@@ -7,9 +7,11 @@
 * file that was distributed with this source code.
 */
 
+/// <reference path="../../adonis-typings/index.ts" />
+
 import test from 'japa'
-import { column } from '../src/Orm/Decorators'
-import { setup, cleanup, getDb, resetTables, getBaseModel, ormAdapter } from '../test-helpers'
+import { column } from '../../src/Orm/Decorators'
+import { setup, cleanup, getDb, resetTables, getBaseModel, ormAdapter } from '../../test-helpers'
 
 test.group('Adapter', (group) => {
   group.before(async () => {

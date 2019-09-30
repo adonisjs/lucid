@@ -7,13 +7,13 @@
 * file that was distributed with this source code.
 */
 
-/// <reference path="../adonis-typings/database.ts" />
+/// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
 import { MysqlConfigContract } from '@ioc:Adonis/Lucid/Database'
 
-import { Connection } from '../src/Connection'
-import { getConfig, setup, cleanup, resetTables, getLogger } from '../test-helpers'
+import { Connection } from '../../src/Connection'
+import { getConfig, setup, cleanup, resetTables, getLogger } from '../../test-helpers'
 
 if (process.env.DB !== 'sqlite') {
   test.group('Connection | config', (group) => {
