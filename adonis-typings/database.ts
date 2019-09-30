@@ -52,23 +52,23 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Tells if client is a transaction client or not
      */
-    isTransaction: boolean
+    readonly isTransaction: boolean
 
     /**
      * The database dialect in use
      */
-    dialect: string
+    readonly dialect: string
 
     /**
      * The client mode in which it is execute queries
      */
-    mode: 'dual' | 'write' | 'read'
+    readonly mode: 'dual' | 'write' | 'read'
 
     /**
      * The name of the connnection from which the client
      * was originated
      */
-    connectionName: string
+    readonly connectionName: string
 
     /**
      * Returns the read and write clients
@@ -499,7 +499,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Name of the connection
      */
-    name: string,
+    readonly name: string,
 
     /**
      * Untouched config

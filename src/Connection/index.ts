@@ -57,7 +57,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
   private _roundRobinCounter = 0
 
   constructor (
-    public name: string,
+    public readonly name: string,
     public config: ConnectionConfigContract,
     private _logger: LoggerContract,
   ) {
