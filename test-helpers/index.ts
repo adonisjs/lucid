@@ -152,6 +152,7 @@ export async function resetTables () {
   await db.table('users').truncate()
   await db.table('profiles').truncate()
   await db.table('identities').truncate()
+  await db.destroy()
 }
 
 /**
