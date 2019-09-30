@@ -23,11 +23,12 @@ import {
  * Enforcing constructor on the destination class
  */
 export type ExecutableConstructor<T = {
-  $knexBuilder: knex.Raw | knex.QueryBuilder,
-  getQueryClient: () => undefined | knex,
   client: QueryClientContract,
   beforeExecute?: () => Promise<void>,
+  getQueryClient: () => undefined | knex,
+  $knexBuilder: knex.Raw | knex.QueryBuilder,
   afterExecute?: (results: any[]) => Promise<any[]>,
+  getProfilerAction (): ProfilerActionContract | null,
 }> = { new (...args: any[]): T }
 
 /**
@@ -35,24 +36,12 @@ export type ExecutableConstructor<T = {
  * `$knexBuilder`
  */
 export class Executable implements ExcutableQueryBuilderContract<any> {
-  protected $knexBuilder: knex.QueryBuilder | knex.Raw
   protected client: QueryClientContract
-  protected getQueryClient: () => undefined | knex
   protected beforeExecute?: () => Promise<void>
+  protected getQueryClient: () => undefined | knex
+  protected $knexBuilder: knex.QueryBuilder | knex.Raw
   protected afterExecute?: (results: any[]) => Promise<any[]>
-
-  /**
-   * Returns the profiler action
-   */
-  private _getProfilerAction () {
-    if (!this.client.profiler) {
-      return null
-    }
-
-    return this.client.profiler.profile('sql:query', Object.assign(this.toSQL(), {
-      connection: this.client.connectionName,
-    }))
-  }
+  protected getProfilerAction: () => ProfilerActionContract | null
 
   /**
    * Ends the profile action
@@ -69,7 +58,8 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
    * Executes the knex query builder
    */
   private async _executeQuery () {
-    const action = this._getProfilerAction()
+    const action = this.getProfilerAction()
+
     try {
       const result = await this.$knexBuilder
       this._endProfilerAction(action)
@@ -85,7 +75,7 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
    * knex client
    */
   private async _executeQueryWithCustomConnection (knexClient: knex) {
-    const action = this._getProfilerAction()
+    const action = this.getProfilerAction()
 
     /**
      * Acquire connection from the client and set it as the

@@ -219,4 +219,18 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
 
     return this.client!.getReadClient().client
   }
+
+  /**
+   * Returns the profiler action
+   */
+  public getProfilerAction () {
+    if (!this.client.profiler) {
+      return null
+    }
+
+    return this.client.profiler.profile('sql:query', Object.assign(this['toSQL'](), {
+      connection: this.client.connectionName,
+      inTransaction: this.client.isTransaction,
+    }))
+  }
 }
