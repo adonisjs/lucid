@@ -181,6 +181,15 @@ declare module '@ioc:Adonis/Lucid/Database' {
   }
 
   /**
+   * Shape of the report node for the database connection report
+   */
+  export type ReportNode = {
+    connection: string,
+    message: string,
+    error: any,
+  }
+
+  /**
    * Shared config options for all clients
    */
   type SharedConfigNode = {
@@ -188,6 +197,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     debug?: boolean,
     asyncStackTraces?: boolean,
     revision?: number,
+    healthCheck?: boolean,
     pool?: {
       afterCreate?: (conn: any, done: any) => void,
       min?: number,
@@ -476,6 +486,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * re-add it using the `add` method
      */
     release (connectionName: string): Promise<void>
+
+    /**
+     * Returns the health check report for registered connections
+     */
+    report (): Promise<{ health: { healthy: boolean, message: string }, meta: ReportNode[] }>
   }
 
   /**
@@ -524,6 +539,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Disconnect knex
      */
     disconnect (): Promise<void>,
+
+    /**
+     * Returns the connection report
+     */
+    getReport (): Promise<ReportNode>
   }
 
   /**
@@ -611,6 +631,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Start a new transaction
      */
     transaction (): Promise<TransactionClientContract>
+
+    /**
+     * Returns the health check report for registered connections
+     */
+    report (): Promise<{ health: { healthy: boolean, message: string }, meta: ReportNode[] }>
   }
 
   const Database: DatabaseContract

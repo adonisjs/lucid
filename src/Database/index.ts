@@ -156,4 +156,11 @@ export class Database implements DatabaseContract {
   public raw (sql: string, bindings?: any, options?: DatabaseClientOptions) {
     return this.connection(this.primaryConnectionName, options).raw(sql, bindings)
   }
+
+  /**
+   * Invokes `manager.report`
+   */
+  public report () {
+    return this.manager.report()
+  }
 }

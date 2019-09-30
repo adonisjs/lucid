@@ -29,6 +29,10 @@ import { Connection } from './index'
 export class ConnectionManager extends EventEmitter implements ConnectionManagerContract {
   public connections: ConnectionManagerContract['connections'] = new Map()
 
+  /**
+   * Connections for which the config was patched. They must get removed
+   * overtime, unless application is behaving unstable.
+   */
   private _orphanConnections: Set<ConnectionContract> = new Set()
 
   constructor (private _logger: LoggerContract) {
@@ -238,6 +242,30 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
       await this.close(connectionName, true)
     } else {
       this.connections.delete(connectionName)
+    }
+  }
+
+  /**
+   * Returns the report for all the connections marked for healthChecks.
+   */
+  public async report () {
+    const reports = await Promise.all(
+      Array.from(this.connections.keys())
+        .filter((one) => this.get(one)!.config.healthCheck)
+        .map((one) => {
+          this.connect(one)
+          return this.get(one)!.connection!.getReport()
+        }),
+      )
+
+    const healthy = !reports.find((report) => !!report.error)
+
+    return {
+      health: {
+        healthy,
+        message: healthy ? 'All connections are healthy' : 'One or more connections are not healthy',
+      },
+      meta: reports,
     }
   }
 }
