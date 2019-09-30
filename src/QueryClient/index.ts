@@ -37,12 +37,12 @@ export class QueryClient implements QueryClientContract {
   /**
    * Not a transaction client
    */
-  public isTransaction = false
+  public readonly isTransaction = false
 
   /**
    * The name of the dialect in use
    */
-  public dialect: string
+  public readonly dialect: string = resolveClientNameWithAliases(this._connection.config.client)
 
   /**
    * The profiler to be used for profiling queries
@@ -52,13 +52,12 @@ export class QueryClient implements QueryClientContract {
   /**
    * Name of the connection in use
    */
-  public connectionName = this._connection.name
+  public readonly connectionName = this._connection.name
 
   constructor (
-    public mode: 'dual' | 'write' | 'read',
+    public readonly mode: 'dual' | 'write' | 'read',
     private _connection: ConnectionContract,
   ) {
-    this.dialect = resolveClientNameWithAliases(this._connection.config.client)
   }
 
   /**
