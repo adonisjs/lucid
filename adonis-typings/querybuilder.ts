@@ -11,6 +11,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   import * as knex from 'knex'
   import { Dictionary } from 'ts-essentials'
   import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
+  import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
   /**
    * Get one or many of a generic
@@ -817,6 +818,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    * other queries
    */
   interface RawContract {
+    client: QueryClientContract,
     wrap (before: string, after: string): this
   }
 
@@ -829,6 +831,8 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     Result extends any = Record,
   > extends ChainableContract<Record> {
     del (): this
+
+    client: QueryClientContract,
 
     /**
      * Clone current query
@@ -870,6 +874,8 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     Record extends Dictionary<any, string> = Dictionary<StrictValues, string>,
     ReturnColumns extends any = any[]
   > {
+    client: QueryClientContract,
+
     /**
      * Table for the insert query
      */

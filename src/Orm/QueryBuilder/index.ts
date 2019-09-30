@@ -49,17 +49,25 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     },
   } = {}
 
+  /**
+   * Options that must be passed to all new model instances
+   */
+  private _options: ModelOptions = {
+    connection: this.client.connectionName,
+    profiler: this.client.profiler,
+  }
+
   constructor (
     builder: knex.QueryBuilder,
     public model: ModelConstructorContract,
     public client: QueryClientContract,
-    public options?: ModelOptions,
   ) {
     super(builder, (userFn) => {
       return (builder) => {
-        userFn(new ModelQueryBuilder(builder, this.model, this.client, this.options))
+        userFn(new ModelQueryBuilder(builder, this.model, this.client))
       }
     })
+
     builder.table(model.$table)
   }
 
@@ -92,7 +100,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    */
   private async _processRelation (models: ModelContract[], name: string) {
     const relation = this._preloads[name]
-    const query = relation.relation.getEagerQuery(models, this.options)
+    const query = relation.relation.getEagerQuery(models, this._options)
 
     /**
      * Pass nested preloads
@@ -125,7 +133,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     const modelInstances = this.model.$createMultipleFromAdapterResult(
       rows,
       this._sideloaded,
-      this.options,
+      this._options,
     )
 
     await Promise.all(Object.keys(this._preloads).map((name) => {
@@ -166,7 +174,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   public async firstOrFail (): Promise<any> {
     const result = await this.limit(1)['exec']()
     if (!result.length) {
-      throw new Error('Row not found')
+      throw new Exception('Row not found', 404, 'E_ROW_NOT_FOUND')
     }
 
     return result[0]

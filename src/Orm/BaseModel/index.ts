@@ -25,6 +25,7 @@ import {
   BaseRelationNode,
   RelationContract,
   AvailableRelations,
+  ModelAdapterOptions,
   ThroughRelationNode,
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
@@ -131,12 +132,9 @@ export class BaseModel implements ModelContract {
     const instance = new this()
     instance.$consumeAdapterResult(adapterResult, sideloadAttributes)
     instance.$hydrateOriginals()
+    instance.$setOptions(options)
     instance.$persisted = true
     instance.$isLocal = false
-
-    if (options) {
-      instance.$options = options
-    }
 
     return instance
   }
@@ -152,7 +150,7 @@ export class BaseModel implements ModelContract {
     this: T,
     adapterResults: ModelObject[],
     sideloadAttributes?: ModelObject,
-    options?: any,
+    options?: ModelOptions,
   ): InstanceType<T>[] {
     if (!Array.isArray(adapterResults)) {
       return []
@@ -302,7 +300,7 @@ export class BaseModel implements ModelContract {
   public static async find<T extends ModelConstructorContract> (
     this: T,
     value: any,
-    options?: any,
+    options?: ModelAdapterOptions,
   ) {
     return this.query(options).where(this.$primaryKey, value).first()
   }
@@ -313,7 +311,7 @@ export class BaseModel implements ModelContract {
   public static async findOrFail<T extends ModelConstructorContract> (
     this: T,
     value: any,
-    options?: any,
+    options?: ModelAdapterOptions,
   ) {
     return this.query(options).where(this.$primaryKey, value).firstOrFail()
   }
@@ -324,9 +322,13 @@ export class BaseModel implements ModelContract {
   public static async findMany<T extends ModelConstructorContract> (
     this: T,
     value: any[],
-    options?: any,
+    options?: ModelAdapterOptions,
   ) {
-    return this.query(options).whereIn(this.$primaryKey, value).exec()
+    return this
+      .query(options)
+      .whereIn(this.$primaryKey, value)
+      .orderBy(this.$primaryKey, 'desc')
+      .exec()
   }
 
   /**
@@ -336,7 +338,7 @@ export class BaseModel implements ModelContract {
     this: T,
     search: any,
     savePayload?: any,
-    options?: ModelOptions,
+    options?: ModelAdapterOptions,
   ) {
     const row = await this.firstOrNew(search, savePayload, options)
     if (!row.$persisted) {
@@ -353,13 +355,14 @@ export class BaseModel implements ModelContract {
     this: T,
     search: any,
     savePayload?: any,
-    options?: ModelOptions,
+    options?: ModelAdapterOptions,
   ) {
-    let row = await this.query(options).where(search).first()
+    const query = this.query(options)
+    let row = await query.where(search).first()
 
     if (!row) {
       row = new this() as InstanceType<T>
-      row.$options = options
+      row.$setOptions({ client: query.client })
       row.fill(Object.assign({}, search, savePayload))
       return row
     }
@@ -371,9 +374,9 @@ export class BaseModel implements ModelContract {
    */
   public static async all <T extends ModelConstructorContract> (
     this: T,
-    options?: any,
+    options?: ModelAdapterOptions,
   ) {
-    return this.query(options).exec()
+    return this.query(options).orderBy(this.$primaryKey, 'desc').exec()
   }
 
   constructor () {
@@ -550,6 +553,38 @@ export class BaseModel implements ModelContract {
    */
   public get $isDirty () {
     return Object.keys(this.$dirty).length > 0
+  }
+
+  /**
+   * Sets the options on the model instance
+   */
+  public $setOptions (options?: ModelAdapterOptions) {
+    if (!options) {
+      return
+    }
+
+    this.$options = this.$options || {}
+
+    if (options.client) {
+      this.$options.connection = options.client.connectionName
+      this.$options.profiler = options.client.profiler
+      return
+    }
+
+    if (options.connection) {
+      this.$options.connection = options.connection
+    }
+
+    if (options.profiler) {
+      this.$options.profiler = options.profiler
+    }
+  }
+
+  /**
+   * Returns $options
+   */
+  public $getOptions (): ModelOptions | undefined {
+    return this.$options
   }
 
   /**

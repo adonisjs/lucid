@@ -99,10 +99,7 @@ export class TransactionClient implements TransactionClientContract {
    * using the same options
    */
   public modelQuery (model: any): any {
-    return new ModelQueryBuilder(this.knexQuery(), model, this, {
-      connection: this.connectionName,
-      profiler: this.profiler,
-    })
+    return new ModelQueryBuilder(this.knexQuery(), model, this)
   }
 
   /**

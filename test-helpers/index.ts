@@ -17,6 +17,7 @@ import { Profiler } from '@adonisjs/profiler/build/standalone'
 import { Filesystem } from '@poppinss/dev-utils'
 
 import {
+  DatabaseContract,
   ConnectionContract,
   QueryClientContract,
   ConnectionConfigContract,
@@ -98,7 +99,8 @@ export async function setup () {
   if (!hasUsersTable) {
     await db.schema.createTable('users', (table) => {
       table.increments()
-      table.string('username')
+      table.string('username').unique()
+      table.string('email')
       table.timestamps()
     })
   }
@@ -223,7 +225,7 @@ export function getDb () {
     },
   }
 
-  return new Database(config, getLogger(), getProfiler())
+  return new Database(config, getLogger(), getProfiler()) as DatabaseContract
 }
 
 /**

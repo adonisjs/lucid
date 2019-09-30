@@ -72,6 +72,13 @@ declare module '@ioc:Adonis/Lucid/Model' {
     profiler?: ProfilerContract | ProfilerRowContract,
   }
 
+  /**
+   * Adapter and also accept a client directly
+   */
+  export type ModelAdapterOptions = ModelOptions & {
+    client?: QueryClientContract,
+  }
+
   type DecoratorFn = (target, property) => void
 
   /**
@@ -116,10 +123,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
   > extends ChainableContract<Model['$refs']> {
     model: Model
 
-    /**
-     * A copy of options based to the query builder
-     */
-    options?: ModelOptions
+    client: QueryClientContract,
 
     /**
      * A custom set of sideloaded properties defined on the query
@@ -190,6 +194,12 @@ declare module '@ioc:Adonis/Lucid/Model' {
     ): ReturnType<QueryClientContract['query']> | ReturnType<QueryClientContract['insertQuery']>
 
     /**
+     * Read/write options
+     */
+    $setOptions (options?: ModelAdapterOptions): void
+    $getOptions (): ModelOptions | undefined
+
+    /**
      * Read/write attributes
      */
     $setAttribute (key: string, value: any)
@@ -218,8 +228,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 
   /**
    * Shape of the model static properties. The `$` prefix is to denote
-   * special properties from the base model with exception to `create`
-   * `findAll`, `findAll`.
+   * special properties from the base model
    */
   export interface ModelConstructorContract {
     /**
@@ -285,7 +294,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
       this: T,
       result?: ModelObject,
       sideloadAttributes?: ModelObject,
-      options?: any,
+      options?: ModelOptions,
     ): null | InstanceType<T>
 
     /**
@@ -296,7 +305,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
       this: T,
       results: ModelObject[],
       sideloadAttributes?: ModelObject,
-      options?: any,
+      options?: ModelOptions,
     ): InstanceType<T>[]
 
     /**
@@ -326,7 +335,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     create<T extends ModelConstructorContract> (
       this: T,
       values: ModelObject,
-      options?: ModelOptions,
+      options?: ModelAdapterOptions,
     ): InstanceType<T>
 
     /**
@@ -335,7 +344,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     find<T extends ModelConstructorContract> (
       this: T,
       value: any,
-      options?: ModelOptions,
+      options?: ModelAdapterOptions,
     ): Promise<null | InstanceType<T>>
 
     /**
@@ -344,7 +353,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     findOrFail<T extends ModelConstructorContract> (
       this: T,
       value: any,
-      options?: ModelOptions,
+      options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
 
     /**
@@ -353,7 +362,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     findMany<T extends ModelConstructorContract> (
       this: T,
       value: any[],
-      options?: ModelOptions,
+      options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>[]>
 
     /**
@@ -363,7 +372,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
       this: T,
       search: any,
       savePayload?: any,
-      options?: ModelOptions,
+      options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
 
     /**
@@ -374,13 +383,16 @@ declare module '@ioc:Adonis/Lucid/Model' {
       this: T,
       search: any,
       savePayload?: any,
-      options?: ModelOptions,
+      options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
 
     /**
      * Fetch all rows
      */
-    all<T extends ModelConstructorContract> (this: T, options?: ModelOptions): Promise<InstanceType<T>[]>
+    all<T extends ModelConstructorContract> (
+      this: T,
+      options?: ModelAdapterOptions,
+    ): Promise<InstanceType<T>[]>
 
     /**
      * Returns the query for fetching a model instance
@@ -389,7 +401,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
       Model extends ModelConstructorContract,
     > (
       this: Model,
-      options?: ModelOptions,
+      options?: ModelAdapterOptions,
     ): ModelQueryBuilderContract<Model> & ExcutableQueryBuilderContract<InstanceType<Model>[]>
 
     new (): ModelContract
@@ -419,7 +431,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     query (
       modelConstructor: ModelConstructorContract,
-      options?: ModelOptions,
+      options?: ModelAdapterOptions,
     ): ModelQueryBuilderContract<ModelConstructorContract> & ExcutableQueryBuilderContract<ModelContract[]>
   }
 }

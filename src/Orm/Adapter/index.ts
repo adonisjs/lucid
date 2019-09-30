@@ -11,9 +11,9 @@
 
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import {
-  ModelOptions,
   ModelContract,
   AdapterContract,
+  ModelAdapterOptions,
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
@@ -28,7 +28,11 @@ export class Adapter implements AdapterContract {
   /**
    * Returns the query client based upon the model instance
    */
-  private _getModelClient (modelConstructor: ModelConstructorContract, options?: ModelOptions) {
+  private _getModelClient (modelConstructor: ModelConstructorContract, options?: ModelAdapterOptions) {
+    if (options && options.client) {
+      return options.client
+    }
+
     const connection = options && options.connection || modelConstructor.$connection
     const profiler = options && options.profiler
     return this._db.connection(connection, { profiler })
@@ -37,7 +41,7 @@ export class Adapter implements AdapterContract {
   /**
    * Returns the model query builder instance for a given model
    */
-  public query (modelConstructor: ModelConstructorContract, options?: ModelOptions): any {
+  public query (modelConstructor: ModelConstructorContract, options?: ModelAdapterOptions): any {
     const client = this._getModelClient(modelConstructor, options)
     return client.modelQuery(modelConstructor)
   }
