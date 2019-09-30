@@ -12,7 +12,7 @@
 import test from 'japa'
 import { Connection } from '../../src/Connection'
 import { QueryClient } from '../../src/QueryClient'
-import { getConfig, setup, cleanup, getLogger } from '../../test-helpers'
+import { getConfig, setup, cleanup, getLogger, resetTables } from '../../test-helpers'
 
 test.group('Query client', (group) => {
   group.before(async () => {
@@ -21,6 +21,10 @@ test.group('Query client', (group) => {
 
   group.after(async () => {
     await cleanup()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
   })
 
   test('get query client in dual mode', async (assert) => {
@@ -58,6 +62,10 @@ test.group('Query client | dual mode', (group) => {
 
   group.after(async () => {
     await cleanup()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
   })
 
   test('perform select queries in dual mode', async (assert) => {
@@ -131,6 +139,10 @@ test.group('Query client | read mode', (group) => {
     await cleanup()
   })
 
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
   test('perform select queries in read mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
@@ -192,6 +204,10 @@ test.group('Query client | write mode', (group) => {
 
   group.after(async () => {
     await cleanup()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
   })
 
   test('perform select queries in write mode', async (assert) => {

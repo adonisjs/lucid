@@ -140,7 +140,7 @@ test.group('Adapter', (group) => {
     assert.isFalse(users[0].$isDirty)
     assert.isFalse(users[1].$isDirty)
 
-    assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
-    assert.deepEqual(users[1].$attributes, { id: 2, username: 'nikk' })
+    assert.deepEqual(users[0].$attributes, { id: 2, username: 'nikk' })
+    assert.deepEqual(users[1].$attributes, { id: 1, username: 'virk' })
   })
 })
