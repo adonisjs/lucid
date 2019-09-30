@@ -34,6 +34,20 @@ export class RawQueryBuilder implements RawContract {
   }
 
   /**
+   * Returns the profiler action
+   */
+  public getProfilerAction () {
+    if (!this.client.profiler) {
+      return null
+    }
+
+    return this.client.profiler.profile('sql:query', Object.assign(this['toSQL'](), {
+      connection: this.client.connectionName,
+      inTransaction: this.client.isTransaction,
+    }))
+  }
+
+  /**
    * Wrap the query with before/after strings.
    */
   public wrap (before: string, after: string): this {

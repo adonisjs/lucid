@@ -39,6 +39,20 @@ export class InsertQueryBuilder implements InsertQueryBuilderContract {
   }
 
   /**
+   * Returns the profiler action
+   */
+  public getProfilerAction () {
+    if (!this.client.profiler) {
+      return null
+    }
+
+    return this.client.profiler.profile('sql:query', Object.assign(this['toSQL'](), {
+      connection: this.client.connectionName,
+      inTransaction: this.client.isTransaction,
+    }))
+  }
+
+  /**
    * Define table for performing the insert query
    */
   public table (table: any): this {
