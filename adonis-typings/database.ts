@@ -187,6 +187,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     useNullAsDefault?: boolean,
     debug?: boolean,
     asyncStackTraces?: boolean,
+    revision?: number,
     pool?: {
       afterCreate?: (conn: any, done: any) => void,
       min?: number,
