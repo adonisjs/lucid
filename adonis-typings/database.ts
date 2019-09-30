@@ -397,7 +397,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     name: string,
     config: ConnectionConfigContract,
     connection?: ConnectionContract,
-    state: 'registered' | 'open' | 'closed',
+    state: 'registered' | 'migrating' | 'open' | 'closed',
   }
 
   /**
@@ -447,6 +447,12 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Find if a connection name is managed by the manager or not
      */
     has (connectionName: string): boolean
+
+    /**
+     * Patch the existing connection config. This triggers the disconnect on the
+     * old connection
+     */
+    patch (connectionName: string, config: ConnectionConfigContract): void
 
     /**
      * Find if a managed connection is instantiated or not

@@ -13,7 +13,7 @@ import test from 'japa'
 
 import { Connection } from '../../src/Connection'
 import { ConnectionManager } from '../../src/Connection/Manager'
-import { getConfig, setup, cleanup, getLogger } from '../../test-helpers'
+import { getConfig, setup, cleanup, getLogger, mapToObj } from '../../test-helpers'
 
 test.group('ConnectionManager', (group) => {
   group.before(async () => {
@@ -145,5 +145,49 @@ test.group('ConnectionManager', (group) => {
 
     const fn = () => manager.connect('primary')
     assert.throw(fn, /knex: Required configuration option/)
+  })
+
+  test('patching the connection config must close old and create a new connection', async (assert, done) => {
+    assert.plan(6)
+
+    let connections: any[] = []
+
+    const manager = new ConnectionManager(getLogger())
+    manager.add('primary', getConfig())
+
+    manager.on('disconnect', (connection) => {
+      try {
+        assert.deepEqual(connection, connections[0])
+        assert.equal(manager['_orphanConnections'].size, 0)
+        assert.deepEqual(mapToObj(manager.connections), {
+          primary: {
+            config: connection.config,
+            name: 'primary',
+            state: 'open',
+            connection: connections[1],
+          },
+        })
+        done()
+      } catch (error) {
+        done(error)
+      }
+    })
+
+    manager.on('connect', (connection) => {
+      assert.instanceOf(connection, Connection)
+      if (connections.length) {
+        assert.notDeepEqual(connections[0], connection)
+      }
+
+      connections.push(connection)
+    })
+
+    manager.connect('primary')
+
+    /**
+     * Patching will trigger disconnect and a new connect
+     */
+    manager.patch('primary', getConfig())
+    manager.connect('primary')
   })
 })
