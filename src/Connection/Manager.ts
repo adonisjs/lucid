@@ -86,20 +86,11 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
    */
   public add (connectionName: string, config: ConnectionConfigContract): void {
     /**
-     * Raise an exception when someone is trying to re-add the same connection. We
-     * should not silently avoid this scanerio, since there is a valid use case
-     * in which the config has been changed and someone wants to re-add the
-     * connection with new config. In that case, they must
-     *
-     * 1. Close and release the old connection
-     * 2. Then add the new connection
+     * Noop when connection already exists. If one wants to change the config, they
+     * must release the old connection and add a new one
      */
-    if (this.isConnected(connectionName)) {
-      throw new Exception(
-        `Attempt to add duplicate connection ${connectionName} failed`,
-        500,
-        'E_DUPLICATE_DB_CONNECTION',
-      )
+    if (this.has(connectionName)) {
+      return
     }
 
     this._logger.trace({ connection: connectionName }, 'adding new connection to the manager')

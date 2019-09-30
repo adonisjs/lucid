@@ -51,13 +51,13 @@ test.group('ConnectionManager', (group) => {
     assert.isFalse(manager.isConnected('primary'))
   })
 
-  test('raise exception when attempt to add a duplication connection', async (assert) => {
+  test('add duplicate connection must be a noop', async (assert) => {
     const manager = new ConnectionManager(getLogger())
     manager.add('primary', getConfig())
     manager.connect('primary')
 
-    const fn = () => manager.add('primary', getConfig())
-    assert.throw(fn, 'E_DUPLICATE_DB_CONNECTION: Attempt to add duplicate connection primary failed')
+    manager.add('primary', Object.assign({}, getConfig(), { client: 'foo' }))
+    assert.notEqual(manager.get('primary')!.config.client, 'foo')
   })
 
   test('patch config when connection is not in open state', async (assert) => {
