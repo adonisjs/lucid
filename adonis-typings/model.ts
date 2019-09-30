@@ -18,7 +18,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
   export type ColumnNode = {
     castAs: string,
     serializeAs: string,
-    nullable: boolean,
+    serialize: boolean,
     primary: boolean,
     hasGetter: boolean,
     hasSetter: boolean,

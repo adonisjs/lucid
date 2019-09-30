@@ -722,6 +722,20 @@ test.group('Base Model | toJSON', () => {
     assert.deepEqual(user.toJSON(), { theUsername: 'virk' })
   })
 
+  test('do not serialize when serialize is set to false', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      @column({ serialize: false })
+      public username: string
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    assert.deepEqual(user.toJSON(), {})
+  })
+
   test('add computed properties to toJSON result', async (assert) => {
     const BaseModel = getBaseModel(ormAdapter())
 
@@ -739,6 +753,25 @@ test.group('Base Model | toJSON', () => {
     user.username = 'virk'
 
     assert.deepEqual(user.toJSON(), { username: 'virk', fullName: 'VIRK' })
+  })
+
+  test('do not add computed property when it returns undefined', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @computed()
+      public get fullName () {
+        return undefined
+      }
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    assert.deepEqual(user.toJSON(), { username: 'virk' })
   })
 })
 
