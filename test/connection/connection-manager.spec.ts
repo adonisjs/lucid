@@ -11,6 +11,7 @@
 
 import test from 'japa'
 
+import { Connection } from '../../src/Connection'
 import { ConnectionManager } from '../../src/Connection/Manager'
 import { getConfig, setup, cleanup, getLogger } from '../../test-helpers'
 
@@ -95,5 +96,54 @@ test.group('ConnectionManager', (group) => {
 
     await manager.release('primary')
     assert.isFalse(manager.has('primary'))
+  })
+
+  test('proxy connect event', (assert, done) => {
+    assert.plan(1)
+
+    const manager = new ConnectionManager(getLogger())
+    manager.add('primary', getConfig())
+
+    manager.on('connect', (connection) => {
+      assert.instanceOf(connection, Connection)
+      done()
+    })
+
+    manager.connect('primary')
+  })
+
+  test('proxy disconnect event', async (assert, done) => {
+    assert.plan(1)
+
+    const manager = new ConnectionManager(getLogger())
+    manager.add('primary', getConfig())
+
+    manager.on('disconnect', (connection) => {
+      assert.instanceOf(connection, Connection)
+      done()
+    })
+
+    manager.connect('primary')
+    await manager.close('primary')
+  })
+
+  test('proxy error event', async (assert, done) => {
+    assert.plan(3)
+
+    const manager = new ConnectionManager(getLogger())
+    manager.add('primary', Object.assign({}, getConfig(), { client: null }))
+
+    manager.on('error', ({ message }, connection) => {
+      try {
+        assert.equal(message, 'knex: Required configuration option \'client\' is missing.')
+        assert.instanceOf(connection, Connection)
+        done()
+      } catch (error) {
+        done(error)
+      }
+    })
+
+    const fn = () => manager.connect('primary')
+    assert.throw(fn, /knex: Required configuration option/)
   })
 })

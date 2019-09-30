@@ -121,12 +121,23 @@ test.group('Connection | setup', (group) => {
     await connection.disconnect()
   })
 
-  test('raise error when unable to make connection', (assert) => {
+  test('raise error when unable to make connection', (assert, done) => {
+    assert.plan(2)
+
     const connection = new Connection(
       'primary',
       Object.assign({}, getConfig(), { client: null }),
       getLogger(),
     )
+
+    connection.on('error', ({ message }) => {
+      try {
+        assert.equal(message, 'knex: Required configuration option \'client\' is missing.')
+        done()
+      } catch (error) {
+        done(error)
+      }
+    })
 
     const fn = () => connection.connect()
     assert.throw(fn, /knex: Required configuration option/)

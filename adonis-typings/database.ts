@@ -424,7 +424,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * When error is received on a given connection
      */
-    on (event: 'error', callback: (connection: ConnectionContract, error: Error) => void): this
+    on (event: 'error', callback: (error: Error, connection: ConnectionContract) => void): this
 
     /**
      * Add a new connection to the list of managed connection. You must call
@@ -504,9 +504,9 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * List of emitted events
      */
     on (event: 'connect', callback: (connection: ConnectionContract) => void): this
-    on (event: 'error', callback: (connection: ConnectionContract, error: Error) => void): this
+    on (event: 'error', callback: (error: Error, connection: ConnectionContract) => void): this
     on (event: 'disconnect', callback: (connection: ConnectionContract) => void): this
-    on (event: 'disconnect:error', callback: (connection: ConnectionContract, error: Error) => void): this
+    on (event: 'disconnect:error', callback: (error: Error, connection: ConnectionContract) => void): this
 
     /**
      * Make knex connection
