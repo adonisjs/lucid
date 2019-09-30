@@ -32,7 +32,7 @@ test.group('Database', (group) => {
     const db = new Database(config, getLogger(), getProfiler())
 
     assert.isDefined(db.manager.connections.get('primary'))
-    assert.equal(db.manager.connections.get('primary')!.state, 'idle')
+    assert.equal(db.manager.connections.get('primary')!.state, 'registered')
     assert.isUndefined(db.manager.connections.get('primary')!.connection)
   })
 
