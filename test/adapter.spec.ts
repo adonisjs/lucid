@@ -110,30 +110,7 @@ test.group('Adapter', (group) => {
     assert.lengthOf(users, 0)
   })
 
-  test('get model instance using the find call', async (assert) => {
-    const db = getDb()
-    const BaseModel = getBaseModel(ormAdapter())
-
-    class User extends BaseModel {
-      public static $table = 'users'
-
-      @column({ primary: true })
-      public id: number
-
-      @column()
-      public username: string
-    }
-    User.$boot()
-
-    const [id] = await db.table('users').returning('id').insert({ username: 'virk' })
-
-    const user = await User.findBy('username', 'virk')
-    assert.instanceOf(user, User)
-    assert.isFalse(user!.$isDirty)
-    assert.deepEqual(user!.$attributes, { id: id, username: 'virk' })
-  })
-
-  test('get array of model instances using the findAll call', async (assert) => {
+  test('get array of model instances using the all call', async (assert) => {
     const db = getDb()
     const BaseModel = getBaseModel(ormAdapter())
 
@@ -152,7 +129,7 @@ test.group('Adapter', (group) => {
       [{ username: 'virk' }, { username: 'nikk' }],
     )
 
-    const users = await User.findAll()
+    const users = await User.all()
 
     assert.lengthOf(users, 2)
     assert.instanceOf(users[0], User)

@@ -139,6 +139,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
     first (): Promise<InstanceType<Model> | null>
 
     /**
+     * Return the first matching row or fail
+     */
+    firstOrFail (): Promise<InstanceType<Model>>
+
+    /**
      * Define relationships to be preloaded
      */
     preload (relation: string, callback?: PreloadCallback): this
@@ -317,22 +322,64 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Creating model
      */
-    create<T extends ModelConstructorContract> (this: T, values: ModelObject): InstanceType<T>
+    create<T extends ModelConstructorContract> (
+      this: T,
+      values: ModelObject,
+      options?: ModelOptions,
+    ): InstanceType<T>
 
     /**
-     * Creating model by invoking actions on adapter
+     * Find one using the primary key
      */
-    findBy<T extends ModelConstructorContract> (
+    find<T extends ModelConstructorContract> (
       this: T,
-      key: string,
       value: any,
       options?: ModelOptions,
     ): Promise<null | InstanceType<T>>
 
     /**
-     * Fetch all rows and convert them to model instances
+     * Find one using the primary key or fail
      */
-    findAll<T extends ModelConstructorContract> (this: T, options?: ModelOptions): Promise<InstanceType<T>[]>
+    findOrFail<T extends ModelConstructorContract> (
+      this: T,
+      value: any,
+      options?: ModelOptions,
+    ): Promise<InstanceType<T>>
+
+    /**
+     * Find many using an array of primary keys
+     */
+    findMany<T extends ModelConstructorContract> (
+      this: T,
+      value: any[],
+      options?: ModelOptions,
+    ): Promise<InstanceType<T>[]>
+
+    /**
+     * Returns the first row or save it to the database
+     */
+    firstOrSave<T extends ModelConstructorContract> (
+      this: T,
+      search: any,
+      savePayload?: any,
+      options?: ModelOptions,
+    ): Promise<InstanceType<T>>
+
+    /**
+     * Returns the first row or create a new instance of model without
+     * persisting it
+     */
+    firstOrNew<T extends ModelConstructorContract> (
+      this: T,
+      search: any,
+      savePayload?: any,
+      options?: ModelOptions,
+    ): Promise<InstanceType<T>>
+
+    /**
+     * Fetch all rows
+     */
+    all<T extends ModelConstructorContract> (this: T, options?: ModelOptions): Promise<InstanceType<T>[]>
 
     /**
      * Returns the query for fetching a model instance

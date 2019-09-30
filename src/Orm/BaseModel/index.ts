@@ -299,19 +299,77 @@ export class BaseModel implements ModelContract {
   /**
    * Find model instance using a key/value pair
    */
-  public static async findBy<T extends ModelConstructorContract> (
+  public static async find<T extends ModelConstructorContract> (
     this: T,
-    key: string,
     value: any,
     options?: any,
   ) {
-    return this.query(options).where(key, value).first()
+    return this.query(options).where(this.$primaryKey, value).first()
   }
 
   /**
+   * Find model instance using a key/value pair
+   */
+  public static async findOrFail<T extends ModelConstructorContract> (
+    this: T,
+    value: any,
+    options?: any,
+  ) {
+    return this.query(options).where(this.$primaryKey, value).firstOrFail()
+  }
+
+  /**
+   * Find model instance using a key/value pair
+   */
+  public static async findMany<T extends ModelConstructorContract> (
+    this: T,
+    value: any[],
+    options?: any,
+  ) {
+    return this.query(options).whereIn(this.$primaryKey, value).exec()
+  }
+
+  /**
+   * Find model instance using a key/value pair
+   */
+  public static async firstOrSave<T extends ModelConstructorContract> (
+    this: T,
+    search: any,
+    savePayload?: any,
+    options?: ModelOptions,
+  ) {
+    const row = await this.firstOrNew(search, savePayload, options)
+    if (!row.$persisted) {
+      await row.save()
+    }
+
+    return row
+  }
+
+  /**
+   * Find model instance using a key/value pair
+   */
+  public static async firstOrNew<T extends ModelConstructorContract> (
+    this: T,
+    search: any,
+    savePayload?: any,
+    options?: ModelOptions,
+  ) {
+    let row = await this.query(options).where(search).first()
+
+    if (!row) {
+      row = new this() as InstanceType<T>
+      row.$options = options
+      row.fill(Object.assign({}, search, savePayload))
+      return row
+    }
+
+    return row
+  }
+  /**
    * Create a array of model instances from the adapter result
    */
-  public static async findAll <T extends ModelConstructorContract> (
+  public static async all <T extends ModelConstructorContract> (
     this: T,
     options?: any,
   ) {
