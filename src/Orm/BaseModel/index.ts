@@ -198,12 +198,12 @@ export class BaseModel implements ModelContract {
     const descriptor = Object.getOwnPropertyDescriptor(this.prototype, name)
 
     const column: ColumnNode = {
-      castAs: options.castAs || snakeCase(name),
-      serializeAs: options.serializeAs || snakeCase(name),
-      nullable: options.nullable || false,
       primary: options.primary || false,
+      castAs: options.castAs || snakeCase(name),
       hasGetter: !!(descriptor && descriptor.get),
       hasSetter: !!(descriptor && descriptor.set),
+      serializeAs: options.serializeAs || snakeCase(name),
+      serialize: options.serialize === false ? false : true,
     }
 
     /**
@@ -782,12 +782,18 @@ export class BaseModel implements ModelContract {
     const Model = this.constructor as typeof BaseModel
     const results = {}
 
-    Model.$computed.forEach((value, key) => {
-      results[value.serializeAs] = this[key]
+    Object.keys(this.$attributes).forEach((key) => {
+      const column = Model.$getColumn(key)!
+      if (column.serialize) {
+        results[column.serializeAs] = this.$attributes[key]
+      }
     })
 
-    Object.keys(this.$attributes).forEach((key) => {
-      results[Model.$getColumn(key)!.serializeAs] = this.$attributes[key]
+    Model.$computed.forEach((value, key) => {
+      const computedValue = this[key]
+      if (computedValue !== undefined) {
+        results[value.serializeAs] = computedValue
+      }
     })
 
     Object.keys(this.$preloaded).forEach((key) => {
