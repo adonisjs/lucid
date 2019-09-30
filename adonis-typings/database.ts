@@ -397,7 +397,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     name: string,
     config: ConnectionConfigContract,
     connection?: ConnectionContract,
-    state: 'idle' | 'open' | 'closed',
+    state: 'registered' | 'open' | 'closed',
   }
 
   /**

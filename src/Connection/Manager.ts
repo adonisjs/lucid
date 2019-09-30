@@ -106,7 +106,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
     this.connections.set(connectionName, {
       name: connectionName,
       config: config,
-      state: 'idle',
+      state: 'registered',
     })
   }
 
