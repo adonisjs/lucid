@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../adonis-typings/database.ts" />
+/// <reference path="../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'

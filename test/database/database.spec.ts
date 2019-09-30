@@ -7,12 +7,12 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../adonis-typings/database.ts" />
+/// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
 
-import { Database } from '../src/Database'
-import { getConfig, setup, cleanup, getLogger, getProfiler } from '../test-helpers'
+import { Database } from '../../src/Database'
+import { getConfig, setup, cleanup, getLogger, getProfiler } from '../../test-helpers'
 
 test.group('Database', (group) => {
   group.before(async () => {

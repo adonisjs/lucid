@@ -7,11 +7,11 @@
 * file that was distributed with this source code.
 */
 
-/// <reference path="../adonis-typings/database.ts" />
+/// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import { Connection } from '../src/Connection'
-import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
+import { Connection } from '../../src/Connection'
+import { DatabaseQueryBuilder } from '../../src/Database/QueryBuilder/Database'
 import {
   setup,
   cleanup,
@@ -21,7 +21,7 @@ import {
   getQueryBuilder,
   getInsertBuilder,
   getRawQueryBuilder,
-} from '../test-helpers'
+} from '../../test-helpers'
 
 if (process.env.DB !== 'sqlite') {
   test.group('Query Builder | client', (group) => {

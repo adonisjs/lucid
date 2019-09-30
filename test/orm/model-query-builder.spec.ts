@@ -7,10 +7,20 @@
 * file that was distributed with this source code.
 */
 
+/// <reference path="../../adonis-typings/index.ts" />
+
 import test from 'japa'
-import { column } from '../src/Orm/Decorators'
-import { ModelQueryBuilder } from '../src/Orm/QueryBuilder'
-import { getBaseModel, ormAdapter, getDb, setup, cleanup, resetTables, getProfiler } from '../test-helpers'
+import { column } from '../../src/Orm/Decorators'
+import { ModelQueryBuilder } from '../../src/Orm/QueryBuilder'
+import {
+  getDb,
+  setup,
+  cleanup,
+  ormAdapter,
+  resetTables,
+  getProfiler,
+  getBaseModel,
+} from '../../test-helpers'
 
 test.group('Model query builder', (group) => {
   group.before(async () => {

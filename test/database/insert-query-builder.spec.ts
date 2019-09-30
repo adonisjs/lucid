@@ -7,12 +7,12 @@
 * file that was distributed with this source code.
 */
 
-/// <reference path="../adonis-typings/database.ts" />
+/// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
 
-import { Connection } from '../src/Connection'
-import { getConfig, setup, cleanup, getInsertBuilder, getLogger, getQueryClient } from '../test-helpers'
+import { Connection } from '../../src/Connection'
+import { getConfig, setup, cleanup, getInsertBuilder, getLogger, getQueryClient } from '../../test-helpers'
 
 test.group('Query Builder | insert', (group) => {
   group.before(async () => {
