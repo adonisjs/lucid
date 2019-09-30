@@ -29,6 +29,8 @@ import { Connection } from './index'
 export class ConnectionManager extends EventEmitter implements ConnectionManagerContract {
   public connections: ConnectionManagerContract['connections'] = new Map()
 
+  private _orphanConnections: Set<ConnectionContract> = new Set()
+
   constructor (private _logger: LoggerContract) {
     super()
   }
@@ -42,6 +44,18 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
      * memory
      */
     connection.on('disconnect', ($connection) => {
+      /**
+       * We received the close event on the orphan connection and not the connection
+       * that is in use
+       */
+      if (this._orphanConnections.has($connection)) {
+        this._orphanConnections.delete($connection)
+
+        this.emit('disconnect', $connection)
+        this._logger.trace({ connection: $connection.name }, 'disconnecting connection inside manager')
+        return
+      }
+
       const internalConnection = this.get($connection.name)
 
       /**
@@ -53,7 +67,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
       }
 
       this.emit('disconnect', $connection)
-      this._logger.trace({ connection: internalConnection.name }, 'disconnecting connection inside manager')
+      this._logger.trace({ connection: $connection.name }, 'disconnecting connection inside manager')
 
       delete internalConnection.connection
       internalConnection.state = 'closed'
@@ -127,6 +141,42 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
     connection.connection = new Connection(connection.name, connection.config, this._logger)
     this._monitorConnection(connection.connection)
     connection.connection.connect()
+  }
+
+  /**
+   * Patching the config
+   */
+  public patch (connectionName: string, config: ConnectionConfigContract): void {
+    const connection = this.get(connectionName)
+
+    /**
+     * If connection is missing, then simply add it
+     */
+    if (!connection) {
+      return this.add(connectionName, config)
+    }
+
+    /**
+     * Move the current connection to the orphan connections. We need
+     * to keep a seperate track of old connections to make sure
+     * they cleanup after some time
+     */
+    if (connection.connection) {
+      this._orphanConnections.add(connection.connection)
+      connection.connection.disconnect()
+    }
+
+    /**
+     * Updating config and state. Next call to connect will use this
+     */
+    connection.state = 'migrating'
+    connection.config = config
+
+    /**
+     * Removing the connection right away, so that the next call to `connect`
+     * creates a new one with new config
+     */
+    delete connection.connection
   }
 
   /**
