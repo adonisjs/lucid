@@ -212,6 +212,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 
     save (): Promise<void>
     delete (): Promise<void>
+    serialize (): ModelObject
     toJSON (): ModelObject
   }
 

@@ -778,7 +778,7 @@ export class BaseModel implements ModelContract {
   /**
    * Converting model to it's JSON representation
    */
-  public toJSON () {
+  public serialize () {
     const Model = this.constructor as typeof BaseModel
     const results = {}
 
@@ -804,6 +804,14 @@ export class BaseModel implements ModelContract {
     })
 
     return results
+  }
+
+  /**
+   * Returns the serialize method output. However, any model can overwrite
+   * it to define it's custom serialize output
+   */
+  public toJSON () {
+    return this.serialize()
   }
 
   /**
