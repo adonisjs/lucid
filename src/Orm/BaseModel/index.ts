@@ -30,9 +30,10 @@ import {
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
-import { proxyHandler } from './proxyHandler'
 import { HasOne } from '../Relations/HasOne'
+import { proxyHandler } from './proxyHandler'
 import { HasMany } from '../Relations/HasMany'
+import { BelongsTo } from '../Relations/BelongsTo'
 
 function StaticImplements<T> () {
   return (_t: T) => {}
@@ -268,6 +269,9 @@ export class BaseModel implements ModelContract {
         break
       case 'hasMany':
         this.$relations.set(name, new HasMany(name, options, this))
+        break
+      case 'belongsTo':
+        this.$relations.set(name, new BelongsTo(name, options, this))
         break
       default:
         throw new Error(`${type} relationship has not been implemented yet`)
