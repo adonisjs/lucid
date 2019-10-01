@@ -32,6 +32,7 @@ import {
 
 import { proxyHandler } from './proxyHandler'
 import { HasOne } from '../Relations/HasOne'
+import { HasMany } from '../Relations/HasMany'
 
 function StaticImplements<T> () {
   return (_t: T) => {}
@@ -264,6 +265,12 @@ export class BaseModel implements ModelContract {
     switch (type) {
       case 'hasOne':
         this.$relations.set(name, new HasOne(name, options, this))
+        break
+      case 'hasMany':
+        this.$relations.set(name, new HasMany(name, options, this))
+        break
+      default:
+        throw new Error(`${type} relationship has not been implemented yet`)
     }
   }
 

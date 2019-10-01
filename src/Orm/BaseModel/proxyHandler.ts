@@ -28,9 +28,9 @@ const DEFAULTS: {
   [P in AvailableRelations]: any
 } = {
   hasOne: null,
+  hasMany: Object.freeze([]),
   // belongsTo: null,
   // hasOneThrough: null,
-  // hasMany: Object.freeze([]),
   // manyToMany: Object.freeze([]),
   // hasManyThrough: Object.freeze([]),
 }
