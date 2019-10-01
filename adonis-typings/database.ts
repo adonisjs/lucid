@@ -25,7 +25,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
     DatabaseQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
-  import { ModelConstructorContract, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
+  import {
+    HooksContract,
+    ModelConstructorContract,
+    ModelQueryBuilderContract,
+  } from '@ioc:Adonis/Lucid/Model'
 
   /**
    * A executable query builder will always have these methods on it.
@@ -151,6 +155,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
    */
   export interface TransactionClientContract extends QueryClientContract {
     knexClient: knex.Transaction,
+
+    hooks: HooksContract<'commit' | 'rollback', (client: TransactionClientContract) => void | Promise<void>>
 
     /**
      * Is transaction completed or not

@@ -13,6 +13,7 @@ import test from 'japa'
 
 import { Connection } from '../../src/Connection'
 import { QueryClient } from '../../src/QueryClient'
+import { TransactionClient } from '../../src/TransactionClient'
 import { getConfig, setup, cleanup, resetTables, getLogger } from '../../test-helpers'
 
 test.group('Transaction | query', (group) => {
@@ -97,5 +98,51 @@ test.group('Transaction | query', (group) => {
     assert.isArray(results)
     assert.lengthOf(results, 1)
     assert.equal(results[0].username, 'virk')
+  })
+
+  test('execute before and after commit hooks', async (assert) => {
+    const stack: string[] = []
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = await new QueryClient('dual', connection).transaction()
+
+    db.hooks.before('commit', (trx) => {
+      stack.push('before')
+      assert.instanceOf(trx, TransactionClient)
+    })
+
+    db.hooks.after('commit', (trx) => {
+      stack.push('after')
+      assert.instanceOf(trx, TransactionClient)
+    })
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.commit()
+    assert.deepEqual(db.hooks['_hooks'], {})
+    assert.deepEqual(stack, ['before', 'after'])
+  })
+
+  test('execute before and after rollback hooks', async (assert) => {
+    const stack: string[] = []
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = await new QueryClient('dual', connection).transaction()
+
+    db.hooks.before('rollback', (trx) => {
+      stack.push('before')
+      assert.instanceOf(trx, TransactionClient)
+    })
+
+    db.hooks.after('rollback', (trx) => {
+      stack.push('after')
+      assert.instanceOf(trx, TransactionClient)
+    })
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.rollback()
+    assert.deepEqual(db.hooks['_hooks'], {})
+    assert.deepEqual(stack, ['before', 'after'])
   })
 })
