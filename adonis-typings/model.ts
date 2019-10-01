@@ -124,7 +124,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     column?: ThroughRelationDecoratorNode,
   ) => DecoratorFn
 
-  export type AvailableRelations = 'hasOne' | 'hasMany'
+  export type AvailableRelations = 'hasOne' | 'hasMany' | 'belongsTo'
 
   /**
    * Callback accepted by the preload method
