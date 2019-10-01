@@ -26,7 +26,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
   } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
   import {
-    HooksContract,
     ModelConstructorContract,
     ModelQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/Model'
@@ -153,10 +152,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * The shape of transaction client to run queries under a given
    * transaction on a single connection
    */
-  export interface TransactionClientContract extends QueryClientContract {
+  export interface TransactionClientContract extends QueryClientContract, EventEmitter {
     knexClient: knex.Transaction,
-
-    hooks: HooksContract<'commit' | 'rollback', (client: TransactionClientContract) => void | Promise<void>>
 
     /**
      * Is transaction completed or not
@@ -172,6 +169,12 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Rollback transaction
      */
     rollback (): Promise<void>
+
+    on (event: 'commit', handler: (client: this) => void): this
+    on (event: 'rollback', handler: (client: this) => void): this
+
+    once (event: 'commit', handler: (client: this) => void): this
+    once (event: 'rollback', handler: (client: this) => void): this
   }
 
   /**
