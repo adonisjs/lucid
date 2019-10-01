@@ -51,7 +51,7 @@ export class Adapter implements AdapterContract {
    */
   public async insert (instance: ModelContract, attributes: any) {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    const client = this._getModelClient(modelConstructor, instance.$options)
+    const client = instance.$trx ? instance.$trx : this._getModelClient(modelConstructor, instance.$options)
     const query = instance.$getQueryFor('insert', client)
 
     const result = await query.insert(attributes)
@@ -65,7 +65,7 @@ export class Adapter implements AdapterContract {
    */
   public async update (instance: ModelContract, dirty: any) {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    const client = this._getModelClient(modelConstructor, instance.$options)
+    const client = instance.$trx ? instance.$trx : this._getModelClient(modelConstructor, instance.$options)
     const query = instance.$getQueryFor('update', client)
 
     await query.update(dirty)
@@ -76,7 +76,7 @@ export class Adapter implements AdapterContract {
    */
   public async delete (instance: ModelContract) {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    const client = this._getModelClient(modelConstructor, instance.$options)
+    const client = instance.$trx ? instance.$trx : this._getModelClient(modelConstructor, instance.$options)
     const query = instance.$getQueryFor('delete', client)
     await query.del()
   }

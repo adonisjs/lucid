@@ -10,7 +10,11 @@
 declare module '@ioc:Adonis/Lucid/Model' {
   import { ChainableContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
   import { ProfilerContract, ProfilerRowContract } from '@ioc:Adonis/Core/Profiler'
-  import { QueryClientContract, ExcutableQueryBuilderContract } from '@ioc:Adonis/Lucid/Database'
+  import {
+    QueryClientContract,
+    TransactionClientContract,
+    ExcutableQueryBuilderContract,
+  } from '@ioc:Adonis/Lucid/Database'
 
   /**
    * Represents a single column on the model
@@ -173,6 +177,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $sideloaded: ModelObject
     $primaryKeyValue?: any
     $options?: ModelOptions
+    $trx?: TransactionClientContract,
 
     /**
      * Gives an option to the end user to define constraints for update, insert

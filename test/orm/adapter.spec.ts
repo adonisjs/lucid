@@ -143,4 +143,167 @@ test.group('Adapter', (group) => {
     assert.deepEqual(users[0].$attributes, { id: 2, username: 'nikk' })
     assert.deepEqual(users[1].$attributes, { id: 1, username: 'virk' })
   })
+
+  test('use transaction client set on the model for the insert', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.$boot()
+    const db = getDb()
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.$trx = trx
+    user.username = 'virk'
+    await user.save()
+    await trx.commit()
+
+    const totalUsers = await db.from('users').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.exists(user.id)
+    assert.isUndefined(user.$trx)
+    assert.deepEqual(user.$attributes, { username: 'virk', id: user.id })
+    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.$persisted)
+  })
+
+  test('do not insert when transaction rollbacks', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.$boot()
+    const db = getDb()
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.$trx = trx
+    user.username = 'virk'
+    await user.save()
+    await trx.rollback()
+
+    const totalUsers = await db.from('users').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.exists(user.id)
+    assert.isUndefined(user.$trx)
+    assert.deepEqual(user.$attributes, { username: 'virk', id: user.id })
+    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.$persisted)
+  })
+
+  test('cleanup old trx event listeners when transaction is updated', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.$boot()
+    const db = getDb()
+    const trx = await db.transaction()
+    const trx1 = await trx.transaction()
+
+    const user = new User()
+    user.$trx = trx1
+    user.$trx = trx
+    user.username = 'virk'
+
+    await trx1.rollback()
+    assert.deepEqual(user.$trx, trx)
+    await trx.rollback()
+  })
+
+  test('use transaction client set on the model for the update', async (assert) => {
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+    User.$boot()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    assert.exists(user.id)
+    assert.deepEqual(user.$attributes, { username: 'virk', id: user.id })
+    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.$persisted)
+
+    const db = getDb()
+    const trx = await db.transaction()
+    user.$trx = trx
+    user.username = 'nikk'
+    await user.save()
+    await trx.rollback()
+
+    const users = await db.from('users')
+    assert.lengthOf(users, 1)
+    assert.equal(users[0].username, 'virk')
+  })
+
+  test('use transaction client set on the model for the delete', async (assert) => {
+    const db = getDb()
+    const BaseModel = getBaseModel(ormAdapter())
+
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+    User.$boot()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    assert.exists(user.id)
+    assert.deepEqual(user.$attributes, { username: 'virk', id: user.id })
+    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.$persisted)
+
+    const trx = await db.transaction()
+    user.$trx = trx
+
+    await user.delete()
+    await trx.rollback()
+
+    const users = await db.from('users').select('*')
+    assert.lengthOf(users, 1)
+  })
 })
