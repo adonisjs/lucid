@@ -1102,7 +1102,7 @@ test.group('Base Model | relations', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasOne({ relatedModel: () => Profile })
+      @hasOne(() => Profile)
       public profile: Profile
     }
 
@@ -1127,7 +1127,7 @@ test.group('Base Model | relations', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasOne({ relatedModel: () => Profile })
+      @hasOne(() => Profile)
       public profile: Profile
     }
 
@@ -1153,7 +1153,7 @@ test.group('Base Model | relations', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasOne({ relatedModel: () => Profile })
+      @hasOne(() => Profile)
       public profile: Profile
     }
 
@@ -1182,7 +1182,7 @@ test.group('Base Model | relations', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasOne({ relatedModel: () => Profile, serializeAs: 'social' })
+      @hasOne(() => Profile, { serializeAs: 'social' })
       public profile: Profile
     }
 

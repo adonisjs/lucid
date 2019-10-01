@@ -49,9 +49,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
   export interface BaseRelationNode {
     relatedModel: (() => ModelConstructorContract),
-    localKey: string,
-    foreignKey: string,
-    serializeAs: string,
+    localKey?: string,
+    foreignKey?: string,
+    serializeAs?: string,
   }
 
   /**
@@ -84,22 +84,47 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   type DecoratorFn = (target, property) => void
+  type BaseRelationDecoratorNode = Omit<BaseRelationNode, 'relatedModel'>
+  type ThroughRelationDecoratorNode = Omit<ThroughRelationNode, 'relatedModel'>
+  type ModelExecuteableQueryBuilder = ModelQueryBuilderContract<any> & ExcutableQueryBuilderContract<any>
 
   /**
    * Types for decorators
    */
   export type ColumnFn = (column?: Partial<ColumnNode>) => DecoratorFn
   export type ComputedFn = (column?: Partial<ComputedNode>) => DecoratorFn
-  export type HasOneFn = (column?: Partial<BaseRelationNode>) => DecoratorFn
-  export type HasManyFn = (column?: Partial<BaseRelationNode>) => DecoratorFn
-  export type BelongsToFn = (column?: Partial<BaseRelationNode>) => DecoratorFn
-  export type ManyToManyFn = (column?: Partial<BaseRelationNode>) => DecoratorFn
-  export type HasOneThroughFn = (column?: Partial<ThroughRelationNode>) => DecoratorFn
-  export type HasManyThroughFn = (column?: Partial<ThroughRelationNode>) => DecoratorFn
+
+  export type HasOneFn = (
+    model: BaseRelationNode['relatedModel'],
+    column?: BaseRelationDecoratorNode,
+  ) => DecoratorFn
+
+  export type HasManyFn = (
+    model: BaseRelationNode['relatedModel'],
+    column?: BaseRelationDecoratorNode,
+  ) => DecoratorFn
+
+  export type BelongsToFn = (
+    model: BaseRelationNode['relatedModel'],
+    column?: BaseRelationDecoratorNode,
+  ) => DecoratorFn
+
+  export type ManyToManyFn = (
+    model: BaseRelationNode['relatedModel'],
+    column?: BaseRelationDecoratorNode,
+  ) => DecoratorFn
+
+  export type HasOneThroughFn = (
+    model: BaseRelationNode['relatedModel'],
+    column?: ThroughRelationDecoratorNode,
+  ) => DecoratorFn
+
+  export type HasManyThroughFn = (
+    model: BaseRelationNode['relatedModel'],
+    column?: ThroughRelationDecoratorNode,
+  ) => DecoratorFn
 
   export type AvailableRelations = 'hasOne'
-
-  type ModelExecuteableQueryBuilder = ModelQueryBuilderContract<any> & ExcutableQueryBuilderContract<any>
 
   /**
    * Callback accepted by the preload method
@@ -113,8 +138,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
     type: AvailableRelations
     serializeAs: string
     relatedModel (): ModelConstructorContract
-    getQuery (model: ModelContract, options?: ModelOptions): ModelExecuteableQueryBuilder
-    getEagerQuery (models: ModelContract[], options?: ModelOptions): ModelExecuteableQueryBuilder
+    getQuery (model: ModelContract, client: QueryClientContract): ModelExecuteableQueryBuilder
+    getEagerQuery (models: ModelContract[], client: QueryClientContract): ModelExecuteableQueryBuilder
     setRelated (model: ModelContract, related?: ModelContract | null): void
     setRelatedMany (models: ModelContract[], related: ModelContract[]): void
   }

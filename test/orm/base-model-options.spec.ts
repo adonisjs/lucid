@@ -12,7 +12,7 @@
 import test from 'japa'
 import { Profiler } from '@adonisjs/profiler/build/standalone'
 
-import { column } from '../../src/Orm/Decorators'
+import { column, hasOne } from '../../src/Orm/Decorators'
 import { setup, cleanup, getDb, resetTables, getBaseModel, ormAdapter } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
@@ -527,5 +527,135 @@ test.group('Model options | Model.firstOrSave', (group) => {
     assert.equal(total[0].total, 2)
     assert.deepEqual(user.$options!.profiler, client.profiler)
     assert.deepEqual(user.$options!.connection, client.connectionName)
+  })
+})
+
+test.group('Model options | Preloads', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('pass query options to preloaded models', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+
+    const users = await User.query({ connection: 'secondary' }).preload('profile').exec()
+    assert.lengthOf(users, 1)
+
+    assert.equal(users[0].$options!.connection, 'secondary')
+    assert.instanceOf(users[0].$options!.profiler, Profiler)
+
+    assert.equal(users[0].profile.$options!.connection, 'secondary')
+    assert.instanceOf(users[0].profile.$options!.profiler, Profiler)
+  })
+
+  test('use transaction client to execute preload queries', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+
+    const trx = await db.transaction()
+    const users = await User.query({ client: trx }).preload('profile').exec()
+    await trx.commit()
+
+    assert.lengthOf(users, 1)
+
+    assert.equal(users[0].$options!.connection, 'primary')
+    assert.instanceOf(users[0].$options!.profiler, Profiler)
+
+    assert.equal(users[0].profile.$options!.connection, 'primary')
+    assert.instanceOf(users[0].profile.$options!.profiler, Profiler)
+  })
+
+  test('pass profiler to preload models', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+
+    const profiler = new Profiler({})
+    const users = await User.query({ profiler }).preload('profile').exec()
+
+    assert.lengthOf(users, 1)
+
+    assert.equal(users[0].$options!.connection, 'primary')
+    assert.deepEqual(users[0].$options!.profiler, profiler)
+
+    assert.equal(users[0].profile.$options!.connection, 'primary')
+    assert.deepEqual(users[0].profile.$options!.profiler, profiler)
   })
 })

@@ -100,7 +100,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    */
   private async _processRelation (models: ModelContract[], name: string) {
     const relation = this._preloads[name]
-    const query = relation.relation.getEagerQuery(models, this._options)
+    const query = relation.relation.getEagerQuery(models, this.client)
 
     /**
      * Pass nested preloads
