@@ -40,6 +40,7 @@ const databaseConfig: DatabaseConfigContract = {
         filename: Application.tmpPath('db.sqlite3'),
       },
       useNullAsDefault: true,
+      healthCheck: false,
     },
 
     /*
@@ -62,6 +63,7 @@ const databaseConfig: DatabaseConfigContract = {
         password: Env.get('DB_PASSWORD', 'lucid') as string,
         database: Env.get('DB_NAME', 'lucid') as string,
       },
+      healthCheck: false,
     },
 
     /*
@@ -84,6 +86,7 @@ const databaseConfig: DatabaseConfigContract = {
         password: Env.get('DB_PASSWORD', 'lucid') as string,
         database: Env.get('DB_NAME', 'lucid') as string,
       },
+      healthCheck: false,
     },
   },
 }
