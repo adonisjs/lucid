@@ -24,12 +24,13 @@ test.group('ConnectionManager', (group) => {
     await cleanup()
   })
 
-  test('do not connect until connect is called', (assert) => {
+  test('do not connect until connect is called', async (assert) => {
     const manager = new ConnectionManager(getLogger())
     manager.add('primary', getConfig())
 
     assert.isTrue(manager.has('primary'))
     assert.isFalse(manager.isConnected('primary'))
+    await manager.closeAll()
   })
 
   test('connect and set its state to open', async (assert) => {
@@ -39,6 +40,7 @@ test.group('ConnectionManager', (group) => {
 
     assert.equal(manager.get('primary')!.state, 'open')
     assert.isTrue(manager.isConnected('primary'))
+    await manager.closeAll()
   })
 
   test('on disconnect set state to closed', async (assert) => {
@@ -49,6 +51,7 @@ test.group('ConnectionManager', (group) => {
     await manager.connections.get('primary')!.connection!.disconnect()
     assert.equal(manager.get('primary')!.state, 'closed')
     assert.isFalse(manager.isConnected('primary'))
+    await manager.closeAll()
   })
 
   test('add duplicate connection must be a noop', async (assert) => {
@@ -58,6 +61,7 @@ test.group('ConnectionManager', (group) => {
 
     manager.add('primary', Object.assign({}, getConfig(), { client: 'foo' }))
     assert.notEqual(manager.get('primary')!.config.client, 'foo')
+    await manager.closeAll()
   })
 
   test('patch config when connection is not in open state', async (assert) => {
@@ -69,6 +73,7 @@ test.group('ConnectionManager', (group) => {
 
     const fn = () => manager.add('primary', getConfig())
     assert.doesNotThrow(fn)
+    await manager.closeAll()
   })
 
   test('ignore multiple calls to `connect` on a single connection', async () => {
@@ -81,6 +86,7 @@ test.group('ConnectionManager', (group) => {
     })
 
     manager.connect('primary')
+    await manager.closeAll()
   })
 
   test('releasing a connection must close it first', async (assert) => {
@@ -104,8 +110,9 @@ test.group('ConnectionManager', (group) => {
     const manager = new ConnectionManager(getLogger())
     manager.add('primary', getConfig())
 
-    manager.on('connect', (connection) => {
+    manager.on('connect', async (connection) => {
       assert.instanceOf(connection, Connection)
+      await manager.closeAll()
       done()
     })
 
@@ -133,12 +140,14 @@ test.group('ConnectionManager', (group) => {
     const manager = new ConnectionManager(getLogger())
     manager.add('primary', Object.assign({}, getConfig(), { client: null }))
 
-    manager.on('error', ({ message }, connection) => {
+    manager.on('error', async ({ message }, connection) => {
       try {
         assert.equal(message, 'knex: Required configuration option \'client\' is missing.')
         assert.instanceOf(connection, Connection)
+        await manager.closeAll()
         done()
       } catch (error) {
+        await manager.closeAll()
         done(error)
       }
     })
@@ -155,7 +164,7 @@ test.group('ConnectionManager', (group) => {
     const manager = new ConnectionManager(getLogger())
     manager.add('primary', getConfig())
 
-    manager.on('disconnect', (connection) => {
+    manager.on('disconnect', async (connection) => {
       try {
         assert.deepEqual(connection, connections[0])
         assert.equal(manager['_orphanConnections'].size, 0)
@@ -167,8 +176,10 @@ test.group('ConnectionManager', (group) => {
             connection: connections[1],
           },
         })
+        await manager.removeAllListeners().closeAll()
         done()
       } catch (error) {
+        await manager.removeAllListeners().closeAll()
         done(error)
       }
     })

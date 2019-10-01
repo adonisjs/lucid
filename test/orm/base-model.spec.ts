@@ -22,10 +22,20 @@ import {
   getBaseModel,
 } from '../../test-helpers'
 
-test.group('Base model | boot', () => {
-  test('compute table name from model name', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
+let db: ReturnType<typeof getDb>
+let BaseModel: ReturnType<typeof getBaseModel>
 
+test.group('Base model | boot', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
+
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('compute table name from model name', async (assert) => {
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -39,8 +49,6 @@ test.group('Base model | boot', () => {
   })
 
   test('allow overriding table name', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'my_users'
 
@@ -56,8 +64,6 @@ test.group('Base model | boot', () => {
   })
 
   test('set increments to true by default', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -71,8 +77,6 @@ test.group('Base model | boot', () => {
   })
 
   test('allow overriding increments', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $increments = false
 
@@ -88,7 +92,6 @@ test.group('Base model | boot', () => {
   })
 
   test('initiate all required static properties', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
     class User extends BaseModel {
     }
 
@@ -99,10 +102,17 @@ test.group('Base model | boot', () => {
   })
 })
 
-test.group('Base Model | getter-setters', () => {
-  test('set property on $attributes when defined on model instance', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
+test.group('Base Model | getter-setters', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
 
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('set property on $attributes when defined on model instance', (assert) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -115,8 +125,6 @@ test.group('Base Model | getter-setters', () => {
   })
 
   test('pass value to setter when defined', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public set username (value: any) {
@@ -131,8 +139,6 @@ test.group('Base Model | getter-setters', () => {
   })
 
   test('set value on model instance when is not a column', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public username: string
     }
@@ -146,8 +152,6 @@ test.group('Base Model | getter-setters', () => {
   })
 
   test('get value from attributes', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -160,8 +164,6 @@ test.group('Base Model | getter-setters', () => {
   })
 
   test('rely on getter when column is defined as a getter', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public get username () {
@@ -176,8 +178,6 @@ test.group('Base Model | getter-setters', () => {
   })
 
   test('get value from model instance when is not a column', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public username = 'virk'
     }
@@ -188,8 +188,6 @@ test.group('Base Model | getter-setters', () => {
   })
 
   test('get value for primary key', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -205,8 +203,6 @@ test.group('Base Model | getter-setters', () => {
   })
 
   test('invoke getter when accessing value using $primaryKeyValue', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column({ primary: true })
       public get id () {
@@ -224,10 +220,17 @@ test.group('Base Model | getter-setters', () => {
   })
 })
 
-test.group('Base Model | dirty', () => {
-  test('get dirty properties on a fresh model', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
+test.group('Base Model | dirty', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
 
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('get dirty properties on a fresh model', (assert) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -241,8 +244,6 @@ test.group('Base Model | dirty', () => {
   })
 
   test('get empty object when model is not dirty', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -258,8 +259,6 @@ test.group('Base Model | dirty', () => {
   })
 
   test('get empty object when model is not dirty with null values', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -276,8 +275,6 @@ test.group('Base Model | dirty', () => {
   })
 
   test('get empty object when model is not dirty with false values', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -294,8 +291,6 @@ test.group('Base Model | dirty', () => {
   })
 
   test('get values removed as a side-effect of fill as dirty', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     const adapter = new FakeAdapter()
     class User extends BaseModel {
       @column()
@@ -320,10 +315,17 @@ test.group('Base Model | dirty', () => {
   })
 })
 
-test.group('Base Model | persist', () => {
-  test('persist model with the adapter', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
+test.group('Base Model | persist', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
 
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('persist model with the adapter', async (assert) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -354,8 +356,6 @@ test.group('Base Model | persist', () => {
   })
 
   test('merge adapter insert return value with attributes', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -388,8 +388,6 @@ test.group('Base Model | persist', () => {
   })
 
   test('do not merge adapter results when not part of model columns', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -419,8 +417,6 @@ test.group('Base Model | persist', () => {
   })
 
   test('issue update when model has already been persisted', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -448,8 +444,6 @@ test.group('Base Model | persist', () => {
   })
 
   test('merge return values from update', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -484,8 +478,6 @@ test.group('Base Model | persist', () => {
   })
 
   test('do not issue update when model is not dirty', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -510,10 +502,17 @@ test.group('Base Model | persist', () => {
   })
 })
 
-test.group('Base Model | create from adapter results', () => {
-  test('create model instance using $createFromAdapterResult method', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
+test.group('Base Model | create from adapter results', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
 
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('create model instance using $createFromAdapterResult method', async (assert) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -533,7 +532,6 @@ test.group('Base Model | create from adapter results', () => {
   })
 
   test('set options on model instance passed to $createFromAdapterResult', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
     class User extends BaseModel {
       @column()
       public username: string
@@ -553,7 +551,6 @@ test.group('Base Model | create from adapter results', () => {
   })
 
   test('return null from $createFromAdapterResult when input is not object', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
     class User extends BaseModel {
       @column()
       public username: string
@@ -567,8 +564,6 @@ test.group('Base Model | create from adapter results', () => {
   })
 
   test('create multiple model instance using $createMultipleFromAdapterResult', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -597,8 +592,6 @@ test.group('Base Model | create from adapter results', () => {
   })
 
   test('pass model options via $createMultipleFromAdapterResult', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -631,8 +624,6 @@ test.group('Base Model | create from adapter results', () => {
   })
 
   test('skip rows that are not valid objects inside array', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -655,10 +646,17 @@ test.group('Base Model | create from adapter results', () => {
   })
 })
 
-test.group('Base Model | delete', () => {
-  test('delete model instance using adapter', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
+test.group('Base Model | delete', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
 
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('delete model instance using adapter', async (assert) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -679,8 +677,6 @@ test.group('Base Model | delete', () => {
   })
 
   test('raise exception when trying to mutate model after deletion', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     const adapter = new FakeAdapter()
     assert.plan(1)
 
@@ -702,10 +698,17 @@ test.group('Base Model | delete', () => {
   })
 })
 
-test.group('Base Model | toJSON', () => {
-  test('convert model to its JSON representation', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
+test.group('Base Model | toJSON', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
 
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('convert model to its JSON representation', async (assert) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -718,8 +721,6 @@ test.group('Base Model | toJSON', () => {
   })
 
   test('use serializeAs key when converting model to JSON', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column({ serializeAs: 'theUsername' })
       public username: string
@@ -732,8 +733,6 @@ test.group('Base Model | toJSON', () => {
   })
 
   test('do not serialize when serialize is set to false', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column({ serialize: false })
       public username: string
@@ -746,8 +745,6 @@ test.group('Base Model | toJSON', () => {
   })
 
   test('add computed properties to toJSON result', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -765,8 +762,6 @@ test.group('Base Model | toJSON', () => {
   })
 
   test('do not add computed property when it returns undefined', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -784,10 +779,17 @@ test.group('Base Model | toJSON', () => {
   })
 })
 
-test.group('BaseModel | cache', () => {
-  test('cache getter value', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
+test.group('BaseModel | cache', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
 
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('cache getter value', (assert) => {
     let invokedCounter = 0
 
     class User extends BaseModel {
@@ -812,8 +814,6 @@ test.group('BaseModel | cache', () => {
   })
 
   test('re-call getter function when attribute value changes', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     let invokedCounter = 0
 
     class User extends BaseModel {
@@ -841,10 +841,17 @@ test.group('BaseModel | cache', () => {
   })
 })
 
-test.group('BaseModel | fill/merge', () => {
-  test('fill model instance with bulk attributes', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
+test.group('BaseModel | fill/merge', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
 
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('fill model instance with bulk attributes', (assert) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -856,8 +863,6 @@ test.group('BaseModel | fill/merge', () => {
   })
 
   test('set extra properties via fill', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -870,8 +875,6 @@ test.group('BaseModel | fill/merge', () => {
   })
 
   test('overwrite existing values when using fill', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -889,8 +892,6 @@ test.group('BaseModel | fill/merge', () => {
   })
 
   test('merge to existing when using merge instead of fill', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -908,8 +909,6 @@ test.group('BaseModel | fill/merge', () => {
   })
 
   test('invoke setter when using fill', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -933,10 +932,17 @@ test.group('BaseModel | fill/merge', () => {
   })
 })
 
-test.group('Base | apdater', () => {
-  test('pass model instance with attributes to the adapter insert method', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
+test.group('Base | apdater', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
 
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('pass model instance with attributes to the adapter insert method', async (assert) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -959,8 +965,6 @@ test.group('Base | apdater', () => {
   })
 
   test('pass model instance with attributes to the adapter update method', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -993,8 +997,6 @@ test.group('Base | apdater', () => {
   })
 
   test('pass model instance to the adapter delete method', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -1024,10 +1026,17 @@ test.group('Base | apdater', () => {
   })
 })
 
-test.group('Base Model | sideloaded', () => {
-  test('define sideloaded properties using $consumeAdapterResults method', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
+test.group('Base Model | sideloaded', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
 
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('define sideloaded properties using $consumeAdapterResults method', (assert) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1041,8 +1050,6 @@ test.group('Base Model | sideloaded', () => {
   })
 
   test('define sideloaded properties using $createFromAdapterResult method', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -1054,8 +1061,6 @@ test.group('Base Model | sideloaded', () => {
   })
 
   test('define sideloaded properties using $createMultipleFromAdapterResult method', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column()
       public username: string
@@ -1074,10 +1079,17 @@ test.group('Base Model | sideloaded', () => {
   })
 })
 
-test.group('Base Model | relations', () => {
-  test('set hasOne relation', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
+test.group('Base Model | relations', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
 
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('set hasOne relation', (assert) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1103,8 +1115,6 @@ test.group('Base Model | relations', () => {
   })
 
   test('return null when relation is not preloaded', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1131,8 +1141,6 @@ test.group('Base Model | relations', () => {
   })
 
   test('serialize relation toJSON', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1162,8 +1170,6 @@ test.group('Base Model | relations', () => {
   })
 
   test('serialize relation toJSON with custom serializeAs key', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1195,11 +1201,14 @@ test.group('Base Model | relations', () => {
 
 test.group('Base Model | fetch', (group) => {
   group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
     await setup()
   })
 
   group.after(async () => {
     await cleanup()
+    await db.manager.closeAll()
   })
 
   group.afterEach(async () => {
@@ -1207,8 +1216,6 @@ test.group('Base Model | fetch', (group) => {
   })
 
   test('find using the primary key', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -1220,7 +1227,6 @@ test.group('Base Model | fetch', (group) => {
       public email: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const user = await User.find(1)
 
@@ -1230,8 +1236,6 @@ test.group('Base Model | fetch', (group) => {
 
   test('raise exception when row is not found', async (assert) => {
     assert.plan(1)
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -1251,8 +1255,6 @@ test.group('Base Model | fetch', (group) => {
   })
 
   test('find many using the primary key', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -1264,7 +1266,6 @@ test.group('Base Model | fetch', (group) => {
       public email: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').multiInsert([
       { username: 'virk' },
       { username: 'nikk' },
@@ -1277,8 +1278,6 @@ test.group('Base Model | fetch', (group) => {
   })
 
   test('return the existing row when search criteria matches', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -1290,7 +1289,6 @@ test.group('Base Model | fetch', (group) => {
       public email: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const user = await User.firstOrSave({ username: 'virk' })
 
@@ -1303,8 +1301,6 @@ test.group('Base Model | fetch', (group) => {
   })
 
   test('create new row when search criteria doesn\'t match', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -1316,7 +1312,6 @@ test.group('Base Model | fetch', (group) => {
       public email: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const user = await User.firstOrSave({ username: 'nikk' }, { email: 'nikk@gmail.com' })
 
@@ -1332,8 +1327,6 @@ test.group('Base Model | fetch', (group) => {
   })
 
   test('return the existing row when search criteria matches using firstOrNew', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -1345,7 +1338,6 @@ test.group('Base Model | fetch', (group) => {
       public email: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const user = await User.firstOrNew({ username: 'virk' })
 
@@ -1358,8 +1350,6 @@ test.group('Base Model | fetch', (group) => {
   })
 
   test('instantiate new row when search criteria doesn\'t match using firstOrNew', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -1371,7 +1361,6 @@ test.group('Base Model | fetch', (group) => {
       public email: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const user = await User.firstOrNew({ username: 'nikk' }, { email: 'nikk@gmail.com' })
 

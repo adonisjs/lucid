@@ -15,13 +15,19 @@ import { Profiler } from '@adonisjs/profiler/build/standalone'
 import { column } from '../../src/Orm/Decorators'
 import { setup, cleanup, getDb, resetTables, getBaseModel, ormAdapter } from '../../test-helpers'
 
+let db: ReturnType<typeof getDb>
+let BaseModel: ReturnType<typeof getBaseModel>
+
 test.group('Model options | QueryBuilder', (group) => {
   group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
     await setup()
   })
 
   group.after(async () => {
     await cleanup()
+    await db.manager.closeAll()
   })
 
   group.afterEach(async () => {
@@ -29,8 +35,6 @@ test.group('Model options | QueryBuilder', (group) => {
   })
 
   test('query builder set model options from the query client', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -41,7 +45,6 @@ test.group('Model options | QueryBuilder', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
     const users = await User.query().exec()
@@ -52,8 +55,6 @@ test.group('Model options | QueryBuilder', (group) => {
   })
 
   test('query builder set model options when only one row is fetched', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -64,7 +65,6 @@ test.group('Model options | QueryBuilder', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
     const user = await User.query().first()
@@ -76,11 +76,14 @@ test.group('Model options | QueryBuilder', (group) => {
 
 test.group('Model options | Adapter', (group) => {
   group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
     await setup()
   })
 
   group.after(async () => {
     await cleanup()
+    await db.manager.closeAll()
   })
 
   group.afterEach(async () => {
@@ -88,8 +91,6 @@ test.group('Model options | Adapter', (group) => {
   })
 
   test('use correct client when custom connection is defined', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -100,7 +101,6 @@ test.group('Model options | Adapter', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
     const user = await User.query({ connection: 'secondary' }).first()
@@ -109,8 +109,6 @@ test.group('Model options | Adapter', (group) => {
   })
 
   test('pass profiler to the client when defined explicitly', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -121,7 +119,6 @@ test.group('Model options | Adapter', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const profiler = new Profiler({})
 
@@ -131,8 +128,6 @@ test.group('Model options | Adapter', (group) => {
   })
 
   test('pass custom client to query builder', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -143,7 +138,6 @@ test.group('Model options | Adapter', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
     const client = db.connection()
@@ -153,8 +147,6 @@ test.group('Model options | Adapter', (group) => {
   })
 
   test('pass transaction client to query builder', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -165,7 +157,6 @@ test.group('Model options | Adapter', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
     const trx = await db.connection('secondary').transaction()
@@ -178,11 +169,14 @@ test.group('Model options | Adapter', (group) => {
 
 test.group('Model options | Model.find', (group) => {
   group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
     await setup()
   })
 
   group.after(async () => {
     await cleanup()
+    await db.manager.closeAll()
   })
 
   group.afterEach(async () => {
@@ -190,8 +184,6 @@ test.group('Model options | Model.find', (group) => {
   })
 
   test('define custom connection', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -202,7 +194,6 @@ test.group('Model options | Model.find', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
     const user = await User.find(1, { connection: 'secondary' })
@@ -211,8 +202,6 @@ test.group('Model options | Model.find', (group) => {
   })
 
   test('define custom profiler', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -223,7 +212,6 @@ test.group('Model options | Model.find', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const profiler = new Profiler({})
 
@@ -232,8 +220,6 @@ test.group('Model options | Model.find', (group) => {
   })
 
   test('define custom query client', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -244,7 +230,6 @@ test.group('Model options | Model.find', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const client = db.connection()
 
@@ -256,11 +241,14 @@ test.group('Model options | Model.find', (group) => {
 
 test.group('Model options | Model.findOrFail', (group) => {
   group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
     await setup()
   })
 
   group.after(async () => {
     await cleanup()
+    await db.manager.closeAll()
   })
 
   group.afterEach(async () => {
@@ -268,8 +256,6 @@ test.group('Model options | Model.findOrFail', (group) => {
   })
 
   test('define custom connection', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -280,7 +266,6 @@ test.group('Model options | Model.findOrFail', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
     const user = await User.findOrFail(1, { connection: 'secondary' })
@@ -289,8 +274,6 @@ test.group('Model options | Model.findOrFail', (group) => {
   })
 
   test('define custom profiler', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -310,8 +293,6 @@ test.group('Model options | Model.findOrFail', (group) => {
   })
 
   test('define custom query client', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -322,7 +303,6 @@ test.group('Model options | Model.findOrFail', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const client = db.connection('secondary')
 
@@ -334,11 +314,14 @@ test.group('Model options | Model.findOrFail', (group) => {
 
 test.group('Model options | Model.findMany', (group) => {
   group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
     await setup()
   })
 
   group.after(async () => {
     await cleanup()
+    await db.manager.closeAll()
   })
 
   group.afterEach(async () => {
@@ -346,8 +329,6 @@ test.group('Model options | Model.findMany', (group) => {
   })
 
   test('define custom connection', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -358,7 +339,6 @@ test.group('Model options | Model.findMany', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
     const users = await User.findMany([1], { connection: 'secondary' })
@@ -367,8 +347,6 @@ test.group('Model options | Model.findMany', (group) => {
   })
 
   test('define custom profiler', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -379,7 +357,6 @@ test.group('Model options | Model.findMany', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const profiler = new Profiler({})
 
@@ -388,8 +365,6 @@ test.group('Model options | Model.findMany', (group) => {
   })
 
   test('define custom query client', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -400,7 +375,6 @@ test.group('Model options | Model.findMany', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const client = db.connection('secondary')
 
@@ -412,11 +386,14 @@ test.group('Model options | Model.findMany', (group) => {
 
 test.group('Model options | Model.firstOrSave', (group) => {
   group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
     await setup()
   })
 
   group.after(async () => {
     await cleanup()
+    await db.manager.closeAll()
   })
 
   group.afterEach(async () => {
@@ -424,8 +401,6 @@ test.group('Model options | Model.firstOrSave', (group) => {
   })
 
   test('define custom connection', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -436,7 +411,6 @@ test.group('Model options | Model.firstOrSave', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
     const user = await User.firstOrSave({ username: 'virk' }, undefined, { connection: 'secondary' })
@@ -448,8 +422,6 @@ test.group('Model options | Model.firstOrSave', (group) => {
   })
 
   test('define custom connection when search fails', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -460,7 +432,6 @@ test.group('Model options | Model.firstOrSave', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
     const user = await User.firstOrSave({ username: 'nikk' }, undefined, { connection: 'secondary' })
@@ -472,8 +443,6 @@ test.group('Model options | Model.firstOrSave', (group) => {
   })
 
   test('define custom profiler', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -484,7 +453,6 @@ test.group('Model options | Model.firstOrSave', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const profiler = new Profiler({})
 
@@ -497,8 +465,6 @@ test.group('Model options | Model.firstOrSave', (group) => {
   })
 
   test('define custom profiler when search fails', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -509,7 +475,6 @@ test.group('Model options | Model.firstOrSave', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const profiler = new Profiler({})
 
@@ -521,8 +486,6 @@ test.group('Model options | Model.firstOrSave', (group) => {
   })
 
   test('define custom client', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -533,7 +496,6 @@ test.group('Model options | Model.firstOrSave', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const client = db.connection('secondary')
 
@@ -546,8 +508,6 @@ test.group('Model options | Model.firstOrSave', (group) => {
   })
 
   test('define custom client when search fails', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -558,7 +518,6 @@ test.group('Model options | Model.firstOrSave', (group) => {
       public username: string
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const client = db.connection('secondary')
 

@@ -13,13 +13,19 @@ import test from 'japa'
 import { column, hasOne } from '../../src/Orm/Decorators'
 import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb } from '../../test-helpers'
 
+let db: ReturnType<typeof getDb>
+let BaseModel: ReturnType<typeof getBaseModel>
+
 test.group('Model | Has one', (group) => {
   group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
     await setup()
   })
 
   group.after(async () => {
     await cleanup()
+    await db.manager.closeAll()
   })
 
   group.afterEach(async () => {
@@ -28,7 +34,6 @@ test.group('Model | Has one', (group) => {
 
   test('raise error when localKey is missing', (assert) => {
     assert.plan(1)
-    const BaseModel = getBaseModel(ormAdapter())
 
     try {
       class Profile extends BaseModel {
@@ -41,13 +46,15 @@ test.group('Model | Has one', (group) => {
 
       User.$boot()
     } catch ({ message }) {
-      assert.equal(message, 'E_MISSING_RELATED_LOCAL_KEY: User.id required by User.profile relation is missing')
+      assert.equal(
+        message,
+        'E_MISSING_RELATED_LOCAL_KEY: User.id required by User.profile relation is missing',
+      )
     }
   })
 
   test('raise error when foreignKey is missing', (assert) => {
     assert.plan(1)
-    const BaseModel = getBaseModel(ormAdapter())
 
     try {
       class Profile extends BaseModel {
@@ -72,8 +79,6 @@ test.group('Model | Has one', (group) => {
   })
 
   test('use primary key is as the local key', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -94,8 +99,6 @@ test.group('Model | Has one', (group) => {
   })
 
   test('use custom defined primary key', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -120,8 +123,6 @@ test.group('Model | Has one', (group) => {
   })
 
   test('compute foreign key from model name and primary key', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -142,8 +143,6 @@ test.group('Model | Has one', (group) => {
   })
 
   test('use pre defined foreign key', (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class Profile extends BaseModel {
       @column({ castAs: 'user_id' })
       public userUid: number
@@ -164,8 +163,6 @@ test.group('Model | Has one', (group) => {
   })
 
   test('preload has one relationship', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class Profile extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -185,7 +182,6 @@ test.group('Model | Has one', (group) => {
       public profile: Profile
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const users = await db.query().from('users')
@@ -207,7 +203,6 @@ test.group('Model | Has one', (group) => {
 
   test('raise exception when local key is not selected', async (assert) => {
     assert.plan(1)
-    const BaseModel = getBaseModel(ormAdapter())
 
     class Profile extends BaseModel {
       @column({ primary: true })
@@ -228,7 +223,6 @@ test.group('Model | Has one', (group) => {
       public profile: Profile
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const users = await db.query().from('users')
@@ -251,7 +245,6 @@ test.group('Model | Has one', (group) => {
   })
 
   test('pass callback to preload', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
 
     class Profile extends BaseModel {
       @column({ primary: true })
@@ -272,7 +265,6 @@ test.group('Model | Has one', (group) => {
       public profile: Profile
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await db.insertQuery().table('profiles').insert([
       {
@@ -295,8 +287,6 @@ test.group('Model | Has one', (group) => {
   })
 
   test('preload nested relations', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class Identity extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -330,7 +320,6 @@ test.group('Model | Has one', (group) => {
       public profile: Profile
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await db.insertQuery().table('profiles').insert([
       {
@@ -366,8 +355,6 @@ test.group('Model | Has one', (group) => {
   })
 
   test('preload nested relations with primary relation repeating twice', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class Identity extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -401,7 +388,6 @@ test.group('Model | Has one', (group) => {
       public profile: Profile
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await db.insertQuery().table('profiles').insert([
       {
@@ -442,8 +428,6 @@ test.group('Model | Has one', (group) => {
   })
 
   test('pass main query options down the chain', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class Identity extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -477,7 +461,6 @@ test.group('Model | Has one', (group) => {
       public profile: Profile
     }
 
-    const db = getDb()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
     await db.insertQuery().table('profiles').insert([
       {
