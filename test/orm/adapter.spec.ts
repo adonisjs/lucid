@@ -13,13 +13,19 @@ import test from 'japa'
 import { column } from '../../src/Orm/Decorators'
 import { setup, cleanup, getDb, resetTables, getBaseModel, ormAdapter } from '../../test-helpers'
 
+let db: ReturnType<typeof getDb>
+let BaseModel: ReturnType<typeof getBaseModel>
+
 test.group('Adapter', (group) => {
   group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
     await setup()
   })
 
   group.after(async () => {
     await cleanup()
+    await db.manager.closeAll()
   })
 
   group.afterEach(async () => {
@@ -27,8 +33,6 @@ test.group('Adapter', (group) => {
   })
 
   test('make insert call using a model', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -52,8 +56,6 @@ test.group('Adapter', (group) => {
   })
 
   test('make update call using a model', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -82,9 +84,6 @@ test.group('Adapter', (group) => {
   })
 
   test('make delete call using a model', async (assert) => {
-    const db = getDb()
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -113,9 +112,6 @@ test.group('Adapter', (group) => {
   })
 
   test('get array of model instances using the all call', async (assert) => {
-    const db = getDb()
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -145,8 +141,6 @@ test.group('Adapter', (group) => {
   })
 
   test('use transaction client set on the model for the insert', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -158,7 +152,6 @@ test.group('Adapter', (group) => {
     }
 
     User.$boot()
-    const db = getDb()
     const trx = await db.transaction()
 
     const user = new User()
@@ -178,8 +171,6 @@ test.group('Adapter', (group) => {
   })
 
   test('do not insert when transaction rollbacks', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -191,7 +182,6 @@ test.group('Adapter', (group) => {
     }
 
     User.$boot()
-    const db = getDb()
     const trx = await db.transaction()
 
     const user = new User()
@@ -211,8 +201,6 @@ test.group('Adapter', (group) => {
   })
 
   test('cleanup old trx event listeners when transaction is updated', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -224,7 +212,6 @@ test.group('Adapter', (group) => {
     }
 
     User.$boot()
-    const db = getDb()
     const trx = await db.transaction()
     const trx1 = await trx.transaction()
 
@@ -239,8 +226,6 @@ test.group('Adapter', (group) => {
   })
 
   test('use transaction client set on the model for the update', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -261,7 +246,6 @@ test.group('Adapter', (group) => {
     assert.isFalse(user.$isDirty)
     assert.isTrue(user.$persisted)
 
-    const db = getDb()
     const trx = await db.transaction()
     user.$trx = trx
     user.username = 'nikk'
@@ -274,9 +258,6 @@ test.group('Adapter', (group) => {
   })
 
   test('use transaction client set on the model for the delete', async (assert) => {
-    const db = getDb()
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       public static $table = 'users'
 

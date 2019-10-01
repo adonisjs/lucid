@@ -22,13 +22,19 @@ import {
   getBaseModel,
 } from '../../test-helpers'
 
+let db: ReturnType<typeof getDb>
+let BaseModel: ReturnType<typeof getBaseModel>
+
 test.group('Model query builder', (group) => {
   group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
     await setup()
   })
 
   group.after(async () => {
     await cleanup()
+    await db.manager.closeAll()
   })
 
   group.afterEach(async () => {
@@ -36,8 +42,6 @@ test.group('Model query builder', (group) => {
   })
 
   test('get instance of query builder for the given model', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
-
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -51,7 +55,6 @@ test.group('Model query builder', (group) => {
   })
 
   test('pre select the table for the query builder instance', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -65,7 +68,6 @@ test.group('Model query builder', (group) => {
   })
 
   test('execute select queries', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -75,7 +77,6 @@ test.group('Model query builder', (group) => {
     }
 
     User.$boot()
-    const db = getDb()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const users = await User.query().where('username', 'virk')
@@ -85,7 +86,6 @@ test.group('Model query builder', (group) => {
   })
 
   test('pass custom connection to the model instance', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -95,7 +95,6 @@ test.group('Model query builder', (group) => {
     }
 
     User.$boot()
-    const db = getDb()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const users = await User.query({ connection: 'secondary' }).where('username', 'virk')
@@ -106,7 +105,6 @@ test.group('Model query builder', (group) => {
   })
 
   test('pass sideloaded attributes to the model instance', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -116,7 +114,6 @@ test.group('Model query builder', (group) => {
     }
 
     User.$boot()
-    const db = getDb()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const users = await User
@@ -131,7 +128,6 @@ test.group('Model query builder', (group) => {
   })
 
   test('pass custom profiler to the model instance', async (assert) => {
-    const BaseModel = getBaseModel(ormAdapter())
     class User extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -141,7 +137,6 @@ test.group('Model query builder', (group) => {
     }
 
     User.$boot()
-    const db = getDb()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const profiler = getProfiler()

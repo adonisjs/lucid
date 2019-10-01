@@ -132,11 +132,6 @@ export async function setup () {
  * Does cleanup removes database
  */
 export async function cleanup () {
-  if (process.env.DB === 'sqlite') {
-    await fs.cleanup()
-    return
-  }
-
   const db = knex(getConfig())
   await db.schema.dropTableIfExists('users')
   await db.schema.dropTableIfExists('profiles')
@@ -232,8 +227,8 @@ export function getDb () {
 /**
  * Returns the orm adapter
  */
-export function ormAdapter () {
-  return new Adapter(getDb())
+export function ormAdapter (db: DatabaseContract) {
+  return new Adapter(db)
 }
 
 /**

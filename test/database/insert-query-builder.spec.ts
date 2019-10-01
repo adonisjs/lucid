@@ -23,7 +23,7 @@ test.group('Query Builder | insert', (group) => {
     await cleanup()
   })
 
-  test('perform insert', (assert) => {
+  test('perform insert', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -37,9 +37,11 @@ test.group('Query Builder | insert', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 
-  test('perform multi insert', (assert) => {
+  test('perform multi insert', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -56,9 +58,11 @@ test.group('Query Builder | insert', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 
-  test('define returning columns', (assert) => {
+  test('define returning columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -77,5 +81,6 @@ test.group('Query Builder | insert', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 })

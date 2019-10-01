@@ -39,6 +39,8 @@ test.group('Transaction | query', (group) => {
 
     assert.isArray(results)
     assert.lengthOf(results, 0)
+
+    await connection.disconnect()
   })
 
   test('commit insert', async (assert) => {
@@ -53,6 +55,8 @@ test.group('Transaction | query', (group) => {
     assert.isArray(results)
     assert.lengthOf(results, 1)
     assert.equal(results[0].username, 'virk')
+
+    await connection.disconnect()
   })
 
   test('rollback insert', async (assert) => {
@@ -66,6 +70,8 @@ test.group('Transaction | query', (group) => {
     const results = await new QueryClient('dual', connection).query().from('users')
     assert.isArray(results)
     assert.lengthOf(results, 0)
+
+    await connection.disconnect()
   })
 
   test('perform nested transactions with save points', async (assert) => {
@@ -98,6 +104,8 @@ test.group('Transaction | query', (group) => {
     assert.isArray(results)
     assert.lengthOf(results, 1)
     assert.equal(results[0].username, 'virk')
+
+    await connection.disconnect()
   })
 
   test('emit after commit event', async (assert) => {
@@ -118,6 +126,8 @@ test.group('Transaction | query', (group) => {
     assert.deepEqual(db.listenerCount('commit'), 0)
     assert.deepEqual(db.listenerCount('rollback'), 0)
     assert.deepEqual(stack, ['commit'])
+
+    await connection.disconnect()
   })
 
   test('execute before and after rollback hooks', async (assert) => {
@@ -137,5 +147,7 @@ test.group('Transaction | query', (group) => {
     assert.deepEqual(db.listenerCount('commit'), 0)
     assert.deepEqual(db.listenerCount('rollback'), 0)
     assert.deepEqual(stack, ['rollback'])
+
+    await connection.disconnect()
   })
 })

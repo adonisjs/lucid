@@ -33,7 +33,7 @@ if (process.env.DB !== 'sqlite') {
       await cleanup()
     })
 
-    test('use read client when making select query', (assert) => {
+    test('use read client when making select query', async (assert) => {
       assert.plan(1)
       const connection = new Connection('primary', getConfig(), getLogger())
       connection.connect()
@@ -48,9 +48,10 @@ if (process.env.DB !== 'sqlite') {
 
       db.select('*').from('users')
       db['getQueryClient']()
+      await connection.disconnect()
     })
 
-    test('use write client for update', (assert) => {
+    test('use write client for update', async (assert) => {
       assert.plan(1)
       const connection = new Connection('primary', getConfig(), getLogger())
       connection.connect()
@@ -65,9 +66,10 @@ if (process.env.DB !== 'sqlite') {
 
       db.from('users').update('username', 'virk')
       db['getQueryClient']()
+      await connection.disconnect()
     })
 
-    test('use write client for delete', (assert) => {
+    test('use write client for delete', async (assert) => {
       assert.plan(1)
       const connection = new Connection('primary', getConfig(), getLogger())
       connection.connect()
@@ -82,6 +84,7 @@ if (process.env.DB !== 'sqlite') {
 
       db.from('users').del()
       db['getQueryClient']()
+      await connection.disconnect()
     })
 
     test('use transaction client when query is used inside a transaction', async () => {
@@ -98,6 +101,7 @@ if (process.env.DB !== 'sqlite') {
       const trx = await client.transaction()
       await db.select('*').from('users').useTransaction(trx).exec()
       await trx.commit()
+      await connection.disconnect()
     })
 
     test('use transaction client when insert query is used inside a transaction', async () => {
@@ -114,6 +118,7 @@ if (process.env.DB !== 'sqlite') {
       const trx = await client.transaction()
       await db.table('users').useTransaction(trx).insert({ username: 'virk' }).exec()
       await trx.rollback()
+      await connection.disconnect()
     })
 
     test('use transaction client when query is issued from transaction client', async () => {
@@ -129,6 +134,7 @@ if (process.env.DB !== 'sqlite') {
       const trx = await client.transaction()
       await trx.query().select('*').from('users').exec()
       await trx.commit()
+      await connection.disconnect()
     })
 
     test('use transaction client when insert query is issued from transaction client', async () => {
@@ -157,7 +163,7 @@ test.group('Query Builder | from', (group) => {
     await cleanup()
   })
 
-  test('define query table', (assert) => {
+  test('define query table', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -167,9 +173,10 @@ test.group('Query Builder | from', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define table alias', (assert) => {
+  test('define table alias', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -191,7 +198,7 @@ test.group('Query Builder | where', (group) => {
     await cleanup()
   })
 
-  test('add where clause', (assert) => {
+  test('add where clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -208,9 +215,10 @@ test.group('Query Builder | where', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where clause as an object', (assert) => {
+  test('add where clause as an object', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -227,9 +235,10 @@ test.group('Query Builder | where', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where wrapped clause', (assert) => {
+  test('add where wrapped clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -246,9 +255,10 @@ test.group('Query Builder | where', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where clause with operator', (assert) => {
+  test('add where clause with operator', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -265,9 +275,10 @@ test.group('Query Builder | where', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where clause as a raw query', (assert) => {
+  test('add where clause as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -284,9 +295,10 @@ test.group('Query Builder | where', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add orWhere clause', (assert) => {
+  test('add orWhere clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -305,9 +317,10 @@ test.group('Query Builder | where', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add orWhere wrapped clause', (assert) => {
+  test('add orWhere wrapped clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -343,7 +356,7 @@ test.group('Query Builder | whereNot', (group) => {
     await cleanup()
   })
 
-  test('add where no clause', (assert) => {
+  test('add where no clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -360,9 +373,10 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where not clause as an object', (assert) => {
+  test('add where not clause as an object', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -379,9 +393,10 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where not wrapped clause', (assert) => {
+  test('add where not wrapped clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -398,9 +413,10 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where not clause with operator', (assert) => {
+  test('add where not clause with operator', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -417,9 +433,10 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where not clause as a raw query', (assert) => {
+  test('add where not clause as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -436,9 +453,10 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add orWhereNot clause', (assert) => {
+  test('add orWhereNot clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -457,9 +475,10 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add orWhereNot wrapped clause', (assert) => {
+  test('add orWhereNot wrapped clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -495,7 +514,7 @@ test.group('Query Builder | whereIn', (group) => {
     await cleanup()
   })
 
-  test('add whereIn clause', (assert) => {
+  test('add whereIn clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -512,9 +531,10 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add whereIn as a query callback', (assert) => {
+  test('add whereIn as a query callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -535,9 +555,10 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add whereIn as a subquery', (assert) => {
+  test('add whereIn as a subquery', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -554,9 +575,10 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add whereIn as a rawquery', (assert) => {
+  test('add whereIn as a rawquery', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -579,9 +601,10 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add whereIn as a subquery with array of keys', (assert) => {
+  test('add whereIn as a subquery with array of keys', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -601,9 +624,10 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add whereIn as a 2d array', (assert) => {
+  test('add whereIn as a 2d array', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -620,9 +644,10 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add orWhereIn clause', (assert) => {
+  test('add orWhereIn clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -641,9 +666,10 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add orWhereIn as a query callback', (assert) => {
+  test('add orWhereIn as a query callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -682,7 +708,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     await cleanup()
   })
 
-  test('add whereNotIn clause', (assert) => {
+  test('add whereNotIn clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -699,9 +725,10 @@ test.group('Query Builder | whereNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add whereNotIn as a query callback', (assert) => {
+  test('add whereNotIn as a query callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -722,9 +749,10 @@ test.group('Query Builder | whereNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add whereNotIn as a sub query', (assert) => {
+  test('add whereNotIn as a sub query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -741,9 +769,10 @@ test.group('Query Builder | whereNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add whereNotIn as a 2d array', (assert) => {
+  test('add whereNotIn as a 2d array', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -760,9 +789,10 @@ test.group('Query Builder | whereNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add orWhereNotIn clause', (assert) => {
+  test('add orWhereNotIn clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -781,9 +811,10 @@ test.group('Query Builder | whereNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add orWhereNotIn as a subquery', (assert) => {
+  test('add orWhereNotIn as a subquery', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -822,7 +853,7 @@ test.group('Query Builder | whereNull', (group) => {
     await cleanup()
   })
 
-  test('add where null clause', (assert) => {
+  test('add where null clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -839,9 +870,10 @@ test.group('Query Builder | whereNull', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or where null clause', (assert) => {
+  test('add or where null clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -872,7 +904,7 @@ test.group('Query Builder | whereNotNull', (group) => {
     await cleanup()
   })
 
-  test('add where not null clause', (assert) => {
+  test('add where not null clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -889,9 +921,10 @@ test.group('Query Builder | whereNotNull', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or where not null clause', (assert) => {
+  test('add or where not null clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -922,7 +955,7 @@ test.group('Query Builder | whereExists', (group) => {
     await cleanup()
   })
 
-  test('add where exists clause', (assert) => {
+  test('add where exists clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -943,9 +976,10 @@ test.group('Query Builder | whereExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where exists clause as a subquery', (assert) => {
+  test('add where exists clause as a subquery', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -962,9 +996,10 @@ test.group('Query Builder | whereExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or where exists clause', (assert) => {
+  test('add or where exists clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -985,9 +1020,10 @@ test.group('Query Builder | whereExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or where exists clause as a subquery', (assert) => {
+  test('add or where exists clause as a subquery', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1016,7 +1052,7 @@ test.group('Query Builder | whereNotExists', (group) => {
     await cleanup()
   })
 
-  test('add where exists clause', (assert) => {
+  test('add where exists clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1037,9 +1073,10 @@ test.group('Query Builder | whereNotExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where exists clause as a subquery', (assert) => {
+  test('add where exists clause as a subquery', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1056,9 +1093,10 @@ test.group('Query Builder | whereNotExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or where exists clause', (assert) => {
+  test('add or where exists clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1079,9 +1117,10 @@ test.group('Query Builder | whereNotExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or where exists clause as a subquery', (assert) => {
+  test('add or where exists clause as a subquery', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1110,7 +1149,7 @@ test.group('Query Builder | whereBetween', (group) => {
     await cleanup()
   })
 
-  test('add where between clause', (assert) => {
+  test('add where between clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1127,9 +1166,10 @@ test.group('Query Builder | whereBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where between clause as a raw query', (assert) => {
+  test('add where between clause as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1152,9 +1192,10 @@ test.group('Query Builder | whereBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or where between clause', (assert) => {
+  test('add or where between clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1171,9 +1212,10 @@ test.group('Query Builder | whereBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or where between clause as a raw query', (assert) => {
+  test('add or where between clause as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1208,7 +1250,7 @@ test.group('Query Builder | whereNotBetween', (group) => {
     await cleanup()
   })
 
-  test('add where not between clause', (assert) => {
+  test('add where not between clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1225,9 +1267,10 @@ test.group('Query Builder | whereNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where not between clause as a raw query', (assert) => {
+  test('add where not between clause as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1250,9 +1293,10 @@ test.group('Query Builder | whereNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or where not between clause', (assert) => {
+  test('add or where not between clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1269,9 +1313,10 @@ test.group('Query Builder | whereNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or where not between clause as a raw query', (assert) => {
+  test('add or where not between clause as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1306,7 +1351,7 @@ test.group('Query Builder | whereRaw', (group) => {
     await cleanup()
   })
 
-  test('add where raw clause', (assert) => {
+  test('add where raw clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1323,9 +1368,10 @@ test.group('Query Builder | whereRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where raw clause without bindings', (assert) => {
+  test('add where raw clause without bindings', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1342,9 +1388,10 @@ test.group('Query Builder | whereRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where raw clause with object of bindings', (assert) => {
+  test('add where raw clause with object of bindings', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1361,9 +1408,10 @@ test.group('Query Builder | whereRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add where raw clause from a raw query', (assert) => {
+  test('add where raw clause from a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1380,9 +1428,10 @@ test.group('Query Builder | whereRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or where raw clause', (assert) => {
+  test('add or where raw clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1413,7 +1462,7 @@ test.group('Query Builder | join', (group) => {
     await cleanup()
   })
 
-  test('add query join', (assert) => {
+  test('add query join', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1430,9 +1479,10 @@ test.group('Query Builder | join', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query join with operator', (assert) => {
+  test('add query join with operator', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1449,9 +1499,10 @@ test.group('Query Builder | join', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query join using join callback', (assert) => {
+  test('add query join using join callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1472,9 +1523,10 @@ test.group('Query Builder | join', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query join as a raw query', (assert) => {
+  test('add query join as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1503,7 +1555,7 @@ test.group('Query Builder | innerJoin', (group) => {
     await cleanup()
   })
 
-  test('add query innerJoin', (assert) => {
+  test('add query innerJoin', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1520,9 +1572,10 @@ test.group('Query Builder | innerJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query innerJoin with operator', (assert) => {
+  test('add query innerJoin with operator', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1539,9 +1592,10 @@ test.group('Query Builder | innerJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query innerJoin using join callback', (assert) => {
+  test('add query innerJoin using join callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1562,9 +1616,10 @@ test.group('Query Builder | innerJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query innerJoin as a raw query', (assert) => {
+  test('add query innerJoin as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1593,7 +1648,7 @@ test.group('Query Builder | leftJoin', (group) => {
     await cleanup()
   })
 
-  test('add query leftJoin', (assert) => {
+  test('add query leftJoin', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1610,9 +1665,10 @@ test.group('Query Builder | leftJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query leftJoin with operator', (assert) => {
+  test('add query leftJoin with operator', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1629,9 +1685,10 @@ test.group('Query Builder | leftJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query leftJoin using join callback', (assert) => {
+  test('add query leftJoin using join callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1652,9 +1709,10 @@ test.group('Query Builder | leftJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query leftJoin as a raw query', (assert) => {
+  test('add query leftJoin as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1683,7 +1741,7 @@ test.group('Query Builder | leftOuterJoin', (group) => {
     await cleanup()
   })
 
-  test('add query leftOuterJoin', (assert) => {
+  test('add query leftOuterJoin', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1700,9 +1758,10 @@ test.group('Query Builder | leftOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query leftOuterJoin with operator', (assert) => {
+  test('add query leftOuterJoin with operator', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1719,9 +1778,10 @@ test.group('Query Builder | leftOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query leftOuterJoin using join callback', (assert) => {
+  test('add query leftOuterJoin using join callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1742,9 +1802,10 @@ test.group('Query Builder | leftOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query leftOuterJoin as a raw query', (assert) => {
+  test('add query leftOuterJoin as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1773,7 +1834,7 @@ test.group('Query Builder | rightJoin', (group) => {
     await cleanup()
   })
 
-  test('add query rightJoin', (assert) => {
+  test('add query rightJoin', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1790,9 +1851,10 @@ test.group('Query Builder | rightJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query rightJoin with operator', (assert) => {
+  test('add query rightJoin with operator', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1809,9 +1871,10 @@ test.group('Query Builder | rightJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query rightJoin using join callback', (assert) => {
+  test('add query rightJoin using join callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1832,9 +1895,10 @@ test.group('Query Builder | rightJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query rightJoin as a raw query', (assert) => {
+  test('add query rightJoin as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1863,7 +1927,7 @@ test.group('Query Builder | rightOuterJoin', (group) => {
     await cleanup()
   })
 
-  test('add query rightOuterJoin', (assert) => {
+  test('add query rightOuterJoin', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1880,9 +1944,10 @@ test.group('Query Builder | rightOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query rightOuterJoin with operator', (assert) => {
+  test('add query rightOuterJoin with operator', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1899,9 +1964,10 @@ test.group('Query Builder | rightOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query rightOuterJoin using join callback', (assert) => {
+  test('add query rightOuterJoin using join callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1922,9 +1988,10 @@ test.group('Query Builder | rightOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query rightOuterJoin as a raw query', (assert) => {
+  test('add query rightOuterJoin as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1953,7 +2020,7 @@ test.group('Query Builder | fullOuterJoin', (group) => {
     await cleanup()
   })
 
-  test('add query fullOuterJoin', (assert) => {
+  test('add query fullOuterJoin', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1970,9 +2037,10 @@ test.group('Query Builder | fullOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query fullOuterJoin with operator', (assert) => {
+  test('add query fullOuterJoin with operator', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -1989,9 +2057,10 @@ test.group('Query Builder | fullOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query fullOuterJoin using join callback', (assert) => {
+  test('add query fullOuterJoin using join callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2012,9 +2081,10 @@ test.group('Query Builder | fullOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query fullOuterJoin as a raw query', (assert) => {
+  test('add query fullOuterJoin as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2043,7 +2113,7 @@ test.group('Query Builder | crossJoin', (group) => {
     await cleanup()
   })
 
-  test('add query crossJoin', (assert) => {
+  test('add query crossJoin', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2060,9 +2130,10 @@ test.group('Query Builder | crossJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query crossJoin with operator', (assert) => {
+  test('add query crossJoin with operator', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2079,9 +2150,10 @@ test.group('Query Builder | crossJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query crossJoin using join callback', (assert) => {
+  test('add query crossJoin using join callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2102,9 +2174,10 @@ test.group('Query Builder | crossJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add query crossJoin as a raw query', (assert) => {
+  test('add query crossJoin as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2133,7 +2206,7 @@ test.group('Query Builder | joinRaw', (group) => {
     await cleanup()
   })
 
-  test('add join as a raw join', (assert) => {
+  test('add join as a raw join', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2150,9 +2223,10 @@ test.group('Query Builder | joinRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add join as a raw join by passing the raw query output', (assert) => {
+  test('add join as a raw join by passing the raw query output', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2181,7 +2255,7 @@ test.group('Query Builder | distinct', (group) => {
     await cleanup()
   })
 
-  test('define distinct columns', (assert) => {
+  test('define distinct columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2210,7 +2284,7 @@ test.group('Query Builder | groupBy', (group) => {
     await cleanup()
   })
 
-  test('define group by columns', (assert) => {
+  test('define group by columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2239,7 +2313,7 @@ test.group('Query Builder | groupByRaw', (group) => {
     await cleanup()
   })
 
-  test('define group by columns as a raw query', (assert) => {
+  test('define group by columns as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2268,7 +2342,7 @@ test.group('Query Builder | orderBy', (group) => {
     await cleanup()
   })
 
-  test('define order by columns', (assert) => {
+  test('define order by columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2285,9 +2359,10 @@ test.group('Query Builder | orderBy', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define order by columns with explicit direction', (assert) => {
+  test('define order by columns with explicit direction', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2304,9 +2379,10 @@ test.group('Query Builder | orderBy', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define order by columns as an array of objects', (assert) => {
+  test('define order by columns as an array of objects', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2335,7 +2411,7 @@ test.group('Query Builder | orderByRaw', (group) => {
     await cleanup()
   })
 
-  test('define order by columns as a raw query', (assert) => {
+  test('define order by columns as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2364,7 +2440,7 @@ test.group('Query Builder | offset', (group) => {
     await cleanup()
   })
 
-  test('define select offset', (assert) => {
+  test('define select offset', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2393,7 +2469,7 @@ test.group('Query Builder | limit', (group) => {
     await cleanup()
   })
 
-  test('define results limit', (assert) => {
+  test('define results limit', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2422,7 +2498,7 @@ test.group('Query Builder | union', (group) => {
     await cleanup()
   })
 
-  test('define union query as a callback', (assert) => {
+  test('define union query as a callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2443,9 +2519,10 @@ test.group('Query Builder | union', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define union query as a subquery', (assert) => {
+  test('define union query as a subquery', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2462,9 +2539,10 @@ test.group('Query Builder | union', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define union query as a raw query', (assert) => {
+  test('define union query as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2481,9 +2559,10 @@ test.group('Query Builder | union', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define union query as an array of callbacks', (assert) => {
+  test('define union query as an array of callbacks', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2504,9 +2583,10 @@ test.group('Query Builder | union', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define union query as an array of subqueries', (assert) => {
+  test('define union query as an array of subqueries', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2523,9 +2603,10 @@ test.group('Query Builder | union', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define union query as an array of raw queries', (assert) => {
+  test('define union query as an array of raw queries', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2554,7 +2635,7 @@ test.group('Query Builder | unionAll', (group) => {
     await cleanup()
   })
 
-  test('define unionAll query as a callback', (assert) => {
+  test('define unionAll query as a callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2575,9 +2656,10 @@ test.group('Query Builder | unionAll', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define unionAll query as a subquery', (assert) => {
+  test('define unionAll query as a subquery', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2594,9 +2676,10 @@ test.group('Query Builder | unionAll', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define unionAll query as a raw query', (assert) => {
+  test('define unionAll query as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2613,9 +2696,10 @@ test.group('Query Builder | unionAll', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define unionAll query as an array of callbacks', (assert) => {
+  test('define unionAll query as an array of callbacks', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2636,9 +2720,10 @@ test.group('Query Builder | unionAll', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define unionAll query as an array of subqueries', (assert) => {
+  test('define unionAll query as an array of subqueries', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2655,9 +2740,10 @@ test.group('Query Builder | unionAll', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define unionAll query as an array of raw queries', (assert) => {
+  test('define unionAll query as an array of raw queries', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2686,7 +2772,7 @@ test.group('Query Builder | forUpdate', (group) => {
     await cleanup()
   })
 
-  test('define FOR UPDATE lock', (assert) => {
+  test('define FOR UPDATE lock', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2703,9 +2789,10 @@ test.group('Query Builder | forUpdate', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define FOR UPDATE lock with additional tables (pg only)', (assert) => {
+  test('define FOR UPDATE lock with additional tables (pg only)', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2734,7 +2821,7 @@ test.group('Query Builder | forShare', (group) => {
     await cleanup()
   })
 
-  test('define FOR SHARE lock', (assert) => {
+  test('define FOR SHARE lock', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2751,9 +2838,10 @@ test.group('Query Builder | forShare', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('define FOR SHARE lock with additional tables (pg only)', (assert) => {
+  test('define FOR SHARE lock with additional tables (pg only)', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2783,7 +2871,7 @@ if (['pg', 'mysql'].includes(process.env.DB!)) {
       await cleanup()
     })
 
-    test('add no wait instruction to the query', (assert) => {
+    test('add no wait instruction to the query', async (assert) => {
       const connection = new Connection('primary', getConfig(), getLogger())
       connection.connect()
 
@@ -2814,7 +2902,7 @@ if (['pg', 'mysql'].includes(process.env.DB!)) {
       await cleanup()
     })
 
-    test('add skip locked instruction to the query', (assert) => {
+    test('add skip locked instruction to the query', async (assert) => {
       const connection = new Connection('primary', getConfig(), getLogger())
       connection.connect()
 
@@ -2846,7 +2934,7 @@ test.group('Query Builder | having', (group) => {
     await cleanup()
   })
 
-  test('add having clause', (assert) => {
+  test('add having clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2863,9 +2951,10 @@ test.group('Query Builder | having', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having clause as a callback', (assert) => {
+  test('add having clause as a callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2886,9 +2975,10 @@ test.group('Query Builder | having', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having clause value being a raw query', (assert) => {
+  test('add having clause value being a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
     const ref = connection.client!.ref.bind(connection.client!)
@@ -2914,9 +3004,10 @@ test.group('Query Builder | having', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having clause value being a sub query', (assert) => {
+  test('add having clause value being a sub query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2941,9 +3032,10 @@ test.group('Query Builder | having', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having clause as a raw query', (assert) => {
+  test('add having clause as a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2960,9 +3052,10 @@ test.group('Query Builder | having', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or having clause', (assert) => {
+  test('add or having clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -2993,7 +3086,7 @@ test.group('Query Builder | havingIn', (group) => {
     await cleanup()
   })
 
-  test('add having in clause', (assert) => {
+  test('add having in clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3010,9 +3103,10 @@ test.group('Query Builder | havingIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having in clause values as subqueries', (assert) => {
+  test('add having in clause values as subqueries', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3029,9 +3123,10 @@ test.group('Query Builder | havingIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having in clause values as raw queries', (assert) => {
+  test('add having in clause values as raw queries', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3048,9 +3143,10 @@ test.group('Query Builder | havingIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having in clause values as query callbacks', (assert) => {
+  test('add having in clause values as query callbacks', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3071,9 +3167,10 @@ test.group('Query Builder | havingIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or having in clause', (assert) => {
+  test('add or having in clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3104,7 +3201,7 @@ test.group('Query Builder | havingNotIn', (group) => {
     await cleanup()
   })
 
-  test('add not having in clause', (assert) => {
+  test('add not having in clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3121,9 +3218,10 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having in clause values as subqueries', (assert) => {
+  test('add having in clause values as subqueries', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3140,9 +3238,10 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having in clause values as raw queries', (assert) => {
+  test('add having in clause values as raw queries', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3159,9 +3258,10 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having in clause values as query callbacks', (assert) => {
+  test('add having in clause values as query callbacks', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3182,9 +3282,10 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or having in clause', (assert) => {
+  test('add or having in clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3215,7 +3316,7 @@ test.group('Query Builder | havingNull', (group) => {
     await cleanup()
   })
 
-  test('add having null clause', (assert) => {
+  test('add having null clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3232,9 +3333,10 @@ test.group('Query Builder | havingNull', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or having null clause', (assert) => {
+  test('add or having null clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3265,7 +3367,7 @@ test.group('Query Builder | havingNotNull', (group) => {
     await cleanup()
   })
 
-  test('add having null clause', (assert) => {
+  test('add having null clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3282,9 +3384,10 @@ test.group('Query Builder | havingNotNull', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or having not null clause', (assert) => {
+  test('add or having not null clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3315,7 +3418,7 @@ test.group('Query Builder | havingExists', (group) => {
     await cleanup()
   })
 
-  test('add having exists clause', (assert) => {
+  test('add having exists clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3336,9 +3439,10 @@ test.group('Query Builder | havingExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having exists clause as a subquery', (assert) => {
+  test('add having exists clause as a subquery', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3355,9 +3459,10 @@ test.group('Query Builder | havingExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or having exists clause', (assert) => {
+  test('add or having exists clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3396,7 +3501,7 @@ test.group('Query Builder | havingNotExists', (group) => {
     await cleanup()
   })
 
-  test('add having not exists clause', (assert) => {
+  test('add having not exists clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3417,9 +3522,10 @@ test.group('Query Builder | havingNotExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having not exists clause as a subquery', (assert) => {
+  test('add having not exists clause as a subquery', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3436,9 +3542,10 @@ test.group('Query Builder | havingNotExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or having not exists clause', (assert) => {
+  test('add or having not exists clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3477,7 +3584,7 @@ test.group('Query Builder | havingBetween', (group) => {
     await cleanup()
   })
 
-  test('add having between clause', (assert) => {
+  test('add having between clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3494,9 +3601,10 @@ test.group('Query Builder | havingBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having between clause with raw values', (assert) => {
+  test('add having between clause with raw values', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3519,9 +3627,10 @@ test.group('Query Builder | havingBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having between clause with subqueries', (assert) => {
+  test('add having between clause with subqueries', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3544,9 +3653,10 @@ test.group('Query Builder | havingBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or having between clause', (assert) => {
+  test('add or having between clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3577,7 +3687,7 @@ test.group('Query Builder | havingNotBetween', (group) => {
     await cleanup()
   })
 
-  test('add having not between clause', (assert) => {
+  test('add having not between clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3594,9 +3704,10 @@ test.group('Query Builder | havingNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having not between clause with raw values', (assert) => {
+  test('add having not between clause with raw values', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3619,9 +3730,10 @@ test.group('Query Builder | havingNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having not between clause with subqueries', (assert) => {
+  test('add having not between clause with subqueries', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3644,9 +3756,10 @@ test.group('Query Builder | havingNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or having not between clause', (assert) => {
+  test('add or having not between clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3677,7 +3790,7 @@ test.group('Query Builder | havingRaw', (group) => {
     await cleanup()
   })
 
-  test('add having raw clause', (assert) => {
+  test('add having raw clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3694,9 +3807,10 @@ test.group('Query Builder | havingRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having raw clause without bindings', (assert) => {
+  test('add having raw clause without bindings', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3713,9 +3827,10 @@ test.group('Query Builder | havingRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having raw clause with object of bindings', (assert) => {
+  test('add having raw clause with object of bindings', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3732,9 +3847,10 @@ test.group('Query Builder | havingRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add having raw clause from a raw query', (assert) => {
+  test('add having raw clause from a raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3751,9 +3867,10 @@ test.group('Query Builder | havingRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('add or having raw clause', (assert) => {
+  test('add or having raw clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3784,7 +3901,7 @@ test.group('Query Builder | clearSelect', (group) => {
     await cleanup()
   })
 
-  test('clear selected columns', (assert) => {
+  test('clear selected columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3815,7 +3932,7 @@ test.group('Query Builder | clearWhere', (group) => {
     await cleanup()
   })
 
-  test('clear where clauses', (assert) => {
+  test('clear where clauses', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3846,7 +3963,7 @@ test.group('Query Builder | clearOrder', (group) => {
     await cleanup()
   })
 
-  test('clear order by columns', (assert) => {
+  test('clear order by columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3877,7 +3994,7 @@ test.group('Query Builder | clearHaving', (group) => {
     await cleanup()
   })
 
-  test('clear having clause', (assert) => {
+  test('clear having clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3908,7 +4025,7 @@ test.group('Query Builder | count', (group) => {
     await cleanup()
   })
 
-  test('count all rows', (assert) => {
+  test('count all rows', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3925,9 +4042,10 @@ test.group('Query Builder | count', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('count multiple rows', (assert) => {
+  test('count multiple rows', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3944,9 +4062,10 @@ test.group('Query Builder | count', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('count by raw query', (assert) => {
+  test('count by raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3968,9 +4087,10 @@ test.group('Query Builder | count', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('count by subquery', (assert) => {
+  test('count by subquery', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -3989,9 +4109,10 @@ test.group('Query Builder | count', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('count by raw query on multiple columns', (assert) => {
+  test('count by raw query on multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4014,9 +4135,10 @@ test.group('Query Builder | count', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('count by subquery on multiple columns', (assert) => {
+  test('count by subquery on multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4051,7 +4173,7 @@ test.group('Query Builder | countDistinct', (group) => {
     await cleanup()
   })
 
-  test('count all rows', (assert) => {
+  test('count all rows', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4068,9 +4190,10 @@ test.group('Query Builder | countDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('count multiple rows', (assert) => {
+  test('count multiple rows', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4087,9 +4210,10 @@ test.group('Query Builder | countDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('count by raw query', (assert) => {
+  test('count by raw query', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4111,9 +4235,10 @@ test.group('Query Builder | countDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('count by subquery', (assert) => {
+  test('count by subquery', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4132,9 +4257,10 @@ test.group('Query Builder | countDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('count by raw query on multiple columns', (assert) => {
+  test('count by raw query on multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4157,9 +4283,10 @@ test.group('Query Builder | countDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('count by subquery on multiple columns', (assert) => {
+  test('count by subquery on multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4194,7 +4321,7 @@ test.group('Query Builder | min', (group) => {
     await cleanup()
   })
 
-  test('use min function', (assert) => {
+  test('use min function', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4211,9 +4338,10 @@ test.group('Query Builder | min', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use min function for multiple times', (assert) => {
+  test('use min function for multiple times', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4230,9 +4358,10 @@ test.group('Query Builder | min', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use raw queries to compute min', (assert) => {
+  test('use raw queries to compute min', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4254,9 +4383,10 @@ test.group('Query Builder | min', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use subqueries to compute min', (assert) => {
+  test('use subqueries to compute min', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4275,9 +4405,10 @@ test.group('Query Builder | min', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use raw query to compute min with multiple columns', (assert) => {
+  test('use raw query to compute min with multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4300,9 +4431,10 @@ test.group('Query Builder | min', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use subquery to compute min with multiple columns', (assert) => {
+  test('use subquery to compute min with multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4337,7 +4469,7 @@ test.group('Query Builder | max', (group) => {
     await cleanup()
   })
 
-  test('use max function', (assert) => {
+  test('use max function', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4354,9 +4486,10 @@ test.group('Query Builder | max', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use max function for multiple times', (assert) => {
+  test('use max function for multiple times', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4373,9 +4506,10 @@ test.group('Query Builder | max', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use raw queries to compute max', (assert) => {
+  test('use raw queries to compute max', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4397,9 +4531,10 @@ test.group('Query Builder | max', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use subqueries to compute max', (assert) => {
+  test('use subqueries to compute max', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4418,9 +4553,10 @@ test.group('Query Builder | max', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use raw query to compute max with multiple columns', (assert) => {
+  test('use raw query to compute max with multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4443,9 +4579,10 @@ test.group('Query Builder | max', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use subquery to compute max with multiple columns', (assert) => {
+  test('use subquery to compute max with multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4480,7 +4617,7 @@ test.group('Query Builder | sum', (group) => {
     await cleanup()
   })
 
-  test('use sum function', (assert) => {
+  test('use sum function', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4497,9 +4634,10 @@ test.group('Query Builder | sum', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use sum function for multiple times', (assert) => {
+  test('use sum function for multiple times', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4516,9 +4654,10 @@ test.group('Query Builder | sum', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use raw queries to compute sum', (assert) => {
+  test('use raw queries to compute sum', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4540,9 +4679,10 @@ test.group('Query Builder | sum', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use subqueries to compute sum', (assert) => {
+  test('use subqueries to compute sum', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4561,9 +4701,10 @@ test.group('Query Builder | sum', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use raw query to compute sum with multiple columns', (assert) => {
+  test('use raw query to compute sum with multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4586,9 +4727,10 @@ test.group('Query Builder | sum', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use subquery to compute sum with multiple columns', (assert) => {
+  test('use subquery to compute sum with multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4623,7 +4765,7 @@ test.group('Query Builder | avg', (group) => {
     await cleanup()
   })
 
-  test('use avg function', (assert) => {
+  test('use avg function', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4640,9 +4782,10 @@ test.group('Query Builder | avg', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use avg function for multiple times', (assert) => {
+  test('use avg function for multiple times', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4659,9 +4802,10 @@ test.group('Query Builder | avg', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use raw queries to compute avg', (assert) => {
+  test('use raw queries to compute avg', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4683,9 +4827,10 @@ test.group('Query Builder | avg', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use subqueries to compute avg', (assert) => {
+  test('use subqueries to compute avg', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4704,9 +4849,10 @@ test.group('Query Builder | avg', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use raw query to compute avg with multiple columns', (assert) => {
+  test('use raw query to compute avg with multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4729,9 +4875,10 @@ test.group('Query Builder | avg', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use subquery to compute avg with multiple columns', (assert) => {
+  test('use subquery to compute avg with multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4766,7 +4913,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     await cleanup()
   })
 
-  test('use avgDistinct function', (assert) => {
+  test('use avgDistinct function', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4783,9 +4930,10 @@ test.group('Query Builder | avgDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use avgDistinct function for multiple times', (assert) => {
+  test('use avgDistinct function for multiple times', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4802,9 +4950,10 @@ test.group('Query Builder | avgDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use raw queries to compute avgDistinct', (assert) => {
+  test('use raw queries to compute avgDistinct', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4826,9 +4975,10 @@ test.group('Query Builder | avgDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use subqueries to compute avgDistinct', (assert) => {
+  test('use subqueries to compute avgDistinct', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4847,9 +4997,10 @@ test.group('Query Builder | avgDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use raw query to compute avgDistinct with multiple columns', (assert) => {
+  test('use raw query to compute avgDistinct with multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4872,9 +5023,10 @@ test.group('Query Builder | avgDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 
-  test('use subquery to compute avgDistinct with multiple columns', (assert) => {
+  test('use subquery to compute avgDistinct with multiple columns', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -4897,5 +5049,6 @@ test.group('Query Builder | avgDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
   })
 })

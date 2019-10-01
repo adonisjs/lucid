@@ -91,9 +91,10 @@ test.group('Connection | setup', (group) => {
 
   test('instantiate knex when connect is invoked', async (assert, done) => {
     const connection = new Connection('primary', getConfig(), getLogger())
-    connection.on('connect', () => {
+    connection.on('connect', async () => {
       assert.isDefined(connection.client!)
       assert.equal(connection.pool!.numUsed(), 0)
+      await connection.disconnect()
       done()
     })
 
@@ -156,6 +157,7 @@ test.group('Connection | setup', (group) => {
         assert.equal(connection.client!['_context'].client.constructor.name, 'Client_MySQL')
         assert.equal(connection.client!['_context'].client.config.connection.charset, 'utf-8')
         assert.equal(connection.client!['_context'].client.config.connection.typeCast, false)
+        await connection.disconnect()
       })
     })
   }
@@ -180,6 +182,8 @@ test.group('Health Checks', (group) => {
       message: 'Connection is healthy',
       error: null,
     })
+
+    await connection.disconnect()
   })
 
   if (process.env.DB !== 'sqlite') {
@@ -194,6 +198,8 @@ test.group('Health Checks', (group) => {
       const report = await connection.getReport()
       assert.equal(report.message, 'Unable to reach the database server')
       assert.equal(report.error!.errno, 'ENOTFOUND')
+
+      await connection.disconnect()
     }).timeout(0)
 
     test('get healthcheck report for un-healthy read host', async (assert) => {
@@ -215,6 +221,8 @@ test.group('Health Checks', (group) => {
       const report = await connection.getReport()
       assert.equal(report.message, 'Unable to reach one of the read hosts')
       assert.equal(report.error!.errno, 'ENOTFOUND')
+
+      await connection.disconnect()
     }).timeout(0)
   }
 })
