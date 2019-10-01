@@ -105,6 +105,26 @@ export async function setup () {
     })
   }
 
+  const hasPostsTable = await db.schema.hasTable('posts')
+  if (!hasPostsTable) {
+    await db.schema.createTable('posts', (table) => {
+      table.increments()
+      table.integer('user_id')
+      table.string('title')
+      table.timestamps()
+    })
+  }
+
+  const hasComments = await db.schema.hasTable('comments')
+  if (!hasComments) {
+    await db.schema.createTable('comments', (table) => {
+      table.increments()
+      table.integer('post_id')
+      table.string('body')
+      table.timestamps()
+    })
+  }
+
   const hasProfilesTable = await db.schema.hasTable('profiles')
   if (!hasProfilesTable) {
     await db.schema.createTable('profiles', (table) => {
@@ -135,6 +155,8 @@ export async function cleanup () {
   const db = knex(getConfig())
   await db.schema.dropTableIfExists('users')
   await db.schema.dropTableIfExists('profiles')
+  await db.schema.dropTableIfExists('posts')
+  await db.schema.dropTableIfExists('comments')
   await db.schema.dropTableIfExists('identities')
   await db.destroy()
 }
@@ -146,6 +168,8 @@ export async function resetTables () {
   const db = knex(getConfig())
   await db.table('users').truncate()
   await db.table('profiles').truncate()
+  await db.table('posts').truncate()
+  await db.table('comments').truncate()
   await db.table('identities').truncate()
   await db.destroy()
 }

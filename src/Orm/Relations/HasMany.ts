@@ -16,14 +16,13 @@ import {
 } from '@ioc:Adonis/Lucid/Model'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-
 import { HasOneOrMany } from './HasOneOrMany'
 
-export class HasOne extends HasOneOrMany {
+export class HasMany extends HasOneOrMany {
   /**
    * Relationship type
    */
-  public type = 'hasOne' as const
+  public type = 'hasMany' as const
 
   constructor (
     relationName: string,
@@ -42,27 +41,15 @@ export class HasOne extends HasOneOrMany {
     return this.relatedModel()
       .query({ client })
       .where(this.foreignAdapterKey, this.$ensureValue(value))
-      .limit(1)
   }
 
   /**
    * Set many related instances
    */
   public setRelatedMany (models: ModelContract[], related: ModelContract[]) {
-    /**
-     * Instead of looping over the model instances, we loop over the related model instances, since
-     * it can improve performance in some case. For example:
-     *
-     * - There are 10 parentInstances and we all of them to have one related instance, in
-     *   this case we run 10 iterations.
-     * - There are 10 parentInstances and 8 of them have related instance, in this case we run 8
-     *   iterations vs 10.
-     */
-    related.forEach((one) => {
-      const relation = models.find((model) => model[this.localKey] === one[this.foreignKey])
-      if (relation) {
-        this.setRelated(relation, one)
-      }
+    models.forEach((one) => {
+      const relation = related.filter((model) => model[this.foreignKey] === one[this.localKey])
+      this.setRelated(one, relation)
     })
   }
 }
