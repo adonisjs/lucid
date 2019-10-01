@@ -13,7 +13,7 @@ import pluralize from 'pluralize'
 import { isObject, snakeCase } from 'lodash'
 import { Exception } from '@poppinss/utils'
 
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import {
   CacheNode,
   ColumnNode,
@@ -384,6 +384,20 @@ export class BaseModel implements ModelContract {
   }
 
   /**
+   * Reference to transaction that will be used for performing queries on a given
+   * model instance.
+   */
+  private _trx?: TransactionClientContract
+
+  /**
+   * The transaction listener listens for the `commit` and `rollback` events and
+   * cleansup the `$trx` reference
+   */
+  private _transactionListener = function listener () {
+    this.$trx = undefined
+  }.bind(this)
+
+  /**
    * When `fill` method is called, then we may have a situation where it
    * removed the values which exists in `original` and hence the dirty
    * diff has to do a negative diff as well
@@ -553,6 +567,38 @@ export class BaseModel implements ModelContract {
    */
   public get $isDirty () {
     return Object.keys(this.$dirty).length > 0
+  }
+
+  /**
+   * Returns the transaction
+   */
+  public get $trx (): TransactionClientContract | undefined {
+    return this._trx
+  }
+
+  /**
+   * Set the trx to be used by the model to executing queries
+   */
+  public set $trx (trx: TransactionClientContract | undefined) {
+    if (!trx) {
+      this._trx = undefined
+      return
+    }
+
+    /**
+     * Remove old listeners
+     */
+    if (this.$trx) {
+      this.$trx.removeListener('commit', this._transactionListener)
+      this.$trx.removeListener('rollback', this._transactionListener)
+    }
+
+    /**
+     * Store reference to the transaction
+     */
+    this._trx = trx
+    this._trx.once('commit', this._transactionListener)
+    this._trx.once('rollback', this._transactionListener)
   }
 
   /**
