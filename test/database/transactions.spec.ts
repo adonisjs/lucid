@@ -100,27 +100,24 @@ test.group('Transaction | query', (group) => {
     assert.equal(results[0].username, 'virk')
   })
 
-  test('execute before and after commit hooks', async (assert) => {
+  test('emit after commit event', async (assert) => {
     const stack: string[] = []
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
     const db = await new QueryClient('dual', connection).transaction()
 
-    db.hooks.before('commit', (trx) => {
-      stack.push('before')
-      assert.instanceOf(trx, TransactionClient)
-    })
-
-    db.hooks.after('commit', (trx) => {
-      stack.push('after')
+    db.on('commit', (trx) => {
+      stack.push('commit')
       assert.instanceOf(trx, TransactionClient)
     })
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.commit()
-    assert.deepEqual(db.hooks['_hooks'], {})
-    assert.deepEqual(stack, ['before', 'after'])
+
+    assert.deepEqual(db.listenerCount('commit'), 0)
+    assert.deepEqual(db.listenerCount('rollback'), 0)
+    assert.deepEqual(stack, ['commit'])
   })
 
   test('execute before and after rollback hooks', async (assert) => {
@@ -130,19 +127,15 @@ test.group('Transaction | query', (group) => {
 
     const db = await new QueryClient('dual', connection).transaction()
 
-    db.hooks.before('rollback', (trx) => {
-      stack.push('before')
-      assert.instanceOf(trx, TransactionClient)
-    })
-
-    db.hooks.after('rollback', (trx) => {
-      stack.push('after')
+    db.on('rollback', (trx) => {
+      stack.push('rollback')
       assert.instanceOf(trx, TransactionClient)
     })
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.rollback()
-    assert.deepEqual(db.hooks['_hooks'], {})
-    assert.deepEqual(stack, ['before', 'after'])
+    assert.deepEqual(db.listenerCount('commit'), 0)
+    assert.deepEqual(db.listenerCount('rollback'), 0)
+    assert.deepEqual(stack, ['rollback'])
   })
 })
