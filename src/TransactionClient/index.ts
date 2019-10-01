@@ -13,6 +13,7 @@ import knex from 'knex'
 import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
+import { Hooks } from '../Hooks'
 import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { RawQueryBuilder } from '../Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../Database/QueryBuilder/Insert'
@@ -38,6 +39,11 @@ export class TransactionClient implements TransactionClientContract {
    * The profiler to be used for profiling queries
    */
   public profiler?: ProfilerRowContract | ProfilerContract
+
+  /**
+   * Reference to client hooks
+   */
+  public hooks = new Hooks<'rollback' | 'commit', any>()
 
   constructor (
     public knexClient: knex.Transaction,
@@ -155,13 +161,64 @@ export class TransactionClient implements TransactionClientContract {
    * Commit the transaction
    */
   public async commit () {
-    await this.knexClient.commit()
+    /**
+     * Execute before hooks
+     */
+    await this.hooks.execute('before', 'commit', this)
+
+    /**
+     * Commit and hold the error (if any)
+     */
+    let commitError: any = null
+    try {
+      await this.knexClient.commit()
+    } catch (error) {
+      commitError = error
+    }
+
+    /**
+     * Raise exception when commit fails
+     */
+    if (commitError) {
+      this.hooks.clearAll()
+      throw commitError
+    }
+
+    /**
+     * Execute after hooks
+     */
+    await this.hooks.execute('after', 'commit', this)
+    this.hooks.clearAll()
   }
 
   /**
    * Rollback the transaction
    */
   public async rollback () {
-    await this.knexClient.rollback()
+    /**
+     * Execute before hooks
+     */
+    await this.hooks.execute('before', 'rollback', this)
+
+    let rollbackError: any = null
+    try {
+      await this.knexClient.rollback()
+    } catch (error) {
+      rollbackError = error
+    }
+
+    /**
+     * Raise exception when commit fails
+     */
+    if (rollbackError) {
+      this.hooks.clearAll()
+      throw rollbackError
+    }
+
+    /**
+     * Execute after hooks
+     */
+    await this.hooks.execute('after', 'rollback', this)
+    this.hooks.clearAll()
   }
 }
