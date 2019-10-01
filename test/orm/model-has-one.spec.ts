@@ -40,7 +40,7 @@ test.group('Model | Has one', (group) => {
       }
 
       class User extends BaseModel {
-        @hasOne({ relatedModel: () => Profile })
+        @hasOne(() => Profile)
         public profile: Profile
       }
 
@@ -65,7 +65,7 @@ test.group('Model | Has one', (group) => {
         @column({ primary: true })
         public id: number
 
-        @hasOne({ relatedModel: () => Profile })
+        @hasOne(() => Profile)
         public profile: Profile
       }
 
@@ -89,7 +89,7 @@ test.group('Model | Has one', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasOne({ relatedModel: () => Profile })
+      @hasOne(() => Profile)
       public profile: Profile
     }
     User.$boot()
@@ -112,7 +112,7 @@ test.group('Model | Has one', (group) => {
       @column({ castAs: 'user_uid' })
       public uid: number
 
-      @hasOne({ relatedModel: () => Profile, localKey: 'uid' })
+      @hasOne(() => Profile, { localKey: 'uid' })
       public profile: Profile
     }
 
@@ -133,7 +133,7 @@ test.group('Model | Has one', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasOne({ relatedModel: () => Profile })
+      @hasOne(() => Profile)
       public profile: Profile
     }
     User.$boot()
@@ -153,7 +153,7 @@ test.group('Model | Has one', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasOne({ relatedModel: () => Profile, foreignKey: 'userUid' })
+      @hasOne(() => Profile, { foreignKey: 'userUid' })
       public profile: Profile
     }
     User.$boot()
@@ -178,7 +178,7 @@ test.group('Model | Has one', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasOne({ relatedModel: () => Profile })
+      @hasOne(() => Profile)
       public profile: Profile
     }
 
@@ -219,7 +219,7 @@ test.group('Model | Has one', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasOne({ relatedModel: () => Profile })
+      @hasOne(() => Profile)
       public profile: Profile
     }
 
@@ -261,7 +261,7 @@ test.group('Model | Has one', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasOne({ relatedModel: () => Profile })
+      @hasOne(() => Profile)
       public profile: Profile
     }
 
@@ -308,7 +308,7 @@ test.group('Model | Has one', (group) => {
       @column()
       public displayName: string
 
-      @hasOne({ relatedModel: () => Identity })
+      @hasOne(() => Identity)
       public identity: Identity
     }
 
@@ -316,7 +316,7 @@ test.group('Model | Has one', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasOne({ relatedModel: () => Profile })
+      @hasOne(() => Profile)
       public profile: Profile
     }
 
@@ -376,7 +376,7 @@ test.group('Model | Has one', (group) => {
       @column()
       public displayName: string
 
-      @hasOne({ relatedModel: () => Identity })
+      @hasOne(() => Identity)
       public identity: Identity
     }
 
@@ -384,7 +384,7 @@ test.group('Model | Has one', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasOne({ relatedModel: () => Profile })
+      @hasOne(() => Profile)
       public profile: Profile
     }
 
@@ -449,7 +449,7 @@ test.group('Model | Has one', (group) => {
       @column()
       public displayName: string
 
-      @hasOne({ relatedModel: () => Identity })
+      @hasOne(() => Identity)
       public identity: Identity
     }
 
@@ -457,7 +457,7 @@ test.group('Model | Has one', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasOne({ relatedModel: () => Profile })
+      @hasOne(() => Profile)
       public profile: Profile
     }
 

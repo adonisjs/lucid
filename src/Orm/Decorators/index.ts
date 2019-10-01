@@ -50,65 +50,65 @@ export const computed: ComputedFn = (column) => {
 /**
  * Define belongsTo relationship
  */
-export const belongsTo: BelongsToFn = (relation?) => {
+export const belongsTo: BelongsToFn = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
     Model.$boot()
-    Model.$addRelation(property, 'belongsTo', relation || {})
+    Model.$addRelation(property, 'belongsTo', Object.assign({ relatedModel }, relation))
   }
 }
 
 /**
  * Define hasOne relationship
  */
-export const hasOne: HasOneFn = (relation?) => {
+export const hasOne: HasOneFn = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
     Model.$boot()
-    Model.$addRelation(property, 'hasOne', relation || {})
+    Model.$addRelation(property, 'hasOne', Object.assign({ relatedModel }, relation))
   }
 }
 
 /**
  * Define hasMany relationship
  */
-export const hasMany: HasManyFn = (relation?) => {
+export const hasMany: HasManyFn = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
     Model.$boot()
-    Model.$addRelation(property, 'hasMany', relation || {})
+    Model.$addRelation(property, 'hasMany', Object.assign({ relatedModel }, relation))
   }
 }
 
 /**
  * Define manyToMany relationship
  */
-export const manyToMany: ManyToManyFn = (relation?) => {
+export const manyToMany: ManyToManyFn = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
     Model.$boot()
-    Model.$addRelation(property, 'manyToMany', relation || {})
+    Model.$addRelation(property, 'manyToMany', Object.assign({ relatedModel }, relation))
   }
 }
 
 /**
  * Define hasOneThrough relationship
  */
-export const hasOneThrough: HasOneThroughFn = (relation?) => {
+export const hasOneThrough: HasOneThroughFn = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
     Model.$boot()
-    Model.$addRelation(property, 'hasOneThrough', relation || {})
+    Model.$addRelation(property, 'hasOneThrough', Object.assign({ relatedModel }, relation))
   }
 }
 
 /**
  * Define hasManyThrough relationship
  */
-export const hasManyThrough: HasManyThroughFn = (relation?) => {
+export const hasManyThrough: HasManyThroughFn = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
     Model.$boot()
-    Model.$addRelation(property, 'hasManyThrough', relation || {})
+    Model.$addRelation(property, 'hasManyThrough', Object.assign({ relatedModel }, relation))
   }
 }

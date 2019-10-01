@@ -259,7 +259,7 @@ export class BaseModel implements ModelContract {
   public static $addRelation (
     name: string,
     type: AvailableRelations,
-    options: Partial<BaseRelationNode | ThroughRelationNode>,
+    options: BaseRelationNode | ThroughRelationNode,
   ) {
     switch (type) {
       case 'hasOne':

@@ -10,15 +10,16 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import {
-  ModelOptions,
   ModelContract,
-  RelationContract,
   BaseRelationNode,
+  RelationContract,
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
-import { camelCase, snakeCase, uniq } from 'lodash'
+import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+
 import { Exception } from '@poppinss/utils'
+import { camelCase, snakeCase, uniq } from 'lodash'
 
 export class HasOne implements RelationContract {
   /**
@@ -63,7 +64,7 @@ export class HasOne implements RelationContract {
 
   constructor (
     private _relationName: string,
-    private _options: Partial<BaseRelationNode>,
+    private _options: BaseRelationNode,
     private _model: ModelConstructorContract,
   ) {
     this._validateOptions()
@@ -77,7 +78,7 @@ export class HasOne implements RelationContract {
   private _validateOptions () {
     if (!this._options.relatedModel) {
       throw new Exception(
-        'Related model reference is required for construct relationship',
+        'Related model reference is required to construct the relationship',
         500,
         'E_MISSING_RELATED_MODEL',
       )
@@ -153,11 +154,11 @@ export class HasOne implements RelationContract {
   /**
    * Returns query for the relationship with applied constraints
    */
-  public getQuery (parent: ModelContract, options?: ModelOptions) {
+  public getQuery (parent: ModelContract, client: QueryClientContract) {
     const value = parent[this.localKey]
 
     return this.relatedModel()
-      .query(options)
+      .query({ client })
       .where(this.foreignAdapterKey, this._ensureValue(value))
   }
 
@@ -165,13 +166,13 @@ export class HasOne implements RelationContract {
    * Returns query for the relationship with applied constraints for
    * eagerloading
    */
-  public getEagerQuery (parents: ModelContract[], options?: ModelOptions) {
+  public getEagerQuery (parents: ModelContract[], client: QueryClientContract) {
     const values = uniq(parents.map((parentInstance) => {
       return this._ensureValue(parentInstance[this.localKey])
     }))
 
     return this.relatedModel()
-      .query(options)
+      .query({ client })
       .whereIn(this.foreignAdapterKey, values)
   }
 
