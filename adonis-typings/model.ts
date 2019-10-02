@@ -55,6 +55,20 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
+   * Shape of many to many relationship
+   */
+  export interface ManyToManyRelationNode {
+    relatedModel: (() => ModelConstructorContract),
+    pivotTable?: string,
+    localKey?: string,
+    pivotForeignKey?: string,
+    relatedKey?: string,
+    pivotRelatedForeignKey?: string,
+    pivotColumns?: string[],
+    serializeAs?: string,
+  }
+
+  /**
    * Shape of hasOneThrough relationship
    */
   export interface ThroughRelationNode extends BaseRelationNode {
@@ -86,7 +100,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
   type DecoratorFn = (target, property) => void
   type BaseRelationDecoratorNode = Omit<BaseRelationNode, 'relatedModel'>
   type ThroughRelationDecoratorNode = Omit<ThroughRelationNode, 'relatedModel'>
+  type ManyToManyRelationDecoratorNode = Omit<ManyToManyRelationNode, 'relatedModel'>
   type ModelExecuteableQueryBuilder = ModelQueryBuilderContract<any> & ExcutableQueryBuilderContract<any>
+  type ManyToManyExecutableQueryBuilder = ManyToManyQueryBuilderContract & ExcutableQueryBuilderContract<any>
 
   /**
    * Types for decorators
@@ -110,31 +126,33 @@ declare module '@ioc:Adonis/Lucid/Model' {
   ) => DecoratorFn
 
   export type ManyToManyFn = (
-    model: BaseRelationNode['relatedModel'],
-    column?: BaseRelationDecoratorNode,
+    model: ManyToManyRelationNode['relatedModel'],
+    column?: ManyToManyRelationDecoratorNode,
   ) => DecoratorFn
 
   export type HasOneThroughFn = (
-    model: BaseRelationNode['relatedModel'],
+    model: ThroughRelationNode['relatedModel'],
     column?: ThroughRelationDecoratorNode,
   ) => DecoratorFn
 
   export type HasManyThroughFn = (
-    model: BaseRelationNode['relatedModel'],
+    model: ThroughRelationNode['relatedModel'],
     column?: ThroughRelationDecoratorNode,
   ) => DecoratorFn
 
+  /**
+   * List of available relations
+   */
   export type AvailableRelations = 'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany'
 
-  /**
-   * Callback accepted by the preload method
-   */
-  export type PreloadCallback = (builder: ModelExecuteableQueryBuilder) => void
+  type ManyToManyPreloadCallback = (builder: ManyToManyExecutableQueryBuilder) => void
+  type BasePreloadCallback = (builder: ModelExecuteableQueryBuilder) => void
+  type PreloadCallback = ManyToManyPreloadCallback | BasePreloadCallback
 
   /**
    * Interface to be implemented by all relationship types
    */
-  export interface RelationContract {
+  export interface BaseRelationContract {
     type: AvailableRelations
     serializeAs: string
     booted: boolean
@@ -144,6 +162,28 @@ declare module '@ioc:Adonis/Lucid/Model' {
     getEagerQuery (models: ModelContract[], client: QueryClientContract): ModelExecuteableQueryBuilder
     setRelated (model: ModelContract, related?: ModelContract | null): void
     setRelatedMany (models: ModelContract[], related: ModelContract[]): void
+  }
+
+  /**
+   * Shape of many to many relationship contract
+   */
+  export interface ManyToManyRelationContract extends BaseRelationContract {
+    pivotTable: string
+    getQuery (model: ModelContract, client: QueryClientContract): ManyToManyExecutableQueryBuilder
+    getEagerQuery (models: ModelContract[], client: QueryClientContract): ManyToManyExecutableQueryBuilder
+  }
+
+  /**
+   * Relationships type
+   */
+  export type RelationContract = BaseRelationContract | ManyToManyRelationContract
+
+  /**
+   * Shape of many to many query builder. It has few methods over the standard
+   * model query builder
+   */
+  export interface ManyToManyQueryBuilderContract extends ModelQueryBuilderContract<any> {
+    pivotColumns (columns: string[]): this
   }
 
   /**
@@ -181,7 +221,14 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Define relationships to be preloaded
      */
-    preload (relation: string, callback?: PreloadCallback): this
+    preload<T extends 'manyToMany'> (
+      relation: string,
+      callback?: ManyToManyPreloadCallback,
+    ): this
+    preload<T extends AvailableRelations> (
+      relation: string,
+      callback?: BasePreloadCallback,
+    ): this
   }
 
   /**

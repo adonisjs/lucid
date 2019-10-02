@@ -105,6 +105,26 @@ export async function setup () {
     })
   }
 
+  const hasSkillsTable = await db.schema.hasTable('skills')
+  if (!hasSkillsTable) {
+    await db.schema.createTable('skills', (table) => {
+      table.increments()
+      table.string('name')
+      table.timestamps()
+    })
+  }
+
+  const hasUserSkillsTable = await db.schema.hasTable('skill_user')
+  if (!hasUserSkillsTable) {
+    await db.schema.createTable('skill_user', (table) => {
+      table.increments()
+      table.integer('user_id')
+      table.integer('skill_id')
+      table.string('proficiency')
+      table.timestamps()
+    })
+  }
+
   const hasPostsTable = await db.schema.hasTable('posts')
   if (!hasPostsTable) {
     await db.schema.createTable('posts', (table) => {
@@ -154,6 +174,8 @@ export async function setup () {
 export async function cleanup () {
   const db = knex(getConfig())
   await db.schema.dropTableIfExists('users')
+  await db.schema.dropTableIfExists('skills')
+  await db.schema.dropTableIfExists('skill_user')
   await db.schema.dropTableIfExists('profiles')
   await db.schema.dropTableIfExists('posts')
   await db.schema.dropTableIfExists('comments')
@@ -167,6 +189,8 @@ export async function cleanup () {
 export async function resetTables () {
   const db = knex(getConfig())
   await db.table('users').truncate()
+  await db.table('skills').truncate()
+  await db.table('skill_user').truncate()
   await db.table('profiles').truncate()
   await db.table('posts').truncate()
   await db.table('comments').truncate()

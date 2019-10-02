@@ -20,6 +20,7 @@ import {
   RelationContract,
   ModelConstructorContract,
   ModelQueryBuilderContract,
+  ManyToManyExecutableQueryBuilder,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
@@ -100,6 +101,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    */
   private async _processRelation (models: ModelContract[], name: string) {
     const relation = this._preloads[name]
+
     relation.relation.boot()
     const query = relation.relation.getEagerQuery(models, this.client)
 
@@ -112,7 +114,10 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
      * Invoke callback when defined
      */
     if (typeof (relation.callback) === 'function') {
-      relation.callback(query)
+      /**
+       * Type casting to superior type.
+       */
+      relation.callback(query as ManyToManyExecutableQueryBuilder)
     }
 
     /**

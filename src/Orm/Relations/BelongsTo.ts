@@ -15,13 +15,16 @@ import { camelCase, snakeCase, uniq } from 'lodash'
 import {
   ModelContract,
   BaseRelationNode,
-  RelationContract,
+  BaseRelationContract,
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
-export class BelongsTo implements RelationContract {
+/**
+ * Exposes the API to construct belongs to relationship.
+ */
+export class BelongsTo implements BaseRelationContract {
   /**
    * Relationship type
    */
