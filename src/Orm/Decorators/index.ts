@@ -105,7 +105,7 @@ export const hasOneThrough: HasOneThroughFn = (relatedModel, relation?) => {
 /**
  * Define hasManyThrough relationship
  */
-export const hasManyThrough: HasManyThroughFn = (relatedModel, relation?) => {
+export const hasManyThrough: HasManyThroughFn = (relatedModel, relation) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
     Model.$boot()

@@ -80,7 +80,7 @@ test.group('Model | Many To Many', (group) => {
     }
   })
 
-  test('use primary key is as the local key', (assert) => {
+  test('use primary key as the local key', (assert) => {
     class Skill extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -415,7 +415,7 @@ test.group('Model | Many To Many', (group) => {
     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
   })
 
-  test('raise error when local is not selected', async (assert) => {
+  test('raise error when local key is not selected', async (assert) => {
     assert.plan(1)
 
     class Skill extends BaseModel {

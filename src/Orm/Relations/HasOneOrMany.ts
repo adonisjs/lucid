@@ -176,7 +176,7 @@ export abstract class HasOneOrMany implements BaseRelationContract {
   /**
    * Sets the related model instance
    */
-  public setRelated (parent: ModelContract, related?: ModelContract | ModelContract[] | null) {
+  public setRelated (parent: ModelContract, related?: ModelContract | ModelContract[]) {
     if (!related) {
       return
     }

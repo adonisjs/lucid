@@ -99,8 +99,18 @@ export async function setup () {
   if (!hasUsersTable) {
     await db.schema.createTable('users', (table) => {
       table.increments()
+      table.integer('country_id')
       table.string('username').unique()
       table.string('email')
+      table.timestamps()
+    })
+  }
+
+  const hasCountriesTable = await db.schema.hasTable('countries')
+  if (!hasCountriesTable) {
+    await db.schema.createTable('countries', (table) => {
+      table.increments()
+      table.string('name')
       table.timestamps()
     })
   }
@@ -174,6 +184,7 @@ export async function setup () {
 export async function cleanup () {
   const db = knex(getConfig())
   await db.schema.dropTableIfExists('users')
+  await db.schema.dropTableIfExists('countries')
   await db.schema.dropTableIfExists('skills')
   await db.schema.dropTableIfExists('skill_user')
   await db.schema.dropTableIfExists('profiles')
@@ -189,6 +200,7 @@ export async function cleanup () {
 export async function resetTables () {
   const db = knex(getConfig())
   await db.table('users').truncate()
+  await db.table('countries').truncate()
   await db.table('skills').truncate()
   await db.table('skill_user').truncate()
   await db.table('profiles').truncate()
