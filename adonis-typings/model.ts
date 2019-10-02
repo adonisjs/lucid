@@ -73,6 +73,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
   export interface ThroughRelationNode extends BaseRelationNode {
     throughModel: (() => ModelConstructorContract)
+    throughLocalKey?: string,
+    throughForeignKey?: string,
   }
 
   /**
@@ -137,13 +139,13 @@ declare module '@ioc:Adonis/Lucid/Model' {
 
   export type HasManyThroughFn = (
     model: ThroughRelationNode['relatedModel'],
-    column?: ThroughRelationDecoratorNode,
+    column: ThroughRelationDecoratorNode,
   ) => DecoratorFn
 
   /**
    * List of available relations
    */
-  export type AvailableRelations = 'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany'
+  export type AvailableRelations = 'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany' | 'hasManyThrough'
 
   type ManyToManyPreloadCallback = (builder: ManyToManyExecutableQueryBuilder) => void
   type BasePreloadCallback = (builder: ModelExecuteableQueryBuilder) => void
@@ -160,7 +162,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     relatedModel (): ModelConstructorContract
     getQuery (model: ModelContract, client: QueryClientContract): ModelExecuteableQueryBuilder
     getEagerQuery (models: ModelContract[], client: QueryClientContract): ModelExecuteableQueryBuilder
-    setRelated (model: ModelContract, related?: ModelContract | null): void
+    setRelated (model: ModelContract, related?: ModelContract | ModelContract[] | null): void
     setRelatedMany (models: ModelContract[], related: ModelContract[]): void
   }
 

@@ -35,6 +35,7 @@ import { proxyHandler } from './proxyHandler'
 import { HasMany } from '../Relations/HasMany'
 import { BelongsTo } from '../Relations/BelongsTo'
 import { ManyToMany } from '../Relations/ManyToMany'
+import { HasManyThrough } from '../Relations/HasManyThrough'
 
 function StaticImplements<T> () {
   return (_t: T) => {}
@@ -276,6 +277,9 @@ export class BaseModel implements ModelContract {
         break
       case 'manyToMany':
         this.$relations.set(name, new ManyToMany(name, options, this))
+        break
+      case 'hasManyThrough':
+        this.$relations.set(name, new HasManyThrough(name, options as ThroughRelationNode, this))
         break
       default:
         throw new Error(`${type} relationship has not been implemented yet`)

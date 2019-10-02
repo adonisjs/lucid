@@ -254,7 +254,7 @@ export class ManyToMany implements ManyToManyRelationContract {
   /**
    * Sets the related model instance
    */
-  public setRelated (model: ModelContract, related?: ModelContract | ModelContract[] | null) {
+  public setRelated (model: ModelContract, related?: ModelContract[] | null) {
     if (!related) {
       return
     }
@@ -270,10 +270,7 @@ export class ManyToMany implements ManyToManyRelationContract {
       const relation = related.filter((model) => {
         return parent[this.localKey] === model.$extras[this.pivotForeignKeyAlias]
       })
-
-      if (relation) {
-        this.setRelated(parent, relation)
-      }
+      this.setRelated(parent, relation)
     })
   }
 }
