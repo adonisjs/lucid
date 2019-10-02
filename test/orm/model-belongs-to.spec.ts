@@ -174,10 +174,53 @@ test.group('Model | Belongs To', (group) => {
       public user: User
     }
 
+    await db.insertQuery().table('users').insert([{ username: 'virk' }])
+
+    const users = await db.query().from('users')
+    await db.insertQuery().table('profiles').insert([
+      {
+        user_id: users[0].id,
+        display_name: 'virk',
+      },
+      {
+        user_id: users[0].id,
+        display_name: 'virk',
+      },
+    ])
+
+    const profiles = await Profile.query().preload('user')
+    assert.instanceOf(profiles[0].user, User)
+    assert.instanceOf(profiles[1].user, User)
+  })
+
+  test('preload belongsTo relationship for many rows', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const users = await db.query().from('users')
     await db.insertQuery().table('profiles').insert([
+      {
+        user_id: users[0].id,
+        display_name: 'virk',
+      },
       {
         user_id: users[0].id,
         display_name: 'virk',
@@ -188,8 +231,10 @@ test.group('Model | Belongs To', (group) => {
       },
     ])
 
-    const profile = await Profile.query().preload('user').where('display_name', 'virk').first()
-    assert.instanceOf(profile!.user, User)
+    const profiles = await Profile.query().preload('user')
+    assert.equal(profiles[0].user.id, 1)
+    assert.equal(profiles[1].user.id, 1)
+    assert.equal(profiles[2].user.id, 2)
   })
 
   test('raise exception when foreign key is not selected', async (assert) => {

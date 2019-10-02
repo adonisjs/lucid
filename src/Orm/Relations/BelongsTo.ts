@@ -194,19 +194,10 @@ export class BelongsTo implements RelationContract {
    * Must be implemented by parent class
    */
   public setRelatedMany (models: ModelContract[], related: ModelContract[]) {
-    /**
-     * Instead of looping over the model instances, we loop over the related model instances, since
-     * it can improve performance in some case. For example:
-     *
-     * - There are 10 parentInstances and we all of them to have one related instance, in
-     *   this case we run 10 iterations.
-     * - There are 10 parentInstances and 8 of them have related instance, in this case we run 8
-     *   iterations vs 10.
-     */
-    related.forEach((one) => {
-      const relation = models.find((model) => model[this.foreignKey] === one[this.localKey])
+    models.forEach((model) => {
+      const relation = related.find((one) => one[this.localKey] === model[this.foreignKey])
       if (relation) {
-        this.setRelated(relation, one)
+        this.setRelated(model, relation)
       }
     })
   }
