@@ -45,6 +45,7 @@ test.group('Model | Has Many', (group) => {
       }
 
       User.$boot()
+      User.$getRelation('posts')!.boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -70,6 +71,7 @@ test.group('Model | Has Many', (group) => {
       }
 
       User.$boot()
+      User.$getRelation('posts')!.boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -91,7 +93,9 @@ test.group('Model | Has Many', (group) => {
       @hasMany(() => Post)
       public posts: Post[]
     }
+
     User.$boot()
+    User.$getRelation('posts')!.boot()
 
     assert.equal(User.$getRelation('posts')!['localKey'], 'id')
     assert.equal(User.$getRelation('posts')!['localAdapterKey'], 'id')
@@ -115,6 +119,7 @@ test.group('Model | Has Many', (group) => {
     }
 
     User.$boot()
+    User.$getRelation('posts')!.boot()
 
     assert.equal(User.$getRelation('posts')!['localKey'], 'uid')
     assert.equal(User.$getRelation('posts')!['localAdapterKey'], 'user_uid')
@@ -133,7 +138,9 @@ test.group('Model | Has Many', (group) => {
       @hasMany(() => Post)
       public posts: Post[]
     }
+
     User.$boot()
+    User.$getRelation('posts')!.boot()
 
     assert.equal(User.$getRelation('posts')!['foreignKey'], 'userId')
     assert.equal(User.$getRelation('posts')!['foreignAdapterKey'], 'user_id')
@@ -152,7 +159,9 @@ test.group('Model | Has Many', (group) => {
       @hasMany(() => Post, { foreignKey: 'userUid' })
       public posts: Post[]
     }
+
     User.$boot()
+    User.$getRelation('posts')!.boot()
 
     assert.equal(User.$getRelation('posts')!['foreignKey'], 'userUid')
     assert.equal(User.$getRelation('posts')!['foreignAdapterKey'], 'user_id')

@@ -46,6 +46,8 @@ test.group('Model | Belongs To', (group) => {
       }
 
       Profile.$boot()
+      Profile.$getRelation('user')!.boot()
+
     } catch ({ message }) {
       assert.equal(
         message,
@@ -71,6 +73,7 @@ test.group('Model | Belongs To', (group) => {
       }
 
       Profile.$boot()
+      Profile.$getRelation('user')!.boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -93,6 +96,8 @@ test.group('Model | Belongs To', (group) => {
       public user: User
     }
 
+    Profile.$getRelation('user')!.boot()
+
     assert.equal(Profile.$getRelation('user')!['localKey'], 'id')
     assert.equal(Profile.$getRelation('user')!['localAdapterKey'], 'id')
   })
@@ -114,6 +119,8 @@ test.group('Model | Belongs To', (group) => {
       public user: User
     }
 
+    Profile.$getRelation('user')!.boot()
+
     assert.equal(Profile.$getRelation('user')!['localKey'], 'uid')
     assert.equal(Profile.$getRelation('user')!['localAdapterKey'], 'user_uid')
   })
@@ -132,6 +139,8 @@ test.group('Model | Belongs To', (group) => {
       public user: User
     }
 
+    Profile.$getRelation('user')!.boot()
+
     assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userId')
     assert.equal(Profile.$getRelation('user')!['foreignAdapterKey'], 'user_id')
   })
@@ -149,6 +158,8 @@ test.group('Model | Belongs To', (group) => {
       @belongsTo(() => User, { foreignKey: 'userUid' })
       public user: User
     }
+
+    Profile.$getRelation('user')!.boot()
 
     assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userUid')
     assert.equal(Profile.$getRelation('user')!['foreignAdapterKey'], 'user_id')

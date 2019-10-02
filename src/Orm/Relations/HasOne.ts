@@ -9,27 +9,22 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import {
-  ModelContract,
-  BaseRelationNode,
-  ModelConstructorContract,
-} from '@ioc:Adonis/Lucid/Model'
-
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { ModelContract, BaseRelationNode, ModelConstructorContract } from '@ioc:Adonis/Lucid/Model'
 
 import { HasOneOrMany } from './HasOneOrMany'
 
+/**
+ * Exposes the API to construct correct queries and set related
+ * models for has one relationship
+ */
 export class HasOne extends HasOneOrMany {
   /**
    * Relationship type
    */
   public type = 'hasOne' as const
 
-  constructor (
-    relationName: string,
-    options: BaseRelationNode,
-    model: ModelConstructorContract,
-  ) {
+  constructor (relationName: string, options: BaseRelationNode, model: ModelConstructorContract) {
     super(relationName, options, model)
   }
 
@@ -48,7 +43,7 @@ export class HasOne extends HasOneOrMany {
   /**
    * Set many related instances
    */
-  public setRelatedMany (models: ModelContract[], related: ModelContract[]) {
+  public setRelatedMany (parents: ModelContract[], related: ModelContract[]) {
     /**
      * Instead of looping over the model instances, we loop over the related model instances, since
      * it can improve performance in some case. For example:
@@ -58,10 +53,10 @@ export class HasOne extends HasOneOrMany {
      * - There are 10 parentInstances and 8 of them have related instance, in this case we run 8
      *   iterations vs 10.
      */
-    related.forEach((one) => {
-      const relation = models.find((model) => model[this.localKey] === one[this.foreignKey])
-      if (relation) {
-        this.setRelated(relation, one)
+    related.forEach((relation) => {
+      const parent = parents.find((model) => model[this.localKey] === relation[this.foreignKey])
+      if (parent) {
+        this.setRelated(parent, relation)
       }
     })
   }

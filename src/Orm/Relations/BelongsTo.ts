@@ -33,17 +33,18 @@ export class BelongsTo implements RelationContract {
   public relatedModel = this._options.relatedModel!
 
   /**
-   * Local key to use for constructing the relationship
+   * Local key to use for constructing the relationship. This is the primary
+   * key on the related model
    */
   public localKey: string
 
   /**
-   * Adapter local key
+   * Adapter local key.
    */
   public localAdapterKey: string
 
   /**
-   * Foreign key referenced by the related model
+   * Foreign key is the on the current model.
    */
   public foreignKey: string
 
@@ -60,22 +61,21 @@ export class BelongsTo implements RelationContract {
   /**
    * A flag to know if model keys valid for executing database queries or not
    */
-  private _isValid: boolean = false
+  public booted: boolean = false
 
   constructor (
     private _relationName: string,
     private _options: BaseRelationNode,
     private _model: ModelConstructorContract,
   ) {
-    this._validateOptions()
-    this._computeKeys()
+    this._ensureRelatedModel()
   }
 
   /**
    * Ensure that related model is defined, otherwise raise an exception, since
    * a relationship cannot work with a single model.
    */
-  private _validateOptions () {
+  private _ensureRelatedModel () {
     if (!this._options.relatedModel) {
       throw new Exception(
         'Related model reference is required to construct the relationship',
@@ -88,8 +88,8 @@ export class BelongsTo implements RelationContract {
   /**
    * Compute keys
    */
-  private _computeKeys () {
-    if (this._isValid) {
+  public boot () {
+    if (this.booted) {
       return
     }
 
@@ -108,6 +108,7 @@ export class BelongsTo implements RelationContract {
      */
     this.localAdapterKey = this.relatedModel().$getColumn(this.localKey)!.castAs
     this.foreignAdapterKey = this._model.$getColumn(this.foreignKey)!.castAs
+    this.booted = true
   }
 
   /**
@@ -134,15 +135,13 @@ export class BelongsTo implements RelationContract {
         'E_MISSING_RELATED_FOREIGN_KEY',
       )
     }
-
-    this._isValid = true
   }
 
   /**
    * Raises exception when value for the foreign key is missing on the model instance. This will
    * make the query fail
    */
-  protected $ensureValue (value: any) {
+  private _ensureValue (value: any) {
     if (value === undefined) {
       throw new Exception(
         `Cannot preload ${this._relationName}, value of ${this._model.name}.${this.foreignKey} is undefined`,
@@ -154,14 +153,14 @@ export class BelongsTo implements RelationContract {
   }
 
   /**
-   * Must be implemented by main class
+   * Returns eager query for a single parent model instance
    */
   public getQuery (parent: ModelContract, client: QueryClientContract) {
     const value = parent[this.foreignKey]
 
     return this.relatedModel()
       .query({ client })
-      .where(this.localAdapterKey, this.$ensureValue(value))
+      .where(this.localAdapterKey, this._ensureValue(value))
       .limit(1)
   }
 
@@ -171,7 +170,7 @@ export class BelongsTo implements RelationContract {
    */
   public getEagerQuery (parents: ModelContract[], client: QueryClientContract) {
     const values = uniq(parents.map((parentInstance) => {
-      return this.$ensureValue(parentInstance[this.foreignKey])
+      return this._ensureValue(parentInstance[this.foreignKey])
     }))
 
     return this.relatedModel()
@@ -191,13 +190,13 @@ export class BelongsTo implements RelationContract {
   }
 
   /**
-   * Must be implemented by parent class
+   * Sets the related instances on the model
    */
-  public setRelatedMany (models: ModelContract[], related: ModelContract[]) {
-    models.forEach((model) => {
-      const relation = related.find((one) => one[this.localKey] === model[this.foreignKey])
+  public setRelatedMany (parents: ModelContract[], related: ModelContract[]) {
+    parents.forEach((parent) => {
+      const relation = related.find((model) => model[this.localKey] === parent[this.foreignKey])
       if (relation) {
-        this.setRelated(model, relation)
+        this.setRelated(parent, relation)
       }
     })
   }

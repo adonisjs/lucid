@@ -30,7 +30,7 @@ export abstract class HasOneOrMany implements RelationContract {
   /**
    * The related model from which, we want to construct the relationship
    */
-  public relatedModel = this.$options.relatedModel!
+  public relatedModel = this._options.relatedModel!
 
   /**
    * Local key to use for constructing the relationship
@@ -55,28 +55,27 @@ export abstract class HasOneOrMany implements RelationContract {
   /**
    * Key to be used for serializing the relationship
    */
-  public serializeAs = this.$options.serializeAs || snakeCase(this.$relationName)
+  public serializeAs = this._options.serializeAs || snakeCase(this._relationName)
 
   /**
    * A flag to know if model keys valid for executing database queries or not
    */
-  protected $isValid: boolean = false
+  public booted: boolean = false
 
   constructor (
-    protected $relationName: string,
-    protected $options: BaseRelationNode,
-    protected $model: ModelConstructorContract,
+    private _relationName: string,
+    private _options: BaseRelationNode,
+    private _model: ModelConstructorContract,
   ) {
-    this._validateOptions()
-    this._computeKeys()
+    this._ensureRelatedModel()
   }
 
   /**
    * Ensure that related model is defined, otherwise raise an exception, since
    * a relationship cannot work with a single model.
    */
-  private _validateOptions () {
-    if (!this.$options.relatedModel) {
+  private _ensureRelatedModel () {
+    if (!this._options.relatedModel) {
       throw new Exception(
         'Related model reference is required to construct the relationship',
         500,
@@ -86,37 +85,14 @@ export abstract class HasOneOrMany implements RelationContract {
   }
 
   /**
-   * Compute keys
-   */
-  private _computeKeys () {
-    if (this.$isValid) {
-      return
-    }
-
-    this.localKey = this.$options.localKey || this.$model.$primaryKey
-    this.foreignKey = this.$options.foreignKey || camelCase(`${this.$model.name}_${this.$model.$primaryKey}`)
-
-    /**
-     * Validate computed keys to ensure they are valid
-     */
-    this._validateKeys()
-
-    /**
-     * Keys for the adapter
-     */
-    this.localAdapterKey = this.$model.$getColumn(this.localKey)!.castAs
-    this.foreignAdapterKey = this.relatedModel().$getColumn(this.foreignKey)!.castAs
-  }
-
-  /**
    * Validating the keys to ensure we are avoiding runtime `undefined` errors. We defer
    * the keys validation, since they may be added after defining the relationship.
    */
   private _validateKeys () {
-    const relationRef = `${this.$model.name}.${this.$relationName}`
+    const relationRef = `${this._model.name}.${this._relationName}`
 
-    if (!this.$model.$hasColumn(this.localKey)) {
-      const ref = `${this.$model.name}.${this.localKey}`
+    if (!this._model.$hasColumn(this.localKey)) {
+      const ref = `${this._model.name}.${this.localKey}`
       throw new Exception(
         `${ref} required by ${relationRef} relation is missing`,
         500,
@@ -132,8 +108,6 @@ export abstract class HasOneOrMany implements RelationContract {
         'E_MISSING_RELATED_FOREIGN_KEY',
       )
     }
-
-    this.$isValid = true
   }
 
   /**
@@ -143,7 +117,7 @@ export abstract class HasOneOrMany implements RelationContract {
   protected $ensureValue (value: any) {
     if (value === undefined) {
       throw new Exception(
-        `Cannot preload ${this.$relationName}, value of ${this.$model.name}.${this.localKey} is undefined`,
+        `Cannot preload ${this._relationName}, value of ${this._model.name}.${this.localKey} is undefined`,
         500,
       )
     }
@@ -155,6 +129,35 @@ export abstract class HasOneOrMany implements RelationContract {
    * Must be implemented by main class
    */
   public abstract getQuery (parent: ModelContract, client: QueryClientContract)
+
+  /**
+   * Must be implemented by parent class
+   */
+  public abstract setRelatedMany (parent: ModelContract[], related: ModelContract[])
+
+  /**
+   * Compute keys
+   */
+  public boot () {
+    if (this.booted) {
+      return
+    }
+
+    this.localKey = this._options.localKey || this._model.$primaryKey
+    this.foreignKey = this._options.foreignKey || camelCase(`${this._model.name}_${this._model.$primaryKey}`)
+
+    /**
+     * Validate computed keys to ensure they are valid
+     */
+    this._validateKeys()
+
+    /**
+     * Keys for the adapter
+     */
+    this.localAdapterKey = this._model.$getColumn(this.localKey)!.castAs
+    this.foreignAdapterKey = this.relatedModel().$getColumn(this.foreignKey)!.castAs
+    this.booted = true
+  }
 
   /**
    * Returns query for the relationship with applied constraints for
@@ -173,16 +176,11 @@ export abstract class HasOneOrMany implements RelationContract {
   /**
    * Sets the related model instance
    */
-  public setRelated (model: ModelContract, related?: ModelContract | ModelContract[] | null) {
+  public setRelated (parent: ModelContract, related?: ModelContract | ModelContract[] | null) {
     if (!related) {
       return
     }
 
-    model.$setRelated(this.$relationName as keyof typeof model, related)
+    parent.$setRelated(this._relationName as keyof typeof parent, related)
   }
-
-  /**
-   * Must be implemented by parent class
-   */
-  public abstract setRelatedMany (models: ModelContract[], related: ModelContract[])
 }

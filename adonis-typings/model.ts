@@ -124,7 +124,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     column?: ThroughRelationDecoratorNode,
   ) => DecoratorFn
 
-  export type AvailableRelations = 'hasOne' | 'hasMany' | 'belongsTo'
+  export type AvailableRelations = 'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany'
 
   /**
    * Callback accepted by the preload method
@@ -137,6 +137,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
   export interface RelationContract {
     type: AvailableRelations
     serializeAs: string
+    booted: boolean
+    boot (): void
     relatedModel (): ModelConstructorContract
     getQuery (model: ModelContract, client: QueryClientContract): ModelExecuteableQueryBuilder
     getEagerQuery (models: ModelContract[], client: QueryClientContract): ModelExecuteableQueryBuilder
