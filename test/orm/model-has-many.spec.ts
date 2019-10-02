@@ -178,7 +178,7 @@ test.group('Model | Has Many', (group) => {
       public posts: Post[]
     }
 
-    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('users').insert([{ username: 'virk' }])
 
     const users = await db.query().from('users')
     await db.insertQuery().table('posts').insert([
@@ -187,16 +187,69 @@ test.group('Model | Has Many', (group) => {
         title: 'Adonis 101',
       },
       {
-        user_id: users[1].id,
+        user_id: users[0].id,
         title: 'Lucid 101',
       },
     ])
 
     User.$boot()
     const user = await User.query().preload('posts').where('username', 'virk').first()
-    assert.lengthOf(user!.posts, 1)
+    assert.lengthOf(user!.posts, 2)
     assert.instanceOf(user!.posts[0], Post)
     assert.equal(user!.posts[0].userId, user!.id)
+
+    assert.instanceOf(user!.posts[1], Post)
+    assert.equal(user!.posts[1].userId, user!.id)
+  })
+
+  test('preload has many relationship for many rows', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 1,
+        title: 'Lucid 101',
+      },
+      {
+        user_id: 2,
+        title: 'Lucid 102',
+      },
+    ])
+
+    User.$boot()
+    const users = await User.query().preload('posts')
+
+    assert.lengthOf(users[0]!.posts, 2)
+    assert.instanceOf(users[0].posts[0], Post)
+    assert.equal(users[0].posts[0].userId, users[0].id)
+    assert.instanceOf(users[0].posts[1], Post)
+    assert.equal(users[0].posts[1].userId, users[0].id)
+
+    assert.lengthOf(users[1]!.posts, 1)
+    assert.instanceOf(users[1].posts[0], Post)
+    assert.equal(users[1].posts[0].userId, users[1].id)
   })
 
   test('raise exception when local key is not selected', async (assert) => {
