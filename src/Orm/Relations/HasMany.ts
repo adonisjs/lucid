@@ -9,26 +9,21 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import {
-  ModelContract,
-  BaseRelationNode,
-  ModelConstructorContract,
-} from '@ioc:Adonis/Lucid/Model'
-
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { ModelContract, BaseRelationNode, ModelConstructorContract } from '@ioc:Adonis/Lucid/Model'
 import { HasOneOrMany } from './HasOneOrMany'
 
+/**
+ * Exposes the API to construct correct queries and set related
+ * models for has many relationship
+ */
 export class HasMany extends HasOneOrMany {
   /**
    * Relationship type
    */
   public type = 'hasMany' as const
 
-  constructor (
-    relationName: string,
-    options: BaseRelationNode,
-    model: ModelConstructorContract,
-  ) {
+  constructor (relationName: string, options: BaseRelationNode, model: ModelConstructorContract) {
     super(relationName, options, model)
   }
 
@@ -46,10 +41,10 @@ export class HasMany extends HasOneOrMany {
   /**
    * Set many related instances
    */
-  public setRelatedMany (models: ModelContract[], related: ModelContract[]) {
-    models.forEach((one) => {
-      const relation = related.filter((model) => model[this.foreignKey] === one[this.localKey])
-      this.setRelated(one, relation)
+  public setRelatedMany (parents: ModelContract[], related: ModelContract[]) {
+    parents.forEach((parent) => {
+      const relation = related.filter((model) => model[this.foreignKey] === parent[this.localKey])
+      this.setRelated(parent, relation)
     })
   }
 }

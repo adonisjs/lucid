@@ -45,6 +45,7 @@ test.group('Model | Has one', (group) => {
       }
 
       User.$boot()
+      User.$getRelation('profile')!.boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -70,6 +71,7 @@ test.group('Model | Has one', (group) => {
       }
 
       User.$boot()
+      User.$getRelation('profile')!.boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -92,7 +94,9 @@ test.group('Model | Has one', (group) => {
       @hasOne(() => Profile)
       public profile: Profile
     }
+
     User.$boot()
+    User.$getRelation('profile')!.boot()
 
     assert.equal(User.$getRelation('profile')!['localKey'], 'id')
     assert.equal(User.$getRelation('profile')!['localAdapterKey'], 'id')
@@ -117,6 +121,7 @@ test.group('Model | Has one', (group) => {
     }
 
     User.$boot()
+    User.$getRelation('profile')!.boot()
 
     assert.equal(User.$getRelation('profile')!['localKey'], 'uid')
     assert.equal(User.$getRelation('profile')!['localAdapterKey'], 'user_uid')
@@ -136,7 +141,9 @@ test.group('Model | Has one', (group) => {
       @hasOne(() => Profile)
       public profile: Profile
     }
+
     User.$boot()
+    User.$getRelation('profile')!.boot()
 
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userId')
     assert.equal(User.$getRelation('profile')!['foreignAdapterKey'], 'user_id')
@@ -156,7 +163,9 @@ test.group('Model | Has one', (group) => {
       @hasOne(() => Profile, { foreignKey: 'userUid' })
       public profile: Profile
     }
+
     User.$boot()
+    User.$getRelation('profile')!.boot()
 
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userUid')
     assert.equal(User.$getRelation('profile')!['foreignAdapterKey'], 'user_id')
@@ -197,6 +206,7 @@ test.group('Model | Has one', (group) => {
     ])
 
     User.$boot()
+
     const user = await User.query().preload('profile').where('username', 'virk').first()
     assert.instanceOf(user!.profile, Profile)
   })

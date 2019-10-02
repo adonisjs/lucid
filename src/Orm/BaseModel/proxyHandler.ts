@@ -31,7 +31,7 @@ const DEFAULTS: {
   hasMany: Object.freeze([]),
   belongsTo: null,
   // hasOneThrough: null,
-  // manyToMany: Object.freeze([]),
+  manyToMany: Object.freeze([]),
   // hasManyThrough: Object.freeze([]),
 }
 
