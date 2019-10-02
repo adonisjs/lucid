@@ -15,13 +15,13 @@ import { camelCase, snakeCase, uniq } from 'lodash'
 import {
   ModelContract,
   BaseRelationNode,
-  RelationContract,
+  BaseRelationContract,
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
-export abstract class HasOneOrMany implements RelationContract {
+export abstract class HasOneOrMany implements BaseRelationContract {
   /**
    * Relationship type
    */
