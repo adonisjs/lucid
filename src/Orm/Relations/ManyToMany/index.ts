@@ -232,7 +232,7 @@ export class ManyToMany implements ManyToManyRelationContract {
     this._addSelect(query)
     this._addJoin(query)
 
-    return query.where(`${this.pivotTable}.${this.pivotForeignKey}`, value)
+    return query.wherePivot(this.pivotForeignKey, value)
   }
 
   /**
@@ -248,7 +248,7 @@ export class ManyToMany implements ManyToManyRelationContract {
     this._addSelect(query)
     this._addJoin(query)
 
-    return query.whereIn(`${this.pivotTable}.${this.pivotForeignKey}`, values)
+    return query.whereInPivot(this.pivotForeignKey, values)
   }
 
   /**
