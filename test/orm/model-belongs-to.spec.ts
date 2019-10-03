@@ -165,6 +165,81 @@ test.group('Model | Belongs To', (group) => {
     assert.equal(Profile.$getRelation('user')!['foreignAdapterKey'], 'user_id')
   })
 
+  test('get eager query', (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    Profile.$getRelation('user')!.boot()
+    const profile = new Profile()
+    profile.userId = 1
+
+    const { sql, bindings } = Profile.$getRelation('user')!
+      .getEagerQuery([profile], Profile.query().client)
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.query()
+      .from('users')
+      .whereIn('id', [1])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('get query', (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    Profile.$getRelation('user')!.boot()
+    const profile = new Profile()
+    profile.userId = 1
+
+    const { sql, bindings } = Profile.$getRelation('user')!
+      .getQuery(profile, Profile.query().client)
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.query()
+      .from('users')
+      .where('id', 1)
+      .limit(1)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
   test('preload belongsTo relationship', async (assert) => {
     class User extends BaseModel {
       @column({ primary: true })

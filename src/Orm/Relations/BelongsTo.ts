@@ -173,7 +173,7 @@ export class BelongsTo implements BaseRelationContract {
    */
   public getEagerQuery (parents: ModelContract[], client: QueryClientContract) {
     const values = uniq(parents.map((parentInstance) => {
-      return this._ensureValue(parentInstance[this.localKey])
+      return this._ensureValue(parentInstance[this.foreignKey])
     }))
 
     return this.relatedModel()
