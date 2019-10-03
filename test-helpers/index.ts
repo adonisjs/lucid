@@ -30,7 +30,14 @@ import {
   DatabaseQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
-import { ModelConstructorContract, ModelContract, AdapterContract } from '@ioc:Adonis/Lucid/Model'
+import {
+  ModelContract,
+  AdapterContract,
+  RelationContract,
+  ModelConstructorContract,
+  ManyToManyRelationContract,
+  ManyToManyExecutableQueryBuilder,
+} from '@ioc:Adonis/Lucid/Model'
 
 import { Adapter } from '../src/Orm/Adapter'
 import { BaseModel } from '../src/Orm/BaseModel'
@@ -39,6 +46,7 @@ import { Database } from '../src/Database/index'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
+import { ManyToManyQueryBuilder } from '../src/Orm/Relations/ManyToMany/QueryBuilder'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
 dotenv.config()
@@ -228,6 +236,17 @@ export function getQueryBuilder (client: QueryClientContract) {
     client.getWriteClient().queryBuilder(),
     client,
   ) as unknown as DatabaseQueryBuilderContract & ExcutableQueryBuilderContract<any>
+}
+
+/**
+ * Returns many to many query builder
+ */
+export function getManyToManyQueryBuilder (relation: RelationContract, client: QueryClientContract) {
+  return new ManyToManyQueryBuilder(
+    client.getWriteClient().queryBuilder(),
+    relation as ManyToManyRelationContract,
+    client,
+  ) as unknown as ManyToManyExecutableQueryBuilder
 }
 
 /**

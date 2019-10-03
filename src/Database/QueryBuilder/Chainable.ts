@@ -10,15 +10,8 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
-import { ChainableContract, QueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-
+import { ChainableContract, DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { RawQueryBuilder } from './Raw'
-
-/**
- * Function to transform the query callbacks and passing them the right
- * instance
- */
-type DBQueryCallback = (userFn: QueryCallback<ChainableContract>) => ((builder: knex.QueryBuilder) => void)
 
 /**
  * The chainable query builder to consturct SQL queries for selecting, updating and
