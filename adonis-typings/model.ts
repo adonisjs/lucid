@@ -190,6 +190,32 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
+   * Shape of the preloader to preload relationships
+   */
+  export interface PreloaderContract {
+    parseRelationName (relationName: string): {
+      primary: string,
+      relation: RelationContract,
+      children: { relationName: string } | null,
+    }
+
+    processForOne (name: string, model: ModelContract, client: QueryClientContract): Promise<void>
+    processForMany (name: string, models: ModelContract[], client: QueryClientContract): Promise<void>
+    processAllForOne (models: ModelContract, client: QueryClientContract): Promise<void>
+    processAllForMany (models: ModelContract[], client: QueryClientContract): Promise<void>
+
+    preload<T extends 'manyToMany'> (
+      relation: string,
+      callback?: ManyToManyPreloadCallback,
+    ): this
+
+    preload<T extends AvailableRelations> (
+      relation: string,
+      callback?: BasePreloadCallback,
+    ): this
+  }
+
+  /**
    * Model query builder will have extras methods on top of Database query builder
    */
   export interface ModelQueryBuilderContract<
@@ -291,8 +317,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Read/write realtionships
      */
-    $getRelated<K extends keyof this> (key: K, defaultValue?: any): this[K]
-    $setRelated<K extends keyof this> (key: K, result: this[K]): void
+    $hasRelated (key: string): boolean
+    $setRelated (key: string, result: ModelContract | ModelContract[]): void
+    $getRelated (key: string, defaultValue?: any): ModelContract
 
     /**
      * Consume the adapter result and hydrate the model
@@ -301,6 +328,18 @@ declare module '@ioc:Adonis/Lucid/Model' {
 
     fill (value: ModelObject): void
     merge (value: ModelObject): void
+
+    preload<T extends 'manyToMany'> (
+      relation: string,
+      callback?: ManyToManyPreloadCallback,
+    ): Promise<void>
+
+    preload<T extends AvailableRelations> (
+      relation: string,
+      callback?: BasePreloadCallback,
+    ): Promise<void>
+
+    preload (callback: (preloader: PreloaderContract) => void): Promise<void>
 
     save (): Promise<void>
     delete (): Promise<void>

@@ -286,6 +286,51 @@ test.group('Model | Has one', (group) => {
     assert.instanceOf(user!.profile, Profile)
   })
 
+  test('preload has one relationship using model instance', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    await db.insertQuery().table('profiles').insert([
+      {
+        user_id: 1,
+        display_name: 'virk',
+      },
+      {
+        user_id: 2,
+        display_name: 'nikk',
+      },
+    ])
+
+    User.$boot()
+
+    const users = await User.all()
+    assert.lengthOf(users, 2)
+
+    await users[0].preload('profile')
+    await users[1].preload('profile')
+
+    assert.equal(users[0].profile.userId, users[0].id)
+    assert.equal(users[1].profile.userId, users[1].id)
+  })
+
   test('raise exception when local key is not selected', async (assert) => {
     assert.plan(1)
 
@@ -330,7 +375,6 @@ test.group('Model | Has one', (group) => {
   })
 
   test('pass callback to preload', async (assert) => {
-
     class Profile extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -510,6 +554,83 @@ test.group('Model | Has one', (group) => {
     assert.property(query['_preloader']['_preloads'], 'profile')
     assert.lengthOf(query['_preloader']['_preloads'].profile.children, 1)
     assert.equal(query['_preloader']['_preloads'].profile.children[0].relationName, 'identity')
+  })
+
+  test('preload nested relations using model instance', async (assert) => {
+    class Identity extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public profileId: number
+
+      @column()
+      public identityName: string
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @hasOne(() => Identity)
+      public identity: Identity
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('profiles').insert([
+      {
+        user_id: 1,
+        display_name: 'virk',
+      },
+      {
+        user_id: 2,
+        display_name: 'nikk',
+      },
+    ])
+
+     await db.insertQuery().table('identities').insert([
+      {
+        profile_id: 1,
+        identity_name: 'virk',
+      },
+      {
+        profile_id: 2,
+        identity_name: 'nikk',
+      },
+    ])
+
+    User.$boot()
+
+    const users = await User.all()
+    assert.lengthOf(users, 2)
+
+    await users[0].preload((preloader) => {
+      preloader.preload('profile').preload('profile.identity')
+    })
+
+    await users[1].preload((preloader) => {
+      preloader.preload('profile').preload('profile.identity')
+    })
+
+    assert.instanceOf(users[0].profile, Profile)
+    assert.instanceOf(users[0].profile!.identity, Identity)
+
+    assert.instanceOf(users[1].profile, Profile)
+    assert.instanceOf(users[1].profile!.identity, Identity)
   })
 
   test('pass main query options down the chain', async (assert) => {

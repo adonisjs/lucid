@@ -12,6 +12,7 @@ import {
   ModelContract,
   PreloadCallback,
   RelationContract,
+  PreloaderContract,
   ModelConstructorContract,
   ManyToManyExecutableQueryBuilder,
 } from '@ioc:Adonis/Lucid/Model'
@@ -28,7 +29,7 @@ type PreloadNode = {
  * Exposes the API to define and preload relationships in reference to
  * a model
  */
-export class Preloader {
+export class Preloader implements PreloaderContract {
   /**
    * Registered preloads
    */
