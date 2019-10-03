@@ -15,16 +15,15 @@ import { Exception } from '@poppinss/utils'
 
 import {
   ModelOptions,
-  ModelContract,
   PreloadCallback,
-  RelationContract,
   ModelConstructorContract,
   ModelQueryBuilderContract,
-  ManyToManyExecutableQueryBuilder,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { Chainable } from '../../Database/QueryBuilder/Chainable'
+
+import { Preloader } from '../Preloader'
 import { Executable, ExecutableConstructor } from '../../Traits/Executable'
 
 /**
@@ -42,13 +41,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * A copy of defined preloads on the model instance
    */
-  private _preloads: {
-    [name: string]: {
-      relation: RelationContract,
-      callback?: PreloadCallback,
-      children: { relationName: string, callback?: PreloadCallback }[],
-    },
-  } = {}
+  private _preloader = new Preloader(this.model)
 
   /**
    * Options that must be passed to all new model instances
@@ -73,65 +66,6 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
-  * Parses the relation name string for nested relations. Nested relations
-  * can be defined using the dot notation.
-  */
-  private _parseRelationName (relationName: string, callback?: PreloadCallback) {
-    const relations = relationName.split('.')
-    const primary = relations.shift()!
-    const relation = this.model.$getRelation(primary)
-
-    /**
-     * Undefined relationship
-     */
-    if (!relation) {
-      throw new Exception(`${primary} is not defined as a relationship on ${this.model.name} model`)
-    }
-
-    return {
-      primary,
-      relation,
-      children: relations.length ? { relationName: relations.join(''), callback } : null,
-      callback: relations.length ? null : callback,
-    }
-  }
-
-  /**
-   * Process preloaded relationship
-   */
-  private async _processRelation (models: ModelContract[], name: string) {
-    const relation = this._preloads[name]
-
-    relation.relation.boot()
-    const query = relation.relation.getEagerQuery(models, this.client)
-
-    /**
-     * Pass nested preloads
-     */
-    relation.children.forEach(({ relationName, callback }) => query.preload(relationName, callback))
-
-    /**
-     * Invoke callback when defined
-     */
-    if (typeof (relation.callback) === 'function') {
-      /**
-       * Type casting to superior type.
-       */
-      relation.callback(query as ManyToManyExecutableQueryBuilder)
-    }
-
-    /**
-     * Execute query
-     */
-    const result = await query.exec()
-
-    /**
-     * Set relationships on models
-     */
-    relation.relation.setRelatedMany(models, result)
-  }
-
-  /**
    * Wraps the query result to model instances. This method is invoked by the
    * Executable trait.
    */
@@ -142,10 +76,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
       this._options,
     )
 
-    await Promise.all(Object.keys(this._preloads).map((name) => {
-      return this._processRelation(modelInstances, name)
-    }))
-
+    await this._preloader.processAllForMany(modelInstances, this.client)
     return modelInstances
   }
 
@@ -190,16 +121,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Define a relationship to be preloaded
    */
   public preload (relationName: string, userCallback?: PreloadCallback): this {
-    const { primary, relation, children, callback } = this._parseRelationName(relationName, userCallback)
-
-    const payload = this._preloads[primary] || { relation, children: [] }
-    if (children) {
-      payload.children.push(children)
-    } else {
-      payload.callback = callback!
-    }
-
-    this._preloads[primary] = payload
+    this._preloader.preload(relationName, userCallback)
     return this
   }
 
