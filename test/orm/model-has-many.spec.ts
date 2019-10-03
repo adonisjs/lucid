@@ -167,6 +167,80 @@ test.group('Model | Has Many', (group) => {
     assert.equal(User.$getRelation('posts')!['foreignAdapterKey'], 'user_id')
   })
 
+  test('get eager query', (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    User.$getRelation('posts')!.boot()
+    const user = new User()
+    user.id = 1
+
+    const { sql, bindings } = User.$getRelation('posts')!
+      .getEagerQuery([user], User.query().client)
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.query()
+      .from('posts')
+      .whereIn('user_id', [1])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('get query', (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    User.$getRelation('posts')!.boot()
+    const user = new User()
+    user.id = 1
+
+    const { sql, bindings } = User.$getRelation('posts')!
+      .getQuery(user, User.query().client)
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.query()
+      .from('posts')
+      .where('user_id', 1)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
   test('preload has many relationship', async (assert) => {
     class Post extends BaseModel {
       @column({ primary: true })
