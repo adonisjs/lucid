@@ -415,6 +415,65 @@ test.group('Model | Many To Many', (group) => {
     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
   })
 
+  test('preload relation using model instance', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    User.$boot()
+    User.$getRelation('skills')!.boot()
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+      {
+        user_id: 2,
+        skill_id: 2,
+      },
+    ])
+
+    const users = await User.query().orderBy('id', 'asc')
+    assert.lengthOf(users, 2)
+
+    await users[0].preload('skills')
+    await users[1].preload('skills')
+
+    assert.lengthOf(users[0].skills, 2)
+    assert.lengthOf(users[1].skills, 1)
+
+    assert.equal(users[0].skills[0].name, 'Programming')
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+
+    assert.equal(users[0].skills[1].name, 'Dancing')
+    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
+
+    assert.equal(users[1].skills[0].name, 'Dancing')
+    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
+  })
+
   test('raise error when local key is not selected', async (assert) => {
     assert.plan(1)
 
@@ -570,6 +629,81 @@ test.group('Model | Many To Many', (group) => {
 
     const users = await User.query().preload<'manyToMany'>('skills', (builder) => {
       builder.pivotColumns(['proficiency'])
+    })
+
+    assert.lengthOf(users, 2)
+    assert.lengthOf(users[0].skills, 2)
+    assert.lengthOf(users[1].skills, 1)
+
+    assert.equal(users[0].skills[0].name, 'Programming')
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_proficiency, 'expert')
+
+    assert.equal(users[0].skills[1].name, 'Dancing')
+    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
+    assert.equal(users[0].skills[1].$extras.pivot_proficiency, 'beginner')
+
+    assert.equal(users[1].skills[0].name, 'Dancing')
+    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
+  })
+
+  test('select extra pivot columns at runtime using model instance', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+
+      @column()
+      public proficiency: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    User.$boot()
+    User.$getRelation('skills')!.boot()
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+        proficiency: 'expert',
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+        proficiency: 'beginner',
+      },
+      {
+        user_id: 2,
+        skill_id: 2,
+        proficiency: 'beginner',
+      },
+    ])
+
+    const users = await User.query().orderBy('id', 'asc')
+
+    await users[0].preload<'manyToMany'>('skills', (builder) => {
+      builder.pivotColumns(['proficiency'])
+    })
+
+    await users[1].preload((preloader) => {
+      preloader.preload<'manyToMany'>('skills', (builder) => {
+        builder.pivotColumns(['proficiency'])
+      })
     })
 
     assert.lengthOf(users, 2)

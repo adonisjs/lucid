@@ -323,6 +323,47 @@ test.group('Model | Belongs To', (group) => {
     assert.equal(profiles[2].user.id, 2)
   })
 
+  test('preload using model instance', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }])
+
+    const users = await db.query().from('users')
+    await db.insertQuery().table('profiles').insert([
+      {
+        user_id: users[0].id,
+        display_name: 'virk',
+      },
+      {
+        user_id: users[0].id,
+        display_name: 'virk',
+      },
+    ])
+
+    const profile = await Profile.findOrFail(1)
+    await profile.preload('user')
+
+    assert.instanceOf(profile.user, User)
+    assert.equal(profile.user.id, profile.userId)
+  })
+
   test('raise exception when foreign key is not selected', async (assert) => {
     assert.plan(1)
     class User extends BaseModel {
@@ -539,6 +580,72 @@ test.group('Model | Belongs To', (group) => {
     assert.property(query['_preloader']['_preloads'], 'profile')
     assert.lengthOf(query['_preloader']['_preloads'].profile.children, 1)
     assert.equal(query['_preloader']['_preloads'].profile.children[0].relationName, 'user')
+  })
+
+  test('preload nested relations using model instance', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    class Identity extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public profileId: number
+
+      @column()
+      public identityName: string
+
+      @belongsTo(() => Profile)
+      public profile: Profile
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('profiles').insert([
+      {
+        user_id: 1,
+        display_name: 'virk',
+      },
+      {
+        user_id: 2,
+        display_name: 'nikk',
+      },
+    ])
+
+     await db.insertQuery().table('identities').insert([
+      {
+        profile_id: 1,
+        identity_name: 'virk',
+      },
+      {
+        profile_id: 2,
+        identity_name: 'nikk',
+      },
+    ])
+
+    const identity = await Identity.query().firstOrFail()
+    await identity.preload((preloader) => {
+      preloader.preload('profile').preload('profile.user')
+    })
+
+    assert.instanceOf(identity!.profile, Profile)
+    assert.instanceOf(identity!.profile!.user, User)
   })
 
   test('pass main query options down the chain', async (assert) => {

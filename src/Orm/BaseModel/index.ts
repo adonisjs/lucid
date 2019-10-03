@@ -22,6 +22,7 @@ import {
   ComputedNode,
   ModelContract,
   AdapterContract,
+  PreloadCallback,
   BaseRelationNode,
   RelationContract,
   AvailableRelations,
@@ -30,6 +31,7 @@ import {
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
+import { Preloader } from '../Preloader'
 import { HasOne } from '../Relations/HasOne'
 import { proxyHandler } from './proxyHandler'
 import { HasMany } from '../Relations/HasMany'
@@ -708,15 +710,26 @@ export class BaseModel implements ModelContract {
   /**
    * Returns the related model or default value when model is missing
    */
-  public $getRelated<K extends keyof this> (key: K, defaultValue: any): any {
-    return this.$preloaded[key as string] || defaultValue
+  public $getRelated (key: string, defaultValue: any): any {
+    if (this.$hasRelated(key)) {
+      return this.$preloaded[key as string]
+    }
+
+    return defaultValue
+  }
+
+  /**
+   * A boolean to know if relationship has been preloaded or not
+   */
+  public $hasRelated (key: string): boolean {
+    return this.$preloaded[key as string] !== undefined
   }
 
   /**
    * Sets the related data on the model instance. The method internally handles
    * `one to one` or `many` relations
    */
-  public $setRelated<K extends keyof this> (key: K, models: this[K]) {
+  public $setRelated (key: string, models: ModelContract | ModelContract[]) {
     const Model = this.constructor as typeof BaseModel
     const relation = Model.$relations.get(key as string)
 
@@ -730,9 +743,12 @@ export class BaseModel implements ModelContract {
     /**
      * Create multiple for `hasMany` and one for `belongsTo` and `hasOne`
      */
-    if (['hasMany', 'manyToMany', 'hasManyThrough'].includes(relation.type)) {
+    const manyRelationships = ['hasMany', 'manyToMany', 'hasManyThrough']
+    if (manyRelationships.includes(relation.type)) {
       if (!Array.isArray(models)) {
-        throw new Error('Pass array please')
+        throw new Exception(`
+          $setRelated accepts an array of related models for ${manyRelationships.join(',')} relationships,
+        `)
       }
       this.$preloaded[key as string] = models
     } else {
@@ -829,6 +845,25 @@ export class BaseModel implements ModelContract {
         this.$extras[key] = values[key]
       })
     }
+  }
+
+  /**
+   * Preloads one or more relationships for the current model
+   */
+  public async preload (
+    relationName: string | ((preloader: Preloader) => void),
+    callback?: PreloadCallback,
+  ) {
+    const constructor = this.constructor as ModelConstructorContract
+    const preloader = new Preloader(constructor)
+
+    if (typeof (relationName) === 'function') {
+      relationName(preloader)
+    } else {
+      preloader.preload(relationName, callback)
+    }
+
+    await preloader.processAllForOne(this, constructor.query(this.$getOptions()).client)
   }
 
   /**
