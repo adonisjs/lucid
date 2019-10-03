@@ -101,8 +101,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
 
   type DecoratorFn = (target, property) => void
   type BaseRelationDecoratorNode = Omit<BaseRelationNode, 'relatedModel'>
-  type ThroughRelationDecoratorNode = Omit<ThroughRelationNode, 'relatedModel'>
+  type ThroughRelationDecoratorNode = Omit<ThroughRelationNode, 'relatedModel' | 'throughModel'>
   type ManyToManyRelationDecoratorNode = Omit<ManyToManyRelationNode, 'relatedModel'>
+
   type ModelExecuteableQueryBuilder = ModelQueryBuilderContract<any> & ExcutableQueryBuilderContract<any>
   type ManyToManyExecutableQueryBuilder = ManyToManyQueryBuilderContract & ExcutableQueryBuilderContract<any>
 
@@ -133,13 +134,13 @@ declare module '@ioc:Adonis/Lucid/Model' {
   ) => DecoratorFn
 
   export type HasOneThroughFn = (
-    model: ThroughRelationNode['relatedModel'],
+    model: [ThroughRelationNode['relatedModel'], ThroughRelationNode['throughModel']],
     column?: ThroughRelationDecoratorNode,
   ) => DecoratorFn
 
   export type HasManyThroughFn = (
-    model: ThroughRelationNode['relatedModel'],
-    column: ThroughRelationDecoratorNode,
+    model: [ThroughRelationNode['relatedModel'], ThroughRelationNode['throughModel']],
+    column?: ThroughRelationDecoratorNode,
   ) => DecoratorFn
 
   /**
