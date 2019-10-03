@@ -21,9 +21,10 @@ import {
 } from '@ioc:Adonis/Lucid/Model'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { Chainable } from '../../Database/QueryBuilder/Chainable'
+import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 import { Preloader } from '../Preloader'
+import { Chainable } from '../../Database/QueryBuilder/Chainable'
 import { Executable, ExecutableConstructor } from '../../Traits/Executable'
 
 /**
@@ -55,13 +56,13 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     builder: knex.QueryBuilder,
     public model: ModelConstructorContract,
     public client: QueryClientContract,
-  ) {
-    super(builder, (userFn) => {
+    customFn: DBQueryCallback = (userFn) => {
       return (builder) => {
         userFn(new ModelQueryBuilder(builder, this.model, this.client))
       }
-    })
-
+    },
+  ) {
+    super(builder, customFn)
     builder.table(model.$table)
   }
 

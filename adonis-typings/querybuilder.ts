@@ -62,6 +62,12 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   )
 
   /**
+   * Function to transform the query callbacks and passing them the right
+   * instance
+   */
+  type DBQueryCallback = (userFn: QueryCallback<ChainableContract>) => ((builder: knex.QueryBuilder) => void)
+
+  /**
    * Possible signatures for a select method on database query builder. The select narrows the result
    * based upon many factors.
    *

@@ -8,8 +8,8 @@
 */
 
 declare module '@ioc:Adonis/Lucid/Model' {
-  import { ChainableContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
   import { ProfilerContract, ProfilerRowContract } from '@ioc:Adonis/Core/Profiler'
+  import { ChainableContract, StrictValues, QueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
   import {
     QueryClientContract,
     TransactionClientContract,
@@ -182,11 +182,47 @@ declare module '@ioc:Adonis/Lucid/Model' {
   export type RelationContract = BaseRelationContract | ManyToManyRelationContract
 
   /**
+   * Possible signatures for adding a where clause
+   */
+  interface WherePivot<Builder extends ChainableContract> {
+    (key: string, value: StrictValues | ChainableContract<any>): Builder
+    (key: string, operator: string, value: StrictValues | ChainableContract<any>): Builder
+  }
+
+  /**
+   * Possible signatures for adding where in clause.
+   */
+  interface WhereInPivot<
+    Builder extends ChainableContract,
+  > {
+    (K: string, value: (StrictValues | ChainableContract<any>)[]): Builder
+    (K: string[], value: (StrictValues | ChainableContract<any>)[][]): Builder
+    (k: string, subquery: ChainableContract<any> | QueryCallback<Builder>): Builder
+    (k: string[], subquery: ChainableContract<any>): Builder
+  }
+
+  /**
    * Shape of many to many query builder. It has few methods over the standard
    * model query builder
    */
   export interface ManyToManyQueryBuilderContract extends ModelQueryBuilderContract<any> {
     pivotColumns (columns: string[]): this
+
+    wherePivot: WherePivot<this>
+    orWherePivot: WherePivot<this>
+    andWherePivot: WherePivot<this>
+
+    whereNotPivot: WherePivot<this>
+    orWhereNotPivot: WherePivot<this>
+    andWhereNotPivot: WherePivot<this>
+
+    whereInPivot: WhereInPivot<this>
+    orWhereInPivot: WhereInPivot<this>
+    andWhereInPivot: WhereInPivot<this>
+
+    whereNotInPivot: WhereInPivot<this>
+    orWhereNotInPivot: WhereInPivot<this>
+    andWhereNotInPivot: WhereInPivot<this>
   }
 
   /**
