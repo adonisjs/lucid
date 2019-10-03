@@ -479,10 +479,10 @@ test.group('Model | Has Many', (group) => {
     assert.lengthOf(user!.posts[0].comments, 1)
     assert.equal(user!.posts[0].comments[0].postId, user!.posts[0].id)
 
-    assert.lengthOf(Object.keys(query['_preloads']), 1)
-    assert.property(query['_preloads'], 'posts')
-    assert.lengthOf(query['_preloads'].posts.children, 1)
-    assert.equal(query['_preloads'].posts.children[0].relationName, 'comments')
+    assert.lengthOf(Object.keys(query['_preloader']['_preloads']), 1)
+    assert.property(query['_preloader']['_preloads'], 'posts')
+    assert.lengthOf(query['_preloader']['_preloads'].posts.children, 1)
+    assert.equal(query['_preloader']['_preloads'].posts.children[0].relationName, 'comments')
   })
 
   test('pass main query options down the chain', async (assert) => {

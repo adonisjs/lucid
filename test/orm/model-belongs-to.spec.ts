@@ -460,10 +460,10 @@ test.group('Model | Belongs To', (group) => {
     const identity = await query.first()
     assert.instanceOf(identity!.profile, Profile)
     assert.instanceOf(identity!.profile!.user, User)
-    assert.lengthOf(Object.keys(query['_preloads']), 1)
-    assert.property(query['_preloads'], 'profile')
-    assert.lengthOf(query['_preloads'].profile.children, 1)
-    assert.equal(query['_preloads'].profile.children[0].relationName, 'user')
+    assert.lengthOf(Object.keys(query['_preloader']['_preloads']), 1)
+    assert.property(query['_preloader']['_preloads'], 'profile')
+    assert.lengthOf(query['_preloader']['_preloads'].profile.children, 1)
+    assert.equal(query['_preloader']['_preloads'].profile.children[0].relationName, 'user')
   })
 
   test('pass main query options down the chain', async (assert) => {
