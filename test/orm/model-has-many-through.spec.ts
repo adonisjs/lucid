@@ -45,7 +45,7 @@ test.group('Model | Has Many Through', (group) => {
       Post.$boot()
 
       class Country extends BaseModel {
-        @hasManyThrough(() => Post, { throughModel: () => User })
+        @hasManyThrough([() => Post, () => User])
         public posts: Post[]
       }
       Country.$boot()
@@ -75,7 +75,7 @@ test.group('Model | Has Many Through', (group) => {
         @column({ primary: true })
         public id: number
 
-        @hasManyThrough(() => Post, { throughModel: () => User })
+        @hasManyThrough([() => Post, () => User])
         public posts: Post[]
       }
       Country.$boot()
@@ -107,7 +107,7 @@ test.group('Model | Has Many Through', (group) => {
         @column({ primary: true })
         public id: number
 
-        @hasManyThrough(() => Post, { throughModel: () => User })
+        @hasManyThrough([() => Post, () => User])
         public posts: Post[]
       }
       Country.$boot()
@@ -142,7 +142,7 @@ test.group('Model | Has Many Through', (group) => {
         @column({ primary: true })
         public id: number
 
-        @hasManyThrough(() => Post, { throughModel: () => User })
+        @hasManyThrough([() => Post, () => User])
         public posts: Post[]
       }
       Country.$boot()
@@ -176,7 +176,7 @@ test.group('Model | Has Many Through', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasManyThrough(() => Post, { throughModel: () => User })
+      @hasManyThrough([() => Post, () => User])
       public posts: Post[]
     }
     Country.$boot()
@@ -224,7 +224,7 @@ test.group('Model | Has Many Through', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasManyThrough(() => Post, { throughModel: () => User })
+      @hasManyThrough([() => Post, () => User])
       public posts: Post[]
     }
     Country.$boot()
@@ -278,7 +278,7 @@ test.group('Model | Has Many Through', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasManyThrough(() => Post, { throughModel: () => User })
+      @hasManyThrough([() => Post, () => User])
       public posts: Post[]
     }
     Country.$boot()
@@ -326,7 +326,7 @@ test.group('Model | Has Many Through', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasManyThrough(() => Post, { throughModel: () => User })
+      @hasManyThrough([() => Post, () => User])
       public posts: Post[]
     }
     Country.$boot()
@@ -383,7 +383,7 @@ test.group('Model | Has Many Through', (group) => {
       @column({ primary: true })
       public id: number
 
-      @hasManyThrough(() => Post, { throughModel: () => User })
+      @hasManyThrough([() => Post, () => User])
       public posts: Post[]
     }
     Country.$boot()

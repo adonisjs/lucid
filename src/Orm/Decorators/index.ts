@@ -94,21 +94,21 @@ export const manyToMany: ManyToManyFn = (relatedModel, relation?) => {
 /**
  * Define hasOneThrough relationship
  */
-export const hasOneThrough: HasOneThroughFn = (relatedModel, relation?) => {
+export const hasOneThrough: HasOneThroughFn = ([relatedModel, throughModel], relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
     Model.$boot()
-    Model.$addRelation(property, 'hasOneThrough', Object.assign({ relatedModel }, relation))
+    Model.$addRelation(property, 'hasOneThrough', Object.assign({ relatedModel, throughModel }, relation))
   }
 }
 
 /**
  * Define hasManyThrough relationship
  */
-export const hasManyThrough: HasManyThroughFn = (relatedModel, relation) => {
+export const hasManyThrough: HasManyThroughFn = ([relatedModel, throughModel], relation) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
     Model.$boot()
-    Model.$addRelation(property, 'hasManyThrough', Object.assign({ relatedModel }, relation))
+    Model.$addRelation(property, 'hasManyThrough', Object.assign({ relatedModel, throughModel }, relation))
   }
 }
