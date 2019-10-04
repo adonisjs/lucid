@@ -11,6 +11,7 @@
 
 const CE = require('../../Exceptions')
 const proxyGet = require('../../../lib/proxyGet')
+const _ = require('lodash')
 
 const proxyHandler = exports = module.exports = {}
 
@@ -48,5 +49,17 @@ proxyHandler.set = function (target, name, value) {
 proxyHandler.get = proxyGet('$attributes', false, function (target, name) {
   if (typeof (target.$sideLoaded[name]) !== 'undefined') {
     return target.$sideLoaded[name]
+  } else if (typeof (target.constructor.computed) === 'object' && Array.isArray(target.constructor.computed) && target.constructor.computed.indexOf(name) > -1) {
+    /**
+   * Check if name exists in computed properties
+   * if it does then convert it to camelCase & call the getName($attributes) function
+   */
+    return target[_.camelCase('get_' + name)](target.$attributes)
+  } else if (typeof (target.$attributes[name]) !== 'undefined' && typeof (target[_.camelCase('get_' + name)]) === 'function') {
+    /**
+     * Check if name exists in $attribute and function getName() exists
+     * If it does then convert it to camelCase & call the getName(attributeValue) function
+     */
+    return target[_.camelCase('get_' + name)](target.$attributes[name])
   }
 })
