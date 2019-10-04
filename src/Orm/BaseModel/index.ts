@@ -981,6 +981,6 @@ export class BaseModel implements ModelContract {
     ensureRelation(relationName, relation)
 
     relation!.boot()
-    return relation
+    return relation!.getQuery(this, Model.$adapter.modelClient(this))
   }
 }

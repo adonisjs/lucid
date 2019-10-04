@@ -739,6 +739,200 @@ test.group('Model | HasOne | preload', (group) => {
   })
 })
 
+test.group('Model | HasOne | fetch related', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('fetch using model instance', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('profiles').insert([
+      {
+        user_id: 1,
+        display_name: 'virk',
+      },
+      {
+        user_id: 1,
+        display_name: 'virk',
+      },
+    ])
+
+    const user = await User.findOrFail(1)
+    const profiles = await user.related('profile')
+    assert.lengthOf(profiles, 1)
+
+    assert.instanceOf(profiles[0], Profile)
+    assert.equal(profiles[0].userId, user.id)
+  })
+
+  test('fetch with preloads using model instance', async (assert) => {
+    class Identity extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public profileId: number
+
+      @column()
+      public identityName: string
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @hasOne(() => Identity)
+      public identity: Identity
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('profiles').insert([
+      {
+        user_id: 1,
+        display_name: 'virk',
+      },
+      {
+        user_id: 1,
+        display_name: 'virk',
+      },
+    ])
+
+     await db.insertQuery().table('identities').insert([
+      {
+        profile_id: 1,
+        identity_name: 'virk',
+      },
+      {
+        profile_id: 2,
+        identity_name: 'nikk',
+      },
+    ])
+
+    const user = await User.findOrFail(1)
+    const profiles = await user.related<'hasOne', 'profile'>('profile').preload('identity')
+    assert.lengthOf(profiles, 1)
+
+    assert.instanceOf(profiles[0], Profile)
+    assert.equal(profiles[0].userId, user.id)
+
+    assert.instanceOf(profiles[0].identity, Identity)
+    assert.equal(profiles[0].identity.profileId, profiles[0].id)
+  })
+
+  test('use parent options to fetch related model instance', async (assert) => {
+    class Identity extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public profileId: number
+
+      @column()
+      public identityName: string
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @hasOne(() => Identity)
+      public identity: Identity
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('profiles').insert([
+      {
+        user_id: 1,
+        display_name: 'virk',
+      },
+      {
+        user_id: 1,
+        display_name: 'virk',
+      },
+    ])
+
+     await db.insertQuery().table('identities').insert([
+      {
+        profile_id: 1,
+        identity_name: 'virk',
+      },
+      {
+        profile_id: 2,
+        identity_name: 'nikk',
+      },
+    ])
+
+    const user = await User.query({ connection: 'secondary' }).firstOrFail()
+    const profiles = await user.related<'hasOne', 'profile'>('profile').preload('identity')
+    assert.lengthOf(profiles, 1)
+
+    assert.instanceOf(profiles[0], Profile)
+    assert.equal(profiles[0].$options!.connection, 'secondary')
+
+    assert.instanceOf(profiles[0].identity, Identity)
+    assert.equal(profiles[0].identity.profileId, profiles[0].id)
+    assert.equal(profiles[0].identity.$options!.connection, 'secondary')
+  })
+})
+
 // test.group('Model | HasOne | persist', (group) => {
 //   group.before(async () => {
 //     db = getDb()

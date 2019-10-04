@@ -16,6 +16,7 @@ import { Exception } from '@poppinss/utils'
 import {
   ModelObject,
   ModelOptions,
+  ModelContract,
   ModelConstructorContract,
   ModelQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
@@ -37,7 +38,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Sideloaded attributes that will be passed to the model instances
    */
-  private _sideloaded: ModelObject = {}
+  protected $sideloaded: ModelObject = {}
 
   /**
    * A copy of defined preloads on the model instance
@@ -67,26 +68,42 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
+   * Process preloads for a single model instance
+   */
+  protected async $processAllForOne (modelInstance: ModelContract) {
+    this._preloader.sideload(this.$sideloaded)
+    await this._preloader.processAllForOne(modelInstance, this.client)
+    return modelInstance
+  }
+
+  /**
+   * Process preloads for array of model instances
+   */
+  protected async $processAllForMany (modelInstances: ModelContract[]) {
+    this._preloader.sideload(this.$sideloaded)
+    await this._preloader.processAllForMany(modelInstances, this.client)
+    return modelInstances
+  }
+
+  /**
    * Wraps the query result to model instances. This method is invoked by the
    * Executable trait.
    */
   public async afterExecute (rows: any[]): Promise<any[]> {
     const modelInstances = this.model.$createMultipleFromAdapterResult(
       rows,
-      this._sideloaded,
+      this.$sideloaded,
       this.clientOptions,
     )
 
-    this._preloader.sideload(this._sideloaded)
-    await this._preloader.processAllForMany(modelInstances, this.client)
-    return modelInstances
+    return this.$processAllForMany(modelInstances)
   }
 
   /**
    * Set sideloaded properties to be passed to the model instance
    */
   public sideload (value: ModelObject) {
-    this._sideloaded = value
+    this.$sideloaded = value
     return this
   }
 

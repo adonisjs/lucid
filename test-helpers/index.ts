@@ -356,6 +356,9 @@ export class FakeAdapter implements AdapterContract {
     this._handlers[action] = handler
   }
 
+  public modelClient (): any {
+  }
+
   public async insert (instance: ModelContract, attributes: any) {
     this.operations.push({ type: 'insert', instance, attributes })
     return this._invokeHandler('insert', instance)

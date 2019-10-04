@@ -793,6 +793,199 @@ test.group('Model | HasMany', (group) => {
   })
 })
 
+test.group('Model | HasMany | fetch related', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('fetch using model instance', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 2,
+        title: 'Lucid 101',
+      },
+    ])
+
+    const user = await User.query().firstOrFail()
+    const posts = await user.related('posts')
+
+    assert.lengthOf(posts, 1)
+    assert.equal(posts[0].userId, user.id)
+  })
+
+  test('fetch with preloads using model instance', async (assert) => {
+    class Comment extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public postId: number
+
+      @column()
+      public body: string
+    }
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+
+      @hasMany(() => Comment)
+      public comments: Comment[]
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 2,
+        title: 'Lucid 101',
+      },
+    ])
+
+     await db.insertQuery().table('comments').insert([
+      {
+        post_id: 1,
+        body: 'Looks nice',
+      },
+      {
+        post_id: 1,
+        body: 'Wow! Never knew that',
+      },
+    ])
+
+    const user = await User.query().firstOrFail()
+    const posts = await user.related<'hasMany', 'posts'>('posts').preload<'hasMany'>('comments')
+
+    assert.lengthOf(posts, 1)
+    assert.equal(posts[0].userId, user.id)
+    assert.lengthOf(posts[0].comments, 2)
+
+    assert.equal(posts[0].comments[0].postId, 1)
+    assert.equal(posts[0].comments[0].body, 'Looks nice')
+
+    assert.equal(posts[0].comments[1].postId, 1)
+    assert.equal(posts[0].comments[1].body, 'Wow! Never knew that')
+  })
+
+  test('fetch with preloads using parent model options', async (assert) => {
+    class Comment extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public postId: number
+
+      @column()
+      public body: string
+    }
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+
+      @hasMany(() => Comment)
+      public comments: Comment[]
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 2,
+        title: 'Lucid 101',
+      },
+    ])
+
+     await db.insertQuery().table('comments').insert([
+      {
+        post_id: 1,
+        body: 'Looks nice',
+      },
+      {
+        post_id: 1,
+        body: 'Wow! Never knew that',
+      },
+    ])
+
+    const user = await User.query({ connection: 'secondary' }).firstOrFail()
+    const posts = await user.related<'hasMany', 'posts'>('posts').preload<'hasMany'>('comments')
+
+    assert.lengthOf(posts, 1)
+    assert.equal(posts[0].$options!.connection, 'secondary')
+    assert.equal(posts[0].comments[0].$options!.connection, 'secondary')
+    assert.equal(posts[0].comments[1].$options!.connection, 'secondary')
+  })
+})
+
 // test.group('Model | HasMany | persist', (group) => {
 //   group.before(async () => {
 //     db = getDb()
