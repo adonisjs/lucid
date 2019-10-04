@@ -14,6 +14,7 @@ import { trait } from '@poppinss/traits'
 import { Exception } from '@poppinss/utils'
 
 import {
+  ModelObject,
   ModelOptions,
   ModelConstructorContract,
   ModelQueryBuilderContract,
@@ -36,7 +37,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Sideloaded attributes that will be passed to the model instances
    */
-  private _sideloaded = {}
+  private _sideloaded: ModelObject = {}
 
   /**
    * A copy of defined preloads on the model instance
@@ -76,6 +77,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
       this.clientOptions,
     )
 
+    this._preloader.sideload(this._sideloaded)
     await this._preloader.processAllForMany(modelInstances, this.client)
     return modelInstances
   }
@@ -83,7 +85,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Set sideloaded properties to be passed to the model instance
    */
-  public sideload (value: any) {
+  public sideload (value: ModelObject) {
     this._sideloaded = value
     return this
   }

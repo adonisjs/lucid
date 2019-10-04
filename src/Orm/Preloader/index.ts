@@ -9,6 +9,7 @@
 
 import { Exception } from '@poppinss/utils'
 import {
+  ModelObject,
   ModelContract,
   RelationContract,
   PreloaderContract,
@@ -32,6 +33,11 @@ type PreloadNode = {
  * a model
  */
 export class Preloader implements PreloaderContract {
+  /**
+   * Sideloaded attributes that will be passed to the model instances
+   */
+  private _sideloaded: ModelObject = {}
+
   /**
    * Registered preloads
    */
@@ -60,7 +66,11 @@ export class Preloader implements PreloaderContract {
     /**
      * Pass nested preloads
      */
-    preload.children.forEach(({ relationName, callback }) => query.preload(relationName, callback))
+    preload.children.forEach(({ relationName, callback }) => {
+      query.preload(relationName, callback)
+    })
+
+    query.sideload(this._sideloaded)
 
     /**
      * Invoke callback when defined
@@ -104,6 +114,14 @@ export class Preloader implements PreloaderContract {
       relation,
       children: relations.length ? { relationName: relations.join('') } : null,
     }
+  }
+
+  /**
+   * Set sideloaded properties to be passed to the model instance
+   */
+  public sideload (value: any) {
+    this._sideloaded = value
+    return this
   }
 
   /**
