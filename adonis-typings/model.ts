@@ -162,63 +162,32 @@ declare module '@ioc:Adonis/Lucid/Model' {
   /**
    * List of available relations
    */
-  export type AvailableRelations = 'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany' | 'hasManyThrough'
+  export type AvailableRelations = 'hasOne' |
+    'hasMany' |
+    'belongsTo' |
+    'manyToMany' |
+    'hasManyThrough'
+
+  /**
+   * Lookup map required for related method
+   */
+  type RelationsQueryBuildersMap<T> = {
+    'unknown': ModelExecuteableQueryBuilder,
+    'hasOne': HasOneQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
+    'hasMany': HasManyQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
+    'belongsTo': BelongsToQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
+    'manyToMany': ManyToManyQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
+    'hasManyThrough': HasManyThroughQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
+  }
 
   /**
    * Overloads for preload method
    */
   interface QueryBuilderPreloadFn<Builder extends any> {
-    <
-      T extends 'belongsTo',
-    > (
+    <T extends keyof RelationsQueryBuildersMap<ModelContract> = 'unknown'> (
       relation: string,
       callback?: (
-        builder: BelongsToQueryBuilderContract<ModelContract> & ExcutableQueryBuilderContract<ModelContract[]>,
-      ) => void,
-    ): Builder
-
-    <
-      T extends 'hasMany',
-    > (
-      relation: string,
-      callback?: (
-        builder: HasManyQueryBuilderContract<ModelContract> & ExcutableQueryBuilderContract<ModelContract[]>,
-      ) => void,
-    ): Builder
-
-    <
-      T extends 'hasOne',
-    > (
-      relation: string,
-      callback?: (
-        builder: HasOneQueryBuilderContract<ModelContract> & ExcutableQueryBuilderContract<ModelContract[]>,
-      ) => void,
-    ): Builder
-
-    <
-      T extends 'manyToMany',
-    > (
-      relation: string,
-      callback?: (
-        builder: ManyToManyQueryBuilderContract<ModelContract> & ExcutableQueryBuilderContract<ModelContract[]>,
-      ) => void,
-    ): Builder
-
-    <
-      T extends 'hasManyThrough',
-    > (
-      relation: string,
-      callback?: (
-        builder: HasManyThroughQueryBuilderContract<ModelContract> & ExcutableQueryBuilderContract<ModelContract[]>,
-      ) => void,
-    ): Builder
-
-    <
-      T extends AvailableRelations,
-    > (
-      relation: string,
-      callback?: (
-        builder: RelationQueryBuilderContract<ModelContract> & ExcutableQueryBuilderContract<ModelContract[]>,
+        builder: RelationsQueryBuildersMap<ModelContract>[T],
       ) => void,
     ): Builder
   }
@@ -267,18 +236,45 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * Shae of has belongs to query builder contract
    */
   export interface BelongsToQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
+    /**
+     * Execute and get first result
+     */
+    first (): Promise<T | null>
+
+    /**
+     * Return the first matching row or fail
+     */
+    firstOrFail (): Promise<T>
   }
 
   /**
    * Shae of has one relationship query builder
    */
   export interface HasOneQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
+    /**
+     * Execute and get first result
+     */
+    first (): Promise<T | null>
+
+    /**
+     * Return the first matching row or fail
+     */
+    firstOrFail (): Promise<T>
   }
 
   /**
    * Shae of has many relationship query builder
    */
   export interface HasManyQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
+    /**
+     * Execute and get first result
+     */
+    first (): Promise<T | null>
+
+    /**
+     * Return the first matching row or fail
+     */
+    firstOrFail (): Promise<T>
   }
 
   /**
@@ -321,12 +317,31 @@ declare module '@ioc:Adonis/Lucid/Model' {
     whereNotInPivot: WhereInPivot<this>
     orWhereNotInPivot: WhereInPivot<this>
     andWhereNotInPivot: WhereInPivot<this>
+
+    /**
+     * Execute and get first result
+     */
+    first (): Promise<T | null>
+
+    /**
+     * Return the first matching row or fail
+     */
+    firstOrFail (): Promise<T>
   }
 
   /**
    * Shae of has many through relationship query builder
    */
   export interface HasManyThroughQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
+    /**
+     * Execute and get first result
+     */
+    first (): Promise<T | null>
+
+    /**
+     * Return the first matching row or fail
+     */
+    firstOrFail (): Promise<T>
   }
 
   /**
@@ -446,30 +461,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
     toJSON (): ModelObject
 
     related<
-      T extends 'belongsTo',
-      K extends keyof this,
-    > (relation: K): BelongsToQueryBuilderContract<this[K]> & ExcutableQueryBuilderContract<this[K]>
-
-    related<
-      T extends 'hasMany',
-      K extends keyof this,
-    > (relation: K): this[K] extends ModelContract[]
-      ? HasManyQueryBuilderContract<this[K][0]> & ExcutableQueryBuilderContract<this[K]>
-      : HasManyQueryBuilderContract<this[K]> & ExcutableQueryBuilderContract<this[K]>
-
-    related<
-      T extends 'manyToMany',
-      K extends keyof this,
-    > (relation: K): this[K] extends ModelContract[]
-      ? ManyToManyQueryBuilderContract<this[K][0]> & ExcutableQueryBuilderContract<this[K]>
-      : ManyToManyQueryBuilderContract<this[K]> & ExcutableQueryBuilderContract<this[K]>
-
-    related<
-      T extends AvailableRelations,
-      K extends keyof this,
-    > (relation: K): this[K] extends ModelContract[]
-      ? RelationQueryBuilderContract<this[K][0]> & ExcutableQueryBuilderContract<this[K]>
-      : RelationQueryBuilderContract<this[K]> & ExcutableQueryBuilderContract<this[K]>
+      T extends keyof RelationsQueryBuildersMap<any> = 'unknown',
+      K extends keyof this = keyof this,
+    > (relation: K): RelationsQueryBuildersMap<
+      this[K] extends ModelContract[] ? this[K][0] : this[K]
+    >[T]
   }
 
   /**
@@ -671,6 +667,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Perform update
      */
     update (instance: ModelContract, attributes: any): Promise<void>
+
+    /**
+     * Returns query client for a model instance by inspecting it's options
+     */
+    modelClient (instance: ModelContract): QueryClientContract
 
     /**
      * Must return the query builder for the model

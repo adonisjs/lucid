@@ -47,12 +47,19 @@ export class Adapter implements AdapterContract {
   }
 
   /**
+   * Returns query client for a model instance by inspecting it's options
+   */
+  public modelClient (instance: ModelContract): any {
+    const modelConstructor = instance.constructor as unknown as ModelConstructorContract
+    return instance.$trx ? instance.$trx : this._getModelClient(modelConstructor, instance.$options)
+  }
+
+  /**
    * Perform insert query on a given model instance
    */
   public async insert (instance: ModelContract, attributes: any) {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    const client = instance.$trx ? instance.$trx : this._getModelClient(modelConstructor, instance.$options)
-    const query = instance.$getQueryFor('insert', client)
+    const query = instance.$getQueryFor('insert', this.modelClient(instance))
 
     const result = await query.insert(attributes)
     if (modelConstructor.$increments) {
@@ -64,20 +71,13 @@ export class Adapter implements AdapterContract {
    * Perform update query on a given model instance
    */
   public async update (instance: ModelContract, dirty: any) {
-    const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    const client = instance.$trx ? instance.$trx : this._getModelClient(modelConstructor, instance.$options)
-    const query = instance.$getQueryFor('update', client)
-
-    await query.update(dirty)
+    await instance.$getQueryFor('update', this.modelClient(instance)).update(dirty)
   }
 
   /**
    * Perform delete query on a given model instance
    */
   public async delete (instance: ModelContract) {
-    const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    const client = instance.$trx ? instance.$trx : this._getModelClient(modelConstructor, instance.$options)
-    const query = instance.$getQueryFor('delete', client)
-    await query.del()
+    await instance.$getQueryFor('delete', this.modelClient(instance)).del()
   }
 }

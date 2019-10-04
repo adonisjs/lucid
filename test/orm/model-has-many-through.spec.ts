@@ -517,3 +517,134 @@ test.group('Model | Has Many Through', (group) => {
     assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
   })
 })
+
+test.group('Model | Has Many Through | fetch', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('fetch using model instance', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.$boot()
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.$boot()
+
+    class Country extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: Post[]
+    }
+    Country.$boot()
+
+    await db.insertQuery().table('countries').insert([{ name: 'India' }, { name: 'USA' }])
+
+    await db.insertQuery().table('users').insert([
+      { username: 'virk', country_id: 1 },
+      { username: 'nikk', country_id: 2 },
+    ])
+
+    await db.insertQuery().table('posts').insert([
+      { title: 'Adonis 101', user_id: 1 },
+      { title: 'Lucid 101', user_id: 1 },
+      { title: 'Adonis5', user_id: 2 },
+    ])
+
+    const country = await Country.query().firstOrFail()
+    const posts = await country.related('posts')
+
+    assert.lengthOf(posts, 2)
+
+    assert.equal(posts[0].title, 'Adonis 101')
+    assert.equal(posts[0].$extras.through_country_id, 1)
+
+    assert.equal(posts[1].title, 'Lucid 101')
+    assert.equal(posts[1].$extras.through_country_id, 1)
+  })
+
+  test('fetch using parent model options', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.$boot()
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.$boot()
+
+    class Country extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: Post[]
+    }
+    Country.$boot()
+
+    await db.insertQuery().table('countries').insert([{ name: 'India' }, { name: 'USA' }])
+
+    await db.insertQuery().table('users').insert([
+      { username: 'virk', country_id: 1 },
+      { username: 'nikk', country_id: 2 },
+    ])
+
+    await db.insertQuery().table('posts').insert([
+      { title: 'Adonis 101', user_id: 1 },
+      { title: 'Lucid 101', user_id: 1 },
+      { title: 'Adonis5', user_id: 2 },
+    ])
+
+    const country = await Country.query({ connection: 'secondary' }).firstOrFail()
+    const posts = await country.related<'hasManyThrough', 'posts'>('posts')
+
+    assert.lengthOf(posts, 2)
+
+    assert.equal(posts[0].title, 'Adonis 101')
+    assert.equal(posts[0].$options!.connection, 'secondary')
+    assert.equal(posts[0].$extras.through_country_id, 1)
+
+    assert.equal(posts[1].title, 'Lucid 101')
+    assert.equal(posts[1].$options!.connection, 'secondary')
+    assert.equal(posts[1].$extras.through_country_id, 1)
+  })
+})
