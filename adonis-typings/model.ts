@@ -337,7 +337,15 @@ declare module '@ioc:Adonis/Lucid/Model' {
   > extends ChainableContract<Model['$refs']> {
     model: Model
 
-    client: QueryClientContract,
+    /**
+     * A copy of client options. They can be set on any model instance
+     */
+    readonly clientOptions: ModelOptions
+
+    /**
+     * Reference to query client used for making queries
+     */
+    client: QueryClientContract
 
     /**
      * A custom set of sideloaded properties defined on the query
@@ -407,12 +415,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
       action: 'insert' | 'delete' | 'update',
       client: QueryClientContract,
     ): ReturnType<QueryClientContract['query']> | ReturnType<QueryClientContract['insertQuery']>
-
-    /**
-     * Read/write options
-     */
-    $setOptions (options?: ModelAdapterOptions): void
-    $getOptions (): ModelOptions | undefined
 
     /**
      * Read/write attributes

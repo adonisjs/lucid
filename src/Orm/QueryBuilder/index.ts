@@ -46,7 +46,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Options that must be passed to all new model instances
    */
-  private _options: ModelOptions = {
+  public clientOptions: ModelOptions = {
     connection: this.client.connectionName,
     profiler: this.client.profiler,
   }
@@ -73,7 +73,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     const modelInstances = this.model.$createMultipleFromAdapterResult(
       rows,
       this._sideloaded,
-      this._options,
+      this.clientOptions,
     )
 
     await this._preloader.processAllForMany(modelInstances, this.client)
