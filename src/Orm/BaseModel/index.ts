@@ -22,7 +22,6 @@ import {
   ComputedNode,
   ModelContract,
   AdapterContract,
-  PreloadCallback,
   BaseRelationNode,
   RelationContract,
   AvailableRelations,
@@ -33,6 +32,7 @@ import {
 
 import { Preloader } from '../Preloader'
 import { HasOne } from '../Relations/HasOne'
+import { ensureRelation } from '../../utils'
 import { proxyHandler } from './proxyHandler'
 import { HasMany } from '../Relations/HasMany'
 import { BelongsTo } from '../Relations/BelongsTo'
@@ -850,10 +850,7 @@ export class BaseModel implements ModelContract {
   /**
    * Preloads one or more relationships for the current model
    */
-  public async preload (
-    relationName: string | ((preloader: Preloader) => void),
-    callback?: PreloadCallback,
-  ) {
+  public async preload (relationName: any, callback?: any) {
     const constructor = this.constructor as ModelConstructorContract
     const preloader = new Preloader(constructor)
 
@@ -979,5 +976,17 @@ export class BaseModel implements ModelContract {
       .query()
       .from(modelConstructor.$table)
       .where(modelConstructor.$primaryKey, this.$primaryKeyValue)
+  }
+
+  /**
+   * Returns an instance of relationship on the given model
+   */
+  public related (relationName: any): any {
+    const Model = this.constructor as typeof BaseModel
+    const relation = Model.$getRelation(relationName as string)
+    ensureRelation(relationName, relation)
+
+    relation!.boot()
+    return relation
   }
 }

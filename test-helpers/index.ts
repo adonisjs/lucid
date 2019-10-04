@@ -35,8 +35,7 @@ import {
   AdapterContract,
   RelationContract,
   ModelConstructorContract,
-  ManyToManyRelationContract,
-  ManyToManyExecutableQueryBuilder,
+  ManyToManyQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { Adapter } from '../src/Orm/Adapter'
@@ -244,9 +243,9 @@ export function getQueryBuilder (client: QueryClientContract) {
 export function getManyToManyQueryBuilder (relation: RelationContract, client: QueryClientContract) {
   return new ManyToManyQueryBuilder(
     client.getWriteClient().queryBuilder(),
-    relation as ManyToManyRelationContract,
+    relation,
     client,
-  ) as unknown as ManyToManyExecutableQueryBuilder
+  ) as unknown as ManyToManyQueryBuilderContract<any> & ExcutableQueryBuilderContract<any>
 }
 
 /**

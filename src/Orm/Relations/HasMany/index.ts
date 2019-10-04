@@ -7,11 +7,13 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../adonis-typings/index.ts" />
+/// <reference path="../../../../adonis-typings/index.ts" />
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ModelContract, BaseRelationNode, ModelConstructorContract } from '@ioc:Adonis/Lucid/Model'
-import { HasOneOrMany } from './HasOneOrMany'
+
+import { HasOneOrMany } from '../HasOneOrMany'
+import { HasManyQueryBuilder } from './QueryBuilder'
 
 /**
  * Exposes the API to construct correct queries and set related
@@ -28,14 +30,18 @@ export class HasMany extends HasOneOrMany {
   }
 
   /**
+   * Returns the query builder for has many relationship
+   */
+  protected $getQueryBuilder (client: QueryClientContract): any {
+    return new HasManyQueryBuilder(client.knexQuery(), this, client)
+  }
+
+  /**
    * Returns query for the relationship with applied constraints
    */
-  public getQuery (parent: ModelContract, client: QueryClientContract) {
+  public getQuery (parent: ModelContract, client: QueryClientContract): any {
     const value = parent[this.localKey]
-
-    return this.relatedModel()
-      .query({ client })
-      .where(this.foreignAdapterKey, this.$ensureValue(value))
+    return this.$getQueryBuilder(client).where(this.foreignAdapterKey, this.$ensureValue(value))
   }
 
   /**

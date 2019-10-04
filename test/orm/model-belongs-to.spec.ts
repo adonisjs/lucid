@@ -11,12 +11,13 @@
 
 import test from 'japa'
 import { column, belongsTo } from '../../src/Orm/Decorators'
+import { BelongsToQueryBuilder } from '../../src/Orm/Relations/BelongsTo/QueryBuilder'
 import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
 
-test.group('Model | Belongs To', (group) => {
+test.group('Model | BelongsTo', (group) => {
   group.before(async () => {
     db = getDb()
     BaseModel = getBaseModel(ormAdapter(db))
@@ -163,6 +164,37 @@ test.group('Model | Belongs To', (group) => {
 
     assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userUid')
     assert.equal(Profile.$getRelation('user')!['foreignAdapterKey'], 'user_id')
+  })
+
+  test('queries must be instance of belongs to query builder', (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    Profile.$getRelation('user')!.boot()
+    const profile = new Profile()
+    profile.userId = 1
+
+    const query = Profile.$getRelation('user')!.getQuery(profile, Profile.query().client)
+    const eagerQuery = Profile.$getRelation('user')!.getQuery(profile, Profile.query().client)
+
+    assert.instanceOf(query, BelongsToQueryBuilder)
+    assert.instanceOf(eagerQuery, BelongsToQueryBuilder)
   })
 
   test('get eager query', (assert) => {
@@ -719,3 +751,145 @@ test.group('Model | Belongs To', (group) => {
     assert.equal(identity!.profile.user.$options!.connection, 'secondary')
   })
 })
+
+// test.group('Model | BelongsTo | persist', (group) => {
+//   group.before(async () => {
+//     db = getDb()
+//     BaseModel = getBaseModel(ormAdapter(db))
+//     await setup()
+//   })
+
+//   group.after(async () => {
+//     await cleanup()
+//     await db.manager.closeAll()
+//   })
+
+//   group.afterEach(async () => {
+//     await resetTables()
+//   })
+
+//   test('save related instance', async (assert) => {
+//     class User extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public username: string
+//     }
+
+//     class Profile extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public userId: number
+
+//       @column()
+//       public displayName: string
+
+//       @belongsTo(() => User)
+//       public user: User
+//     }
+
+//     const profile = new Profile()
+//     profile.displayName = 'virk'
+//     await profile.save()
+
+//     const user = new User()
+//     user.username = 'virk'
+
+//     await profile.associate('user', user)
+
+//     assert.isTrue(profile.$persisted)
+//     assert.equal(user.id, profile.userId)
+//   })
+
+//   test('use parent model transaction when defined', async (assert) => {
+//     class User extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public username: string
+//     }
+
+//     class Profile extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public userId: number
+
+//       @column()
+//       public displayName: string
+
+//       @belongsTo(() => User)
+//       public user: User
+//     }
+
+//     const profile = new Profile()
+//     profile.displayName = 'virk'
+//     await profile.save()
+
+//     const user = new User()
+//     user.username = 'virk'
+
+//     const trx = await db.transaction()
+//     profile.$trx = trx
+//     await profile.associate('user', user)
+
+//     assert.isTrue(profile.$persisted)
+//     assert.equal(user.id, profile.userId)
+
+//     await trx.rollback()
+
+//     const totalUsers = await db.from('users').count('*', 'total')
+//     const profiles = await db.from('profiles')
+
+//     assert.lengthOf(profiles, 1)
+//     assert.equal(profiles[0].user_id, null)
+
+//     assert.equal(totalUsers[0].total, 0)
+//     assert.isUndefined(user.$trx)
+//     assert.isUndefined(profile.$trx)
+//   })
+
+//   test('use parent model options when defined', async (assert) => {
+//     class User extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public username: string
+//     }
+
+//     class Profile extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public userId: number
+
+//       @column()
+//       public displayName: string
+
+//       @belongsTo(() => User)
+//       public user: User
+//     }
+
+//     const profile = new Profile()
+//     profile.displayName = 'virk'
+//     profile.$options = { connection: 'secondary' }
+//     await profile.save()
+
+//     const user = new User()
+//     user.username = 'virk'
+//     await profile.associate('user', user)
+
+//     assert.isTrue(profile.$persisted)
+//     assert.equal(user.id, profile.userId)
+
+//     assert.deepEqual(user.$options, { connection: 'secondary' })
+//     assert.deepEqual(profile.$options, { connection: 'secondary' })
+//   })
+// })

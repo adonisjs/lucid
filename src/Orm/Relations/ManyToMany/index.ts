@@ -14,9 +14,9 @@ import { snakeCase, uniq, sortBy } from 'lodash'
 
 import {
   ModelContract,
+  RelationContract,
   ManyToManyRelationNode,
   ModelConstructorContract,
-  ManyToManyRelationContract,
   ManyToManyQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
@@ -27,7 +27,7 @@ import { ManyToManyQueryBuilder } from './QueryBuilder'
  * Exposes the API to construct many to many relationship. This also comes
  * with it's own query builder
  */
-export class ManyToMany implements ManyToManyRelationContract {
+export class ManyToMany implements RelationContract {
   /**
    * Relationship type
    */
@@ -161,7 +161,7 @@ export class ManyToMany implements ManyToManyRelationContract {
   /**
    * Adds necessary select columns for the select query
    */
-  private _addSelect (query: ManyToManyQueryBuilderContract) {
+  private _addSelect (query: ManyToManyQueryBuilderContract<any>) {
     query.select(`${this.relatedModel().$table}.*`)
     query.pivotColumns(
       [this.pivotForeignKey, this.pivotRelatedForeignKey].concat(this._options.pivotColumns || []),
@@ -171,12 +171,19 @@ export class ManyToMany implements ManyToManyRelationContract {
   /**
    * Adds neccessary joins for the select query
    */
-  private _addJoin (query: ManyToManyQueryBuilderContract) {
+  private _addJoin (query: ManyToManyQueryBuilderContract<any>) {
     query.innerJoin(
       this.pivotTable,
       `${this.relatedModel().$table}.${this.relatedAdapterKey}`,
       `${this.pivotTable}.${this.pivotRelatedForeignKey}`,
     )
+  }
+
+  /**
+   * Returns the belongs to query builder
+   */
+  private _getQueryBuilder (client: QueryClientContract) {
+    return new ManyToManyQueryBuilder(client.knexQuery(), this, client)
   }
 
   /**
@@ -228,7 +235,7 @@ export class ManyToMany implements ManyToManyRelationContract {
   public getQuery (parent: ModelContract, client: QueryClientContract): any {
     const value = parent[this.localKey]
 
-    const query = new ManyToManyQueryBuilder(client.knexQuery(), this, client)
+    const query = this._getQueryBuilder(client)
     this._addSelect(query)
     this._addJoin(query)
 
@@ -244,7 +251,7 @@ export class ManyToMany implements ManyToManyRelationContract {
       return this._ensureValue(parentInstance[this.localKey])
     }))
 
-    const query = new ManyToManyQueryBuilder(client.knexQuery(), this, client)
+    const query = this._getQueryBuilder(client)
     this._addSelect(query)
     this._addJoin(query)
 

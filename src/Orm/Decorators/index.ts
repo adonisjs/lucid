@@ -17,7 +17,6 @@ import {
   ComputedFn,
   BelongsToFn,
   ManyToManyFn,
-  HasOneThroughFn,
   HasManyThroughFn,
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
@@ -88,17 +87,6 @@ export const manyToMany: ManyToManyFn = (relatedModel, relation?) => {
     const Model = target.constructor as ModelConstructorContract
     Model.$boot()
     Model.$addRelation(property, 'manyToMany', Object.assign({ relatedModel }, relation))
-  }
-}
-
-/**
- * Define hasOneThrough relationship
- */
-export const hasOneThrough: HasOneThroughFn = ([relatedModel, throughModel], relation?) => {
-  return function decorateAsRelation (target, property: string) {
-    const Model = target.constructor as ModelConstructorContract
-    Model.$boot()
-    Model.$addRelation(property, 'hasOneThrough', Object.assign({ relatedModel, throughModel }, relation))
   }
 }
 

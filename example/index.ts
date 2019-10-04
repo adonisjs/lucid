@@ -1,14 +1,13 @@
-// import { BaseModel } from '@ioc:Adonis/Lucid/Orm'
-// import Database from '@ioc:Adonis/Lucid/Database'
+import { BaseModel } from '@ioc:Adonis/Lucid/Orm'
 
-// class Profile extends BaseModel {
-// }
+class Profile extends BaseModel {
+}
 
-// class User extends BaseModel {
-//   public username: string
-//   public profile: Profile[]
-// }
+class User extends BaseModel {
+  public username: string
 
-// user.saveRelated('profile', new Profile())
-// const profile = user.$getRelated('profile')
-// console.log(profile)
+  public profile: Profile
+}
+
+const user = new User()
+user.related('profile').where('username', 'virk').exec()

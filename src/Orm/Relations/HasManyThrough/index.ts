@@ -7,22 +7,23 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../adonis-typings/index.ts" />
+/// <reference path="../../../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
 import { camelCase, snakeCase, uniq } from 'lodash'
 
 import {
   ModelContract,
+  RelationContract,
   ThroughRelationNode,
-  BaseRelationContract,
   ModelConstructorContract,
   ModelQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { HasManyThroughQueryBuilder } from './QueryBuilder'
 
-export class HasManyThrough implements BaseRelationContract {
+export class HasManyThrough implements RelationContract {
   /**
    * Relationship type
    */
@@ -172,6 +173,9 @@ export class HasManyThrough implements BaseRelationContract {
     return value
   }
 
+  /**
+   * Adds the select columns
+   */
   private _addSelect (query: ModelQueryBuilderContract<any>) {
     query.select(
       `${this.relatedModel().$table}.*`,
@@ -179,6 +183,9 @@ export class HasManyThrough implements BaseRelationContract {
     )
   }
 
+  /**
+   * Adds the join clause for the select query
+   */
   private _addJoin (query: ModelQueryBuilderContract<any>) {
     const throughTable = this.throughModel().$table
     const relatedTable = this.relatedModel().$table
@@ -188,6 +195,13 @@ export class HasManyThrough implements BaseRelationContract {
       `${throughTable}.${this.throughLocalAdapterKey}`,
       `${relatedTable}.${this.throughForeignAdapterKey}`,
     )
+  }
+
+  /**
+   * Returns the belongs to query builder
+   */
+  private _getQueryBuilder (client: QueryClientContract) {
+    return new HasManyThroughQueryBuilder(client.knexQuery(), this, client)
   }
 
   /**
@@ -224,13 +238,13 @@ export class HasManyThrough implements BaseRelationContract {
    * Returns query for the relationship with applied constraints for
    * eagerloading
    */
-  public getEagerQuery (parents: ModelContract[], client: QueryClientContract) {
+  public getEagerQuery (parents: ModelContract[], client: QueryClientContract): any {
     const values = uniq(parents.map((parentInstance) => {
       return this._ensureValue(parentInstance[this.localKey])
     }))
 
     const throughTable = this.throughModel().$table
-    const query = this.relatedModel().query({ client })
+    const query = this._getQueryBuilder(client)
 
     this._addJoin(query)
     this._addSelect(query)
@@ -241,10 +255,10 @@ export class HasManyThrough implements BaseRelationContract {
   /**
    * Returns query for the relationship with applied constraints
    */
-  public getQuery (parent: ModelContract, client: QueryClientContract) {
+  public getQuery (parent: ModelContract, client: QueryClientContract): any {
     const value = parent[this.localKey]
     const throughTable = this.throughModel().$table
-    const query = this.relatedModel().query({ client })
+    const query = this._getQueryBuilder(client)
 
     this._addJoin(query)
     this._addSelect(query)

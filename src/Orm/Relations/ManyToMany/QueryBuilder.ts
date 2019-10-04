@@ -11,17 +11,17 @@
 
 import knex from 'knex'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ManyToManyRelationContract, ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
+import { RelationContract, ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
 
 import { ModelQueryBuilder } from '../../QueryBuilder'
 
 /**
  * Query builder with many to many relationships
  */
-export class ManyToManyQueryBuilder extends ModelQueryBuilder implements ManyToManyQueryBuilderContract {
+export class ManyToManyQueryBuilder extends ModelQueryBuilder implements ManyToManyQueryBuilderContract<any> {
   constructor (
     builder: knex.QueryBuilder,
-    private _relation: ManyToManyRelationContract,
+    private _relation: RelationContract,
     client: QueryClientContract,
   ) {
     super(builder, _relation.relatedModel(), client, (userFn) => {
@@ -35,7 +35,7 @@ export class ManyToManyQueryBuilder extends ModelQueryBuilder implements ManyToM
    * Prefixes the pivot table name to the key
    */
   private _prefixPivotTable (key: string) {
-    return `${this._relation.pivotTable}.${key}`
+    return `${this._relation['pivotTable']}.${key}`
   }
 
   /**

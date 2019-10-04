@@ -15,7 +15,6 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     ComputedFn,
     BelongsToFn,
     ManyToManyFn,
-    HasOneThroughFn,
     HasManyThroughFn,
     ModelConstructorContract,
   } from '@ioc:Adonis/Lucid/Model'
@@ -27,6 +26,5 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   export const belongsTo: BelongsToFn
   export const hasMany: HasManyFn
   export const manyToMany: ManyToManyFn
-  export const hasOneThrough: HasOneThroughFn
   export const hasManyThrough: HasManyThroughFn
 }

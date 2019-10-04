@@ -10,19 +10,21 @@
 import { Exception } from '@poppinss/utils'
 import {
   ModelContract,
-  PreloadCallback,
   RelationContract,
   PreloaderContract,
   ModelConstructorContract,
-  ManyToManyExecutableQueryBuilder,
+  RelationQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
+/**
+ * Internal shape of registered preloads
+ */
 type PreloadNode = {
   relation: RelationContract,
-  callback?: PreloadCallback,
-  children: { relationName: string, callback?: PreloadCallback }[],
+  callback?: (builder: RelationQueryBuilderContract) => void,
+  children: { relationName: string, callback?: (builder: RelationQueryBuilderContract) => void }[],
 }
 
 /**
@@ -54,10 +56,7 @@ export class Preloader implements PreloaderContract {
   /**
    * Execute the related query
    */
-  private async _executeQuery (
-    query: ManyToManyExecutableQueryBuilder,
-    preload: PreloadNode,
-  ): Promise<ModelContract[]> {
+  private async _executeQuery (query: any, preload: PreloadNode): Promise<ModelContract[]> {
     /**
      * Pass nested preloads
      */
@@ -70,7 +69,7 @@ export class Preloader implements PreloaderContract {
       /**
        * Type casting to superior type.
        */
-      preload.callback(query as ManyToManyExecutableQueryBuilder)
+      preload.callback(query)
     }
 
     /**
@@ -110,7 +109,7 @@ export class Preloader implements PreloaderContract {
   /**
    * Define relationship to be preloaded
    */
-  public preload (relationName: string, userCallback?: PreloadCallback) {
+  public preload (relationName: string, userCallback?: any) {
     const { primary, relation, children } = this.parseRelationName(relationName)
 
     const payload = this._preloads[primary] || { relation, children: [] }
@@ -145,7 +144,7 @@ export class Preloader implements PreloaderContract {
     /**
      * Execute the query
      */
-    const result = await this._executeQuery(query as ManyToManyExecutableQueryBuilder, relation)
+    const result = await this._executeQuery(query, relation)
 
     /**
      * Set only one when relationship is hasOne or belongsTo
@@ -182,7 +181,7 @@ export class Preloader implements PreloaderContract {
     /**
      * Execute the query
      */
-    const result = await this._executeQuery(query as ManyToManyExecutableQueryBuilder, relation)
+    const result = await this._executeQuery(query, relation)
 
     /**
      * Set relationships on model
