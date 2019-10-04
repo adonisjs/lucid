@@ -138,7 +138,7 @@ export class BaseModel implements ModelContract {
     const instance = new this()
     instance.$consumeAdapterResult(adapterResult, sideloadAttributes)
     instance.$hydrateOriginals()
-    instance.$setOptions(options)
+    instance.$options = options
     instance.$persisted = true
     instance.$isLocal = false
 
@@ -383,7 +383,7 @@ export class BaseModel implements ModelContract {
 
     if (!row) {
       row = new this() as InstanceType<T>
-      row.$setOptions({ client: query.client })
+      row.$options = query.clientOptions
       row.fill(Object.assign({}, search, savePayload))
       return row
     }
@@ -403,6 +403,12 @@ export class BaseModel implements ModelContract {
   constructor () {
     return new Proxy(this, proxyHandler)
   }
+
+  /**
+   * Custom options defined on the model instance that are
+   * passed to the adapter
+   */
+  private _options?: ModelOptions
 
   /**
    * Reference to transaction that will be used for performing queries on a given
@@ -504,12 +510,6 @@ export class BaseModel implements ModelContract {
    * Once deleted the model instance cannot make calls to the adapter
    */
   public $isDeleted: boolean = false
-
-  /**
-   * Custom options defined on the model instance that are
-   * passed to the adapter
-   */
-  public $options: ModelOptions
 
   /**
    * Returns the value of primary key. The value must be
@@ -623,35 +623,28 @@ export class BaseModel implements ModelContract {
   }
 
   /**
-   * Sets the options on the model instance
+   * Get options
    */
-  public $setOptions (options?: ModelAdapterOptions) {
+  public get $options (): ModelOptions | undefined {
+    return this._options
+  }
+
+  /**
+   * Set options
+   */
+  public set $options (options: ModelOptions | undefined) {
     if (!options) {
       return
     }
 
-    this.$options = this.$options || {}
-
-    if (options.client) {
-      this.$options.connection = options.client.connectionName
-      this.$options.profiler = options.client.profiler
-      return
-    }
-
+    this._options = this._options || {}
     if (options.connection) {
-      this.$options.connection = options.connection
+      this._options.connection = options.connection
     }
 
     if (options.profiler) {
-      this.$options.profiler = options.profiler
+      this._options.profiler = options.profiler
     }
-  }
-
-  /**
-   * Returns $options
-   */
-  public $getOptions (): ModelOptions | undefined {
-    return this.$options
   }
 
   /**
@@ -860,7 +853,7 @@ export class BaseModel implements ModelContract {
       preloader.preload(relationName, callback)
     }
 
-    await preloader.processAllForOne(this, constructor.query(this.$getOptions()).client)
+    await preloader.processAllForOne(this, constructor.query(this.$options).client)
   }
 
   /**
