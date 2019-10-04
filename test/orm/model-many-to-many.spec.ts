@@ -10,6 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
+import { ManyToManyQueryBuilder } from '../../src/Orm/Relations/ManyToMany/QueryBuilder'
 import { manyToMany, column } from '../../src/Orm/Decorators'
 
 import {
@@ -296,7 +297,7 @@ test.group('Model | Many To Many', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('get query for single parent', (assert) => {
+  test('get query', (assert) => {
     class Skill extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -330,6 +331,33 @@ test.group('Model | Many To Many', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('queries must be instance of many to many query builder', (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    User.$boot()
+    User.$getRelation('skills')!.boot()
+
+    const user = new User()
+    user.id = 1
+
+    const query = User.$getRelation('skills')!.getQuery(user, User.query().client)
+    const eagerQuery = User.$getRelation('skills')!.getEagerQuery([user], User.query().client)
+
+    assert.instanceOf(query, ManyToManyQueryBuilder)
+    assert.instanceOf(eagerQuery, ManyToManyQueryBuilder)
   })
 
   test('preload relation', async (assert) => {

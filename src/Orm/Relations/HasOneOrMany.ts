@@ -15,13 +15,13 @@ import { camelCase, snakeCase, uniq } from 'lodash'
 import {
   ModelContract,
   BaseRelationNode,
-  BaseRelationContract,
+  RelationContract,
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
-export abstract class HasOneOrMany implements BaseRelationContract {
+export abstract class HasOneOrMany implements RelationContract {
   /**
    * Relationship type
    */
@@ -114,10 +114,10 @@ export abstract class HasOneOrMany implements BaseRelationContract {
    * Raises exception when value for the local key is missing on the model instance. This will
    * make the query fail
    */
-  protected $ensureValue (value: any) {
+  protected $ensureValue (value: any, action: string = 'preload') {
     if (value === undefined) {
       throw new Exception(
-        `Cannot preload ${this._relationName}, value of ${this._model.name}.${this.localKey} is undefined`,
+        `Cannot ${action} ${this._relationName}, value of ${this._model.name}.${this.localKey} is undefined`,
         500,
       )
     }
@@ -134,6 +134,11 @@ export abstract class HasOneOrMany implements BaseRelationContract {
    * Must be implemented by parent class
    */
   public abstract setRelatedMany (parent: ModelContract[], related: ModelContract[])
+
+  /**
+   * Must be implemented by parent class
+   */
+  protected abstract $getQueryBuilder (client: QueryClientContract): any
 
   /**
    * Compute keys
@@ -168,8 +173,7 @@ export abstract class HasOneOrMany implements BaseRelationContract {
       return this.$ensureValue(parentInstance[this.localKey])
     }))
 
-    return this.relatedModel()
-      .query({ client })
+    return this.$getQueryBuilder(client)
       .whereIn(this.foreignAdapterKey, values)
   }
 

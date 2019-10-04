@@ -99,13 +99,15 @@ declare module '@ioc:Adonis/Lucid/Model' {
     client?: QueryClientContract,
   }
 
+  /**
+   * Generic return function of a decorator
+   */
   type DecoratorFn = (target, property) => void
-  type BaseRelationDecoratorNode = Omit<BaseRelationNode, 'relatedModel'>
-  type ThroughRelationDecoratorNode = Omit<ThroughRelationNode, 'relatedModel' | 'throughModel'>
-  type ManyToManyRelationDecoratorNode = Omit<ManyToManyRelationNode, 'relatedModel'>
 
+  /**
+   * Model query builder with applied executable trait
+   */
   type ModelExecuteableQueryBuilder = ModelQueryBuilderContract<any> & ExcutableQueryBuilderContract<any>
-  type ManyToManyExecutableQueryBuilder = ManyToManyQueryBuilderContract & ExcutableQueryBuilderContract<any>
 
   /**
    * Types for decorators
@@ -113,31 +115,45 @@ declare module '@ioc:Adonis/Lucid/Model' {
   export type ColumnFn = (column?: Partial<ColumnNode>) => DecoratorFn
   export type ComputedFn = (column?: Partial<ComputedNode>) => DecoratorFn
 
+  type BaseRelationDecoratorNode = Omit<BaseRelationNode, 'relatedModel'>
+
+  /**
+   * Decorator signature to define has one relationship
+   */
   export type HasOneFn = (
     model: BaseRelationNode['relatedModel'],
     column?: BaseRelationDecoratorNode,
   ) => DecoratorFn
 
+  /**
+   * Decorator signature to define has many relationship
+   */
   export type HasManyFn = (
     model: BaseRelationNode['relatedModel'],
     column?: BaseRelationDecoratorNode,
   ) => DecoratorFn
 
+  /**
+   * Decorator signature to define belongs to relationship
+   */
   export type BelongsToFn = (
     model: BaseRelationNode['relatedModel'],
     column?: BaseRelationDecoratorNode,
   ) => DecoratorFn
 
+  /**
+   * Decorator signature to define many to many relationship
+   */
+  type ManyToManyRelationDecoratorNode = Omit<ManyToManyRelationNode, 'relatedModel'>
   export type ManyToManyFn = (
     model: ManyToManyRelationNode['relatedModel'],
     column?: ManyToManyRelationDecoratorNode,
   ) => DecoratorFn
 
-  export type HasOneThroughFn = (
-    model: [ThroughRelationNode['relatedModel'], ThroughRelationNode['throughModel']],
-    column?: ThroughRelationDecoratorNode,
-  ) => DecoratorFn
-
+  /**
+   * Decorator signature to define has many through relationship
+   */
+  type ThroughRelationDecoratorNode = Omit<ThroughRelationNode, 'relatedModel' | 'throughModel'>
   export type HasManyThroughFn = (
     model: [ThroughRelationNode['relatedModel'], ThroughRelationNode['throughModel']],
     column?: ThroughRelationDecoratorNode,
@@ -148,38 +164,122 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
   export type AvailableRelations = 'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany' | 'hasManyThrough'
 
-  type ManyToManyPreloadCallback = (builder: ManyToManyExecutableQueryBuilder) => void
-  type BasePreloadCallback = (builder: ModelExecuteableQueryBuilder) => void
-  type PreloadCallback = ManyToManyPreloadCallback | BasePreloadCallback
+  /**
+   * Overloads for preload method
+   */
+  interface QueryBuilderPreloadFn<Builder extends any> {
+    <
+      T extends 'belongsTo',
+    > (
+      relation: string,
+      callback?: (
+        builder: BelongsToQueryBuilderContract<ModelContract> & ExcutableQueryBuilderContract<ModelContract[]>,
+      ) => void,
+    ): Builder
+
+    <
+      T extends 'hasMany',
+    > (
+      relation: string,
+      callback?: (
+        builder: HasManyQueryBuilderContract<ModelContract> & ExcutableQueryBuilderContract<ModelContract[]>,
+      ) => void,
+    ): Builder
+
+    <
+      T extends 'hasOne',
+    > (
+      relation: string,
+      callback?: (
+        builder: HasOneQueryBuilderContract<ModelContract> & ExcutableQueryBuilderContract<ModelContract[]>,
+      ) => void,
+    ): Builder
+
+    <
+      T extends 'manyToMany',
+    > (
+      relation: string,
+      callback?: (
+        builder: ManyToManyQueryBuilderContract<ModelContract> & ExcutableQueryBuilderContract<ModelContract[]>,
+      ) => void,
+    ): Builder
+
+    <
+      T extends 'hasManyThrough',
+    > (
+      relation: string,
+      callback?: (
+        builder: HasManyThroughQueryBuilderContract<ModelContract> & ExcutableQueryBuilderContract<ModelContract[]>,
+      ) => void,
+    ): Builder
+
+    <
+      T extends AvailableRelations,
+    > (
+      relation: string,
+      callback?: (
+        builder: RelationQueryBuilderContract<ModelContract> & ExcutableQueryBuilderContract<ModelContract[]>,
+      ) => void,
+    ): Builder
+  }
+
+  /**
+   * Preload function on a model instance
+   */
+  interface ModelBuilderPreloadFn extends QueryBuilderPreloadFn<Promise<void>> {
+    (callback: (preloader: PreloaderContract) => void): Promise<void>
+  }
 
   /**
    * Interface to be implemented by all relationship types
    */
-  export interface BaseRelationContract {
+  export interface RelationContract {
     type: AvailableRelations
     serializeAs: string
     booted: boolean
     boot (): void
     relatedModel (): ModelConstructorContract
-    getQuery (model: ModelContract, client: QueryClientContract): ModelExecuteableQueryBuilder
-    getEagerQuery (models: ModelContract[], client: QueryClientContract): ModelExecuteableQueryBuilder
+
     setRelated (model: ModelContract, related?: ModelContract | ModelContract[] | null): void
     setRelatedMany (models: ModelContract[], related: ModelContract[]): void
+
+    getQuery (
+      model: ModelContract,
+      client: QueryClientContract,
+    ): RelationQueryBuilderContract & ExcutableQueryBuilderContract<any>
+
+    getEagerQuery (
+      models: ModelContract[],
+      client: QueryClientContract,
+    ): RelationQueryBuilderContract & ExcutableQueryBuilderContract<any>
   }
 
   /**
-   * Shape of many to many relationship contract
+   * A union of relation relations query builders
    */
-  export interface ManyToManyRelationContract extends BaseRelationContract {
-    pivotTable: string
-    getQuery (model: ModelContract, client: QueryClientContract): ManyToManyExecutableQueryBuilder
-    getEagerQuery (models: ModelContract[], client: QueryClientContract): ManyToManyExecutableQueryBuilder
+  type RelationQueryBuilderContract<T extends any = ModelContract> = BelongsToQueryBuilderContract<T> |
+    HasOneQueryBuilderContract<T> |
+    HasManyQueryBuilderContract<T> |
+    ManyToManyQueryBuilderContract<T> |
+    HasManyThroughQueryBuilderContract<T>
+
+  /**
+   * Shae of has belongs to query builder contract
+   */
+  export interface BelongsToQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
   }
 
   /**
-   * Relationships type
+   * Shae of has one relationship query builder
    */
-  export type RelationContract = BaseRelationContract | ManyToManyRelationContract
+  export interface HasOneQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
+  }
+
+  /**
+   * Shae of has many relationship query builder
+   */
+  export interface HasManyQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
+  }
 
   /**
    * Possible signatures for adding a where clause
@@ -192,9 +292,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
   /**
    * Possible signatures for adding where in clause.
    */
-  interface WhereInPivot<
-    Builder extends ChainableContract,
-  > {
+  interface WhereInPivot<Builder extends ChainableContract> {
     (K: string, value: (StrictValues | ChainableContract<any>)[]): Builder
     (K: string[], value: (StrictValues | ChainableContract<any>)[][]): Builder
     (k: string, subquery: ChainableContract<any> | QueryCallback<Builder>): Builder
@@ -205,7 +303,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * Shape of many to many query builder. It has few methods over the standard
    * model query builder
    */
-  export interface ManyToManyQueryBuilderContract extends ModelQueryBuilderContract<any> {
+  export interface ManyToManyQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
     pivotColumns (columns: string[]): this
 
     wherePivot: WherePivot<this>
@@ -226,29 +324,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
-   * Shape of the preloader to preload relationships
+   * Shae of has many through relationship query builder
    */
-  export interface PreloaderContract {
-    parseRelationName (relationName: string): {
-      primary: string,
-      relation: RelationContract,
-      children: { relationName: string } | null,
-    }
-
-    processForOne (name: string, model: ModelContract, client: QueryClientContract): Promise<void>
-    processForMany (name: string, models: ModelContract[], client: QueryClientContract): Promise<void>
-    processAllForOne (models: ModelContract, client: QueryClientContract): Promise<void>
-    processAllForMany (models: ModelContract[], client: QueryClientContract): Promise<void>
-
-    preload<T extends 'manyToMany'> (
-      relation: string,
-      callback?: ManyToManyPreloadCallback,
-    ): this
-
-    preload<T extends AvailableRelations> (
-      relation: string,
-      callback?: BasePreloadCallback,
-    ): this
+  export interface HasManyThroughQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
   }
 
   /**
@@ -286,14 +364,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Define relationships to be preloaded
      */
-    preload<T extends 'manyToMany'> (
-      relation: string,
-      callback?: ManyToManyPreloadCallback,
-    ): this
-    preload<T extends AvailableRelations> (
-      relation: string,
-      callback?: BasePreloadCallback,
-    ): this
+    preload: QueryBuilderPreloadFn<this>
   }
 
   /**
@@ -365,22 +436,38 @@ declare module '@ioc:Adonis/Lucid/Model' {
     fill (value: ModelObject): void
     merge (value: ModelObject): void
 
-    preload<T extends 'manyToMany'> (
-      relation: string,
-      callback?: ManyToManyPreloadCallback,
-    ): Promise<void>
-
-    preload<T extends AvailableRelations> (
-      relation: string,
-      callback?: BasePreloadCallback,
-    ): Promise<void>
-
-    preload (callback: (preloader: PreloaderContract) => void): Promise<void>
+    preload: ModelBuilderPreloadFn
 
     save (): Promise<void>
     delete (): Promise<void>
     serialize (): ModelObject
     toJSON (): ModelObject
+
+    related<
+      T extends 'belongsTo',
+      K extends keyof this,
+    > (relation: K): BelongsToQueryBuilderContract<this[K]> & ExcutableQueryBuilderContract<this[K]>
+
+    related<
+      T extends 'hasMany',
+      K extends keyof this,
+    > (relation: K): this[K] extends ModelContract[]
+      ? HasManyQueryBuilderContract<this[K][0]> & ExcutableQueryBuilderContract<this[K]>
+      : HasManyQueryBuilderContract<this[K]> & ExcutableQueryBuilderContract<this[K]>
+
+    related<
+      T extends 'manyToMany',
+      K extends keyof this,
+    > (relation: K): this[K] extends ModelContract[]
+      ? ManyToManyQueryBuilderContract<this[K][0]> & ExcutableQueryBuilderContract<this[K]>
+      : ManyToManyQueryBuilderContract<this[K]> & ExcutableQueryBuilderContract<this[K]>
+
+    related<
+      T extends AvailableRelations,
+      K extends keyof this,
+    > (relation: K): this[K] extends ModelContract[]
+      ? RelationQueryBuilderContract<this[K][0]> & ExcutableQueryBuilderContract<this[K]>
+      : RelationQueryBuilderContract<this[K]> & ExcutableQueryBuilderContract<this[K]>
   }
 
   /**
@@ -602,5 +689,23 @@ declare module '@ioc:Adonis/Lucid/Model' {
     execute (lifecycle: 'before' | 'after', event: Events, payload: any): Promise<void>
     clear (event: Events): void
     clearAll (): void
+  }
+
+  /**
+   * Shape of the preloader to preload relationships
+   */
+  export interface PreloaderContract {
+    parseRelationName (relationName: string): {
+      primary: string,
+      relation: RelationContract,
+      children: { relationName: string } | null,
+    }
+
+    processForOne (name: string, model: ModelContract, client: QueryClientContract): Promise<void>
+    processForMany (name: string, models: ModelContract[], client: QueryClientContract): Promise<void>
+    processAllForOne (models: ModelContract, client: QueryClientContract): Promise<void>
+    processAllForMany (models: ModelContract[], client: QueryClientContract): Promise<void>
+
+    preload: QueryBuilderPreloadFn<this>
   }
 }

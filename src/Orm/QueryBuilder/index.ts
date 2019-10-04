@@ -15,7 +15,6 @@ import { Exception } from '@poppinss/utils'
 
 import {
   ModelOptions,
-  PreloadCallback,
   ModelConstructorContract,
   ModelQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
@@ -121,7 +120,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Define a relationship to be preloaded
    */
-  public preload (relationName: string, userCallback?: PreloadCallback): this {
+  public preload (relationName: string, userCallback?: any): this {
     this._preloader.preload(relationName, userCallback)
     return this
   }

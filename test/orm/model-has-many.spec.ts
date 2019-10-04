@@ -11,12 +11,13 @@
 
 import test from 'japa'
 import { column, hasMany } from '../../src/Orm/Decorators'
+import { HasManyQueryBuilder } from '../../src/Orm/Relations/HasMany/QueryBuilder'
 import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
 
-test.group('Model | Has Many', (group) => {
+test.group('Model | HasMany', (group) => {
   group.before(async () => {
     db = getDb()
     BaseModel = getBaseModel(ormAdapter(db))
@@ -239,6 +240,37 @@ test.group('Model | Has Many', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('queries must be instance of has many query builder', (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    User.$getRelation('posts')!.boot()
+    const user = new User()
+    user.id = 1
+
+    const query = User.$getRelation('posts')!.getQuery(user, User.query().client)
+    const eagerQuery = User.$getRelation('posts')!.getEagerQuery([user], User.query().client)
+
+    assert.instanceOf(query, HasManyQueryBuilder)
+    assert.instanceOf(eagerQuery, HasManyQueryBuilder)
   })
 
   test('preload has many relationship', async (assert) => {
@@ -760,3 +792,179 @@ test.group('Model | Has Many', (group) => {
     assert.equal(user!.posts[0].comments[0].$options!.connection, 'secondary')
   })
 })
+
+// test.group('Model | HasMany | persist', (group) => {
+//   group.before(async () => {
+//     db = getDb()
+//     BaseModel = getBaseModel(ormAdapter(db))
+//     await setup()
+//   })
+
+//   group.after(async () => {
+//     await cleanup()
+//     await db.manager.closeAll()
+//   })
+
+//   group.afterEach(async () => {
+//     await resetTables()
+//   })
+
+//   test('save related instance', async (assert) => {
+//     class Post extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public userId: number
+
+//       @column()
+//       public title: string
+//     }
+
+//     class User extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public username: string
+
+//       @hasMany(() => Post)
+//       public posts: Post[]
+//     }
+
+//     const user = new User()
+//     user.username = 'virk'
+//     await user.save()
+
+//     const post = new Post()
+//     post.title = 'Hvirk'
+
+//     await user.saveRelated('posts', post)
+
+//     assert.isTrue(post.$persisted)
+//     assert.equal(user.id, post.userId)
+//   })
+
+//   test('use parent model transaction when defined', async (assert) => {
+//     class Post extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public userId: number
+
+//       @column()
+//       public title: string
+//     }
+
+//     class User extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public username: string
+
+//       @hasMany(() => Post)
+//       public posts: Post[]
+//     }
+
+//     const trx = await db.transaction()
+
+//     const user = new User()
+//     user.username = 'virk'
+//     user.$trx = trx
+
+//     await user.save()
+
+//     const post = new Post()
+//     post.title = 'Hvirk'
+
+//     await user.saveRelated('posts', post)
+//     assert.isTrue(post.$persisted)
+//     assert.equal(user.id, post.userId)
+
+//     await trx.rollback()
+//     const totalUsers = await db.from('users').count('*', 'total')
+//     const totalPosts = await db.from('posts').count('*', 'total')
+
+//     assert.equal(totalPosts[0].total, 0)
+//     assert.equal(totalUsers[0].total, 0)
+//     assert.isUndefined(user.$trx)
+//     assert.isUndefined(post.$trx)
+//   })
+
+//   test('use parent model options when defined', async (assert) => {
+//     class Post extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public userId: number
+
+//       @column()
+//       public title: string
+//     }
+
+//     class User extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public username: string
+
+//       @hasMany(() => Post)
+//       public posts: Post[]
+//     }
+
+//     const user = new User()
+//     user.username = 'virk'
+//     user.$options = { connection: 'secondary' }
+//     await user.save()
+
+//     const post = new Post()
+//     post.title = 'Hvirk'
+
+//     await user.saveRelated('posts', post)
+
+//     assert.isTrue(post.$persisted)
+//     assert.equal(user.id, post.userId)
+
+//     assert.deepEqual(user.$options, { connection: 'secondary' })
+//     assert.deepEqual(post.$options, { connection: 'secondary' })
+//   })
+
+//   test('persist parent model when not already persisted', async (assert) => {
+//     class Post extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public userId: number
+
+//       @column()
+//       public title: string
+//     }
+
+//     class User extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public username: string
+
+//       @hasMany(() => Post)
+//       public posts: Post[]
+//     }
+
+//     const user = new User()
+//     user.username = 'virk'
+
+//     const post = new Post()
+//     post.title = 'Hvirk'
+
+//     await user.saveRelated('posts', post)
+
+//     assert.isTrue(post.$persisted)
+//     assert.equal(user.id, post.userId)
+//   })
+// })

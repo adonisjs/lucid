@@ -11,6 +11,7 @@
 
 import test from 'japa'
 import { hasManyThrough, column } from '../../src/Orm/Decorators'
+import { HasManyThroughQueryBuilder } from '../../src/Orm/Relations/HasManyThrough/QueryBuilder'
 import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
@@ -250,6 +251,43 @@ test.group('Model | Has Many Through', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('queries must be instance of has many through query builder', (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.$boot()
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+    Post.$boot()
+
+    class Country extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: Post[]
+    }
+    Country.$boot()
+
+    const country = new Country()
+    country.id = 1
+
+    Country.$getRelation('posts')!.boot()
+
+    const query = Country.$getRelation('posts')!.getQuery(country, Country.query().client)
+    const eagerQuery = Country.$getRelation('posts')!.getEagerQuery([country], Country.query().client)
+
+    assert.instanceOf(query, HasManyThroughQueryBuilder)
+    assert.instanceOf(eagerQuery, HasManyThroughQueryBuilder)
   })
 
   test('preload relationship', async (assert) => {

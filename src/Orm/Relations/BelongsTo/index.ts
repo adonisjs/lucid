@@ -7,24 +7,25 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../adonis-typings/index.ts" />
+/// <reference path="../../../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
 import { camelCase, snakeCase, uniq } from 'lodash'
 
 import {
   ModelContract,
+  RelationContract,
   BaseRelationNode,
-  BaseRelationContract,
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { BelongsToQueryBuilder } from './QueryBuilder'
 
 /**
  * Exposes the API to construct belongs to relationship.
  */
-export class BelongsTo implements BaseRelationContract {
+export class BelongsTo implements RelationContract {
   /**
    * Relationship type
    */
@@ -89,32 +90,6 @@ export class BelongsTo implements BaseRelationContract {
   }
 
   /**
-   * Compute keys
-   */
-  public boot () {
-    if (this.booted) {
-      return
-    }
-
-    this.localKey = this._options.localKey || this.relatedModel().$primaryKey
-    this.foreignKey = this._options.foreignKey || camelCase(
-      `${this.relatedModel().name}_${this.relatedModel().$primaryKey}`,
-    )
-
-    /**
-     * Validate computed keys to ensure they are valid
-     */
-    this._validateKeys()
-
-    /**
-     * Keys for the adapter
-     */
-    this.localAdapterKey = this.relatedModel().$getColumn(this.localKey)!.castAs
-    this.foreignAdapterKey = this._model.$getColumn(this.foreignKey)!.castAs
-    this.booted = true
-  }
-
-  /**
    * Validating the keys to ensure we are avoiding runtime `undefined` errors. We defer
    * the keys validation, since they may be added after defining the relationship.
    */
@@ -144,10 +119,10 @@ export class BelongsTo implements BaseRelationContract {
    * Raises exception when value for the foreign key is missing on the model instance. This will
    * make the query fail
    */
-  private _ensureValue (value: any) {
+  private _ensureValue (value: any, action: string = 'preload') {
     if (value === undefined) {
       throw new Exception(
-        `Cannot preload ${this._relationName}, value of ${this._model.name}.${this.foreignKey} is undefined`,
+        `Cannot ${action} ${this._relationName}, value of ${this._model.name}.${this.foreignKey} is undefined`,
         500,
       )
     }
@@ -156,13 +131,45 @@ export class BelongsTo implements BaseRelationContract {
   }
 
   /**
+   * Returns the belongs to query builder
+   */
+  private _getQueryBuilder (client: QueryClientContract) {
+    return new BelongsToQueryBuilder(client.knexQuery(), this, client)
+  }
+
+  /**
+   * Compute keys
+   */
+  public boot () {
+    if (this.booted) {
+      return
+    }
+
+    this.localKey = this._options.localKey || this.relatedModel().$primaryKey
+    this.foreignKey = this._options.foreignKey || camelCase(
+      `${this.relatedModel().name}_${this.relatedModel().$primaryKey}`,
+    )
+
+    /**
+     * Validate computed keys to ensure they are valid
+     */
+    this._validateKeys()
+
+    /**
+     * Keys for the adapter
+     */
+    this.localAdapterKey = this.relatedModel().$getColumn(this.localKey)!.castAs
+    this.foreignAdapterKey = this._model.$getColumn(this.foreignKey)!.castAs
+    this.booted = true
+  }
+
+  /**
    * Returns eager query for a single parent model instance
    */
   public getQuery (parent: ModelContract, client: QueryClientContract) {
     const value = parent[this.foreignKey]
 
-    return this.relatedModel()
-      .query({ client })
+    return this._getQueryBuilder(client)
       .where(this.localAdapterKey, this._ensureValue(value))
       .limit(1)
   }
@@ -176,9 +183,7 @@ export class BelongsTo implements BaseRelationContract {
       return this._ensureValue(parentInstance[this.foreignKey])
     }))
 
-    return this.relatedModel()
-      .query({ client })
-      .whereIn(this.localAdapterKey, values)
+    return this._getQueryBuilder(client).whereIn(this.localAdapterKey, values)
   }
 
   /**

@@ -11,12 +11,13 @@
 
 import test from 'japa'
 import { column, hasOne } from '../../src/Orm/Decorators'
+import { HasOneQueryBuilder } from '../../src/Orm/Relations/HasOne/QueryBuilder'
 import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
 
-test.group('Model | Has one', (group) => {
+test.group('Model | HasOne | preload', (group) => {
   group.before(async () => {
     db = getDb()
     BaseModel = getBaseModel(ormAdapter(db))
@@ -244,6 +245,37 @@ test.group('Model | Has one', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('queries must be instance of has one query builder', (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    User.$getRelation('profile')!.boot()
+    const user = new User()
+    user.id = 1
+
+    const query = User.$getRelation('profile')!.getQuery(user, User.query().client)
+    const eagerQuery = User.$getRelation('profile')!.getEagerQuery([user], User.query().client)
+
+    assert.instanceOf(query, HasOneQueryBuilder)
+    assert.instanceOf(eagerQuery, HasOneQueryBuilder)
   })
 
   test('preload has one relationship', async (assert) => {
@@ -706,3 +738,177 @@ test.group('Model | Has one', (group) => {
     assert.equal(user!.profile.identity.$options!.connection, 'secondary')
   })
 })
+
+// test.group('Model | HasOne | persist', (group) => {
+//   group.before(async () => {
+//     db = getDb()
+//     BaseModel = getBaseModel(ormAdapter(db))
+//     await setup()
+//   })
+
+//   group.after(async () => {
+//     await cleanup()
+//     await db.manager.closeAll()
+//   })
+
+//   group.afterEach(async () => {
+//     await resetTables()
+//   })
+
+//   test('save related instance', async (assert) => {
+//     class Profile extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public userId: number
+
+//       @column()
+//       public displayName: string
+//     }
+
+//     class User extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public username: string
+
+//       @hasOne(() => Profile)
+//       public profile: Profile
+//     }
+
+//     const user = new User()
+//     user.username = 'virk'
+//     await user.save()
+
+//     const profile = new Profile()
+//     profile.displayName = 'Hvirk'
+
+//     await user.saveRelated('profile', profile)
+
+//     assert.isTrue(profile.$persisted)
+//     assert.equal(user.id, profile.userId)
+//   })
+
+//   test('use parent model transaction when defined', async (assert) => {
+//     class Profile extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public userId: number
+
+//       @column()
+//       public displayName: string
+//     }
+
+//     class User extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public username: string
+
+//       @hasOne(() => Profile)
+//       public profile: Profile
+//     }
+
+//     const trx = await db.transaction()
+
+//     const user = new User()
+//     user.username = 'virk'
+//     user.$trx = trx
+
+//     await user.save()
+
+//     const profile = new Profile()
+//     profile.displayName = 'Hvirk'
+
+//     await user.saveRelated('profile', profile)
+//     assert.isTrue(profile.$persisted)
+//     assert.equal(user.id, profile.userId)
+
+//     await trx.rollback()
+//     const totalUsers = await db.from('users').count('*', 'total')
+//     const totalProfiles = await db.from('profiles').count('*', 'total')
+
+//     assert.equal(totalProfiles[0].total, 0)
+//     assert.equal(totalUsers[0].total, 0)
+//     assert.isUndefined(user.$trx)
+//     assert.isUndefined(profile.$trx)
+//   })
+
+//   test('use parent model options when defined', async (assert) => {
+//     class Profile extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public userId: number
+
+//       @column()
+//       public displayName: string
+//     }
+
+//     class User extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public username: string
+
+//       @hasOne(() => Profile)
+//       public profile: Profile
+//     }
+
+//     const user = new User()
+//     user.username = 'virk'
+//     user.$options = { connection: 'secondary' }
+//     await user.save()
+
+//     const profile = new Profile()
+//     profile.displayName = 'Hvirk'
+//     await user.saveRelated('profile', profile)
+
+//     assert.isTrue(profile.$persisted)
+//     assert.equal(user.id, profile.userId)
+
+//     assert.deepEqual(user.$options, { connection: 'secondary' })
+//     assert.deepEqual(profile.$options, { connection: 'secondary' })
+//   })
+
+//   test('persist parent model when not already persisted', async (assert) => {
+//     class Profile extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public userId: number
+
+//       @column()
+//       public displayName: string
+//     }
+
+//     class User extends BaseModel {
+//       @column({ primary: true })
+//       public id: number
+
+//       @column()
+//       public username: string
+
+//       @hasOne(() => Profile)
+//       public profile: Profile
+//     }
+
+//     const user = new User()
+//     user.username = 'virk'
+
+//     const profile = new Profile()
+//     profile.displayName = 'Hvirk'
+//     await user.saveRelated('profile', profile)
+
+//     assert.isTrue(profile.$persisted)
+//     assert.equal(user.id, profile.userId)
+//   })
+// })
