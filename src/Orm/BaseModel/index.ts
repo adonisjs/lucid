@@ -853,6 +853,7 @@ export class BaseModel implements ModelContract {
       preloader.preload(relationName, callback)
     }
 
+    preloader.sideload(this.$sideloaded)
     await preloader.processAllForOne(this, constructor.query(this.$options).client)
   }
 
