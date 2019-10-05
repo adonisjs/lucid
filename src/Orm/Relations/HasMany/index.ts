@@ -32,16 +32,15 @@ export class HasMany extends HasOneOrMany {
   /**
    * Returns the query builder for has many relationship
    */
-  protected $getQueryBuilder (client: QueryClientContract): any {
-    return new HasManyQueryBuilder(client.knexQuery(), this, client)
+  protected $getQueryBuilder (client: QueryClientContract, parent: ModelContract | ModelContract[]): any {
+    return new HasManyQueryBuilder(client.knexQuery(), this, client, parent)
   }
 
   /**
    * Returns query for the relationship with applied constraints
    */
   public getQuery (parent: ModelContract, client: QueryClientContract): any {
-    const value = parent[this.localKey]
-    return this.$getQueryBuilder(client).where(this.foreignAdapterKey, this.$ensureValue(value))
+    return this.$getQueryBuilder(client, parent)
   }
 
   /**

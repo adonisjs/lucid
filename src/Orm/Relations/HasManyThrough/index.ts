@@ -10,14 +10,13 @@
 /// <reference path="../../../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
-import { camelCase, snakeCase, uniq } from 'lodash'
+import { camelCase, snakeCase } from 'lodash'
 
 import {
   ModelContract,
   RelationContract,
   ThroughRelationNode,
   ModelConstructorContract,
-  ModelQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
@@ -85,7 +84,7 @@ export class HasManyThrough implements RelationContract {
   /**
    * Key to be used for serializing the relationship
    */
-  public serializeAs = this._options.serializeAs || snakeCase(this._relationName)
+  public serializeAs = this._options.serializeAs || snakeCase(this.relationName)
 
   /**
    * A flag to know if model keys valid for executing database queries or not
@@ -93,9 +92,9 @@ export class HasManyThrough implements RelationContract {
   public booted: boolean = false
 
   constructor (
-    private _relationName: string,
+    public relationName: string,
     private _options: ThroughRelationNode,
-    private _model: ModelConstructorContract,
+    public model: ModelConstructorContract,
   ) {
     this._ensureRelatedModel()
   }
@@ -119,10 +118,10 @@ export class HasManyThrough implements RelationContract {
    * the keys validation, since they may be added after defining the relationship.
    */
   private _validateKeys () {
-    const relationRef = `${this._model.name}.${this._relationName}`
+    const relationRef = `${this.model.name}.${this.relationName}`
 
-    if (!this._model.$hasColumn(this.localKey)) {
-      const ref = `${this._model.name}.${this.localKey}`
+    if (!this.model.$hasColumn(this.localKey)) {
+      const ref = `${this.model.name}.${this.localKey}`
       throw new Exception(
         `${ref} required by ${relationRef} relation is missing`,
         500,
@@ -159,52 +158,6 @@ export class HasManyThrough implements RelationContract {
   }
 
   /**
-   * Raises exception when value for the local key is missing on the model instance. This will
-   * make the query fail
-   */
-  private _ensureValue (value: any) {
-    if (value === undefined) {
-      throw new Exception(
-        `Cannot preload ${this._relationName}, value of ${this._model.name}.${this.localKey} is undefined`,
-        500,
-      )
-    }
-
-    return value
-  }
-
-  /**
-   * Adds the select columns
-   */
-  private _addSelect (query: ModelQueryBuilderContract<any>) {
-    query.select(
-      `${this.relatedModel().$table}.*`,
-      `${this.throughModel().$table}.${this.foreignAdapterKey} as through_${this.foreignAdapterKey}`,
-    )
-  }
-
-  /**
-   * Adds the join clause for the select query
-   */
-  private _addJoin (query: ModelQueryBuilderContract<any>) {
-    const throughTable = this.throughModel().$table
-    const relatedTable = this.relatedModel().$table
-
-    query.innerJoin(
-      `${throughTable}`,
-      `${throughTable}.${this.throughLocalAdapterKey}`,
-      `${relatedTable}.${this.throughForeignAdapterKey}`,
-    )
-  }
-
-  /**
-   * Returns the belongs to query builder
-   */
-  private _getQueryBuilder (client: QueryClientContract) {
-    return new HasManyThroughQueryBuilder(client.knexQuery(), this, client)
-  }
-
-  /**
    * Compute keys
    */
   public boot () {
@@ -212,12 +165,12 @@ export class HasManyThrough implements RelationContract {
       return
     }
 
-    this.localKey = this._options.localKey || this._model.$primaryKey
-    this.foreignKey = this._options.foreignKey || camelCase(`${this._model.name}_${this._model.$primaryKey}`)
+    this.localKey = this._options.localKey || this.model.$primaryKey
+    this.foreignKey = this._options.foreignKey || camelCase(`${this.model.name}_${this.model.$primaryKey}`)
 
-    this.throughLocalKey = this._options.localKey || this.throughModel().$primaryKey // id (user)
+    this.throughLocalKey = this._options.localKey || this.throughModel().$primaryKey
     this.throughForeignKey = this._options.throughForeignKey
-      || camelCase(`${this.throughModel().name}_${this.throughModel().$primaryKey}`) // user_id (user)
+      || camelCase(`${this.throughModel().name}_${this.throughModel().$primaryKey}`)
 
     /**
      * Validate computed keys to ensure they are valid
@@ -227,7 +180,7 @@ export class HasManyThrough implements RelationContract {
     /**
      * Keys for the adapter
      */
-    this.localAdapterKey = this._model.$getColumn(this.localKey)!.castAs
+    this.localAdapterKey = this.model.$getColumn(this.localKey)!.castAs
     this.foreignAdapterKey = this.throughModel().$getColumn(this.foreignKey)!.castAs
     this.throughLocalAdapterKey = this.throughModel().$getColumn(this.throughLocalKey)!.castAs
     this.throughForeignAdapterKey = this.relatedModel().$getColumn(this.throughForeignKey)!.castAs
@@ -239,31 +192,14 @@ export class HasManyThrough implements RelationContract {
    * eagerloading
    */
   public getEagerQuery (parents: ModelContract[], client: QueryClientContract): any {
-    const values = uniq(parents.map((parentInstance) => {
-      return this._ensureValue(parentInstance[this.localKey])
-    }))
-
-    const throughTable = this.throughModel().$table
-    const query = this._getQueryBuilder(client)
-
-    this._addJoin(query)
-    this._addSelect(query)
-
-    return query.whereIn(`${throughTable}.${this.foreignAdapterKey}`, values)
+    return new HasManyThroughQueryBuilder(client.knexQuery(), this, client, parents)
   }
 
   /**
    * Returns query for the relationship with applied constraints
    */
   public getQuery (parent: ModelContract, client: QueryClientContract): any {
-    const value = parent[this.localKey]
-    const throughTable = this.throughModel().$table
-    const query = this._getQueryBuilder(client)
-
-    this._addJoin(query)
-    this._addSelect(query)
-
-    return query.where(`${throughTable}.${this.foreignAdapterKey}`, this._ensureValue(value))
+    return new HasManyThroughQueryBuilder(client.knexQuery(), this, client, parent)
   }
 
   /**
@@ -274,7 +210,7 @@ export class HasManyThrough implements RelationContract {
       return
     }
 
-    parent.$setRelated(this._relationName as keyof typeof parent, related)
+    parent.$setRelated(this.relationName as keyof typeof parent, related)
   }
 
   /**

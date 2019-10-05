@@ -10,14 +10,13 @@
 /// <reference path="../../../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
-import { snakeCase, uniq, sortBy } from 'lodash'
+import { snakeCase, sortBy } from 'lodash'
 
 import {
   ModelContract,
   RelationContract,
   ManyToManyRelationNode,
   ModelConstructorContract,
-  ManyToManyQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
@@ -86,9 +85,14 @@ export class ManyToMany implements RelationContract {
   public pivotTable: string
 
   /**
+   * Extra pivot columns to extra
+   */
+  public extrasPivotColumns: string[] = this._options.pivotColumns || []
+
+  /**
    * Key to be used for serializing the relationship
    */
-  public serializeAs = this._options.serializeAs || snakeCase(this._relationName)
+  public serializeAs = this._options.serializeAs || snakeCase(this.relationName)
 
   /**
    * A flag to know if model keys are valid for executing database queries or not
@@ -96,9 +100,9 @@ export class ManyToMany implements RelationContract {
   public booted: boolean = false
 
   constructor (
-    private _relationName: string,
+    public relationName: string,
     private _options: ManyToManyRelationNode,
-    private _model: ModelConstructorContract,
+    public model: ModelConstructorContract,
   ) {
     this._ensureRelatedModel()
   }
@@ -122,10 +126,10 @@ export class ManyToMany implements RelationContract {
    * the keys validation, since they may be added after defining the relationship.
    */
   private _validateKeys () {
-    const relationRef = `${this._model.name}.${this._relationName}`
+    const relationRef = `${this.model.name}.${this.relationName}`
 
-    if (!this._model.$hasColumn(this.localKey)) {
-      const ref = `${this._model.name}.${this.localKey}`
+    if (!this.model.$hasColumn(this.localKey)) {
+      const ref = `${this.model.name}.${this.localKey}`
       throw new Exception(
         `${ref} required by ${relationRef} relation is missing`,
         500,
@@ -144,49 +148,6 @@ export class ManyToMany implements RelationContract {
   }
 
   /**
-   * Raises exception when value for the foreign key is missing on the model instance. This will
-   * make the query fail
-   */
-  private _ensureValue (value: any) {
-    if (value === undefined) {
-      throw new Exception(
-        `Cannot preload ${this._relationName}, value of ${this._model.name}.${this.localKey} is undefined`,
-        500,
-      )
-    }
-
-    return value
-  }
-
-  /**
-   * Adds necessary select columns for the select query
-   */
-  private _addSelect (query: ManyToManyQueryBuilderContract<any>) {
-    query.select(`${this.relatedModel().$table}.*`)
-    query.pivotColumns(
-      [this.pivotForeignKey, this.pivotRelatedForeignKey].concat(this._options.pivotColumns || []),
-    )
-  }
-
-  /**
-   * Adds neccessary joins for the select query
-   */
-  private _addJoin (query: ManyToManyQueryBuilderContract<any>) {
-    query.innerJoin(
-      this.pivotTable,
-      `${this.relatedModel().$table}.${this.relatedAdapterKey}`,
-      `${this.pivotTable}.${this.pivotRelatedForeignKey}`,
-    )
-  }
-
-  /**
-   * Returns the belongs to query builder
-   */
-  private _getQueryBuilder (client: QueryClientContract) {
-    return new ManyToManyQueryBuilder(client.knexQuery(), this, client)
-  }
-
-  /**
    * Compute keys
    */
   public boot () {
@@ -195,15 +156,15 @@ export class ManyToMany implements RelationContract {
     }
 
     this.pivotTable = this._options.pivotTable || snakeCase(
-      sortBy([this.relatedModel().name, this._model.name]).join('_'),
+      sortBy([this.relatedModel().name, this.model.name]).join('_'),
     )
 
     /**
      * Parent model and it's foreign key in pivot table
      */
-    this.localKey = this._options.localKey || this._model.$primaryKey
+    this.localKey = this._options.localKey || this.model.$primaryKey
     this.pivotForeignKey = this._options.pivotForeignKey || snakeCase(
-      `${this._model.name}_${this._model.$primaryKey}`,
+      `${this.model.name}_${this.model.$primaryKey}`,
     )
     this.pivotForeignKeyAlias = `pivot_${this.pivotForeignKey}`
 
@@ -224,7 +185,7 @@ export class ManyToMany implements RelationContract {
     /**
      * Keys for the adapter
      */
-    this.localAdapterKey = this._model.$getColumn(this.localKey)!.castAs
+    this.localAdapterKey = this.model.$getColumn(this.localKey)!.castAs
     this.relatedAdapterKey = this.relatedModel().$getColumn(this.relatedKey)!.castAs
     this.booted = true
   }
@@ -233,13 +194,7 @@ export class ManyToMany implements RelationContract {
    * Must be implemented by main class
    */
   public getQuery (parent: ModelContract, client: QueryClientContract): any {
-    const value = parent[this.localKey]
-
-    const query = this._getQueryBuilder(client)
-    this._addSelect(query)
-    this._addJoin(query)
-
-    return query.wherePivot(this.pivotForeignKey, value)
+    return new ManyToManyQueryBuilder(client.knexQuery(), this, client, parent)
   }
 
   /**
@@ -247,15 +202,7 @@ export class ManyToMany implements RelationContract {
    * eagerloading
    */
   public getEagerQuery (parents: ModelContract[], client: QueryClientContract): any {
-    const values = uniq(parents.map((parentInstance) => {
-      return this._ensureValue(parentInstance[this.localKey])
-    }))
-
-    const query = this._getQueryBuilder(client)
-    this._addSelect(query)
-    this._addJoin(query)
-
-    return query.whereInPivot(this.pivotForeignKey, values)
+    return new ManyToManyQueryBuilder(client.knexQuery(), this, client, parents)
   }
 
   /**
@@ -265,8 +212,7 @@ export class ManyToMany implements RelationContract {
     if (!related) {
       return
     }
-
-    model.$setRelated(this._relationName as keyof typeof model, related)
+    model.$setRelated(this.relationName as keyof typeof model, related)
   }
 
   /**

@@ -10,6 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
+import { ManyToMany } from '../../src/Orm/Relations/ManyToMany'
 import { ManyToManyQueryBuilder } from '../../src/Orm/Relations/ManyToMany/QueryBuilder'
 import { manyToMany, column } from '../../src/Orm/Decorators'
 
@@ -281,7 +282,11 @@ test.group('Model | Many To Many', (group) => {
     const user = new User()
     user.id = 1
 
-    const { sql, bindings } = User.$getRelation('skills')!.getEagerQuery([user], User.query().client).toSQL()
+    const { sql, bindings } = User.$getRelation('skills')!
+      .getEagerQuery([user], User.query().client)
+      .applyConstraints()
+      .toSQL()
+
     const { sql: knexSql, bindings: knexBindings } = db.query()
       .from('skills')
       .select([
@@ -317,7 +322,11 @@ test.group('Model | Many To Many', (group) => {
     const user = new User()
     user.id = 1
 
-    const { sql, bindings } = User.$getRelation('skills')!.getQuery(user, User.query().client).toSQL()
+    const { sql, bindings } = User.$getRelation('skills')!
+      .getQuery(user, User.query().client)
+      .applyConstraints()
+      .toSQL()
+
     const { sql: knexSql, bindings: knexBindings } = db.query()
       .from('skills')
       .select([
@@ -795,7 +804,7 @@ test.group('ManyToMany Query Builder | where', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .wherePivot('username', 'virk')
@@ -829,7 +838,7 @@ test.group('ManyToMany Query Builder | where', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .where((builder) => builder.wherePivot('username', 'virk'))
@@ -863,7 +872,7 @@ test.group('ManyToMany Query Builder | where', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .wherePivot('age', '>', 22)
@@ -897,7 +906,7 @@ test.group('ManyToMany Query Builder | where', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .wherePivot('age', '>', db.raw('select min_age from ages limit 1;'))
@@ -935,7 +944,7 @@ test.group('ManyToMany Query Builder | where', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .wherePivot('age', '>', 22)
@@ -971,7 +980,7 @@ test.group('ManyToMany Query Builder | where', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .wherePivot('age', '>', 22)
@@ -1024,7 +1033,7 @@ test.group('ManyToMany Query Builder | whereNot', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereNotPivot('username', 'virk')
@@ -1058,7 +1067,7 @@ test.group('ManyToMany Query Builder | whereNot', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereNotPivot('age', '>', 22)
@@ -1092,7 +1101,7 @@ test.group('ManyToMany Query Builder | whereNot', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereNotPivot('age', '>', db.raw('select min_age from ages limit 1;'))
@@ -1130,7 +1139,7 @@ test.group('ManyToMany Query Builder | whereNot', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereNotPivot('age', '>', 22)
@@ -1179,7 +1188,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereInPivot('username', ['virk', 'nikk'])
@@ -1213,7 +1222,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereInPivot('username', (builder) => {
@@ -1251,7 +1260,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereInPivot('username', db.query().select('id').from('accounts'))
@@ -1287,7 +1296,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereInPivot('username', [
@@ -1325,7 +1334,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereInPivot(
@@ -1365,7 +1374,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereInPivot(['username', 'email'], [['foo', 'bar']])
@@ -1399,7 +1408,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereInPivot('username', ['virk', 'nikk'])
@@ -1435,7 +1444,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereInPivot('username', (builder) => {
@@ -1492,7 +1501,7 @@ test.group('ManyToMany Query Builder | whereNotIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereNotInPivot('username', ['virk', 'nikk'])
@@ -1526,7 +1535,7 @@ test.group('ManyToMany Query Builder | whereNotIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereNotInPivot('username', (builder) => {
@@ -1564,7 +1573,7 @@ test.group('ManyToMany Query Builder | whereNotIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereNotInPivot('username', db.query().select('username').from('accounts'))
@@ -1601,7 +1610,7 @@ test.group('ManyToMany Query Builder | whereNotIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereNotInPivot(['username', 'email'], [['foo', 'bar']])
@@ -1635,7 +1644,7 @@ test.group('ManyToMany Query Builder | whereNotIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereNotInPivot('username', ['virk', 'nikk'])
@@ -1671,7 +1680,7 @@ test.group('ManyToMany Query Builder | whereNotIn', (group) => {
 
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
-    const query = getManyToManyQueryBuilder(relation, connection)
+    const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
 
     const { sql, bindings } = query
       .whereNotInPivot('username', (builder) => {
@@ -1815,5 +1824,984 @@ test.group('Model | ManyToMany | fetch', (group) => {
     assert.equal(skills[1].$options!.connection, 'secondary')
     assert.equal(skills[1].$extras.pivot_user_id, 1)
     assert.equal(skills[1].$extras.pivot_skill_id, 2)
+  })
+})
+
+test.group('Model | ManyToMany | persist', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('save related instance', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill)
+
+    assert.isTrue(user.$persisted)
+    assert.isTrue(skill.$persisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+
+    assert.lengthOf(skillUsers, 1)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
+  test('attach duplicates when save is called twice', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill)
+    await user.related<'manyToMany', 'skills'>('skills').save(skill, true, false)
+
+    assert.isTrue(user.$persisted)
+    assert.isTrue(skill.$persisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+
+    assert.lengthOf(skillUsers, 2)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, skill.id)
+
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
+  test('do not attach duplicates when checkExisting is true', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill)
+    await user.related<'manyToMany', 'skills'>('skills').save(skill)
+
+    assert.isTrue(user.$persisted)
+    assert.isTrue(skill.$persisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+
+    assert.lengthOf(skillUsers, 1)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
+  test('attach when related pivot entry exists but for a different parent', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const user1 = new User()
+    user1.username = 'nikk'
+    await user1.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill)
+    await user1.related<'manyToMany', 'skills'>('skills').save(skill)
+
+    assert.isTrue(user.$persisted)
+    assert.isTrue(skill.$persisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 2)
+    assert.equal(totalSkills[0].total, 1)
+
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+
+    assert.equal(skillUsers[1].user_id, user1.id)
+    assert.equal(skillUsers[1].skill_id, skill.id)
+
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(user1.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
+  test('save many of related instance', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    const skill1 = new Skill()
+    skill1.name = 'Dancing'
+
+    await user.related('skills').saveMany([skill, skill1])
+
+    assert.isTrue(user.$persisted)
+    assert.isTrue(skill.$persisted)
+    assert.isTrue(skill1.$persisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalSkills[0].total, 2)
+
+    assert.lengthOf(skillUsers, 2)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, skill1.id)
+
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+    assert.isUndefined(skill1.$trx)
+  })
+
+  test('save many add duplicates when checkExisting is false', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    const skill1 = new Skill()
+    skill1.name = 'Dancing'
+
+    await user.related('skills').save(skill)
+    await user.related<'manyToMany', 'skills'>('skills').saveMany([skill, skill1], true, false)
+
+    assert.isTrue(user.$persisted)
+    assert.isTrue(skill.$persisted)
+    assert.isTrue(skill1.$persisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalSkills[0].total, 2)
+
+    assert.lengthOf(skillUsers, 3)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, skill.id)
+
+    assert.equal(skillUsers[2].user_id, user.id)
+    assert.equal(skillUsers[2].skill_id, skill1.id)
+
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+    assert.isUndefined(skill1.$trx)
+  })
+
+  test('wrap calls inside transaction', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    const skill = new Skill()
+
+    try {
+      await user.related('skills').save(skill)
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 0)
+  })
+
+  test('wrap calls inside transaction even when parent has been persisted', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+
+    try {
+      await user.related('skills').save(skill)
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 0)
+  })
+
+  test('do not wrap calls inside transaction when wrapInTransaction=false', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    const skill = new Skill()
+
+    try {
+      await user.related('skills').save(skill, false)
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 0)
+  })
+
+  test('wrap save many calls inside transaction', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    const skill1 = new Skill()
+
+    try {
+      await user.related('skills').saveMany([skill, skill1])
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 0)
+  })
+
+  test('do not wrap save many calls inside transaction when wrapInTransaction=false', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    const skill1 = new Skill()
+
+    try {
+      await user.related('skills').saveMany([skill, skill1], false)
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalSkills[0].total, 1)
+    assert.lengthOf(skillUsers, 0)
+  })
+
+  test('use parent model transaction when defined', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.$trx = trx
+    user.username = 'virk'
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill)
+    await trx.rollback()
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 0)
+  })
+
+  test('use parent model transaction when wrapInTransaction=false', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.$trx = trx
+    user.username = 'virk'
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill, false)
+    await trx.rollback()
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 0)
+  })
+
+  test('use parent model transaction with save many when defined', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.$trx = trx
+    user.username = 'virk'
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    const skill1 = new Skill()
+    skill1.name = 'Dancy'
+
+    await user.related('skills').saveMany([skill, skill1])
+    await trx.rollback()
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 0)
+  })
+
+  test('use parent model transaction with save many when wrapInTransaction=false', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.$trx = trx
+    user.username = 'virk'
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    const skill1 = new Skill()
+    skill1.name = 'Dancing'
+
+    await user.related('skills').saveMany([skill, skill1], false)
+    await trx.rollback()
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 0)
+  })
+
+  test('create save point when parent is already in transaction', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.$trx = trx
+    user.username = 'virk'
+
+    const skill = new Skill()
+
+    try {
+      await user.related('skills').save(skill)
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    await trx.commit()
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 0)
+  })
+
+  test('create save point with save many when parent is already in transaction', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.$trx = trx
+    user.username = 'virk'
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    const skill1 = new Skill()
+
+    try {
+      await user.related('skills').saveMany([skill, skill1])
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    await trx.commit()
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 0)
+  })
+})
+
+test.group('Model | ManyToMany | attach', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('attach pivot ids', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.related<'manyToMany', 'skills'>('skills').attach([1, 2])
+    assert.isTrue(user.$persisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+
+    assert.lengthOf(skillUsers, 2)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, 1)
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, 2)
+
+    assert.isUndefined(user.$trx)
+  })
+
+  test('attach pivot ids avoid duplicates', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.related<'manyToMany', 'skills'>('skills').attach([1, 1, 2])
+    assert.isTrue(user.$persisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+
+    assert.lengthOf(skillUsers, 2)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, 1)
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, 2)
+
+    assert.isUndefined(user.$trx)
+  })
+
+  test('fail attach when parent model has not been persisted', async (assert) => {
+    assert.plan(1)
+
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    try {
+      await user.related<'manyToMany', 'skills'>('skills').attach([1, 1, 2])
+    } catch ({ message }) {
+      assert.equal(message, 'Cannot attach skills, value of User.id is undefined')
+    }
+  })
+
+  test('attach with extra data', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.related<'manyToMany', 'skills'>('skills').attach({
+      1: { proficiency: 'Master' },
+      2: { proficiency: 'Beginner' },
+    })
+    assert.isTrue(user.$persisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+
+    assert.lengthOf(skillUsers, 2)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, 1)
+    assert.equal(skillUsers[0].proficiency, 'Master')
+
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, 2)
+    assert.equal(skillUsers[1].proficiency, 'Beginner')
+
+    assert.isUndefined(user.$trx)
   })
 })

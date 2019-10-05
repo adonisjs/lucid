@@ -10,4 +10,6 @@ class User extends BaseModel {
 }
 
 const user = new User()
-user.related('profile').where('username', 'virk').exec()
+user.related<'hasOne', 'profile'>('profile').save(new Profile())
+
+user.profile = new Profile()

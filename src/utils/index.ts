@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
-import { RelationContract } from '@ioc:Adonis/Lucid/Model'
+import { RelationContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 
 /**
  * Ensure that relation is defined
@@ -24,4 +24,26 @@ export function ensureRelation<T extends RelationContract> (
   }
 
   return true
+}
+
+/**
+ * Returns the value for a key from the model instance and raises descriptive
+ * exception when the value is missing
+ */
+export function getValue (
+  model: ModelContract,
+  key: string,
+  relation: RelationContract,
+  action = 'preload',
+) {
+  const value = model[key]
+
+  if (value === undefined) {
+    throw new Exception(
+      `Cannot ${action} ${relation.relationName}, value of ${relation.model.name}.${key} is undefined`,
+      500,
+    )
+  }
+
+  return value
 }
