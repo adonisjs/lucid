@@ -33,7 +33,6 @@ import {
 import {
   ModelContract,
   AdapterContract,
-  RelationContract,
   ModelConstructorContract,
   ManyToManyQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
@@ -45,6 +44,7 @@ import { Database } from '../src/Database/index'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
+import { ManyToMany } from '../src/Orm/Relations/ManyToMany/index'
 import { ManyToManyQueryBuilder } from '../src/Orm/Relations/ManyToMany/QueryBuilder'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
@@ -126,7 +126,7 @@ export async function setup () {
   if (!hasSkillsTable) {
     await db.schema.createTable('skills', (table) => {
       table.increments()
-      table.string('name')
+      table.string('name').notNullable()
       table.timestamps()
     })
   }
@@ -147,7 +147,7 @@ export async function setup () {
     await db.schema.createTable('posts', (table) => {
       table.increments()
       table.integer('user_id')
-      table.string('title')
+      table.string('title').notNullable()
       table.timestamps()
     })
   }
@@ -167,7 +167,7 @@ export async function setup () {
     await db.schema.createTable('profiles', (table) => {
       table.increments()
       table.integer('user_id')
-      table.string('display_name')
+      table.string('display_name').notNullable()
       table.timestamps()
     })
   }
@@ -240,11 +240,16 @@ export function getQueryBuilder (client: QueryClientContract) {
 /**
  * Returns many to many query builder
  */
-export function getManyToManyQueryBuilder (relation: RelationContract, client: QueryClientContract) {
+export function getManyToManyQueryBuilder (
+  parent: ModelContract,
+  relation: ManyToMany,
+  client: QueryClientContract,
+) {
   return new ManyToManyQueryBuilder(
     client.getWriteClient().queryBuilder(),
     relation,
     client,
+    parent,
   ) as unknown as ManyToManyQueryBuilderContract<any> & ExcutableQueryBuilderContract<any>
 }
 

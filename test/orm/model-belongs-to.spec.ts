@@ -223,6 +223,7 @@ test.group('Model | BelongsTo', (group) => {
 
     const { sql, bindings } = Profile.$getRelation('user')!
       .getEagerQuery([profile], Profile.query().client)
+      .applyConstraints()
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = db.query()
@@ -260,6 +261,7 @@ test.group('Model | BelongsTo', (group) => {
 
     const { sql, bindings } = Profile.$getRelation('user')!
       .getQuery(profile, Profile.query().client)
+      .applyConstraints()
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = db.query()
@@ -947,144 +949,285 @@ test.group('Model | BelongsTo | fetch related', (group) => {
   })
 })
 
-// test.group('Model | BelongsTo | persist', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
+test.group('Model | HasOne | persist', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
 
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
 
-//   group.afterEach(async () => {
-//     await resetTables()
-//   })
+  group.afterEach(async () => {
+    await resetTables()
+  })
 
-//   test('save related instance', async (assert) => {
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+  test('save related instance', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @column()
-//       public username: string
-//     }
+      @column()
+      public username: string
+    }
 
-//     class Profile extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @column()
-//       public userId: number
+      @column()
+      public userId: number
 
-//       @column()
-//       public displayName: string
+      @column()
+      public displayName: string
 
-//       @belongsTo(() => User)
-//       public user: User
-//     }
+      @belongsTo(() => User)
+      public user: User
+    }
 
-//     const profile = new Profile()
-//     profile.displayName = 'virk'
-//     await profile.save()
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
 
-//     const user = new User()
-//     user.username = 'virk'
+    const profile = new Profile()
+    profile.displayName = 'Hvirk'
 
-//     await profile.associate('user', user)
+    await profile.related<'belongsTo', 'user'>('user').associate(user)
 
-//     assert.isTrue(profile.$persisted)
-//     assert.equal(user.id, profile.userId)
-//   })
+    assert.isTrue(profile.$persisted)
+    assert.equal(user.id, profile.userId)
+  })
 
-//   test('use parent model transaction when defined', async (assert) => {
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+  test('wrap save calls inside transaction', async (assert) => {
+    assert.plan(5)
 
-//       @column()
-//       public username: string
-//     }
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//     class Profile extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+      @column()
+      public username: string
+    }
 
-//       @column()
-//       public userId: number
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @column()
-//       public displayName: string
+      @column()
+      public userId: number
 
-//       @belongsTo(() => User)
-//       public user: User
-//     }
+      @column()
+      public displayName: string
 
-//     const profile = new Profile()
-//     profile.displayName = 'virk'
-//     await profile.save()
+      @belongsTo(() => User)
+      public user: User
+    }
 
-//     const user = new User()
-//     user.username = 'virk'
+    const user = new User()
+    const profile = new Profile()
 
-//     const trx = await db.transaction()
-//     profile.$trx = trx
-//     await profile.associate('user', user)
+    try {
+      await profile.related<'belongsTo', 'user'>('user').associate(user)
+    } catch (error) {
+      assert.exists(error)
+    }
 
-//     assert.isTrue(profile.$persisted)
-//     assert.equal(user.id, profile.userId)
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalProfiles = await db.query().from('profiles').count('*', 'total')
 
-//     await trx.rollback()
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalProfiles[0].total, 0)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(profile.$trx)
+  })
 
-//     const totalUsers = await db.from('users').count('*', 'total')
-//     const profiles = await db.from('profiles')
+  test('do not wrap when wrapInTransaction is set to false', async (assert) => {
+    assert.plan(5)
 
-//     assert.lengthOf(profiles, 1)
-//     assert.equal(profiles[0].user_id, null)
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//     assert.equal(totalUsers[0].total, 0)
-//     assert.isUndefined(user.$trx)
-//     assert.isUndefined(profile.$trx)
-//   })
+      @column()
+      public username: string
+    }
 
-//   test('use parent model options when defined', async (assert) => {
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @column()
-//       public username: string
-//     }
+      @column()
+      public userId: number
 
-//     class Profile extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+      @column()
+      public displayName: string
 
-//       @column()
-//       public userId: number
+      @belongsTo(() => User)
+      public user: User
+    }
 
-//       @column()
-//       public displayName: string
+    const user = new User()
+    user.username = 'virk'
 
-//       @belongsTo(() => User)
-//       public user: User
-//     }
+    const profile = new Profile()
 
-//     const profile = new Profile()
-//     profile.displayName = 'virk'
-//     profile.$options = { connection: 'secondary' }
-//     await profile.save()
+    try {
+      await profile.related<'belongsTo', 'user'>('user').associate(user, false)
+    } catch (error) {
+      assert.exists(error)
+    }
 
-//     const user = new User()
-//     user.username = 'virk'
-//     await profile.associate('user', user)
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalProfiles = await db.query().from('profiles').count('*', 'total')
 
-//     assert.isTrue(profile.$persisted)
-//     assert.equal(user.id, profile.userId)
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalProfiles[0].total, 0)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(profile.$trx)
+  })
 
-//     assert.deepEqual(user.$options, { connection: 'secondary' })
-//     assert.deepEqual(profile.$options, { connection: 'secondary' })
-//   })
-// })
+  test('do not wrap in transaction when parent has been persisted', async (assert) => {
+    assert.plan(5)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const profile = new Profile()
+
+    try {
+      await profile.related<'belongsTo', 'user'>('user').associate(user)
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalProfiles = await db.query().from('profiles').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalProfiles[0].total, 0)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(profile.$trx)
+  })
+
+  test('use parent model transaction when defined', async (assert) => {
+    assert.plan(4)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.username = 'virk'
+
+    const profile = new Profile()
+    profile.$trx = trx
+    profile.displayName = 'virk'
+
+    await profile.related<'belongsTo', 'user'>('user').associate(user)
+    await trx.rollback()
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalProfiles = await db.query().from('profiles').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalProfiles[0].total, 0)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(profile.$trx)
+  })
+
+  test('create save point when parent is already in transaction', async (assert) => {
+    assert.plan(5)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.username = 'virk'
+
+    const profile = new Profile()
+    profile.$trx = trx
+
+    try {
+      await profile.related<'belongsTo', 'user'>('user').associate(user)
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    await trx.commit()
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalProfiles = await db.query().from('profiles').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalProfiles[0].total, 0)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(profile.$trx)
+  })
+})

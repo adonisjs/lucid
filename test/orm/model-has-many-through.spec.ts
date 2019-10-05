@@ -189,6 +189,7 @@ test.group('Model | Has Many Through', (group) => {
 
     const { sql, bindings } = Country.$getRelation('posts')!
       .getQuery(country, Country.query().client)
+      .applyConstraints()
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = db.query()
@@ -237,6 +238,7 @@ test.group('Model | Has Many Through', (group) => {
 
     const { sql, bindings } = Country.$getRelation('posts')!
       .getEagerQuery([country], Country.query().client)
+      .applyConstraints()
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = db.query()

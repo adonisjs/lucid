@@ -86,8 +86,8 @@ export abstract class Chainable implements ChainableContract {
   /**
    * Define columns for selection
    */
-  public select (): this {
-    this.$knexBuilder.select(...arguments)
+  public select (...args: any): this {
+    this.$knexBuilder.select(...args)
     return this
   }
 

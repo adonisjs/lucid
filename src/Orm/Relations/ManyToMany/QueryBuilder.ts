@@ -10,23 +10,29 @@
 /// <reference path="../../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { RelationContract, ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
+import { uniq, difference } from 'lodash'
+import { ModelContract, ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
+import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
-import { ModelQueryBuilder } from '../../QueryBuilder'
+import { ManyToMany } from './index'
+import { BaseRelationQueryBuilder } from '../Base/QueryBuilder'
 
 /**
  * Query builder with many to many relationships
  */
-export class ManyToManyQueryBuilder extends ModelQueryBuilder implements ManyToManyQueryBuilderContract<any> {
+export class ManyToManyQueryBuilder
+  extends BaseRelationQueryBuilder
+  implements ManyToManyQueryBuilderContract<any>
+{
   constructor (
     builder: knex.QueryBuilder,
-    private _relation: RelationContract,
+    private _relation: ManyToMany,
     client: QueryClientContract,
+    private _parent: ModelContract | ModelContract[],
   ) {
-    super(builder, _relation.relatedModel(), client, (userFn) => {
+    super(builder, _relation, client, (userFn) => {
       return (builder) => {
-        userFn(new ManyToManyQueryBuilder(builder, this._relation, this.client))
+        userFn(new ManyToManyQueryBuilder(builder, this._relation, this.client, this._parent))
       }
     })
   }
@@ -198,5 +204,267 @@ export class ManyToManyQueryBuilder extends ModelQueryBuilder implements ManyToM
       return `${this._prefixPivotTable(column)} as pivot_${column}`
     }))
     return this
+  }
+
+  /**
+   * Applies constraints for `select`, `update` and `delete` queries. The
+   * inserts are not allowed directly and one must use `save` method
+   * instead.
+   */
+  public applyConstraints () {
+    /**
+     * Avoid adding it for multiple times
+     */
+    if (this.$appliedConstraints) {
+      return this
+    }
+
+    this.$appliedConstraints = true
+
+    /**
+     * Select * from related model
+     */
+    this.select(`${this._relation.relatedModel().$table}.*`)
+
+    /**
+     * Select pivot columns
+     */
+    this.pivotColumns(
+      [
+        this._relation.pivotForeignKey,
+        this._relation.pivotRelatedForeignKey,
+      ].concat(this._relation.extrasPivotColumns),
+    )
+
+    /**
+     * Add inner join
+     */
+    this.innerJoin(
+      this._relation.pivotTable,
+      `${this._relation.relatedModel().$table}.${this._relation.relatedAdapterKey}`,
+      `${this._relation.pivotTable}.${this._relation.pivotRelatedForeignKey}`,
+    )
+
+    /**
+     * Constraint for multiple parents
+     */
+    if (Array.isArray(this._parent)) {
+      const values = uniq(this._parent.map((parentInstance) => {
+        return this.$getRelatedValue(parentInstance, this._relation.localKey)
+      }))
+      return this.whereInPivot(this._relation.pivotForeignKey, values)
+    }
+
+    /**
+     * Constraint for one parent
+     */
+    const value = this.$getRelatedValue(this._parent, this._relation.localKey)
+    return this.wherePivot(this._relation.pivotForeignKey, value)
+  }
+
+  /**
+   * Perists the model, related model along with the pivot entry
+   */
+  private async _persist (
+    parent: ModelContract,
+    related: ModelContract | ModelContract[],
+    checkExisting: boolean,
+  ) {
+    related = Array.isArray(related) ? related : [related]
+
+    /**
+     * Persist parent and related models (if required)
+     */
+    await this.$persist(parent, related, () => {})
+
+    /**
+     * Pull the parent model client from the adapter, so that it used the
+     * same connection options for creating the pivot entry
+     */
+    const client = this._relation.model.$adapter.modelClient(parent)
+
+    /**
+     * Attach the id
+     */
+    await this._attach(
+      parent,
+      client,
+      related.map((relation) => this.$getRelatedValue(relation, this._relation.relatedKey)),
+      checkExisting,
+    )
+  }
+
+  /**
+   * Perists the model, related model along with the pivot entry inside the
+   * transaction.
+   */
+  private async _persistInTransaction (
+    parent: ModelContract,
+    related: ModelContract | ModelContract[],
+    trx: TransactionClientContract,
+    checkExisting: boolean,
+  ) {
+    related = Array.isArray(related) ? related : [related]
+
+    try {
+      /**
+       * Setting transaction on the parent model and this will
+       * be copied over related model as well inside the
+       * $persist call
+       */
+      parent.$trx = trx
+      await this.$persist(parent, related, () => {})
+
+      /**
+       * Invoking attach on the related model id and passing the transaction
+       * client around, so that the pivot insert is also a part of
+       * the transaction
+       */
+      await this._attach(
+        parent,
+        trx,
+        related.map((relation) => this.$getRelatedValue(relation, this._relation.relatedKey)),
+        checkExisting,
+      )
+
+      /**
+       * Commit the transaction
+       */
+      await trx.commit()
+    } catch (error) {
+      await trx.rollback()
+      throw error
+    }
+  }
+
+  /**
+   * Make relation entries to the pivot table. The id's must be a reference
+   * to the related model primary key, and this method doesn't perform
+   * any checks for same.
+   */
+  private async _attach (
+    parent: ModelContract,
+    client: QueryClientContract,
+    ids: (string | number)[] | { [key: string]: any },
+    checkExisting: boolean,
+  ) {
+    let idsList = uniq(Array.isArray(ids) ? ids : Object.keys(ids))
+    const hasAttributes = !Array.isArray(ids)
+
+    /**
+     * Pull existing pivot rows when `checkExisting = true` and persist only
+     * the differnce
+     */
+    if (checkExisting) {
+      const existingRows = await client
+        .query()
+        .from(this._relation.pivotTable)
+        .select(this._relation.pivotRelatedForeignKey)
+        .whereIn(this._relation.pivotRelatedForeignKey, idsList)
+        .where(
+          this._relation.pivotForeignKey,
+          this.$getRelatedValue(parent, this._relation.localKey, 'attach'),
+        )
+
+      const existingIds = existingRows.map((row) => row[this._relation.pivotRelatedForeignKey])
+      idsList = difference(idsList, existingIds)
+    }
+
+    /**
+     * Ignore when there is nothing to insert
+     */
+    if (!idsList.length) {
+      return
+    }
+
+    /**
+     * Perform multiple inserts in one go
+     */
+    await client
+      .insertQuery()
+      .table(this._relation.pivotTable)
+      .multiInsert(idsList.map((id) => {
+        const payload = {
+          [this._relation.pivotForeignKey]: this.$getRelatedValue(parent, this._relation.localKey),
+          [this._relation.pivotRelatedForeignKey]: id,
+        }
+
+        return hasAttributes ? Object.assign(payload, ids[id]) : payload
+      }))
+  }
+
+  /**
+   * Save related model instance with entry in the pivot table
+   */
+  public async save (
+    related: ModelContract,
+    wrapInTransaction: boolean = true,
+    checkExisting: boolean = true,
+  ): Promise<void> {
+    if (Array.isArray(this._parent)) {
+      throw new Error('Cannot save with multiple parents')
+      return
+    }
+
+    /**
+     * Wrap in transaction when wrapInTransaction is not set to false. So that
+     * we rollback to initial state, when one or more fails
+     */
+    let trx: TransactionClientContract | undefined
+    if (wrapInTransaction) {
+      trx = await this.client.transaction()
+    }
+
+    if (trx) {
+      await this._persistInTransaction(this._parent, related, trx, checkExisting)
+    } else {
+      await this._persist(this._parent, related, checkExisting)
+    }
+  }
+
+  /**
+   * Save many of related model instances with entry
+   * in the pivot table
+   */
+  public async saveMany (
+    related: ModelContract[],
+    wrapInTransaction: boolean = true,
+    checkExisting: boolean = true,
+  ) {
+    if (Array.isArray(this._parent)) {
+      throw new Error('Cannot save with multiple parents')
+      return
+    }
+
+    /**
+     * Wrap in transaction when wrapInTransaction is not set to false. So that
+     * we rollback to initial state, when one or more fails
+     */
+    let trx: TransactionClientContract | undefined
+    if (wrapInTransaction) {
+      trx = await this.client.transaction()
+    }
+
+    if (trx) {
+      await this._persistInTransaction(this._parent, related, trx, checkExisting)
+    } else {
+      await this._persist(this._parent, related, checkExisting)
+    }
+  }
+
+  /**
+   * Attach one of more related instances
+   */
+  public async attach (
+    ids: (string | number)[] | { [key: string]: any },
+    checkExisting: boolean = true,
+  ) {
+    if (Array.isArray(this._parent)) {
+      throw new Error('Cannot save with multiple parents')
+      return
+    }
+
+    const client = this._relation.model.$adapter.modelClient(this._parent)
+    await this._attach(this._parent, client, ids, checkExisting)
   }
 }

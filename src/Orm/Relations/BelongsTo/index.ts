@@ -10,7 +10,7 @@
 /// <reference path="../../../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
-import { camelCase, snakeCase, uniq } from 'lodash'
+import { camelCase, snakeCase } from 'lodash'
 
 import {
   ModelContract,
@@ -60,7 +60,7 @@ export class BelongsTo implements RelationContract {
   /**
    * Key to be used for serializing the relationship
    */
-  public serializeAs = this._options.serializeAs || snakeCase(this._relationName)
+  public serializeAs = this._options.serializeAs || snakeCase(this.relationName)
 
   /**
    * A flag to know if model keys valid for executing database queries or not
@@ -68,9 +68,9 @@ export class BelongsTo implements RelationContract {
   public booted: boolean = false
 
   constructor (
-    private _relationName: string,
+    public relationName: string,
     private _options: BaseRelationNode,
-    private _model: ModelConstructorContract,
+    public model: ModelConstructorContract,
   ) {
     this._ensureRelatedModel()
   }
@@ -94,10 +94,10 @@ export class BelongsTo implements RelationContract {
    * the keys validation, since they may be added after defining the relationship.
    */
   private _validateKeys () {
-    const relationRef = `${this._model.name}.${this._relationName}`
+    const relationRef = `${this.model.name}.${this.relationName}`
 
-    if (!this._model.$hasColumn(this.foreignKey)) {
-      const ref = `${this._model.name}.${this.foreignKey}`
+    if (!this.model.$hasColumn(this.foreignKey)) {
+      const ref = `${this.model.name}.${this.foreignKey}`
       throw new Exception(
         `${ref} required by ${relationRef} relation is missing`,
         500,
@@ -113,28 +113,6 @@ export class BelongsTo implements RelationContract {
         'E_MISSING_RELATED_FOREIGN_KEY',
       )
     }
-  }
-
-  /**
-   * Raises exception when value for the foreign key is missing on the model instance. This will
-   * make the query fail
-   */
-  private _ensureValue (value: any, action: string = 'preload') {
-    if (value === undefined) {
-      throw new Exception(
-        `Cannot ${action} ${this._relationName}, value of ${this._model.name}.${this.foreignKey} is undefined`,
-        500,
-      )
-    }
-
-    return value
-  }
-
-  /**
-   * Returns the belongs to query builder
-   */
-  private _getQueryBuilder (client: QueryClientContract) {
-    return new BelongsToQueryBuilder(client.knexQuery(), this, client)
   }
 
   /**
@@ -159,31 +137,23 @@ export class BelongsTo implements RelationContract {
      * Keys for the adapter
      */
     this.localAdapterKey = this.relatedModel().$getColumn(this.localKey)!.castAs
-    this.foreignAdapterKey = this._model.$getColumn(this.foreignKey)!.castAs
+    this.foreignAdapterKey = this.model.$getColumn(this.foreignKey)!.castAs
     this.booted = true
   }
 
   /**
    * Returns eager query for a single parent model instance
    */
-  public getQuery (parent: ModelContract, client: QueryClientContract) {
-    const value = parent[this.foreignKey]
-
-    return this._getQueryBuilder(client)
-      .where(this.localAdapterKey, this._ensureValue(value))
-      .limit(1)
+  public getQuery (parent: ModelContract, client: QueryClientContract): any {
+    return new BelongsToQueryBuilder(client.knexQuery(), this, client, parent)
   }
 
   /**
    * Returns query for the relationship with applied constraints for
    * eagerloading
    */
-  public getEagerQuery (parents: ModelContract[], client: QueryClientContract) {
-    const values = uniq(parents.map((parentInstance) => {
-      return this._ensureValue(parentInstance[this.foreignKey])
-    }))
-
-    return this._getQueryBuilder(client).whereIn(this.localAdapterKey, values)
+  public getEagerQuery (parents: ModelContract[], client: QueryClientContract): any {
+    return new BelongsToQueryBuilder(client.knexQuery(), this, client, parents)
   }
 
   /**
@@ -194,7 +164,7 @@ export class BelongsTo implements RelationContract {
       return
     }
 
-    model.$setRelated(this._relationName as keyof typeof model, related)
+    model.$setRelated(this.relationName as keyof typeof model, related)
   }
 
   /**

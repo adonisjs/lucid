@@ -10,7 +10,7 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
-import { camelCase, snakeCase, uniq } from 'lodash'
+import { camelCase, snakeCase } from 'lodash'
 
 import {
   ModelContract,
@@ -55,7 +55,7 @@ export abstract class HasOneOrMany implements RelationContract {
   /**
    * Key to be used for serializing the relationship
    */
-  public serializeAs = this._options.serializeAs || snakeCase(this._relationName)
+  public serializeAs = this._options.serializeAs || snakeCase(this.relationName)
 
   /**
    * A flag to know if model keys valid for executing database queries or not
@@ -63,9 +63,9 @@ export abstract class HasOneOrMany implements RelationContract {
   public booted: boolean = false
 
   constructor (
-    private _relationName: string,
+    public relationName: string,
     private _options: BaseRelationNode,
-    private _model: ModelConstructorContract,
+    public model: ModelConstructorContract,
   ) {
     this._ensureRelatedModel()
   }
@@ -89,10 +89,10 @@ export abstract class HasOneOrMany implements RelationContract {
    * the keys validation, since they may be added after defining the relationship.
    */
   private _validateKeys () {
-    const relationRef = `${this._model.name}.${this._relationName}`
+    const relationRef = `${this.model.name}.${this.relationName}`
 
-    if (!this._model.$hasColumn(this.localKey)) {
-      const ref = `${this._model.name}.${this.localKey}`
+    if (!this.model.$hasColumn(this.localKey)) {
+      const ref = `${this.model.name}.${this.localKey}`
       throw new Exception(
         `${ref} required by ${relationRef} relation is missing`,
         500,
@@ -111,21 +111,6 @@ export abstract class HasOneOrMany implements RelationContract {
   }
 
   /**
-   * Raises exception when value for the local key is missing on the model instance. This will
-   * make the query fail
-   */
-  protected $ensureValue (value: any, action: string = 'preload') {
-    if (value === undefined) {
-      throw new Exception(
-        `Cannot ${action} ${this._relationName}, value of ${this._model.name}.${this.localKey} is undefined`,
-        500,
-      )
-    }
-
-    return value
-  }
-
-  /**
    * Must be implemented by main class
    */
   public abstract getQuery (parent: ModelContract, client: QueryClientContract)
@@ -138,7 +123,10 @@ export abstract class HasOneOrMany implements RelationContract {
   /**
    * Must be implemented by parent class
    */
-  protected abstract $getQueryBuilder (client: QueryClientContract): any
+  protected abstract $getQueryBuilder (
+    client: QueryClientContract,
+    parent: ModelContract | ModelContract[],
+  ): any
 
   /**
    * Compute keys
@@ -148,8 +136,8 @@ export abstract class HasOneOrMany implements RelationContract {
       return
     }
 
-    this.localKey = this._options.localKey || this._model.$primaryKey
-    this.foreignKey = this._options.foreignKey || camelCase(`${this._model.name}_${this._model.$primaryKey}`)
+    this.localKey = this._options.localKey || this.model.$primaryKey
+    this.foreignKey = this._options.foreignKey || camelCase(`${this.model.name}_${this.model.$primaryKey}`)
 
     /**
      * Validate computed keys to ensure they are valid
@@ -159,7 +147,7 @@ export abstract class HasOneOrMany implements RelationContract {
     /**
      * Keys for the adapter
      */
-    this.localAdapterKey = this._model.$getColumn(this.localKey)!.castAs
+    this.localAdapterKey = this.model.$getColumn(this.localKey)!.castAs
     this.foreignAdapterKey = this.relatedModel().$getColumn(this.foreignKey)!.castAs
     this.booted = true
   }
@@ -169,12 +157,7 @@ export abstract class HasOneOrMany implements RelationContract {
    * eagerloading
    */
   public getEagerQuery (parents: ModelContract[], client: QueryClientContract) {
-    const values = uniq(parents.map((parentInstance) => {
-      return this.$ensureValue(parentInstance[this.localKey])
-    }))
-
-    return this.$getQueryBuilder(client)
-      .whereIn(this.foreignAdapterKey, values)
+    return this.$getQueryBuilder(client, parents)
   }
 
   /**
@@ -185,6 +168,6 @@ export abstract class HasOneOrMany implements RelationContract {
       return
     }
 
-    parent.$setRelated(this._relationName as keyof typeof parent, related)
+    parent.$setRelated(this.relationName as keyof typeof parent, related)
   }
 }

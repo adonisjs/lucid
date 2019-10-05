@@ -172,7 +172,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * Lookup map required for related method
    */
   type RelationsQueryBuildersMap<T> = {
-    'unknown': ModelExecuteableQueryBuilder,
+    'unknown': BaseRelationQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
     'hasOne': HasOneQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
     'hasMany': HasManyQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
     'belongsTo': BelongsToQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
@@ -204,8 +204,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
   export interface RelationContract {
     type: AvailableRelations
+    relationName: string
     serializeAs: string
     booted: boolean
+    model: ModelConstructorContract
+
     boot (): void
     relatedModel (): ModelConstructorContract
 
@@ -224,6 +227,33 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
+   * Base query builder for all relations
+   */
+  export interface BaseRelationQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
+    applyConstraints (): this
+
+    /**
+     * Execute and get first result
+     */
+    first (): Promise<T | null>
+
+    /**
+     * Return the first matching row or fail
+     */
+    firstOrFail (): Promise<T>
+
+    /**
+     * Save the related model.
+     */
+    save (model: T, wrapInTransaction?: boolean): Promise<void>
+
+    /**
+     * Save the related model.
+     */
+    saveMany (model: T[], wrapInTransaction?: boolean): Promise<void>
+  }
+
+  /**
    * A union of relation relations query builders
    */
   type RelationQueryBuilderContract<T extends any = ModelContract> = BelongsToQueryBuilderContract<T> |
@@ -235,46 +265,28 @@ declare module '@ioc:Adonis/Lucid/Model' {
   /**
    * Shae of has belongs to query builder contract
    */
-  export interface BelongsToQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
+  export interface BelongsToQueryBuilderContract<T> extends BaseRelationQueryBuilderContract<T> {
     /**
-     * Execute and get first result
+     * Associate related model.
      */
-    first (): Promise<T | null>
+    associate (model: T, wrapInTransaction?: boolean): Promise<void>
 
     /**
-     * Return the first matching row or fail
+     * Dissociate all relationships.
      */
-    firstOrFail (): Promise<T>
+    dissociate (): Promise<void>
   }
 
   /**
    * Shae of has one relationship query builder
    */
-  export interface HasOneQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
-    /**
-     * Execute and get first result
-     */
-    first (): Promise<T | null>
-
-    /**
-     * Return the first matching row or fail
-     */
-    firstOrFail (): Promise<T>
+  export interface HasOneQueryBuilderContract<T> extends BaseRelationQueryBuilderContract<T> {
   }
 
   /**
    * Shae of has many relationship query builder
    */
-  export interface HasManyQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
-    /**
-     * Execute and get first result
-     */
-    first (): Promise<T | null>
-
-    /**
-     * Return the first matching row or fail
-     */
-    firstOrFail (): Promise<T>
+  export interface HasManyQueryBuilderContract<T> extends BaseRelationQueryBuilderContract<T> {
   }
 
   /**
@@ -299,7 +311,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * Shape of many to many query builder. It has few methods over the standard
    * model query builder
    */
-  export interface ManyToManyQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
+  export interface ManyToManyQueryBuilderContract<T> extends BaseRelationQueryBuilderContract<T> {
     pivotColumns (columns: string[]): this
 
     wherePivot: WherePivot<this>
@@ -319,29 +331,38 @@ declare module '@ioc:Adonis/Lucid/Model' {
     andWhereNotInPivot: WhereInPivot<this>
 
     /**
-     * Execute and get first result
+     * Save related model
      */
-    first (): Promise<T | null>
+    save (model: T, wrapInTransaction?: boolean, checkExisting?: boolean): Promise<void>
 
     /**
-     * Return the first matching row or fail
+     * Save related many
      */
-    firstOrFail (): Promise<T>
+    saveMany (model: T[], wrapInTransaction?: boolean, checkExisting?: boolean): Promise<void>
+
+    /**
+     * Attach related
+     */
+    attach (
+      ids: (string | number)[] | { [key: string]: any },
+      checkExisting?: boolean,
+    ): Promise<void>
+
+    // /**
+    //  * Attach related
+    //  */
+    // detach (ids: any[]): Promise<void>
+
+    // /**
+    //  * Attach related
+    //  */
+    // sync (ids: any[], detach: boolean): Promise<void>
   }
 
   /**
    * Shae of has many through relationship query builder
    */
-  export interface HasManyThroughQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
-    /**
-     * Execute and get first result
-     */
-    first (): Promise<T | null>
-
-    /**
-     * Return the first matching row or fail
-     */
-    firstOrFail (): Promise<T>
+  export interface HasManyThroughQueryBuilderContract<T> extends BaseRelationQueryBuilderContract<T> {
   }
 
   /**
