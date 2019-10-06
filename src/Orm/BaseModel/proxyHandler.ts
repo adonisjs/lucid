@@ -9,30 +9,7 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import { Exception } from '@poppinss/utils'
-import { ModelConstructorContract, AvailableRelations } from '@ioc:Adonis/Lucid/Model'
-
-/**
- * Value to return when relationship is not preloaded
- * with the model instance.
- *
- * We are re-using the defaults from a static source to avoid creating empty arrays
- * everytime someone access the relationship. However, as a downside, if someone
- * decides to mutate the array, that will mutate the source and hence we
- * freeze the arrays.
- *
- * The `Object.freeze` however doesn't stop one from defining values for a specific
- * index.
- */
-const DEFAULTS: {
-  [P in AvailableRelations]: any
-} = {
-  hasOne: null,
-  hasMany: Object.freeze([]),
-  belongsTo: null,
-  manyToMany: Object.freeze([]),
-  hasManyThrough: Object.freeze([]),
-}
+import { ModelConstructorContract } from '@ioc:Adonis/Lucid/Model'
 
 /**
  * A proxy trap to add support for custom getters and setters
@@ -55,7 +32,7 @@ export const proxyHandler = {
      */
     const relation = Model.$getRelation(key)
     if (relation) {
-      return target.$getRelated(key, DEFAULTS[relation.type])
+      return target.$getRelated(key)
     }
 
     return Reflect.get(target, key, receiver)
@@ -79,7 +56,8 @@ export const proxyHandler = {
      */
     const relation = Model.$getRelation(key)
     if (relation) {
-      throw new Exception('Cannot set relationships locally', 500, 'E_CANNOT_DEFINE_RELATIONSHIP')
+      target.$setRelated(key, value)
+      return true
     }
 
     return Reflect.set(target, key, value, receiver)

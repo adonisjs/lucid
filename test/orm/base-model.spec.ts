@@ -1114,7 +1114,7 @@ test.group('Base Model | relations', (group) => {
     assert.instanceOf(user.$preloaded.profile, Profile)
   })
 
-  test('return null when relation is not preloaded', (assert) => {
+  test('return undefined when relation is not preloaded', (assert) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1136,7 +1136,7 @@ test.group('Base Model | relations', (group) => {
       id: 1,
     })
 
-    assert.isNull(user.profile)
+    assert.isUndefined(user.profile)
     assert.deepEqual(user.$preloaded, {})
   })
 

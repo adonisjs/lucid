@@ -446,7 +446,7 @@ test.group('Model | HasOne | preload', (group) => {
       builder.whereNull('display_name')
     }).where('username', 'virk').first()
 
-    assert.isNull(user!.profile)
+    assert.isUndefined(user!.profile)
   })
 
   test('preload nested relations', async (assert) => {

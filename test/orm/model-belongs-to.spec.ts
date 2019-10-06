@@ -476,7 +476,7 @@ test.group('Model | BelongsTo', (group) => {
       builder.whereNull('username')
     }).first()
 
-    assert.isNull(profile!.user)
+    assert.isUndefined(profile!.user)
   })
 
   test('preload nested relations', async (assert) => {
