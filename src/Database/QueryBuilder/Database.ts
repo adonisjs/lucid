@@ -174,7 +174,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
     /**
      * Do not chain `returning` in sqlite3 to avoid knex warnings
      */
-    if (this.client && this.client.dialect === 'sqlite3') {
+    if (this.client && ['sqlite3', 'mysql'].includes(this.client.dialect)) {
       return this
     }
 
