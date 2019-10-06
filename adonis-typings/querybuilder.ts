@@ -602,8 +602,6 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   export interface DatabaseQueryBuilderContract <
     Result extends any = Dictionary<any, string>,
   > extends ChainableContract {
-    del (): this
-
     client: QueryClientContract,
 
     /**
@@ -616,8 +614,10 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
      */
     first (): Promise<Result | null>
 
+    del (): this
+
     /**
-     * Mutations
+     * Mutations (update and increment can be one query aswell)
      */
     update: Update<this>
     increment: Counter<this>

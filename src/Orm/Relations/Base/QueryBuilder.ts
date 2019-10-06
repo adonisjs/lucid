@@ -59,7 +59,7 @@ export abstract class BaseRelationQueryBuilder
   /**
    * Adds neccessary where clause to the query to perform the select
    */
-  public beforeExecute () {
+  public async beforeExecute () {
     this.applyConstraints()
   }
 

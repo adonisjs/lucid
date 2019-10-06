@@ -146,4 +146,84 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
     assert.deepEqual(users[0].$options!.profiler, profiler)
   })
+
+  test('perform update using model query builder', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.$boot()
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const rows = await User.query().where('username', 'virk').update({ username: 'hvirk' })
+    assert.lengthOf(rows, 1)
+    assert.deepEqual(rows, [1])
+
+    const user = await db.from('users').where('username', 'hvirk').first()
+    assert.equal(user!.username, 'hvirk')
+  })
+
+  test('perform increment using model query builder', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.$boot()
+    await db.insertQuery().table('users').insert([{ username: 'virk', points: 1 }])
+
+    const rows = await User.query().where('username', 'virk').increment('points', 1)
+    assert.lengthOf(rows, 1)
+    assert.deepEqual(rows, [1])
+
+    const user = await db.from('users').where('username', 'virk').first()
+    assert.equal(user!.points, 2)
+  })
+
+  test('perform decrement using model query builder', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.$boot()
+    await db.insertQuery().table('users').insert([{ username: 'virk', points: 3 }])
+
+    const rows = await User.query().where('username', 'virk').decrement('points', 1)
+    assert.lengthOf(rows, 1)
+    assert.deepEqual(rows, [1])
+
+    const user = await db.from('users').where('username', 'virk').first()
+    assert.equal(user!.points, 2)
+  })
+
+  test('delete in bulk', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.$boot()
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const rows = await User.query().where('username', 'virk').del()
+    assert.lengthOf(rows, 1)
+    assert.deepEqual(rows, [1])
+
+    const user = await db.from('users').where('username', 'virk').first()
+    assert.isNull(user)
+  })
 })

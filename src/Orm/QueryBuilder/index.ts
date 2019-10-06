@@ -36,6 +36,13 @@ import { Executable, ExecutableConstructor } from '../../Traits/Executable'
 export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderContract<ModelConstructorContract
 > {
   /**
+   * A flag to know, if the query being executed is a select query
+   * or not, since we don't transform return types of non-select
+   * queries
+   */
+  private _isSelectQuery: boolean = true
+
+  /**
    * Sideloaded attributes that will be passed to the model instances
    */
   protected $sideloaded: ModelObject = {}
@@ -68,6 +75,16 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
+   * Ensures that we are not executing `update` or `del` when using read only
+   * client
+   */
+  private _ensureCanPerformWrites () {
+    if (this.client && this.client.mode === 'read') {
+      throw new Exception('Updates and deletes cannot be performed in read mode')
+    }
+  }
+
+  /**
    * Process preloads for a single model instance
    */
   protected async $processAllForOne (modelInstance: ModelContract) {
@@ -86,10 +103,23 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
+   * Checks to see that the executed query is update or delete
+   */
+  public async beforeExecute () {
+    if (['update', 'del'].includes(this.$knexBuilder['_method'])) {
+      this._isSelectQuery = false
+    }
+  }
+
+  /**
    * Wraps the query result to model instances. This method is invoked by the
    * Executable trait.
    */
   public async afterExecute (rows: any[]): Promise<any[]> {
+    if (!this._isSelectQuery) {
+      return Array.isArray(rows) ? rows : [rows]
+    }
+
     const modelInstances = this.model.$createMultipleFromAdapterResult(
       rows,
       this.$sideloaded,
@@ -149,6 +179,14 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * to running the query
    */
   public getQueryClient () {
+    /**
+     * Use write client for updates and deletes
+     */
+    if (['update', 'del'].includes(this.$knexBuilder['_method'])) {
+      this._ensureCanPerformWrites()
+      return this.client!.getWriteClient().client
+    }
+
     return this.client!.getReadClient().client
   }
 
@@ -165,5 +203,42 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
       inTransaction: this.client.isTransaction,
       model: this.model.name,
     }))
+  }
+  /**
+   * Perform update by incrementing value for a given column. Increments
+   * can be clubbed with `update` as well
+   */
+  public increment (column: any, counter?: any): any {
+    this._ensureCanPerformWrites()
+    this.$knexBuilder.increment(column, counter)
+    return this
+  }
+
+  /**
+   * Perform update by decrementing value for a given column. Decrements
+   * can be clubbed with `update` as well
+   */
+  public decrement (column: any, counter?: any): any {
+    this._ensureCanPerformWrites()
+    this.$knexBuilder.decrement(column, counter)
+    return this
+  }
+
+  /**
+   * Perform update
+   */
+  public update (columns: any): any {
+    this._ensureCanPerformWrites()
+    this.$knexBuilder.update(columns)
+    return this
+  }
+
+  /**
+   * Delete rows under the current query
+   */
+  public del (): any {
+    this._ensureCanPerformWrites()
+    this.$knexBuilder.del()
+    return this
   }
 }

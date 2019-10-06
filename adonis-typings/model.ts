@@ -9,7 +9,14 @@
 
 declare module '@ioc:Adonis/Lucid/Model' {
   import { ProfilerContract, ProfilerRowContract } from '@ioc:Adonis/Core/Profiler'
-  import { ChainableContract, StrictValues, QueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+  import {
+    Update,
+    Counter,
+    StrictValues,
+    QueryCallback,
+    ChainableContract,
+  } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+
   import {
     QueryClientContract,
     TransactionClientContract,
@@ -368,9 +375,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
   /**
    * Model query builder will have extras methods on top of Database query builder
    */
-  export interface ModelQueryBuilderContract<
-    Model extends ModelConstructorContract
-  > extends ChainableContract {
+  export interface ModelQueryBuilderContract<Model extends ModelConstructorContract>
+    extends ChainableContract
+  {
     model: Model
 
     /**
@@ -404,6 +411,14 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Return the first matching row or fail
      */
     firstOrFail (): Promise<InstanceType<Model>>
+
+    /**
+     * Mutations (update and increment can be one query aswell)
+     */
+    update: Update<ModelQueryBuilderContract<Model> & ExcutableQueryBuilderContract<number[]>>
+    increment: Counter<ModelQueryBuilderContract<Model> & ExcutableQueryBuilderContract<number[]>>
+    decrement: Counter<ModelQueryBuilderContract<Model> & ExcutableQueryBuilderContract<number[]>>
+    del (): ModelQueryBuilderContract<Model> & ExcutableQueryBuilderContract<number[]>
 
     /**
      * Define relationships to be preloaded
