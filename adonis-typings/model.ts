@@ -293,18 +293,18 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * Possible signatures for adding a where clause
    */
   interface WherePivot<Builder extends ChainableContract> {
-    (key: string, value: StrictValues | ChainableContract<any>): Builder
-    (key: string, operator: string, value: StrictValues | ChainableContract<any>): Builder
+    (key: string, value: StrictValues | ChainableContract): Builder
+    (key: string, operator: string, value: StrictValues | ChainableContract): Builder
   }
 
   /**
    * Possible signatures for adding where in clause.
    */
   interface WhereInPivot<Builder extends ChainableContract> {
-    (K: string, value: (StrictValues | ChainableContract<any>)[]): Builder
-    (K: string[], value: (StrictValues | ChainableContract<any>)[][]): Builder
-    (k: string, subquery: ChainableContract<any> | QueryCallback<Builder>): Builder
-    (k: string[], subquery: ChainableContract<any>): Builder
+    (K: string, value: (StrictValues | ChainableContract)[]): Builder
+    (K: string[], value: (StrictValues | ChainableContract)[][]): Builder
+    (k: string, subquery: ChainableContract | QueryCallback<Builder>): Builder
+    (k: string[], subquery: ChainableContract): Builder
   }
 
   /**
@@ -369,8 +369,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * Model query builder will have extras methods on top of Database query builder
    */
   export interface ModelQueryBuilderContract<
-    Model extends ModelConstructorContract,
-  > extends ChainableContract<Model['$refs']> {
+    Model extends ModelConstructorContract
+  > extends ChainableContract {
     model: Model
 
     /**
