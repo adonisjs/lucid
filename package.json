@@ -43,9 +43,9 @@
     "@adonisjs/profiler": "^1.2.4",
     "@poppinss/traits": "^1.0.0",
     "@poppinss/utils": "^2.0.0",
+    "camelcase": "^5.3.1",
     "knex": "^0.19.4",
     "knex-dynamic-connection": "^1.0.0",
-    "lodash": "^4.17.15",
     "pluralize": "^8.0.0",
     "snake-case": "^2.1.0",
     "ts-essentials": "^3.0.2"
@@ -59,7 +59,6 @@
     "@adonisjs/sink": "^2.2.1",
     "@poppinss/dev-utils": "^1.0.1",
     "@types/dotenv": "^6.1.1",
-    "@types/lodash": "^4.14.141",
     "@types/node": "^12.7.11",
     "@types/pluralize": "0.0.29",
     "clone": "^2.1.2",

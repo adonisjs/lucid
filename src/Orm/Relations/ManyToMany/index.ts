@@ -10,7 +10,7 @@
 /// <reference path="../../../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
-import { snakeCase, sortBy } from 'lodash'
+import snakeCase from 'snake-case'
 
 import {
   ModelContract,
@@ -156,7 +156,7 @@ export class ManyToMany implements RelationContract {
     }
 
     this.pivotTable = this._options.pivotTable || snakeCase(
-      sortBy([this.relatedModel().name, this.model.name]).join('_'),
+      [this.relatedModel().name, this.model.name].sort().join('_'),
     )
 
     /**

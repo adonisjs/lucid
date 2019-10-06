@@ -10,11 +10,11 @@
 /// <reference path="../../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
-import { uniq, difference } from 'lodash'
 import { ModelContract, ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { ManyToMany } from './index'
+import { unique, difference } from '../../../utils'
 import { BaseRelationQueryBuilder } from '../Base/QueryBuilder'
 
 /**
@@ -249,7 +249,7 @@ export class ManyToManyQueryBuilder
      * Constraint for multiple parents
      */
     if (Array.isArray(this._parent)) {
-      const values = uniq(this._parent.map((parentInstance) => {
+      const values = unique(this._parent.map((parentInstance) => {
         return this.$getRelatedValue(parentInstance, this._relation.localKey)
       }))
       return this.whereInPivot(this._relation.pivotForeignKey, values)
@@ -348,7 +348,7 @@ export class ManyToManyQueryBuilder
     ids: (string | number)[] | { [key: string]: any },
     checkExisting: boolean,
   ) {
-    let idsList = uniq(Array.isArray(ids) ? ids : Object.keys(ids))
+    let idsList = unique(Array.isArray(ids) ? ids : Object.keys(ids))
     const hasAttributes = !Array.isArray(ids)
 
     /**
