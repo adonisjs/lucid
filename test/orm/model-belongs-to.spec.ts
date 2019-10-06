@@ -1231,3 +1231,58 @@ test.group('Model | HasOne | persist', (group) => {
     assert.isUndefined(profile.$trx)
   })
 })
+
+test.group('Model | HasOne | dissociate', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('dissociate relationship', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const profile = new Profile()
+    profile.displayName = 'Hvirk'
+
+    await profile.related<'belongsTo', 'user'>('user').associate(user)
+    assert.isTrue(profile.$persisted)
+    assert.equal(user.id, profile.userId)
+
+    await profile.related<'belongsTo', 'user'>('user').dissociate()
+    assert.isNull(profile.userId)
+  })
+})
