@@ -39,6 +39,25 @@ export abstract class Chainable implements ChainableContract {
   }
 
   /**
+   * Normalizes the columns aggregates functions to something
+   * knex can process.
+   */
+  private _normalizeAggregateColumns (columns: any, alias?: any): any {
+    if (columns.constructor === Object) {
+      return Object.keys(columns).reduce((result, key) => {
+        result[key] = this.$transformValue(columns[key])
+        return result
+      }, {})
+    }
+
+    if (!alias) {
+      return alias
+    }
+
+    return { [alias]: this.$transformValue(columns) }
+  }
+
+  /**
    * Transforms the value to something that knex can internally understand and
    * handle. It includes.
    *
@@ -1018,6 +1037,80 @@ export abstract class Chainable implements ChainableContract {
    */
   public as (alias: any): this {
     this.$knexBuilder.as(alias)
+    return this
+  }
+
+  /**
+   * Count rows for the current query
+   */
+  public count (columns: any, alias?: any): this {
+    this.$knexBuilder.count(this._normalizeAggregateColumns(columns, alias))
+    return this
+  }
+
+  /**
+   * Count distinct rows for the current query
+   */
+  public countDistinct (columns: any, alias?: any): this {
+    this.$knexBuilder.countDistinct(this._normalizeAggregateColumns(columns, alias))
+    return this
+  }
+
+  /**
+   * Make use of `min` aggregate function
+   */
+  public min (columns: any, alias?: any): this {
+    this.$knexBuilder.min(this._normalizeAggregateColumns(columns, alias))
+    return this
+  }
+
+  /**
+   * Make use of `max` aggregate function
+   */
+  public max (columns: any, alias?: any): this {
+    this.$knexBuilder.max(this._normalizeAggregateColumns(columns, alias))
+    return this
+  }
+
+  /**
+   * Make use of `avg` aggregate function
+   */
+  public avg (columns: any, alias?: any): this {
+    this.$knexBuilder.avg(this._normalizeAggregateColumns(columns, alias))
+    return this
+  }
+
+  /**
+   * Make use of distinct `avg` aggregate function
+   */
+  public avgDistinct (columns: any, alias?: any): this {
+    this.$knexBuilder.avgDistinct(this._normalizeAggregateColumns(columns, alias))
+    return this
+  }
+
+  /**
+   * Make use of `sum` aggregate function
+   */
+  public sum (columns: any, alias?: any): this {
+    this.$knexBuilder.sum(this._normalizeAggregateColumns(columns, alias))
+    return this
+  }
+
+  /**
+   * Perform update by incrementing value for a given column. Increments
+   * can be clubbed with `update` as well
+   */
+  public increment (column: any, counter?: any): this {
+    this.$knexBuilder.increment(column, counter)
+    return this
+  }
+
+  /**
+   * Perform update by decrementing value for a given column. Decrements
+   * can be clubbed with `update` as well
+   */
+  public decrement (column: any, counter?: any): this {
+    this.$knexBuilder.decrement(column, counter)
     return this
   }
 }
