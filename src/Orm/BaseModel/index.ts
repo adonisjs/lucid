@@ -703,19 +703,15 @@ export class BaseModel implements ModelContract {
   /**
    * Returns the related model or default value when model is missing
    */
-  public $getRelated (key: string, defaultValue: any): any {
-    if (this.$hasRelated(key)) {
-      return this.$preloaded[key as string]
-    }
-
-    return defaultValue
+  public $getRelated (key: string): any {
+    return this.$preloaded[key]
   }
 
   /**
    * A boolean to know if relationship has been preloaded or not
    */
   public $hasRelated (key: string): boolean {
-    return this.$preloaded[key as string] !== undefined
+    return this.$preloaded[key] !== undefined
   }
 
   /**
@@ -739,13 +735,13 @@ export class BaseModel implements ModelContract {
     const manyRelationships = ['hasMany', 'manyToMany', 'hasManyThrough']
     if (manyRelationships.includes(relation.type)) {
       if (!Array.isArray(models)) {
-        throw new Exception(`
-          $setRelated accepts an array of related models for ${manyRelationships.join(',')} relationships,
-        `)
+        throw new Exception(
+          `${Model}.${key} must be an array (${manyRelationships.join(',')} relationships)`,
+        )
       }
-      this.$preloaded[key as string] = models
+      this.$preloaded[key] = models
     } else {
-      this.$preloaded[key as string] = models as unknown as ModelContract
+      this.$preloaded[key] = models as unknown as ModelContract
     }
   }
 
