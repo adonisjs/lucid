@@ -47,3 +47,18 @@ export function getValue (
 
   return value
 }
+
+export function isObject (value: any): boolean {
+  return value !== null && typeof (value) === 'object' && !Array.isArray(value)
+}
+
+export function unique (value: any[]) {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return [...new Set(value)]
+}
+
+export function difference (main: any[], other: []) {
+  return [main, other].reduce((a, b) => a.filter(c => !b.includes(c)))
+}

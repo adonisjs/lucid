@@ -10,12 +10,12 @@
 /// <reference path="../../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
-import { uniq } from 'lodash'
 import { Exception } from '@poppinss/utils'
 import { HasOneQueryBuilderContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { HasOne } from './index'
+import { unique } from '../../../utils'
 import { BaseRelationQueryBuilder } from '../Base/QueryBuilder'
 
 /**
@@ -54,7 +54,7 @@ export class HasOneQueryBuilder extends BaseRelationQueryBuilder implements HasO
      * Constraint for multiple parents
      */
     if (Array.isArray(this._parent)) {
-      const values = uniq(this._parent.map((parentInstance) => {
+      const values = unique(this._parent.map((parentInstance) => {
         return this.$getRelatedValue(parentInstance, this._relation.localKey)
       }))
       return this.whereIn(this._relation.foreignAdapterKey, values)

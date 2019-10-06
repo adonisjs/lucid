@@ -10,13 +10,13 @@
 /// <reference path="../../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
-import { uniq } from 'lodash'
 import { Exception } from '@poppinss/utils'
 
 import { ModelContract, BelongsToQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { BelongsTo } from './index'
+import { unique } from '../../../utils'
 import { BaseRelationQueryBuilder } from '../Base/QueryBuilder'
 
 /**
@@ -58,7 +58,7 @@ export class BelongsToQueryBuilder
      * Constraint for multiple parents
      */
     if (Array.isArray(this._parent)) {
-      const values = uniq(this._parent.map((parentInstance) => {
+      const values = unique(this._parent.map((parentInstance) => {
         return this.$getRelatedValue(parentInstance, this._relation.foreignKey)
       }))
       return this.whereIn(this._relation.localAdapterKey, values)

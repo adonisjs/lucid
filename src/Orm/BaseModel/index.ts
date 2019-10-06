@@ -10,7 +10,7 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import pluralize from 'pluralize'
-import { isObject, snakeCase } from 'lodash'
+import snakeCase from 'snake-case'
 import { Exception } from '@poppinss/utils'
 
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
@@ -32,11 +32,11 @@ import {
 
 import { Preloader } from '../Preloader'
 import { HasOne } from '../Relations/HasOne'
-import { ensureRelation } from '../../utils'
 import { proxyHandler } from './proxyHandler'
 import { HasMany } from '../Relations/HasMany'
 import { BelongsTo } from '../Relations/BelongsTo'
 import { ManyToMany } from '../Relations/ManyToMany'
+import { ensureRelation, isObject } from '../../utils'
 import { HasManyThrough } from '../Relations/HasManyThrough'
 
 function StaticImplements<T> () {

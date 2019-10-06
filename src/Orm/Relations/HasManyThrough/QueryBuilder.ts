@@ -10,12 +10,12 @@
 /// <reference path="../../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
-import { uniq } from 'lodash'
 import { Exception } from '@poppinss/utils'
 import { HasManyThroughQueryBuilderContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { HasManyThrough } from './index'
+import { unique } from '../../../utils'
 import { BaseRelationQueryBuilder } from '../Base/QueryBuilder'
 
 /**
@@ -76,7 +76,7 @@ export class HasManyThroughQueryBuilder
      * Constraint for multiple parents
      */
     if (Array.isArray(this._parent)) {
-      const values = uniq(this._parent.map((parentInstance) => {
+      const values = unique(this._parent.map((parentInstance) => {
         return this.$getRelatedValue(parentInstance, this._relation.localKey)
       }))
       return this.whereIn(`${throughTable}.${this._relation.foreignAdapterKey}`, values)
