@@ -109,6 +109,7 @@ export async function setup () {
       table.integer('country_id')
       table.string('username').unique()
       table.string('email')
+      table.integer('points').defaultTo(0)
       table.timestamps()
     })
   }

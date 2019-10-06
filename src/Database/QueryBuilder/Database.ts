@@ -90,6 +90,24 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   }
 
   /**
+   * Perform update by incrementing value for a given column. Increments
+   * can be clubbed with `update` as well
+   */
+  public increment (column: any, counter?: any): this {
+    this.$knexBuilder.increment(column, counter)
+    return this
+  }
+
+  /**
+   * Perform update by decrementing value for a given column. Decrements
+   * can be clubbed with `update` as well
+   */
+  public decrement (column: any, counter?: any): this {
+    this.$knexBuilder.decrement(column, counter)
+    return this
+  }
+
+  /**
    * Perform update
    */
   public update (columns: any): this {
