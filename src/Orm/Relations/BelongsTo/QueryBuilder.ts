@@ -99,7 +99,6 @@ export class BelongsToQueryBuilder
   public async save (related: ModelContract, wrapInTransaction: boolean = true) {
     if (Array.isArray(this._parent)) {
       throw new Error('Cannot save with multiple parents')
-      return
     }
 
     /**
@@ -111,7 +110,7 @@ export class BelongsToQueryBuilder
       trx = await this.client.transaction()
     }
 
-    const callback = (parent, related) => {
+    const callback = (parent: ModelContract, related: ModelContract) => {
       parent[this._relation.foreignKey] = this.$getRelatedValue(related, this._relation.localKey)
     }
 
@@ -133,6 +132,12 @@ export class BelongsToQueryBuilder
    * Remove relation
    */
   public async dissociate () {
+    if (Array.isArray(this._parent)) {
+      throw new Error('Cannot save with multiple parents')
+    }
+
+    this._parent[this._relation.foreignKey] = null
+    await this._parent.save()
   }
 
   /**
