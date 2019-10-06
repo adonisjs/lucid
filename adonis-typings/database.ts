@@ -93,26 +93,19 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Get new query builder instance for select, update and
      * delete calls
      */
-    query<
-      Record extends any = any,
-      Result extends any = Record,
-    > (): DatabaseQueryBuilderContract<Record, Result> & ExcutableQueryBuilderContract<Result>,
+    query<Result extends any = any> (
+    ): DatabaseQueryBuilderContract<Result> & ExcutableQueryBuilderContract<Result>,
 
     /**
      * Get new query builder instance inserts
      */
-    insertQuery<
-      Record extends any = any,
-      ReturnColumns extends any = Record
-    > (
-    ): InsertQueryBuilderContract<Record, ReturnColumns[]> & ExcutableQueryBuilderContract<ReturnColumns[]>,
+    insertQuery<ReturnColumns extends any = any> (
+    ): InsertQueryBuilderContract & ExcutableQueryBuilderContract<ReturnColumns[]>,
 
     /**
      * Get raw query builder instance
      */
-    raw<
-      Result extends any = any
-    > (
+    raw<Result extends any = any> (
       sql: string,
       bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw,
     ): RawContract & ExcutableQueryBuilderContract<Result>
@@ -594,29 +587,21 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Get query builder instance for a given connection.
      */
-    query<
-      Record extends any = any,
-      Result extends any = Record,
-    > (
+    query<Result extends any = any> (
       options?: DatabaseClientOptions,
-    ): DatabaseQueryBuilderContract<Record, Result> & ExcutableQueryBuilderContract<Result>,
+    ): DatabaseQueryBuilderContract<Result> & ExcutableQueryBuilderContract<Result>,
 
     /**
      * Get insert query builder instance for a given connection.
      */
-    insertQuery<
-      Record extends any = any,
-      ReturnColumns extends any = Record
-    > (
+    insertQuery<ReturnColumns extends any = any> (
       options?: DatabaseClientOptions,
-    ): InsertQueryBuilderContract<Record, ReturnColumns[]> & ExcutableQueryBuilderContract<ReturnColumns[]>,
+    ): InsertQueryBuilderContract & ExcutableQueryBuilderContract<ReturnColumns[]>,
 
     /**
      * Get raw query builder instance
      */
-    raw<
-      Result extends any = any
-    > (
+    raw<Result extends any = any> (
       sql: string,
       bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[],
       options?: DatabaseClientOptions,
