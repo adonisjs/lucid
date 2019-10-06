@@ -60,7 +60,7 @@
     "@poppinss/dev-utils": "^1.0.1",
     "@types/dotenv": "^6.1.1",
     "@types/lodash": "^4.14.141",
-    "@types/node": "^12.7.9",
+    "@types/node": "^12.7.11",
     "@types/pluralize": "0.0.29",
     "clone": "^2.1.2",
     "commitizen": "^4.0.3",
