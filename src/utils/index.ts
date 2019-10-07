@@ -38,7 +38,7 @@ export function getValue (
 ) {
   const value = model[key]
 
-  if (value === undefined) {
+  if (value === undefined || value === null) {
     throw new Exception(
       `Cannot ${action} ${relation.relationName}, value of ${relation.model.name}.${key} is undefined`,
       500,

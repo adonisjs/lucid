@@ -805,6 +805,7 @@ test.group('ManyToMany Query Builder | where', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .wherePivot('username', 'virk')
@@ -839,6 +840,7 @@ test.group('ManyToMany Query Builder | where', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .where((builder) => builder.wherePivot('username', 'virk'))
@@ -873,6 +875,7 @@ test.group('ManyToMany Query Builder | where', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .wherePivot('age', '>', 22)
@@ -907,6 +910,7 @@ test.group('ManyToMany Query Builder | where', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .wherePivot('age', '>', db.raw('select min_age from ages limit 1;'))
@@ -945,6 +949,7 @@ test.group('ManyToMany Query Builder | where', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .wherePivot('age', '>', 22)
@@ -981,6 +986,7 @@ test.group('ManyToMany Query Builder | where', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .wherePivot('age', '>', 22)
@@ -1034,6 +1040,7 @@ test.group('ManyToMany Query Builder | whereNot', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotPivot('username', 'virk')
@@ -1068,6 +1075,7 @@ test.group('ManyToMany Query Builder | whereNot', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotPivot('age', '>', 22)
@@ -1102,6 +1110,7 @@ test.group('ManyToMany Query Builder | whereNot', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotPivot('age', '>', db.raw('select min_age from ages limit 1;'))
@@ -1140,6 +1149,7 @@ test.group('ManyToMany Query Builder | whereNot', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotPivot('age', '>', 22)
@@ -1189,6 +1199,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot('username', ['virk', 'nikk'])
@@ -1223,6 +1234,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot('username', (builder) => {
@@ -1261,6 +1273,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot('username', db.query().select('id').from('accounts'))
@@ -1297,6 +1310,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot('username', [
@@ -1335,6 +1349,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot(
@@ -1375,6 +1390,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot(['username', 'email'], [['foo', 'bar']])
@@ -1409,6 +1425,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot('username', ['virk', 'nikk'])
@@ -1445,6 +1462,7 @@ test.group('ManyToMany Query Builder | whereIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot('username', (builder) => {
@@ -1502,6 +1520,7 @@ test.group('ManyToMany Query Builder | whereNotIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotInPivot('username', ['virk', 'nikk'])
@@ -1536,6 +1555,7 @@ test.group('ManyToMany Query Builder | whereNotIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotInPivot('username', (builder) => {
@@ -1574,6 +1594,7 @@ test.group('ManyToMany Query Builder | whereNotIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotInPivot('username', db.query().select('username').from('accounts'))
@@ -1611,6 +1632,7 @@ test.group('ManyToMany Query Builder | whereNotIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotInPivot(['username', 'email'], [['foo', 'bar']])
@@ -1645,6 +1667,7 @@ test.group('ManyToMany Query Builder | whereNotIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotInPivot('username', ['virk', 'nikk'])
@@ -1681,6 +1704,7 @@ test.group('ManyToMany Query Builder | whereNotIn', (group) => {
     const connection = db.connection()
     const relation = User.$getRelation('skills')!
     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
+    query['$appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotInPivot('username', (builder) => {
@@ -2803,5 +2827,94 @@ test.group('Model | ManyToMany | attach', (group) => {
     assert.equal(skillUsers[1].proficiency, 'Beginner')
 
     assert.isUndefined(user.$trx)
+  })
+})
+
+test.group('Model | ManyToMany | bulk operation', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('generate correct sql for deleting related rows', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+
+    const user = await User.find(1)
+    const { sql, bindings } = user!.related('skills').del().toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .getWriteClient()
+      .from('skill_user')
+      .where('skill_user.user_id', 1)
+      .del()
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('generate correct sql for updating related rows', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+
+    const user = await User.find(1)
+    const { sql, bindings } = user!.related('skills').update({ proficiency: 'Master' }).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .getWriteClient()
+      .from('skill_user')
+      .where('skill_user.user_id', 1)
+      .update({ proficiency: 'Master' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
   })
 })

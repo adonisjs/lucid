@@ -1576,3 +1576,98 @@ test.group('Model | HasMany | persist', (group) => {
     assert.isUndefined(post.$trx)
   })
 })
+
+test.group('Model | HasMany | bulk operation', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('generate correct sql for deleting related rows', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+
+    const user = await User.find(1)
+    const { sql, bindings } = user!.related('posts').del().toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .getWriteClient()
+      .from('posts')
+      .where('user_id', 1)
+      .del()
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('generate correct sql for updating related rows', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+
+    const user = await User.find(1)
+    const { sql, bindings } = user!.related('posts').update({ title: 'Adonis 101' }).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .getWriteClient()
+      .from('posts')
+      .where('user_id', 1)
+      .update({ title: 'Adonis 101' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})

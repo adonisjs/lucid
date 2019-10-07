@@ -207,6 +207,29 @@ export class ManyToManyQueryBuilder
   }
 
   /**
+   * Adds where or where clause on the query builder based upon the
+   * number of parent records passed to the query builder.
+   */
+  private _addParentConstraint (builder: ManyToManyQueryBuilder) {
+    /**
+     * Constraint for multiple parents
+     */
+    if (Array.isArray(this._parent)) {
+      const values = unique(this._parent.map((parentInstance) => {
+        return this.$getRelatedValue(parentInstance, this._relation.localKey)
+      }))
+      builder.whereInPivot(this._relation.pivotForeignKey, values)
+      return
+    }
+
+    /**
+     * Constraint for one parent
+     */
+    const value = this.$getRelatedValue(this._parent, this._relation.localKey)
+    builder.wherePivot(this._relation.pivotForeignKey, value)
+  }
+
+  /**
    * Applies constraints for `select`, `update` and `delete` queries. The
    * inserts are not allowed directly and one must use `save` method
    * instead.
@@ -220,6 +243,23 @@ export class ManyToManyQueryBuilder
     }
 
     this.$appliedConstraints = true
+
+    /**
+     * We do not allow deleting/updating the related rows via `relationship.delete`.
+     *
+     * For example:
+     * A `user` has many to many `roles`, so issuing a delete query using the
+     * user instance cannot delete the `roles` from the `roles` table, but
+     * instead it only deletes the `user roles` from the pivot table.
+     *
+     * In short user doesn't own the role directly, it owns a relationship with
+     * the role and hence it can only remove the relation.
+     */
+    if (['delete', 'update'].includes(this.$queryAction())) {
+      this.from(this._relation.pivotTable)
+      this._addParentConstraint(this)
+      return this
+    }
 
     /**
      * Select * from related model
@@ -245,21 +285,8 @@ export class ManyToManyQueryBuilder
       `${this._relation.pivotTable}.${this._relation.pivotRelatedForeignKey}`,
     )
 
-    /**
-     * Constraint for multiple parents
-     */
-    if (Array.isArray(this._parent)) {
-      const values = unique(this._parent.map((parentInstance) => {
-        return this.$getRelatedValue(parentInstance, this._relation.localKey)
-      }))
-      return this.whereInPivot(this._relation.pivotForeignKey, values)
-    }
-
-    /**
-     * Constraint for one parent
-     */
-    const value = this.$getRelatedValue(this._parent, this._relation.localKey)
-    return this.wherePivot(this._relation.pivotForeignKey, value)
+    this._addParentConstraint(this)
+    return this
   }
 
   /**

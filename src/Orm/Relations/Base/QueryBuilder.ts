@@ -64,10 +64,18 @@ export abstract class BaseRelationQueryBuilder
   }
 
   /**
+   * Get query sql
+   */
+  public toSQL () {
+    this.applyConstraints()
+    return super['toSQL']()
+  }
+
+  /**
    * Read value for a key on a model instance, in reference to the
    * relationship operations
    */
-  protected $getRelatedValue (model: ModelContract, key: string, action = 'preload') {
+  protected $getRelatedValue (model: ModelContract, key: string, action = this.$queryAction()) {
     return getValue(model, key, this._baseRelation, action)
   }
 
@@ -114,6 +122,20 @@ export abstract class BaseRelationQueryBuilder
       await trx.rollback()
       throw error
     }
+  }
+
+  /**
+   * Returns the query action
+   */
+  protected $queryAction (): string {
+    let action = this.$knexBuilder['_method']
+    if (action === 'select') {
+      action = 'preload'
+    } else if (action === 'del') {
+      action = 'delete'
+    }
+
+    return action
   }
 
   public abstract async save (model: ModelContract, wrapInTransaction?: boolean): Promise<void>

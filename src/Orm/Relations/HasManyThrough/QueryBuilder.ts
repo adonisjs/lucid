@@ -39,6 +39,29 @@ export class HasManyThroughQueryBuilder
   }
 
   /**
+   * Applies constraints on the query to limit to the parent row(s).
+   */
+  private _applyParentConstraints (builder: HasManyThroughQueryBuilder) {
+    const throughTable = this._relation.throughModel().$table
+
+    /**
+     * Constraint for multiple parents
+     */
+    if (Array.isArray(this._parent)) {
+      const values = unique(this._parent.map((parentInstance) => {
+        return this.$getRelatedValue(parentInstance, this._relation.localKey)
+      }))
+      return builder.whereIn(`${throughTable}.${this._relation.foreignAdapterKey}`, values)
+    }
+
+    /**
+     * Constraint for one parent
+     */
+    const value = this.$getRelatedValue(this._parent, this._relation.localKey)
+    return builder.where(`${throughTable}.${this._relation.foreignAdapterKey}`, value)
+  }
+
+  /**
    * Applies constraints for `select`, `update` and `delete` queries. The
    * inserts are not allowed directly and one must use `save` method
    * instead.
@@ -54,6 +77,18 @@ export class HasManyThroughQueryBuilder
 
     const throughTable = this._relation.throughModel().$table
     const relatedTable = this._relation.relatedModel().$table
+
+    /**
+     * When updating or deleting the through rows, we run a whereIn
+     * subquery to limit to the parent rows.
+     */
+    if (['delete', 'update'].includes(this.$queryAction())) {
+      this.whereIn(`${relatedTable}.${this._relation.throughForeignAdapterKey}`, (builder) => {
+        builder.from(throughTable)
+        this._applyParentConstraints(builder)
+      })
+      return this
+    }
 
     /**
      * Select * from related model and through foreign adapter key
@@ -72,21 +107,8 @@ export class HasManyThroughQueryBuilder
       `${relatedTable}.${this._relation.throughForeignAdapterKey}`,
     )
 
-    /**
-     * Constraint for multiple parents
-     */
-    if (Array.isArray(this._parent)) {
-      const values = unique(this._parent.map((parentInstance) => {
-        return this.$getRelatedValue(parentInstance, this._relation.localKey)
-      }))
-      return this.whereIn(`${throughTable}.${this._relation.foreignAdapterKey}`, values)
-    }
-
-    /**
-     * Constraint for one parent
-     */
-    const value = this.$getRelatedValue(this._parent, this._relation.localKey)
-    return this.where(`${throughTable}.${this._relation.foreignAdapterKey}`, value)
+    this._applyParentConstraints(this)
+    return this
   }
 
   public async save () {
@@ -94,6 +116,6 @@ export class HasManyThroughQueryBuilder
   }
 
   public async saveMany () {
-    throw new Exception(`Has many through doesn\'t support saving relations`)
+    return this.save()
   }
 }
