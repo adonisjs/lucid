@@ -19,6 +19,14 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     ModelConstructorContract,
   } from '@ioc:Adonis/Lucid/Model'
 
+  /**
+   * Generate key/value pair of model properties and
+   * adapter keys
+   */
+  export type Refs<T extends any, K extends keyof T> = {
+    [P in K]: string
+  }
+
   export const BaseModel: ModelConstructorContract
   export const column: ColumnFn
   export const computed: ComputedFn
