@@ -1219,6 +1219,52 @@ test.group('Model | HasOne | persist', (group) => {
     assert.isUndefined(user.$trx)
     assert.isUndefined(profile.$trx)
   })
+
+  test('invoke hooks for related model', async (assert) => {
+    assert.plan(1)
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+        this.$before('save', (model) => {
+          assert.instanceOf(model, Profile)
+        })
+      }
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const profile = new Profile()
+    profile.displayName = 'Hvirk'
+
+    await user.related<'hasOne', 'profile'>('profile').save(profile)
+  })
 })
 
 test.group('Model | HasOne | bulk operation', (group) => {

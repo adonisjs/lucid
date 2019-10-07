@@ -1230,6 +1230,52 @@ test.group('Model | BelongsTo | persist', (group) => {
     assert.isUndefined(user.$trx)
     assert.isUndefined(profile.$trx)
   })
+
+  test('invoke hooks for related model', async (assert) => {
+    assert.plan(1)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+        this.$before('save', (model) => {
+          assert.instanceOf(model, User)
+        })
+      }
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const profile = new Profile()
+    profile.displayName = 'Hvirk'
+
+    await profile.related<'belongsTo', 'user'>('user').associate(user)
+  })
 })
 
 test.group('Model | BelongsTo | dissociate', (group) => {
@@ -1284,6 +1330,53 @@ test.group('Model | BelongsTo | dissociate', (group) => {
 
     await profile.related<'belongsTo', 'user'>('user').dissociate()
     assert.isNull(profile.userId)
+  })
+
+  test('invoke hooks for related model', async (assert) => {
+    assert.plan(1)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+        this.$before('save', (model) => {
+          assert.instanceOf(model, User)
+        })
+      }
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const profile = new Profile()
+    profile.displayName = 'Hvirk'
+
+    await profile.related<'belongsTo', 'user'>('user').associate(user)
+    await profile.related<'belongsTo', 'user'>('user').dissociate()
   })
 })
 

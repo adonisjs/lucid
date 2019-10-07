@@ -1575,6 +1575,101 @@ test.group('Model | HasMany | persist', (group) => {
     assert.isUndefined(user.$trx)
     assert.isUndefined(post.$trx)
   })
+
+  test('invoke hooks for related model', async (assert) => {
+    assert.plan(1)
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+        this.$before('save', (model) => {
+          assert.instanceOf(model, Post)
+        })
+      }
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const post = new Post()
+    post.title = 'Adonis 101'
+
+    await user.related('posts').save(post)
+  })
+
+  test('invoke hooks when called saveMany', async (assert) => {
+    assert.plan(2)
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+        this.$before('save', (model) => {
+          assert.instanceOf(model, Post)
+        })
+      }
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const post = new Post()
+    post.title = 'Adonis 101'
+
+    const post1 = new Post()
+    post1.title = 'Lucid 101'
+
+    await user.related('posts').saveMany([post, post1])
+  })
 })
 
 test.group('Model | HasMany | bulk operation', (group) => {

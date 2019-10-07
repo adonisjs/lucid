@@ -1391,3 +1391,394 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(user!.username, 'nikk')
   })
 })
+
+test.group('Base Model | hooks', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('invoke before and after create hooks', async (assert) => {
+    assert.plan(8)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+
+        this.$before('create', (model) => {
+          assert.instanceOf(model, User)
+          assert.isFalse(model.$persisted)
+        })
+
+        this.$before('save', (model) => {
+          assert.instanceOf(model, User)
+          assert.isFalse(model.$persisted)
+        })
+
+        this.$after('create', (model) => {
+          assert.instanceOf(model, User)
+          assert.isTrue(model.$persisted)
+        })
+
+        this.$after('save', (model) => {
+          assert.instanceOf(model, User)
+          assert.isTrue(model.$persisted)
+        })
+      }
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+  })
+
+  test('abort create when before hook raises exception', async (assert) => {
+    assert.plan(3)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+
+        this.$before('create', (model) => {
+          assert.instanceOf(model, User)
+          assert.isFalse(model.$persisted)
+          throw new Error('Wait')
+        })
+
+        this.$before('save', (model) => {
+          assert.instanceOf(model, User)
+          assert.isFalse(model.$persisted)
+        })
+
+        this.$after('create', (model) => {
+          assert.instanceOf(model, User)
+          assert.isTrue(model.$persisted)
+        })
+
+        this.$after('save', (model) => {
+          assert.instanceOf(model, User)
+          assert.isTrue(model.$persisted)
+        })
+      }
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    try {
+      await user.save()
+    } catch ({ message }) {
+      assert.equal(message, 'Wait')
+    }
+  })
+
+  test('listen for trx on after save commit', async (assert) => {
+    assert.plan(1)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+
+        this.$after('save', (model) => {
+          if (model.$trx) {
+            model.$trx.on('commit', () => {
+              assert.isTrue(true)
+            })
+          }
+        })
+      }
+    }
+
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.username = 'virk'
+    user.$trx = trx
+    await user.save()
+
+    await trx.commit()
+  })
+
+  test('listen for trx on after save rollback', async (assert) => {
+    assert.plan(1)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+
+        this.$after('save', (model) => {
+          if (model.$trx) {
+            model.$trx.on('rollback', () => {
+              assert.isTrue(true)
+            })
+          }
+        })
+      }
+    }
+
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.username = 'virk'
+    user.$trx = trx
+    await user.save()
+
+    await trx.rollback()
+  })
+
+  test('invoke before and after update hooks', async (assert) => {
+    assert.plan(10)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+
+        this.$before('update', (model) => {
+          assert.instanceOf(model, User)
+          assert.isTrue(model.$isDirty)
+        })
+
+        this.$before('save', (model) => {
+          assert.instanceOf(model, User)
+          assert.isTrue(model.$isDirty)
+        })
+
+        this.$after('update', (model) => {
+          assert.instanceOf(model, User)
+          assert.isFalse(model.$isDirty)
+        })
+
+        this.$after('save', (model) => {
+          assert.instanceOf(model, User)
+          assert.isFalse(model.$isDirty)
+        })
+      }
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.findOrFail(1)
+
+    user.username = 'nikk'
+    await user.save()
+
+    const users = await db.from('users')
+    assert.lengthOf(users, 1)
+    assert.equal(users[0].username, 'nikk')
+  })
+
+  test('abort update when before hook raises exception', async (assert) => {
+    assert.plan(5)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+
+        this.$before('update', (model) => {
+          assert.instanceOf(model, User)
+          assert.isTrue(model.$isDirty)
+          throw new Error('Wait')
+        })
+
+        this.$before('save', (model) => {
+          assert.instanceOf(model, User)
+          assert.isTrue(model.$isDirty)
+        })
+
+        this.$after('update', (model) => {
+          assert.instanceOf(model, User)
+          assert.isFalse(model.$isDirty)
+        })
+
+        this.$after('save', (model) => {
+          assert.instanceOf(model, User)
+          assert.isFalse(model.$isDirty)
+        })
+      }
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.findOrFail(1)
+
+    user.username = 'nikk'
+
+    try {
+      await user.save()
+    } catch ({ message }) {
+      assert.equal(message, 'Wait')
+    }
+
+    const users = await db.from('users')
+    assert.lengthOf(users, 1)
+    assert.equal(users[0].username, 'virk')
+  })
+
+  test('invoke before and after delete hooks', async (assert) => {
+    assert.plan(3)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+
+        this.$before('delete', (model) => {
+          assert.instanceOf(model, User)
+        })
+
+        this.$after('delete', (model) => {
+          assert.instanceOf(model, User)
+        })
+      }
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.findOrFail(1)
+    await user.delete()
+
+    const usersCount = await db.from('users').count('*', 'total')
+    assert.equal(usersCount[0].total, 0)
+  })
+
+  test('abort delete when before hook raises exception', async (assert) => {
+    assert.plan(3)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+
+        this.$before('delete', (model) => {
+          assert.instanceOf(model, User)
+          throw new Error('Wait')
+        })
+
+        this.$after('delete', (model) => {
+          assert.instanceOf(model, User)
+        })
+      }
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.findOrFail(1)
+
+    try {
+      await user.delete()
+    } catch ({ message }) {
+      assert.equal(message, 'Wait')
+    }
+
+    const usersCount = await db.from('users').count('*', 'total')
+    assert.equal(usersCount[0].total, 1)
+  })
+})

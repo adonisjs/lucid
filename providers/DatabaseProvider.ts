@@ -43,6 +43,7 @@ export default class DatabaseServiceProvider {
        * a different adapter.
        */
       BaseModel.$adapter = new Adapter(this.$container.use('Adonis/Lucid/Database'))
+      BaseModel.$container = this.$container
 
       return {
         BaseModel,

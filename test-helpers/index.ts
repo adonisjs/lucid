@@ -12,9 +12,10 @@
 import knex from 'knex'
 import dotenv from 'dotenv'
 import { join } from 'path'
+import { IocContract, Ioc } from '@adonisjs/fold'
+import { Filesystem } from '@poppinss/dev-utils'
 import { FakeLogger } from '@adonisjs/logger/build/standalone'
 import { Profiler } from '@adonisjs/profiler/build/standalone'
-import { Filesystem } from '@poppinss/dev-utils'
 
 import {
   DatabaseContract,
@@ -318,8 +319,9 @@ export function ormAdapter (db: DatabaseContract) {
 /**
  * Returns the base model with the adapter attached to it
  */
-export function getBaseModel (adapter: AdapterContract) {
+export function getBaseModel (adapter: AdapterContract, container?: IocContract) {
   BaseModel.$adapter = adapter
+  BaseModel.$container = container || new Ioc()
   return BaseModel as unknown as ModelConstructorContract
 }
 
