@@ -2650,6 +2650,95 @@ test.group('Model | ManyToMany | persist', (group) => {
     assert.equal(totalSkills[0].total, 0)
     assert.lengthOf(skillUsers, 0)
   })
+
+  test('invoke hooks for related model', async (assert) => {
+    assert.plan(1)
+
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+        this.$before('save', (model) => {
+          assert.instanceOf(model, Skill)
+        })
+      }
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill)
+  })
+
+  test('invoke hooks for related model using save many', async (assert) => {
+    assert.plan(2)
+
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+
+      public static $boot () {
+        if (this.$booted) {
+          return
+        }
+
+        super.$boot()
+        this.$before('save', (model) => {
+          assert.instanceOf(model, Skill)
+        })
+      }
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    const skill1 = new Skill()
+    skill1.name = 'Dancing'
+
+    await user.related('skills').saveMany([skill, skill1])
+  })
 })
 
 test.group('Model | ManyToMany | attach', (group) => {

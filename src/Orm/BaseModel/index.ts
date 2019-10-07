@@ -11,13 +11,16 @@
 
 import pluralize from 'pluralize'
 import snakeCase from 'snake-case'
+import { IocContract } from '@adonisjs/fold'
 import { Exception } from '@poppinss/utils'
 
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import {
   CacheNode,
+  EventsList,
   ColumnNode,
   ModelObject,
+  HooksHandler,
   ModelOptions,
   ComputedNode,
   ModelContract,
@@ -30,6 +33,7 @@ import {
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
+import { Hooks } from '../Hooks'
 import { Preloader } from '../Preloader'
 import { HasOne } from '../Relations/HasOne'
 import { proxyHandler } from './proxyHandler'
@@ -49,9 +53,20 @@ function StaticImplements<T> () {
 @StaticImplements<ModelConstructorContract>()
 export class BaseModel implements ModelContract {
   /**
-   * The adapter to be used for persisting and fetching data
+   * The adapter to be used for persisting and fetching data.
+   *
+   * NOTE: Adapter is a singleton and share among all the models, unless
+   * a user wants to swap the adapter for a given model
    */
   public static $adapter: AdapterContract
+
+  /**
+   * The container required to resolve hooks
+   *
+   * NOTE: Container is a singleton and share among all the models, unless
+   * a user wants to swap the container for a given model
+   */
+  public static $container: IocContract
 
   /**
    * Primary key is required to build relationships across models
@@ -113,6 +128,27 @@ export class BaseModel implements ModelContract {
    */
   private static _mappings: {
     cast: Map<string, string>,
+  }
+
+  /**
+   * Storing model hooks
+   */
+  private static _hooks: Hooks
+
+  /**
+   * Register before hooks
+   */
+  public static $before (event: EventsList, handler: HooksHandler<any>) {
+    this._hooks.add('before', event, handler)
+    return this
+  }
+
+  /**
+   * Register after hooks
+   */
+  public static $after (event: EventsList, handler: HooksHandler<any>) {
+    this._hooks.add('after', event, handler)
+    return this
   }
 
   /**
@@ -181,15 +217,13 @@ export class BaseModel implements ModelContract {
     this.$booted = true
     this.$primaryKey = this.$primaryKey || 'id'
 
+    Object.defineProperty(this, '$refs', { value: {} })
     Object.defineProperty(this, '$columns', { value: new Map() })
     Object.defineProperty(this, '$computed', { value: new Map() })
     Object.defineProperty(this, '$relations', { value: new Map() })
-    Object.defineProperty(this, '$refs', { value: {} })
-    Object.defineProperty(this, '_mappings', {
-      value: {
-        cast: new Map(),
-      },
-    })
+
+    Object.defineProperty(this, '_hooks', { value: new Hooks(this.$container) })
+    Object.defineProperty(this, '_mappings', { value: { cast: new Map() }})
 
     this.$increments = this.$increments === undefined ? true : this.$increments
     this.$table = this.$table === undefined ? pluralize(snakeCase(this.name)) : this.$table
@@ -866,9 +900,15 @@ export class BaseModel implements ModelContract {
      * Persit the model when it's not persisted already
      */
     if (!this.$persisted) {
+      await Model._hooks.execute('before', 'create', this)
+      await Model._hooks.execute('before', 'save', this)
+
       await Model.$adapter.insert(this, this.$prepareForAdapter(this.$attributes))
       this.$hydrateOriginals()
       this.$persisted = true
+
+      await Model._hooks.execute('after', 'create', this)
+      await Model._hooks.execute('after', 'save', this)
       return
     }
 
@@ -881,12 +921,18 @@ export class BaseModel implements ModelContract {
       return
     }
 
+    await Model._hooks.execute('before', 'update', this)
+    await Model._hooks.execute('before', 'save', this)
+
     /**
      * Perform update
      */
     await Model.$adapter.update(this, this.$prepareForAdapter(dirty))
     this.$hydrateOriginals()
     this.$persisted = true
+
+    await Model._hooks.execute('after', 'update', this)
+    await Model._hooks.execute('after', 'save', this)
   }
 
   /**
@@ -895,8 +941,13 @@ export class BaseModel implements ModelContract {
   public async delete () {
     this._ensureIsntDeleted()
     const Model = this.constructor as typeof BaseModel
+
+    await Model._hooks.execute('before', 'delete', this)
+
     await Model.$adapter.delete(this)
     this.$isDeleted = true
+
+    await Model._hooks.execute('after', 'delete', this)
   }
 
   /**

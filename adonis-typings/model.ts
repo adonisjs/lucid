@@ -176,6 +176,12 @@ declare module '@ioc:Adonis/Lucid/Model' {
     'hasManyThrough'
 
   /**
+   * List of events for which a model will trigger hooks
+   */
+  export type EventsList = 'save' | 'create' | 'update' | 'delete'
+  export type HooksHandler<T> = ((model: T) => Promise<void> | void) | string
+
+  /**
    * Lookup map required for related method
    */
   type RelationsQueryBuildersMap<T> = {
@@ -566,6 +572,24 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $boot (): void
 
     /**
+     * Register a before hook
+     */
+    $before<T extends ModelConstructorContract> (
+      this: T,
+      event: EventsList,
+      handler: HooksHandler<InstanceType<T>>,
+    )
+
+    /**
+     * Register an after hook
+     */
+    $after<T extends ModelConstructorContract> (
+      this: T,
+      event: EventsList,
+      handler: HooksHandler<InstanceType<T>>,
+    )
+
+    /**
      * Creating model from adapter results
      */
     $createFromAdapterResult<T extends ModelConstructorContract> (
@@ -716,18 +740,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
       modelConstructor: ModelConstructorContract,
       options?: ModelAdapterOptions,
     ): ModelQueryBuilderContract<ModelConstructorContract> & ExcutableQueryBuilderContract<ModelContract[]>
-  }
-
-  /**
-   * Shape of the hooks contract used by transaction client and models
-   */
-  export interface HooksContract<Events extends string, Handler extends any> {
-    add (lifecycle: 'before' | 'after', event: Events, handler: Handler): this
-    before (event: Events, handler: Handler): this
-    after (event: Events, handler: Handler): this
-    execute (lifecycle: 'before' | 'after', event: Events, payload: any): Promise<void>
-    clear (event: Events): void
-    clearAll (): void
   }
 
   /**
