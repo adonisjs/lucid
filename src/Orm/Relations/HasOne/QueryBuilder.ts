@@ -64,7 +64,13 @@ export class HasOneQueryBuilder extends BaseRelationQueryBuilder implements HasO
      * Constraint for one parent
      */
     const value = this.$getRelatedValue(this._parent, this._relation.localKey)
-    return this.where(this._relation.foreignAdapterKey, value).limit(1)
+    this.where(this._relation.foreignAdapterKey, value)
+
+    if (!['update', 'delete'].includes(this.$queryAction())) {
+      this.limit(1)
+    }
+
+    return this
   }
 
   /**

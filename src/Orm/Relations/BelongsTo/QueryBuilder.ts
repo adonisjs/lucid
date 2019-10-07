@@ -68,7 +68,13 @@ export class BelongsToQueryBuilder
      * Constraint for one parent
      */
     const value = this.$getRelatedValue(this._parent, this._relation.foreignKey)
-    return this.where(this._relation.localAdapterKey, value).limit(1)
+    this.where(this._relation.localAdapterKey, value)
+
+    if (!['update', 'delete'].includes(this.$queryAction())) {
+      this.limit(1)
+    }
+
+    return this
   }
 
   /**
