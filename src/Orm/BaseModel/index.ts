@@ -184,6 +184,7 @@ export class BaseModel implements ModelContract {
     Object.defineProperty(this, '$columns', { value: new Map() })
     Object.defineProperty(this, '$computed', { value: new Map() })
     Object.defineProperty(this, '$relations', { value: new Map() })
+    Object.defineProperty(this, '$refs', { value: {} })
     Object.defineProperty(this, '_mappings', {
       value: {
         cast: new Map(),
@@ -219,6 +220,7 @@ export class BaseModel implements ModelContract {
 
     this.$columns.set(name, column)
     this._mappings.cast.set(column.castAs!, name)
+    this.$refs[name] = column.castAs
    }
 
   /**

@@ -99,6 +99,22 @@ test.group('Base model | boot', (group) => {
     assert.deepEqual(mapToObj(User.$columns), {})
     assert.deepEqual(mapToObj(User.$relations), {})
     assert.deepEqual(mapToObj(User.$computed), {})
+    assert.deepEqual(User.$refs, {})
+  })
+
+  test('compute refs from the added columns', async (assert) => {
+    class User extends BaseModel {
+      public static $increments = false
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userName: string
+    }
+
+    User.$boot()
+    assert.deepEqual(User.$refs, { id: 'id', userName: 'user_name' })
   })
 })
 
