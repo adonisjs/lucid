@@ -419,13 +419,44 @@ export class BaseModel implements ModelContract {
 
     if (!row) {
       row = new this() as InstanceType<T>
-      row.$options = query.clientOptions
       row.fill(Object.assign({}, search, savePayload))
-      return row
+    }
+
+    /**
+     * Copying options from the select query client and use the same
+     * one's for persistance
+     */
+    if (query.client.isTransaction) {
+      row.$trx = query.client as TransactionClientContract
+    } else {
+      row.$options = query.clientOptions
     }
 
     return row
   }
+
+  /**
+   * Updates or creates a new row inside the database
+   */
+  public static async updateOrCreate<T extends ModelConstructorContract> (
+    this: T,
+    search: any,
+    updatedPayload: any,
+    options?: ModelAdapterOptions,
+  ) {
+    const row = await this.firstOrNew(search, updatedPayload, options)
+
+    /**
+     * Update if row was found
+     */
+    if (row.$persisted) {
+      row.merge(updatedPayload)
+    }
+
+    await row.save()
+    return row
+  }
+
   /**
    * Create a array of model instances from the adapter result
    */

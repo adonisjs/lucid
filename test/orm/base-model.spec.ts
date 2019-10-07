@@ -1390,6 +1390,131 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(user!.email, 'nikk@gmail.com')
     assert.equal(user!.username, 'nikk')
   })
+
+  test('update the existing row when search criteria matches', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.updateOrCreate({ username: 'virk' }, { points: 20 })
+    assert.isTrue(user.$persisted)
+    assert.equal(user.points, 20)
+    assert.equal(user.username, 'virk')
+
+    const users = await db.query().from('users')
+
+    assert.lengthOf(users, 1)
+    assert.equal(users[0].points, 20)
+  })
+
+  test('execute updateOrCreate update action inside a transaction', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const trx = await db.transaction()
+
+    const user = await User.updateOrCreate({ username: 'virk' }, { points: 20 }, { client: trx })
+
+    assert.isTrue(user.$persisted)
+    assert.equal(user.points, 20)
+    assert.equal(user.username, 'virk')
+
+    await trx.rollback()
+
+    const users = await db.query().from('users')
+    assert.lengthOf(users, 1)
+
+    assert.equal(users[0].username, 'virk')
+    assert.equal(users[0].points, 0)
+  })
+
+  test('create a new row when search criteria fails', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.updateOrCreate({ username: 'nikk' }, { points: 20 })
+
+    assert.isTrue(user.$persisted)
+    assert.equal(user.points, 20)
+    assert.equal(user.username, 'nikk')
+
+    const users = await db.query().from('users')
+    assert.lengthOf(users, 2)
+
+    assert.equal(users[0].username, 'virk')
+    assert.equal(users[0].points, 0)
+
+    assert.equal(users[1].username, 'nikk')
+    assert.equal(users[1].points, 20)
+  })
+
+  test('execute updateOrCreate create action inside a transaction', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const trx = await db.transaction()
+
+    const user = await User.updateOrCreate({ username: 'nikk' }, { points: 20 }, { client: trx })
+
+    assert.isTrue(user.$persisted)
+    assert.equal(user.points, 20)
+    assert.equal(user.username, 'nikk')
+
+    await trx.rollback()
+
+    const users = await db.query().from('users')
+    assert.lengthOf(users, 1)
+
+    assert.equal(users[0].username, 'virk')
+    assert.equal(users[0].points, 0)
+  })
 })
 
 test.group('Base Model | hooks', (group) => {
