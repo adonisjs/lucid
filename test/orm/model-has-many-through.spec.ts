@@ -650,3 +650,116 @@ test.group('Model | Has Many Through | fetch', (group) => {
     assert.equal(posts[1].$extras.through_country_id, 1)
   })
 })
+
+test.group('Model | HasManyThrough | bulk operation', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('generate correct sql for deleting related rows', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.$boot()
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.$boot()
+
+    class Country extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: Post[]
+    }
+
+    await db.insertQuery().table('countries').insert([{ name: 'India' }, { name: 'USA' }])
+
+    const country = await Country.find(1)
+    const { sql, bindings } = country!.related('posts').del().toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .getWriteClient()
+      .from('posts')
+      .whereIn('posts.user_id', (builder) => {
+        builder.from('users').where('users.country_id', 1)
+      })
+      .del()
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('generate correct sql for updating related rows', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.$boot()
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.$boot()
+
+    class Country extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: Post[]
+    }
+
+    await db.insertQuery().table('countries').insert([{ name: 'India' }, { name: 'USA' }])
+
+    const country = await Country.find(1)
+    const { sql, bindings } = country!.related('posts').update({ title: 'Lucid 101' }).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .getWriteClient()
+      .from('posts')
+      .whereIn('posts.user_id', (builder) => {
+        builder.from('users').where('users.country_id', 1)
+      })
+      .update({ title: 'Lucid 101' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})

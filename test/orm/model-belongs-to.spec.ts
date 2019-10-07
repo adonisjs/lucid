@@ -949,7 +949,7 @@ test.group('Model | BelongsTo | fetch related', (group) => {
   })
 })
 
-test.group('Model | HasOne | persist', (group) => {
+test.group('Model | BelongsTo | persist', (group) => {
   group.before(async () => {
     db = getDb()
     BaseModel = getBaseModel(ormAdapter(db))
@@ -1232,7 +1232,7 @@ test.group('Model | HasOne | persist', (group) => {
   })
 })
 
-test.group('Model | HasOne | dissociate', (group) => {
+test.group('Model | BelongsTo | dissociate', (group) => {
   group.before(async () => {
     db = getDb()
     BaseModel = getBaseModel(ormAdapter(db))
@@ -1284,5 +1284,130 @@ test.group('Model | HasOne | dissociate', (group) => {
 
     await profile.related<'belongsTo', 'user'>('user').dissociate()
     assert.isNull(profile.userId)
+  })
+})
+
+test.group('Model | BelongsTo | bulk operation', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('generate correct sql for deleting related rows', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    await db.table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+
+    const profile = await Profile.find(1)
+    const { sql, bindings } = profile!.related('user').del().toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .getWriteClient()
+      .from('users')
+      .where('id', 1)
+      .del()
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('raise exception when FK is null', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    await db.table('profiles').insert({ display_name: 'Hvirk' })
+
+    const profile = await Profile.find(1)
+    const fn = () => profile!.related('user').del().toSQL()
+    assert.throw(fn, 'Cannot delete user, value of Profile.userId is undefined')
+  })
+
+  test('generate correct sql for updating related rows', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: User
+    }
+
+    await db.table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+
+    const profile = await Profile.find(1)
+    const { sql, bindings } = profile!.related('user').update({ username: 'virk' }).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .getWriteClient()
+      .from('users')
+      .where('id', 1)
+      .update({ username: 'virk' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
   })
 })
