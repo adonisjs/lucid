@@ -689,6 +689,16 @@ declare module '@ioc:Adonis/Lucid/Model' {
     ): Promise<InstanceType<T>>
 
     /**
+     * Returns the first row or save it to the database
+     */
+    updateOrCreate<T extends ModelConstructorContract> (
+      this: T,
+      search: any,
+      updatePayload: any,
+      options?: ModelAdapterOptions,
+    ): Promise<InstanceType<T>>
+
+    /**
      * Fetch all rows
      */
     all<T extends ModelConstructorContract> (
