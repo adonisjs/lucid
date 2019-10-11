@@ -5,6 +5,7 @@
   },
   "files": [
     "./node_modules/@adonisjs/profiler/build/adonis-typings/profiler.d.ts",
-    "./node_modules/@adonisjs/logger/build/adonis-typings/logger.d.ts"
+    "./node_modules/@adonisjs/logger/build/adonis-typings/logger.d.ts",
+    "./node_modules/@adonisjs/application/build/adonis-typings/application.d.ts"
   ]
 }

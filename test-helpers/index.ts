@@ -7,7 +7,7 @@
 * file that was distributed with this source code.
 */
 
-/// <reference path="../adonis-typings/database.ts" />
+/// <reference path="../adonis-typings/index.ts" />
 
 import knex from 'knex'
 import dotenv from 'dotenv'
@@ -38,6 +38,9 @@ import {
   ManyToManyQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
+import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
+
+import { Schema } from '../src/Schema'
 import { Adapter } from '../src/Orm/Adapter'
 import { BaseModel } from '../src/Orm/BaseModel'
 import { QueryClient } from '../src/QueryClient'
@@ -200,6 +203,7 @@ export async function cleanup () {
   await db.schema.dropTableIfExists('posts')
   await db.schema.dropTableIfExists('comments')
   await db.schema.dropTableIfExists('identities')
+  await db.schema.dropTableIfExists('knex_migrations')
   await db.destroy()
 }
 
@@ -412,4 +416,11 @@ export function mapToObj<T extends any> (value: Map<any, any>): T {
     obj[key] = value
   })
   return obj
+}
+
+/**
+ * Returns the base schema class typed to it's interface
+ */
+export function getBaseSchema () {
+  return Schema as unknown as SchemaConstructorContract
 }

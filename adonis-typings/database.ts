@@ -43,6 +43,16 @@ declare module '@ioc:Adonis/Lucid/Database' {
   }
 
   /**
+   * Dialect specfic methods
+   */
+  export interface DialectContract {
+    readonly name: string
+    supportsAdvisoryLocks: boolean
+    getAdvisoryLock (key: string | number, timeout?: number): Promise<boolean>
+    releaseAdvisoryLock (key: string | number): Promise<boolean>
+  }
+
+  /**
    * Shape of the query client, that is used to retrive instances
    * of query builder
    */
@@ -60,7 +70,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * The database dialect in use
      */
-    readonly dialect: string
+    dialect: DialectContract
 
     /**
      * The client mode in which it is execute queries
@@ -72,6 +82,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * was originated
      */
     readonly connectionName: string
+
+    /**
+     * Returns schema instance for the write client
+     */
+    schema: knex.SchemaBuilder
 
     /**
      * Returns the read and write clients
@@ -192,6 +207,16 @@ declare module '@ioc:Adonis/Lucid/Database' {
   }
 
   /**
+   * Migrations config
+   */
+  export type MigratorConfigContract = {
+    disableTransactions?: boolean,
+    paths?: string[],
+    schemaName?: string,
+    tableName?: string,
+  }
+
+  /**
    * Shared config options for all clients
    */
   type SharedConfigNode = {
@@ -200,6 +225,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     asyncStackTraces?: boolean,
     revision?: number,
     healthCheck?: boolean,
+    migrations?: MigratorConfigContract,
     pool?: {
       afterCreate?: (conn: any, done: any) => void,
       min?: number,

@@ -15,6 +15,7 @@ import { resolveClientNameWithAliases } from 'knex/lib/helpers'
 import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 import {
+  DialectContract,
   ConnectionContract,
   QueryClientContract,
   TransactionClientContract,
@@ -25,6 +26,7 @@ import { TransactionClient } from '../TransactionClient'
 import { RawQueryBuilder } from '../Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../Database/QueryBuilder/Database'
+import { dialects } from '../Dialects'
 
 /**
  * Query client exposes the API to fetch instance of different query builders
@@ -34,6 +36,8 @@ import { DatabaseQueryBuilder } from '../Database/QueryBuilder/Database'
  * it doesn't real matter what are the return types from this class
  */
 export class QueryClient implements QueryClientContract {
+  private _dialect: DialectContract
+
   /**
    * Not a transaction client
    */
@@ -42,7 +46,7 @@ export class QueryClient implements QueryClientContract {
   /**
    * The name of the dialect in use
    */
-  public readonly dialect: string = resolveClientNameWithAliases(this._connection.config.client)
+  public dialect = new (dialects[resolveClientNameWithAliases(this._connection.config.client)])(this)
 
   /**
    * The profiler to be used for profiling queries
@@ -58,6 +62,13 @@ export class QueryClient implements QueryClientContract {
     public readonly mode: 'dual' | 'write' | 'read',
     private _connection: ConnectionContract,
   ) {
+  }
+
+  /**
+   * Returns schema instance for the write client
+   */
+  public get schema () {
+    return this.getWriteClient().schema
   }
 
   /**
@@ -170,5 +181,13 @@ export class QueryClient implements QueryClientContract {
    */
   public table (table: any): any {
     return this.insertQuery().table(table)
+  }
+
+  public getAdvisoryLock (key: string, timeout?: number): any {
+    return this._dialect.getAdvisoryLock(key, timeout)
+  }
+
+  public releaseAdvisoryLock (key: string): any {
+    return this._dialect.releaseAdvisoryLock(key)
   }
 }

@@ -197,7 +197,7 @@ test.group('Health Checks', (group) => {
 
       const report = await connection.getReport()
       assert.equal(report.message, 'Unable to reach the database server')
-      assert.equal(report.error!.errno, 'ENOTFOUND')
+      assert.exists(report.error)
 
       await connection.disconnect()
     }).timeout(0)
@@ -220,7 +220,7 @@ test.group('Health Checks', (group) => {
 
       const report = await connection.getReport()
       assert.equal(report.message, 'Unable to reach one of the read hosts')
-      assert.equal(report.error!.errno, 'ENOTFOUND')
+      assert.exists(report.error)
 
       await connection.disconnect()
     }).timeout(0)

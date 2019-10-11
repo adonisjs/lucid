@@ -11,7 +11,7 @@
 
 import knex from 'knex'
 import { EventEmitter } from 'events'
-import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+import { TransactionClientContract, DialectContract } from '@ioc:Adonis/Lucid/Database'
 import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 import { ModelQueryBuilder } from '../Orm/QueryBuilder'
@@ -42,7 +42,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
 
   constructor (
     public knexClient: knex.Transaction,
-    public dialect: string,
+    public dialect: DialectContract,
     public connectionName: string,
   ) {
     super()
@@ -53,6 +53,13 @@ export class TransactionClient extends EventEmitter implements TransactionClient
    */
   public get isCompleted () {
     return this.knexClient.isCompleted()
+  }
+
+  /**
+   * Returns schema instance for the write client
+   */
+  public get schema () {
+    return this.getWriteClient().schema
   }
 
   /**
