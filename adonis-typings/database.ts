@@ -212,7 +212,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
   export type MigratorConfigContract = {
     disableTransactions?: boolean,
     paths?: string[],
-    schemaName?: string,
     tableName?: string,
   }
 
