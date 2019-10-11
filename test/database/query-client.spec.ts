@@ -10,6 +10,8 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
+import { resolveClientNameWithAliases } from 'knex/lib/helpers'
+
 import { Connection } from '../../src/Connection'
 import { QueryClient } from '../../src/QueryClient'
 import { getConfig, setup, cleanup, getLogger, resetTables } from '../../test-helpers'
@@ -271,3 +273,50 @@ test.group('Query client | write mode', (group) => {
     await connection.disconnect()
   })
 })
+
+if (process.env.DB !== 'sqlite') {
+  test.group('Query client | advisory locks', (group) => {
+    group.before(async () => {
+      await setup()
+    })
+
+    group.after(async () => {
+      await cleanup()
+    })
+
+    group.afterEach(async () => {
+      await resetTables()
+    })
+
+    test('get advisory lock', async (assert) => {
+      const connection = new Connection('primary', getConfig(), getLogger())
+      connection.connect()
+
+      const client = new QueryClient('dual', connection)
+      const lock = await client.dialect.getAdvisoryLock(1)
+
+      assert.isTrue(lock)
+      assert.equal(client.dialect.name, resolveClientNameWithAliases(connection.config.client))
+
+      await client.dialect.releaseAdvisoryLock(1)
+      await connection.disconnect()
+    })
+
+    test('release advisory lock', async (assert) => {
+      const connection = new Connection('primary', getConfig(), getLogger())
+      connection.connect()
+
+      const client = new QueryClient('dual', connection)
+      if (client.dialect.name === 'sqlite3') {
+        await connection.disconnect()
+        return
+      }
+
+      await client.dialect.getAdvisoryLock(1)
+      const released = await client.dialect.releaseAdvisoryLock(1)
+      assert.isTrue(released)
+
+      await connection.disconnect()
+    })
+  })
+}

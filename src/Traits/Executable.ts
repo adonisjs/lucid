@@ -175,7 +175,7 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
      * transaction
      */
     if (
-      this.client.dialect === 'sqlite3'
+      this.client.dialect.name === 'sqlite3'
       || this.client.isTransaction
       || this.$knexBuilder['client'].transacting
     ) {

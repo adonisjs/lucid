@@ -2,3 +2,5 @@
 /// <reference path="./querybuilder.ts" />
 /// <reference path="./model.ts" />
 /// <reference path="./orm.ts" />
+/// <reference path="./schema.ts" />
+/// <reference path="./migrator.ts" />
