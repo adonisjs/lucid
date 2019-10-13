@@ -45,7 +45,7 @@
     "@poppinss/utils": "^2.0.0",
     "camelcase": "^5.3.1",
     "knex": "^0.19.5",
-    "knex-dynamic-connection": "^1.0.0",
+    "knex-dynamic-connection": "^1.0.1",
     "pluralize": "^8.0.0",
     "snake-case": "^2.1.0",
     "ts-essentials": "^3.0.2"
