@@ -50,11 +50,11 @@ test.group('MigrationSource', (group) => {
     }), [
       {
         absPath: join(fs.basePath, 'database/migrations/bar.js'),
-        name: 'bar',
+        name: 'database/migrations/bar',
       },
       {
         absPath: join(fs.basePath, 'database/migrations/foo.js'),
-        name: 'foo',
+        name: 'database/migrations/foo',
       },
     ])
   })
@@ -82,19 +82,19 @@ test.group('MigrationSource', (group) => {
     }), [
       {
         absPath: join(fs.basePath, 'database/primary/b.js'),
-        name: 'b',
+        name: 'database/primary/b',
       },
       {
         absPath: join(fs.basePath, 'database/primary/d.js'),
-        name: 'd',
+        name: 'database/primary/d',
       },
       {
         absPath: join(fs.basePath, 'database/secondary/a.js'),
-        name: 'a',
+        name: 'database/secondary/a',
       },
       {
         absPath: join(fs.basePath, 'database/secondary/c.js'),
-        name: 'c',
+        name: 'database/secondary/c',
       },
     ])
   })
