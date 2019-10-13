@@ -51,7 +51,7 @@ export abstract class Chainable implements ChainableContract {
     }
 
     if (!alias) {
-      return alias
+      return columns
     }
 
     return { [alias]: this.$transformValue(columns) }
@@ -123,7 +123,7 @@ export abstract class Chainable implements ChainableContract {
    * Add a `where` clause
    */
   public where (key: any, operator?: any, value?: any): this {
-    if (value) {
+    if (value !== undefined) {
       this.$knexBuilder.where(key, operator, this.$transformValue(value))
     } else if (operator) {
       this.$knexBuilder.where(key, this.$transformValue(operator))
@@ -142,7 +142,7 @@ export abstract class Chainable implements ChainableContract {
    * Add a `or where` clause
    */
   public orWhere (key: any, operator?: any, value?: any): this {
-    if (value) {
+    if (value !== undefined) {
       this.$knexBuilder.orWhere(key, operator, this.$transformValue(value))
     } else if (operator) {
       this.$knexBuilder.orWhere(key, this.$transformValue(operator))
@@ -164,7 +164,7 @@ export abstract class Chainable implements ChainableContract {
    * Adding `where not` clause
    */
   public whereNot (key: any, operator?: any, value?: any): this {
-    if (value) {
+    if (value !== undefined) {
       this.$knexBuilder.whereNot(key, operator, this.$transformValue(value))
     } else if (operator) {
       this.$knexBuilder.whereNot(key, this.$transformValue(operator))
@@ -179,7 +179,7 @@ export abstract class Chainable implements ChainableContract {
    * Adding `or where not` clause
    */
   public orWhereNot (key: any, operator?: any, value?: any): this {
-    if (value) {
+    if (value !== undefined) {
       this.$knexBuilder.orWhereNot(key, operator, this.$transformValue(value))
     } else if (operator) {
       this.$knexBuilder.orWhereNot(key, this.$transformValue(operator))
@@ -448,7 +448,7 @@ export abstract class Chainable implements ChainableContract {
    * Add an inner join clause
    */
   public innerJoin (table: any, first: any, operator?: any, second?: any): this {
-    if (second) {
+    if (second !== undefined) {
       this.$knexBuilder.innerJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
       this.$knexBuilder.innerJoin(table, first, this.$transformRaw(operator))
@@ -463,7 +463,7 @@ export abstract class Chainable implements ChainableContract {
    * Add a left join clause
    */
   public leftJoin (table: any, first: any, operator?: any, second?: any): this {
-    if (second) {
+    if (second !== undefined) {
       this.$knexBuilder.leftJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
       this.$knexBuilder.leftJoin(table, first, this.$transformRaw(operator))
@@ -478,7 +478,7 @@ export abstract class Chainable implements ChainableContract {
    * Add a left outer join clause
    */
   public leftOuterJoin (table: any, first: any, operator?: any, second?: any): this {
-    if (second) {
+    if (second !== undefined) {
       this.$knexBuilder.leftOuterJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
       this.$knexBuilder.leftOuterJoin(table, first, this.$transformRaw(operator))
@@ -493,7 +493,7 @@ export abstract class Chainable implements ChainableContract {
    * Add a right join clause
    */
   public rightJoin (table: any, first: any, operator?: any, second?: any): this {
-    if (second) {
+    if (second !== undefined) {
       this.$knexBuilder.rightJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
       this.$knexBuilder.rightJoin(table, first, this.$transformRaw(operator))
@@ -508,7 +508,7 @@ export abstract class Chainable implements ChainableContract {
    * Add a right outer join clause
    */
   public rightOuterJoin (table: any, first: any, operator?: any, second?: any): this {
-    if (second) {
+    if (second !== undefined) {
       this.$knexBuilder.rightOuterJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
       this.$knexBuilder.rightOuterJoin(table, first, this.$transformRaw(operator))
@@ -523,7 +523,7 @@ export abstract class Chainable implements ChainableContract {
    * Add a full outer join clause
    */
   public fullOuterJoin (table: any, first: any, operator?: any, second?: any): this {
-    if (second) {
+    if (second !== undefined) {
       this.$knexBuilder.fullOuterJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
       this.$knexBuilder.fullOuterJoin(table, first, this.$transformRaw(operator))
@@ -538,7 +538,7 @@ export abstract class Chainable implements ChainableContract {
    * Add a cross join clause
    */
   public crossJoin (table: any, first: any, operator?: any, second?: any): this {
-    if (second) {
+    if (second !== undefined) {
       this.$knexBuilder.crossJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
       this.$knexBuilder.crossJoin(table, first, this.$transformRaw(operator))
@@ -569,7 +569,7 @@ export abstract class Chainable implements ChainableContract {
    * use raw queries in this case.
    */
   public having (key: any, operator?: any, value?: any): this {
-    if (value) {
+    if (value !== undefined) {
       this.$knexBuilder.having(key, operator, this.$transformValue(value))
     } else if (operator) {
       this.$knexBuilder.having(key, this.$transformValue(operator))
@@ -587,7 +587,7 @@ export abstract class Chainable implements ChainableContract {
    * use raw queries in this case.
    */
   public orHaving (key: any, operator?: any, value?: any): this {
-    if (value) {
+    if (value !== undefined) {
       this.$knexBuilder.orHaving(key, operator, this.$transformValue(value))
     } else if (operator) {
       this.$knexBuilder.orHaving(key, this.$transformValue(operator))

@@ -48,7 +48,7 @@ export class ManyToManyQueryBuilder
    * Add where clause with pivot table prefix
    */
   public wherePivot (key: any, operator?: any, value?: any): this {
-    if (value) {
+    if (value !== undefined) {
       this.$knexBuilder.where(this._prefixPivotTable(key), operator, this.$transformValue(value))
     } else if (operator) {
       this.$knexBuilder.where(this._prefixPivotTable(key), this.$transformValue(operator))
@@ -63,7 +63,7 @@ export class ManyToManyQueryBuilder
    * Add or where clause with pivot table prefix
    */
   public orWherePivot (key: any, operator?: any, value?: any): this {
-    if (value) {
+    if (value !== undefined) {
       this.$knexBuilder.orWhere(this._prefixPivotTable(key), operator, this.$transformValue(value))
     } else if (operator) {
       this.$knexBuilder.orWhere(this._prefixPivotTable(key), this.$transformValue(operator))
@@ -85,7 +85,7 @@ export class ManyToManyQueryBuilder
    * Add where not pivot
    */
   public whereNotPivot (key: any, operator?: any, value?: any): this {
-    if (value) {
+    if (value !== undefined) {
       this.$knexBuilder.whereNot(this._prefixPivotTable(key), operator, this.$transformValue(value))
     } else if (operator) {
       this.$knexBuilder.whereNot(this._prefixPivotTable(key), this.$transformValue(operator))
@@ -100,7 +100,7 @@ export class ManyToManyQueryBuilder
    * Add or where not pivot
    */
   public orWhereNotPivot (key: any, operator?: any, value?: any): this {
-    if (value) {
+    if (value !== undefined) {
       this.$knexBuilder.orWhereNot(this._prefixPivotTable(key), operator, this.$transformValue(value))
     } else if (operator) {
       this.$knexBuilder.orWhereNot(this._prefixPivotTable(key), this.$transformValue(operator))

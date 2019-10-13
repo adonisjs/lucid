@@ -38,17 +38,20 @@ import {
   ManyToManyQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
+import { MigratorContract, MigratorOptions } from '@ioc:Adonis/Lucid/Migrator'
 
 import { Schema } from '../src/Schema'
+import { Migrator } from '../src/Migrator'
 import { Adapter } from '../src/Orm/Adapter'
 import { BaseModel } from '../src/Orm/BaseModel'
 import { QueryClient } from '../src/QueryClient'
 import { Database } from '../src/Database/index'
+import { ManyToMany } from '../src/Orm/Relations/ManyToMany/index'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
-import { ManyToMany } from '../src/Orm/Relations/ManyToMany/index'
 import { ManyToManyQueryBuilder } from '../src/Orm/Relations/ManyToMany/QueryBuilder'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
@@ -193,8 +196,14 @@ export async function setup () {
 /**
  * Does cleanup removes database
  */
-export async function cleanup () {
+export async function cleanup (customTables?: string[]) {
   const db = knex(getConfig())
+
+  if (customTables) {
+    await Promise.all(customTables.map((table) => db.schema.dropTableIfExists(table)))
+    return
+  }
+
   await db.schema.dropTableIfExists('users')
   await db.schema.dropTableIfExists('countries')
   await db.schema.dropTableIfExists('skills')
@@ -204,6 +213,7 @@ export async function cleanup () {
   await db.schema.dropTableIfExists('comments')
   await db.schema.dropTableIfExists('identities')
   await db.schema.dropTableIfExists('knex_migrations')
+
   await db.destroy()
 }
 
@@ -423,4 +433,11 @@ export function mapToObj<T extends any> (value: Map<any, any>): T {
  */
 export function getBaseSchema () {
   return Schema as unknown as SchemaConstructorContract
+}
+
+/**
+ * Returns instance of migrator
+ */
+export function getMigrator (db: DatabaseContract, app: ApplicationContract, config: MigratorOptions) {
+  return new Migrator(db, app, config) as unknown as MigratorContract
 }

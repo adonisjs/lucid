@@ -41,7 +41,7 @@ export class MigrationSource {
         return resolve(files.sort().map((file) => {
           return {
             absPath: join(path, file),
-            name: file.replace(RegExp(`${extname(file)}$`), ''),
+            name: join(directoryPath, file.replace(RegExp(`${extname(file)}$`), '')),
             source: require(join(path, file)),
           }
         }))
