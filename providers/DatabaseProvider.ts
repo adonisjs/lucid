@@ -9,9 +9,11 @@
 
 import { IocContract } from '@adonisjs/fold'
 
+import { Schema } from '../src/Schema'
 import { Database } from '../src/Database'
 import { Adapter } from '../src/Orm/Adapter'
 import { BaseModel } from '../src/Orm/BaseModel'
+
 import {
   column,
   hasOne,
@@ -55,6 +57,10 @@ export default class DatabaseServiceProvider {
         manyToMany,
         hasManyThrough,
       }
+    })
+
+    this.$container.singleton('Adonis/Lucid/Schema', () => {
+      return Schema
     })
   }
 

@@ -32,4 +32,7 @@ declare module '@ioc:Adonis/Lucid/Schema' {
     execUp (): Promise<string [] | boolean>
     execDown (): Promise<string [] | boolean>
   }
+
+  const Schema: SchemaConstructorContract
+  export default Schema
 }
