@@ -361,15 +361,19 @@ declare module '@ioc:Adonis/Lucid/Model' {
       checkExisting?: boolean,
     ): Promise<void>
 
-    // /**
-    //  * Attach related
-    //  */
-    // detach (ids: any[]): Promise<void>
+    /**
+     * Detach from pivot table
+     */
+    detach (ids: (string | number)[]): Promise<void>
 
-    // /**
-    //  * Attach related
-    //  */
-    // sync (ids: any[], detach: boolean): Promise<void>
+    /**
+     * Sync related ids
+     */
+    sync (
+      ids: (string | number)[] | { [key: string]: any },
+      wrapInTransaction?: boolean,
+      checkExisting?: boolean,
+    ): Promise<void>
   }
 
   /**

@@ -421,6 +421,82 @@ export class ManyToManyQueryBuilder
   }
 
   /**
+   * Remove related records from the pivot table. The `inverse` flag
+   * will remove all except given ids
+   */
+  private async _detach (
+    parent: ModelContract,
+    client: QueryClientContract,
+    ids: (string | number)[],
+    inverse: boolean = false,
+  ) {
+    const query = client
+      .query()
+      .from(this._relation.pivotTable)
+      .where(
+        this._relation.pivotForeignKey,
+        this.$getRelatedValue(parent, this._relation.localKey, 'detach'),
+      )
+
+    if (inverse) {
+      query.whereNotIn(this._relation.pivotRelatedForeignKey, ids)
+    } else {
+      query.whereIn(this._relation.pivotRelatedForeignKey, ids)
+    }
+
+    return query.del()
+  }
+
+  /**
+   * Sync related ids inside the pivot table.
+   */
+  private async _sync (
+    parent: ModelContract,
+    ids: (string | number)[] | { [key: string]: any },
+    checkExisting: boolean,
+  ) {
+    const client = this._relation.model.$adapter.modelClient(parent)
+
+    /**
+     * Remove except given ids
+     */
+    const detachIds = Array.isArray(ids) ? ids : Object.keys(ids)
+    await this._detach(parent, client, detachIds, true)
+
+    /**
+     * Add new ids
+     */
+    await this._attach(parent, client, ids, checkExisting)
+  }
+
+  /**
+   * Sync related ids inside the pivot table within a transaction
+   */
+  private async _syncInTransaction (
+    parent: ModelContract,
+    trx: TransactionClientContract,
+    ids: (string | number)[] | { [key: string]: any },
+    checkExisting: boolean,
+  ) {
+    try {
+      /**
+       * Remove except given ids
+       */
+      const detachIds = Array.isArray(ids) ? ids : Object.keys(ids)
+      await this._detach(parent, trx, detachIds, true)
+
+      /**
+       * Add new ids
+       */
+      await this._attach(parent, trx, ids, checkExisting)
+      await trx.commit()
+    } catch (error) {
+      await trx.rollback()
+      throw error
+    }
+  }
+
+  /**
    * Save related model instance with entry in the pivot table
    */
   public async save (
@@ -493,5 +569,47 @@ export class ManyToManyQueryBuilder
 
     const client = this._relation.model.$adapter.modelClient(this._parent)
     await this._attach(this._parent, client, ids, checkExisting)
+  }
+
+  /**
+   * Remove one of more related instances
+   */
+  public async detach (ids: (string | number)[]) {
+    if (Array.isArray(this._parent)) {
+      throw new Error('Cannot save with multiple parents')
+      return
+    }
+
+    const client = this._relation.model.$adapter.modelClient(this._parent)
+    await this._detach(this._parent, client, ids)
+  }
+
+  /**
+   * Sync related ids
+   */
+  public async sync (
+    ids: (string | number)[] | { [key: string]: any },
+    wrapInTransaction: boolean = true,
+    checkExisting: boolean = true,
+  ) {
+    if (Array.isArray(this._parent)) {
+      throw new Error('Cannot save with multiple parents')
+      return
+    }
+
+    /**
+     * Wrap in transaction when wrapInTransaction is not set to false. So that
+     * we rollback to initial state, when one or more fails
+     */
+    let trx: TransactionClientContract | undefined
+    if (wrapInTransaction) {
+      trx = await this.client.transaction()
+    }
+
+    if (trx) {
+      await this._syncInTransaction(this._parent, trx, ids, checkExisting)
+    } else {
+      await this._sync(this._parent, ids, checkExisting)
+    }
   }
 }
