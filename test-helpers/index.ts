@@ -69,7 +69,6 @@ export function getConfig (): ConnectionConfigContract {
           filename: join(fs.basePath, 'db.sqlite'),
         },
         useNullAsDefault: true,
-        debug: true,
       }
     case 'mysql':
       return {
