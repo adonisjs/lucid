@@ -33,7 +33,7 @@ export class Schema implements SchemaContract {
   /**
    * Enable/disable transactions for this schema
    */
-  public disableTransactions = false
+  public static disableTransactions = false
 
   /**
    * Returns the schema to build database tables

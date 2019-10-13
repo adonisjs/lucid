@@ -15,6 +15,7 @@ declare module '@ioc:Adonis/Lucid/Schema' {
   export type DeferCallback = (client: QueryClientContract) => void | Promise<void>
 
   export interface SchemaConstructorContract {
+    disableTransactions: boolean
     new (db: QueryClientContract, file: string, dryRun: boolean): SchemaContract
   }
 
@@ -23,7 +24,6 @@ declare module '@ioc:Adonis/Lucid/Schema' {
     db: QueryClientContract
     schema: SchemaBuilder
     file: string
-    disableTransactions: boolean
 
     now (precision?: number): RawContract & ExcutableQueryBuilderContract<any>
     defer: (cb: DeferCallback) => void
