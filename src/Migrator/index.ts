@@ -358,6 +358,17 @@ export class Migrator implements MigratorContract {
   }
 
   /**
+   * Returns list of migrated files, along with their
+   * batch
+   */
+  public async getList () {
+    return this._client
+      .query()
+      .from(this._migrationsConfig.tableName)
+      .select('name', 'batch', 'migration_time')
+  }
+
+  /**
    * Migrate the database by calling the up method
    */
   public async run () {
