@@ -38,7 +38,7 @@
   },
   "homepage": "https://github.com/adonisjs/adonis-lucid#readme",
   "dependencies": {
-    "@adonisjs/application": "^1.0.14",
+    "@adonisjs/application": "^1.1.0",
     "@adonisjs/logger": "^1.1.6",
     "@adonisjs/profiler": "^1.2.4",
     "@poppinss/traits": "^1.0.0",
@@ -54,12 +54,12 @@
     "@adonisjs/core": "2.x.x"
   },
   "devDependencies": {
-    "@adonisjs/fold": "^6.2.1",
+    "@adonisjs/fold": "^6.2.2",
     "@adonisjs/mrm-preset": "^2.1.0",
     "@adonisjs/sink": "^2.2.3",
     "@poppinss/dev-utils": "^1.0.1",
     "@types/dotenv": "^6.1.1",
-    "@types/node": "^12.7.12",
+    "@types/node": "^12.11.1",
     "@types/pluralize": "0.0.29",
     "clone": "^2.1.2",
     "commitizen": "^4.0.3",
@@ -67,7 +67,7 @@
     "cz-conventional-changelog": "^3.0.2",
     "del-cli": "^3.0.0",
     "doctoc": "^1.4.0",
-    "dotenv": "^8.1.0",
+    "dotenv": "^8.2.0",
     "husky": "^3.0.9",
     "japa": "^3.0.1",
     "mrm": "^1.2.2",
