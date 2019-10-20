@@ -113,6 +113,77 @@ test.group('Model', (group) => {
     assert.deepEqual(user.$attributes, { username: 'virk', age: 22 })
   })
 
+  test('should be able to test if two models hold the same record', (assert) => {
+    class User extends Model {}
+
+    const user = new User()
+    user.id = 1
+    const user2 = new User()
+    user2.id = 1
+
+    assert.isTrue(user.is(user2))
+  })
+
+  test('should be able to test if model is not the same when primary key is different', (assert) => {
+    class User extends Model {}
+
+    const user = new User()
+    user.id = 1
+    const user2 = new User()
+    user2.id = 2
+
+    assert.isFalse(user.is(user2))
+  })
+
+  test('should be able to test if model is not the same when model is null', (assert) => {
+    class User extends Model {}
+
+    const user = new User()
+
+    assert.isFalse(user.is(null))
+  })
+
+  test('should be able to test if model is not the same when comparing different tables', (assert) => {
+    class User extends Model {}
+    class Post extends Model {}
+
+    const user = new User()
+    user.id = 1
+    const post = new Post()
+    post.id = 1
+
+    assert.isFalse(user.is(post))
+  })
+
+  test('should be able to test if model is not the same when connection is different', (assert) => {
+    class SqliteUser extends Model {
+      static get connection () {
+        return 'sqlite'
+      }
+
+      static get table () {
+        return 'user'
+      }
+    }
+
+    class MysqlUser extends Model {
+      static get connection () {
+        return 'mysql'
+      }
+
+      static get table () {
+        return 'user'
+      }
+    }
+
+    const user = new SqliteUser()
+    user.id = 1
+    const user2 = new MysqlUser()
+    user2.id = 1
+
+    assert.isFalse(user.is(user2))
+  })
+
   test('remove existing attributes when calling fill', (assert) => {
     class User extends Model {
     }

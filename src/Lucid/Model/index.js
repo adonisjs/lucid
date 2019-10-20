@@ -781,6 +781,21 @@ class Model extends BaseModel {
   }
 
   /**
+   * Checks if the passed model instance's record is the same as the current
+   *
+   * @method is
+   * @param  {Model} model
+   *
+   * @return {Boolean}
+   */
+  is (model) {
+    return !!model &&
+      this.primaryKeyValue === model.primaryKeyValue &&
+      this.constructor.table === model.constructor.table &&
+      this.constructor.connection === model.constructor.connection
+  }
+
+  /**
    * Persist model instance to the database. It will create
    * a new row when model has not been persisted already,
    * otherwise will update it.
