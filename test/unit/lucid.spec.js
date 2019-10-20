@@ -113,7 +113,7 @@ test.group('Model', (group) => {
     assert.deepEqual(user.$attributes, { username: 'virk', age: 22 })
   })
 
-  test('should be able to test if two models hold the same record', (assert) => {
+  test('can verify that two models hold the same record', (assert) => {
     class User extends Model {}
 
     const user = new User()
@@ -124,7 +124,7 @@ test.group('Model', (group) => {
     assert.isTrue(user.is(user2))
   })
 
-  test('should be able to test if model is not the same when primary key is different', (assert) => {
+  test('can verify that two models do not hold the same record based on primary key', (assert) => {
     class User extends Model {}
 
     const user = new User()
@@ -135,7 +135,7 @@ test.group('Model', (group) => {
     assert.isFalse(user.is(user2))
   })
 
-  test('should be able to test if model is not the same when model is null', (assert) => {
+  test('can verify that two models do not hold the same record when comparing against an empty model', (assert) => {
     class User extends Model {}
 
     const user = new User()
@@ -143,7 +143,7 @@ test.group('Model', (group) => {
     assert.isFalse(user.is(null))
   })
 
-  test('should be able to test if model is not the same when comparing different tables', (assert) => {
+  test('can verify that two models do not hold the same record based on table', (assert) => {
     class User extends Model {}
     class Post extends Model {}
 
@@ -155,7 +155,7 @@ test.group('Model', (group) => {
     assert.isFalse(user.is(post))
   })
 
-  test('should be able to test if model is not the same when connection is different', (assert) => {
+  test('can verify that two models do not hold the same record based on connection', (assert) => {
     class SqliteUser extends Model {
       static get connection () {
         return 'sqlite'
