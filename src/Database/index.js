@@ -178,12 +178,14 @@ class Database {
    * ```
    */
   beginTransaction () {
+    if (this._globalTrx) {
+      return new Promise((resolve, reject) => {
+        this._globalTrx.transaction(resolve).catch(() => {})
+      })
+    }
+
     return new Promise((resolve, reject) => {
-      this
-        .knex
-        .transaction(function (trx) {
-          resolve(trx)
-        }).catch(() => {})
+      this.knex.transaction(resolve).catch(() => {})
     })
   }
 
