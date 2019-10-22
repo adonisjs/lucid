@@ -102,7 +102,7 @@ export class QueryClient implements QueryClientContract {
    * Truncate table
    */
   public async truncate (table: string): Promise<void> {
-    await this.getWriteClient().select(table).truncate()
+    await this.getWriteClient().table(table).truncate()
   }
 
   /**
