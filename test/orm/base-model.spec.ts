@@ -116,6 +116,32 @@ test.group('Base model | boot', (group) => {
     User.$boot()
     assert.deepEqual(User.$refs, { id: 'id', userName: 'user_name' })
   })
+
+  test('compute primary adapter key from primary key column', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.$boot()
+    assert.equal(User.$primaryAdapterKey, 'id')
+  })
+
+  test('use cast as key when defined on primary column', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true, castAs: 'user_id' })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.$boot()
+    assert.equal(User.$primaryAdapterKey, 'user_id')
+  })
 })
 
 test.group('Base Model | getter-setters', (group) => {
