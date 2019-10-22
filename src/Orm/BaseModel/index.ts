@@ -74,6 +74,12 @@ export class BaseModel implements ModelContract {
   public static $primaryKey: string
 
   /**
+   * Primary key for executing database queries. The adapter keys are
+   * the column names
+   */
+  public static $primaryAdapterKey: string
+
+  /**
    * Whether or not the model has been booted. Booting the model initializes it's
    * static properties. Base models must not be initialized.
    */
@@ -216,6 +222,7 @@ export class BaseModel implements ModelContract {
 
     this.$booted = true
     this.$primaryKey = this.$primaryKey || 'id'
+    this.$primaryAdapterKey = snakeCase(this.$primaryKey)
 
     Object.defineProperty(this, '$refs', { value: {} })
     Object.defineProperty(this, '$columns', { value: new Map() })
@@ -250,6 +257,7 @@ export class BaseModel implements ModelContract {
      */
     if (column.primary) {
       this.$primaryKey = name
+      this.$primaryAdapterKey = column.castAs
     }
 
     this.$columns.set(name, column)
@@ -359,7 +367,7 @@ export class BaseModel implements ModelContract {
     value: any,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).where(this.$primaryKey, value).first()
+    return this.query(options).where(this.$primaryAdapterKey, value).first()
   }
 
   /**
@@ -370,7 +378,7 @@ export class BaseModel implements ModelContract {
     value: any,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).where(this.$primaryKey, value).firstOrFail()
+    return this.query(options).where(this.$primaryAdapterKey, value).firstOrFail()
   }
 
   /**
@@ -383,8 +391,8 @@ export class BaseModel implements ModelContract {
   ) {
     return this
       .query(options)
-      .whereIn(this.$primaryKey, value)
-      .orderBy(this.$primaryKey, 'desc')
+      .whereIn(this.$primaryAdapterKey, value)
+      .orderBy(this.$primaryAdapterKey, 'desc')
       .exec()
   }
 
@@ -464,7 +472,7 @@ export class BaseModel implements ModelContract {
     this: T,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).orderBy(this.$primaryKey, 'desc').exec()
+    return this.query(options).orderBy(this.$primaryAdapterKey, 'desc').exec()
   }
 
   constructor () {
@@ -1038,7 +1046,7 @@ export class BaseModel implements ModelContract {
       const insertQuery = client.insertQuery().table(modelConstructor.$table)
 
       if (modelConstructor.$increments) {
-        insertQuery.returning(modelConstructor.$primaryKey)
+        insertQuery.returning(modelConstructor.$primaryAdapterKey)
       }
       return insertQuery
     }
@@ -1049,7 +1057,7 @@ export class BaseModel implements ModelContract {
     return client
       .query()
       .from(modelConstructor.$table)
-      .where(modelConstructor.$primaryKey, this.$primaryKeyValue)
+      .where(modelConstructor.$primaryAdapterKey, this.$primaryKeyValue)
   }
 
   /**
