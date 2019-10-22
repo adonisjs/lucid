@@ -129,12 +129,11 @@ test.group('Database | QueryBuilder', (group) => {
 
   test('create nested transaction (savepoint) when global transaction is in place', async (assert) => {
     await this.database.beginGlobalTransaction()
-    await this.database.table('users').insert({ username: 'michael' })
     const trx = await this.database.beginTransaction()
-    await trx.table('users').where({ username: 'michael' }).update({ username: 'virk' })
-    await this.database.commitGlobalTransaction()
-    const firstUser = await this.database.table('users').first()
-    assert.equal(firstUser.username, 'virk')
+    await this.database.table('users').insert({ username: 'michael' }, trx)
+    await trx.commit()
+    await this.database.rollbackGlobalTransaction()
+    assert.isUndefined(await this.database.table('users').first())
   })
 
   test('destroy database connection', async (assert) => {
