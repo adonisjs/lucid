@@ -160,7 +160,7 @@ export class BaseModel implements ModelContract {
   /**
    * Returns the model query instance for the given model
    */
-  public static query (options?: ModelOptions): any {
+  public static query (options?: ModelAdapterOptions): any {
     return this.$adapter.query(this, options)
   }
 
@@ -171,7 +171,7 @@ export class BaseModel implements ModelContract {
   public static $createFromAdapterResult (
     adapterResult: ModelObject,
     sideloadAttributes?: ModelObject,
-    options?: ModelOptions,
+    options?: ModelAdapterOptions,
   ): any | null {
     if (typeof (adapterResult) !== 'object' || Array.isArray(adapterResult)) {
       return null
@@ -180,6 +180,14 @@ export class BaseModel implements ModelContract {
     const instance = new this()
     instance.$consumeAdapterResult(adapterResult, sideloadAttributes)
     instance.$hydrateOriginals()
+
+    /**
+     * Set $trx when defined
+     */
+    if (options && options.client && options.client.isTransaction) {
+      instance.$trx = options.client as TransactionClientContract
+    }
+
     instance.$options = options
     instance.$persisted = true
     instance.$isLocal = false
@@ -198,7 +206,7 @@ export class BaseModel implements ModelContract {
     this: T,
     adapterResults: ModelObject[],
     sideloadAttributes?: ModelObject,
-    options?: ModelOptions,
+    options?: ModelAdapterOptions,
   ): InstanceType<T>[] {
     if (!Array.isArray(adapterResults)) {
       return []

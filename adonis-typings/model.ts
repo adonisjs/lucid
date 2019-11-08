@@ -605,7 +605,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
       this: T,
       result?: ModelObject,
       sideloadAttributes?: ModelObject,
-      options?: ModelOptions,
+      options?: ModelAdapterOptions,
     ): null | InstanceType<T>
 
     /**
@@ -616,7 +616,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
       this: T,
       results: ModelObject[],
       sideloadAttributes?: ModelObject,
-      options?: ModelOptions,
+      options?: ModelAdapterOptions,
     ): InstanceType<T>[]
 
     /**
