@@ -15,8 +15,8 @@ import { Exception } from '@poppinss/utils'
 
 import {
   ModelObject,
-  ModelOptions,
   ModelContract,
+  ModelAdapterOptions,
   ModelConstructorContract,
   ModelQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
@@ -55,7 +55,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Options that must be passed to all new model instances
    */
-  public clientOptions: ModelOptions = {
+  public clientOptions: ModelAdapterOptions = {
+    client: this.client,
     connection: this.client.connectionName,
     profiler: this.client.profiler,
   }

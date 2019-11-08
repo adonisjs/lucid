@@ -72,6 +72,58 @@ test.group('Model options | QueryBuilder', (group) => {
     assert.equal(user!.$options!.connection, 'primary')
     assert.instanceOf(user!.$options!.profiler, Profiler)
   })
+
+  test('query builder use transaction when updating rows', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const trx = await db.transaction()
+
+    const users = await User.query({ client: trx }).exec()
+    assert.lengthOf(users, 1)
+
+    users[0].username = 'nikk'
+    await users[0].save()
+
+    await trx.rollback()
+
+    const usersFresh = await User.query().exec()
+    assert.equal(usersFresh[0].username, 'virk')
+  })
+
+  test('cleanup transaction reference after commit or rollback', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const trx = await db.transaction()
+
+    const users = await User.query({ client: trx }).exec()
+    assert.lengthOf(users, 1)
+    await trx.commit()
+
+    assert.isUndefined(users[0].$trx)
+    users[0].username = 'nikk'
+    await users[0].save()
+
+    const usersFresh = await User.query().exec()
+    assert.equal(usersFresh[0].username, 'nikk')
+  })
 })
 
 test.group('Model options | Adapter', (group) => {
@@ -729,6 +781,90 @@ test.group('Model options | Query Builder Preloads', (group) => {
     assert.equal(users[0].$options!.connection, 'primary')
     assert.deepEqual(users[0].$sideloaded, { id: 1 })
     assert.deepEqual(users[0].profile.$sideloaded, { id: 2 })
+  })
+
+  test('use transaction client to update preloaded rows', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+
+    const trx = await db.transaction()
+    const users = await User.query({ client: trx }).preload('profile').exec()
+
+    assert.lengthOf(users, 1)
+
+    users[0].profile.displayName = 'Nikk'
+    await users[0].profile.save()
+
+    await trx.rollback()
+
+    const profiles = await Profile.all()
+    assert.lengthOf(profiles, 1)
+    assert.equal(profiles[0].displayName, 'Virk')
+  })
+
+  test('cleanup transaction reference after commit or rollback', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+
+    const trx = await db.transaction()
+    const users = await User.query({ client: trx }).preload('profile').exec()
+
+    assert.lengthOf(users, 1)
+    await trx.commit()
+
+    assert.isUndefined(users[0].$trx)
+    assert.isUndefined(users[0].profile.$trx)
+
+    users[0].profile.displayName = 'Nikk'
+    await users[0].profile.save()
+
+    const profiles = await Profile.all()
+    assert.lengthOf(profiles, 1)
+    assert.equal(profiles[0].displayName, 'Nikk')
   })
 })
 
