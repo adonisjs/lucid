@@ -548,11 +548,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $primaryKey: string
 
     /**
-     * The primary key for executing queries
-     */
-    $primaryAdapterKey: string
-
-    /**
      * Custom database connection to use
      */
     $connection?: string
