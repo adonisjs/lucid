@@ -1079,4 +1079,37 @@ export class BaseModel implements ModelContract {
     relation!.boot()
     return relation!.getQuery(this, Model.$adapter.modelClient(this))
   }
+
+  /**
+   * Reload/Refresh the model instance
+   */
+  public async refresh () {
+    this._ensureIsntDeleted()
+    const modelConstructor = this.constructor as typeof BaseModel
+    const { $table, $primaryAdapterKey } = modelConstructor
+
+    /**
+     * Noop when model instance is not persisted
+     */
+    if (!this.$persisted) {
+      return
+    }
+
+    /**
+     * This will occur, when some other part of the application removes
+     * the row
+     */
+    const freshModelInstance = await modelConstructor.find(this.$primaryKeyValue)
+    if (!freshModelInstance) {
+      throw new Exception(
+        [
+          'Model.reload failed. ',
+          `Unable to lookup ${$table} table where ${$primaryAdapterKey} = ${this.$primaryKeyValue}`,
+        ].join('')
+      )
+    }
+
+    this.fill(freshModelInstance!.$attributes)
+    this.$hydrateOriginals()
+  }
 }

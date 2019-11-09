@@ -117,7 +117,8 @@ export async function setup () {
       table.string('username').unique()
       table.string('email')
       table.integer('points').defaultTo(0)
-      table.timestamps()
+      table.timestamp('created_at').defaultTo(db.fn.now())
+      table.timestamp('updated_at')
     })
   }
 
