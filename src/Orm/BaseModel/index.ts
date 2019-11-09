@@ -74,12 +74,6 @@ export class BaseModel implements ModelContract {
   public static $primaryKey: string
 
   /**
-   * Primary key for executing database queries. The adapter keys are
-   * the column names
-   */
-  public static $primaryAdapterKey: string
-
-  /**
    * Whether or not the model has been booted. Booting the model initializes it's
    * static properties. Base models must not be initialized.
    */
@@ -230,7 +224,6 @@ export class BaseModel implements ModelContract {
 
     this.$booted = true
     this.$primaryKey = this.$primaryKey || 'id'
-    this.$primaryAdapterKey = snakeCase(this.$primaryKey)
 
     Object.defineProperty(this, '$refs', { value: {} })
     Object.defineProperty(this, '$columns', { value: new Map() })
@@ -265,7 +258,6 @@ export class BaseModel implements ModelContract {
      */
     if (column.primary) {
       this.$primaryKey = name
-      this.$primaryAdapterKey = column.castAs
     }
 
     this.$columns.set(name, column)
@@ -375,7 +367,7 @@ export class BaseModel implements ModelContract {
     value: any,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).where(this.$primaryAdapterKey, value).first()
+    return this.query(options).where(this.$refs[this.$primaryKey], value).first()
   }
 
   /**
@@ -386,7 +378,7 @@ export class BaseModel implements ModelContract {
     value: any,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).where(this.$primaryAdapterKey, value).firstOrFail()
+    return this.query(options).where(this.$refs[this.$primaryKey], value).firstOrFail()
   }
 
   /**
@@ -399,8 +391,8 @@ export class BaseModel implements ModelContract {
   ) {
     return this
       .query(options)
-      .whereIn(this.$primaryAdapterKey, value)
-      .orderBy(this.$primaryAdapterKey, 'desc')
+      .whereIn(this.$refs[this.$primaryKey], value)
+      .orderBy(this.$refs[this.$primaryKey], 'desc')
       .exec()
   }
 
@@ -480,7 +472,7 @@ export class BaseModel implements ModelContract {
     this: T,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).orderBy(this.$primaryAdapterKey, 'desc').exec()
+    return this.query(options).orderBy(this.$refs[this.$primaryKey], 'desc').exec()
   }
 
   constructor () {
@@ -1054,7 +1046,7 @@ export class BaseModel implements ModelContract {
       const insertQuery = client.insertQuery().table(modelConstructor.$table)
 
       if (modelConstructor.$increments) {
-        insertQuery.returning(modelConstructor.$primaryAdapterKey)
+        insertQuery.returning(modelConstructor.$refs[modelConstructor.$primaryKey])
       }
       return insertQuery
     }
@@ -1065,7 +1057,7 @@ export class BaseModel implements ModelContract {
     return client
       .query()
       .from(modelConstructor.$table)
-      .where(modelConstructor.$primaryAdapterKey, this.$primaryKeyValue)
+      .where(modelConstructor.$refs[modelConstructor.$primaryKey], this.$primaryKeyValue)
   }
 
   /**
@@ -1086,7 +1078,8 @@ export class BaseModel implements ModelContract {
   public async refresh () {
     this._ensureIsntDeleted()
     const modelConstructor = this.constructor as typeof BaseModel
-    const { $table, $primaryAdapterKey } = modelConstructor
+    const { $table } = modelConstructor
+    const primaryAdapterKey = modelConstructor.$refs[modelConstructor.$primaryKey]
 
     /**
      * Noop when model instance is not persisted
@@ -1104,8 +1097,8 @@ export class BaseModel implements ModelContract {
       throw new Exception(
         [
           'Model.reload failed. ',
-          `Unable to lookup ${$table} table where ${$primaryAdapterKey} = ${this.$primaryKeyValue}`,
-        ].join('')
+          `Unable to lookup ${$table} table where ${primaryAdapterKey} = ${this.$primaryKeyValue}`,
+        ].join(''),
       )
     }
 
