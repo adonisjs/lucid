@@ -361,10 +361,16 @@ test.group('Base Model | persist', (group) => {
   group.before(async () => {
     db = getDb()
     BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
   })
 
   group.after(async () => {
+    await cleanup()
     await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
   })
 
   test('persist model with the adapter', async (assert) => {
@@ -541,6 +547,69 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(adapter.operations, [])
     assert.deepEqual(user.$attributes, {})
     assert.deepEqual(user.$original, {})
+  })
+
+  test('refresh model instance', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public createdAt: string
+
+      @column({ castAs: 'updated_at' })
+      public updatedAt: string
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.$isDirty)
+    assert.isUndefined(user.updatedAt)
+
+    await user.refresh()
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.$isDirty)
+    assert.isDefined(user.updatedAt)
+  })
+
+  test('raise exception when attempted to refresh deleted row', async (assert) => {
+    assert.plan(4)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public createdAt: string
+
+      @column({ castAs: 'updated_at' })
+      public updatedAt: string
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    assert.isTrue(user.$persisted)
+    assert.isFalse(user.$isDirty)
+    assert.isUndefined(user.updatedAt)
+
+    await db.from('users').del()
+
+    try {
+      await user.refresh()
+    } catch ({ message }) {
+      assert.equal(message, 'Model.reload failed. Unable to lookup users table where id = 1')
+    }
   })
 })
 

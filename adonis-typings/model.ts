@@ -505,6 +505,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     delete (): Promise<void>
     serialize (): ModelObject
     toJSON (): ModelObject
+    refresh (): Promise<void>
 
     related<
       T extends keyof RelationsQueryBuildersMap<any> = 'unknown',
