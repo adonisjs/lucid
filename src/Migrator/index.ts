@@ -31,7 +31,7 @@ import { MigrationSource } from './MigrationSource'
  * for a given connection at a time.
  */
 export class Migrator implements MigratorContract {
-  private _client = this._db.connection(this._options.connectionName)
+  private _client = this._db.connection(this._options.connectionName || this._db.primaryConnectionName)
   private _config = this._db.getRawConnection(this._client.connectionName)!.config
 
   /**
@@ -381,5 +381,12 @@ export class Migrator implements MigratorContract {
     }
 
     await this._shutdown()
+  }
+
+  /**
+   * Close database connections
+   */
+  public async close () {
+    await this._db.manager.closeAll(true)
   }
 }

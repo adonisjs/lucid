@@ -45,5 +45,6 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
     migratedQueries: { [file: string]: string[] }
     run (): Promise<void>
     getList (): Promise<{ batch: number, name: string, migration_time: Date }[]>
+    close (): Promise<void>
   }
 }
