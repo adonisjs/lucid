@@ -61,7 +61,7 @@ test.group('MigrationSource', (group) => {
 
   test('sort multiple migration directories seperately', async (assert) => {
     const app = new Application(fs.basePath, {} as any, {} as any, {})
-    const config = Object.assign(db.getRawConnection('primary')!.config, {
+    const config = Object.assign({}, db.getRawConnection('primary')!.config, {
       migrations: {
         paths: ['database/secondary', 'database/primary'],
       },
@@ -97,5 +97,14 @@ test.group('MigrationSource', (group) => {
         name: 'database/secondary/c',
       },
     ])
+  })
+
+  test('handle esm default exports properly', async (assert) => {
+    const app = new Application(fs.basePath, {} as any, {} as any, {})
+    const migrationSource = new MigrationSource(db.getRawConnection('primary')!.config, app)
+
+    await fs.add('database/migrations/foo.ts', 'export default class Foo {}')
+    const directories = await migrationSource.getMigrations()
+    assert.equal(directories[0].source.name, 'Foo')
   })
 })

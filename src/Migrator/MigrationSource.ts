@@ -10,6 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { readdir } from 'fs'
+import { esmRequire } from '@poppinss/utils'
 import { join, isAbsolute, extname } from 'path'
 import { MigrationNode } from '@ioc:Adonis/Lucid/Migrator'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
@@ -42,7 +43,7 @@ export class MigrationSource {
           return {
             absPath: join(path, file),
             name: join(directoryPath, file.replace(RegExp(`${extname(file)}$`), '')),
-            source: require(join(path, file)),
+            source: esmRequire(join(path, file)),
           }
         }))
       })
