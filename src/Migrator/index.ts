@@ -18,6 +18,7 @@ import {
   MigratorOptions,
   MigratedFileNode,
   MigratorContract,
+  MigrationListNode,
 } from '@ioc:Adonis/Lucid/Migrator'
 
 import {
@@ -299,9 +300,9 @@ export class Migrator extends EventEmitter implements MigratorContract {
    */
   private async _getMigratedFilesTillBatch (batch: number) {
     return this._client
-      .query<{ name: string, batch: number }[]>()
+      .query<{ name: string, batch: number, migration_time: Date }[]>()
       .from(this._migrationsConfig.tableName)
-      .select('name', 'batch')
+      .select('name', 'batch', 'migration_time')
       .where('batch', '>', batch)
       .orderBy('id', 'desc')
   }
@@ -356,7 +357,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Migrate down (aka rollback)
    */
   private async _runDown (batch?: number) {
-    batch = batch || await this._getLatestBatch()
+    batch = batch === undefined ? await this._getLatestBatch() : batch
     const existing = await this._getMigratedFilesTillBatch(batch)
     const collected = await this._migrationSource.getMigrations()
 
@@ -400,14 +401,47 @@ export class Migrator extends EventEmitter implements MigratorContract {
   }
 
   /**
-   * Returns list of migrated files, along with their
-   * batch
+   * Returns a merged list of completed and pending migrations
    */
-  public async getList () {
-    return this._client
-      .query()
-      .from(this._migrationsConfig.tableName)
-      .select('name', 'batch', 'migration_time')
+  public async getList (): Promise<MigrationListNode[]> {
+    const existingCollected: Set<string> = new Set()
+    const existing = await this._getMigratedFilesTillBatch(0)
+    const collected = await this._migrationSource.getMigrations()
+
+    const list: MigrationListNode[] = collected.map((migration) => {
+      const migrated = existing.find(({ name }) => migration.name === name)
+
+      /**
+       * Already migrated. We move to an additional list, so that we can later
+       * find the one's which are migrated but now missing on the disk
+       */
+      if (migrated) {
+        existingCollected.add(migrated.name)
+        return {
+          name: migration.name,
+          batch: migrated.batch,
+          status: 'migrated',
+          migrationTime: migrated.migration_time,
+        }
+      }
+
+      return {
+        name: migration.name,
+        status: 'pending',
+      }
+    })
+
+    /**
+     * These are the one's which were migrated earlier, but now missing
+     * on the disk
+     */
+    existing.forEach(({ name, batch, migration_time }) => {
+      if (!existingCollected.has(name)) {
+        list.push({ name, batch, migrationTime: migration_time, status: 'corrupt' })
+      }
+    })
+
+    return list
   }
 
   /**

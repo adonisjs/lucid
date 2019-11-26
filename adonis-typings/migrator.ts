@@ -46,6 +46,16 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
   }
 
   /**
+   * Shape of migrated file within migrator
+   */
+  export type MigrationListNode = {
+    name: string,
+    status: 'pending' | 'migrated' | 'corrupt',
+    batch?: number,
+    migrationTime?: Date,
+  }
+
+  /**
    * Shape of the migrator
    */
   export interface MigratorContract extends EventEmitter {
@@ -55,7 +65,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
     error: null | Error
     migratedFiles: { [file: string]: MigratedFileNode }
     run (): Promise<void>
-    getList (): Promise<{ batch: number, name: string, migration_time: Date }[]>
+    getList (): Promise<MigrationListNode[]>
     close (): Promise<void>
     on (event: 'start', callback: () => void): this
     on (event: 'acquire:lock', callback: () => void): this
