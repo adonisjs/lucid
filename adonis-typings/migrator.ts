@@ -9,6 +9,7 @@
 
 declare module '@ioc:Adonis/Lucid/Migrator' {
   import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
+  import { EventEmitter } from 'events'
 
   /**
    * Migration node returned by the migration source
@@ -29,7 +30,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
     dryRun?: boolean,
   } | {
     direction: 'down',
-    batch: number,
+    batch?: number,
     connectionName?: string,
     dryRun?: boolean,
   }
@@ -47,7 +48,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
   /**
    * Shape of the migrator
    */
-  export interface MigratorContract {
+  export interface MigratorContract extends EventEmitter {
     dryRun: boolean
     direction: 'up' | 'down'
     status: 'completed' | 'skipped' | 'pending' | 'error'
@@ -56,5 +57,12 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
     run (): Promise<void>
     getList (): Promise<{ batch: number, name: string, migration_time: Date }[]>
     close (): Promise<void>
+    on (event: 'start', callback: () => void): this
+    on (event: 'acquire:lock', callback: () => void): this
+    on (event: 'release:lock', callback: () => void): this
+    on (event: 'create:schema:table', callback: () => void): this
+    on (event: 'migration:start', callback: (file: MigratedFileNode) => void): this
+    on (event: 'migration:completed', callback: (file: MigratedFileNode) => void): this
+    on (event: 'migration:error', callback: (file: MigratedFileNode) => void): this
   }
 }

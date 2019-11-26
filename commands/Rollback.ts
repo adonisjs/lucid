@@ -20,14 +20,19 @@ import MigrationsBase from './MigrationsBase'
  */
 @inject([null, 'Adonis/Lucid/Database'])
 export default class Migrate extends MigrationsBase {
-  public static commandName = 'migration:run'
-  public static description = 'Run pending migrations'
+  public static commandName = 'migration:rollback'
+  public static description = 'Rollback migrations to a given batch number'
 
   @flags.string({ description: 'Define a custom database connection' })
   public connection: string
 
   @flags.boolean({ description: 'Print SQL queries, instead of running the migrations' })
   public dryRun: boolean
+
+  @flags.number({
+    description: 'Define custom batch number for rollback. Use 0 to rollback to initial state',
+  })
+  public batch: number
 
   /**
    * This command loads the application, since we need the runtime
@@ -63,7 +68,8 @@ export default class Migrate extends MigrationsBase {
      */
     const { Migrator } = await import('../src/Migrator')
     const migrator = new Migrator(this._db, this.application, {
-      direction: 'up',
+      direction: 'down',
+      batch: this.batch,
       connectionName: this.connection,
       dryRun: this.dryRun,
     })
