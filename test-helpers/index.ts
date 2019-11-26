@@ -442,3 +442,10 @@ export function getBaseSchema () {
 export function getMigrator (db: DatabaseContract, app: ApplicationContract, config: MigratorOptions) {
   return new Migrator(db, app, config) as unknown as MigratorContract
 }
+
+/**
+ * Split string to an array using cross platform new lines
+ */
+export function toNewlineArray (contents: string): string[] {
+  return contents.split(/\r?\n/)
+}
