@@ -184,13 +184,13 @@ declare module '@ioc:Adonis/Lucid/Model' {
   /**
    * Lookup map required for related method
    */
-  type RelationsQueryBuildersMap<T> = {
-    'unknown': BaseRelationQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
-    'hasOne': HasOneQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
-    'hasMany': HasManyQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
-    'belongsTo': BelongsToQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
-    'manyToMany': ManyToManyQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
-    'hasManyThrough': HasManyThroughQueryBuilderContract<T> & ExcutableQueryBuilderContract<T[]>,
+  type RelationsQueryBuildersMap<T, R extends any = T> = {
+    'unknown': BaseRelationQueryBuilderContract<T> & ExcutableQueryBuilderContract<R[]>,
+    'hasOne': HasOneQueryBuilderContract<T> & ExcutableQueryBuilderContract<R[]>,
+    'hasMany': HasManyQueryBuilderContract<T> & ExcutableQueryBuilderContract<R[]>,
+    'belongsTo': BelongsToQueryBuilderContract<T> & ExcutableQueryBuilderContract<R[]>,
+    'manyToMany': ManyToManyQueryBuilderContract<T> & ExcutableQueryBuilderContract<R[]>,
+    'hasManyThrough': HasManyThroughQueryBuilderContract<T> & ExcutableQueryBuilderContract<R[]>,
   }
 
   /**
@@ -385,7 +385,10 @@ declare module '@ioc:Adonis/Lucid/Model' {
   /**
    * Model query builder will have extras methods on top of Database query builder
    */
-  export interface ModelQueryBuilderContract<Model extends ModelConstructorContract>
+  export interface ModelQueryBuilderContract<
+    Model extends ModelConstructorContract,
+    Result extends any = InstanceType<Model>
+  >
     extends ChainableContract
   {
     model: Model
@@ -415,12 +418,12 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Execute and get first result
      */
-    first (): Promise<InstanceType<Model> | null>
+    first (): Promise<Result | null>
 
     /**
      * Return the first matching row or fail
      */
-    firstOrFail (): Promise<InstanceType<Model>>
+    firstOrFail (): Promise<Result>
 
     /**
      * Mutations (update and increment can be one query aswell)
@@ -510,9 +513,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
     related<
       T extends keyof RelationsQueryBuildersMap<any> = 'unknown',
       K extends keyof this = keyof this,
-    > (relation: K): RelationsQueryBuildersMap<
-      this[K] extends ModelContract[] ? this[K][0] : this[K]
-    >[T]
+      M extends any = this[K] extends ModelContract[] ? this[K][0] : this[K],
+      R extends any = M
+    > (relation: K): RelationsQueryBuildersMap<M, R>[T]
   }
 
   /**
@@ -716,10 +719,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     query<
       Model extends ModelConstructorContract,
+      Result extends any = InstanceType<Model>,
     > (
       this: Model,
       options?: ModelAdapterOptions,
-    ): ModelQueryBuilderContract<Model> & ExcutableQueryBuilderContract<InstanceType<Model>[]>
+    ): ModelQueryBuilderContract<Model, Result> & ExcutableQueryBuilderContract<Result[]>
 
     new (): ModelContract
   }
