@@ -35,6 +35,16 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
   }
 
   /**
+   * Shape of migrated file within migrator
+   */
+  export type MigratedFileNode = {
+    status: 'completed' | 'error' | 'pending',
+    queries: string[],
+    migration: MigrationNode,
+    batch: number,
+  }
+
+  /**
    * Shape of the migrator
    */
   export interface MigratorContract {
@@ -42,14 +52,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
     direction: 'up' | 'down'
     status: 'completed' | 'skipped' | 'pending' | 'error'
     error: null | Error
-    migratedFiles: {
-      [file: string]: {
-        status: 'completed' | 'error' | 'pending',
-        queries: string[],
-        migration: MigrationNode,
-        batch: number,
-      },
-    }
+    migratedFiles: { [file: string]: MigratedFileNode }
     run (): Promise<void>
     getList (): Promise<{ batch: number, name: string, migration_time: Date }[]>
     close (): Promise<void>

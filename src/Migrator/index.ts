@@ -9,12 +9,14 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
+import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import {
   MigrationNode,
   MigratorOptions,
+  MigratedFileNode,
   MigratorContract,
 } from '@ioc:Adonis/Lucid/Migrator'
 
@@ -30,7 +32,7 @@ import { MigrationSource } from './MigrationSource'
  * Migrator exposes the API to execute migrations using the schema files
  * for a given connection at a time.
  */
-export class Migrator implements MigratorContract {
+export class Migrator extends EventEmitter implements MigratorContract {
   private _client = this._db.connection(this._options.connectionName || this._db.primaryConnectionName)
   private _config = this._db.getRawConnection(this._client.connectionName)!.config
 
@@ -69,14 +71,7 @@ export class Migrator implements MigratorContract {
    * An array of files we have successfully migrated. The files are
    * collected regardless of `up` or `down` methods
    */
-  public migratedFiles: {
-    [file: string]: {
-      status: 'completed' | 'error' | 'pending',
-      queries: string[],
-      migration: MigrationNode,
-      batch: number,
-    },
-  } = {}
+  public migratedFiles: { [file: string]: MigratedFileNode } = {}
 
   /**
    * Last error occurred when executing migrations
@@ -101,6 +96,7 @@ export class Migrator implements MigratorContract {
     private _app: ApplicationContract,
     private _options: MigratorOptions,
   ) {
+    super()
   }
 
   /**
@@ -190,6 +186,7 @@ export class Migrator implements MigratorContract {
 
     try {
       const schema = new migration.source(client, migration.name, this.dryRun)
+      this.emit('migration:start', this.migratedFiles[migration.name])
 
       if (this.direction === 'up') {
         const response = await schema.execUp()  // Handles dry run itself
@@ -201,8 +198,12 @@ export class Migrator implements MigratorContract {
 
       await this._commit(client)
       this.migratedFiles[migration.name].status = 'completed'
+      this.emit('migration:completed', this.migratedFiles[migration.name])
     } catch (error) {
+      this.error = error
       this.migratedFiles[migration.name].status = 'error'
+      this.emit('migration:error', this.migratedFiles[migration.name])
+
       await this._rollback(client)
       throw error
     }
@@ -227,6 +228,7 @@ export class Migrator implements MigratorContract {
     if (!acquired) {
       throw new Exception('Unable to acquire lock. Concurrent migrations are not allowed')
     }
+    this.emit('acquire:lock')
   }
 
   /**
@@ -242,6 +244,7 @@ export class Migrator implements MigratorContract {
     if (!released) {
       throw new Exception('Migration completed, but unable to release database lock')
     }
+    this.emit('release:lock')
   }
 
   /**
@@ -257,6 +260,7 @@ export class Migrator implements MigratorContract {
       return
     }
 
+    this.emit('create:schema:table')
     await client.schema.createTable(this._migrationsConfig.tableName, (table) => {
       table.increments().notNullable()
       table.string('name').notNullable()
@@ -307,6 +311,7 @@ export class Migrator implements MigratorContract {
    * work regardless of dryRun is enabled or not.
    */
   private async _boot () {
+    this.emit('start')
     this._booted = true
     await this._acquireLock()
     await this._makeMigrationsTable()
@@ -380,6 +385,17 @@ export class Migrator implements MigratorContract {
     for (let name of filesToMigrate) {
       await this._executeMigration(this.migratedFiles[name].migration)
     }
+  }
+
+  public on (event: 'start', callback: () => void): this
+  public on (event: 'acquire:lock', callback: () => void): this
+  public on (event: 'release:lock', callback: () => void): this
+  public on (event: 'create:schema:table', callback: () => void): this
+  public on (event: 'migration:start', callback: (file: MigratedFileNode) => void): this
+  public on (event: 'migration:completed', callback: (file: MigratedFileNode) => void): this
+  public on (event: 'migration:error', callback: (file: MigratedFileNode) => void): this
+  public on (event: string, callback: (...args: any[]) => void): this {
+    return super.on(event, callback)
   }
 
   /**
