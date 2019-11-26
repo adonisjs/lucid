@@ -124,7 +124,9 @@
       "DB_PASSWORD": "lucid",
       "DB_NAME": "lucid"
     },
-    "types": "@adonisjs/lucid"
+    "types": "@adonisjs/lucid",
+    "providers": ["@adonisjs/lucid"],
+    "commands": ["@adonisjs/lucid/build/commands"]
   },
   "np": {
     "contents": ".",
