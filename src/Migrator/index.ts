@@ -297,7 +297,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Returns an array of files migrated till now. The latest
    * migrations are on top
    */
-  private async _getMigratedFilesTillBatch (batch) {
+  private async _getMigratedFilesTillBatch (batch: number) {
     return this._client
       .query<{ name: string, batch: number }[]>()
       .from(this._migrationsConfig.tableName)
@@ -355,7 +355,8 @@ export class Migrator extends EventEmitter implements MigratorContract {
   /**
    * Migrate down (aka rollback)
    */
-  private async _runDown (batch: number) {
+  private async _runDown (batch?: number) {
+    batch = batch || await this._getLatestBatch()
     const existing = await this._getMigratedFilesTillBatch(batch)
     const collected = await this._migrationSource.getMigrations()
 
