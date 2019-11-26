@@ -31,8 +31,10 @@ export class MigrationSource {
    * paths are resolved from the project root
    */
   private _getDirectoryFiles (directoryPath: string): Promise<MigrationNode[]> {
+    const basePath = this._app.cliCwd || this._app.appRoot
+
     return new Promise((resolve, reject) => {
-      const path = isAbsolute(directoryPath) ? directoryPath : join(this._app.appRoot, directoryPath)
+      const path = isAbsolute(directoryPath) ? directoryPath : join(basePath, directoryPath)
       readdir(path, (error, files) => {
         if (error) {
           reject(error)
@@ -55,7 +57,8 @@ export class MigrationSource {
    * are not defined, then `database/migrations` fallback is used
    */
   private _getMigrationsPath (): string[] {
-    return (this._config.migrations && this._config.migrations.paths) || ['database/migrations']
+    const directories = (this._config.migrations || {}).paths
+    return directories && directories.length ? directories : ['database/migrations']
   }
 
   /**

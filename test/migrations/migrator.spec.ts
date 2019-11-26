@@ -48,7 +48,7 @@ test.group('Migrator', (group) => {
     await migrator.run()
     const hasSchemaTable = await db.connection().schema.hasTable('adonis_schema')
     assert.isTrue(hasSchemaTable)
-    assert.deepEqual(migrator.migratedFiles, [])
+    assert.deepEqual(migrator.migratedFiles, {})
     assert.equal(migrator.status, 'skipped')
   })
 
@@ -75,12 +75,23 @@ test.group('Migrator', (group) => {
 
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const migratedFiles = Object.keys(migrator.migratedFiles).map((file) => {
+      return {
+        status: migrator.migratedFiles[file].status,
+        file: file,
+        queries: migrator.migratedFiles[file].queries,
+      }
+    })
 
     assert.lengthOf(migrated, 1)
     assert.equal(migrated[0].name, 'database/migrations/users')
     assert.equal(migrated[0].batch, 1)
     assert.isTrue(hasUsersTable)
-    assert.deepEqual(migrator.migratedFiles, ['database/migrations/users'])
+    assert.deepEqual(migratedFiles, [{
+      status: 'completed',
+      file: 'database/migrations/users',
+      queries: [],
+    }])
     assert.equal(migrator.status, 'completed')
   })
 
@@ -116,23 +127,39 @@ test.group('Migrator', (group) => {
       connectionName: 'primary',
     })
 
-    try {
-      await migrator.run()
-    } catch (error) {
-      assert.exists(error)
-    }
+    await migrator.run()
 
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
     const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+    const migratedFiles = Object.keys(migrator.migratedFiles).map((file) => {
+      return {
+        status: migrator.migratedFiles[file].status,
+        file: file,
+        queries: migrator.migratedFiles[file].queries,
+      }
+    })
 
     assert.lengthOf(migrated, 1)
     assert.equal(migrated[0].name, 'database/migrations/accounts')
     assert.equal(migrated[0].batch, 1)
     assert.isFalse(hasUsersTable, 'Has users table')
     assert.isTrue(hasAccountsTable, 'Has accounts table')
-    assert.deepEqual(migrator.migratedFiles, ['database/migrations/accounts'])
-    assert.equal(migrator.status, 'completed')
+    assert.deepEqual(migratedFiles, [
+      {
+        status: 'completed',
+        file: 'database/migrations/accounts',
+        queries: [],
+      },
+      {
+        status: 'error',
+        file: 'database/migrations/users',
+        queries: [],
+      },
+    ])
+
+    assert.equal(migrator.status, 'error')
+    assert.equal(migrator.error!.message, 'table.badMethod is not a function')
   })
 
   test('do not migrate when dryRun is true', async (assert) => {
@@ -171,30 +198,105 @@ test.group('Migrator', (group) => {
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
     const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+    const migratedFiles = Object.keys(migrator.migratedFiles).map((file) => {
+      return {
+        status: migrator.migratedFiles[file].status,
+        file: file,
+        queries: migrator.migratedFiles[file].queries,
+      }
+    })
 
     assert.lengthOf(migrated, 0)
     assert.isFalse(hasUsersTable, 'Has users table')
     assert.isFalse(hasAccountsTable, 'Has accounts table')
 
-    assert.deepEqual(migrator.migratedFiles, [
-      'database/migrations/accounts',
-      'database/migrations/users',
+    assert.deepEqual(migratedFiles, [
+      {
+        status: 'completed',
+        file: 'database/migrations/accounts',
+        queries: [
+          db.connection().schema.createTable('schema_accounts', (table) => {
+            table.increments()
+          }).toQuery(),
+        ],
+      },
+      {
+        status: 'completed',
+        file: 'database/migrations/users',
+        queries: [
+          db.connection().schema.createTable('schema_users', (table) => {
+            table.increments()
+          }).toQuery(),
+        ],
+      },
     ])
 
-    assert.deepEqual(migrator.migratedQueries, {
-      'database/migrations/accounts': [
-         db.connection().schema.createTable('schema_accounts', (table) => {
-           table.increments()
-         }).toQuery(),
-      ],
-      'database/migrations/users': [
-         db.connection().schema.createTable('schema_users', (table) => {
-           table.increments()
-         }).toQuery(),
-      ],
+    assert.equal(migrator.status, 'completed')
+  })
+
+  test('catch and report errors in dryRun', async (assert) => {
+    const app = new Application(fs.basePath, {} as any, {} as any, {})
+
+    await fs.add('database/migrations/users.ts', `
+      import { Schema } from '../../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `)
+
+    await fs.add('database/migrations/accounts.ts', `
+      import { Schema } from '../../../../../src/Schema'
+      module.exports = class Accounts extends Schema {
+        public async up () {
+          this.schema.createTable('schema_accounts', (table) => {
+            table.increments()
+            table['badMethod']('account_id')
+          })
+        }
+      }
+    `)
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+      dryRun: true,
     })
 
-    assert.equal(migrator.status, 'completed')
+    await migrator.run()
+
+    const migrated = await db.connection().from('adonis_schema').select('*')
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+    const migratedFiles = Object.keys(migrator.migratedFiles).map((file) => {
+      return {
+        status: migrator.migratedFiles[file].status,
+        file: file,
+        queries: migrator.migratedFiles[file].queries,
+      }
+    })
+
+    assert.lengthOf(migrated, 0)
+    assert.isFalse(hasUsersTable, 'Has users table')
+    assert.isFalse(hasAccountsTable, 'Has accounts table')
+
+    assert.deepEqual(migratedFiles, [
+      {
+        status: 'error',
+        file: 'database/migrations/accounts',
+        queries: [],
+      },
+      {
+        status: 'pending',
+        file: 'database/migrations/users',
+        queries: [],
+      },
+    ])
+
+    assert.equal(migrator.status, 'error')
   })
 
   test('do not migrate a schema file twice', async (assert) => {
@@ -293,11 +395,22 @@ test.group('Migrator', (group) => {
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
     const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+    const migratedFiles = Object.keys(migrator2.migratedFiles).map((file) => {
+      return {
+        status: migrator2.migratedFiles[file].status,
+        file: file,
+        queries: migrator2.migratedFiles[file].queries,
+      }
+    })
 
     assert.lengthOf(migrated, 1)
     assert.isTrue(hasUsersTable)
     assert.isFalse(hasAccountsTable)
-    assert.deepEqual(migrator2.migratedFiles, ['database/migrations/accounts'])
+    assert.deepEqual(migratedFiles, [{
+      status: 'completed',
+      file: 'database/migrations/accounts',
+      queries: [],
+    }])
   })
 
   test('rollback all down to batch 0', async (assert) => {
@@ -345,15 +458,30 @@ test.group('Migrator', (group) => {
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
     const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+    const migratedFiles = Object.keys(migrator2.migratedFiles).map((file) => {
+      return {
+        status: migrator2.migratedFiles[file].status,
+        file: file,
+        queries: migrator2.migratedFiles[file].queries,
+      }
+    })
 
     assert.lengthOf(migrated, 0)
     assert.isFalse(hasUsersTable)
     assert.isFalse(hasAccountsTable)
 
     assert.equal(migrator2.status, 'completed')
-    assert.deepEqual(migrator2.migratedFiles, [
-      'database/migrations/accounts',
-      'database/migrations/users',
+    assert.deepEqual(migratedFiles, [
+      {
+        status: 'completed',
+        file: 'database/migrations/accounts',
+        queries: [],
+      },
+      {
+        status: 'completed',
+        file: 'database/migrations/users',
+        queries: [],
+      },
     ])
   })
 
@@ -406,17 +534,41 @@ test.group('Migrator', (group) => {
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
     const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
 
+    const migrator2Files = Object.keys(migrator2.migratedFiles).map((file) => {
+      return {
+        status: migrator2.migratedFiles[file].status,
+        file: file,
+        queries: migrator2.migratedFiles[file].queries,
+      }
+    })
+
+    const migrator3Files = Object.keys(migrator3.migratedFiles).map((file) => {
+      return {
+        status: migrator3.migratedFiles[file].status,
+        file: file,
+        queries: migrator3.migratedFiles[file].queries,
+      }
+    })
+
     assert.lengthOf(migrated, 0)
     assert.isFalse(hasUsersTable)
     assert.isFalse(hasAccountsTable)
 
     assert.equal(migrator2.status, 'completed')
     assert.equal(migrator3.status, 'skipped')
-    assert.deepEqual(migrator2.migratedFiles, [
-      'database/migrations/accounts',
-      'database/migrations/users',
+    assert.deepEqual(migrator2Files, [
+      {
+        status: 'completed',
+        file: 'database/migrations/accounts',
+        queries: [],
+      },
+      {
+        status: 'completed',
+        file: 'database/migrations/users',
+        queries: [],
+      },
     ])
-    assert.deepEqual(migrator3.migratedFiles, [])
+    assert.deepEqual(migrator3Files, [])
   })
 
   test('do not rollback in dryRun', async (assert) => {
@@ -469,25 +621,35 @@ test.group('Migrator', (group) => {
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
     const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+    const migrator2Files = Object.keys(migrator2.migratedFiles).map((file) => {
+      return {
+        status: migrator2.migratedFiles[file].status,
+        file: file,
+        queries: migrator2.migratedFiles[file].queries,
+      }
+    })
 
     assert.lengthOf(migrated, 2)
     assert.isTrue(hasUsersTable)
     assert.isTrue(hasAccountsTable)
 
     assert.equal(migrator2.status, 'completed')
-    assert.deepEqual(migrator2.migratedFiles, [
-      'database/migrations/accounts',
-      'database/migrations/users',
+    assert.deepEqual(migrator2Files, [
+      {
+        status: 'completed',
+        file: 'database/migrations/accounts',
+        queries: [
+          db.connection().schema.dropTable('schema_accounts').toQuery(),
+        ],
+      },
+      {
+        status: 'completed',
+        file: 'database/migrations/users',
+        queries: [
+          db.connection().schema.dropTable('schema_users').toQuery(),
+        ],
+      },
     ])
-
-    assert.deepEqual(migrator2.migratedQueries, {
-      'database/migrations/accounts': [
-        db.connection().schema.dropTable('schema_accounts').toQuery(),
-      ],
-      'database/migrations/users': [
-        db.connection().schema.dropTable('schema_users').toQuery(),
-      ],
-    })
   })
 
   test('do not rollback when a schema file goes missing', async (assert) => {
@@ -535,11 +697,7 @@ test.group('Migrator', (group) => {
       connectionName: 'primary',
     })
 
-    try {
-      await migrator1.run()
-    } catch ({ message }) {
-      assert.equal(message, 'E_MISSING_SCHEMA_FILES: Cannot perform rollback. Schema file {database/migrations/accounts} is missing')
-    }
+    await migrator1.run()
 
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
@@ -548,6 +706,7 @@ test.group('Migrator', (group) => {
     assert.lengthOf(migrated, 2)
     assert.isTrue(hasUsersTable)
     assert.isTrue(hasAccountsTable)
+    assert.equal(migrator1.error!.message, 'E_MISSING_SCHEMA_FILES: Cannot perform rollback. Schema file {database/migrations/accounts} is missing')
   })
 
   test('get list of migrated files', async (assert) => {
@@ -593,5 +752,72 @@ test.group('Migrator', (group) => {
 
     assert.equal(files[1].name, 'database/migrations/users')
     assert.equal(files[1].batch, 1)
+  })
+
+  test('skip upcoming migrations after failure', async (assert) => {
+    const app = new Application(fs.basePath, {} as any, {} as any, {})
+
+    await fs.add('database/migrations/users.ts', `
+      import { Schema } from '../../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `)
+
+    await fs.add('database/migrations/accounts.ts', `
+      import { Schema } from '../../../../../src/Schema'
+      module.exports = class Accounts extends Schema {
+        public async up () {
+          this.schema.createTable('schema_accounts', (table) => {
+            table.increments()
+            table['badMethod']('account_id')
+          })
+        }
+      }
+    `)
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+    })
+
+    try {
+      await migrator.run()
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    const migrated = await db.connection().from('adonis_schema').select('*')
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+    const migratedFiles = Object.keys(migrator.migratedFiles).map((file) => {
+      return {
+        status: migrator.migratedFiles[file].status,
+        file: file,
+        queries: migrator.migratedFiles[file].queries,
+      }
+    })
+
+    assert.lengthOf(migrated, 0)
+    assert.isFalse(hasUsersTable, 'Has users table')
+    assert.isFalse(hasAccountsTable, 'Has accounts table')
+    assert.deepEqual(migratedFiles, [
+      {
+        status: 'error',
+        file: 'database/migrations/accounts',
+        queries: [],
+      },
+      {
+        status: 'pending',
+        file: 'database/migrations/users',
+        queries: [],
+      },
+    ])
+
+    assert.equal(migrator.status, 'error')
   })
 })
