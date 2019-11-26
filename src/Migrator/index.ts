@@ -37,23 +37,20 @@ export class Migrator implements MigratorContract {
   /**
    * Reference to the migrations config for the given connection
    */
-  private _migrationsConfig = {
+  private _migrationsConfig = Object.assign({
     tableName: 'adonis_schema',
     disableTransactions: false,
-    ...this._config.migrations,
-  }
+  }, this._config.migrations)
 
+  /**
+   * Whether or not the migrator has been booted
+   */
   private _booted: boolean = false
 
   /**
    * Migration source to collect schema files from the disk
    */
   private _migrationSource = new MigrationSource(this._config, this._app)
-
-  /**
-   * The latest batch in the database before we start the migrations
-   */
-  private _latestBatch?: number
 
   /**
    * Mode decides in which mode the migrator is executing migrations. The migrator
@@ -72,18 +69,31 @@ export class Migrator implements MigratorContract {
    * An array of files we have successfully migrated. The files are
    * collected regardless of `up` or `down` methods
    */
-  public migratedFiles: string[] = []
+  public migratedFiles: {
+    [file: string]: {
+      status: 'completed' | 'error' | 'pending',
+      queries: string[],
+      migration: MigrationNode,
+      batch: number,
+    },
+  } = {}
 
   /**
-   * Copy of migrated queries, available only in dry run
+   * Last error occurred when executing migrations
    */
-  public migratedQueries = {}
+  public error: null | Error = null
 
   /**
    * Current status of the migrator
    */
   public get status () {
-    return !this._booted ? 'pending' : (this.migratedFiles.length ? 'completed' : 'skipped')
+    return !this._booted
+      ? 'pending'
+      : (
+        this.error
+        ? 'error'
+        : (Object.keys(this.migratedFiles).length ? 'completed' : 'skipped')
+      )
   }
 
   constructor (
@@ -144,13 +154,13 @@ export class Migrator implements MigratorContract {
     executionResponse: boolean | string[],
   ) {
     if (this.dryRun) {
-      this.migratedQueries[name] = executionResponse as string[]
+      this.migratedFiles[name].queries = executionResponse as string[]
       return
     }
 
     await client.insertQuery().table(this._migrationsConfig.tableName).insert({
       name,
-      batch: this._latestBatch! + 1,
+      batch: this.migratedFiles[name].batch,
     })
   }
 
@@ -164,7 +174,7 @@ export class Migrator implements MigratorContract {
     executionResponse: boolean | string[],
   ) {
     if (this.dryRun) {
-      this.migratedQueries[name] = executionResponse as string[]
+      this.migratedFiles[name].queries = executionResponse as string[]
       return
     }
 
@@ -190,8 +200,9 @@ export class Migrator implements MigratorContract {
       }
 
       await this._commit(client)
-      this.migratedFiles.push(migration.name)
+      this.migratedFiles[migration.name].status = 'completed'
     } catch (error) {
+      this.migratedFiles[migration.name].status = 'error'
       await this._rollback(client)
       throw error
     }
@@ -279,17 +290,16 @@ export class Migrator implements MigratorContract {
   }
 
   /**
-   * Returns an array of files migrated till now
+   * Returns an array of files migrated till now. The latest
+   * migrations are on top
    */
   private async _getMigratedFilesTillBatch (batch) {
-    const rows = await this._client
-      .query<{ name: string }[]>()
+    return this._client
+      .query<{ name: string, batch: number }[]>()
       .from(this._migrationsConfig.tableName)
-      .select('name')
+      .select('name', 'batch')
       .where('batch', '>', batch)
       .orderBy('id', 'desc')
-
-    return rows.map(({ name }) => name)
   }
 
   /**
@@ -300,7 +310,6 @@ export class Migrator implements MigratorContract {
     this._booted = true
     await this._acquireLock()
     await this._makeMigrationsTable()
-    this._latestBatch = await this._getLatestBatch()
   }
 
   /**
@@ -314,16 +323,27 @@ export class Migrator implements MigratorContract {
    * Migrate up
    */
   private async _runUp () {
+    const batch = await this._getLatestBatch()
     const existing = await this._getMigratedFiles()
     const collected = await this._migrationSource.getMigrations()
 
-    for (let migration of collected) {
-      /**
-       * Only execute non migrated files
-       */
+    /**
+     * Upfront collecting the files to be executed
+     */
+    collected.forEach((migration) => {
       if (!existing.has(migration.name)) {
-        await this._executeMigration(migration)
+        this.migratedFiles[migration.name] = {
+          status: 'pending',
+          queries: [],
+          migration: migration,
+          batch: batch + 1,
+        }
       }
+    })
+
+    const filesToMigrate = Object.keys(this.migratedFiles)
+    for (let name of filesToMigrate) {
+      await this._executeMigration(this.migratedFiles[name].migration)
     }
   }
 
@@ -338,22 +358,27 @@ export class Migrator implements MigratorContract {
      * Finding schema files for migrations to rollback. We do not perform
      * rollback when any of the files are missing
      */
-    const migrations = existing.reduce((migrations: MigrationNode[], file) => {
-      const migration = collected.find((migration) => migration.name === file)
+    existing.forEach((file) => {
+      const migration = collected.find((migration) => migration.name === file.name)
       if (!migration) {
         throw new Exception(
-          `Cannot perform rollback. Schema file {${file}} is missing`,
+          `Cannot perform rollback. Schema file {${file.name}} is missing`,
           500,
           'E_MISSING_SCHEMA_FILES',
         )
       }
 
-      migrations.push(migration)
-      return migrations
-    }, [])
+      this.migratedFiles[migration.name] = {
+        status: 'pending',
+        queries: [],
+        migration: migration,
+        batch: file.batch,
+      }
+    })
 
-    for (let migration of migrations) {
-      await this._executeMigration(migration)
+    const filesToMigrate = Object.keys(this.migratedFiles)
+    for (let name of filesToMigrate) {
+      await this._executeMigration(this.migratedFiles[name].migration)
     }
   }
 
@@ -372,12 +397,16 @@ export class Migrator implements MigratorContract {
    * Migrate the database by calling the up method
    */
   public async run () {
-    await this._boot()
+    try {
+      await this._boot()
 
-    if (this.direction === 'up') {
-      await this._runUp()
-    } else if (this._options.direction === 'down') {
-      await this._runDown(this._options.batch)
+      if (this.direction === 'up') {
+        await this._runUp()
+      } else if (this._options.direction === 'down') {
+        await this._runDown(this._options.batch)
+      }
+    } catch (error) {
+      this.error = error
     }
 
     await this._shutdown()

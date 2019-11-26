@@ -40,9 +40,16 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
   export interface MigratorContract {
     dryRun: boolean
     direction: 'up' | 'down'
-    status: 'completed' | 'skipped' | 'pending'
-    migratedFiles: string[]
-    migratedQueries: { [file: string]: string[] }
+    status: 'completed' | 'skipped' | 'pending' | 'error'
+    error: null | Error
+    migratedFiles: {
+      [file: string]: {
+        status: 'completed' | 'error' | 'pending',
+        queries: string[],
+        migration: MigrationNode,
+        batch: number,
+      },
+    }
     run (): Promise<void>
     getList (): Promise<{ batch: number, name: string, migration_time: Date }[]>
     close (): Promise<void>
