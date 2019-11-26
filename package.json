@@ -45,7 +45,7 @@
     "@poppinss/utils": "^2.1.0",
     "camelcase": "^5.3.1",
     "knex": "^0.20.2",
-    "knex-dynamic-connection": "^1.0.1",
+    "knex-dynamic-connection": "^1.0.2",
     "pluralize": "^8.0.0",
     "snake-case": "^2.1.0",
     "ts-essentials": "^3.0.5"
@@ -54,7 +54,7 @@
     "@adonisjs/core": "2.x.x"
   },
   "devDependencies": {
-    "@adonisjs/ace": "^6.7.2",
+    "@adonisjs/ace": "^6.7.3",
     "@adonisjs/fold": "^6.2.3",
     "@adonisjs/mrm-preset": "^2.1.0",
     "@adonisjs/sink": "^2.4.0",
