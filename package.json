@@ -56,7 +56,7 @@
     "@adonisjs/core": "2.x.x"
   },
   "devDependencies": {
-    "@adonisjs/ace": "^6.7.3",
+    "@adonisjs/ace": "^6.7.4",
     "@adonisjs/fold": "^6.2.3",
     "@adonisjs/mrm-preset": "^2.1.0",
     "@adonisjs/sink": "^2.4.0",
@@ -125,8 +125,12 @@
       "DB_NAME": "lucid"
     },
     "types": "@adonisjs/lucid",
-    "providers": ["@adonisjs/lucid"],
-    "commands": ["@adonisjs/lucid/build/commands"]
+    "providers": [
+      "@adonisjs/lucid"
+    ],
+    "commands": [
+      "@adonisjs/lucid/build/commands"
+    ]
   },
   "np": {
     "contents": ".",
