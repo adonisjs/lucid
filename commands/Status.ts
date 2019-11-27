@@ -12,6 +12,7 @@ import { inject } from '@adonisjs/fold'
 import { BaseCommand, flags } from '@adonisjs/ace'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { MigrationListNode } from '@ioc:Adonis/Lucid/Migrator'
 
 /**
  * The command is meant to migrate the database by execute migrations
@@ -35,6 +36,23 @@ export default class Status extends BaseCommand {
 
   constructor (app: ApplicationContract, private _db: DatabaseContract) {
     super(app)
+  }
+
+  /**
+   * Colorizes the status string
+   */
+  private _colorizeStatus (status: MigrationListNode['status']) {
+    if (status === 'pending') {
+      return this.colors.yellow('pending')
+    }
+
+    if (status === 'migrated') {
+      return this.colors.green('completed')
+    }
+
+    if (status === 'corrupt') {
+      return this.colors.red('corrupt')
+    }
   }
 
   /**
@@ -63,15 +81,33 @@ export default class Status extends BaseCommand {
     const list = await migrator.getList()
     await migrator.close()
 
-    const columns = columnify(list.map((node) => {
+    /**
+     * List to be printed on the console
+     */
+    const uiList = list.map((node) => {
       return {
         name: node.name,
-        status: node.status,
+        status: this._colorizeStatus(node.status),
         batch: node.batch || 'NA',
         message: node.status === 'corrupt' ? 'The migration file is missing on filesystem' : '',
       }
-    }))
+    })
 
-    console.log(columns)
+    /**
+     * Columnify options
+     */
+    const columnifyOptions = {
+      batch: {
+        minWidth: 8,
+      },
+      name: {
+        minWidth: 60,
+      },
+      status: {
+        minWidth: 14,
+      },
+    }
+
+    console.log(columnify(uiList, columnifyOptions))
   }
 }
