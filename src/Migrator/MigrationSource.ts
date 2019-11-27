@@ -31,7 +31,7 @@ export class MigrationSource {
    * paths are resolved from the project root
    */
   private _getDirectoryFiles (directoryPath: string): Promise<MigrationNode[]> {
-    const basePath = this._app.cliCwd || this._app.appRoot
+    const basePath = this._app.appRoot
 
     return new Promise((resolve, reject) => {
       const path = isAbsolute(directoryPath) ? directoryPath : join(basePath, directoryPath)
