@@ -357,7 +357,10 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Migrate down (aka rollback)
    */
   private async _runDown (batch?: number) {
-    batch = batch === undefined ? await this._getLatestBatch() : batch
+    if (batch === undefined) {
+      batch = await this._getLatestBatch() - 1
+    }
+
     const existing = await this._getMigratedFilesTillBatch(batch)
     const collected = await this._migrationSource.getMigrations()
 
