@@ -8,8 +8,8 @@
 */
 
 export default [
-  '@adonisjs/lucid/build/MakeMigration',
-  '@adonisjs/lucid/build/Migrate',
-  '@adonisjs/lucid/build/Rollback',
-  '@adonisjs/lucid/build/Status',
+  '@adonisjs/lucid/build/commands/MakeMigration',
+  '@adonisjs/lucid/build/commands/Migrate',
+  '@adonisjs/lucid/build/commands/Rollback',
+  '@adonisjs/lucid/build/commands/Status',
 ]
