@@ -97,14 +97,16 @@ export default class Status extends BaseCommand {
      * Columnify options
      */
     const columnifyOptions = {
-      batch: {
-        minWidth: 8,
-      },
-      name: {
-        minWidth: 60,
-      },
-      status: {
-        minWidth: 14,
+      config: {
+        batch: {
+          minWidth: 8,
+        },
+        name: {
+          minWidth: 60,
+        },
+        status: {
+          minWidth: 14,
+        },
       },
     }
 
