@@ -413,6 +413,69 @@ test.group('Migrator', (group) => {
     }])
   })
 
+  test('rollback database to the latest batch', async (assert) => {
+    const app = new Application(fs.basePath, {} as any, {} as any, {})
+
+    await fs.add('database/migrations/users.ts', `
+      import { Schema } from '../../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_users')
+        }
+      }
+    `)
+
+    const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    await migrator.run()
+
+    await fs.add('database/migrations/accounts.ts', `
+      import { Schema } from '../../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_accounts', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_accounts')
+        }
+      }
+    `)
+
+    const migrator1 = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    await migrator1.run()
+
+    const migrator2 = getMigrator(db, app, { direction: 'down', connectionName: 'primary' })
+    await migrator2.run()
+
+    const migrated = await db.connection().from('adonis_schema').select('*')
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+    const migratedFiles = Object.keys(migrator2.migratedFiles).map((file) => {
+      return {
+        status: migrator2.migratedFiles[file].status,
+        file: file,
+        queries: migrator2.migratedFiles[file].queries,
+      }
+    })
+
+    assert.lengthOf(migrated, 1)
+    assert.isTrue(hasUsersTable)
+    assert.isFalse(hasAccountsTable)
+    assert.deepEqual(migratedFiles, [{
+      status: 'completed',
+      file: 'database/migrations/accounts',
+      queries: [],
+    }])
+  })
+
   test('rollback all down to batch 0', async (assert) => {
     const app = new Application(fs.basePath, {} as any, {} as any, {})
 
