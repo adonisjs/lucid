@@ -17,6 +17,7 @@
 const _ = require('lodash')
 const KnexQueryBuilder = require('knex/lib/query/builder')
 const excludeAttrFromCount = ['order', 'columns', 'limit', 'offset']
+const excludeSubAttrFromCount = ['join', 'order', 'columns', 'group', 'limit', 'offset', 'where']
 const util = require('../../lib/util')
 
 const _from = KnexQueryBuilder.prototype.from
@@ -129,6 +130,7 @@ KnexQueryBuilder.prototype.forPage = function (page = 1, perPage = 20) {
 KnexQueryBuilder.prototype.paginate = async function (page = 1, perPage = 20) {
   const countByQuery = this.clone()
 
+  const subByQuery = this.clone()
   /**
    * Copy the subQuery fn to the clone query. This will make sure
    * that build uses the extended query builder methods on the
@@ -141,22 +143,26 @@ KnexQueryBuilder.prototype.paginate = async function (page = 1, perPage = 20) {
    */
   page = Number(page)
   perPage = Number(perPage)
-
   /**
    * Remove statements that will make things bad with count
    * query, for example `orderBy`
    */
+
   countByQuery._statements = _.filter(countByQuery._statements, (statement) => {
     return excludeAttrFromCount.indexOf(statement.grouping) < 0
   })
 
-  const counts = await this.client // this fails
-    .queryBuilder()
+  subByQuery._statements = _.filter(subByQuery._statements, (statement) => {
+    return excludeSubAttrFromCount.indexOf(statement.grouping) < 0
+  })
+
+  const counts = await subByQuery
     .count('* as total')
     .from({
-      main: countByQuery.count('*')
+      main: countByQuery.select(this.client.raw("'total'"))
     })
   const total = _.get(counts, '0.total', 0)
+
   const data = total === 0 ? [] : await this.forPage(page, perPage)
 
   return {
