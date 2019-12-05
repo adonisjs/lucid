@@ -150,7 +150,12 @@ KnexQueryBuilder.prototype.paginate = async function (page = 1, perPage = 20) {
     return excludeAttrFromCount.indexOf(statement.grouping) < 0
   })
 
-  const counts = await countByQuery.count('* as total')
+  const counts = await this.client // this fails
+    .queryBuilder()
+    .count('* as total')
+    .from({
+      main:countByQuery.count('*')
+    })
   const total = _.get(counts, '0.total', 0)
   const data = total === 0 ? [] : await this.forPage(page, perPage)
 
