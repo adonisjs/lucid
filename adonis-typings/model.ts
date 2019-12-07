@@ -646,7 +646,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
       this: T,
       values: ModelObject,
       options?: ModelAdapterOptions,
-    ): InstanceType<T>
+    ): Promise<InstanceType<T>>
 
     /**
      * Find one using the primary key

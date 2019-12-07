@@ -1174,7 +1174,8 @@ test.group('Base Model | relations', (group) => {
     await db.manager.closeAll()
   })
 
-  test('set hasOne relation', (assert) => {
+  test('set hasOne relation', async (assert) => {
+    const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1192,8 +1193,9 @@ test.group('Base Model | relations', (group) => {
     }
 
     const user = new User()
+    Profile.$adapter = adapter
     user.$consumeAdapterResult({ id: 1 })
-    user.$setRelated('profile', Profile.create({ username: 'virk' }))
+    user.$setRelated('profile', await Profile.create({ username: 'virk' }))
 
     assert.deepEqual(user.profile.username, 'virk')
     assert.instanceOf(user.$preloaded.profile, Profile)
@@ -1225,7 +1227,8 @@ test.group('Base Model | relations', (group) => {
     assert.deepEqual(user.$preloaded, {})
   })
 
-  test('serialize relation toJSON', (assert) => {
+  test('serialize relation toJSON', async (assert) => {
+    const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1243,8 +1246,9 @@ test.group('Base Model | relations', (group) => {
     }
 
     const user = new User()
+    Profile.$adapter = adapter
     user.$consumeAdapterResult({ id: 1 })
-    user.$setRelated('profile', Profile.create({ username: 'virk' }))
+    user.$setRelated('profile', await Profile.create({ username: 'virk' }))
 
     assert.deepEqual(user.toJSON(), {
       id: 1,
@@ -1254,7 +1258,8 @@ test.group('Base Model | relations', (group) => {
     })
   })
 
-  test('serialize relation toJSON with custom serializeAs key', (assert) => {
+  test('serialize relation toJSON with custom serializeAs key', async (assert) => {
+    const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1272,8 +1277,9 @@ test.group('Base Model | relations', (group) => {
     }
 
     const user = new User()
+    Profile.$adapter = adapter
     user.$consumeAdapterResult({ id: 1 })
-    user.$setRelated('profile', Profile.create({ username: 'virk' }))
+    user.$setRelated('profile', await Profile.create({ username: 'virk' }))
 
     assert.deepEqual(user.toJSON(), {
       id: 1,

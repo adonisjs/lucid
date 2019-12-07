@@ -350,12 +350,13 @@ export class BaseModel implements ModelContract {
    * Returns a fresh instance of model by applying attributes
    * to the model instance
    */
-  public static create<T extends ModelConstructorContract> (
+  public static async create<T extends ModelConstructorContract> (
     this: T,
     values: ModelObject,
-  ): InstanceType<T> {
+  ): Promise<InstanceType<T>> {
     const instance = new this()
     instance.fill(values)
+    await instance.save()
     return instance as InstanceType<T>
   }
 
