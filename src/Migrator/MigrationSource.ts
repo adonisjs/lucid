@@ -15,7 +15,7 @@ import { join, isAbsolute, extname } from 'path'
 import { MigrationNode } from '@ioc:Adonis/Lucid/Migrator'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { ConnectionConfigContract } from '@ioc:Adonis/Lucid/Database'
-import { isNotSourceMapFile } from '../utils'
+import { isJavaScriptFile } from '../utils'
 
 /**
  * Migration source exposes the API to read the migration files
@@ -43,7 +43,7 @@ export class MigrationSource {
         }
 
         return resolve(files.sort().filter((file) => {
-          return isNotSourceMapFile(file)
+          return isJavaScriptFile(file)
         }).map((file) => {
           return {
             absPath: join(path, file),

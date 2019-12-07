@@ -69,6 +69,6 @@ export function difference (main: any[], other: []) {
   })
 }
 
-export function isNotSourceMapFile (file: string) {
-  return !['.map'].includes(extname(file))
+export function isJavaScriptFile (file: string) {
+  return ['.js', '.ts'].includes(extname(file))
 }
