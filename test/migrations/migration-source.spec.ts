@@ -59,6 +59,25 @@ test.group('MigrationSource', (group) => {
     ])
   })
 
+  test('only use javascript files for migration', async (assert) => {
+    const app = new Application(fs.basePath, {} as any, {} as any, {})
+    const migrationSource = new MigrationSource(db.getRawConnection('primary')!.config, app)
+
+    await fs.add('database/migrations/foo.js', 'module.exports = class Foo {}')
+    await fs.add('database/migrations/foo.js.map', '{}')
+
+    const directories = await migrationSource.getMigrations()
+
+    assert.deepEqual(directories.map((file) => {
+      return { absPath: file.absPath, name: file.name }
+    }), [
+      {
+        absPath: join(fs.basePath, 'database/migrations/foo.js'),
+        name: 'database/migrations/foo',
+      },
+    ])
+  })
+
   test('sort multiple migration directories seperately', async (assert) => {
     const app = new Application(fs.basePath, {} as any, {} as any, {})
     const config = Object.assign({}, db.getRawConnection('primary')!.config, {

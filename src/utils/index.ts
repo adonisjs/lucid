@@ -9,6 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
+import { extname } from 'path'
 import { Exception } from '@poppinss/utils'
 import { RelationContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 
@@ -66,4 +67,8 @@ export function difference (main: any[], other: []) {
       return !b.find((one) => c == one)
     })
   })
+}
+
+export function isJavaScriptFile (file: string) {
+  return ['.js', '.ts'].includes(extname(file))
 }
