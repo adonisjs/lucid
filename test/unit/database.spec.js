@@ -165,6 +165,28 @@ test.group('Database | QueryBuilder', (group) => {
     await this.database.table('users').truncate()
   })
 
+  test('paginate results with group by', async assert => {
+    const users = _.map(_.range(20), () => {
+      return {
+        username: chance.word(),
+        country_id: chance.integer({ min: 1, max: 2 })
+      }
+    })
+    await this.database.insert(users).into('users')
+    const result = await this.database
+      .table('users')
+      .groupBy('country_id')
+      .orderBy('username')
+      .paginate(1, 5)
+    assert.equal(result.perPage, 5)
+    assert.equal(result.total, 2)
+    assert.equal(result.page, 1)
+    assert.equal(result.lastPage, 1)
+    assert.isAtMost(result.data.length, result.perPage)
+
+    await this.database.table('users').truncate()
+  })
+
   test('paginate results when records are less than perPage', async (assert) => {
     const users = _.map(_.range(4), () => {
       return { username: chance.word() }

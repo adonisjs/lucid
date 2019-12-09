@@ -602,6 +602,34 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(users.first().getRelated('posts').size(), 1)
   })
 
+  test('paginate and groupby and load related rows', async (assert) => {
+    class Post extends Model {
+    }
+
+    class User extends Model {
+      posts () {
+        return this.belongsToMany(Post).withPivot('is_published')
+      }
+    }
+
+    User._bootIfNotBooted()
+    Post._bootIfNotBooted()
+
+    await ioc.use('Database').table('users').insert([{ id: 20, country_id: 1, username: 'virk' }, { id: 10, country_id: 1, username: 'nikk' }])
+    await ioc.use('Database').table('posts').insert([{ id: 18, title: 'Adonis 101' }, { id: 19, title: 'Lucid 101' }])
+    await ioc.use('Database').table('post_user').insert([
+      { post_id: 18, user_id: 20 },
+      { post_id: 18, user_id: 10 },
+      { post_id: 19, user_id: 20 }
+    ])
+    const users = await User.query().with('posts').groupBy('country_id').orderBy('id', 'asc').paginate()
+
+    assert.equal(users.size(), 1)
+    assert.deepEqual(users.pages, { total: helpers.formatNumber(1), perPage: 20, page: 1, lastPage: 1 })
+    assert.equal(users.last().getRelated('posts').size(), 1)
+    assert.equal(users.first().getRelated('posts').size(), 1)
+  })
+
   test('add runtime constraints when eagerloading', async (assert) => {
     class Post extends Model {
     }
@@ -1822,7 +1850,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const user = await User.find(20)
     const postsCount = await user.posts().countDistinct('post_user.user_id as total')
-    assert.include(postsCount[0], { 'total': helpers.formatNumber(1) })
+    assert.include(postsCount[0], { total: helpers.formatNumber(1) })
   })
 
   test('withCount work fine with self relations', async (assert) => {

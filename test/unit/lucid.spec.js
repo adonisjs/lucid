@@ -2029,6 +2029,31 @@ test.group('Model', (group) => {
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (exists (select * from "profiles" where "users"."id" = "profiles"."user_id")) limit ?'))
   })
 
+  test('run whereHas with paginate and groupBy', async (assert) => {
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Profile._bootIfNotBooted()
+
+    const user = await User.create({ username: 'virk' })
+    await user.profile().create({ profile_name: 'virk' })
+
+    let userQuery = null
+    User.onQuery((query) => (userQuery = query))
+
+    await User.query().where(function () {
+      this.whereHas('profile')
+    }).groupBy('username').paginate()
+    assert.equal(userQuery.sql, helpers.formatQuery('select * from "users" where (exists (select * from "profiles" where "users"."id" = "profiles"."user_id")) group by `username` limit ?'))
+  })
+
   test('do not set created_at when explicitly set in values', async (assert) => {
     class User extends Model {
     }
