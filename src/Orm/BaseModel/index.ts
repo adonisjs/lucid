@@ -10,7 +10,7 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import pluralize from 'pluralize'
-import snakeCase from 'snake-case'
+import { snakeCase } from 'snake-case'
 import { IocContract } from '@adonisjs/fold'
 import { Exception } from '@poppinss/utils'
 

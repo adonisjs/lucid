@@ -10,7 +10,7 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
-import snakeCase from 'snake-case'
+import { snakeCase } from 'snake-case'
 import camelCase from 'camelcase'
 
 import {
