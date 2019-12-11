@@ -1109,6 +1109,28 @@ test.group('Base | apdater', (group) => {
       },
     ])
   })
+
+  test('fill model instance with bulk attributes via cast key is different', async (assert) => {
+    const adapter = new FakeAdapter()
+    class User extends BaseModel {
+      @column({ castAs: 'first_name' })
+      public firstName: string
+    }
+
+    User.$adapter = adapter
+
+    const user = new User()
+    user.fill({ firstName: 'virk' })
+    await user.save()
+
+    assert.deepEqual(adapter.operations, [
+      {
+        type: 'insert',
+        instance: user,
+        attributes: { first_name: 'virk' },
+      },
+    ])
+  })
 })
 
 test.group('Base Model | sideloaded', (group) => {
@@ -1373,15 +1395,15 @@ test.group('Base Model | fetch', (group) => {
       @column({ primary: true })
       public id: number
 
-      @column()
-      public username: string
+      @column({ castAs: 'username' })
+      public userName: string
 
       @column()
       public email: string
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const user = await User.firstOrSave({ username: 'virk' })
+    const user = await User.firstOrSave({ userName: 'virk' })
 
     const totalUsers = await db.query().from('users').count('*', 'total')
 
@@ -1396,15 +1418,15 @@ test.group('Base Model | fetch', (group) => {
       @column({ primary: true })
       public id: number
 
-      @column()
-      public username: string
+      @column({ castAs: 'username' })
+      public userName: string
 
       @column()
       public email: string
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const user = await User.firstOrSave({ username: 'nikk' }, { email: 'nikk@gmail.com' })
+    const user = await User.firstOrSave({ userName: 'nikk' }, { email: 'nikk@gmail.com' })
 
     const totalUsers = await db.query().from('users').count('*', 'total')
 
@@ -1414,7 +1436,7 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(user!.$primaryKeyValue, 2)
     assert.isTrue(user.$persisted)
     assert.equal(user!.email, 'nikk@gmail.com')
-    assert.equal(user!.username, 'nikk')
+    assert.equal(user!.userName, 'nikk')
   })
 
   test('return the existing row when search criteria matches using firstOrNew', async (assert) => {
@@ -1422,15 +1444,15 @@ test.group('Base Model | fetch', (group) => {
       @column({ primary: true })
       public id: number
 
-      @column()
-      public username: string
+      @column({ castAs: 'username' })
+      public userName: string
 
       @column()
       public email: string
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const user = await User.firstOrNew({ username: 'virk' })
+    const user = await User.firstOrNew({ userName: 'virk' })
 
     const totalUsers = await db.query().from('users').count('*', 'total')
 
@@ -1445,15 +1467,15 @@ test.group('Base Model | fetch', (group) => {
       @column({ primary: true })
       public id: number
 
-      @column()
-      public username: string
+      @column({ castAs: 'username' })
+      public userName: string
 
       @column()
       public email: string
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const user = await User.firstOrNew({ username: 'nikk' }, { email: 'nikk@gmail.com' })
+    const user = await User.firstOrNew({ userName: 'nikk' }, { email: 'nikk@gmail.com' })
 
     const totalUsers = await db.query().from('users').count('*', 'total')
 
@@ -1463,7 +1485,7 @@ test.group('Base Model | fetch', (group) => {
     assert.isUndefined(user!.$primaryKeyValue)
     assert.isFalse(user.$persisted)
     assert.equal(user!.email, 'nikk@gmail.com')
-    assert.equal(user!.username, 'nikk')
+    assert.equal(user!.userName, 'nikk')
   })
 
   test('update the existing row when search criteria matches', async (assert) => {
@@ -1471,8 +1493,8 @@ test.group('Base Model | fetch', (group) => {
       @column({ primary: true })
       public id: number
 
-      @column()
-      public username: string
+      @column({ castAs: 'username' })
+      public userName: string
 
       @column()
       public email: string
@@ -1482,10 +1504,10 @@ test.group('Base Model | fetch', (group) => {
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const user = await User.updateOrCreate({ username: 'virk' }, { points: 20 })
+    const user = await User.updateOrCreate({ userName: 'virk' }, { points: 20 })
     assert.isTrue(user.$persisted)
     assert.equal(user.points, 20)
-    assert.equal(user.username, 'virk')
+    assert.equal(user.userName, 'virk')
 
     const users = await db.query().from('users')
 
@@ -1498,8 +1520,8 @@ test.group('Base Model | fetch', (group) => {
       @column({ primary: true })
       public id: number
 
-      @column()
-      public username: string
+      @column({ castAs: 'username' })
+      public userName: string
 
       @column()
       public email: string
@@ -1511,11 +1533,11 @@ test.group('Base Model | fetch', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const trx = await db.transaction()
 
-    const user = await User.updateOrCreate({ username: 'virk' }, { points: 20 }, { client: trx })
+    const user = await User.updateOrCreate({ userName: 'virk' }, { points: 20 }, { client: trx })
 
     assert.isTrue(user.$persisted)
     assert.equal(user.points, 20)
-    assert.equal(user.username, 'virk')
+    assert.equal(user.userName, 'virk')
 
     await trx.rollback()
 

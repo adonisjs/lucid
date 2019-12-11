@@ -357,7 +357,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Attach related
      */
     attach (
-      ids: (string | number)[] | { [key: string]: any },
+      ids: (string | number)[] | { [key: string]: ModelObject },
       checkExisting?: boolean,
     ): Promise<void>
 
@@ -370,7 +370,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Sync related ids
      */
     sync (
-      ids: (string | number)[] | { [key: string]: any },
+      ids: (string | number)[] | { [key: string]: ModelObject },
       wrapInTransaction?: boolean,
       checkExisting?: boolean,
     ): Promise<void>
@@ -638,6 +638,12 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $addRelation (name: string, type: string, options: Partial<BaseRelationNode | ThroughRelationNode>): void
     $hasRelation (name: string): boolean
     $getRelation (name: string): RelationContract | undefined
+
+    /**
+     * Resolve keys to their database column names
+     */
+    $resolveCastKey (key: string): string
+    $mapKeysToCastKeys (values: ModelObject): ModelObject
 
     /**
      * Creating model
