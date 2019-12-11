@@ -14,7 +14,7 @@ import { ModelContract, ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { ManyToMany } from './index'
-import { unique, difference } from '../../../utils'
+import { unique, syncDiff } from '../../../utils'
 import { BaseRelationQueryBuilder } from '../Base/QueryBuilder'
 
 /**
@@ -374,8 +374,16 @@ export class ManyToManyQueryBuilder
     ids: (string | number)[] | { [key: string]: any },
     checkExisting: boolean,
   ) {
-    let idsList = unique(Array.isArray(ids) ? ids : Object.keys(ids))
+    const pivotFKValue = this.$getRelatedValue(parent, this._relation.localKey, 'attach')
+
     const hasAttributes = !Array.isArray(ids)
+    const idsList = hasAttributes ? Object.keys(ids) : ids as string[]
+
+    /**
+     * Initial diff has all the ids under the insert array. If `checkExisting = true`
+     * then we will re-compute the diff from the existing database rows.
+     */
+    let diff: { update: any[], insert: any[] } = { update: [], insert: idsList }
 
     /**
      * Pull existing pivot rows when `checkExisting = true` and persist only
@@ -385,38 +393,51 @@ export class ManyToManyQueryBuilder
       const existingRows = await client
         .query()
         .from(this._relation.pivotTable)
-        .select(this._relation.pivotRelatedForeignKey)
         .whereIn(this._relation.pivotRelatedForeignKey, idsList)
-        .where(
-          this._relation.pivotForeignKey,
-          this.$getRelatedValue(parent, this._relation.localKey, 'attach'),
-        )
+        .where(this._relation.pivotForeignKey, pivotFKValue)
 
-      const existingIds = existingRows.map((row) => row[this._relation.pivotRelatedForeignKey])
-      idsList = difference(idsList, existingIds)
+      /**
+       * Computing the diff using the existing database rows
+       */
+      diff = syncDiff(existingRows, ids, (rows, forId) => {
+        /* eslint eqeqeq: "off" */
+        return rows.find((row) => row[this._relation.pivotRelatedForeignKey] == forId)
+      })
     }
 
     /**
-     * Ignore when there is nothing to insert
+     * Update rows where attributes have changed. The query is exactly the
+     * same as the above fetch query with two changes.
+     *
+     * 1. Performing an updating, instead of select
+     * 2. Instead of whereIn on the `pivotRelatedForeignKey`, we are using `where`
+     *    cause of the nature of the update action.
      */
-    if (!idsList.length) {
-      return
+    if (diff.update.length) {
+      await Promise.all(unique(diff.update).map((id) => {
+        return client
+          .query()
+          .from(this._relation.pivotTable)
+          .where(this._relation.pivotForeignKey, pivotFKValue)
+          .where(this._relation.pivotRelatedForeignKey, id)
+          .update(ids[id])
+      }))
     }
 
     /**
      * Perform multiple inserts in one go
      */
-    await client
-      .insertQuery()
-      .table(this._relation.pivotTable)
-      .multiInsert(idsList.map((id) => {
-        const payload = {
-          [this._relation.pivotForeignKey]: this.$getRelatedValue(parent, this._relation.localKey),
-          [this._relation.pivotRelatedForeignKey]: id,
-        }
-
-        return hasAttributes ? Object.assign(payload, ids[id]) : payload
-      }))
+    if (diff.insert.length) {
+      await client
+        .insertQuery()
+        .table(this._relation.pivotTable)
+        .multiInsert(unique(diff.insert).map((id) => {
+          return Object.assign({}, hasAttributes ? ids[id] : {}, {
+            [this._relation.pivotForeignKey]: pivotFKValue,
+            [this._relation.pivotRelatedForeignKey]: id,
+          })
+        }))
+    }
   }
 
   /**

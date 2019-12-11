@@ -3184,7 +3184,7 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsersAfterSync[0].skill_id, 2)
   })
 
-  test('insert new ids metioned in sync', async (assert) => {
+  test('insert new ids mentioned in sync', async (assert) => {
     class Skill extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -3264,10 +3264,61 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[0].id, skillUsersAfterSync[0].id)
     assert.equal(skillUsersAfterSync[0].user_id, user.id)
     assert.equal(skillUsersAfterSync[0].skill_id, 1)
-    assert.isNull(skillUsersAfterSync[0].proficiency)
+    assert.equal(skillUsersAfterSync[0].proficiency, 'master')
 
     assert.equal(skillUsersAfterSync[1].user_id, user.id)
     assert.equal(skillUsersAfterSync[1].skill_id, 2)
     assert.equal(skillUsersAfterSync[1].proficiency, 'beginner')
+  })
+
+  test('sync update extra properties when rows are same', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.related<'manyToMany', 'skills'>('skills').attach([1])
+    const skillUsers = await db.query().from('skill_user')
+
+    await user.related<'manyToMany', 'skills'>('skills').sync({
+      1: { proficiency: 'master' },
+      2: { proficiency: 'beginner' },
+    })
+
+    await user.related<'manyToMany', 'skills'>('skills').sync({
+      1: { proficiency: 'master' },
+      2: { proficiency: 'intermediate' },
+    })
+    const skillUsersAfterSync = await db.query().from('skill_user')
+
+    assert.lengthOf(skillUsers, 1)
+    assert.lengthOf(skillUsersAfterSync, 2)
+
+    assert.equal(skillUsers[0].id, skillUsersAfterSync[0].id)
+    assert.equal(skillUsersAfterSync[0].user_id, user.id)
+    assert.equal(skillUsersAfterSync[0].skill_id, 1)
+    assert.equal(skillUsersAfterSync[0].proficiency, 'master')
+
+    assert.equal(skillUsersAfterSync[1].user_id, user.id)
+    assert.equal(skillUsersAfterSync[1].skill_id, 2)
+    assert.equal(skillUsersAfterSync[1].proficiency, 'intermediate')
   })
 })
