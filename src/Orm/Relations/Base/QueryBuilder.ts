@@ -36,8 +36,7 @@ import { ModelQueryBuilder } from '../../QueryBuilder'
  */
 export abstract class BaseRelationQueryBuilder
   extends ModelQueryBuilder
-  implements BaseRelationQueryBuilderContract<any>
-{
+  implements BaseRelationQueryBuilderContract<any> {
   protected $appliedConstraints: boolean = false
 
   constructor (

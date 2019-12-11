@@ -336,8 +336,8 @@ test.group('Model options | Model.findOrFail', (group) => {
       public username: string
     }
 
-    const db = getDb()
-    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const customDb = getDb()
+    await customDb.insertQuery().table('users').insert({ username: 'virk' })
     const profiler = new Profiler({})
 
     const user = await User.findOrFail(1, { profiler })

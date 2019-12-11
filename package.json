@@ -19,7 +19,7 @@
     "test:pg": "DB=pg node japaFile.js",
     "test:docker": "npm run test:sqlite && npm run test:mysql && npm run test:pg",
     "test": "docker-compose -f docker-compose.yml -f docker-compose-test.yml build && docker-compose -f docker-compose.yml -f docker-compose-test.yml run --rm test",
-    "lint": "tslint --project tsconfig.json",
+    "lint": "eslint . --ext=.ts",
     "clean": "del build",
     "compile": "npm run lint && npm run clean && tsc && npm run copy:files",
     "copy:files": "copyfiles \"templates/**/*.txt\" build",
@@ -72,6 +72,8 @@
     "del-cli": "^3.0.0",
     "doctoc": "^1.4.0",
     "dotenv": "^8.2.0",
+    "eslint": "^6.7.2",
+    "eslint-plugin-adonis": "^1.0.2",
     "husky": "^3.1.0",
     "japa": "^3.0.1",
     "mrm": "^2.0.1",
@@ -81,8 +83,6 @@
     "reflect-metadata": "^0.1.13",
     "sqlite3": "^4.1.1",
     "ts-node": "^8.5.4",
-    "tslint": "^5.20.1",
-    "tslint-eslint-rules": "^5.4.0",
     "typescript": "^3.7.3"
   },
   "publishConfig": {

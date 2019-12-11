@@ -22,8 +22,7 @@ import { BaseRelationQueryBuilder } from '../Base/QueryBuilder'
  */
 export class ManyToManyQueryBuilder
   extends BaseRelationQueryBuilder
-  implements ManyToManyQueryBuilderContract<any>
-{
+  implements ManyToManyQueryBuilderContract<any> {
   constructor (
     builder: knex.QueryBuilder,
     private _relation: ManyToMany,
@@ -31,8 +30,8 @@ export class ManyToManyQueryBuilder
     private _parent: ModelContract | ModelContract[],
   ) {
     super(builder, _relation, client, (userFn) => {
-      return (builder) => {
-        userFn(new ManyToManyQueryBuilder(builder, this._relation, this.client, this._parent))
+      return (__builder) => {
+        userFn(new ManyToManyQueryBuilder(__builder, this._relation, this.client, this._parent))
       }
     })
   }
@@ -506,7 +505,6 @@ export class ManyToManyQueryBuilder
   ): Promise<void> {
     if (Array.isArray(this._parent)) {
       throw new Error('Cannot save with multiple parents')
-      return
     }
 
     /**
@@ -536,7 +534,6 @@ export class ManyToManyQueryBuilder
   ) {
     if (Array.isArray(this._parent)) {
       throw new Error('Cannot save with multiple parents')
-      return
     }
 
     /**
@@ -564,7 +561,6 @@ export class ManyToManyQueryBuilder
   ) {
     if (Array.isArray(this._parent)) {
       throw new Error('Cannot save with multiple parents')
-      return
     }
 
     const client = this._relation.model.$adapter.modelClient(this._parent)
@@ -577,7 +573,6 @@ export class ManyToManyQueryBuilder
   public async detach (ids: (string | number)[]) {
     if (Array.isArray(this._parent)) {
       throw new Error('Cannot save with multiple parents')
-      return
     }
 
     const client = this._relation.model.$adapter.modelClient(this._parent)
@@ -594,7 +589,6 @@ export class ManyToManyQueryBuilder
   ) {
     if (Array.isArray(this._parent)) {
       throw new Error('Cannot save with multiple parents')
-      return
     }
 
     /**

@@ -19,14 +19,14 @@ export class SqliteDialect implements DialectContract {
    * Attempts to add advisory lock to the database and
    * returns it's status.
    */
-  public async getAdvisoryLock (): Promise<boolean> {
-    throw new Error(`Sqlite doesn't support advisory locks`)
+  public getAdvisoryLock (): Promise<boolean> {
+    throw new Error('Sqlite doesn\'t support advisory locks')
   }
 
   /**
    * Releases the advisory lock
    */
-  public async releaseAdvisoryLock (): Promise<boolean> {
-    throw new Error(`Sqlite doesn't support advisory locks`)
+  public releaseAdvisoryLock (): Promise<boolean> {
+    throw new Error('Sqlite doesn\'t support advisory locks')
   }
 }

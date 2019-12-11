@@ -19,15 +19,15 @@ export class RedshiftDialect implements DialectContract {
    * Redshift doesn't support advisory locks. Learn more:
    * https://tableplus.com/blog/2018/10/redshift-vs-postgres-database-comparison.html
    */
-  public async getAdvisoryLock (): Promise<boolean> {
-    throw new Error(`Redshift doesn't support advisory locks`)
+  public getAdvisoryLock (): Promise<boolean> {
+    throw new Error('Redshift doesn\'t support advisory locks')
   }
 
   /**
    * Redshift doesn't support advisory locks. Learn more:
    * https://tableplus.com/blog/2018/10/redshift-vs-postgres-database-comparison.html
    */
-  public async releaseAdvisoryLock (): Promise<boolean> {
-    throw new Error(`Redshift doesn't support advisory locks`)
+  public releaseAdvisoryLock (): Promise<boolean> {
+    throw new Error('Redshift doesn\'t support advisory locks')
   }
 }

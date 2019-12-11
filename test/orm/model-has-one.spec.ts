@@ -495,7 +495,7 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-     await db.insertQuery().table('identities').insert([
+    await db.insertQuery().table('identities').insert([
       {
         profile_id: 1,
         identity_name: 'virk',
@@ -563,7 +563,7 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-     await db.insertQuery().table('identities').insert([
+    await db.insertQuery().table('identities').insert([
       {
         profile_id: 1,
         identity_name: 'virk',
@@ -636,7 +636,7 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-     await db.insertQuery().table('identities').insert([
+    await db.insertQuery().table('identities').insert([
       {
         profile_id: 1,
         identity_name: 'virk',
@@ -713,7 +713,7 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-     await db.insertQuery().table('identities').insert([
+    await db.insertQuery().table('identities').insert([
       {
         profile_id: 1,
         identity_name: 'virk',
@@ -843,7 +843,7 @@ test.group('Model | HasOne | fetch related', (group) => {
       },
     ])
 
-     await db.insertQuery().table('identities').insert([
+    await db.insertQuery().table('identities').insert([
       {
         profile_id: 1,
         identity_name: 'virk',
@@ -911,7 +911,7 @@ test.group('Model | HasOne | fetch related', (group) => {
       },
     ])
 
-     await db.insertQuery().table('identities').insert([
+    await db.insertQuery().table('identities').insert([
       {
         profile_id: 1,
         identity_name: 'virk',

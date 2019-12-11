@@ -24,8 +24,7 @@ import { BaseRelationQueryBuilder } from '../Base/QueryBuilder'
  */
 export class BelongsToQueryBuilder
   extends BaseRelationQueryBuilder
-  implements BelongsToQueryBuilderContract<any>
-{
+  implements BelongsToQueryBuilderContract<any> {
   constructor (
     builder: knex.QueryBuilder,
     private _relation: BelongsTo,
@@ -33,8 +32,8 @@ export class BelongsToQueryBuilder
     private _parent: ModelContract | ModelContract[],
   ) {
     super(builder, _relation, client, (userFn) => {
-      return (builder) => {
-        userFn(new BelongsToQueryBuilder(builder, this._relation, this.client, this._parent))
+      return (__builder) => {
+        userFn(new BelongsToQueryBuilder(__builder, this._relation, this.client, this._parent))
       }
     })
   }
@@ -116,8 +115,8 @@ export class BelongsToQueryBuilder
       trx = await this.client.transaction()
     }
 
-    const callback = (parent: ModelContract, related: ModelContract) => {
-      parent[this._relation.foreignKey] = this.$getRelatedValue(related, this._relation.localKey)
+    const callback = (__parent: ModelContract, __related: ModelContract) => {
+      __parent[this._relation.foreignKey] = this.$getRelatedValue(__related, this._relation.localKey)
     }
 
     if (trx) {
@@ -149,7 +148,7 @@ export class BelongsToQueryBuilder
   /**
    * Save many not allowed for belongsTo
    */
-  public async saveMany () {
+  public saveMany (): Promise<void> {
     throw new Exception(`Cannot save many of ${this._relation.model.name}.${this._relation.relationName}. Use associate instead.`)
   }
 }

@@ -29,8 +29,8 @@ export class HasOneQueryBuilder extends BaseRelationQueryBuilder implements HasO
     private _parent: ModelContract | ModelContract[],
   ) {
     super(builder, _relation, client, (userFn) => {
-      return (builder) => {
-        userFn(new HasOneQueryBuilder(builder, this._relation, this.client, _parent))
+      return (__builder) => {
+        userFn(new HasOneQueryBuilder(__builder, this._relation, this.client, _parent))
       }
     })
   }
@@ -81,7 +81,6 @@ export class HasOneQueryBuilder extends BaseRelationQueryBuilder implements HasO
   public async save (related: ModelContract, wrapInTransaction: boolean = true): Promise<void> {
     if (Array.isArray(this._parent)) {
       throw new Error('Cannot save with multiple parents')
-      return
     }
 
     /**
@@ -93,8 +92,8 @@ export class HasOneQueryBuilder extends BaseRelationQueryBuilder implements HasO
       trx = await this.client.transaction()
     }
 
-    const callback = (parent, related) => {
-      related[this._relation.foreignKey] = this.$getRelatedValue(parent, this._relation.localKey)
+    const callback = (__parent, __related) => {
+      __related[this._relation.foreignKey] = this.$getRelatedValue(__parent, this._relation.localKey)
     }
 
     if (trx) {
@@ -107,7 +106,7 @@ export class HasOneQueryBuilder extends BaseRelationQueryBuilder implements HasO
   /**
    * Save many is not allowed by HasOne
    */
-  public async saveMany () {
+  public saveMany (): Promise<void> {
     throw new Exception(`Cannot save many of ${this._relation.model.name}.${this._relation.relationName}. Use save instead.`)
   }
 }

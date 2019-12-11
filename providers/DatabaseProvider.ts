@@ -31,7 +31,7 @@ export default class DatabaseServiceProvider {
   /**
    * Register database binding
    */
-  public register () {
+  public register (): void {
     this.$container.singleton('Adonis/Lucid/Database', () => {
       const config = this.$container.use('Adonis/Core/Config').get('database', {})
       const Logger = this.$container.use('Adonis/Core/Logger')
@@ -64,7 +64,7 @@ export default class DatabaseServiceProvider {
     })
   }
 
-  public boot () {
+  public boot (): void {
     this.$container.with(['Adonis/Core/HealthCheck', 'Adonis/Lucid/Database'], (HealthCheck) => {
       HealthCheck.addChecker('lucid', 'Adonis/Lucid/Database')
     })

@@ -22,8 +22,7 @@ import { BaseRelationQueryBuilder } from '../Base/QueryBuilder'
  */
 export class HasManyQueryBuilder
   extends BaseRelationQueryBuilder
-  implements HasManyQueryBuilderContract<any>
-{
+  implements HasManyQueryBuilderContract<any> {
   constructor (
     builder: knex.QueryBuilder,
     private _relation: HasMany,
@@ -31,8 +30,8 @@ export class HasManyQueryBuilder
     private _parent: ModelContract | ModelContract[],
   ) {
     super(builder, _relation, client, (userFn) => {
-      return (builder) => {
-        userFn(new HasManyQueryBuilder(builder, this._relation, this.client, this._parent))
+      return (__builder) => {
+        userFn(new HasManyQueryBuilder(__builder, this._relation, this.client, this._parent))
       }
     })
   }
@@ -77,7 +76,6 @@ export class HasManyQueryBuilder
   public async save (related: ModelContract, wrapInTransaction: boolean = true): Promise<void> {
     if (Array.isArray(this._parent)) {
       throw new Error('Cannot save with multiple parents')
-      return
     }
 
     /**
@@ -89,8 +87,8 @@ export class HasManyQueryBuilder
       trx = await this.client.transaction()
     }
 
-    const callback = (parent, related) => {
-      related[this._relation.foreignKey] = this.$getRelatedValue(parent, this._relation.localKey)
+    const callback = (__parent, __related) => {
+      __related[this._relation.foreignKey] = this.$getRelatedValue(__parent, this._relation.localKey)
     }
 
     if (trx) {
@@ -106,7 +104,6 @@ export class HasManyQueryBuilder
   public async saveMany (related: ModelContract[], wrapInTransaction: boolean = true): Promise<void> {
     if (Array.isArray(this._parent)) {
       throw new Error('Cannot save with multiple parents')
-      return
     }
 
     /**
@@ -118,8 +115,8 @@ export class HasManyQueryBuilder
       trx = await this.client.transaction()
     }
 
-    const callback = (parent, related) => {
-      related[this._relation.foreignKey] = this.$getRelatedValue(parent, this._relation.localKey)
+    const callback = (__parent, __related) => {
+      __related[this._relation.foreignKey] = this.$getRelatedValue(__parent, this._relation.localKey)
     }
 
     if (trx) {

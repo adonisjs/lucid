@@ -87,8 +87,8 @@ export class Migrator extends EventEmitter implements MigratorContract {
       ? 'pending'
       : (
         this.error
-        ? 'error'
-        : (Object.keys(this.migratedFiles).length ? 'completed' : 'skipped')
+          ? 'error'
+          : (Object.keys(this.migratedFiles).length ? 'completed' : 'skipped')
       )
   }
 
@@ -190,7 +190,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
       this.emit('migration:start', this.migratedFiles[migration.name])
 
       if (this.direction === 'up') {
-        const response = await schema.execUp()  // Handles dry run itself
+        const response = await schema.execUp() // Handles dry run itself
         await this._recordMigrated(client, migration.name, response) // Handles dry run itself
       } else if (this.direction === 'down') {
         const response = await schema.execDown() // Handles dry run itself
@@ -369,7 +369,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
      * rollback when any of the files are missing
      */
     existing.forEach((file) => {
-      const migration = collected.find((migration) => migration.name === file.name)
+      const migration = collected.find(({ name }) => name === file.name)
       if (!migration) {
         throw new Exception(
           `Cannot perform rollback. Schema file {${file.name}} is missing`,

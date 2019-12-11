@@ -263,7 +263,7 @@ export class BaseModel implements ModelContract {
     this.$columns.set(name, column)
     this._mappings.cast.set(column.castAs!, name)
     this.$refs[name] = column.castAs
-   }
+  }
 
   /**
    * Returns a boolean telling if column exists on the model
@@ -629,7 +629,7 @@ export class BaseModel implements ModelContract {
       return this.$attributes
     }
 
-    const result = Object.keys(this.$attributes).reduce((result, key) => {
+    const dirty = Object.keys(this.$attributes).reduce((result, key) => {
       const value = this.$attributes[key]
       const originalValue = this.$original[key]
 
@@ -652,11 +652,11 @@ export class BaseModel implements ModelContract {
       Object.keys(this.$original)
         .filter((key) => !processedKeys.includes(key))
         .forEach((key) => {
-          result[key] = null
+          dirty[key] = null
         })
     }
 
-    return result
+    return dirty
   }
 
   /**

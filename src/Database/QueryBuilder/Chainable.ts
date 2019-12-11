@@ -736,7 +736,7 @@ export abstract class Chainable implements ChainableContract {
     return this.havingExists(value)
   }
 
-    /**
+  /**
    * Adding `having not exists` clause
    */
   public havingNotExists (value: any): this {

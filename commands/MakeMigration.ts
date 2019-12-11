@@ -81,7 +81,7 @@ export default class MakeMigration extends BaseCommand {
     return this.prompt.choice('Select the migrations folder', directories, { name: 'folder' })
   }
 
-  public async handle () {
+  public async handle (): Promise<void> {
     const connection = this._db.getRawConnection(this.connection || this._db.primaryConnectionName)
 
     /**

@@ -1,5 +1,0 @@
-{
-  "extends": [
-    "@adonisjs/mrm-preset/_tslint"
-  ]
-}

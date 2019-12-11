@@ -41,24 +41,21 @@ export default class Status extends BaseCommand {
   /**
    * Colorizes the status string
    */
-  private _colorizeStatus (status: MigrationListNode['status']) {
-    if (status === 'pending') {
-      return this.colors.yellow('pending')
-    }
-
-    if (status === 'migrated') {
-      return this.colors.green('completed')
-    }
-
-    if (status === 'corrupt') {
-      return this.colors.red('corrupt')
+  private _colorizeStatus (status: MigrationListNode['status']): string {
+    switch (status) {
+      case 'pending':
+        return this.colors.yellow('pending')
+      case 'migrated':
+        return this.colors.green('completed')
+      case 'corrupt':
+        return this.colors.red('corrupt')
     }
   }
 
   /**
    * Handle command
    */
-  public async handle () {
+  public async handle (): Promise<void> {
     const connection = this._db.getRawConnection(this.connection || this._db.primaryConnectionName)
 
     /**

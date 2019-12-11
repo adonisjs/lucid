@@ -144,9 +144,9 @@ declare module '@ioc:Adonis/Lucid/Database' {
     from: SelectTable<DatabaseQueryBuilderContract & ExcutableQueryBuilderContract<any>>,
 
     /**
-     * Same as `insertQuery()`, but also selects the table for the query. The `table`
-     * method doesn't allow defining the return type and one must use `insertQuery`
-     * to define that.
+     * Same as `insertQuery()`, but also selects the table for the query.
+     * The `table` method doesn't allow defining the return type and
+     * one must use `insertQuery` to define that.
      */
     table: Table<InsertQueryBuilderContract & ExcutableQueryBuilderContract<any>>,
 
@@ -431,7 +431,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   /**
    * The shape of a connection within the connection manager
    */
-  type ConnectionManagerConnectionNode = {
+  export type ConnectionManagerConnectionNode = {
     name: string,
     config: ConnectionConfigContract,
     connection?: ConnectionContract,

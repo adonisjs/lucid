@@ -9,7 +9,7 @@ class User extends BaseModel {
   public profile: Profile
 }
 
-User.$before('save', async (user) => {
+User.$before('save', (user) => {
   user.username
 })
 

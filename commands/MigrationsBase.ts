@@ -47,7 +47,7 @@ export default abstract class MigrationsBase extends BaseCommand {
   /**
    * Runs the migrations using the migrator
    */
-  protected async $runMigrations (migrator: MigratorContract) {
+  protected async $runMigrations (migrator: MigratorContract): Promise<void> {
     /**
      * A set of files processed and emitted using event emitter.
      */

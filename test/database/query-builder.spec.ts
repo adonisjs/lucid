@@ -176,7 +176,7 @@ test.group('Query Builder | from', (group) => {
     await connection.disconnect()
   })
 
-  test('define table alias', async (assert) => {
+  test('define table alias', (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
@@ -320,7 +320,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('add orWhere wrapped clause', async (assert) => {
+  test('add orWhere wrapped clause', (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 

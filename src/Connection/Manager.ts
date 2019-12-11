@@ -14,9 +14,11 @@ import { Exception } from '@poppinss/utils'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
 
 import {
+  ReportNode,
   ConnectionContract,
   ConnectionConfigContract,
   ConnectionManagerContract,
+  ConnectionManagerConnectionNode,
 } from '@ioc:Adonis/Lucid/Database'
 
 import { Connection } from './index'
@@ -42,7 +44,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
   /**
    * Monitors a given connection by listening for lifecycle events
    */
-  private _monitorConnection (connection: ConnectionContract) {
+  private _monitorConnection (connection: ConnectionContract): void {
     /**
      * Listens for disconnect to set the connection state and cleanup
      * memory
@@ -186,7 +188,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
   /**
    * Returns the connection node for a given named connection
    */
-  public get (connectionName: string) {
+  public get (connectionName: string): ConnectionManagerConnectionNode | undefined {
     return this.connections.get(connectionName)
   }
 
@@ -195,7 +197,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
    * a given named connection. This method doesn't tell if
    * connection is connected or not.
    */
-  public has (connectionName: string) {
+  public has (connectionName: string): boolean {
     return this.connections.has(connectionName)
   }
 
@@ -203,7 +205,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
    * Returns a boolean telling if connection has been established
    * with the database or not
    */
-  public isConnected (connectionName: string) {
+  public isConnected (connectionName: string): boolean {
     if (!this.has(connectionName)) {
       return false
     }
@@ -216,7 +218,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
    * Closes a given connection and can optionally release it from the
    * tracking list
    */
-  public async close (connectionName: string, release: boolean = false) {
+  public async close (connectionName: string, release: boolean = false): Promise<void> {
     if (this.isConnected(connectionName)) {
       await this.get(connectionName)!.connection!.disconnect()
     }
@@ -229,7 +231,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
   /**
    * Close all tracked connections
    */
-  public async closeAll (release: boolean = false) {
+  public async closeAll (release: boolean = false): Promise<void> {
     await Promise.all(Array.from(this.connections.keys()).map((name) => this.close(name, release)))
   }
 
@@ -237,7 +239,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
    * Release a connection. This will disconnect the connection
    * and will delete it from internal list
    */
-  public async release (connectionName: string) {
+  public async release (connectionName: string): Promise<void> {
     if (this.isConnected(connectionName)) {
       await this.close(connectionName, true)
     } else {
@@ -248,7 +250,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
   /**
    * Returns the report for all the connections marked for healthChecks.
    */
-  public async report () {
+  public async report (): Promise<{ health: { healthy: boolean, message: string }, meta: ReportNode[] }> {
     const reports = await Promise.all(
       Array.from(this.connections.keys())
         .filter((one) => this.get(one)!.config.healthCheck)
@@ -256,7 +258,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
           this.connect(one)
           return this.get(one)!.connection!.getReport()
         }),
-      )
+    )
 
     const healthy = !reports.find((report) => !!report.error)
 

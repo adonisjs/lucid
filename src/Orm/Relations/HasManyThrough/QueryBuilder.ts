@@ -23,8 +23,7 @@ import { BaseRelationQueryBuilder } from '../Base/QueryBuilder'
  */
 export class HasManyThroughQueryBuilder
   extends BaseRelationQueryBuilder
-  implements HasManyThroughQueryBuilderContract<any>
-{
+  implements HasManyThroughQueryBuilderContract<any> {
   constructor (
     builder: knex.QueryBuilder,
     private _relation: HasManyThrough,
@@ -32,8 +31,8 @@ export class HasManyThroughQueryBuilder
     private _parent: ModelContract | ModelContract[],
   ) {
     super(builder, _relation, client, (userFn) => {
-      return (builder) => {
-        userFn(new HasManyThroughQueryBuilder(builder, this._relation, this.client, this._parent))
+      return (__builder) => {
+        userFn(new HasManyThroughQueryBuilder(__builder, this._relation, this.client, this._parent))
       }
     })
   }
@@ -111,8 +110,8 @@ export class HasManyThroughQueryBuilder
     return this
   }
 
-  public async save () {
-    throw new Exception(`Has many through doesn\'t support saving relations`)
+  public save (): Promise<void> {
+    throw new Exception('Has many through doesn\'t support saving relations')
   }
 
   public async saveMany () {
