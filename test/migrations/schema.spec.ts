@@ -62,7 +62,7 @@ test.group('Schema', (group) => {
     assert.deepEqual(queries, [knexSchema])
   })
 
-  test('get raw query builder using now method', async (assert) => {
+  test('get knex raw query builder using now method', async (assert) => {
     class UsersSchema extends getBaseSchema() {
       public up () {
         this.schema.createTable('users', (table) => {
@@ -207,5 +207,26 @@ test.group('Schema', (group) => {
 
     assert.isFalse(hasUsers)
     assert.isFalse(hasAccounts)
+  })
+
+  test('use now helper to define default timestamp', async (assert) => {
+    class UsersSchema extends getBaseSchema() {
+      public up () {
+        this.schema.createTable('users', (table) => {
+          table.increments('id')
+          table.timestamp('created_at').defaultTo(this.now())
+        })
+      }
+    }
+
+    const schema = new UsersSchema(db.connection(), 'users.ts', true)
+    const queries = await schema.execUp()
+
+    const knexSchema = db.connection().schema.createTable('users', (table) => {
+      table.increments('id')
+      table.timestamp('created_at').defaultTo(db.connection().getWriteClient().fn.now())
+    }).toQuery()
+
+    assert.deepEqual(queries, [knexSchema])
   })
 })

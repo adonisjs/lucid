@@ -592,6 +592,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    */
   interface RawContract {
     client: QueryClientContract,
+    toKnex (): knex.Raw,
     wrap (before: string, after: string): this
   }
 
