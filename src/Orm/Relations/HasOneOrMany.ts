@@ -171,4 +171,15 @@ export abstract class HasOneOrMany implements RelationContract {
 
     parent.$setRelated(this.relationName as keyof typeof parent, related)
   }
+
+  /**
+   * Push the related model instance
+   */
+  public pushRelated (parent: ModelContract, related?: ModelContract | ModelContract[]) {
+    if (!related) {
+      return
+    }
+
+    parent.$pushRelated(this.relationName as keyof typeof parent, related)
+  }
 }

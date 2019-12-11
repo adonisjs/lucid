@@ -48,8 +48,8 @@ export class HasMany extends HasOneOrMany {
    */
   public setRelatedMany (parents: ModelContract[], related: ModelContract[]) {
     parents.forEach((parent) => {
-      const relation = related.filter((model) => model[this.foreignKey] === parent[this.localKey])
-      this.setRelated(parent, relation)
+      const relations = related.filter((model) => model[this.foreignKey] === parent[this.localKey])
+      this.setRelated(parent, relations)
     })
   }
 }

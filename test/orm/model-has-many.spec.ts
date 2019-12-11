@@ -793,6 +793,59 @@ test.group('Model | HasMany', (group) => {
     assert.equal(user!.posts[0].$options!.connection, 'secondary')
     assert.equal(user!.posts[0].comments[0].$options!.connection, 'secondary')
   })
+
+  test('push to existing relations when preloading using model instance', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 1,
+        title: 'Lucid 101',
+      },
+      {
+        user_id: 2,
+        title: 'Lucid 102',
+      },
+    ])
+
+    User.$boot()
+    const users = await User.query().orderBy('id', 'asc')
+
+    const dummyPost = new Post()
+    dummyPost.fill({ userId: users[0].id, title: 'Dummy 101' })
+    users[0].$setRelated('posts', [dummyPost])
+
+    await users[0].preload('posts')
+    await users[1].preload('posts')
+
+    assert.lengthOf(users[0]!.posts, 3)
+    assert.equal(users[0].posts[0].title, 'Dummy 101')
+
+    assert.lengthOf(users[1]!.posts, 1)
+    assert.equal(users[1].posts[0].title, 'Lucid 102')
+  })
 })
 
 test.group('Model | HasMany | fetch related', (group) => {
