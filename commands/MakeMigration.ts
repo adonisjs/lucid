@@ -9,7 +9,7 @@
 
 import { join } from 'path'
 import camelCase from 'camelcase'
-import snakeCase from 'snake-case'
+import { snakeCase } from 'snake-case'
 import { inject } from '@adonisjs/fold'
 import { BaseCommand, args, flags } from '@adonisjs/ace'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
