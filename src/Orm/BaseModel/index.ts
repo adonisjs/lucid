@@ -347,6 +347,24 @@ export class BaseModel implements ModelContract {
   }
 
   /**
+   * Resolves the cast key for a given property. The original key
+   * is returned as it is, If property doesn't exists inside refs.
+   */
+  public static $resolveCastKey (key: string): string {
+    return this.$refs[key] || key
+  }
+
+  /**
+   * Maps the object keys to their database column name.
+   */
+  public static $mapKeysToCastKeys (values: ModelObject): ModelObject {
+    return Object.keys(values).reduce((result, key) => {
+      result[this.$resolveCastKey(key)] = values[key]
+      return result
+    }, {})
+  }
+
+  /**
    * Returns a fresh instance of model by applying attributes
    * to the model instance
    */
@@ -368,7 +386,7 @@ export class BaseModel implements ModelContract {
     value: any,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).where(this.$refs[this.$primaryKey], value).first()
+    return this.query(options).where(this.$resolveCastKey(this.$primaryKey), value).first()
   }
 
   /**
@@ -379,7 +397,7 @@ export class BaseModel implements ModelContract {
     value: any,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).where(this.$refs[this.$primaryKey], value).firstOrFail()
+    return this.query(options).where(this.$resolveCastKey(this.$primaryKey), value).firstOrFail()
   }
 
   /**
@@ -392,8 +410,8 @@ export class BaseModel implements ModelContract {
   ) {
     return this
       .query(options)
-      .whereIn(this.$refs[this.$primaryKey], value)
-      .orderBy(this.$refs[this.$primaryKey], 'desc')
+      .whereIn(this.$resolveCastKey(this.$primaryKey), value)
+      .orderBy(this.$resolveCastKey(this.$primaryKey), 'desc')
       .exec()
   }
 
@@ -424,7 +442,7 @@ export class BaseModel implements ModelContract {
     options?: ModelAdapterOptions,
   ) {
     const query = this.query(options)
-    let row = await query.where(search).first()
+    let row = await query.where(this.$mapKeysToCastKeys(search)).first()
 
     if (!row) {
       row = new this() as InstanceType<T>
@@ -473,7 +491,7 @@ export class BaseModel implements ModelContract {
     this: T,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).orderBy(this.$refs[this.$primaryKey], 'desc').exec()
+    return this.query(options).orderBy(this.$resolveCastKey(this.$primaryKey), 'desc').exec()
   }
 
   constructor () {
@@ -529,7 +547,7 @@ export class BaseModel implements ModelContract {
   protected $prepareForAdapter (attributes: ModelObject) {
     const Model = this.constructor as typeof BaseModel
     return Object.keys(attributes).reduce((result, key) => {
-      result[Model.$getColumn(key)!.castAs] = attributes[key]
+      result[Model.$resolveCastKey(key)] = attributes[key]
       return result
     }, {})
   }
@@ -1047,7 +1065,7 @@ export class BaseModel implements ModelContract {
       const insertQuery = client.insertQuery().table(modelConstructor.$table)
 
       if (modelConstructor.$increments) {
-        insertQuery.returning(modelConstructor.$refs[modelConstructor.$primaryKey])
+        insertQuery.returning(modelConstructor.$resolveCastKey(modelConstructor.$primaryKey))
       }
       return insertQuery
     }
@@ -1058,7 +1076,7 @@ export class BaseModel implements ModelContract {
     return client
       .query()
       .from(modelConstructor.$table)
-      .where(modelConstructor.$refs[modelConstructor.$primaryKey], this.$primaryKeyValue)
+      .where(modelConstructor.$resolveCastKey(modelConstructor.$primaryKey), this.$primaryKeyValue)
   }
 
   /**
@@ -1080,7 +1098,7 @@ export class BaseModel implements ModelContract {
     this._ensureIsntDeleted()
     const modelConstructor = this.constructor as typeof BaseModel
     const { $table } = modelConstructor
-    const primaryAdapterKey = modelConstructor.$refs[modelConstructor.$primaryKey]
+    const primaryAdapterKey = modelConstructor.$resolveCastKey(modelConstructor.$primaryKey)
 
     /**
      * Noop when model instance is not persisted
