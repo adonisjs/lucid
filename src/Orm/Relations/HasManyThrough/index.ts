@@ -27,7 +27,7 @@ export class HasManyThrough implements RelationContract {
   /**
    * Relationship type
    */
-  public type: 'hasManyThrough'
+  public type = 'hasManyThrough' as const
 
   /**
    * The related model from which, we want to construct the relationship
