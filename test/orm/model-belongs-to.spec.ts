@@ -48,7 +48,6 @@ test.group('Model | BelongsTo', (group) => {
 
       Profile.$boot()
       Profile.$getRelation('user')!.boot()
-
     } catch ({ message }) {
       assert.equal(
         message,
@@ -525,7 +524,7 @@ test.group('Model | BelongsTo', (group) => {
       },
     ])
 
-     await db.insertQuery().table('identities').insert([
+    await db.insertQuery().table('identities').insert([
       {
         profile_id: 1,
         identity_name: 'virk',
@@ -591,7 +590,7 @@ test.group('Model | BelongsTo', (group) => {
       },
     ])
 
-     await db.insertQuery().table('identities').insert([
+    await db.insertQuery().table('identities').insert([
       {
         profile_id: 1,
         identity_name: 'virk',
@@ -662,7 +661,7 @@ test.group('Model | BelongsTo', (group) => {
       },
     ])
 
-     await db.insertQuery().table('identities').insert([
+    await db.insertQuery().table('identities').insert([
       {
         profile_id: 1,
         identity_name: 'virk',
@@ -728,7 +727,7 @@ test.group('Model | BelongsTo', (group) => {
       },
     ])
 
-     await db.insertQuery().table('identities').insert([
+    await db.insertQuery().table('identities').insert([
       {
         profile_id: 1,
         identity_name: 'virk',

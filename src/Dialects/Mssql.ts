@@ -15,11 +15,11 @@ export class MssqlDialect implements DialectContract {
   public readonly name = 'mssql'
   public supportsAdvisoryLocks = false
 
-  public async getAdvisoryLock (): Promise<boolean> {
-    throw new Error(`Support for advisory locks is not implemented for mssql. Create a PR to add the feature`)
+  public getAdvisoryLock (): Promise<boolean> {
+    throw new Error('Support for advisory locks is not implemented for mssql. Create a PR to add the feature')
   }
 
-  public async releaseAdvisoryLock (): Promise<boolean> {
-    throw new Error(`Support for advisory locks is not implemented for mssql. Create a PR to add the feature`)
+  public releaseAdvisoryLock (): Promise<boolean> {
+    throw new Error('Support for advisory locks is not implemented for mssql. Create a PR to add the feature')
   }
 }

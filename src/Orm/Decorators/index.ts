@@ -25,11 +25,11 @@ import {
  * Define property on a model as a column. The decorator needs a
  * proper model class inheriting the base model
  */
-export const column: ColumnFn = (column?) => {
+export const column: ColumnFn = (options?) => {
   return function decorateAsColumn (target, property) {
     const Model = target.constructor as ModelConstructorContract
     Model.$boot()
-    Model.$addColumn(property, column || {})
+    Model.$addColumn(property, options || {})
   }
 }
 
@@ -37,12 +37,12 @@ export const column: ColumnFn = (column?) => {
  * Define computed property on a model. The decorator needs a
  * proper model class inheriting the base model
  */
-export const computed: ComputedFn = (column) => {
+export const computed: ComputedFn = (options) => {
   return function decorateAsComputed (target, property) {
     const Model = target.constructor as ModelConstructorContract
 
     Model.$boot()
-    Model.$addComputed(property, column || {})
+    Model.$addComputed(property, options || {})
   }
 }
 

@@ -49,7 +49,7 @@ export default class Migrate extends MigrationsBase {
   /**
    * Handle command
    */
-  public async handle () {
+  public async handle (): Promise<void> {
     const connection = this._db.getRawConnection(this.connection || this._db.primaryConnectionName)
 
     /**

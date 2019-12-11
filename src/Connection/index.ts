@@ -69,7 +69,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Validates the config to ensure that read/write replicas are defined
    * properly.
    */
-  private _validateConfig () {
+  private _validateConfig (): void {
     if (this.config.replicas) {
       if (!this.config.replicas.read || !this.config.replicas.write) {
         throw new Exception(
@@ -92,7 +92,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
   /**
    * Cleanup references
    */
-  private _cleanup () {
+  private _cleanup (): void {
     this.client = undefined
     this.readClient = undefined
     this._readReplicas = []
@@ -104,7 +104,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * For the same of simplicity, we get rid of both read and write
    * clients, when anyone of them disconnects.
    */
-  private _monitorPoolResources () {
+  private _monitorPoolResources (): void {
     /**
      * Pool has destroyed and hence we must cleanup resources
      * as well.

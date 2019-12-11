@@ -769,7 +769,10 @@ test.group('Migrator', (group) => {
     assert.lengthOf(migrated, 2)
     assert.isTrue(hasUsersTable)
     assert.isTrue(hasAccountsTable)
-    assert.equal(migrator1.error!.message, 'E_MISSING_SCHEMA_FILES: Cannot perform rollback. Schema file {database/migrations/accounts} is missing')
+    assert.equal(
+      migrator1.error!.message,
+      'E_MISSING_SCHEMA_FILES: Cannot perform rollback. Schema file {database/migrations/accounts} is missing',
+    )
   })
 
   test('get list of migrated files', async (assert) => {

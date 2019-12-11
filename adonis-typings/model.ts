@@ -170,10 +170,10 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * List of available relations
    */
   export type AvailableRelations = 'hasOne' |
-    'hasMany' |
-    'belongsTo' |
-    'manyToMany' |
-    'hasManyThrough'
+  'hasMany' |
+  'belongsTo' |
+  'manyToMany' |
+  'hasManyThrough'
 
   /**
    * List of events for which a model will trigger hooks
@@ -270,10 +270,10 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * A union of relation relations query builders
    */
   type RelationQueryBuilderContract<T extends any = ModelContract> = BelongsToQueryBuilderContract<T> |
-    HasOneQueryBuilderContract<T> |
-    HasManyQueryBuilderContract<T> |
-    ManyToManyQueryBuilderContract<T> |
-    HasManyThroughQueryBuilderContract<T>
+  HasOneQueryBuilderContract<T> |
+  HasManyQueryBuilderContract<T> |
+  ManyToManyQueryBuilderContract<T> |
+  HasManyThroughQueryBuilderContract<T>
 
   /**
    * Shae of has belongs to query builder contract

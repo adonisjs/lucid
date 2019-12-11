@@ -66,8 +66,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     public model: ModelConstructorContract,
     public client: QueryClientContract,
     customFn: DBQueryCallback = (userFn) => {
-      return (builder) => {
-        userFn(new ModelQueryBuilder(builder, this.model, this.client))
+      return (__builder) => {
+        userFn(new ModelQueryBuilder(__builder, this.model, this.client))
       }
     },
   ) {

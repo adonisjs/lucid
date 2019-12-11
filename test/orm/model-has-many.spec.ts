@@ -552,7 +552,7 @@ test.group('Model | HasMany', (group) => {
       },
     ])
 
-     await db.insertQuery().table('comments').insert([
+    await db.insertQuery().table('comments').insert([
       {
         post_id: 1,
         body: 'Looks nice',
@@ -619,7 +619,7 @@ test.group('Model | HasMany', (group) => {
       },
     ])
 
-     await db.insertQuery().table('comments').insert([
+    await db.insertQuery().table('comments').insert([
       {
         post_id: 1,
         body: 'Looks nice',
@@ -692,7 +692,7 @@ test.group('Model | HasMany', (group) => {
       },
     ])
 
-     await db.insertQuery().table('comments').insert([
+    await db.insertQuery().table('comments').insert([
       {
         post_id: 1,
         body: 'Looks nice',
@@ -768,7 +768,7 @@ test.group('Model | HasMany', (group) => {
       },
     ])
 
-     await db.insertQuery().table('comments').insert([
+    await db.insertQuery().table('comments').insert([
       {
         post_id: 1,
         body: 'Looks nice',
@@ -896,7 +896,7 @@ test.group('Model | HasMany | fetch related', (group) => {
       },
     ])
 
-     await db.insertQuery().table('comments').insert([
+    await db.insertQuery().table('comments').insert([
       {
         post_id: 1,
         body: 'Looks nice',
@@ -967,7 +967,7 @@ test.group('Model | HasMany | fetch related', (group) => {
       },
     ])
 
-     await db.insertQuery().table('comments').insert([
+    await db.insertQuery().table('comments').insert([
       {
         post_id: 1,
         body: 'Looks nice',

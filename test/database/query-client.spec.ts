@@ -102,7 +102,7 @@ test.group('Query client | dual mode', (group) => {
     connection.connect()
     const client = new QueryClient('dual', connection)
 
-    const command = process.env.DB === 'sqlite' ? `DELETE FROM users;` : 'TRUNCATE users;'
+    const command = process.env.DB === 'sqlite' ? 'DELETE FROM users;' : 'TRUNCATE users;'
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     await client.raw(command).exec()
@@ -244,7 +244,7 @@ test.group('Query client | write mode', (group) => {
     connection.connect()
     const client = new QueryClient('write', connection)
 
-    const command = process.env.DB === 'sqlite' ? `DELETE FROM users;` : 'TRUNCATE users;'
+    const command = process.env.DB === 'sqlite' ? 'DELETE FROM users;' : 'TRUNCATE users;'
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     await client.raw(command).exec()

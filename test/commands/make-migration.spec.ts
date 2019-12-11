@@ -177,9 +177,9 @@ test.group('MakeMigration', (group) => {
       }, getConfig()) },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
+    const customDb = new Database(config, getLogger(), getProfiler())
 
-    const makeMigration = new MakeMigration(app, db)
+    const makeMigration = new MakeMigration(app, customDb)
     makeMigration.name = 'users'
 
     makeMigration.prompt.on('prompt', (prompt) => {
@@ -201,7 +201,7 @@ test.group('MakeMigration', (group) => {
           .replace('${toTableName(filename)}', 'users'),
       ),
     )
-    await db.manager.closeAll()
+    await customDb.manager.closeAll()
   })
 
   test('use custom directory when defined', async (assert) => {
@@ -217,9 +217,9 @@ test.group('MakeMigration', (group) => {
       }, getConfig()) },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
+    const customDb = new Database(config, getLogger(), getProfiler())
 
-    const makeMigration = new MakeMigration(app, db)
+    const makeMigration = new MakeMigration(app, customDb)
     makeMigration.name = 'users'
     makeMigration.folder = 'database/c'
 
@@ -238,6 +238,6 @@ test.group('MakeMigration', (group) => {
           .replace('${toTableName(filename)}', 'users'),
       ),
     )
-    await db.manager.closeAll()
+    await customDb.manager.closeAll()
   })
 })

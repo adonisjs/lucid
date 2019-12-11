@@ -63,7 +63,7 @@ export function unique (value: any[]) {
 export function difference (main: any[], other: []) {
   return [main, other].reduce((a, b) => {
     return a.filter(c => {
-      /* tslint:disable triple-equals */
+      /* eslint eqeqeq: "off" */
       return !b.find((one) => c == one)
     })
   })

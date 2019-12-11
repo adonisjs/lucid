@@ -421,9 +421,9 @@ export class FakeAdapter implements AdapterContract {
 /**
  * Converts a map to an object
  */
-export function mapToObj<T extends any> (value: Map<any, any>): T {
+export function mapToObj<T extends any> (collection: Map<any, any>): T {
   let obj = {} as T
-  value.forEach((value, key) => {
+  collection.forEach((value, key) => {
     obj[key] = value
   })
   return obj
