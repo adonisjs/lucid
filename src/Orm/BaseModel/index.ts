@@ -43,6 +43,8 @@ import { ManyToMany } from '../Relations/ManyToMany'
 import { ensureRelation, isObject } from '../../utils'
 import { HasManyThrough } from '../Relations/HasManyThrough'
 
+const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
+
 function StaticImplements<T> () {
   return (_t: T) => {}
 }
@@ -797,14 +799,14 @@ export class BaseModel implements ModelContract {
   /**
    * Returns the related model or default value when model is missing
    */
-  public $getRelated (key: string): any {
+  public $getRelated (key: any): any {
     return this.$preloaded[key]
   }
 
   /**
    * A boolean to know if relationship has been preloaded or not
    */
-  public $hasRelated (key: string): boolean {
+  public $hasRelated (key: any): boolean {
     return this.$preloaded[key] !== undefined
   }
 
@@ -812,7 +814,7 @@ export class BaseModel implements ModelContract {
    * Sets the related data on the model instance. The method internally handles
    * `one to one` or `many` relations
    */
-  public $setRelated (key: string, models: ModelContract | ModelContract[]) {
+  public $setRelated (key: any, models: ModelContract | ModelContract[]) {
     const Model = this.constructor as typeof BaseModel
     const relation = Model.$relations.get(key as string)
 
@@ -824,19 +826,52 @@ export class BaseModel implements ModelContract {
     }
 
     /**
-     * Create multiple for `hasMany` and one for `belongsTo` and `hasOne`
+     * Reset array before invoking $pushRelated
      */
-    const manyRelationships = ['hasMany', 'manyToMany', 'hasManyThrough']
-    if (manyRelationships.includes(relation.type)) {
+    if (MANY_RELATIONS.includes(relation.type)) {
       if (!Array.isArray(models)) {
         throw new Exception(
-          `${Model}.${key} must be an array (${manyRelationships.join(',')} relationships)`,
+          `${Model.name}.${key} must be an array when setting ${relation.type} relationship`,
         )
       }
-      this.$preloaded[key] = models
-    } else {
-      this.$preloaded[key] = models as unknown as ModelContract
+      this.$preloaded[key] = []
     }
+
+    return this.$pushRelated(key, models)
+  }
+
+  /**
+   * Push related adds to the existing related collection
+   */
+  public $pushRelated (key: any, models: ModelContract | ModelContract[]) {
+    const Model = this.constructor as typeof BaseModel
+    const relation = Model.$relations.get(key as string)
+
+    /**
+     * Ignore when relation is not defined
+     */
+    if (!relation) {
+      return
+    }
+
+    /**
+     * Create multiple for `hasMany` `manyToMany` and `hasManyThrough`
+     */
+    if (MANY_RELATIONS.includes(relation.type)) {
+      this.$preloaded[key] = ((this.$preloaded[key] || []) as ModelContract[]).concat(models)
+      return
+    }
+
+    /**
+     * Dis-allow setting multiple model instances for a one to one relationship
+     */
+    if (Array.isArray(models)) {
+      throw new Error(
+        `${Model.name}.${key} cannot reference more than one instance of ${relation.relatedModel().name} model`
+      )
+    }
+
+    this.$preloaded[key] = models
   }
 
   /**
