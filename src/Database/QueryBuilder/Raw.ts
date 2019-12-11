@@ -54,4 +54,11 @@ export class RawQueryBuilder implements RawContract {
     this.$knexBuilder.wrap(before, after)
     return this
   }
+
+  /**
+   * Returns reference to knex raw query
+   */
+  public toKnex () {
+    return this.$knexBuilder
+  }
 }

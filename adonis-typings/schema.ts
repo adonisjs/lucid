@@ -10,7 +10,7 @@
 declare module '@ioc:Adonis/Lucid/Schema' {
   import { QueryClientContract, ExcutableQueryBuilderContract } from '@ioc:Adonis/Lucid/Database'
   import { RawContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-  import { SchemaBuilder } from 'knex'
+  import { SchemaBuilder, Raw } from 'knex'
 
   export type DeferCallback = (client: QueryClientContract) => void | Promise<void>
 
@@ -25,7 +25,7 @@ declare module '@ioc:Adonis/Lucid/Schema' {
     schema: SchemaBuilder
     file: string
 
-    now (precision?: number): RawContract & ExcutableQueryBuilderContract<any>
+    now (precision?: number): Raw
     defer: (cb: DeferCallback) => void
     up (): Promise<void> | void
     down (): Promise<void> | void
