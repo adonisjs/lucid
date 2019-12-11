@@ -226,6 +226,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     relatedModel (): ModelConstructorContract
 
     setRelated (model: ModelContract, related?: ModelContract | ModelContract[] | null): void
+    pushRelated (model: ModelContract, related?: ModelContract | ModelContract[] | null): void
     setRelatedMany (models: ModelContract[], related: ModelContract[]): void
 
     getQuery (

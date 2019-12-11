@@ -169,6 +169,17 @@ export class BelongsTo implements RelationContract {
   }
 
   /**
+   * Push the related model instance
+   */
+  public pushRelated (model: ModelContract, related?: ModelContract) {
+    if (!related) {
+      return
+    }
+
+    model.$pushRelated(this.relationName as keyof typeof model, related)
+  }
+
+  /**
    * Sets the related instances on the model
    */
   public setRelatedMany (parents: ModelContract[], related: ModelContract[]) {

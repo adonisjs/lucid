@@ -771,6 +771,71 @@ test.group('Model | Many To Many', (group) => {
     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
     assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
   })
+
+  test('push to existing relations when preloading using model instance', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    User.$boot()
+    User.$getRelation('skills')!.boot()
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+      {
+        user_id: 2,
+        skill_id: 2,
+      },
+    ])
+
+    const users = await User.query().orderBy('id', 'asc')
+    assert.lengthOf(users, 2)
+
+    const dummySkill = new Skill()
+    dummySkill.fill({ name: 'dummy' })
+    users[0].$setRelated('skills', [dummySkill])
+
+    await users[0].preload('skills')
+    await users[1].preload('skills')
+
+    assert.lengthOf(users[0].skills, 3)
+    assert.lengthOf(users[1].skills, 1)
+
+    assert.equal(users[0].skills[0].name, 'dummy')
+
+    assert.equal(users[0].skills[1].name, 'Programming')
+    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 1)
+
+    assert.equal(users[0].skills[2].name, 'Dancing')
+    assert.equal(users[0].skills[2].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[2].$extras.pivot_skill_id, 2)
+
+    assert.equal(users[1].skills[0].name, 'Dancing')
+    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
+  })
 })
 
 test.group('ManyToMany Query Builder | where', (group) => {

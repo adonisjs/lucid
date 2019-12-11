@@ -168,14 +168,14 @@ export class Preloader implements PreloaderContract {
      * Set only one when relationship is hasOne or belongsTo
      */
     if (['hasOne', 'belongsTo'].includes(relation.relation.type)) {
-      relation.relation.setRelated(model, result[0])
+      relation.relation.pushRelated(model, result[0])
       return
     }
 
     /**
      * Set relationships on model
      */
-    relation.relation.setRelated(model, result)
+    relation.relation.pushRelated(model, result)
   }
 
   /**

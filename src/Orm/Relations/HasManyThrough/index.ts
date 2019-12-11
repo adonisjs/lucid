@@ -215,14 +215,25 @@ export class HasManyThrough implements RelationContract {
   }
 
   /**
+   * Push the related model instance
+   */
+  public pushRelated (parent: ModelContract, related?: ModelContract[]) {
+    if (!related) {
+      return
+    }
+
+    parent.$pushRelated(this.relationName as keyof typeof parent, related)
+  }
+
+  /**
    * Set many related instances
    */
   public setRelatedMany (parents: ModelContract[], related: ModelContract[]) {
     parents.forEach((parent) => {
-      const relation = related.filter((model) => {
+      const relations = related.filter((model) => {
         return model.$extras[`through_${this.foreignAdapterKey}`] === parent[this.localKey]
       })
-      this.setRelated(parent, relation)
+      this.setRelated(parent, relations)
     })
   }
 }

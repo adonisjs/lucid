@@ -518,6 +518,75 @@ test.group('Model | Has Many Through', (group) => {
     assert.equal(countries[1].posts[0].title, 'Adonis5')
     assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
   })
+
+  test('push to existing relations when preloading using model instance', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.$boot()
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.$boot()
+
+    class Country extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: Post[]
+    }
+    Country.$boot()
+
+    await db.insertQuery().table('countries').insert([{ name: 'India' }, { name: 'USA' }])
+
+    await db.insertQuery().table('users').insert([
+      { username: 'virk', country_id: 1 },
+      { username: 'nikk', country_id: 2 },
+    ])
+
+    await db.insertQuery().table('posts').insert([
+      { title: 'Adonis 101', user_id: 1 },
+      { title: 'Lucid 101', user_id: 1 },
+      { title: 'Adonis5', user_id: 2 },
+    ])
+
+    const countries = await Country.query().orderBy('id', 'asc')
+    assert.lengthOf(countries, 2)
+
+    const dummyPost = new Post()
+    dummyPost.fill({ userId: 1, title: 'Dummy 101' })
+    countries[0].$setRelated('posts', [dummyPost])
+
+    await countries[0].preload('posts')
+    await countries[1].preload('posts')
+
+    assert.lengthOf(countries[0].posts, 3)
+    assert.lengthOf(countries[1].posts, 1)
+
+    assert.equal(countries[0].posts[0].title, 'Dummy 101')
+
+    assert.equal(countries[0].posts[1].title, 'Adonis 101')
+    assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
+
+    assert.equal(countries[0].posts[2].title, 'Lucid 101')
+    assert.equal(countries[0].posts[2].$extras.through_country_id, 1)
+
+    assert.equal(countries[1].posts[0].title, 'Adonis5')
+    assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
+  })
 })
 
 test.group('Model | Has Many Through | fetch', (group) => {

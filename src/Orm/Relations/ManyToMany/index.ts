@@ -212,7 +212,19 @@ export class ManyToMany implements RelationContract {
     if (!related) {
       return
     }
+
     model.$setRelated(this.relationName as keyof typeof model, related)
+  }
+
+  /**
+   * Push the related model instance
+   */
+  public pushRelated (model: ModelContract, related?: ModelContract[] | null) {
+    if (!related) {
+      return
+    }
+
+    model.$pushRelated(this.relationName as keyof typeof model, related)
   }
 
   /**
@@ -220,10 +232,10 @@ export class ManyToMany implements RelationContract {
    */
   public setRelatedMany (parents: ModelContract[], related: ModelContract[]) {
     parents.forEach((parent) => {
-      const relation = related.filter((model) => {
+      const relations = related.filter((model) => {
         return parent[this.localKey] === model.$extras[this.pivotForeignKeyAlias]
       })
-      this.setRelated(parent, relation)
+      this.setRelated(parent, relations)
     })
   }
 }
