@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import { column, computed, hasOne } from '../../src/Orm/Decorators'
+import { column, computed, hasMany, hasOne } from '../../src/Orm/Decorators'
 import {
   getDb,
   cleanup,
@@ -1309,6 +1309,172 @@ test.group('Base Model | relations', (group) => {
         username: 'virk',
       },
     })
+  })
+
+  test('push relationship', async (assert) => {
+    const adapter = new FakeAdapter()
+    class Profile extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Profile)
+      public profiles: Profile[]
+    }
+
+    const user = new User()
+    Profile.$adapter = adapter
+    user.$consumeAdapterResult({ id: 1 })
+    user.$pushRelated('profiles', await Profile.create({ username: 'nikk' }))
+
+    assert.deepEqual(user.toJSON(), {
+      id: 1,
+      profiles: [
+        {
+          username: 'nikk',
+        },
+      ],
+    })
+  })
+
+  test('push relationship to existing list', async (assert) => {
+    const adapter = new FakeAdapter()
+    class Profile extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Profile)
+      public profiles: Profile[]
+    }
+
+    const user = new User()
+    Profile.$adapter = adapter
+    user.$consumeAdapterResult({ id: 1 })
+    user.$setRelated('profiles', [await Profile.create({ username: 'virk' })])
+    user.$pushRelated('profiles', await Profile.create({ username: 'nikk' }))
+
+    assert.deepEqual(user.toJSON(), {
+      id: 1,
+      profiles: [
+        {
+          username: 'virk',
+        },
+        {
+          username: 'nikk',
+        },
+      ],
+    })
+  })
+
+  test('push an array of relationships', async (assert) => {
+    const adapter = new FakeAdapter()
+    class Profile extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Profile)
+      public profiles: Profile[]
+    }
+
+    const user = new User()
+    Profile.$adapter = adapter
+    user.$consumeAdapterResult({ id: 1 })
+    user.$pushRelated('profiles', [
+      await Profile.create({ username: 'virk' }),
+      await Profile.create({ username: 'nikk' }),
+    ])
+
+    assert.deepEqual(user.toJSON(), {
+      id: 1,
+      profiles: [
+        {
+          username: 'virk',
+        },
+        {
+          username: 'nikk',
+        },
+      ],
+    })
+  })
+
+  test('raise error when pushing an array of relationships for hasOne', async (assert) => {
+    const adapter = new FakeAdapter()
+    class Profile extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    const user = new User()
+    Profile.$adapter = adapter
+    user.$consumeAdapterResult({ id: 1 })
+
+    const profile = await Profile.create({ username: 'virk' })
+    const profile1 = await Profile.create({ username: 'virk' })
+
+    const fn = () => user.$pushRelated('profile', [profile, profile1])
+    assert.throw(fn, 'User.profile cannot reference more than one instance of Profile model')
+  })
+
+  test('raise error when setting single relationships for hasMany', async (assert) => {
+    const adapter = new FakeAdapter()
+    class Profile extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Profile)
+      public profiles: Profile[]
+    }
+
+    const user = new User()
+    Profile.$adapter = adapter
+    user.$consumeAdapterResult({ id: 1 })
+
+    const profile = await Profile.create({ username: 'virk' })
+
+    const fn = () => user.$setRelated('profiles', profile)
+    assert.throw(fn, 'User.profiles must be an array when setting hasMany relationship')
   })
 })
 

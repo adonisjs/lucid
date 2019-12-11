@@ -490,9 +490,19 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Read/write realtionships
      */
-    $hasRelated (key: string): boolean
-    $setRelated (key: string, result: ModelContract | ModelContract[]): void
-    $getRelated (key: string, defaultValue?: any): ModelContract
+    $hasRelated<K extends keyof this = keyof this> (key: K): boolean
+    $setRelated<K extends keyof this = keyof this> (
+      key: string,
+      result: ModelContract | ModelContract[]
+    ): void
+    $pushRelated<K extends keyof this = keyof this> (
+      key: K,
+      result: ModelContract | ModelContract[],
+    ): void
+    $getRelated<K extends keyof this = keyof this> (
+      key: K,
+      defaultValue?: any,
+    ): ModelContract
 
     /**
      * Consume the adapter result and hydrate the model
