@@ -482,6 +482,7 @@ export class BaseModel implements ModelContract {
     uniqueKey: string,
     payload: ModelObject[],
     options?: ModelAdapterOptions,
+    mergeAttributes: boolean = false,
   ) {
     const castKey = this.$refs[uniqueKey]
     if (!castKey) {
@@ -512,6 +513,9 @@ export class BaseModel implements ModelContract {
       /* eslint-disable-next-line eqeqeq */
       const existingRow = existingRows.find((one) => one[uniqueKey] == row[uniqueKey])
       if (existingRow) {
+        if (mergeAttributes) {
+          existingRow.merge(row)
+        }
         return existingRow
       }
 
@@ -534,13 +538,29 @@ export class BaseModel implements ModelContract {
     options?: ModelAdapterOptions,
   ) {
     const rows = await this.fetchOrNewUpMany(uniqueKey, payload, options)
-    await await Promise.all(rows.map((row) => {
+    await Promise.all(rows.map((row) => {
       if (!row.$persisted) {
         return row.save()
       }
       return Promise.resolve()
     }))
 
+    return rows
+  }
+
+  /**
+   * Update existing rows or create missing one's. One database call per insert
+   * is invoked, so that each insert and update goes through the lifecycle
+   * of model hooks.
+   */
+  public static async updateOrCreateMany<T extends ModelConstructorContract> (
+    this: T,
+    uniqueKey: string,
+    payload: ModelObject[],
+    options?: ModelAdapterOptions,
+  ) {
+    const rows = await this.fetchOrNewUpMany(uniqueKey, payload, options, true)
+    await Promise.all(rows.map((row) => row.save()))
     return rows
   }
 
