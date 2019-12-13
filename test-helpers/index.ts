@@ -115,7 +115,7 @@ export async function setup () {
       table.increments()
       table.integer('country_id')
       table.string('username').unique()
-      table.string('email')
+      table.string('email').unique()
       table.integer('points').defaultTo(0)
       table.timestamp('created_at').defaultTo(db.fn.now())
       table.timestamp('updated_at').nullable()

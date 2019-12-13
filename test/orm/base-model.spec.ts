@@ -1778,6 +1778,359 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(users[0].username, 'virk')
     assert.equal(users[0].points, 0)
   })
+
+  test('persist records to db when find call returns zero rows', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    const users = await User.fetchOrCreateMany(
+      'username',
+      [
+        {
+          username: 'virk',
+          email: 'virk@adonisjs.com',
+        },
+        {
+          username: 'nikk',
+          email: 'nikk@adonisjs.com',
+        },
+        {
+          username: 'romain',
+          email: 'romain@adonisjs.com',
+        },
+      ],
+    )
+
+    assert.lengthOf(users, 3)
+    assert.isTrue(users[0].$persisted)
+    assert.equal(users[0].username, 'virk')
+    assert.equal(users[0].email, 'virk@adonisjs.com')
+
+    assert.isTrue(users[1].$persisted)
+    assert.equal(users[1].username, 'nikk')
+    assert.equal(users[1].email, 'nikk@adonisjs.com')
+
+    assert.isTrue(users[2].$persisted)
+    assert.equal(users[2].username, 'romain')
+    assert.equal(users[2].email, 'romain@adonisjs.com')
+
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 3)
+  })
+
+  test('sync records by avoiding duplicates', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      email: 'virk@adonisjs.com',
+      points: 10,
+    })
+
+    const users = await User.fetchOrCreateMany(
+      'username',
+      [
+        {
+          username: 'virk',
+          email: 'virk@adonisjs.com',
+        },
+        {
+          username: 'nikk',
+          email: 'nikk@adonisjs.com',
+        },
+        {
+          username: 'romain',
+          email: 'romain@adonisjs.com',
+        },
+      ],
+    )
+
+    assert.lengthOf(users, 3)
+    assert.isTrue(users[0].$persisted)
+    assert.equal(users[0].username, 'virk')
+    assert.equal(users[0].email, 'virk@adonisjs.com')
+    assert.equal(users[0].points, 10)
+
+    assert.isTrue(users[1].$persisted)
+    assert.equal(users[1].username, 'nikk')
+    assert.equal(users[1].email, 'nikk@adonisjs.com')
+    assert.isUndefined(users[1].points)
+
+    assert.isTrue(users[2].$persisted)
+    assert.equal(users[2].username, 'romain')
+    assert.equal(users[2].email, 'romain@adonisjs.com')
+    assert.isUndefined(users[2].points)
+
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 3)
+  })
+
+  test('wrap create calls inside a transaction', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      email: 'virk@adonisjs.com',
+      points: 10,
+    })
+
+    const trx = await db.transaction()
+
+    await User.fetchOrCreateMany(
+      'username',
+      [
+        {
+          username: 'virk',
+          email: 'virk@adonisjs.com',
+        },
+        {
+          username: 'nikk',
+          email: 'nikk@adonisjs.com',
+        },
+        {
+          username: 'romain',
+          email: 'romain@adonisjs.com',
+        },
+      ],
+      {
+        client: trx,
+      },
+    )
+
+    await trx.rollback()
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 1)
+  })
+
+  test('handle columns with different cast key name', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column({ castAs: 'username' })
+      public userName: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      email: 'virk@adonisjs.com',
+      points: 10,
+    })
+
+    const users = await User.fetchOrCreateMany(
+      'userName',
+      [
+        {
+          userName: 'virk',
+          email: 'virk@adonisjs.com',
+        },
+        {
+          userName: 'nikk',
+          email: 'nikk@adonisjs.com',
+        },
+        {
+          userName: 'romain',
+          email: 'romain@adonisjs.com',
+        },
+      ],
+    )
+
+    assert.lengthOf(users, 3)
+    assert.isTrue(users[0].$persisted)
+    assert.equal(users[0].userName, 'virk')
+    assert.equal(users[0].email, 'virk@adonisjs.com')
+    assert.equal(users[0].points, 10)
+
+    assert.isTrue(users[1].$persisted)
+    assert.equal(users[1].userName, 'nikk')
+    assert.equal(users[1].email, 'nikk@adonisjs.com')
+    assert.isUndefined(users[1].points)
+
+    assert.isTrue(users[2].$persisted)
+    assert.equal(users[2].userName, 'romain')
+    assert.equal(users[2].email, 'romain@adonisjs.com')
+    assert.isUndefined(users[2].points)
+
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 3)
+  })
+
+  test('raise exception when one or more rows fails', async (assert) => {
+    assert.plan(2)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      email: 'virk@adonisjs.com',
+      points: 10,
+    })
+
+    const trx = await db.transaction()
+
+    try {
+      await User.fetchOrCreateMany(
+        'username',
+        [
+          {
+            username: 'nikk',
+            email: 'virk@adonisjs.com',
+          },
+          {
+            username: 'romain',
+            email: 'romain@adonisjs.com',
+          },
+        ],
+        {
+          client: trx,
+        },
+      )
+    } catch (error) {
+      assert.exists(error)
+      await trx.rollback()
+    }
+
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 1)
+  })
+
+  test('raise exception when value of unique key inside payload is undefined', async (assert) => {
+    assert.plan(2)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      email: 'virk@adonisjs.com',
+      points: 10,
+    })
+
+    try {
+      await User.fetchOrCreateMany(
+        'username',
+        [
+          {
+            email: 'virk@adonisjs.com',
+          },
+          {
+            username: 'romain',
+            email: 'romain@adonisjs.com',
+          },
+        ],
+      )
+    } catch ({ message }) {
+      assert.equal(message, 'Value for "username" is null or undefined inside "fetchOrNewUpMany" payload')
+    }
+
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 1)
+  })
+
+  test('raise exception when key is not defined on the model', async (assert) => {
+    assert.plan(2)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      email: 'virk@adonisjs.com',
+      points: 10,
+    })
+
+    try {
+      await User.fetchOrCreateMany(
+        'username',
+        [
+          {
+            email: 'virk@adonisjs.com',
+          },
+          {
+            username: 'romain',
+            email: 'romain@adonisjs.com',
+          },
+        ],
+      )
+    } catch ({ message }) {
+      assert.equal(message, '"username" is not defined as a column on the "User" model')
+    }
+
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 1)
+  })
 })
 
 test.group('Base Model | hooks', (group) => {

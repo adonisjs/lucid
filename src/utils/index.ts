@@ -27,6 +27,16 @@ export function ensureRelation<T extends RelationContract> (
   return true
 }
 
+export function ensureValue (collection: any, key: string, missingCallback: () => void) {
+  const value = collection[key]
+  if (value === undefined || value === null) {
+    missingCallback()
+    return
+  }
+
+  return value
+}
+
 /**
  * Returns the value for a key from the model instance and raises descriptive
  * exception when the value is missing
@@ -37,16 +47,12 @@ export function getValue (
   relation: RelationContract,
   action = 'preload',
 ) {
-  const value = model[key]
-
-  if (value === undefined || value === null) {
+  return ensureValue(model, key, () => {
     throw new Exception(
       `Cannot ${action} ${relation.relationName}, value of ${relation.model.name}.${key} is undefined`,
       500,
     )
-  }
-
-  return value
+  })
 }
 
 /**
@@ -73,7 +79,7 @@ export function unique (value: any[]) {
 export function difference (main: any[], other: []) {
   return [main, other].reduce((a, b) => {
     return a.filter(c => {
-      /* eslint eqeqeq: "off" */
+      /* eslint-disable-next-line eqeqeq */
       return !b.find((one) => c == one)
     })
   })
@@ -135,7 +141,7 @@ export function syncDiff (
      * from the actual row, then we perform an update
      */
     const attributes = attributesToSync[id]
-    /* eslint eqeqeq: "off" */
+    /* eslint-disable-next-line eqeqeq */
     if (Object.keys(attributes).find((key) => matchingRow[key] != attributes[key])) {
       result.update.push(id)
     }
