@@ -1431,7 +1431,7 @@ test.group('Model | HasMany | persist', (group) => {
   })
 
   test('use parent model transaction when defined', async (assert) => {
-    assert.plan(4)
+    assert.plan(5)
 
     class Post extends BaseModel {
       @column({ primary: true })
@@ -1466,6 +1466,12 @@ test.group('Model | HasMany | persist', (group) => {
     post.title = 'Adonis 101'
 
     await user.related('posts').save(post)
+
+    /**
+     * Ensure that related save has not committed the transaction
+     */
+    assert.deepEqual(user.$trx, trx)
+
     await trx.rollback()
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -1478,7 +1484,7 @@ test.group('Model | HasMany | persist', (group) => {
   })
 
   test('use parent model transaction with save many when defined', async (assert) => {
-    assert.plan(5)
+    assert.plan(6)
 
     class Post extends BaseModel {
       @column({ primary: true })
@@ -1516,6 +1522,12 @@ test.group('Model | HasMany | persist', (group) => {
     post1.title = 'Lucid 101'
 
     await user.related('posts').saveMany([post, post1])
+
+    /**
+     * Ensure that related save has not committed the transaction
+     */
+    assert.deepEqual(user.$trx, trx)
+
     await trx.rollback()
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -1528,7 +1540,7 @@ test.group('Model | HasMany | persist', (group) => {
     assert.isUndefined(post1.$trx)
   })
 
-  test('create save point when parent is already in transaction', async (assert) => {
+  test('create save point when parent is in transaction and not persisted', async (assert) => {
     assert.plan(5)
 
     class Post extends BaseModel {
@@ -1577,7 +1589,7 @@ test.group('Model | HasMany | persist', (group) => {
     assert.isUndefined(post.$trx)
   })
 
-  test('create save point with saveMany when parent is already in transaction', async (assert) => {
+  test('create save point with saveMany when parent is in transaction and not persisted', async (assert) => {
     assert.plan(5)
 
     class Post extends BaseModel {

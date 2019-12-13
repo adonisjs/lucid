@@ -2483,6 +2483,12 @@ test.group('Model | ManyToMany | persist', (group) => {
     skill.name = 'Programming'
 
     await user.related('skills').save(skill)
+
+    /**
+     * Ensure that related save has not committed the transaction
+     */
+    assert.deepEqual(user.$trx, trx)
+
     await trx.rollback()
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -2524,6 +2530,12 @@ test.group('Model | ManyToMany | persist', (group) => {
     skill.name = 'Programming'
 
     await user.related('skills').save(skill, false)
+
+    /**
+     * Ensure that related save has not committed the transaction
+     */
+    assert.deepEqual(user.$trx, trx)
+
     await trx.rollback()
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -2568,6 +2580,12 @@ test.group('Model | ManyToMany | persist', (group) => {
     skill1.name = 'Dancy'
 
     await user.related('skills').saveMany([skill, skill1])
+
+    /**
+     * Ensure that related save has not committed the transaction
+     */
+    assert.deepEqual(user.$trx, trx)
+
     await trx.rollback()
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -2612,6 +2630,12 @@ test.group('Model | ManyToMany | persist', (group) => {
     skill1.name = 'Dancing'
 
     await user.related('skills').saveMany([skill, skill1], false)
+
+    /**
+     * Ensure that related save has not committed the transaction
+     */
+    assert.deepEqual(user.$trx, trx)
+
     await trx.rollback()
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -2623,7 +2647,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     assert.lengthOf(skillUsers, 0)
   })
 
-  test('create save point when parent is already in transaction', async (assert) => {
+  test('create save point when parent is in transaction and not persisted', async (assert) => {
     class Skill extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -2668,7 +2692,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     assert.lengthOf(skillUsers, 0)
   })
 
-  test('create save point with save many when parent is already in transaction', async (assert) => {
+  test('create save point with save many when parent is in transaction and not persisted', async (assert) => {
     class Skill extends BaseModel {
       @column({ primary: true })
       public id: number
