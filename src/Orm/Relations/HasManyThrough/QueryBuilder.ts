@@ -110,11 +110,19 @@ export class HasManyThroughQueryBuilder
     return this
   }
 
-  public save (): Promise<void> {
+  public async save (): Promise<void> {
     throw new Exception('Has many through doesn\'t support saving relations')
   }
 
   public async saveMany () {
+    return this.save()
+  }
+
+  public async create (): Promise<any> {
+    return this.save()
+  }
+
+  public async createMany (): Promise<any> {
     return this.save()
   }
 }

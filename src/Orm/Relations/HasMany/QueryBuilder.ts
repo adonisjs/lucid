@@ -10,7 +10,7 @@
 /// <reference path="../../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
-import { HasManyQueryBuilderContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
+import { HasManyQueryBuilderContract, ModelContract, ModelObject } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { HasMany } from './index'
@@ -124,5 +124,30 @@ export class HasManyQueryBuilder
     } else {
       return this.$persist(this._parent, related, callback)
     }
+  }
+
+  /**
+   * Create and persist related model instance
+   */
+  public async create (values: ModelObject, wrapInTransaction: boolean = true): Promise<any> {
+    const related = new (this._relation.relatedModel())()
+    related.fill(values)
+    await this.save(related, wrapInTransaction)
+
+    return related
+  }
+
+  /**
+   * Create and persist related model instances
+   */
+  public async createMany (values: ModelObject[], wrapInTransaction: boolean = true): Promise<any> {
+    const relatedModels = values.map((value) => {
+      const related = new (this._relation.relatedModel())()
+      related.fill(value)
+      return related
+    })
+
+    await this.saveMany(relatedModels, wrapInTransaction)
+    return relatedModels
   }
 }

@@ -20,6 +20,7 @@
 import knex from 'knex'
 
 import {
+  ModelObject,
   ModelContract,
   RelationContract,
   BaseRelationQueryBuilderContract,
@@ -139,4 +140,6 @@ export abstract class BaseRelationQueryBuilder
 
   public abstract async save (model: ModelContract, wrapInTransaction?: boolean): Promise<void>
   public abstract async saveMany (model: ModelContract[], wrapInTransaction?: boolean): Promise<void>
+  public abstract async create (model: ModelObject, wrapInTransaction?: boolean): Promise<ModelContract>
+  public abstract async createMany (model: ModelObject[], wrapInTransaction?: boolean): Promise<ModelContract[]>
 }

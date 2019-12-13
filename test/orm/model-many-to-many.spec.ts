@@ -2804,6 +2804,102 @@ test.group('Model | ManyToMany | persist', (group) => {
 
     await user.related('skills').saveMany([skill, skill1])
   })
+
+  test('create related instance', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = await user.related('skills').create({ name: 'Programming' })
+
+    assert.isTrue(user.$persisted)
+    assert.isTrue(skill.$persisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+
+    assert.lengthOf(skillUsers, 1)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
+  test('create many of related instance', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: Skill[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const [skill, skill1] = await user.related('skills').createMany([{
+      name: 'Programming',
+    }, {
+      name: 'Dancing',
+    }])
+
+    assert.isTrue(user.$persisted)
+    assert.isTrue(skill.$persisted)
+    assert.isTrue(skill1.$persisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalSkills[0].total, 2)
+
+    assert.lengthOf(skillUsers, 2)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, skill1.id)
+
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+    assert.isUndefined(skill1.$trx)
+  })
 })
 
 test.group('Model | ManyToMany | attach', (group) => {

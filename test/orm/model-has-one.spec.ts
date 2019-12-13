@@ -1265,6 +1265,83 @@ test.group('Model | HasOne | persist', (group) => {
 
     await user.related<'hasOne', 'profile'>('profile').save(profile)
   })
+
+  test('create related instance', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const profile = await user.related<'hasOne', 'profile'>('profile').create({
+      displayName: 'Hvirk',
+    })
+
+    assert.isTrue(profile.$persisted)
+    assert.equal(user.id, profile.userId)
+  })
+
+  test('wrap create calls inside transaction', async (assert) => {
+    assert.plan(4)
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    try {
+      await user.related<'hasOne', 'profile'>('profile').create({})
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalProfiles = await db.query().from('profiles').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalProfiles[0].total, 0)
+    assert.isUndefined(user.$trx)
+  })
 })
 
 test.group('Model | HasOne | bulk operation', (group) => {
