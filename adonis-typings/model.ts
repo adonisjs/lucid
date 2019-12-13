@@ -744,6 +744,17 @@ declare module '@ioc:Adonis/Lucid/Model' {
     ): Promise<InstanceType<T>>
 
     /**
+     * Find rows or create many when missing. One db call is invoked
+     * for each create
+     */
+    // findOrCreateMany<T extends ModelConstructorContract> (
+    //   this: T,
+    //   uniqueKey: string,
+    //   payload: ModelObject[],
+    //   options?: ModelAdapterOptions,
+    // ): Promise<InstanceType<T>[]>
+
+    /**
      * Fetch all rows
      */
     all<T extends ModelConstructorContract> (

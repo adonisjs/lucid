@@ -1135,7 +1135,7 @@ test.group('Model | BelongsTo | persist', (group) => {
   })
 
   test('use parent model transaction when defined', async (assert) => {
-    assert.plan(5)
+    assert.plan(4)
 
     class User extends BaseModel {
       @column({ primary: true })
@@ -1169,11 +1169,6 @@ test.group('Model | BelongsTo | persist', (group) => {
     profile.displayName = 'virk'
 
     await profile.related<'belongsTo', 'user'>('user').associate(user)
-
-    /**
-     * Ensure that related save has not committed the transaction
-     */
-    assert.deepEqual(profile.$trx, trx)
 
     await trx.rollback()
 

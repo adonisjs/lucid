@@ -2453,7 +2453,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     assert.lengthOf(skillUsers, 0)
   })
 
-  test('use parent model transaction when defined', async (assert) => {
+  test('create save point when parent is not persisted', async (assert) => {
     class Skill extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -2483,11 +2483,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     skill.name = 'Programming'
 
     await user.related('skills').save(skill)
-
-    /**
-     * Ensure that related save has not committed the transaction
-     */
-    assert.deepEqual(user.$trx, trx)
+    assert.isUndefined(user.$trx)
 
     await trx.rollback()
 
@@ -2547,7 +2543,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     assert.lengthOf(skillUsers, 0)
   })
 
-  test('use parent model transaction with save many when defined', async (assert) => {
+  test('create save point with save many', async (assert) => {
     class Skill extends BaseModel {
       @column({ primary: true })
       public id: number
@@ -2580,11 +2576,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     skill1.name = 'Dancy'
 
     await user.related('skills').saveMany([skill, skill1])
-
-    /**
-     * Ensure that related save has not committed the transaction
-     */
-    assert.deepEqual(user.$trx, trx)
+    assert.isUndefined(user.$trx)
 
     await trx.rollback()
 

@@ -1483,8 +1483,8 @@ test.group('Model | HasMany | persist', (group) => {
     assert.isUndefined(post.$trx)
   })
 
-  test('use parent model transaction with save many when defined', async (assert) => {
-    assert.plan(6)
+  test('create save point with saveMany even when parent model is persisted', async (assert) => {
+    assert.plan(8)
 
     class Post extends BaseModel {
       @column({ primary: true })
@@ -1526,7 +1526,9 @@ test.group('Model | HasMany | persist', (group) => {
     /**
      * Ensure that related save has not committed the transaction
      */
-    assert.deepEqual(user.$trx, trx)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(post.$trx)
+    assert.isUndefined(post1.$trx)
 
     await trx.rollback()
 
