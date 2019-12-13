@@ -2131,6 +2131,216 @@ test.group('Base Model | fetch', (group) => {
     const usersList = await db.query().from('users')
     assert.lengthOf(usersList, 1)
   })
+
+  test('persist records to db when find call returns zero rows', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    const users = await User.updateOrCreateMany(
+      'username',
+      [
+        {
+          username: 'virk',
+          email: 'virk@adonisjs.com',
+        },
+        {
+          username: 'nikk',
+          email: 'nikk@adonisjs.com',
+        },
+        {
+          username: 'romain',
+          email: 'romain@adonisjs.com',
+        },
+      ],
+    )
+
+    assert.lengthOf(users, 3)
+    assert.isTrue(users[0].$persisted)
+    assert.equal(users[0].username, 'virk')
+    assert.equal(users[0].email, 'virk@adonisjs.com')
+
+    assert.isTrue(users[1].$persisted)
+    assert.equal(users[1].username, 'nikk')
+    assert.equal(users[1].email, 'nikk@adonisjs.com')
+
+    assert.isTrue(users[2].$persisted)
+    assert.equal(users[2].username, 'romain')
+    assert.equal(users[2].email, 'romain@adonisjs.com')
+
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 3)
+  })
+
+  test('update records and avoiding duplicates', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      email: 'virk@adonisjs.com',
+      points: 10,
+    })
+
+    const users = await User.updateOrCreateMany(
+      'username',
+      [
+        {
+          username: 'virk',
+          email: 'virk@adonisjs.com',
+          points: 4,
+        },
+        {
+          username: 'nikk',
+          email: 'nikk@adonisjs.com',
+        },
+        {
+          username: 'romain',
+          email: 'romain@adonisjs.com',
+        },
+      ],
+    )
+
+    assert.lengthOf(users, 3)
+    assert.isTrue(users[0].$persisted)
+    assert.equal(users[0].username, 'virk')
+    assert.equal(users[0].email, 'virk@adonisjs.com')
+    assert.equal(users[0].points, 4)
+
+    assert.isTrue(users[1].$persisted)
+    assert.equal(users[1].username, 'nikk')
+    assert.equal(users[1].email, 'nikk@adonisjs.com')
+    assert.isUndefined(users[1].points)
+
+    assert.isTrue(users[2].$persisted)
+    assert.equal(users[2].username, 'romain')
+    assert.equal(users[2].email, 'romain@adonisjs.com')
+    assert.isUndefined(users[2].points)
+
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 3)
+  })
+
+  test('wrap create calls inside a transaction using updateOrCreateMany', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      email: 'virk@adonisjs.com',
+      points: 10,
+    })
+
+    const trx = await db.transaction()
+
+    await User.updateOrCreateMany(
+      'username',
+      [
+        {
+          username: 'virk',
+          email: 'virk@adonisjs.com',
+        },
+        {
+          username: 'nikk',
+          email: 'nikk@adonisjs.com',
+        },
+        {
+          username: 'romain',
+          email: 'romain@adonisjs.com',
+        },
+      ],
+      {
+        client: trx,
+      },
+    )
+
+    await trx.rollback()
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 1)
+  })
+
+  test('wrap update calls inside a transaction using updateOrCreateMany', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+    }
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      email: 'virk@adonisjs.com',
+      points: 10,
+    })
+
+    const trx = await db.transaction()
+
+    await User.updateOrCreateMany(
+      'username',
+      [
+        {
+          username: 'virk',
+          email: 'virk@adonisjs.com',
+          points: 4,
+        },
+        {
+          username: 'nikk',
+          email: 'nikk@adonisjs.com',
+        },
+        {
+          username: 'romain',
+          email: 'romain@adonisjs.com',
+        },
+      ],
+      {
+        client: trx,
+      },
+    )
+
+    await trx.rollback()
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 1)
+    assert.equal(usersList[0].points, 10)
+  })
 })
 
 test.group('Base Model | hooks', (group) => {

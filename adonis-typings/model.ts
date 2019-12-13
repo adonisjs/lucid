@@ -736,6 +736,29 @@ declare module '@ioc:Adonis/Lucid/Model' {
     ): Promise<InstanceType<T>>
 
     /**
+     * Find rows or create in-memory instances of the missing
+     * one's.
+     */
+    fetchOrNewUpMany<T extends ModelConstructorContract> (
+      this: T,
+      uniqueKey: string,
+      payload: ModelObject[],
+      options?: ModelAdapterOptions,
+      mergeAttributes?: boolean,
+    ): Promise<InstanceType<T>[]>
+
+    /**
+     * Find rows or create many when missing. One db call is invoked
+     * for each create
+     */
+    fetchOrCreateMany<T extends ModelConstructorContract> (
+      this: T,
+      uniqueKey: string,
+      payload: ModelObject[],
+      options?: ModelAdapterOptions,
+    ): Promise<InstanceType<T>[]>
+
+    /**
      * Returns the first row or save it to the database
      */
     updateOrCreate<T extends ModelConstructorContract> (
@@ -746,21 +769,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
     ): Promise<InstanceType<T>>
 
     /**
-     * Find rows or create in-memory instances of the missing
-     * one's.
+     * Update existing rows or create new one's.
      */
-    fetchOrNewUpMany<T extends ModelConstructorContract> (
-      this: T,
-      uniqueKey: string,
-      payload: ModelObject[],
-      options?: ModelAdapterOptions,
-    ): Promise<InstanceType<T>[]>
-
-    /**
-     * Find rows or create many when missing. One db call is invoked
-     * for each create
-     */
-    fetchOrCreateMany<T extends ModelConstructorContract> (
+    updateOrCreateMany<T extends ModelConstructorContract> (
       this: T,
       uniqueKey: string,
       payload: ModelObject[],
