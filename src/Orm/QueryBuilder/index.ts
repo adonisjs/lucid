@@ -53,6 +53,12 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   private _preloader = new Preloader(this.model)
 
   /**
+   * Required by macroable
+   */
+  protected static _macros = {}
+  protected static _getters = {}
+
+  /**
    * Options that must be passed to all new model instances
    */
   public clientOptions: ModelAdapterOptions = {

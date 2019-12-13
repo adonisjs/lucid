@@ -49,6 +49,7 @@
     "knex": "^0.20.4",
     "knex-dynamic-connection": "^1.0.3",
     "log-update": "^3.3.0",
+    "macroable": "^3.0.0",
     "pluralize": "^8.0.0",
     "snake-case": "^3.0.2",
     "ts-essentials": "^4.0.0"

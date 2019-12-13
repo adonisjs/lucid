@@ -10,6 +10,7 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
+import { Macroable } from 'macroable'
 import { ChainableContract, DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { RawQueryBuilder } from './Raw'
 
@@ -20,11 +21,13 @@ import { RawQueryBuilder } from './Raw'
  * The API internally uses the knex query builder. However, many of methods may have
  * different API.
  */
-export abstract class Chainable implements ChainableContract {
+export abstract class Chainable extends Macroable implements ChainableContract {
   constructor (
     public $knexBuilder: knex.QueryBuilder, // Needs to be public for Executable trait
     private _queryCallback: DBQueryCallback,
-  ) {}
+  ) {
+    super()
+  }
 
   /**
    * Returns the value pair for the `whereBetween` clause

@@ -49,6 +49,12 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   }
 
   /**
+   * Required by macroable
+   */
+  protected static _macros = {}
+  protected static _getters = {}
+
+  /**
    * Ensures that we are not executing `update` or `del` when using read only
    * client
    */

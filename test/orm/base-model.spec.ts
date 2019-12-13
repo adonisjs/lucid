@@ -2170,3 +2170,77 @@ test.group('Base Model | hooks', (group) => {
     assert.equal(usersCount[0].total, 1)
   })
 })
+
+test.group('Base model | extend', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
+
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('extend model query builder', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+    User.$boot()
+
+    db.ModelQueryBuilder.macro('whereActive', function () {
+      this.where('is_active', true)
+      return this
+    })
+
+    const knexClient = db.connection().getReadClient()
+    const { sql, bindings } = User.query()['whereActive']().toSQL()
+    const { sql: knexSql, bindings: knexBindings } = knexClient
+      .from('users')
+      .where('is_active', true)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('extend model insert query builder', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      public $getQueryFor (_, client) {
+        return client.insertQuery().table('users').withId()
+      }
+    }
+    User.$boot()
+
+    db.InsertQueryBuilder.macro('withId', function () {
+      this.returning('id')
+      return this
+    })
+
+    const knexClient = db.connection().getReadClient()
+    const user = new User()
+
+    const { sql, bindings } = user
+      .$getQueryFor('insert', db.connection())
+      .insert({ id: 1 })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = knexClient
+      .from('users')
+      .returning('id')
+      .insert({ id: 1 })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})
