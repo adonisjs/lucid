@@ -40,8 +40,8 @@ import { proxyHandler } from './proxyHandler'
 import { HasMany } from '../Relations/HasMany'
 import { BelongsTo } from '../Relations/BelongsTo'
 import { ManyToMany } from '../Relations/ManyToMany'
-import { ensureRelation, isObject } from '../../utils'
 import { HasManyThrough } from '../Relations/HasManyThrough'
+import { ensureRelation, isObject, ensureValue } from '../../utils'
 
 const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
 
@@ -177,14 +177,10 @@ export class BaseModel implements ModelContract {
     instance.$consumeAdapterResult(adapterResult, sideloadAttributes)
     instance.$hydrateOriginals()
 
-    /**
-     * Set $trx when defined
-     */
-    if (options && options.client && options.client.isTransaction) {
-      instance.$trx = options.client as TransactionClientContract
+    if (options) {
+      instance.$setOptionsOrTrx(options)
     }
 
-    instance.$options = options
     instance.$persisted = true
     instance.$isLocal = false
 
@@ -373,9 +369,15 @@ export class BaseModel implements ModelContract {
   public static async create<T extends ModelConstructorContract> (
     this: T,
     values: ModelObject,
+    options?: ModelAdapterOptions,
   ): Promise<InstanceType<T>> {
     const instance = new this()
     instance.fill(values)
+
+    if (options) {
+      instance.$setOptionsOrTrx(options)
+    }
+
     await instance.save()
     return instance as InstanceType<T>
   }
@@ -449,16 +451,7 @@ export class BaseModel implements ModelContract {
     if (!row) {
       row = new this() as InstanceType<T>
       row.fill(Object.assign({}, search, savePayload))
-    }
-
-    /**
-     * Copying options from the select query client and use the same
-     * one's for persistance
-     */
-    if (query.client.isTransaction) {
-      row.$trx = query.client as TransactionClientContract
-    } else {
-      row.$options = query.clientOptions
+      row.$setOptionsOrTrx(query.clientOptions)
     }
 
     return row
@@ -484,6 +477,79 @@ export class BaseModel implements ModelContract {
 
     await row.save()
     return row
+  }
+
+  /**
+   * Find existing rows or create an in-memory instances of the
+   * missing one's.
+   */
+  public static async fetchOrNewUpMany<T extends ModelConstructorContract> (
+    this: T,
+    uniqueKey: string,
+    payload: ModelObject[],
+    options?: ModelAdapterOptions,
+  ) {
+    const castKey = this.$refs[uniqueKey]
+    if (!castKey) {
+      throw new Exception(
+        `"${uniqueKey}" is not defined as a column on the "${this.name}" model`,
+      )
+    }
+
+    /**
+     * A array of values for the unique key
+     */
+    const uniqueKeyValues = payload.map((row) => {
+      return ensureValue(row, uniqueKey, () => {
+        throw new Exception(
+          `Value for "${uniqueKey}" is null or undefined inside "fetchOrNewUpMany" payload`,
+        )
+      })
+    })
+
+    const existingRows = await this.query(options).whereIn(castKey, uniqueKeyValues)
+
+    /**
+     * Return existing or create missing rows in the same order as the original
+     * array
+     */
+    return payload.map((row) => {
+      /* eslint-disable-next-line eqeqeq */
+      const existingRow = existingRows.find((one) => one[uniqueKey] == row[uniqueKey])
+      if (existingRow) {
+        return existingRow
+      }
+
+      const instance = new this() as InstanceType<T>
+      instance.fill(row)
+      if (options) {
+        instance.$setOptionsOrTrx(options)
+      }
+
+      return instance
+    })
+  }
+
+  /**
+   * Find existing rows or create missing one's. One database call per insert
+   * is invoked, so that each insert goes through the lifecycle of model
+   * hooks.
+   */
+  public static async fetchOrCreateMany<T extends ModelConstructorContract> (
+    this: T,
+    uniqueKey: string,
+    payload: ModelObject[],
+    options?: ModelAdapterOptions,
+  ) {
+    const rows = await this.fetchOrNewUpMany(uniqueKey, payload, options)
+    await await Promise.all(rows.map((row) => {
+      if (!row.$persisted) {
+        return row.save()
+      }
+      return Promise.resolve()
+    }))
+
+    return rows
   }
 
   /**
@@ -740,6 +806,18 @@ export class BaseModel implements ModelContract {
 
     if (options.profiler) {
       this._options.profiler = options.profiler
+    }
+  }
+
+  /**
+   * Set options on the model instance by giving preference to the transaction
+   * client.
+   */
+  public $setOptionsOrTrx (options: ModelAdapterOptions): void {
+    if (options.client && options.client.isTransaction) {
+      this.$trx = options.client as TransactionClientContract
+    } else {
+      this.$options = options
     }
   }
 

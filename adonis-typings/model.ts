@@ -417,7 +417,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * A copy of client options. They can be set on any model instance
      */
-    readonly clientOptions: ModelOptions
+    readonly clientOptions: ModelAdapterOptions
 
     /**
      * Reference to query client used for making queries
@@ -481,6 +481,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $primaryKeyValue?: any
     $options?: ModelOptions
     $trx?: TransactionClientContract,
+
+    $setOptionsOrTrx (options: ModelAdapterOptions): void
 
     /**
      * Gives an option to the end user to define constraints for update, insert
@@ -744,15 +746,26 @@ declare module '@ioc:Adonis/Lucid/Model' {
     ): Promise<InstanceType<T>>
 
     /**
+     * Find rows or create in-memory instances of the missing
+     * one's.
+     */
+    fetchOrNewUpMany<T extends ModelConstructorContract> (
+      this: T,
+      uniqueKey: string,
+      payload: ModelObject[],
+      options?: ModelAdapterOptions,
+    ): Promise<InstanceType<T>[]>
+
+    /**
      * Find rows or create many when missing. One db call is invoked
      * for each create
      */
-    // findOrCreateMany<T extends ModelConstructorContract> (
-    //   this: T,
-    //   uniqueKey: string,
-    //   payload: ModelObject[],
-    //   options?: ModelAdapterOptions,
-    // ): Promise<InstanceType<T>[]>
+    fetchOrCreateMany<T extends ModelConstructorContract> (
+      this: T,
+      uniqueKey: string,
+      payload: ModelObject[],
+      options?: ModelAdapterOptions,
+    ): Promise<InstanceType<T>[]>
 
     /**
      * Fetch all rows
