@@ -107,7 +107,7 @@ export class BelongsToQueryBuilder
     }
 
     /**
-     * Wrap in transaction when parent has not been persisted
+     * Wrap in transaction when related model has not been persisted
      * to ensure consistency
      */
     let trx: TransactionClientContract | undefined
