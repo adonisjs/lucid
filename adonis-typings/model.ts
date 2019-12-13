@@ -482,7 +482,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $options?: ModelOptions
     $trx?: TransactionClientContract,
 
-    $setOptionsOrTrx (options: ModelAdapterOptions): void
+    $setOptionsAndTrx (options?: ModelAdapterOptions): void
 
     /**
      * Gives an option to the end user to define constraints for update, insert

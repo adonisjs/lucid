@@ -580,6 +580,53 @@ test.group('Model options | Model.firstOrSave', (group) => {
     assert.deepEqual(user.$options!.profiler, client.profiler)
     assert.deepEqual(user.$options!.connection, client.connectionName)
   })
+
+  test('use transaction', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const client = await db.connection('secondary').transaction()
+
+    const user = await User.firstOrSave({ username: 'virk' }, undefined, { client })
+    await client.commit()
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 1)
+    assert.deepEqual(user.$options!.profiler, client.profiler)
+    assert.deepEqual(user.$options!.connection, client.connectionName)
+  })
+
+  test('use transaction to save when search fails', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    const client = await db.connection('secondary').transaction()
+
+    const user = await User.firstOrSave({ username: 'virk' }, undefined, { client })
+    await client.rollback()
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 0)
+    assert.deepEqual(user.$options!.profiler, client.profiler)
+    assert.deepEqual(user.$options!.connection, client.connectionName)
+  })
 })
 
 test.group('Model options | Query Builder Preloads', (group) => {
@@ -1021,5 +1068,234 @@ test.group('Model options | Model Preloads', (group) => {
 
     await user.preload('profile', (query) => query.sideload({ id: 2 }))
     assert.deepEqual(user.profile.$sideloaded, { id: 2 })
+  })
+})
+
+test.group('Model options | Model.fetchOrCreateMany', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('define custom connection', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+
+    const [user] = await User.fetchOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { connection: 'secondary' },
+    )
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 1)
+    assert.equal(user.$options!.connection, 'secondary')
+    assert.instanceOf(user.$options!.profiler, Profiler)
+  })
+
+  test('define custom connection when search fails', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    const [user] = await User.fetchOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { connection: 'secondary' },
+    )
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 1)
+    assert.equal(user.$options!.connection, 'secondary')
+    assert.instanceOf(user.$options!.profiler, Profiler)
+  })
+
+  test('define custom profiler', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const profiler = new Profiler({})
+
+    const [user] = await User.fetchOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { profiler },
+    )
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 1)
+    assert.equal(user.$options!.connection, 'primary')
+    assert.deepEqual(user.$options!.profiler, profiler)
+  })
+
+  test('define custom profiler when search fails', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    const profiler = new Profiler({})
+    const [user] = await User.fetchOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { profiler },
+    )
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 1)
+    assert.equal(user.$options!.connection, 'primary')
+    assert.deepEqual(user.$options!.profiler, profiler)
+  })
+
+  test('define custom client', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const client = db.connection('secondary')
+
+    const [user] = await User.fetchOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { client },
+    )
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 1)
+    assert.deepEqual(user.$options!.profiler, client.profiler)
+    assert.deepEqual(user.$options!.connection, client.connectionName)
+  })
+
+  test('define custom client when search fails', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    const client = db.connection('secondary')
+
+    const [user] = await User.fetchOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { client },
+    )
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 1)
+    assert.deepEqual(user.$options!.profiler, client.profiler)
+    assert.deepEqual(user.$options!.connection, client.connectionName)
+  })
+
+  test('use transaction', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const client = await db.connection('secondary').transaction()
+
+    const [user] = await User.fetchOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { client },
+    )
+    await client.commit()
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 1)
+    assert.isUndefined(user.$trx)
+    assert.deepEqual(user.$options!.profiler, client.profiler)
+    assert.deepEqual(user.$options!.connection, client.connectionName)
+  })
+
+  test('use transaction when search fails', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    const client = await db.connection('secondary').transaction()
+
+    const [user] = await User.fetchOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { client },
+    )
+    await client.rollback()
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 0)
+    assert.isUndefined(user.$trx)
+    assert.deepEqual(user.$options!.profiler, client.profiler)
+    assert.deepEqual(user.$options!.connection, client.connectionName)
   })
 })
