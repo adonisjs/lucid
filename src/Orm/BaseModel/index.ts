@@ -177,10 +177,7 @@ export class BaseModel implements ModelContract {
     instance.$consumeAdapterResult(adapterResult, sideloadAttributes)
     instance.$hydrateOriginals()
 
-    if (options) {
-      instance.$setOptionsOrTrx(options)
-    }
-
+    instance.$setOptionsAndTrx(options)
     instance.$persisted = true
     instance.$isLocal = false
 
@@ -373,10 +370,7 @@ export class BaseModel implements ModelContract {
   ): Promise<InstanceType<T>> {
     const instance = new this()
     instance.fill(values)
-
-    if (options) {
-      instance.$setOptionsOrTrx(options)
-    }
+    instance.$setOptionsAndTrx(options)
 
     await instance.save()
     return instance as InstanceType<T>
@@ -451,7 +445,7 @@ export class BaseModel implements ModelContract {
     if (!row) {
       row = new this() as InstanceType<T>
       row.fill(Object.assign({}, search, savePayload))
-      row.$setOptionsOrTrx(query.clientOptions)
+      row.$setOptionsAndTrx(query.clientOptions)
     }
 
     return row
@@ -507,7 +501,8 @@ export class BaseModel implements ModelContract {
       })
     })
 
-    const existingRows = await this.query(options).whereIn(castKey, uniqueKeyValues)
+    const query = this.query(options)
+    const existingRows = await query.whereIn(castKey, uniqueKeyValues)
 
     /**
      * Return existing or create missing rows in the same order as the original
@@ -522,10 +517,7 @@ export class BaseModel implements ModelContract {
 
       const instance = new this() as InstanceType<T>
       instance.fill(row)
-      if (options) {
-        instance.$setOptionsOrTrx(options)
-      }
-
+      instance.$setOptionsAndTrx(query.clientOptions)
       return instance
     })
   }
@@ -810,15 +802,17 @@ export class BaseModel implements ModelContract {
   }
 
   /**
-   * Set options on the model instance by giving preference to the transaction
-   * client.
+   * Set options on the model instance along with transaction
    */
-  public $setOptionsOrTrx (options: ModelAdapterOptions): void {
+  public $setOptionsAndTrx (options?: ModelAdapterOptions): void {
+    if (!options) {
+      return
+    }
+
     if (options.client && options.client.isTransaction) {
       this.$trx = options.client as TransactionClientContract
-    } else {
-      this.$options = options
     }
+    this.$options = options
   }
 
   /**
