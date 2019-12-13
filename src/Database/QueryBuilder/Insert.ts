@@ -10,6 +10,7 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
+import { Macroable } from 'macroable'
 import { trait } from '@poppinss/traits'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
@@ -21,9 +22,16 @@ import { Executable, ExecutableConstructor } from '../../Traits/Executable'
  * Exposes the API for performing SQL inserts
  */
 @trait<ExecutableConstructor>(Executable)
-export class InsertQueryBuilder implements InsertQueryBuilderContract {
+export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderContract {
   constructor (public $knexBuilder: knex.QueryBuilder, public client: QueryClientContract) {
+    super()
   }
+
+  /**
+   * Required by macroable
+   */
+  protected static _macros = {}
+  protected static _getters = {}
 
   /**
    * Returns the client to be used for the query. Even though the insert query

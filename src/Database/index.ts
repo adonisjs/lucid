@@ -23,6 +23,10 @@ import {
 import { QueryClient } from '../QueryClient'
 import { ConnectionManager } from '../Connection/Manager'
 
+import { InsertQueryBuilder } from './QueryBuilder/Insert'
+import { DatabaseQueryBuilder } from './QueryBuilder/Database'
+import { ModelQueryBuilder } from '../Orm/QueryBuilder'
+
 /**
  * Database class exposes the API to manage multiple connections and obtain an instance
  * of query/transaction clients.
@@ -37,6 +41,13 @@ export class Database implements DatabaseContract {
    * Primary connection name
    */
   public primaryConnectionName = this._config.connection
+
+  /**
+   * Reference to query builders
+   */
+  public DatabaseQueryBuilder = DatabaseQueryBuilder
+  public InsertQueryBuilder = InsertQueryBuilder
+  public ModelQueryBuilder = ModelQueryBuilder
 
   constructor (
     private _config: DatabaseConfigContract,

@@ -12,7 +12,7 @@
 import test from 'japa'
 
 import { Database } from '../../src/Database'
-import { getConfig, setup, cleanup, getLogger, getProfiler } from '../../test-helpers'
+import { getConfig, setup, cleanup, getLogger, getProfiler, getDb } from '../../test-helpers'
 
 test.group('Database', (group) => {
   group.before(async () => {
@@ -217,6 +217,66 @@ test.group('Database', (group) => {
 
     await trx1.rollback()
     await trx.rollback()
+    await db.manager.closeAll()
+  })
+})
+
+test.group('Database | extend', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  test('extend database query builder by adding macros', async (assert) => {
+    const db = getDb()
+
+    db.DatabaseQueryBuilder.macro('whereActive', function whereActive () {
+      this.where('is_active', true)
+      return this
+    })
+
+    const knexClient = db.connection().getReadClient()
+
+    const { sql, bindings } = db.query().from('users')['whereActive']().toSQL()
+    const { sql: knexSql, bindings: knexBindings } = knexClient
+      .from('users')
+      .where('is_active', true)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await db.manager.closeAll()
+  })
+
+  test('extend insert query builder by adding macros', async (assert) => {
+    const db = getDb()
+
+    db.InsertQueryBuilder.macro('returnId', function whereActive () {
+      this.returning('id')
+      return this
+    })
+
+    const knexClient = db.connection().getReadClient()
+
+    const { sql, bindings } = db
+      .insertQuery()
+      .table('users')['returnId']()
+      .insert({ id: 1 })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = knexClient
+      .from('users')
+      .returning('id')
+      .insert({ id: 1 })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
     await db.manager.closeAll()
   })
 })
