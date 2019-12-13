@@ -1135,7 +1135,7 @@ test.group('Model | BelongsTo | persist', (group) => {
   })
 
   test('use parent model transaction when defined', async (assert) => {
-    assert.plan(4)
+    assert.plan(5)
 
     class User extends BaseModel {
       @column({ primary: true })
@@ -1169,6 +1169,12 @@ test.group('Model | BelongsTo | persist', (group) => {
     profile.displayName = 'virk'
 
     await profile.related<'belongsTo', 'user'>('user').associate(user)
+
+    /**
+     * Ensure that related save has not committed the transaction
+     */
+    assert.deepEqual(profile.$trx, trx)
+
     await trx.rollback()
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -1180,7 +1186,7 @@ test.group('Model | BelongsTo | persist', (group) => {
     assert.isUndefined(profile.$trx)
   })
 
-  test('create save point when parent is already in transaction', async (assert) => {
+  test('create save point when parent is in transaction and not persisted', async (assert) => {
     assert.plan(5)
 
     class User extends BaseModel {
