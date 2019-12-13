@@ -1569,7 +1569,7 @@ test.group('Base Model | fetch', (group) => {
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const user = await User.firstOrSave({ userName: 'virk' })
+    const user = await User.firstOrCreate({ userName: 'virk' })
 
     const totalUsers = await db.query().from('users').count('*', 'total')
 
@@ -1592,7 +1592,7 @@ test.group('Base Model | fetch', (group) => {
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const user = await User.firstOrSave({ userName: 'nikk' }, { email: 'nikk@gmail.com' })
+    const user = await User.firstOrCreate({ userName: 'nikk' }, { email: 'nikk@gmail.com' })
 
     const totalUsers = await db.query().from('users').count('*', 'total')
 

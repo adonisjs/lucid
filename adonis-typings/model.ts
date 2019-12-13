@@ -717,7 +717,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Returns the first row or save it to the database
      */
-    firstOrSave<T extends ModelConstructorContract> (
+    firstOrCreate<T extends ModelConstructorContract> (
       this: T,
       search: any,
       savePayload?: any,

@@ -436,7 +436,7 @@ test.group('Model options | Model.findMany', (group) => {
   })
 })
 
-test.group('Model options | Model.firstOrSave', (group) => {
+test.group('Model options | Model.firstOrCreate', (group) => {
   group.before(async () => {
     db = getDb()
     BaseModel = getBaseModel(ormAdapter(db))
@@ -465,7 +465,7 @@ test.group('Model options | Model.firstOrSave', (group) => {
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
-    const user = await User.firstOrSave({ username: 'virk' }, undefined, { connection: 'secondary' })
+    const user = await User.firstOrCreate({ username: 'virk' }, undefined, { connection: 'secondary' })
     const total = await db.from('users').count('*', 'total')
 
     assert.equal(total[0].total, 1)
@@ -486,7 +486,7 @@ test.group('Model options | Model.firstOrSave', (group) => {
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
-    const user = await User.firstOrSave({ username: 'nikk' }, undefined, { connection: 'secondary' })
+    const user = await User.firstOrCreate({ username: 'nikk' }, undefined, { connection: 'secondary' })
     const total = await db.from('users').count('*', 'total')
 
     assert.equal(total[0].total, 2)
@@ -508,7 +508,7 @@ test.group('Model options | Model.firstOrSave', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const profiler = new Profiler({})
 
-    const user = await User.firstOrSave({ username: 'virk' }, undefined, { profiler })
+    const user = await User.firstOrCreate({ username: 'virk' }, undefined, { profiler })
     const total = await db.from('users').count('*', 'total')
 
     assert.equal(total[0].total, 1)
@@ -530,7 +530,7 @@ test.group('Model options | Model.firstOrSave', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const profiler = new Profiler({})
 
-    const user = await User.firstOrSave({ username: 'nikk' }, undefined, { profiler })
+    const user = await User.firstOrCreate({ username: 'nikk' }, undefined, { profiler })
     const total = await db.from('users').count('*', 'total')
 
     assert.equal(total[0].total, 2)
@@ -551,7 +551,7 @@ test.group('Model options | Model.firstOrSave', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const client = db.connection('secondary')
 
-    const user = await User.firstOrSave({ username: 'virk' }, undefined, { client })
+    const user = await User.firstOrCreate({ username: 'virk' }, undefined, { client })
     const total = await db.from('users').count('*', 'total')
 
     assert.equal(total[0].total, 1)
@@ -573,7 +573,7 @@ test.group('Model options | Model.firstOrSave', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const client = db.connection('secondary')
 
-    const user = await User.firstOrSave({ username: 'nikk' }, undefined, { client })
+    const user = await User.firstOrCreate({ username: 'nikk' }, undefined, { client })
     const total = await db.from('users').count('*', 'total')
 
     assert.equal(total[0].total, 2)
@@ -595,7 +595,7 @@ test.group('Model options | Model.firstOrSave', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const client = await db.connection('secondary').transaction()
 
-    const user = await User.firstOrSave({ username: 'virk' }, undefined, { client })
+    const user = await User.firstOrCreate({ username: 'virk' }, undefined, { client })
     await client.commit()
 
     const total = await db.from('users').count('*', 'total')
@@ -618,7 +618,7 @@ test.group('Model options | Model.firstOrSave', (group) => {
 
     const client = await db.connection('secondary').transaction()
 
-    const user = await User.firstOrSave({ username: 'virk' }, undefined, { client })
+    const user = await User.firstOrCreate({ username: 'virk' }, undefined, { client })
     await client.rollback()
 
     const total = await db.from('users').count('*', 'total')

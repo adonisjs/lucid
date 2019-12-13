@@ -416,7 +416,7 @@ export class BaseModel implements ModelContract {
   /**
    * Find model instance using a key/value pair
    */
-  public static async firstOrSave<T extends ModelConstructorContract> (
+  public static async firstOrCreate<T extends ModelConstructorContract> (
     this: T,
     search: any,
     savePayload?: any,
