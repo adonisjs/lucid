@@ -12,7 +12,7 @@
 import knex from 'knex'
 import { Exception } from '@poppinss/utils'
 
-import { ModelContract, BelongsToQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
+import { ModelContract, BelongsToQueryBuilderContract, ModelObject } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { BelongsTo } from './index'
@@ -150,5 +150,23 @@ export class BelongsToQueryBuilder
    */
   public saveMany (): Promise<void> {
     throw new Exception(`Cannot save many of ${this._relation.model.name}.${this._relation.relationName}. Use associate instead.`)
+  }
+
+  /**
+   * Alias for save, since `associate` feels more natural
+   */
+  public async create (values: ModelObject, wrapInTransaction: boolean = true): Promise<any> {
+    const related = new (this._relation.relatedModel())()
+    related.fill(values)
+
+    await this.save(related, wrapInTransaction)
+    return related
+  }
+
+  /**
+   * Create many not allowed for belongsTo
+   */
+  public createMany (): Promise<any> {
+    throw new Exception(`Cannot create many of ${this._relation.model.name}.${this._relation.relationName}. Use create instead.`)
   }
 }

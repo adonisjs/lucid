@@ -10,7 +10,7 @@
 /// <reference path="../../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
-import { ModelContract, ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
+import { ModelContract, ManyToManyQueryBuilderContract, ModelObject } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { ManyToMany } from './index'
@@ -626,5 +626,38 @@ export class ManyToManyQueryBuilder
     } else {
       await this._sync(this._parent, ids, checkExisting)
     }
+  }
+
+  /**
+   * Create and persist related model instance
+   */
+  public async create (
+    values: ModelObject,
+    wrapInTransaction: boolean = true,
+    checkExisting: boolean = true,
+  ): Promise<any> {
+    const related = new (this._relation.relatedModel())()
+    related.fill(values)
+    await this.save(related, wrapInTransaction, checkExisting)
+
+    return related
+  }
+
+  /**
+   * Create and persist related model instances
+   */
+  public async createMany (
+    values: ModelObject[],
+    wrapInTransaction: boolean = true,
+    checkExisting: boolean = true,
+  ): Promise<any> {
+    const relatedModels = values.map((value) => {
+      const related = new (this._relation.relatedModel())()
+      related.fill(value)
+      return related
+    })
+
+    await this.saveMany(relatedModels, wrapInTransaction, checkExisting)
+    return relatedModels
   }
 }

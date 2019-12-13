@@ -265,6 +265,16 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Save the related model.
      */
     saveMany (model: T[], wrapInTransaction?: boolean): Promise<void>
+
+    /**
+     * Create the related model instance
+     */
+    create (values: ModelObject, wrapInTransaction?: boolean): Promise<T>
+
+    /**
+     * Create many of the related model instance
+     */
+    createMany (values: ModelObject[], wrapInTransaction?: boolean): Promise<T[]>
   }
 
   /**
@@ -353,6 +363,16 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Save related many
      */
     saveMany (model: T[], wrapInTransaction?: boolean, checkExisting?: boolean): Promise<void>
+
+    /**
+     * Create the related model instance
+     */
+    create (values: ModelObject, wrapInTransaction?: boolean, checkExisting?: boolean): Promise<T>
+
+    /**
+     * Create many of the related model instance
+     */
+    createMany (values: ModelObject, wrapInTransaction?: boolean, checkExisting?: boolean): Promise<T[]>
 
     /**
      * Attach related

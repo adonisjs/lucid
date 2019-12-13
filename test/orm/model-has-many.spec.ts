@@ -1723,6 +1723,173 @@ test.group('Model | HasMany | persist', (group) => {
 
     await user.related('posts').saveMany([post, post1])
   })
+
+  test('create related instance', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const post = await user.related('posts').create({ title: 'Adonis 101' })
+
+    assert.isTrue(post.$persisted)
+    assert.equal(user.id, post.userId)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('posts').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+  })
+
+  test('create many related instance', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const [post, post1] = await user
+      .related('posts')
+      .createMany([{ title: 'Adonis 101' }, { title: 'Lucid 101' }])
+
+    assert.isTrue(post.$persisted)
+    assert.equal(user.id, post.userId)
+
+    assert.isTrue(post1.$persisted)
+    assert.equal(user.id, post1.userId)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('posts').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 2)
+  })
+
+  test('wrap create calls inside transaction', async (assert) => {
+    assert.plan(4)
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    try {
+      await user.related('posts').create({})
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('posts').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalPosts[0].total, 0)
+    assert.isUndefined(user.$trx)
+  })
+
+  test('wrap create many calls inside transaction', async (assert) => {
+    assert.plan(4)
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    try {
+      await user.related('posts').createMany([{ title: 'Adonis 101' }, {}])
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('posts').count('*', 'total')
+
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalPosts[0].total, 0)
+    assert.isUndefined(user.$trx)
+  })
 })
 
 test.group('Model | HasMany | bulk operation', (group) => {
