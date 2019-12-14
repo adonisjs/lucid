@@ -150,4 +150,45 @@ export class HasManyQueryBuilder
     await this.saveMany(relatedModels, wrapInTransaction)
     return relatedModels
   }
+
+  /**
+   * Update the related model instance or create a new one
+   */
+  public async updateOrCreate (
+    search: ModelObject,
+    updatePayload: ModelObject,
+    wrapInTransaction: boolean = true,
+  ): Promise<any> {
+    if (Array.isArray(this._parent)) {
+      throw new Error('Cannot call "updateOrCreate" with multiple parents')
+    }
+
+    /**
+     * Callback is invoked after the parent is persisted, so that we can
+     * read the foreign key value
+     */
+    const callback = (parent: ModelContract) => {
+      const foreignKey = this._relation.foreignKey
+      const foreignKeyValue = this.$getRelatedValue(parent, this._relation.localKey, 'updateOrCreate')
+
+      return {
+        searchPayload: Object.assign({ [foreignKey]: foreignKeyValue }, search),
+        updatePayload,
+      }
+    }
+
+    /**
+     * Wrap in transaction when parent has not been persisted
+     * to ensure consistency
+     */
+    let trx: TransactionClientContract | undefined
+    if (!this._parent.$persisted && wrapInTransaction) {
+      trx = await this.client.transaction()
+    }
+
+    if (trx) {
+      return this.$updateOrCreateInTrx(this._parent, callback, trx)
+    }
+    return this.$updateOrCreate(this._parent, callback)
+  }
 }

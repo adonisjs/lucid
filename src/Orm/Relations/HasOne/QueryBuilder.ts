@@ -12,7 +12,12 @@
 import knex from 'knex'
 import { Exception } from '@poppinss/utils'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
-import { HasOneQueryBuilderContract, ModelContract, ModelObject } from '@ioc:Adonis/Lucid/Model'
+import {
+  ModelObject,
+  ModelContract,
+  ModelQueryBuilderContract,
+  HasOneQueryBuilderContract,
+} from '@ioc:Adonis/Lucid/Model'
 
 import { HasOne } from './index'
 import { unique } from '../../../utils'
@@ -36,6 +41,35 @@ export class HasOneQueryBuilder extends BaseRelationQueryBuilder implements HasO
   }
 
   /**
+   * Apply relationship constraints on a given query builder instance
+   */
+  private applyContraintsTo (
+    builder: ModelQueryBuilderContract<any, any>,
+    queryAction: string,
+  ) {
+    /**
+     * Constraint for multiple parents
+     */
+    if (Array.isArray(this._parent)) {
+      const values = unique(this._parent.map((parentInstance) => {
+        return this.$getRelatedValue(parentInstance, this._relation.localKey, queryAction)
+      }))
+      builder.whereIn(this._relation.foreignAdapterKey, values)
+      return
+    }
+
+    /**
+     * Constraint for one parent
+     */
+    const value = this.$getRelatedValue(this._parent, this._relation.localKey, queryAction)
+    builder.where(this._relation.foreignAdapterKey, value)
+
+    if (!['update', 'delete'].includes(queryAction)) {
+      builder.limit(1)
+    }
+  }
+
+  /**
    * Applies constraints for `select`, `update` and `delete` queries. The
    * inserts are not allowed directly and one must use `save` method
    * instead.
@@ -49,27 +83,7 @@ export class HasOneQueryBuilder extends BaseRelationQueryBuilder implements HasO
     }
 
     this.$appliedConstraints = true
-
-    /**
-     * Constraint for multiple parents
-     */
-    if (Array.isArray(this._parent)) {
-      const values = unique(this._parent.map((parentInstance) => {
-        return this.$getRelatedValue(parentInstance, this._relation.localKey)
-      }))
-      return this.whereIn(this._relation.foreignAdapterKey, values)
-    }
-
-    /**
-     * Constraint for one parent
-     */
-    const value = this.$getRelatedValue(this._parent, this._relation.localKey)
-    this.where(this._relation.foreignAdapterKey, value)
-
-    if (!['update', 'delete'].includes(this.$queryAction())) {
-      this.limit(1)
-    }
-
+    this.applyContraintsTo(this, this.$queryAction())
     return this
   }
 
@@ -115,6 +129,47 @@ export class HasOneQueryBuilder extends BaseRelationQueryBuilder implements HasO
   }
 
   /**
+   * Update the related model instance or create a new one
+   */
+  public async updateOrCreate (
+    search: ModelObject,
+    updatePayload: ModelObject,
+    wrapInTransaction: boolean = true,
+  ): Promise<any> {
+    if (Array.isArray(this._parent)) {
+      throw new Error('Cannot call "updateOrCreate" with multiple parents')
+    }
+
+    /**
+     * Callback is invoked after the parent is persisted, so that we can
+     * read the foreign key value
+     */
+    const callback = (parent: ModelContract) => {
+      const foreignKey = this._relation.foreignKey
+      const foreignKeyValue = this.$getRelatedValue(parent, this._relation.localKey, 'updateOrCreate')
+
+      return {
+        searchPayload: Object.assign({ [foreignKey]: foreignKeyValue }, search),
+        updatePayload,
+      }
+    }
+
+    /**
+     * Wrap in transaction when parent has not been persisted
+     * to ensure consistency
+     */
+    let trx: TransactionClientContract | undefined
+    if (!this._parent.$persisted && wrapInTransaction) {
+      trx = await this.client.transaction()
+    }
+
+    if (trx) {
+      return this.$updateOrCreateInTrx(this._parent, callback, trx)
+    }
+    return this.$updateOrCreate(this._parent, callback)
+  }
+
+  /**
    * Save many is not allowed by HasOne
    */
   public saveMany (): Promise<void> {
@@ -126,5 +181,9 @@ export class HasOneQueryBuilder extends BaseRelationQueryBuilder implements HasO
    */
   public createMany (): Promise<any> {
     throw new Exception(`Cannot create many of ${this._relation.model.name}.${this._relation.relationName}. Use create instead.`)
+  }
+
+  public updateOrCreateMany (): Promise<any> {
+    return this.createMany()
   }
 }

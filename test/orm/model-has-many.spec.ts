@@ -1904,6 +1904,291 @@ test.group('Model | HasMany | persist', (group) => {
     assert.equal(totalPosts[0].total, 0)
     assert.isUndefined(user.$trx)
   })
+
+  test('create related instance when there isn\'t any existing row', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const post = await user.related('posts').updateOrCreate({}, {
+      title: 'Adonis 101',
+    })
+
+    assert.isTrue(post.$persisted)
+    assert.equal(user.id, post.userId)
+    assert.equal(post.title, 'Adonis 101')
+  })
+
+  test('update related instance when row already exists', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    await db.insertQuery().table('posts').insert({ title: 'Adonis 101', user_id: 1 })
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const post = await user.related('posts').updateOrCreate({}, {
+      title: 'Adonis 102',
+    })
+
+    assert.isTrue(post.$persisted)
+    assert.equal(user.id, post.userId)
+    assert.equal(post.title, 'Adonis 102')
+  })
+
+  test('only update the first matching row', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    await db.insertQuery().table('posts').multiInsert(
+      [
+        { title: 'Adonis 101', user_id: 1 },
+        { title: 'Lucid 101', user_id: 1 },
+      ]
+    )
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.related('posts').updateOrCreate({}, {
+      title: 'Adonis 102',
+    })
+
+    const posts = await db.query().from('posts').orderBy('id', 'desc')
+    assert.lengthOf(posts, 2)
+
+    assert.equal(posts[0].title, 'Adonis 102')
+    assert.equal(posts[1].title, 'Lucid 101')
+  })
+
+  test('do not update rows that belongs to a different entity', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    await db.insertQuery().table('posts').multiInsert(
+      [
+        { title: 'Adonis 101', user_id: 2 },
+        { title: 'Lucid 101', user_id: 2 },
+      ]
+    )
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.related('posts').updateOrCreate({}, {
+      title: 'Adonis 102',
+    })
+
+    const posts = await db.query().from('posts')
+    assert.lengthOf(posts, 3)
+
+    assert.equal(posts[0].title, 'Adonis 101')
+    assert.equal(posts[1].title, 'Lucid 101')
+    assert.equal(posts[2].title, 'Adonis 102')
+  })
+
+  test('create using parent model transaction instance', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.username = 'virk'
+    user.$trx = trx
+    await user.save()
+
+    await user.related('posts').updateOrCreate({}, {
+      title: 'Adonis 101',
+    })
+
+    await trx.rollback()
+    const posts = await db.query().from('posts')
+    assert.lengthOf(posts, 0)
+  })
+
+  test('update using parent model transaction instance', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    await db.insertQuery().table('posts').insert({ title: 'Adonis 101', user_id: 1 })
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.username = 'virk'
+    user.$trx = trx
+    await user.save()
+
+    await user.related('posts').updateOrCreate({}, {
+      title: 'Adonis 102',
+    })
+
+    await trx.rollback()
+    const posts = await db.query().from('posts')
+    assert.lengthOf(posts, 1)
+    assert.equal(posts[0].title, 'Adonis 101')
+  })
+
+  test('create save point when parent is not peristed', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: Post[]
+    }
+
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.username = 'virk'
+    user.$trx = trx
+
+    try {
+      await user.related('posts').updateOrCreate({}, {})
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    assert.isFalse(trx.isCompleted)
+    assert.isUndefined(user.$trx)
+    await trx.commit()
+
+    const posts = await db.query().from('posts')
+    assert.lengthOf(posts, 0)
+  })
 })
 
 test.group('Model | HasMany | bulk operation', (group) => {

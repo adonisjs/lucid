@@ -660,4 +660,10 @@ export class ManyToManyQueryBuilder
     await this.saveMany(relatedModels, wrapInTransaction, checkExisting)
     return relatedModels
   }
+
+  public async updateOrCreate (
+    _search: ModelObject,
+    _updatePayload: ModelObject,
+    _wrapInTransaction?: boolean,
+  ): Promise<any> {}
 }

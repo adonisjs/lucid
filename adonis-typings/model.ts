@@ -275,6 +275,15 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Create many of the related model instance
      */
     createMany (values: ModelObject[], wrapInTransaction?: boolean): Promise<T[]>
+
+    /**
+     * Update the relationship or create a new one
+     */
+    updateOrCreate (
+      search: ModelObject,
+      updatePayload: ModelObject,
+      wrapInTransaction?: boolean,
+    ): Promise<T>
   }
 
   /**
@@ -715,9 +724,10 @@ declare module '@ioc:Adonis/Lucid/Model' {
     ): Promise<InstanceType<T>[]>
 
     /**
-     * Returns the first row or save it to the database
+     * Returns the first row or create a new instance of model without
+     * persisting it
      */
-    firstOrCreate<T extends ModelConstructorContract> (
+    firstOrNew<T extends ModelConstructorContract> (
       this: T,
       search: any,
       savePayload?: any,
@@ -725,10 +735,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
     ): Promise<InstanceType<T>>
 
     /**
-     * Returns the first row or create a new instance of model without
-     * persisting it
+     * Returns the first row or save it to the database
      */
-    firstOrNew<T extends ModelConstructorContract> (
+    firstOrCreate<T extends ModelConstructorContract> (
       this: T,
       search: any,
       savePayload?: any,
