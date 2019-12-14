@@ -2018,8 +2018,8 @@ test.group('Model | HasMany | persist', (group) => {
     const posts = await db.query().from('posts').orderBy('id', 'desc')
     assert.lengthOf(posts, 2)
 
-    assert.equal(posts[0].title, 'Adonis 102')
-    assert.equal(posts[1].title, 'Lucid 101')
+    assert.equal(posts[0].title, 'Lucid 101')
+    assert.equal(posts[1].title, 'Adonis 102')
   })
 
   test('do not update rows that belongs to a different entity', async (assert) => {
