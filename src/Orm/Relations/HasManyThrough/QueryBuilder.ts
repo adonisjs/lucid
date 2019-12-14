@@ -125,4 +125,8 @@ export class HasManyThroughQueryBuilder
   public async createMany (): Promise<any> {
     return this.save()
   }
+
+  public async updateOrCreate (): Promise<any> {
+    return this.save()
+  }
 }

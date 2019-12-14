@@ -416,23 +416,6 @@ export class BaseModel implements ModelContract {
   /**
    * Find model instance using a key/value pair
    */
-  public static async firstOrCreate<T extends ModelConstructorContract> (
-    this: T,
-    search: any,
-    savePayload?: any,
-    options?: ModelAdapterOptions,
-  ) {
-    const row = await this.firstOrNew(search, savePayload, options)
-    if (!row.$persisted) {
-      await row.save()
-    }
-
-    return row
-  }
-
-  /**
-   * Find model instance using a key/value pair
-   */
   public static async firstOrNew<T extends ModelConstructorContract> (
     this: T,
     search: any,
@@ -446,6 +429,23 @@ export class BaseModel implements ModelContract {
       row = new this() as InstanceType<T>
       row.fill(Object.assign({}, search, savePayload))
       row.$setOptionsAndTrx(query.clientOptions)
+    }
+
+    return row
+  }
+
+  /**
+   * Find model instance using a key/value pair
+   */
+  public static async firstOrCreate<T extends ModelConstructorContract> (
+    this: T,
+    search: any,
+    savePayload?: any,
+    options?: ModelAdapterOptions,
+  ) {
+    const row = await this.firstOrNew(search, savePayload, options)
+    if (!row.$persisted) {
+      await row.save()
     }
 
     return row

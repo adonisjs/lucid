@@ -1348,6 +1348,248 @@ test.group('Model | HasOne | persist', (group) => {
     assert.equal(totalProfiles[0].total, 0)
     assert.isUndefined(user.$trx)
   })
+
+  test('create related instance when there isn\'t any existing row', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const profile = await user.related<'hasOne', 'profile'>('profile').updateOrCreate({}, {
+      displayName: 'Hvirk',
+    })
+
+    assert.isTrue(profile.$persisted)
+    assert.equal(user.id, profile.userId)
+    assert.equal(profile.displayName, 'Hvirk')
+  })
+
+  test('fetch and update related instance when already exists', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.related<'hasOne', 'profile'>('profile').create({ displayName: 'Hvirk' })
+    const profile = await user.related<'hasOne', 'profile'>('profile').updateOrCreate({}, {
+      displayName: 'Virk',
+    })
+    assert.isTrue(profile.$persisted)
+
+    const profiles = await db.query().from('profiles')
+    assert.lengthOf(profiles, 1)
+    assert.equal(profiles[0].user_id, user.id)
+    assert.equal(profiles[0].display_name, 'Virk')
+  })
+
+  test('use parent model transaction to perform insert', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.username = 'virk'
+    user.$trx = trx
+    await user.save()
+
+    await user.related<'hasOne', 'profile'>('profile').updateOrCreate({}, {
+      displayName: 'Virk',
+    })
+
+    await user.$trx.rollback()
+    const profiles = await db.query().from('profiles')
+
+    assert.lengthOf(profiles, 0)
+  })
+
+  test('use parent model transaction to perform update', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+    const trx = await db.transaction()
+
+    const user = new User()
+    user.username = 'virk'
+    user.$trx = trx
+    await user.save()
+
+    await user.related<'hasOne', 'profile'>('profile').updateOrCreate({}, {
+      displayName: 'Virk',
+    })
+
+    await user.$trx.rollback()
+    const profiles = await db.query().from('profiles')
+
+    assert.equal(profiles[0].display_name, 'Hvirk')
+  })
+
+  test('create save point when persisting parent and related model together', async (assert) => {
+    assert.plan(4)
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    const trx = await db.transaction()
+    const user = new User()
+    user.username = 'virk'
+    user.$trx = trx
+
+    try {
+      await user.related<'hasOne', 'profile'>('profile').updateOrCreate({}, {})
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    assert.isFalse(trx.isCompleted)
+    assert.isUndefined(user.$trx)
+    await trx.commit()
+
+    const profiles = await db.query().from('profiles')
+    assert.lengthOf(profiles, 0)
+  })
+
+  test('create save point when updating related model', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: Profile
+    }
+
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+
+    const trx = await db.transaction()
+    const user = new User()
+    user.username = 'virk'
+    user.$trx = trx
+
+    await user.related<'hasOne', 'profile'>('profile').updateOrCreate({}, {
+      displayName: 'Virk',
+    })
+
+    assert.isFalse(trx.isCompleted)
+    assert.isUndefined(user.$trx)
+    await trx.commit()
+
+    const profiles = await db.query().from('profiles')
+    assert.equal(profiles[0].display_name, 'Virk')
+  })
 })
 
 test.group('Model | HasOne | bulk operation', (group) => {

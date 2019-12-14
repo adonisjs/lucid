@@ -23,6 +23,7 @@ import {
   ModelObject,
   ModelContract,
   RelationContract,
+  ModelAdapterOptions,
   BaseRelationQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
@@ -125,6 +126,49 @@ export abstract class BaseRelationQueryBuilder
   }
 
   /**
+   * Update relationship or create a new one.
+   */
+  protected async $updateOrCreate<T extends ModelContract> (
+    parent: T,
+    cb: (parent: T) => { searchPayload: ModelObject, updatePayload: ModelObject },
+  ) {
+    await parent.save()
+    const { searchPayload, updatePayload } = cb(parent)
+
+    /**
+     * Passing down options of the parent model to the
+     * related model
+     */
+    const options: ModelAdapterOptions = parent.$options || {}
+    if (parent.$trx) {
+      options.client = parent.$trx
+    }
+
+    return this._baseRelation
+      .relatedModel()
+      .updateOrCreate(searchPayload, updatePayload, options)
+  }
+
+  /**
+   * Update relationship inside a managed transaction
+   */
+  protected async $updateOrCreateInTrx<T extends ModelContract> (
+    parent: T,
+    cb: (parent: T) => { searchPayload: ModelObject, updatePayload: ModelObject },
+    trx: TransactionClientContract,
+  ) {
+    try {
+      parent.$trx = trx
+      const related = await this.$updateOrCreate(parent, cb)
+      await trx.commit()
+      return related
+    } catch (error) {
+      await trx.rollback()
+      throw error
+    }
+  }
+
+  /**
    * Returns the query action
    */
   protected $queryAction (): string {
@@ -138,8 +182,29 @@ export abstract class BaseRelationQueryBuilder
     return action
   }
 
-  public abstract async save (model: ModelContract, wrapInTransaction?: boolean): Promise<void>
-  public abstract async saveMany (model: ModelContract[], wrapInTransaction?: boolean): Promise<void>
-  public abstract async create (model: ModelObject, wrapInTransaction?: boolean): Promise<ModelContract>
-  public abstract async createMany (model: ModelObject[], wrapInTransaction?: boolean): Promise<ModelContract[]>
+  public abstract async save (
+    model: ModelContract,
+    wrapInTransaction?: boolean,
+  ): Promise<void>
+
+  public abstract async saveMany (
+    model: ModelContract[],
+    wrapInTransaction?: boolean,
+  ): Promise<void>
+
+  public abstract async create (
+    model: ModelObject,
+    wrapInTransaction?: boolean,
+  ): Promise<ModelContract>
+
+  public abstract async createMany (
+    model: ModelObject[],
+    wrapInTransaction?: boolean,
+  ): Promise<ModelContract[]>
+
+  public abstract async updateOrCreate (
+    search: ModelObject,
+    updatePayload: ModelObject,
+    wrapInTransaction?: boolean,
+  ): Promise<ModelContract>
 }

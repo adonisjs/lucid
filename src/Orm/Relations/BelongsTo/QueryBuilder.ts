@@ -163,6 +163,12 @@ export class BelongsToQueryBuilder
     return related
   }
 
+  public async updateOrCreate (
+    _search: ModelObject,
+    _updatePayload: ModelObject,
+    _wrapInTransaction?: boolean,
+  ): Promise<any> {}
+
   /**
    * Create many not allowed for belongsTo
    */
