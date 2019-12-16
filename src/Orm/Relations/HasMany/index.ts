@@ -14,6 +14,9 @@ import { HasManyRelationContract, RelationOptions } from '@ioc:Adonis/Lucid/Rela
 import { BaseRelation } from '../Base'
 import { HasManyQueryClient } from './QueryClient'
 
+/**
+ * Manages loading and persisting has many relationship
+ */
 export class HasMany extends BaseRelation implements HasManyRelationContract<
 ModelConstructorContract,
 ModelConstructorContract
@@ -118,8 +121,11 @@ ModelConstructorContract
     })
   }
 
-  public client (models: ModelContract | ModelContract[], client: QueryClientContract): any {
+  /**
+   * Returns an instance of query client for invoking queries
+   */
+  public client (parent: ModelContract | ModelContract[], client: QueryClientContract): any {
     this.$ensureIsBooted()
-    return new HasManyQueryClient(models, client, this)
+    return new HasManyQueryClient(parent, client, this)
   }
 }

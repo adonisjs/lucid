@@ -14,6 +14,9 @@ import { ManyToManyRelationContract, ManyToManyRelationOptions } from '@ioc:Adon
 import { BaseRelation } from '../Base'
 import { ManyToManyQueryClient } from './QueryClient'
 
+/**
+ * Manages loading and persisting many to many relationship
+ */
 export class ManyToMany extends BaseRelation implements ManyToManyRelationContract<
 ModelConstructorContract,
 ModelConstructorContract
@@ -157,8 +160,11 @@ ModelConstructorContract
     })
   }
 
-  public client (models: ModelContract | ModelContract[], client: QueryClientContract): any {
+  /**
+   * Returns an instance of query client for invoking queries
+   */
+  public client (parent: ModelContract | ModelContract[], client: QueryClientContract): any {
     this.$ensureIsBooted()
-    return new ManyToManyQueryClient(models, client, this)
+    return new ManyToManyQueryClient(parent, client, this)
   }
 }

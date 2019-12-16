@@ -14,6 +14,9 @@ import { HasManyThroughRelationContract, ThroughRelationOptions } from '@ioc:Ado
 import { BaseRelation } from '../Base'
 import { HasManyThroughClient } from './QueryClient'
 
+/**
+ * Manages loading and persisting has many through relationship
+ */
 export class HasManyThrough extends BaseRelation implements HasManyThroughRelationContract<
 ModelConstructorContract,
 ModelConstructorContract
@@ -162,8 +165,11 @@ ModelConstructorContract
     })
   }
 
-  public client (models: ModelContract | ModelContract[], client: QueryClientContract): any {
+  /**
+   * Returns an instance of query client for invoking queries
+   */
+  public client (parent: ModelContract | ModelContract[], client: QueryClientContract): any {
     this.$ensureIsBooted()
-    return new HasManyThroughClient(models, client, this)
+    return new HasManyThroughClient(parent, client, this)
   }
 }

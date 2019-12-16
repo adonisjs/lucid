@@ -14,6 +14,9 @@ import { BelongsToRelationContract, RelationOptions } from '@ioc:Adonis/Lucid/Re
 import { BaseRelation } from '../Base'
 import { BelongsToQueryClient } from './QueryClient'
 
+/**
+ * Manages loading and persisting belongs to relationship
+ */
 export class BelongsTo extends BaseRelation implements BelongsToRelationContract<
 ModelConstructorContract,
 ModelConstructorContract
@@ -131,8 +134,11 @@ ModelConstructorContract
     })
   }
 
-  public client (models: ModelContract | ModelContract[], client: QueryClientContract): any {
+  /**
+   * Returns an instance of query client for the given relationship
+   */
+  public client (parent: ModelContract | ModelContract[], client: QueryClientContract): any {
     this.$ensureIsBooted()
-    return new BelongsToQueryClient(models, client, this)
+    return new BelongsToQueryClient(parent, client, this)
   }
 }

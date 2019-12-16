@@ -15,6 +15,9 @@ import { RelationBaseQueryBuilderContract, RelationshipsContract } from '@ioc:Ad
 
 import { ModelQueryBuilder } from '../../QueryBuilder'
 
+/**
+ * Base query builder for ORM relationships
+ */
 export abstract class BaseQueryBuilder extends ModelQueryBuilder implements RelationBaseQueryBuilderContract<
 ModelConstructorContract,
 ModelConstructorContract
@@ -31,14 +34,13 @@ ModelConstructorContract
   }
 
   /**
-   * Name of the query action
+   * Returns the name of the query action
    */
   protected $queryAction (): string {
     let action = this.$knexBuilder['_method']
     if (action === 'del') {
       action = 'delete'
     }
-
     return action
   }
 
