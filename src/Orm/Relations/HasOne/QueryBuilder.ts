@@ -16,23 +16,31 @@ import { HasOne } from './index'
 import { getValue, unique } from '../../../utils'
 import { BaseQueryBuilder } from '../Base/QueryBuilder'
 
+/**
+ * Extends the model query builder for executing queries in scope
+ * to the current relationship
+ */
 export class HasOneQueryBuilder extends BaseQueryBuilder implements RelationBaseQueryBuilderContract<
 ModelConstructorContract,
 ModelConstructorContract
 > {
   constructor (
-    private builder: knex.QueryBuilder,
-    private models: ModelContract | ModelContract[],
+    builder: knex.QueryBuilder,
     client: QueryClientContract,
+    private parent: ModelContract | ModelContract[],
     private relation: HasOne,
   ) {
     super(builder, client, relation, (userFn) => {
       return (__builder) => {
-        userFn(new HasOneQueryBuilder(__builder, this.models, this.client, this.relation))
+        userFn(new HasOneQueryBuilder(__builder, this.client, this.parent, this.relation))
       }
     })
   }
 
+  /**
+   * Applies constraint to limit rows to the current relationship
+   * only.
+   */
   public applyConstraints () {
     if (this.$appliedConstraints) {
       return
@@ -44,8 +52,8 @@ ModelConstructorContract
     /**
      * Eager query contraints
      */
-    if (Array.isArray(this.models)) {
-      this.builder.whereIn(this.relation.$foreignCastAsKey, unique(this.models.map((model) => {
+    if (Array.isArray(this.parent)) {
+      this.$knexBuilder.whereIn(this.relation.$foreignCastAsKey, unique(this.parent.map((model) => {
         return getValue(model, this.relation.$localKey, this.relation, queryAction)
       })))
       return
@@ -54,14 +62,14 @@ ModelConstructorContract
     /**
      * Query constraints
      */
-    const value = getValue(this.models, this.relation.$localKey, this.relation, queryAction)
-    this.builder.where(this.relation.$foreignCastAsKey, value)
+    const value = getValue(this.parent, this.relation.$localKey, this.relation, queryAction)
+    this.$knexBuilder.where(this.relation.$foreignCastAsKey, value)
 
     /**
      * Do not add limit when updating or deleting
      */
     if (!['update', 'delete'].includes(queryAction)) {
-      this.builder.limit(1)
+      this.$knexBuilder.limit(1)
     }
   }
 }

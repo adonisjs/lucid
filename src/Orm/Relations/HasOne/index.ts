@@ -14,6 +14,9 @@ import { HasOneRelationContract, RelationOptions } from '@ioc:Adonis/Lucid/Relat
 import { BaseRelation } from '../Base'
 import { HasOneQueryClient } from './QueryClient'
 
+/**
+ * Manages loading and persisting has one relationship
+ */
 export class HasOne extends BaseRelation implements HasOneRelationContract<
 ModelConstructorContract,
 ModelConstructorContract
@@ -133,8 +136,11 @@ ModelConstructorContract
     })
   }
 
-  public client (models: ModelContract | ModelContract[], client: QueryClientContract): any {
+  /**
+   * Returns an instance of query client for invoking queries
+   */
+  public client (parent: ModelContract | ModelContract[], client: QueryClientContract): any {
     this.$ensureIsBooted()
-    return new HasOneQueryClient(models, client, this)
+    return new HasOneQueryClient(parent, client, this)
   }
 }

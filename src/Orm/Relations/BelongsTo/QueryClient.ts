@@ -14,19 +14,23 @@ import { RelationBaseQueryClientContract } from '@ioc:Adonis/Lucid/Relations'
 import { BelongsTo } from './index'
 import { BelongsToQueryBuilder } from './QueryBuilder'
 
+/**
+ * Query client for executing queries in scope to the defined
+ * relationship
+ */
 export class BelongsToQueryClient implements RelationBaseQueryClientContract<
 ModelConstructorContract,
 ModelConstructorContract
 > {
   constructor (
-    private models: ModelContract | ModelContract[],
+    private parent: ModelContract | ModelContract[],
     private client: QueryClientContract,
     private relation: BelongsTo,
   ) {
   }
 
   public query (): any {
-    return new BelongsToQueryBuilder(this.client.knexQuery(), this.models, this.client, this.relation)
+    return new BelongsToQueryBuilder(this.client.knexQuery(), this.client, this.parent, this.relation)
   }
 
   public eagerQuery (): any {

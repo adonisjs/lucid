@@ -14,6 +14,9 @@ import { BaseRelationContract, RelationOptions, TypedRelations } from '@ioc:Adon
 
 import { KeysExtractor } from '../KeysExtractor'
 
+/**
+ * Base class for implementing ORM Relationships
+ */
 export abstract class BaseRelation implements BaseRelationContract<
 ModelConstructorContract,
 ModelConstructorContract

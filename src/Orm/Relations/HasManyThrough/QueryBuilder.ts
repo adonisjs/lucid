@@ -16,19 +16,23 @@ import { HasManyThrough } from './index'
 import { getValue, unique } from '../../../utils'
 import { BaseQueryBuilder } from '../Base/QueryBuilder'
 
+/**
+ * Extends the model query builder for executing queries in scope
+ * to the current relationship
+ */
 export class HasManyThroughQueryBuilder extends BaseQueryBuilder implements RelationBaseQueryBuilderContract<
 ModelConstructorContract,
 ModelConstructorContract
 > {
   constructor (
     builder: knex.QueryBuilder,
-    private models: ModelContract | ModelContract[],
     client: QueryClientContract,
+    private parent: ModelContract | ModelContract[],
     private relation: HasManyThrough,
   ) {
     super(builder, client, relation, (userFn) => {
       return (__builder) => {
-        userFn(new HasManyThroughQueryBuilder(__builder, this.models, this.client, this.relation))
+        userFn(new HasManyThroughQueryBuilder(__builder, this.client, this.parent, this.relation))
       }
     })
   }
@@ -43,10 +47,10 @@ ModelConstructorContract
     /**
      * Eager query contraints
      */
-    if (Array.isArray(this.models)) {
+    if (Array.isArray(this.parent)) {
       builder.whereIn(
         `${throughTable}.${this.relation.$foreignCastAsKey}`,
-        unique(this.models.map((model) => {
+        unique(this.parent.map((model) => {
           return getValue(model, this.relation.$localKey, this.relation, queryAction)
         })),
       )
@@ -56,10 +60,14 @@ ModelConstructorContract
     /**
      * Query constraints
      */
-    const value = getValue(this.models, this.relation.$localKey, this.relation, queryAction)
+    const value = getValue(this.parent, this.relation.$localKey, this.relation, queryAction)
     builder.where(`${throughTable}.${this.relation.$foreignCastAsKey}`, value)
   }
 
+  /**
+   * Applies constraint to limit rows to the current relationship
+   * only.
+   */
   public applyConstraints () {
     if (this.$appliedConstraints) {
       return

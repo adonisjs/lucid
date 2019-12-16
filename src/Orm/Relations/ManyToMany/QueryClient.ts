@@ -14,19 +14,23 @@ import { ManyToManyClientContract } from '@ioc:Adonis/Lucid/Relations'
 import { ManyToMany } from './index'
 import { ManyToManyQueryBuilder } from './QueryBuilder'
 
+/**
+ * Query client for executing queries in scope to the defined
+ * relationship
+ */
 export class ManyToManyQueryClient implements ManyToManyClientContract<
 ModelConstructorContract,
 ModelConstructorContract
 > {
   constructor (
-    private models: ModelContract | ModelContract[],
+    private parent: ModelContract | ModelContract[],
     private client: QueryClientContract,
     private relation: ManyToMany,
   ) {
   }
 
   public query (): any {
-    return new ManyToManyQueryBuilder(this.client.knexQuery(), this.models, this.client, this.relation)
+    return new ManyToManyQueryBuilder(this.client.knexQuery(), this.client, this.parent, this.relation)
   }
 
   public eagerQuery (): any {

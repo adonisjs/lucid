@@ -14,19 +14,23 @@ import { RelationBaseQueryClientContract } from '@ioc:Adonis/Lucid/Relations'
 import { HasManyThrough } from './index'
 import { HasManyThroughQueryBuilder } from './QueryBuilder'
 
+/**
+ * Query client for executing queries in scope to the defined
+ * relationship
+ */
 export class HasManyThroughClient implements RelationBaseQueryClientContract<
 ModelConstructorContract,
 ModelConstructorContract
 > {
   constructor (
-    private models: ModelContract | ModelContract[],
+    private parent: ModelContract | ModelContract[],
     private client: QueryClientContract,
     private relation: HasManyThrough,
   ) {
   }
 
   public query (): any {
-    return new HasManyThroughQueryBuilder(this.client.knexQuery(), this.models, this.client, this.relation)
+    return new HasManyThroughQueryBuilder(this.client.knexQuery(), this.client, this.parent, this.relation)
   }
 
   public eagerQuery (): any {

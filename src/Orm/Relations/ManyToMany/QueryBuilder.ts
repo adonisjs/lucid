@@ -16,19 +16,23 @@ import { ManyToMany } from './index'
 import { getValue, unique } from '../../../utils'
 import { BaseQueryBuilder } from '../Base/QueryBuilder'
 
+/**
+ * Extends the model query builder for executing queries in scope
+ * to the current relationship
+ */
 export class ManyToManyQueryBuilder extends BaseQueryBuilder implements ManyToManyQueryBuilderContract<
 ModelConstructorContract,
 ModelConstructorContract
 > {
   constructor (
     builder: knex.QueryBuilder,
-    private models: ModelContract | ModelContract[],
     client: QueryClientContract,
+    private parent: ModelContract | ModelContract[],
     private relation: ManyToMany,
   ) {
     super(builder, client, relation, (userFn) => {
       return (__builder) => {
-        userFn(new ManyToManyQueryBuilder(__builder, this.models, this.client, this.relation))
+        userFn(new ManyToManyQueryBuilder(__builder, this.client, this.parent, this.relation))
       }
     })
   }
@@ -49,8 +53,8 @@ ModelConstructorContract
     /**
      * Eager query contraints
      */
-    if (Array.isArray(this.models)) {
-      this.whereInPivot(this.relation.$pivotForeignKey, unique(this.models.map((model) => {
+    if (Array.isArray(this.parent)) {
+      this.whereInPivot(this.relation.$pivotForeignKey, unique(this.parent.map((model) => {
         return getValue(model, this.relation.$localKey, this.relation, queryAction)
       })))
       return
@@ -59,7 +63,7 @@ ModelConstructorContract
     /**
      * Query constraints
      */
-    const value = getValue(this.models, this.relation.$localKey, this.relation, queryAction)
+    const value = getValue(this.parent, this.relation.$localKey, this.relation, queryAction)
     this.wherePivot(this.relation.$pivotForeignKey, value)
   }
 
