@@ -17,6 +17,8 @@ import { patchKnex } from 'knex-dynamic-connection'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
 import { ConnectionConfigContract, ConnectionContract, ReportNode } from '@ioc:Adonis/Lucid/Database'
 
+import { Logger } from './Logger'
+
 /**
  * Connection class manages a given database connection. Internally it uses
  * knex to build the database connection with appropriate database
@@ -223,7 +225,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Creates the write connection
    */
   private _setupWriteConnection () {
-    this.client = knex(this._getWriteConfig())
+    this.client = knex(Object.assign({ log: new Logger(this._logger) }, this._getWriteConfig()))
     patchKnex(this.client, this._writeConfigResolver.bind(this))
   }
 
@@ -239,7 +241,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
 
     this._logger.trace({ connection: this.name }, 'setting up read/write replicas')
 
-    this.readClient = knex(this._getReadConfig())
+    this.readClient = knex(Object.assign({ log: new Logger(this._logger) }, this._getReadConfig()))
     patchKnex(this.readClient, this._readConfigResolver.bind(this))
   }
 
@@ -248,7 +250,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * after first error.
    */
   private async _checkReadHosts () {
-    const configCopy = Object.assign({}, this.config)
+    const configCopy = Object.assign({ log: new Logger(this._logger) }, this.config)
     let error: any = null
 
     for (let _replica of this._readReplicas) {
