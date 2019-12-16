@@ -9,30 +9,33 @@
 
 declare module '@ioc:Adonis/Lucid/Orm' {
   import {
-    ColumnFn,
-    HasOneFn,
-    HasManyFn,
-    ComputedFn,
-    BelongsToFn,
-    ManyToManyFn,
-    HasManyThroughFn,
+    ColumnDecorator,
+    ComputedDecorator,
     ModelConstructorContract,
   } from '@ioc:Adonis/Lucid/Model'
 
-  /**
-   * Generate key/value pair of model properties and
-   * adapter keys
-   */
-  export type Refs<T extends any, K extends keyof T> = {
-    [P in K]: string
-  }
+  import {
+    HasOneDecorator,
+    HasManyDecorator,
+    BelongsToDecorator,
+    ManyToManyDecorator,
+    HasManyThroughDecorator,
+  } from '@ioc:Adonis/Lucid/Relations'
+
+  export {
+    HasOne,
+    HasMany,
+    BelongsTo,
+    ManyToMany,
+    HasManyThrough,
+  } from '@ioc:Adonis/Lucid/Relations'
 
   export const BaseModel: ModelConstructorContract
-  export const column: ColumnFn
-  export const computed: ComputedFn
-  export const hasOne: HasOneFn
-  export const belongsTo: BelongsToFn
-  export const hasMany: HasManyFn
-  export const manyToMany: ManyToManyFn
-  export const hasManyThrough: HasManyThroughFn
+  export const column: ColumnDecorator
+  export const computed: ComputedDecorator
+  export const hasOne: HasOneDecorator
+  export const belongsTo: BelongsToDecorator
+  export const hasMany: HasManyDecorator
+  export const manyToMany: ManyToManyDecorator
+  export const hasManyThrough: HasManyThroughDecorator
 }

@@ -35,8 +35,9 @@ import {
   ModelContract,
   AdapterContract,
   ModelConstructorContract,
-  ManyToManyQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
+
+// import { ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
@@ -48,11 +49,11 @@ import { Adapter } from '../src/Orm/Adapter'
 import { BaseModel } from '../src/Orm/BaseModel'
 import { QueryClient } from '../src/QueryClient'
 import { Database } from '../src/Database/index'
-import { ManyToMany } from '../src/Orm/Relations/ManyToMany/index'
+// import { ManyToMany } from '../src/Orm/Relations/ManyToMany/index'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
-import { ManyToManyQueryBuilder } from '../src/Orm/Relations/ManyToMany/QueryBuilder'
+// import { ManyToManyQueryBuilder } from '../src/Orm/Relations/ManyToMany/QueryBuilder'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
 dotenv.config()
@@ -257,18 +258,18 @@ export function getQueryBuilder (client: QueryClientContract) {
 /**
  * Returns many to many query builder
  */
-export function getManyToManyQueryBuilder (
-  parent: ModelContract,
-  relation: ManyToMany,
-  client: QueryClientContract,
-) {
-  return new ManyToManyQueryBuilder(
-    client.getWriteClient().queryBuilder(),
-    relation,
-    client,
-    parent,
-  ) as unknown as ManyToManyQueryBuilderContract<any> & ExcutableQueryBuilderContract<any>
-}
+// export function getManyToManyQueryBuilder (
+//   parent: ModelContract,
+//   relation: ManyToMany,
+//   client: QueryClientContract,
+// ) {
+//   return new ManyToManyQueryBuilder(
+//     client.getWriteClient().queryBuilder(),
+//     relation,
+//     client,
+//     parent,
+//   ) as unknown as ManyToManyQueryBuilderContract<any> & ExcutableQueryBuilderContract<any>
+// }
 
 /**
  * Returns raw query builder instance for a given connection

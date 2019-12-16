@@ -24,7 +24,7 @@ import {
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
-import { Preloader } from '../Preloader'
+// import { Preloader } from '../Preloader'
 import { Chainable } from '../../Database/QueryBuilder/Chainable'
 import { Executable, ExecutableConstructor } from '../../Traits/Executable'
 
@@ -50,7 +50,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * A copy of defined preloads on the model instance
    */
-  private _preloader = new Preloader(this.model)
+  // private _preloader = new Preloader(this.model)
 
   /**
    * Required by macroable
@@ -95,8 +95,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Process preloads for a single model instance
    */
   protected async $processAllForOne (modelInstance: ModelContract) {
-    this._preloader.sideload(this.$sideloaded)
-    await this._preloader.processAllForOne(modelInstance, this.client)
+    // this._preloader.sideload(this.$sideloaded)
+    // await this._preloader.processAllForOne(modelInstance, this.client)
     return modelInstance
   }
 
@@ -104,8 +104,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Process preloads for array of model instances
    */
   protected async $processAllForMany (modelInstances: ModelContract[]) {
-    this._preloader.sideload(this.$sideloaded)
-    await this._preloader.processAllForMany(modelInstances, this.client)
+    // this._preloader.sideload(this.$sideloaded)
+    // await this._preloader.processAllForMany(modelInstances, this.client)
     return modelInstances
   }
 
@@ -176,8 +176,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Define a relationship to be preloaded
    */
-  public preload (relationName: string, userCallback?: any): this {
-    this._preloader.preload(relationName, userCallback)
+  public preload (_relationName: any, _userCallback?: any): this {
+    // this._preloader.preload(relationName, userCallback)
     return this
   }
 

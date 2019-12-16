@@ -7,221 +7,221 @@
  * file that was distributed with this source code.
 */
 
-import { Exception } from '@poppinss/utils'
-import {
-  ModelObject,
-  ModelContract,
-  RelationContract,
-  PreloaderContract,
-  ModelConstructorContract,
-  RelationQueryBuilderContract,
-} from '@ioc:Adonis/Lucid/Model'
+// import { Exception } from '@poppinss/utils'
+// import {
+//   ModelObject,
+//   ModelContract,
+//   RelationContract,
+//   PreloaderContract,
+//   ModelConstructorContract,
+//   RelationQueryBuilderContract,
+// } from '@ioc:Adonis/Lucid/Model'
 
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+// import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
-/**
- * Internal shape of registered preloads
- */
-type PreloadNode = {
-  relation: RelationContract,
-  callback?: (builder: RelationQueryBuilderContract) => void,
-  children: { relationName: string, callback?: (builder: RelationQueryBuilderContract) => void }[],
-}
+// /**
+//  * Internal shape of registered preloads
+//  */
+// type PreloadNode = {
+//   relation: RelationContract,
+//   callback?: (builder: RelationQueryBuilderContract) => void,
+//   children: { relationName: string, callback?: (builder: RelationQueryBuilderContract) => void }[],
+// }
 
-/**
- * Exposes the API to define and preload relationships in reference to
- * a model
- */
-export class Preloader implements PreloaderContract {
-  /**
-   * Sideloaded attributes that will be passed to the model instances
-   */
-  private _sideloaded: ModelObject = {}
+// /**
+//  * Exposes the API to define and preload relationships in reference to
+//  * a model
+//  */
+// export class Preloader implements PreloaderContract {
+//   /**
+//    * Sideloaded attributes that will be passed to the model instances
+//    */
+//   private _sideloaded: ModelObject = {}
 
-  /**
-   * Registered preloads
-   */
-  private _preloads: { [key: string]: PreloadNode } = {}
+//   /**
+//    * Registered preloads
+//    */
+//   private _preloads: { [key: string]: PreloadNode } = {}
 
-  constructor (private _model: ModelConstructorContract) {
-  }
+//   constructor (private _model: ModelConstructorContract) {
+//   }
 
-  /**
-   * Returns the preload node for the a given relationship name
-   */
-  private _getPreloadedRelation (name: string) {
-    const relation = this._preloads[name]
-    if (!relation) {
-      throw new Exception(`Cannot process unregistered relationship ${name}`, 500)
-    }
+//   /**
+//    * Returns the preload node for the a given relationship name
+//    */
+//   private _getPreloadedRelation (name: string) {
+//     const relation = this._preloads[name]
+//     if (!relation) {
+//       throw new Exception(`Cannot process unregistered relationship ${name}`, 500)
+//     }
 
-    relation.relation.boot()
-    return relation
-  }
+//     relation.relation.boot()
+//     return relation
+//   }
 
-  /**
-   * Execute the related query
-   */
-  private async _executeQuery (query: any, preload: PreloadNode): Promise<ModelContract[]> {
-    /**
-     * Pass nested preloads
-     */
-    preload.children.forEach(({ relationName, callback }) => {
-      query.preload(relationName, callback)
-    })
+//   /**
+//    * Execute the related query
+//    */
+//   private async _executeQuery (query: any, preload: PreloadNode): Promise<ModelContract[]> {
+//     /**
+//      * Pass nested preloads
+//      */
+//     preload.children.forEach(({ relationName, callback }) => {
+//       query.preload(relationName, callback)
+//     })
 
-    query.sideload(this._sideloaded)
+//     query.sideload(this._sideloaded)
 
-    /**
-     * Invoke callback when defined
-     */
-    if (typeof (preload.callback) === 'function') {
-      /**
-       * Type casting to superior type.
-       */
-      preload.callback(query)
-    }
+//     /**
+//      * Invoke callback when defined
+//      */
+//     if (typeof (preload.callback) === 'function') {
+//       /**
+//        * Type casting to superior type.
+//        */
+//       preload.callback(query)
+//     }
 
-    /**
-     * Execute query
-     */
-    return query.exec()
-  }
+//     /**
+//      * Execute query
+//      */
+//     return query.exec()
+//   }
 
-  /**
-   * Parses the relation name for finding nested relations. The
-   * children `relationName` must be further parsed until
-   * the last segment
-   */
-  public parseRelationName (relationName: string) {
-    const relations = relationName.split('.')
-    const primary = relations.shift()!
-    const relation = this._model.$getRelation(primary)
+//   /**
+//    * Parses the relation name for finding nested relations. The
+//    * children `relationName` must be further parsed until
+//    * the last segment
+//    */
+//   public parseRelationName (relationName: string) {
+//     const relations = relationName.split('.')
+//     const primary = relations.shift()!
+//     const relation = this._model.$getRelation(primary)
 
-    /**
-     * Undefined relationship
-     */
-    if (!relation) {
-      throw new Exception(
-        `${primary} is not defined as a relationship on ${this._model.name} model`,
-        500,
-        'E_UNDEFINED_RELATIONSHIP',
-      )
-    }
+//     /**
+//      * Undefined relationship
+//      */
+//     if (!relation) {
+//       throw new Exception(
+//         `${primary} is not defined as a relationship on ${this._model.name} model`,
+//         500,
+//         'E_UNDEFINED_RELATIONSHIP',
+//       )
+//     }
 
-    return {
-      primary,
-      relation,
-      children: relations.length ? { relationName: relations.join('') } : null,
-    }
-  }
+//     return {
+//       primary,
+//       relation,
+//       children: relations.length ? { relationName: relations.join('') } : null,
+//     }
+//   }
 
-  /**
-   * Set sideloaded properties to be passed to the model instance
-   */
-  public sideload (value: any) {
-    this._sideloaded = value
-    return this
-  }
+//   *
+//    * Set sideloaded properties to be passed to the model instance
 
-  /**
-   * Define relationship to be preloaded
-   */
-  public preload (relationName: string, userCallback?: any) {
-    const { primary, relation, children } = this.parseRelationName(relationName)
+//   public sideload (value: any) {
+//     this._sideloaded = value
+//     return this
+//   }
 
-    const payload = this._preloads[primary] || { relation, children: [] }
-    if (children) {
-      payload.children.push(Object.assign(children, { callback: userCallback }))
-    } else {
-      payload.callback = userCallback
-    }
+//   /**
+//    * Define relationship to be preloaded
+//    */
+//   public preload (relationName: string, userCallback?: any) {
+//     const { primary, relation, children } = this.parseRelationName(relationName)
 
-    this._preloads[primary] = payload
-    return this
-  }
+//     const payload = this._preloads[primary] || { relation, children: [] }
+//     if (children) {
+//       payload.children.push(Object.assign(children, { callback: userCallback }))
+//     } else {
+//       payload.callback = userCallback
+//     }
 
-  /**
-   * Process a single relationship for a single parent model
-   */
-  public async processForOne (
-    name: string,
-    model: ModelContract,
-    client: QueryClientContract,
-  ): Promise<void> {
-    /**
-     * Get the relation
-     */
-    const relation = this._getPreloadedRelation(name)
+//     this._preloads[primary] = payload
+//     return this
+//   }
 
-    /**
-     * Pull query for a single parent model instance
-     */
-    const query = relation.relation.getQuery(model, client)
+//   /**
+//    * Process a single relationship for a single parent model
+//    */
+//   public async processForOne (
+//     name: string,
+//     model: ModelContract,
+//     client: QueryClientContract,
+//   ): Promise<void> {
+//     /**
+//      * Get the relation
+//      */
+//     const relation = this._getPreloadedRelation(name)
 
-    /**
-     * Execute the query
-     */
-    const result = await this._executeQuery(query, relation)
+//     /**
+//      * Pull query for a single parent model instance
+//      */
+//     const query = relation.relation.getQuery(model, client)
 
-    /**
-     * Set only one when relationship is hasOne or belongsTo
-     */
-    if (['hasOne', 'belongsTo'].includes(relation.relation.type)) {
-      relation.relation.pushRelated(model, result[0])
-      return
-    }
+//     /**
+//      * Execute the query
+//      */
+//     const result = await this._executeQuery(query, relation)
 
-    /**
-     * Set relationships on model
-     */
-    relation.relation.pushRelated(model, result)
-  }
+//     /**
+//      * Set only one when relationship is hasOne or belongsTo
+//      */
+//     if (['hasOne', 'belongsTo'].includes(relation.relation.type)) {
+//       relation.relation.pushRelated(model, result[0])
+//       return
+//     }
 
-  /**
-   * Process a single relationship for a many parent models
-   */
-  public async processForMany (
-    name: string,
-    models: ModelContract[],
-    client: QueryClientContract,
-  ): Promise<void> {
-    /**
-     * Get the relation
-     */
-    const relation = this._getPreloadedRelation(name)
+//     /**
+//      * Set relationships on model
+//      */
+//     relation.relation.pushRelated(model, result)
+//   }
 
-    /**
-     * Pull query for a single parent model instance
-     */
-    const query = relation.relation.getEagerQuery(models, client)
+//   /**
+//    * Process a single relationship for a many parent models
+//    */
+//   public async processForMany (
+//     name: string,
+//     models: ModelContract[],
+//     client: QueryClientContract,
+//   ): Promise<void> {
+//     /**
+//      * Get the relation
+//      */
+//     const relation = this._getPreloadedRelation(name)
 
-    /**
-     * Execute the query
-     */
-    const result = await this._executeQuery(query, relation)
+//     /**
+//      * Pull query for a single parent model instance
+//      */
+//     const query = relation.relation.getEagerQuery(models, client)
 
-    /**
-     * Set relationships on model
-     */
-    relation.relation.setRelatedMany(models, result)
-  }
+//     /**
+//      * Execute the query
+//      */
+//     const result = await this._executeQuery(query, relation)
 
-  /**
-   * Process all preloaded for many parent models
-   */
-  public async processAllForMany (models: ModelContract[], client: QueryClientContract): Promise<void> {
-    await Promise.all(Object.keys(this._preloads).map((name) => {
-      return this.processForMany(name, models, client)
-    }))
-  }
+//     /**
+//      * Set relationships on model
+//      */
+//     relation.relation.setRelatedMany(models, result)
+//   }
 
-  /**
-   * Processes all relationships for one parent model
-   */
-  public async processAllForOne (model: ModelContract, client: QueryClientContract): Promise<void> {
-    await Promise.all(Object.keys(this._preloads).map((name) => {
-      return this.processForOne(name, model, client)
-    }))
-  }
-}
+//   /**
+//    * Process all preloaded for many parent models
+//    */
+//   public async processAllForMany (models: ModelContract[], client: QueryClientContract): Promise<void> {
+//     await Promise.all(Object.keys(this._preloads).map((name) => {
+//       return this.processForMany(name, models, client)
+//     }))
+//   }
+
+//   /**
+//    * Processes all relationships for one parent model
+//    */
+//   public async processAllForOne (model: ModelContract, client: QueryClientContract): Promise<void> {
+//     await Promise.all(Object.keys(this._preloads).map((name) => {
+//       return this.processForOne(name, model, client)
+//     }))
+//   }
+// }

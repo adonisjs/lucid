@@ -23,16 +23,29 @@ declare module '@ioc:Adonis/Lucid/Model' {
     ExcutableQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/Database'
 
+  import {
+    TypedRelations,
+    RelationOptions,
+    ExtractRelations,
+    PreloaderContract,
+    ExtractRelationModel,
+    QueryBuilderPreloadFn,
+    RelationshipsContract,
+    ThroughRelationOptions,
+    ManyToManyRelationOptions,
+  } from '@ioc:Adonis/Lucid/Relations'
+
   /**
-   * Represents a single column on the model
+   * ------------------------------------------------------
+   *  Helpers
+   * ------------------------------------------------------
    */
-  export type ColumnNode = {
-    castAs: string,
-    serializeAs: string,
-    serialize: boolean,
-    primary: boolean,
-    hasGetter: boolean,
-    hasSetter: boolean,
+
+  /**
+   * Reusable interface to define an object.
+   */
+  export interface ModelObject {
+    [key: string]: any
   }
 
   /**
@@ -45,51 +58,54 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
+   * List of events for which a model will trigger hooks
+   */
+  export type EventsList = 'save' | 'create' | 'update' | 'delete'
+  export type HooksHandler<T> = ((model: T) => Promise<void> | void) | string
+
+  /**
+   * Extract columns from a model class
+   */
+  export type AsColumns<K extends any> = {
+    [P in keyof K]: string
+  }
+
+  /**
+   * ------------------------------------------------------
+   * Decorators and Options
+   * ------------------------------------------------------
+   */
+
+  /**
+   * Options for defining a column
+   */
+  export type ColumnOptions = {
+    castAs: string,
+    serializeAs: string,
+    serialize: boolean,
+    primary: boolean,
+    hasGetter: boolean,
+    hasSetter: boolean,
+  }
+
+  /**
    * Represents a computed property on the model
    */
-  export type ComputedNode = {
+  export type ComputedOptions = {
     serializeAs: string,
   }
 
   /**
-   * Shape of the relationships node
+   * Signature for decorator functions
    */
-  export interface BaseRelationNode {
-    relatedModel: (() => ModelConstructorContract),
-    localKey?: string,
-    foreignKey?: string,
-    serializeAs?: string,
-  }
+  export type ColumnDecorator = (options?: Partial<ColumnOptions>) => (target, property) => void
+  export type ComputedDecorator = (options?: Partial<ComputedOptions>) => (target, property) => void
 
   /**
-   * Shape of many to many relationship
+   * ------------------------------------------------------
+   * Model Options
+   * ------------------------------------------------------
    */
-  export interface ManyToManyRelationNode {
-    relatedModel: (() => ModelConstructorContract),
-    pivotTable?: string,
-    localKey?: string,
-    pivotForeignKey?: string,
-    relatedKey?: string,
-    pivotRelatedForeignKey?: string,
-    pivotColumns?: string[],
-    serializeAs?: string,
-  }
-
-  /**
-   * Shape of hasOneThrough relationship
-   */
-  export interface ThroughRelationNode extends BaseRelationNode {
-    throughModel: (() => ModelConstructorContract)
-    throughLocalKey?: string,
-    throughForeignKey?: string,
-  }
-
-  /**
-   * Reusable interface to define an object.
-   */
-  export interface ModelObject {
-    [key: string]: any
-  }
 
   /**
    * Model options to dictate query values
@@ -107,310 +123,19 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
-   * Generic return function of a decorator
-   */
-  type DecoratorFn = (target, property) => void
-
-  /**
-   * Model query builder with applied executable trait
-   */
-  type ModelExecuteableQueryBuilder = ModelQueryBuilderContract<any> & ExcutableQueryBuilderContract<any>
-
-  /**
-   * Types for decorators
-   */
-  export type ColumnFn = (column?: Partial<ColumnNode>) => DecoratorFn
-  export type ComputedFn = (column?: Partial<ComputedNode>) => DecoratorFn
-
-  type BaseRelationDecoratorNode = Omit<BaseRelationNode, 'relatedModel'>
-
-  /**
-   * Decorator signature to define has one relationship
-   */
-  export type HasOneFn = (
-    model: BaseRelationNode['relatedModel'],
-    column?: BaseRelationDecoratorNode,
-  ) => DecoratorFn
-
-  /**
-   * Decorator signature to define has many relationship
-   */
-  export type HasManyFn = (
-    model: BaseRelationNode['relatedModel'],
-    column?: BaseRelationDecoratorNode,
-  ) => DecoratorFn
-
-  /**
-   * Decorator signature to define belongs to relationship
-   */
-  export type BelongsToFn = (
-    model: BaseRelationNode['relatedModel'],
-    column?: BaseRelationDecoratorNode,
-  ) => DecoratorFn
-
-  /**
-   * Decorator signature to define many to many relationship
-   */
-  type ManyToManyRelationDecoratorNode = Omit<ManyToManyRelationNode, 'relatedModel'>
-  export type ManyToManyFn = (
-    model: ManyToManyRelationNode['relatedModel'],
-    column?: ManyToManyRelationDecoratorNode,
-  ) => DecoratorFn
-
-  /**
-   * Decorator signature to define has many through relationship
-   */
-  type ThroughRelationDecoratorNode = Omit<ThroughRelationNode, 'relatedModel' | 'throughModel'>
-  export type HasManyThroughFn = (
-    model: [ThroughRelationNode['relatedModel'], ThroughRelationNode['throughModel']],
-    column?: ThroughRelationDecoratorNode,
-  ) => DecoratorFn
-
-  /**
-   * List of available relations
-   */
-  export type AvailableRelations = 'hasOne' |
-  'hasMany' |
-  'belongsTo' |
-  'manyToMany' |
-  'hasManyThrough'
-
-  /**
-   * List of events for which a model will trigger hooks
-   */
-  export type EventsList = 'save' | 'create' | 'update' | 'delete'
-  export type HooksHandler<T> = ((model: T) => Promise<void> | void) | string
-
-  /**
-   * Lookup map required for related method
-   */
-  type RelationsQueryBuildersMap<T, R extends any = T> = {
-    'unknown': BaseRelationQueryBuilderContract<T> & ExcutableQueryBuilderContract<R[]>,
-    'hasOne': HasOneQueryBuilderContract<T> & ExcutableQueryBuilderContract<R[]>,
-    'hasMany': HasManyQueryBuilderContract<T> & ExcutableQueryBuilderContract<R[]>,
-    'belongsTo': BelongsToQueryBuilderContract<T> & ExcutableQueryBuilderContract<R[]>,
-    'manyToMany': ManyToManyQueryBuilderContract<T> & ExcutableQueryBuilderContract<R[]>,
-    'hasManyThrough': HasManyThroughQueryBuilderContract<T> & ExcutableQueryBuilderContract<R[]>,
-  }
-
-  /**
-   * Overloads for preload method
-   */
-  interface QueryBuilderPreloadFn<Builder extends any> {
-    <T extends keyof RelationsQueryBuildersMap<ModelContract> = 'unknown'> (
-      relation: string,
-      callback?: (
-        builder: RelationsQueryBuildersMap<ModelContract>[T],
-      ) => void,
-    ): Builder
-  }
-
-  /**
    * Preload function on a model instance
    */
-  interface ModelBuilderPreloadFn extends QueryBuilderPreloadFn<Promise<void>> {
-    (callback: (preloader: PreloaderContract) => void): Promise<void>
+  interface ModelBuilderPreloadFn<
+    Model extends ModelContract,
+  > extends QueryBuilderPreloadFn<Model, Promise<void>> {
+    (callback: (preloader: PreloaderContract<Model>) => void): Promise<void>
   }
 
   /**
-   * Interface to be implemented by all relationship types
+   * ------------------------------------------------------
+   * Model Query Builder
+   * ------------------------------------------------------
    */
-  export interface RelationContract {
-    type: AvailableRelations
-    relationName: string
-    serializeAs: string
-    booted: boolean
-    model: ModelConstructorContract
-
-    boot (): void
-    relatedModel (): ModelConstructorContract
-
-    setRelated (model: ModelContract, related?: ModelContract | ModelContract[] | null): void
-    pushRelated (model: ModelContract, related?: ModelContract | ModelContract[] | null): void
-    setRelatedMany (models: ModelContract[], related: ModelContract[]): void
-
-    getQuery (
-      model: ModelContract,
-      client: QueryClientContract,
-    ): RelationQueryBuilderContract & ExcutableQueryBuilderContract<any>
-
-    getEagerQuery (
-      models: ModelContract[],
-      client: QueryClientContract,
-    ): RelationQueryBuilderContract & ExcutableQueryBuilderContract<any>
-  }
-
-  /**
-   * Base query builder for all relations
-   */
-  export interface BaseRelationQueryBuilderContract<T> extends ModelQueryBuilderContract<any> {
-    applyConstraints (): this
-
-    /**
-     * Execute and get first result
-     */
-    first (): Promise<T | null>
-
-    /**
-     * Return the first matching row or fail
-     */
-    firstOrFail (): Promise<T>
-
-    /**
-     * Save the related model.
-     */
-    save (model: T, wrapInTransaction?: boolean): Promise<void>
-
-    /**
-     * Save the related model.
-     */
-    saveMany (model: T[], wrapInTransaction?: boolean): Promise<void>
-
-    /**
-     * Create the related model instance
-     */
-    create (values: ModelObject, wrapInTransaction?: boolean): Promise<T>
-
-    /**
-     * Create many of the related model instance
-     */
-    createMany (values: ModelObject[], wrapInTransaction?: boolean): Promise<T[]>
-
-    /**
-     * Update the relationship or create a new one
-     */
-    updateOrCreate (
-      search: ModelObject,
-      updatePayload: ModelObject,
-      wrapInTransaction?: boolean,
-    ): Promise<T>
-  }
-
-  /**
-   * A union of relation relations query builders
-   */
-  type RelationQueryBuilderContract<T extends any = ModelContract> = BelongsToQueryBuilderContract<T> |
-  HasOneQueryBuilderContract<T> |
-  HasManyQueryBuilderContract<T> |
-  ManyToManyQueryBuilderContract<T> |
-  HasManyThroughQueryBuilderContract<T>
-
-  /**
-   * Shae of has belongs to query builder contract
-   */
-  export interface BelongsToQueryBuilderContract<T> extends BaseRelationQueryBuilderContract<T> {
-    /**
-     * Associate related model.
-     */
-    associate (model: T, wrapInTransaction?: boolean): Promise<void>
-
-    /**
-     * Dissociate all relationships.
-     */
-    dissociate (): Promise<void>
-  }
-
-  /**
-   * Shae of has one relationship query builder
-   */
-  export interface HasOneQueryBuilderContract<T> extends BaseRelationQueryBuilderContract<T> {
-  }
-
-  /**
-   * Shae of has many relationship query builder
-   */
-  export interface HasManyQueryBuilderContract<T> extends BaseRelationQueryBuilderContract<T> {
-  }
-
-  /**
-   * Possible signatures for adding a where clause
-   */
-  interface WherePivot<Builder extends ChainableContract> {
-    (key: string, value: StrictValues | ChainableContract): Builder
-    (key: string, operator: string, value: StrictValues | ChainableContract): Builder
-  }
-
-  /**
-   * Possible signatures for adding where in clause.
-   */
-  interface WhereInPivot<Builder extends ChainableContract> {
-    (K: string, value: (StrictValues | ChainableContract)[]): Builder
-    (K: string[], value: (StrictValues | ChainableContract)[][]): Builder
-    (k: string, subquery: ChainableContract | QueryCallback<Builder>): Builder
-    (k: string[], subquery: ChainableContract): Builder
-  }
-
-  /**
-   * Shape of many to many query builder. It has few methods over the standard
-   * model query builder
-   */
-  export interface ManyToManyQueryBuilderContract<T> extends BaseRelationQueryBuilderContract<T> {
-    pivotColumns (columns: string[]): this
-
-    wherePivot: WherePivot<this>
-    orWherePivot: WherePivot<this>
-    andWherePivot: WherePivot<this>
-
-    whereNotPivot: WherePivot<this>
-    orWhereNotPivot: WherePivot<this>
-    andWhereNotPivot: WherePivot<this>
-
-    whereInPivot: WhereInPivot<this>
-    orWhereInPivot: WhereInPivot<this>
-    andWhereInPivot: WhereInPivot<this>
-
-    whereNotInPivot: WhereInPivot<this>
-    orWhereNotInPivot: WhereInPivot<this>
-    andWhereNotInPivot: WhereInPivot<this>
-
-    /**
-     * Save related model
-     */
-    save (model: T, wrapInTransaction?: boolean, checkExisting?: boolean): Promise<void>
-
-    /**
-     * Save related many
-     */
-    saveMany (model: T[], wrapInTransaction?: boolean, checkExisting?: boolean): Promise<void>
-
-    /**
-     * Create the related model instance
-     */
-    create (values: ModelObject, wrapInTransaction?: boolean, checkExisting?: boolean): Promise<T>
-
-    /**
-     * Create many of the related model instance
-     */
-    createMany (values: ModelObject, wrapInTransaction?: boolean, checkExisting?: boolean): Promise<T[]>
-
-    /**
-     * Attach related
-     */
-    attach (
-      ids: (string | number)[] | { [key: string]: ModelObject },
-      checkExisting?: boolean,
-    ): Promise<void>
-
-    /**
-     * Detach from pivot table
-     */
-    detach (ids: (string | number)[]): Promise<void>
-
-    /**
-     * Sync related ids
-     */
-    sync (
-      ids: (string | number)[] | { [key: string]: ModelObject },
-      wrapInTransaction?: boolean,
-      checkExisting?: boolean,
-    ): Promise<void>
-  }
-
-  /**
-   * Shae of has many through relationship query builder
-   */
-  export interface HasManyThroughQueryBuilderContract<T> extends BaseRelationQueryBuilderContract<T> {
-  }
 
   /**
    * Model query builder will have extras methods on top of Database query builder
@@ -466,8 +191,14 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Define relationships to be preloaded
      */
-    preload: QueryBuilderPreloadFn<this>
+    preload: QueryBuilderPreloadFn<InstanceType<Model>, this>
   }
+
+  /**
+   * ------------------------------------------------------
+   * Shape of Model instance
+   * ------------------------------------------------------
+   */
 
   /**
    * Shape of the model instance. We prefix the properties with a `$` to
@@ -479,15 +210,15 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $attributes: ModelObject
     $extras: ModelObject
     $original: ModelObject
-    $persisted: boolean
+    $dirty: ModelObject
+    $isPersisted: boolean
     $isNew: boolean
     $isLocal: boolean
-    $dirty: ModelObject
     $isDirty: boolean
     $isDeleted: boolean
     $preloaded: { [relation: string]: ModelContract | ModelContract[] }
     $sideloaded: ModelObject
-    $primaryKeyValue?: any
+    $primaryKeyValue?: number | string
     $options?: ModelOptions
     $trx?: TransactionClientContract,
 
@@ -515,26 +246,40 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Read/write attributes
      */
-    $setAttribute (key: string, value: any)
+    $setAttribute (key: string, value: any): void
     $getAttribute (key: string): any
     $getAttributeFromCache (key: string, callback: CacheNode['getter']): any
 
     /**
      * Read/write realtionships
      */
-    $hasRelated<K extends keyof this = keyof this> (key: K): boolean
-    $setRelated<K extends keyof this = keyof this> (
-      key: string,
-      result: ModelContract | ModelContract[]
+    $hasRelated<Name extends keyof this = keyof this> (key: Name): boolean
+
+    $setRelated<
+      Name extends keyof ExtractRelations<this>,
+      RelationType extends TypedRelations = this[Name] extends TypedRelations ? this[Name] : never
+    > (
+      key: Name,
+      result: ExtractRelationModel<RelationType>
     ): void
-    $pushRelated<K extends keyof this = keyof this> (
-      key: K,
-      result: ModelContract | ModelContract[],
+
+    $pushRelated<
+      Name extends keyof ExtractRelations<this>,
+      RelationType extends TypedRelations = this[Name] extends TypedRelations ? this[Name] : never,
+      RelationModel extends ExtractRelationModel<RelationType> = ExtractRelationModel<RelationType>
+    > (
+      key: Name,
+      result: RelationModel extends any[] ? RelationModel | RelationModel[0] : RelationModel
     ): void
-    $getRelated<K extends keyof this = keyof this> (
-      key: K,
+
+    $getRelated<
+      Name extends keyof ExtractRelations<this>,
+      RelationType extends TypedRelations = this[Name] extends TypedRelations ? this[Name] : never,
+      RelationModel extends ExtractRelationModel<RelationType> = ExtractRelationModel<RelationType>
+    > (
+      key: Name,
       defaultValue?: any,
-    ): ModelContract
+    ): RelationModel extends any[] ? RelationModel : (RelationModel | undefined)
 
     /**
      * Consume the adapter result and hydrate the model
@@ -543,28 +288,33 @@ declare module '@ioc:Adonis/Lucid/Model' {
 
     fill (value: ModelObject): void
     merge (value: ModelObject): void
-
-    preload: ModelBuilderPreloadFn
-
     save (): Promise<void>
     delete (): Promise<void>
     serialize (): ModelObject
     toJSON (): ModelObject
     refresh (): Promise<void>
 
+    preload: ModelBuilderPreloadFn<this>
+
     related<
-      T extends keyof RelationsQueryBuildersMap<any> = 'unknown',
-      K extends keyof this = keyof this,
-      M extends any = this[K] extends ModelContract[] ? this[K][0] : this[K],
-      R extends any = M
-    > (relation: K): RelationsQueryBuildersMap<M, R>[T]
+      Name extends keyof ExtractRelations<this>,
+      RelationType extends TypedRelations = this[Name] extends TypedRelations ? this[Name] : never
+    > (
+      relation: Name,
+    ): ReturnType<RelationType['relation']['client']>
   }
+
+  /**
+   * ------------------------------------------------------
+   * Shape of Model constructor
+   * ------------------------------------------------------
+   */
 
   /**
    * Shape of the model static properties. The `$` prefix is to denote
    * special properties from the base model
    */
-  export interface ModelConstructorContract {
+  export interface ModelConstructorContract<Model extends ModelContract = ModelContract> {
     /**
      * Whether or not model has been booted. After this model configurations
      * are ignored
@@ -574,17 +324,17 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * A map of defined columns
      */
-    $columns: Map<string, ColumnNode>
+    $columns: Map<string, ColumnOptions>
 
     /**
      * A map of defined relationships
      */
-    $relations: Map<string, RelationContract>
+    $relations: Map<string, RelationshipsContract>
 
     /**
-     * A map of defined computed properties
+     * A map of computed properties
      */
-    $computed: Map<string, ComputedNode>
+    $computed: Map<string, ComputedOptions>
 
     /**
      * The primary key for finding unique referencing to a
@@ -603,6 +353,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $adapter: AdapterContract
 
     /**
+     * Used to construct defaults for the model
+     */
+    $configurator: OrmConfigContract,
+
+    /**
      * Whether primary key is auto incrementing or not. If not, then
      * end user must provide the value for the primary key
      */
@@ -617,7 +372,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Refs are named value pair on model used mainly for autocompleting
      * the query constraints
      */
-    $refs: any
+    $refs: { [key: string]: string }
 
     $boot (): void
 
@@ -628,7 +383,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
       this: T,
       event: EventsList,
       handler: HooksHandler<InstanceType<T>>,
-    )
+    ): void
 
     /**
      * Register an after hook
@@ -637,7 +392,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
       this: T,
       event: EventsList,
       handler: HooksHandler<InstanceType<T>>,
-    )
+    ): void
 
     /**
      * Creating model from adapter results
@@ -663,23 +418,40 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Managing columns
      */
-    $addColumn (name: string, options: Partial<ColumnNode>): void
+    $addColumn (name: string, options: Partial<ColumnOptions>): void
     $hasColumn (name: string): boolean
-    $getColumn (name: string): ColumnNode | undefined
+    $getColumn (name: string): ColumnOptions | undefined
 
     /**
      * Managing computed columns
      */
-    $addComputed (name: string, options: Partial<ComputedNode>): void
+    $addComputed (name: string, options: Partial<ComputedOptions>): void
     $hasComputed (name: string): boolean
-    $getComputed (name: string): ComputedNode | undefined
+    $getComputed (name: string): ComputedOptions | undefined
 
     /**
      * Managing relationships
      */
-    $addRelation (name: string, type: string, options: Partial<BaseRelationNode | ThroughRelationNode>): void
+    $addRelation (
+      name: string,
+      type: string,
+      options: Partial<RelationOptions | ManyToManyRelationOptions | ThroughRelationOptions>,
+    ): void
+
+    /**
+     * Find if a relationship exists
+     */
     $hasRelation (name: string): boolean
-    $getRelation (name: string): RelationContract | undefined
+
+    /**
+     * Get relationship declaration
+     */
+    $getRelation<
+      T extends ModelConstructorContract,
+      M extends InstanceType<T>,
+      Name extends keyof ExtractRelations<M>,
+      RelationType extends TypedRelations = M[Name] extends TypedRelations ? M[Name] : never
+    > (this: T, name: Name): RelationType['relation']
 
     /**
      * Resolve keys to their database column names
@@ -806,13 +578,24 @@ declare module '@ioc:Adonis/Lucid/Model' {
       options?: ModelAdapterOptions,
     ): ModelQueryBuilderContract<Model, Result> & ExcutableQueryBuilderContract<Result[]>
 
-    new (): ModelContract
+    new (): Model
   }
+
+  /**
+   * ------------------------------------------------------
+   * Database Adapter
+   * ------------------------------------------------------
+   */
 
   /**
    * Every adapter must adhere to the Adapter contract
    */
   export interface AdapterContract {
+    /**
+     * Returns query client for a model instance by inspecting it's options
+     */
+    modelClient (instance: ModelContract): QueryClientContract
+
     /**
      * Delete model instance
      */
@@ -829,11 +612,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
     update (instance: ModelContract, attributes: any): Promise<void>
 
     /**
-     * Returns query client for a model instance by inspecting it's options
-     */
-    modelClient (instance: ModelContract): QueryClientContract
-
-    /**
      * Must return the query builder for the model
      */
     query (
@@ -843,20 +621,39 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
-   * Shape of the preloader to preload relationships
+   * Shape of ORM config to have a standard place for computing
+   * defaults
    */
-  export interface PreloaderContract {
-    parseRelationName (relationName: string): {
-      primary: string,
-      relation: RelationContract,
-      children: { relationName: string } | null,
-    }
+  export type OrmConfigContract = {
+    getTableName (model: ModelConstructorContract): string
+    getCastKey (model: ModelConstructorContract, key: string): string
+    getSerializeAsKey (model: ModelConstructorContract, key: string): string
+    serialize (model: ModelConstructorContract, key: string): boolean
 
-    processForOne (name: string, model: ModelContract, client: QueryClientContract): Promise<void>
-    processForMany (name: string, models: ModelContract[], client: QueryClientContract): Promise<void>
-    processAllForOne (models: ModelContract, client: QueryClientContract): Promise<void>
-    processAllForMany (models: ModelContract[], client: QueryClientContract): Promise<void>
+    getLocalKey (
+      relation: TypedRelations['type'],
+      model: ModelConstructorContract,
+      relatedModel: ModelConstructorContract,
+    ): string
 
-    preload: QueryBuilderPreloadFn<this>
+    getForeignKey (
+      relation: TypedRelations['type'],
+      model: ModelConstructorContract,
+      relatedModel: ModelConstructorContract,
+    ): string
+
+    getPivotTableName (
+      relation: TypedRelations['type'],
+      model: ModelConstructorContract,
+      relatedModel: ModelConstructorContract,
+      relationName: string,
+    ): string
+
+    getPivotForeignKey (
+      relation: TypedRelations['type'],
+      model: ModelConstructorContract,
+      relatedModel: ModelConstructorContract,
+      relationName: string,
+    ): string
   }
 }

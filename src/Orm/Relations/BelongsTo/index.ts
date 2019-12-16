@@ -7,187 +7,132 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../../adonis-typings/index.ts" />
-
-import { Exception } from '@poppinss/utils'
-import { snakeCase } from 'snake-case'
-import camelCase from 'camelcase'
-
-import {
-  ModelContract,
-  RelationContract,
-  BaseRelationNode,
-  ModelConstructorContract,
-} from '@ioc:Adonis/Lucid/Model'
-
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { BelongsToQueryBuilder } from './QueryBuilder'
+import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
+import { BelongsToRelationContract, RelationOptions } from '@ioc:Adonis/Lucid/Relations'
 
-/**
- * Exposes the API to construct belongs to relationship.
- */
-export class BelongsTo implements RelationContract {
-  /**
-   * Relationship type
-   */
-  public type = 'belongsTo' as const
+import { BaseRelation } from '../Base'
+import { BelongsToQueryClient } from './QueryClient'
 
-  /**
-   * The related model from which, we want to construct the relationship
-   */
-  public relatedModel = this._options.relatedModel!
+export class BelongsTo extends BaseRelation implements BelongsToRelationContract<
+ModelConstructorContract,
+ModelConstructorContract
+> {
+  public $type = 'belongsTo' as const
 
   /**
-   * Local key to use for constructing the relationship. This is the primary
-   * key on the related model
+   * Available after boot is invoked
    */
-  public localKey: string
-
-  /**
-   * Adapter local key.
-   */
-  public localAdapterKey: string
-
-  /**
-   * Foreign key is the on the current model.
-   */
-  public foreignKey: string
-
-  /**
-   * Adapter foreign key
-   */
-  public foreignAdapterKey: string
-
-  /**
-   * Key to be used for serializing the relationship
-   */
-  public serializeAs = this._options.serializeAs || snakeCase(this.relationName)
-
-  /**
-   * A flag to know if model keys valid for executing database queries or not
-   */
-  public booted: boolean = false
+  public $localKey: string
+  public $localCastAsKey: string
+  public $foreignKey: string
+  public $foreignCastAsKey: string
 
   constructor (
-    public relationName: string,
-    private _options: BaseRelationNode,
-    public model: ModelConstructorContract,
+    relationName: string,
+    options: RelationOptions,
+    model: ModelConstructorContract,
   ) {
-    this._ensureRelatedModel()
+    super(relationName, options, model)
   }
 
   /**
-   * Ensure that related model is defined, otherwise raise an exception, since
-   * a relationship cannot work with a single model.
+   * Boot the relationship and ensure that all keys are in
+   * place for queries to do their job.
    */
-  private _ensureRelatedModel () {
-    if (!this._options.relatedModel) {
-      throw new Exception(
-        'Related model reference is required to construct the relationship',
-        500,
-        'E_MISSING_RELATED_MODEL',
-      )
-    }
-  }
-
-  /**
-   * Validating the keys to ensure we are avoiding runtime `undefined` errors. We defer
-   * the keys validation, since they may be added after defining the relationship.
-   */
-  private _validateKeys () {
-    const relationRef = `${this.model.name}.${this.relationName}`
-
-    if (!this.model.$hasColumn(this.foreignKey)) {
-      const ref = `${this.model.name}.${this.foreignKey}`
-      throw new Exception(
-        `${ref} required by ${relationRef} relation is missing`,
-        500,
-        'E_MISSING_RELATED_LOCAL_KEY',
-      )
-    }
-
-    if (!this.relatedModel().$hasColumn(this.localKey)) {
-      const ref = `${this.relatedModel().name}.${this.localKey}`
-      throw new Exception(
-        `${ref} required by ${relationRef} relation is missing`,
-        500,
-        'E_MISSING_RELATED_FOREIGN_KEY',
-      )
-    }
-  }
-
-  /**
-   * Compute keys
-   */
-  public boot () {
-    if (this.booted) {
+  public $boot () {
+    if (this.$booted) {
       return
     }
-
-    this.localKey = this._options.localKey || this.relatedModel().$primaryKey
-    this.foreignKey = this._options.foreignKey || camelCase(
-      `${this.relatedModel().name}_${this.relatedModel().$primaryKey}`,
-    )
 
     /**
-     * Validate computed keys to ensure they are valid
+     * Extracting keys from the model and the relation model. The keys
+     * extractor ensures all the required columns are defined on
+     * the models for the relationship to work
      */
-    this._validateKeys()
-
-    /**
-     * Keys for the adapter
-     */
-    this.localAdapterKey = this.relatedModel().$getColumn(this.localKey)!.castAs
-    this.foreignAdapterKey = this.model.$getColumn(this.foreignKey)!.castAs
-    this.booted = true
-  }
-
-  /**
-   * Returns eager query for a single parent model instance
-   */
-  public getQuery (parent: ModelContract, client: QueryClientContract): any {
-    return new BelongsToQueryBuilder(client.knexQuery(), this, client, parent)
-  }
-
-  /**
-   * Returns query for the relationship with applied constraints for
-   * eagerloading
-   */
-  public getEagerQuery (parents: ModelContract[], client: QueryClientContract): any {
-    return new BelongsToQueryBuilder(client.knexQuery(), this, client, parents)
-  }
-
-  /**
-   * Sets the related model instance
-   */
-  public setRelated (model: ModelContract, related?: ModelContract) {
-    if (!related) {
-      return
-    }
-
-    model.$setRelated(this.relationName as keyof typeof model, related)
-  }
-
-  /**
-   * Push the related model instance
-   */
-  public pushRelated (model: ModelContract, related?: ModelContract) {
-    if (!related) {
-      return
-    }
-
-    model.$pushRelated(this.relationName as keyof typeof model, related)
-  }
-
-  /**
-   * Sets the related instances on the model
-   */
-  public setRelatedMany (parents: ModelContract[], related: ModelContract[]) {
-    parents.forEach((parent) => {
-      const relation = related.find((model) => model[this.localKey] === parent[this.foreignKey])
-      if (relation) {
-        this.setRelated(parent, relation)
-      }
+    const { localKey, foreignKey } = this.$extractKeys({
+      localKey: {
+        model: this.$relatedModel(),
+        key: (
+          this.$options.localKey ||
+          this.$model.$configurator.getLocalKey(this.$type, this.$model, this.$relatedModel())
+        ),
+      },
+      foreignKey: {
+        model: this.$model,
+        key: (
+          this.$options.foreignKey ||
+          this.$model.$configurator.getForeignKey(this.$type, this.$model, this.$relatedModel())
+        ),
+      },
     })
+
+    /**
+     * Keys on the related model
+     */
+    this.$localKey = localKey.attributeName
+    this.$localCastAsKey = localKey.castAsKey
+
+    /**
+     * Keys on the parent model
+     */
+    this.$foreignKey = foreignKey.attributeName
+    this.$foreignCastAsKey = foreignKey.castAsKey
+
+    /**
+     * Booted successfully
+     */
+    this.$booted = true
+  }
+
+  /**
+   * Set related model instances
+   */
+  public $setRelated (
+    parent: ModelContract,
+    related: ModelContract | null
+  ): void {
+    this.$ensureIsBooted()
+    if (!related) {
+      return
+    }
+
+    parent.$setRelated(this.$relationName as any, related)
+  }
+
+  /**
+   * Push related model instance
+   */
+  public $pushRelated (
+    parent: ModelContract,
+    related: ModelContract | null
+  ): void {
+    this.$ensureIsBooted()
+    if (!related) {
+      return
+    }
+
+    parent.$setRelated(this.$relationName as any, related)
+  }
+
+  /**
+   * Finds and set the related model instance next to the parent
+   * models.
+   */
+  public $setRelatedForMany (parent: ModelContract[], related: ModelContract[]): void {
+    this.$ensureIsBooted()
+
+    parent.forEach((parentModel) => {
+      const match = related.find((relatedModel) => {
+        const value = relatedModel[this.$localKey]
+        return value !== undefined && parentModel[this.$foreignKey] === value
+      })
+      this.$setRelated(parentModel, match || null)
+    })
+  }
+
+  public client (models: ModelContract | ModelContract[], client: QueryClientContract): any {
+    this.$ensureIsBooted()
+    return new BelongsToQueryClient(models, client, this)
   }
 }

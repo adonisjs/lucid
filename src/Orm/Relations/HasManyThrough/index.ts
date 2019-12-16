@@ -7,233 +7,163 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../../adonis-typings/index.ts" />
-
-import { Exception } from '@poppinss/utils'
-import { snakeCase } from 'snake-case'
-import camelCase from 'camelcase'
-
-import {
-  ModelContract,
-  RelationContract,
-  ThroughRelationNode,
-  ModelConstructorContract,
-} from '@ioc:Adonis/Lucid/Model'
-
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { HasManyThroughQueryBuilder } from './QueryBuilder'
+import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
+import { HasManyThroughRelationContract, ThroughRelationOptions } from '@ioc:Adonis/Lucid/Relations'
 
-export class HasManyThrough implements RelationContract {
-  /**
-   * Relationship type
-   */
-  public type = 'hasManyThrough' as const
+import { BaseRelation } from '../Base'
+import { HasManyThroughClient } from './QueryClient'
 
-  /**
-   * The related model from which, we want to construct the relationship
-   */
-  public relatedModel = this._options.relatedModel!
+export class HasManyThrough extends BaseRelation implements HasManyThroughRelationContract<
+ModelConstructorContract,
+ModelConstructorContract
+> {
+  public $type = 'hasManyThrough' as const
 
-  /**
-   * The through model from which, we construct the through query
-   */
-  public throughModel = this._options.throughModel
+  public $throughModel = this.throughOptions.throughModel
 
   /**
-   * Local key on the parent model for constructing relationship
+   * Available after boot is invoked
    */
-  public localKey: string
+  public $localKey: string
+  public $localCastAsKey: string
 
   /**
-   * Adapter key for the defined `localKey`
+   * This exists on the through model
    */
-  public localAdapterKey: string
+  public $foreignKey: string
+  public $foreignCastAsKey: string
 
   /**
-   * Foreign key on the through model. NOTE: We do not have any direct
-   * relationship with the related model and hence our FK is on
-   * the through model
+   * This exists on the through model
    */
-  public foreignKey: string
+  public $throughLocalKey: string
+  public $throughLocalCastAsKey: string
 
   /**
-   * Adapter key for the defined `foreignKey`
+   * This exists on the related model
    */
-  public foreignAdapterKey: string
-
-  /**
-   * The local (PK) on the through model.
-   */
-  public throughLocalKey: string
-
-  /**
-   * Adapter key for the defined `throughLocalKey`
-   */
-  public throughLocalAdapterKey: string
-
-  /**
-   * Foreign key on the `relatedModel`. This bounds the `throughModel` with
-   * the `relatedModel`.
-   */
-  public throughForeignKey: string
-
-  /**
-   * Adapter key for the defined `throughForeignKey`
-   */
-  public throughForeignAdapterKey: string
-
-  /**
-   * Key to be used for serializing the relationship
-   */
-  public serializeAs = this._options.serializeAs || snakeCase(this.relationName)
-
-  /**
-   * A flag to know if model keys valid for executing database queries or not
-   */
-  public booted: boolean = false
+  public $throughForeignKey: string
+  public $throughForeignCastAsKey: string
 
   constructor (
-    public relationName: string,
-    private _options: ThroughRelationNode,
-    public model: ModelConstructorContract,
+    relationName: string,
+    private throughOptions: ThroughRelationOptions,
+    model: ModelConstructorContract,
   ) {
-    this._ensureRelatedModel()
+    super(relationName, throughOptions, model)
   }
 
   /**
-   * Ensure that related model is defined, otherwise raise an exception, since
-   * a relationship cannot work with a single model.
+   * Returns the alias for the through key
    */
-  private _ensureRelatedModel () {
-    if (!this._options.relatedModel) {
-      throw new Exception(
-        'Related model reference is required to construct the relationship',
-        500,
-        'E_MISSING_RELATED_MODEL',
-      )
-    }
+  public throughAlias (key) {
+    return `through_${key}`
   }
 
   /**
-   * Validating the keys to ensure we are avoiding runtime `undefined` errors. We defer
-   * the keys validation, since they may be added after defining the relationship.
+   * Boot the relationship and ensure that all keys are in
+   * place for queries to do their job.
    */
-  private _validateKeys () {
-    const relationRef = `${this.model.name}.${this.relationName}`
-
-    if (!this.model.$hasColumn(this.localKey)) {
-      const ref = `${this.model.name}.${this.localKey}`
-      throw new Exception(
-        `${ref} required by ${relationRef} relation is missing`,
-        500,
-        'E_MISSING_RELATED_LOCAL_KEY',
-      )
-    }
-
-    if (!this.throughModel().$hasColumn(this.foreignKey)) {
-      const ref = `${this.throughModel().name}.${this.foreignKey}`
-      throw new Exception(
-        `${ref} required by ${relationRef} relation is missing`,
-        500,
-        'E_MISSING_RELATED_FOREIGN_KEY',
-      )
-    }
-
-    if (!this.throughModel().$hasColumn(this.throughLocalKey)) {
-      const ref = `${this.throughModel().name}.${this.throughLocalKey}`
-      throw new Exception(
-        `${ref} required by ${relationRef} relation is missing`,
-        500,
-        'E_MISSING_THROUGH_LOCAL_KEY',
-      )
-    }
-
-    if (!this.relatedModel().$hasColumn(this.throughForeignKey)) {
-      const ref = `${this.relatedModel().name}.${this.throughForeignKey}`
-      throw new Exception(
-        `${ref} required by ${relationRef} relation is missing`,
-        500,
-        'E_MISSING_THROUGH_FOREIGN_KEY',
-      )
-    }
-  }
-
-  /**
-   * Compute keys
-   */
-  public boot () {
-    if (this.booted) {
+  public $boot () {
+    if (this.$booted) {
       return
     }
-
-    this.localKey = this._options.localKey || this.model.$primaryKey
-    this.foreignKey = this._options.foreignKey || camelCase(`${this.model.name}_${this.model.$primaryKey}`)
-
-    this.throughLocalKey = this._options.localKey || this.throughModel().$primaryKey
-    this.throughForeignKey = this._options.throughForeignKey
-      || camelCase(`${this.throughModel().name}_${this.throughModel().$primaryKey}`)
 
     /**
-     * Validate computed keys to ensure they are valid
+     * Extracting keys from the model and the relation model. The keys
+     * extractor ensures all the required columns are defined on
+     * the models for the relationship to work
      */
-    this._validateKeys()
-
-    /**
-     * Keys for the adapter
-     */
-    this.localAdapterKey = this.model.$getColumn(this.localKey)!.castAs
-    this.foreignAdapterKey = this.throughModel().$getColumn(this.foreignKey)!.castAs
-    this.throughLocalAdapterKey = this.throughModel().$getColumn(this.throughLocalKey)!.castAs
-    this.throughForeignAdapterKey = this.relatedModel().$getColumn(this.throughForeignKey)!.castAs
-    this.booted = true
-  }
-
-  /**
-   * Returns query for the relationship with applied constraints for
-   * eagerloading
-   */
-  public getEagerQuery (parents: ModelContract[], client: QueryClientContract): any {
-    return new HasManyThroughQueryBuilder(client.knexQuery(), this, client, parents)
-  }
-
-  /**
-   * Returns query for the relationship with applied constraints
-   */
-  public getQuery (parent: ModelContract, client: QueryClientContract): any {
-    return new HasManyThroughQueryBuilder(client.knexQuery(), this, client, parent)
-  }
-
-  /**
-   * Sets the related model instance
-   */
-  public setRelated (parent: ModelContract, related?: ModelContract[]) {
-    if (!related) {
-      return
-    }
-
-    parent.$setRelated(this.relationName as keyof typeof parent, related)
-  }
-
-  /**
-   * Push the related model instance
-   */
-  public pushRelated (parent: ModelContract, related?: ModelContract[]) {
-    if (!related) {
-      return
-    }
-
-    parent.$pushRelated(this.relationName as keyof typeof parent, related)
-  }
-
-  /**
-   * Set many related instances
-   */
-  public setRelatedMany (parents: ModelContract[], related: ModelContract[]) {
-    parents.forEach((parent) => {
-      const relations = related.filter((model) => {
-        return model.$extras[`through_${this.foreignAdapterKey}`] === parent[this.localKey]
-      })
-      this.setRelated(parent, relations)
+    const { localKey, foreignKey, throughLocalKey, throughForeignKey } = this.$extractKeys({
+      localKey: {
+        model: this.$model,
+        key: (
+          this.throughOptions.localKey ||
+          this.$model.$configurator.getLocalKey(this.$type, this.$model, this.$relatedModel())
+        ),
+      },
+      foreignKey: {
+        model: this.$throughModel(),
+        key: (
+          this.throughOptions.foreignKey ||
+          this.$model.$configurator.getForeignKey(this.$type, this.$model, this.$throughModel())
+        ),
+      },
+      throughLocalKey: {
+        model: this.$throughModel(),
+        key: (
+          this.throughOptions.throughLocalKey ||
+          this.$model.$configurator.getLocalKey(this.$type, this.$throughModel(), this.$relatedModel())
+        ),
+      },
+      throughForeignKey: {
+        model: this.$relatedModel(),
+        key: (
+          this.throughOptions.throughForeignKey ||
+          this.$model.$configurator.getForeignKey(this.$type, this.$throughModel(), this.$relatedModel())
+        ),
+      },
     })
+
+    /**
+     * Keys on the parent model
+     */
+    this.$localKey = localKey.attributeName
+    this.$localCastAsKey = localKey.castAsKey
+
+    /**
+     * Keys on the through model
+     */
+    this.$foreignKey = foreignKey.attributeName
+    this.$foreignCastAsKey = foreignKey.castAsKey
+
+    this.$throughLocalKey = throughLocalKey.attributeName
+    this.$throughLocalCastAsKey = throughLocalKey.castAsKey
+
+    this.$throughForeignKey = throughForeignKey.attributeName
+    this.$throughForeignCastAsKey = throughForeignKey.castAsKey
+
+    /**
+     * Booted successfully
+     */
+    this.$booted = true
+  }
+
+  /**
+   * Set related model instances
+   */
+  public $setRelated (parent: ModelContract, related: ModelContract[]): void {
+    this.$ensureIsBooted()
+    parent.$setRelated(this.$relationName as any, related)
+  }
+
+  /**
+   * Push related model instance(s)
+   */
+  public $pushRelated (parent: ModelContract, related: ModelContract | ModelContract[]): void {
+    this.$ensureIsBooted()
+    parent.$pushRelated(this.$relationName as any, related as any)
+  }
+
+  /**
+   * Finds and set the related model instances next to the parent
+   * models.
+   */
+  public $setRelatedForMany (parent: ModelContract[], related: ModelContract[]): void {
+    this.$ensureIsBooted()
+    const $foreignCastAsKeyAlias = this.throughAlias(this.$foreignCastAsKey)
+
+    parent.forEach((parentModel) => {
+      this.$setRelated(parentModel, related.filter((relatedModel) => {
+        const value = parentModel[this.$localKey]
+        return value !== undefined && relatedModel.$extras[$foreignCastAsKeyAlias] === value
+      }))
+    })
+  }
+
+  public client (models: ModelContract | ModelContract[], client: QueryClientContract): any {
+    this.$ensureIsBooted()
+    return new HasManyThroughClient(models, client, this)
   }
 }

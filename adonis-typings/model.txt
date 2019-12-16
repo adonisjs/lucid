@@ -1,0 +1,90 @@
+    /**
+     * Save the related model.
+     */
+    save (model: T, wrapInTransaction?: boolean): Promise<void>
+
+    /**
+     * Save the related model.
+     */
+    saveMany (model: T[], wrapInTransaction?: boolean): Promise<void>
+
+    /**
+     * Create the related model instance
+     */
+    create (values: ModelObject, wrapInTransaction?: boolean): Promise<T>
+
+    /**
+     * Create many of the related model instance
+     */
+    createMany (values: ModelObject[], wrapInTransaction?: boolean): Promise<T[]>
+
+    /**
+     * Update the relationship or create a new one
+     */
+    updateOrCreate (
+      search: ModelObject,
+      updatePayload: ModelObject,
+      wrapInTransaction?: boolean,
+    ): Promise<T>
+
+
+
+
+    /**
+     * Associate related model.
+     */
+    associate (model: T, wrapInTransaction?: boolean): Promise<void>
+
+    /**
+     * Dissociate all relationships.
+     */
+    dissociate (): Promise<void>
+
+
+
+
+
+
+
+
+    /**
+     * Save related model
+     */
+    save (model: T, wrapInTransaction?: boolean, checkExisting?: boolean): Promise<void>
+
+    /**
+     * Save related many
+     */
+    saveMany (model: T[], wrapInTransaction?: boolean, checkExisting?: boolean): Promise<void>
+
+    /**
+     * Create the related model instance
+     */
+    create (values: ModelObject, wrapInTransaction?: boolean, checkExisting?: boolean): Promise<T>
+
+    /**
+     * Create many of the related model instance
+     */
+    createMany (values: ModelObject, wrapInTransaction?: boolean, checkExisting?: boolean): Promise<T[]>
+
+    /**
+     * Attach related
+     */
+    attach (
+      ids: (string | number)[] | { [key: string]: ModelObject },
+      checkExisting?: boolean,
+    ): Promise<void>
+
+    /**
+     * Detach from pivot table
+     */
+    detach (ids: (string | number)[]): Promise<void>
+
+    /**
+     * Sync related ids
+     */
+    sync (
+      ids: (string | number)[] | { [key: string]: ModelObject },
+      wrapInTransaction?: boolean,
+      checkExisting?: boolean,
+    ): Promise<void>
