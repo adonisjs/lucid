@@ -7,126 +7,98 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../../adonis-typings/index.ts" />
-
 import knex from 'knex'
-import { Exception } from '@poppinss/utils'
-import { HasManyThroughQueryBuilderContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
+import { RelationBaseQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { HasManyThrough } from './index'
-import { unique } from '../../../utils'
-import { BaseRelationQueryBuilder } from '../Base/QueryBuilder'
+import { getValue, unique } from '../../../utils'
+import { BaseQueryBuilder } from '../Base/QueryBuilder'
 
-/**
- * Exposes the API for interacting with has many relationship
- */
-export class HasManyThroughQueryBuilder
-  extends BaseRelationQueryBuilder
-  implements HasManyThroughQueryBuilderContract<any> {
+export class HasManyThroughQueryBuilder extends BaseQueryBuilder implements RelationBaseQueryBuilderContract<
+ModelConstructorContract,
+ModelConstructorContract
+> {
   constructor (
     builder: knex.QueryBuilder,
-    private _relation: HasManyThrough,
+    private models: ModelContract | ModelContract[],
     client: QueryClientContract,
-    private _parent: ModelContract | ModelContract[],
+    private relation: HasManyThrough,
   ) {
-    super(builder, _relation, client, (userFn) => {
+    super(builder, client, relation, (userFn) => {
       return (__builder) => {
-        userFn(new HasManyThroughQueryBuilder(__builder, this._relation, this.client, this._parent))
+        userFn(new HasManyThroughQueryBuilder(__builder, this.models, this.client, this.relation))
       }
     })
   }
 
   /**
-   * Applies constraints on the query to limit to the parent row(s).
+   * Adds where constraint to the pivot table
    */
-  private _applyParentConstraints (builder: HasManyThroughQueryBuilder) {
-    const throughTable = this._relation.throughModel().$table
+  private addWhereConstraints (builder: HasManyThroughQueryBuilder) {
+    const queryAction = this.$queryAction()
+    const throughTable = this.relation.$throughModel().$table
 
     /**
-     * Constraint for multiple parents
+     * Eager query contraints
      */
-    if (Array.isArray(this._parent)) {
-      const values = unique(this._parent.map((parentInstance) => {
-        return this.$getRelatedValue(parentInstance, this._relation.localKey)
-      }))
-      return builder.whereIn(`${throughTable}.${this._relation.foreignAdapterKey}`, values)
+    if (Array.isArray(this.models)) {
+      builder.whereIn(
+        `${throughTable}.${this.relation.$foreignCastAsKey}`,
+        unique(this.models.map((model) => {
+          return getValue(model, this.relation.$localKey, this.relation, queryAction)
+        })),
+      )
+      return
     }
 
     /**
-     * Constraint for one parent
+     * Query constraints
      */
-    const value = this.$getRelatedValue(this._parent, this._relation.localKey)
-    return builder.where(`${throughTable}.${this._relation.foreignAdapterKey}`, value)
+    const value = getValue(this.models, this.relation.$localKey, this.relation, queryAction)
+    builder.where(`${throughTable}.${this.relation.$foreignCastAsKey}`, value)
   }
 
-  /**
-   * Applies constraints for `select`, `update` and `delete` queries. The
-   * inserts are not allowed directly and one must use `save` method
-   * instead.
-   */
   public applyConstraints () {
-    /**
-     * Avoid adding it for multiple times
-     */
     if (this.$appliedConstraints) {
-      return this
+      return
     }
+
     this.$appliedConstraints = true
 
-    const throughTable = this._relation.throughModel().$table
-    const relatedTable = this._relation.relatedModel().$table
+    const throughTable = this.relation.$throughModel().$table
+    const relatedTable = this.relation.$relatedModel().$table
 
-    /**
-     * When updating or deleting the through rows, we run a whereIn
-     * subquery to limit to the parent rows.
-     */
     if (['delete', 'update'].includes(this.$queryAction())) {
-      this.whereIn(`${relatedTable}.${this._relation.throughForeignAdapterKey}`, (builder) => {
-        builder.from(throughTable)
-        this._applyParentConstraints(builder)
+      this.whereIn(`${relatedTable}.${this.relation.$throughForeignCastAsKey}`, (subQuery) => {
+        subQuery.from(throughTable)
+        this.addWhereConstraints(subQuery)
       })
-      return this
+      return
     }
 
     /**
-     * Select * from related model and through foreign adapter key
+     * Selecting all from the related table, along with the foreign key of the
+     * through table.
      */
     this.select(
       `${relatedTable}.*`,
-      `${throughTable}.${this._relation.foreignAdapterKey} as through_${this._relation.foreignAdapterKey}`,
+      `${throughTable}.${this.relation.$foreignCastAsKey} as ${this.relation.throughAlias(this.relation.$foreignCastAsKey)}`,
     )
 
     /**
-     * Add inner join
+     * Inner join
      */
     this.innerJoin(
-      `${throughTable}`,
-      `${throughTable}.${this._relation.throughLocalAdapterKey}`,
-      `${relatedTable}.${this._relation.throughForeignAdapterKey}`,
+      throughTable,
+      `${throughTable}.${this.relation.$throughLocalCastAsKey}`,
+      `${relatedTable}.${this.relation.$throughForeignCastAsKey}`,
     )
 
-    this._applyParentConstraints(this)
-    return this
-  }
-
-  public async save (): Promise<void> {
-    throw new Exception('Has many through doesn\'t support saving relations')
-  }
-
-  public async saveMany () {
-    return this.save()
-  }
-
-  public async create (): Promise<any> {
-    return this.save()
-  }
-
-  public async createMany (): Promise<any> {
-    return this.save()
-  }
-
-  public async updateOrCreate (): Promise<any> {
-    return this.save()
+    /**
+     * Adding where constraints
+     */
+    this.addWhereConstraints(this)
   }
 }

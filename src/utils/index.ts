@@ -11,12 +11,13 @@
 
 import { extname } from 'path'
 import { Exception } from '@poppinss/utils'
-import { RelationContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
+import { ModelContract } from '@ioc:Adonis/Lucid/Model'
+import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 
 /**
  * Ensure that relation is defined
  */
-export function ensureRelation<T extends RelationContract> (
+export function ensureRelation<T extends RelationshipsContract> (
   name: string,
   relation?: T,
 ): relation is T {
@@ -44,12 +45,12 @@ export function ensureValue (collection: any, key: string, missingCallback: () =
 export function getValue (
   model: ModelContract,
   key: string,
-  relation: RelationContract,
+  relation: RelationshipsContract,
   action = 'preload',
 ) {
   return ensureValue(model, key, () => {
     throw new Exception(
-      `Cannot ${action} ${relation.relationName}, value of ${relation.model.name}.${key} is undefined`,
+      `Cannot ${action} ${relation.$relationName}, value of ${relation.$model.name}.${key} is undefined`,
       500,
     )
   })

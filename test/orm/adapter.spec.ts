@@ -52,7 +52,7 @@ test.group('Adapter', (group) => {
     assert.exists(user.id)
     assert.deepEqual(user.$attributes, { username: 'virk', id: user.id })
     assert.isFalse(user.$isDirty)
-    assert.isTrue(user.$persisted)
+    assert.isTrue(user.$isPersisted)
   })
 
   test('make update call using a model', async (assert) => {
@@ -74,7 +74,7 @@ test.group('Adapter', (group) => {
     assert.exists(user.id)
     assert.deepEqual(user.$attributes, { username: 'virk', id: user.id })
     assert.isFalse(user.$isDirty)
-    assert.isTrue(user.$persisted)
+    assert.isTrue(user.$isPersisted)
 
     user.username = 'nikk'
     assert.isTrue(user.$isDirty)
@@ -102,7 +102,7 @@ test.group('Adapter', (group) => {
     assert.exists(user.id)
     assert.deepEqual(user.$attributes, { username: 'virk', id: user.id })
     assert.isFalse(user.$isDirty)
-    assert.isTrue(user.$persisted)
+    assert.isTrue(user.$isPersisted)
 
     await user.delete()
     assert.isTrue(user.$isDeleted)
@@ -167,7 +167,7 @@ test.group('Adapter', (group) => {
     assert.isUndefined(user.$trx)
     assert.deepEqual(user.$attributes, { username: 'virk', id: user.id })
     assert.isFalse(user.$isDirty)
-    assert.isTrue(user.$persisted)
+    assert.isTrue(user.$isPersisted)
   })
 
   test('do not insert when transaction rollbacks', async (assert) => {
@@ -197,7 +197,7 @@ test.group('Adapter', (group) => {
     assert.isUndefined(user.$trx)
     assert.deepEqual(user.$attributes, { username: 'virk', id: user.id })
     assert.isFalse(user.$isDirty)
-    assert.isTrue(user.$persisted)
+    assert.isTrue(user.$isPersisted)
   })
 
   test('cleanup old trx event listeners when transaction is updated', async (assert) => {
@@ -244,7 +244,7 @@ test.group('Adapter', (group) => {
     assert.exists(user.id)
     assert.deepEqual(user.$attributes, { username: 'virk', id: user.id })
     assert.isFalse(user.$isDirty)
-    assert.isTrue(user.$persisted)
+    assert.isTrue(user.$isPersisted)
 
     const trx = await db.transaction()
     user.$trx = trx
@@ -276,7 +276,7 @@ test.group('Adapter', (group) => {
     assert.exists(user.id)
     assert.deepEqual(user.$attributes, { username: 'virk', id: user.id })
     assert.isFalse(user.$isDirty)
-    assert.isTrue(user.$persisted)
+    assert.isTrue(user.$isPersisted)
 
     const trx = await db.transaction()
     user.$trx = trx
