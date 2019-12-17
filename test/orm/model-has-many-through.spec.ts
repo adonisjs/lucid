@@ -376,7 +376,7 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
   })
 })
 
-test.group('Model | ManyToMany | bulk operations', (group) => {
+test.group('Model | Has Many Through | bulk operations', (group) => {
   group.before(async () => {
     db = getDb()
     BaseModel = getBaseModel(ormAdapter(db))
@@ -674,453 +674,314 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
   })
 })
 
-// test.group('Model | Has Many Through', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
-
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
-
-//   group.afterEach(async () => {
-//     await resetTables()
-//   })
-
-//   test('get query', (assert) => {
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public countryId: number
-//     }
-//     User.$boot()
-
-//     class Post extends BaseModel {
-//       @column()
-//       public userId: number
-//     }
-//     Post.$boot()
-
-//     class Country extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasManyThrough([() => Post, () => User])
-//       public posts: Post[]
-//     }
-//     Country.$boot()
-
-//     const country = new Country()
-//     country.id = 1
-
-//     Country.$getRelation('posts')!.boot()
-
-//     const { sql, bindings } = Country.$getRelation('posts')!
-//       .getQuery(country, Country.query().client)
-//       .applyConstraints()
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.query()
-//       .from('posts')
-//       .select([
-//         'posts.*',
-//         'users.country_id as through_country_id',
-//       ])
-//       .innerJoin('users', 'users.id', 'posts.user_id')
-//       .where('users.country_id', 1)
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('get eager query', (assert) => {
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public countryId: number
-//     }
-//     User.$boot()
-
-//     class Post extends BaseModel {
-//       @column()
-//       public userId: number
-//     }
-//     Post.$boot()
-
-//     class Country extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasManyThrough([() => Post, () => User])
-//       public posts: Post[]
-//     }
-//     Country.$boot()
-
-//     const country = new Country()
-//     country.id = 1
-
-//     Country.$getRelation('posts')!.boot()
-
-//     const { sql, bindings } = Country.$getRelation('posts')!
-//       .getEagerQuery([country], Country.query().client)
-//       .applyConstraints()
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.query()
-//       .from('posts')
-//       .select([
-//         'posts.*',
-//         'users.country_id as through_country_id',
-//       ])
-//       .innerJoin('users', 'users.id', 'posts.user_id')
-//       .whereIn('users.country_id', [1])
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('queries must be instance of has many through query builder', (assert) => {
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public countryId: number
-//     }
-//     User.$boot()
-
-//     class Post extends BaseModel {
-//       @column()
-//       public userId: number
-//     }
-//     Post.$boot()
-
-//     class Country extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasManyThrough([() => Post, () => User])
-//       public posts: Post[]
-//     }
-//     Country.$boot()
-
-//     const country = new Country()
-//     country.id = 1
-
-//     Country.$getRelation('posts')!.boot()
-
-//     const query = Country.$getRelation('posts')!.getQuery(country, Country.query().client)
-//     const eagerQuery = Country.$getRelation('posts')!.getEagerQuery([country], Country.query().client)
-
-//     assert.instanceOf(query, HasManyThroughQueryBuilder)
-//     assert.instanceOf(eagerQuery, HasManyThroughQueryBuilder)
-//   })
-
-//   test('preload relationship', async (assert) => {
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public countryId: number
-//     }
-//     User.$boot()
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-//     Post.$boot()
-
-//     class Country extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasManyThrough([() => Post, () => User])
-//       public posts: Post[]
-//     }
-//     Country.$boot()
-
-//     await db.insertQuery().table('countries').insert([{ name: 'India' }])
-//     await db.insertQuery().table('users').insert([{ username: 'virk', country_id: 1 }])
-//     await db.insertQuery().table('posts').insert([
-//       { title: 'Adonis 101', user_id: 1 },
-//       { title: 'Lucid 101', user_id: 1 },
-//     ])
-
-//     const countries = await Country.query().preload('posts')
-//     assert.lengthOf(countries, 1)
-//     assert.lengthOf(countries[0].posts, 2)
-//     assert.equal(countries[0].posts[0].title, 'Adonis 101')
-//     assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
-
-//     assert.equal(countries[0].posts[1].title, 'Lucid 101')
-//     assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
-//   })
-
-//   test('preload many through relationships', async (assert) => {
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public countryId: number
-//     }
-//     User.$boot()
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-//     Post.$boot()
-
-//     class Country extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasManyThrough([() => Post, () => User])
-//       public posts: Post[]
-//     }
-//     Country.$boot()
-
-//     await db.insertQuery().table('countries').insert([{ name: 'India' }])
-
-//     await db.insertQuery().table('users').insert([
-//       { username: 'virk', country_id: 1 },
-//       { username: 'nikk', country_id: 1 },
-//     ])
-
-//     await db.insertQuery().table('posts').insert([
-//       { title: 'Adonis 101', user_id: 1 },
-//       { title: 'Lucid 101', user_id: 1 },
-//       { title: 'Adonis5', user_id: 2 },
-//     ])
-
-//     const countries = await Country.query().preload('posts')
-//     assert.lengthOf(countries, 1)
-//     assert.lengthOf(countries[0].posts, 3)
-//     assert.equal(countries[0].posts[0].title, 'Adonis 101')
-//     assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
-
-//     assert.equal(countries[0].posts[1].title, 'Lucid 101')
-//     assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
-
-//     assert.equal(countries[0].posts[2].title, 'Adonis5')
-//     assert.equal(countries[0].posts[2].$extras.through_country_id, 1)
-//   })
-
-//   test('preload many relationships', async (assert) => {
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public countryId: number
-//     }
-//     User.$boot()
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-//     Post.$boot()
-
-//     class Country extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasManyThrough([() => Post, () => User])
-//       public posts: Post[]
-//     }
-//     Country.$boot()
-
-//     await db.insertQuery().table('countries').insert([{ name: 'India' }, { name: 'USA' }])
-
-//     await db.insertQuery().table('users').insert([
-//       { username: 'virk', country_id: 1 },
-//       { username: 'nikk', country_id: 2 },
-//     ])
-
-//     await db.insertQuery().table('posts').insert([
-//       { title: 'Adonis 101', user_id: 1 },
-//       { title: 'Lucid 101', user_id: 1 },
-//       { title: 'Adonis5', user_id: 2 },
-//     ])
-
-//     const countries = await Country.query().preload('posts')
-//     assert.lengthOf(countries, 2)
-//     assert.lengthOf(countries[0].posts, 2)
-//     assert.lengthOf(countries[1].posts, 1)
-
-//     assert.equal(countries[0].posts[0].title, 'Adonis 101')
-//     assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
-
-//     assert.equal(countries[0].posts[1].title, 'Lucid 101')
-//     assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
-
-//     assert.equal(countries[1].posts[0].title, 'Adonis5')
-//     assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
-//   })
-
-//   test('preload many relationships using model instance', async (assert) => {
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public countryId: number
-//     }
-//     User.$boot()
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-//     Post.$boot()
-
-//     class Country extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasManyThrough([() => Post, () => User])
-//       public posts: Post[]
-//     }
-//     Country.$boot()
-
-//     await db.insertQuery().table('countries').insert([{ name: 'India' }, { name: 'USA' }])
-
-//     await db.insertQuery().table('users').insert([
-//       { username: 'virk', country_id: 1 },
-//       { username: 'nikk', country_id: 2 },
-//     ])
-
-//     await db.insertQuery().table('posts').insert([
-//       { title: 'Adonis 101', user_id: 1 },
-//       { title: 'Lucid 101', user_id: 1 },
-//       { title: 'Adonis5', user_id: 2 },
-//     ])
-
-//     const countries = await Country.query().orderBy('id', 'asc')
-//     assert.lengthOf(countries, 2)
-
-//     await countries[0].preload('posts')
-//     await countries[1].preload('posts')
-
-//     assert.lengthOf(countries[0].posts, 2)
-//     assert.lengthOf(countries[1].posts, 1)
-
-//     assert.equal(countries[0].posts[0].title, 'Adonis 101')
-//     assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
-
-//     assert.equal(countries[0].posts[1].title, 'Lucid 101')
-//     assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
-
-//     assert.equal(countries[1].posts[0].title, 'Adonis5')
-//     assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
-//   })
-
-//   test('push to existing relations when preloading using model instance', async (assert) => {
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public countryId: number
-//     }
-//     User.$boot()
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-//     Post.$boot()
-
-//     class Country extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasManyThrough([() => Post, () => User])
-//       public posts: Post[]
-//     }
-//     Country.$boot()
-
-//     await db.insertQuery().table('countries').insert([{ name: 'India' }, { name: 'USA' }])
-
-//     await db.insertQuery().table('users').insert([
-//       { username: 'virk', country_id: 1 },
-//       { username: 'nikk', country_id: 2 },
-//     ])
-
-//     await db.insertQuery().table('posts').insert([
-//       { title: 'Adonis 101', user_id: 1 },
-//       { title: 'Lucid 101', user_id: 1 },
-//       { title: 'Adonis5', user_id: 2 },
-//     ])
-
-//     const countries = await Country.query().orderBy('id', 'asc')
-//     assert.lengthOf(countries, 2)
-
-//     const dummyPost = new Post()
-//     dummyPost.fill({ userId: 1, title: 'Dummy 101' })
-//     countries[0].$setRelated('posts', [dummyPost])
-
-//     await countries[0].preload('posts')
-//     await countries[1].preload('posts')
-
-//     assert.lengthOf(countries[0].posts, 3)
-//     assert.lengthOf(countries[1].posts, 1)
-
-//     assert.equal(countries[0].posts[0].title, 'Dummy 101')
-
-//     assert.equal(countries[0].posts[1].title, 'Adonis 101')
-//     assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
-
-//     assert.equal(countries[0].posts[2].title, 'Lucid 101')
-//     assert.equal(countries[0].posts[2].$extras.through_country_id, 1)
-
-//     assert.equal(countries[1].posts[0].title, 'Adonis5')
-//     assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
-//   })
-// })
+test.group('Model | Has Many Through | preload', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('preload through relationships', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.$boot()
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.$boot()
+
+    class Country extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<Post>
+    }
+    Country.$boot()
+
+    await db.insertQuery().table('countries').insert([{ name: 'India' }])
+
+    await db.insertQuery().table('users').insert([
+      { username: 'virk', country_id: 1 },
+      { username: 'nikk', country_id: 1 },
+    ])
+
+    await db.insertQuery().table('posts').insert([
+      { title: 'Adonis 101', user_id: 1 },
+      { title: 'Lucid 101', user_id: 1 },
+      { title: 'Adonis5', user_id: 2 },
+    ])
+
+    const countries = await Country.query().preload('posts')
+    assert.lengthOf(countries, 1)
+    assert.lengthOf(countries[0].posts, 3)
+    assert.equal(countries[0].posts[0].title, 'Adonis 101')
+    assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
+
+    assert.equal(countries[0].posts[1].title, 'Lucid 101')
+    assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
+
+    assert.equal(countries[0].posts[2].title, 'Adonis5')
+    assert.equal(countries[0].posts[2].$extras.through_country_id, 1)
+  })
+
+  test('preload many relationships', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.$boot()
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.$boot()
+
+    class Country extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<Post>
+    }
+    Country.$boot()
+
+    await db.insertQuery().table('countries').insert([{ name: 'India' }, { name: 'USA' }])
+
+    await db.insertQuery().table('users').insert([
+      { username: 'virk', country_id: 1 },
+      { username: 'nikk', country_id: 2 },
+    ])
+
+    await db.insertQuery().table('posts').insert([
+      { title: 'Adonis 101', user_id: 1 },
+      { title: 'Lucid 101', user_id: 1 },
+      { title: 'Adonis5', user_id: 2 },
+    ])
+
+    const countries = await Country.query().preload('posts')
+    assert.lengthOf(countries, 2)
+    assert.lengthOf(countries[0].posts, 2)
+    assert.lengthOf(countries[1].posts, 1)
+
+    assert.equal(countries[0].posts[0].title, 'Adonis 101')
+    assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
+
+    assert.equal(countries[0].posts[1].title, 'Lucid 101')
+    assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
+
+    assert.equal(countries[1].posts[0].title, 'Adonis5')
+    assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
+  })
+
+  test('preload many relationships using model instance', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.$boot()
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.$boot()
+
+    class Country extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<Post>
+    }
+    Country.$boot()
+
+    await db.insertQuery().table('countries').insert([{ name: 'India' }, { name: 'USA' }])
+
+    await db.insertQuery().table('users').insert([
+      { username: 'virk', country_id: 1 },
+      { username: 'nikk', country_id: 2 },
+    ])
+
+    await db.insertQuery().table('posts').insert([
+      { title: 'Adonis 101', user_id: 1 },
+      { title: 'Lucid 101', user_id: 1 },
+      { title: 'Adonis5', user_id: 2 },
+    ])
+
+    const countries = await Country.query().orderBy('id', 'asc')
+    assert.lengthOf(countries, 2)
+
+    await countries[0].preload('posts')
+    await countries[1].preload('posts')
+
+    assert.lengthOf(countries[0].posts, 2)
+    assert.lengthOf(countries[1].posts, 1)
+
+    assert.equal(countries[0].posts[0].title, 'Adonis 101')
+    assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
+
+    assert.equal(countries[0].posts[1].title, 'Lucid 101')
+    assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
+
+    assert.equal(countries[1].posts[0].title, 'Adonis5')
+    assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
+  })
+
+  test('cherry pick columns during preload', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.$boot()
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.$boot()
+
+    class Country extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<Post>
+    }
+    Country.$boot()
+
+    await db.insertQuery().table('countries').insert([{ name: 'India' }, { name: 'USA' }])
+
+    await db.insertQuery().table('users').insert([
+      { username: 'virk', country_id: 1 },
+      { username: 'nikk', country_id: 2 },
+    ])
+
+    await db.insertQuery().table('posts').insert([
+      { title: 'Adonis 101', user_id: 1 },
+      { title: 'Lucid 101', user_id: 1 },
+      { title: 'Adonis5', user_id: 2 },
+    ])
+
+    const countries = await Country.query().preload('posts', (builder) => {
+      builder.select('title')
+    })
+
+    assert.lengthOf(countries, 2)
+    assert.lengthOf(countries[0].posts, 2)
+    assert.lengthOf(countries[1].posts, 1)
+
+    assert.equal(countries[0].posts[0].title, 'Adonis 101')
+    assert.deepEqual(countries[0].posts[0].$extras, { through_country_id: 1 })
+
+    assert.equal(countries[0].posts[1].title, 'Lucid 101')
+    assert.deepEqual(countries[0].posts[1].$extras, { through_country_id: 1 })
+
+    assert.equal(countries[1].posts[0].title, 'Adonis5')
+    assert.deepEqual(countries[1].posts[0].$extras, { through_country_id: 2 })
+  })
+
+  test('raise error when local key is not selected', async (assert) => {
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.$boot()
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.$boot()
+
+    class Country extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<Post>
+    }
+    Country.$boot()
+
+    await db.insertQuery().table('countries').insert([{ name: 'India' }, { name: 'USA' }])
+
+    await db.insertQuery().table('users').insert([
+      { username: 'virk', country_id: 1 },
+      { username: 'nikk', country_id: 2 },
+    ])
+
+    await db.insertQuery().table('posts').insert([
+      { title: 'Adonis 101', user_id: 1 },
+      { title: 'Lucid 101', user_id: 1 },
+      { title: 'Adonis5', user_id: 2 },
+    ])
+
+    try {
+      await Country.query().select('name').preload('posts')
+    } catch ({ message }) {
+      assert.equal(message, 'Cannot preload "posts", value of "Country.id" is undefined')
+    }
+  })
+})
 
 // test.group('Model | Has Many Through | fetch', (group) => {
 //   group.before(async () => {

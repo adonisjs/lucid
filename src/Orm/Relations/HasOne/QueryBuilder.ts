@@ -29,8 +29,9 @@ ModelConstructorContract
     client: QueryClientContract,
     private parent: ModelContract | ModelContract[],
     private relation: HasOne,
+    isEager: boolean = false,
   ) {
-    super(builder, client, relation, (userFn) => {
+    super(builder, client, relation, isEager, (userFn) => {
       return (__builder) => {
         userFn(new HasOneQueryBuilder(__builder, this.client, this.parent, this.relation))
       }
@@ -71,5 +72,12 @@ ModelConstructorContract
     if (!['update', 'delete'].includes(queryAction)) {
       this.$knexBuilder.limit(1)
     }
+  }
+
+  /**
+   * The keys for constructing the join query
+   */
+  public getRelationKeys (): string[] {
+    return [this.relation.$foreignCastAsKey]
   }
 }

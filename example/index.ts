@@ -1,4 +1,4 @@
-import { HasOne, HasMany, BelongsTo, ExtractRelations } from '@ioc:Adonis/Lucid/Relations'
+import { HasOne, HasMany, BelongsTo } from '@ioc:Adonis/Lucid/Relations'
 import { BaseModel } from '@ioc:Adonis/Lucid/Orm'
 import { AsColumns } from '@ioc:Adonis/Lucid/Model'
 
@@ -6,20 +6,10 @@ class Profile extends BaseModel {
   public foo = 'a'
 
   public user: BelongsTo<User>
-
-  public static $refs: {
-    columns: any,
-    relations: ExtractRelations<Profile>,
-  }
 }
 
 class Post extends BaseModel {
   public user: BelongsTo<User>
-
-  public static $refs: {
-    columns: any,
-    relations: ExtractRelations<Post>,
-  }
 }
 
 class User extends BaseModel {
@@ -35,14 +25,11 @@ class User extends BaseModel {
   public profile: HasOne<Profile>
   public posts: HasMany<Post>
 
-  public static $refs: {
-    columns: AsColumns<Pick<User, 'username' | 'age'>>,
-    relations: ExtractRelations<User>,
-  }
+  public static $refs: AsColumns<Pick<User, 'username' | 'age'>>
 }
 
 const user = new User()
-User.$refs.columns.age
+User.$refs.age
 
 user.username = 'virk'
 user.$getRelated('profile')!.preload('user')
@@ -60,7 +47,9 @@ user.preload((preloader) => {
   }).preload('posts')
 })
 
-const profile = (User.$getRelation('profile').$relatedModel() as typeof Profile).$refs.relations.user
+// user.preload('profile')
+
+const profile = (User.$getRelation('profile').$relatedModel() as typeof Profile)
 
 // const profile = User.$getRelation('profile')!
 

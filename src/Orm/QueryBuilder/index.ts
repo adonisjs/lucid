@@ -15,7 +15,6 @@ import { Exception } from '@poppinss/utils'
 
 import {
   ModelObject,
-  ModelContract,
   ModelAdapterOptions,
   ModelConstructorContract,
   ModelQueryBuilderContract,
@@ -24,7 +23,7 @@ import {
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
-// import { Preloader } from '../Preloader'
+import { Preloader } from '../Preloader'
 import { Chainable } from '../../Database/QueryBuilder/Chainable'
 import { Executable, ExecutableConstructor } from '../../Traits/Executable'
 
@@ -45,12 +44,12 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Sideloaded attributes that will be passed to the model instances
    */
-  protected $sideloaded: ModelObject = {}
+  private sideloaded: ModelObject = {}
 
   /**
    * A copy of defined preloads on the model instance
    */
-  // private _preloader = new Preloader(this.model)
+  private _preloader = new Preloader(this.model)
 
   /**
    * Required by macroable
@@ -92,24 +91,6 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
-   * Process preloads for a single model instance
-   */
-  protected async $processAllForOne (modelInstance: ModelContract) {
-    // this._preloader.sideload(this.$sideloaded)
-    // await this._preloader.processAllForOne(modelInstance, this.client)
-    return modelInstance
-  }
-
-  /**
-   * Process preloads for array of model instances
-   */
-  protected async $processAllForMany (modelInstances: ModelContract[]) {
-    // this._preloader.sideload(this.$sideloaded)
-    // await this._preloader.processAllForMany(modelInstances, this.client)
-    return modelInstances
-  }
-
-  /**
    * Checks to see that the executed query is update or delete
    */
   public async beforeExecute () {
@@ -129,18 +110,19 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 
     const modelInstances = this.model.$createMultipleFromAdapterResult(
       rows,
-      this.$sideloaded,
+      this.sideloaded,
       this.clientOptions,
     )
 
-    return this.$processAllForMany(modelInstances)
+    await this._preloader.sideload(this.sideloaded).processAllForMany(modelInstances, this.client)
+    return modelInstances
   }
 
   /**
    * Set sideloaded properties to be passed to the model instance
    */
   public sideload (value: ModelObject) {
-    this.$sideloaded = value
+    this.sideloaded = value
     return this
   }
 
@@ -176,8 +158,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Define a relationship to be preloaded
    */
-  public preload (_relationName: any, _userCallback?: any): this {
-    // this._preloader.preload(relationName, userCallback)
+  public preload (relationName: any, userCallback?: any): this {
+    this._preloader.preload(relationName, userCallback)
     return this
   }
 
@@ -211,6 +193,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
       model: this.model.name,
     }))
   }
+
   /**
    * Perform update by incrementing value for a given column. Increments
    * can be clubbed with `update` as well

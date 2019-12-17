@@ -649,597 +649,380 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
   })
 })
 
-// test.group('Model | Many To Many', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
-
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
-
-//   group.afterEach(async () => {
-//     await resetTables()
-//   })
-
-//   test('get eager query', (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const user = new User()
-//     user.id = 1
-
-//     const { sql, bindings } = User.$getRelation('skills')!
-//       .getEagerQuery([user], User.query().client)
-//       .applyConstraints()
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.query()
-//       .from('skills')
-//       .select([
-//         'skills.*',
-//         'skill_user.user_id as pivot_user_id',
-//         'skill_user.skill_id as pivot_skill_id',
-//       ])
-//       .innerJoin('skill_user', 'skills.id', 'skill_user.skill_id')
-//       .whereIn('skill_user.user_id', [1])
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('get query', (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const user = new User()
-//     user.id = 1
-
-//     const { sql, bindings } = User.$getRelation('skills')!
-//       .getQuery(user, User.query().client)
-//       .applyConstraints()
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.query()
-//       .from('skills')
-//       .select([
-//         'skills.*',
-//         'skill_user.user_id as pivot_user_id',
-//         'skill_user.skill_id as pivot_skill_id',
-//       ])
-//       .innerJoin('skill_user', 'skills.id', 'skill_user.skill_id')
-//       .where('skill_user.user_id', 1)
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('queries must be instance of many to many query builder', (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const user = new User()
-//     user.id = 1
-
-//     const query = User.$getRelation('skills')!.getQuery(user, User.query().client)
-//     const eagerQuery = User.$getRelation('skills')!.getEagerQuery([user], User.query().client)
-
-//     assert.instanceOf(query, ManyToManyQueryBuilder)
-//     assert.instanceOf(eagerQuery, ManyToManyQueryBuilder)
-//   })
-
-//   test('preload relation', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public name: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }])
-//     await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
-//     await db.insertQuery().table('skill_user').insert([
-//       {
-//         user_id: 1,
-//         skill_id: 1,
-//       },
-//     ])
-
-//     const users = await User.query().preload('skills')
-//     assert.lengthOf(users, 1)
-//     assert.lengthOf(users[0].skills, 1)
-//     assert.equal(users[0].skills[0].name, 'Programming')
-//     assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
-//     assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
-//   })
-
-//   test('preload relation for many', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public name: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
-//     await db.insertQuery().table('skill_user').insert([
-//       {
-//         user_id: 1,
-//         skill_id: 1,
-//       },
-//       {
-//         user_id: 1,
-//         skill_id: 2,
-//       },
-//       {
-//         user_id: 2,
-//         skill_id: 2,
-//       },
-//     ])
-
-//     const users = await User.query().preload('skills')
-//     assert.lengthOf(users, 2)
-//     assert.lengthOf(users[0].skills, 2)
-//     assert.lengthOf(users[1].skills, 1)
-
-//     assert.equal(users[0].skills[0].name, 'Programming')
-//     assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
-//     assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
-
-//     assert.equal(users[0].skills[1].name, 'Dancing')
-//     assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
-//     assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
-
-//     assert.equal(users[1].skills[0].name, 'Dancing')
-//     assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
-//     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
-//   })
-
-//   test('preload relation using model instance', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public name: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
-//     await db.insertQuery().table('skill_user').insert([
-//       {
-//         user_id: 1,
-//         skill_id: 1,
-//       },
-//       {
-//         user_id: 1,
-//         skill_id: 2,
-//       },
-//       {
-//         user_id: 2,
-//         skill_id: 2,
-//       },
-//     ])
-
-//     const users = await User.query().orderBy('id', 'asc')
-//     assert.lengthOf(users, 2)
-
-//     await users[0].preload('skills')
-//     await users[1].preload('skills')
-
-//     assert.lengthOf(users[0].skills, 2)
-//     assert.lengthOf(users[1].skills, 1)
-
-//     assert.equal(users[0].skills[0].name, 'Programming')
-//     assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
-//     assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
-
-//     assert.equal(users[0].skills[1].name, 'Dancing')
-//     assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
-//     assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
-
-//     assert.equal(users[1].skills[0].name, 'Dancing')
-//     assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
-//     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
-//   })
-
-//   test('raise error when local key is not selected', async (assert) => {
-//     assert.plan(1)
-
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public name: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
-//     await db.insertQuery().table('skill_user').insert([
-//       {
-//         user_id: 1,
-//         skill_id: 1,
-//       },
-//       {
-//         user_id: 1,
-//         skill_id: 2,
-//       },
-//       {
-//         user_id: 2,
-//         skill_id: 2,
-//       },
-//     ])
-
-//     try {
-//       await User.query().select('username').preload('skills')
-//     } catch ({ message }) {
-//       assert.equal(message, 'Cannot preload skills, value of User.id is undefined')
-//     }
-//   })
-
-//   test('select extra pivot columns', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public name: string
-
-//       @column()
-//       public proficiency: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill, { pivotColumns: ['proficiency'] })
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
-//     await db.insertQuery().table('skill_user').insert([
-//       {
-//         user_id: 1,
-//         skill_id: 1,
-//         proficiency: 'expert',
-//       },
-//       {
-//         user_id: 1,
-//         skill_id: 2,
-//         proficiency: 'beginner',
-//       },
-//       {
-//         user_id: 2,
-//         skill_id: 2,
-//         proficiency: 'beginner',
-//       },
-//     ])
-
-//     const users = await User.query().preload('skills')
-//     assert.lengthOf(users, 2)
-//     assert.lengthOf(users[0].skills, 2)
-//     assert.lengthOf(users[1].skills, 1)
-
-//     assert.equal(users[0].skills[0].name, 'Programming')
-//     assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
-//     assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
-//     assert.equal(users[0].skills[0].$extras.pivot_proficiency, 'expert')
-
-//     assert.equal(users[0].skills[1].name, 'Dancing')
-//     assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
-//     assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
-//     assert.equal(users[0].skills[1].$extras.pivot_proficiency, 'beginner')
-
-//     assert.equal(users[1].skills[0].name, 'Dancing')
-//     assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
-//     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
-//     assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
-//   })
-
-//   test('select extra pivot columns at runtime', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public name: string
-
-//       @column()
-//       public proficiency: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
-//     await db.insertQuery().table('skill_user').insert([
-//       {
-//         user_id: 1,
-//         skill_id: 1,
-//         proficiency: 'expert',
-//       },
-//       {
-//         user_id: 1,
-//         skill_id: 2,
-//         proficiency: 'beginner',
-//       },
-//       {
-//         user_id: 2,
-//         skill_id: 2,
-//         proficiency: 'beginner',
-//       },
-//     ])
-
-//     const users = await User.query().preload<'manyToMany'>('skills', (builder) => {
-//       builder.pivotColumns(['proficiency'])
-//     })
-
-//     assert.lengthOf(users, 2)
-//     assert.lengthOf(users[0].skills, 2)
-//     assert.lengthOf(users[1].skills, 1)
-
-//     assert.equal(users[0].skills[0].name, 'Programming')
-//     assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
-//     assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
-//     assert.equal(users[0].skills[0].$extras.pivot_proficiency, 'expert')
-
-//     assert.equal(users[0].skills[1].name, 'Dancing')
-//     assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
-//     assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
-//     assert.equal(users[0].skills[1].$extras.pivot_proficiency, 'beginner')
-
-//     assert.equal(users[1].skills[0].name, 'Dancing')
-//     assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
-//     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
-//     assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
-//   })
-
-//   test('select extra pivot columns at runtime using model instance', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public name: string
-
-//       @column()
-//       public proficiency: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
-//     await db.insertQuery().table('skill_user').insert([
-//       {
-//         user_id: 1,
-//         skill_id: 1,
-//         proficiency: 'expert',
-//       },
-//       {
-//         user_id: 1,
-//         skill_id: 2,
-//         proficiency: 'beginner',
-//       },
-//       {
-//         user_id: 2,
-//         skill_id: 2,
-//         proficiency: 'beginner',
-//       },
-//     ])
-
-//     const users = await User.query().orderBy('id', 'asc')
-
-//     await users[0].preload<'manyToMany'>('skills', (builder) => {
-//       builder.pivotColumns(['proficiency'])
-//     })
-
-//     await users[1].preload((preloader) => {
-//       preloader.preload<'manyToMany'>('skills', (builder) => {
-//         builder.pivotColumns(['proficiency'])
-//       })
-//     })
-
-//     assert.lengthOf(users, 2)
-//     assert.lengthOf(users[0].skills, 2)
-//     assert.lengthOf(users[1].skills, 1)
-
-//     assert.equal(users[0].skills[0].name, 'Programming')
-//     assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
-//     assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
-//     assert.equal(users[0].skills[0].$extras.pivot_proficiency, 'expert')
-
-//     assert.equal(users[0].skills[1].name, 'Dancing')
-//     assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
-//     assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
-//     assert.equal(users[0].skills[1].$extras.pivot_proficiency, 'beginner')
-
-//     assert.equal(users[1].skills[0].name, 'Dancing')
-//     assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
-//     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
-//     assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
-//   })
-
-//   test('push to existing relations when preloading using model instance', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public name: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
-//     await db.insertQuery().table('skill_user').insert([
-//       {
-//         user_id: 1,
-//         skill_id: 1,
-//       },
-//       {
-//         user_id: 1,
-//         skill_id: 2,
-//       },
-//       {
-//         user_id: 2,
-//         skill_id: 2,
-//       },
-//     ])
-
-//     const users = await User.query().orderBy('id', 'asc')
-//     assert.lengthOf(users, 2)
-
-//     const dummySkill = new Skill()
-//     dummySkill.fill({ name: 'dummy' })
-//     users[0].$setRelated('skills', [dummySkill])
-
-//     await users[0].preload('skills')
-//     await users[1].preload('skills')
-
-//     assert.lengthOf(users[0].skills, 3)
-//     assert.lengthOf(users[1].skills, 1)
-
-//     assert.equal(users[0].skills[0].name, 'dummy')
-
-//     assert.equal(users[0].skills[1].name, 'Programming')
-//     assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
-//     assert.equal(users[0].skills[1].$extras.pivot_skill_id, 1)
-
-//     assert.equal(users[0].skills[2].name, 'Dancing')
-//     assert.equal(users[0].skills[2].$extras.pivot_user_id, 1)
-//     assert.equal(users[0].skills[2].$extras.pivot_skill_id, 2)
-
-//     assert.equal(users[1].skills[0].name, 'Dancing')
-//     assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
-//     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
-//   })
-// })
+test.group('Model | ManyToMany | preload', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('preload relation', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    await db.insertQuery().table('users').insert([{ username: 'virk' }])
+    await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+    ])
+
+    const users = await User.query().preload('skills')
+    assert.lengthOf(users, 1)
+    assert.lengthOf(users[0].skills, 1)
+    assert.equal(users[0].skills[0].name, 'Programming')
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+  })
+
+  test('preload relation for many', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+      {
+        user_id: 2,
+        skill_id: 2,
+      },
+    ])
+
+    const users = await User.query().preload('skills')
+    assert.lengthOf(users, 2)
+    assert.lengthOf(users[0].skills, 2)
+    assert.lengthOf(users[1].skills, 1)
+
+    assert.equal(users[0].skills[0].name, 'Programming')
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+
+    assert.equal(users[0].skills[1].name, 'Dancing')
+    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
+
+    assert.equal(users[1].skills[0].name, 'Dancing')
+    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
+  })
+
+  test('preload relation using model instance', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+      {
+        user_id: 2,
+        skill_id: 2,
+      },
+    ])
+
+    const users = await User.query().orderBy('id', 'asc')
+    assert.lengthOf(users, 2)
+
+    await users[0].preload('skills')
+    await users[1].preload('skills')
+
+    assert.lengthOf(users[0].skills, 2)
+    assert.lengthOf(users[1].skills, 1)
+
+    assert.equal(users[0].skills[0].name, 'Programming')
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+
+    assert.equal(users[0].skills[1].name, 'Dancing')
+    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
+
+    assert.equal(users[1].skills[0].name, 'Dancing')
+    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
+  })
+
+  test('select extra pivot columns', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+
+      @column()
+      public proficiency: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill, { pivotColumns: ['proficiency'] })
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+        proficiency: 'expert',
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+        proficiency: 'beginner',
+      },
+      {
+        user_id: 2,
+        skill_id: 2,
+        proficiency: 'beginner',
+      },
+    ])
+
+    const users = await User.query().preload('skills')
+    assert.lengthOf(users, 2)
+    assert.lengthOf(users[0].skills, 2)
+    assert.lengthOf(users[1].skills, 1)
+
+    assert.equal(users[0].skills[0].name, 'Programming')
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_proficiency, 'expert')
+
+    assert.equal(users[0].skills[1].name, 'Dancing')
+    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
+    assert.equal(users[0].skills[1].$extras.pivot_proficiency, 'beginner')
+
+    assert.equal(users[1].skills[0].name, 'Dancing')
+    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
+  })
+
+  test('select extra pivot columns at runtime', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+
+      @column()
+      public proficiency: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+        proficiency: 'expert',
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+        proficiency: 'beginner',
+      },
+      {
+        user_id: 2,
+        skill_id: 2,
+        proficiency: 'beginner',
+      },
+    ])
+
+    const users = await User.query().preload('skills', (builder) => {
+      builder.pivotColumns(['proficiency'])
+    })
+
+    assert.lengthOf(users, 2)
+    assert.lengthOf(users[0].skills, 2)
+    assert.lengthOf(users[1].skills, 1)
+
+    assert.equal(users[0].skills[0].name, 'Programming')
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_proficiency, 'expert')
+
+    assert.equal(users[0].skills[1].name, 'Dancing')
+    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
+    assert.equal(users[0].skills[1].$extras.pivot_proficiency, 'beginner')
+
+    assert.equal(users[1].skills[0].name, 'Dancing')
+    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
+  })
+
+  test('cherry pick columns during preload', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    await db.insertQuery().table('users').insert([{ username: 'virk' }])
+    await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+    ])
+
+    const users = await User.query().preload('skills', (builder) => {
+      return builder.select('name')
+    })
+
+    assert.lengthOf(users, 1)
+    assert.lengthOf(users[0].skills, 1)
+    assert.equal(users[0].skills[0].name, 'Programming')
+    assert.deepEqual(users[0].skills[0].$extras, { pivot_user_id: 1, pivot_skill_id: 1 })
+  })
+
+  test('raise error when local key is not selected', async (assert) => {
+    assert.plan(1)
+
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+      {
+        user_id: 2,
+        skill_id: 2,
+      },
+    ])
+
+    try {
+      await User.query().select('username').preload('skills')
+    } catch ({ message }) {
+      assert.equal(message, 'Cannot preload "skills", value of "User.id" is undefined')
+    }
+  })
+})
 
 // test.group('ManyToMany Query Builder | where', (group) => {
 //   group.before(async () => {

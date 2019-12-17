@@ -13,8 +13,8 @@ import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model
 import { RelationBaseQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { HasManyThrough } from './index'
-import { getValue, unique } from '../../../utils'
 import { BaseQueryBuilder } from '../Base/QueryBuilder'
+import { getValue, unique, isObject } from '../../../utils'
 
 /**
  * Extends the model query builder for executing queries in scope
@@ -24,13 +24,16 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder implements Rela
 ModelConstructorContract,
 ModelConstructorContract
 > {
+  private cherryPickingKeys: boolean = false
+
   constructor (
     builder: knex.QueryBuilder,
     client: QueryClientContract,
     private parent: ModelContract | ModelContract[],
     private relation: HasManyThrough,
+    isEager: boolean = false,
   ) {
-    super(builder, client, relation, (userFn) => {
+    super(builder, client, relation, isEager, (userFn) => {
       return (__builder) => {
         userFn(new HasManyThroughQueryBuilder(__builder, this.client, this.parent, this.relation))
       }
@@ -65,6 +68,42 @@ ModelConstructorContract
   }
 
   /**
+   * Transforms the selected column names by prefixing the
+   * table name
+   */
+  private transformRelatedTableColumns (columns: any[]) {
+    const relatedTable = this.relation.$relatedModel().$table
+
+    return columns.map((column) => {
+      if (typeof (column) === 'string') {
+        return `${relatedTable}.${column}`
+      }
+
+      if (Array.isArray(column)) {
+        return this.transformRelatedTableColumns(column)
+      }
+
+      if (isObject(column)) {
+        return Object.keys(column).reduce((result, alias) => {
+          result[alias] = `${relatedTable}.${column[alias]}`
+          return result
+        }, {})
+      }
+
+      return column
+    })
+  }
+
+  /**
+   * Select keys from the related table
+   */
+  public select (...args: any): this {
+    this.cherryPickingKeys = true
+    this.$knexBuilder.select(this.transformRelatedTableColumns(args))
+    return this
+  }
+
+  /**
    * Applies constraint to limit rows to the current relationship
    * only.
    */
@@ -87,11 +126,18 @@ ModelConstructorContract
     }
 
     /**
+     * Select * from related model when user is not cherry picking
+     * keys
+     */
+    if (!this.cherryPickingKeys) {
+      this.select('*')
+    }
+
+    /**
      * Selecting all from the related table, along with the foreign key of the
      * through table.
      */
-    this.select(
-      `${relatedTable}.*`,
+    this.$knexBuilder.select(
       `${throughTable}.${this.relation.$foreignCastAsKey} as ${this.relation.throughAlias(this.relation.$foreignCastAsKey)}`,
     )
 
@@ -108,5 +154,12 @@ ModelConstructorContract
      * Adding where constraints
      */
     this.addWhereConstraints(this)
+  }
+
+  /**
+   * The keys for constructing the join query
+   */
+  public getRelationKeys (): string[] {
+    return [this.relation.$throughForeignCastAsKey]
   }
 }
