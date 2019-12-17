@@ -70,7 +70,7 @@ export function getConfig (): ConnectionConfigContract {
           filename: join(fs.basePath, 'db.sqlite'),
         },
         useNullAsDefault: true,
-        debug: true,
+        debug: false,
       }
     case 'mysql':
       return {

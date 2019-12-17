@@ -9,6 +9,7 @@
 
 declare module '@ioc:Adonis/Lucid/Relations' {
   import {
+    ModelObject,
     ModelContract,
     ModelConstructorContract,
     ModelQueryBuilderContract,
@@ -442,6 +443,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     Result extends any = InstanceType<Related>
   > extends ModelQueryBuilderContract<Related, Result> {
     applyConstraints (): void
+    selectRelationKeys (): this
   }
 
   /**
@@ -518,18 +520,10 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    * Shape of the preloader to preload relationships
    */
   export interface PreloaderContract<Model extends ModelContract> {
-    parseRelationName (relationName: string): {
-      primary: string,
-      relation: RelationshipsContract,
-      children: { relationName: string } | null,
-    }
-
-    processForOne (name: string, model: Model, client: QueryClientContract): Promise<void>
-    processForMany (name: string, models: Model[], client: QueryClientContract): Promise<void>
-    processAllForOne (models: Model, client: QueryClientContract): Promise<void>
-    processAllForMany (models: Model[], client: QueryClientContract): Promise<void>
-
+    processAllForOne (parent: Model, client: QueryClientContract): Promise<void>
+    processAllForMany (parent: Model[], client: QueryClientContract): Promise<void>
     preload: QueryBuilderPreloadFn<Model, this>
+    sideload (values: ModelObject): this
   }
 
   /**

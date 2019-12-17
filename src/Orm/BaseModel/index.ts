@@ -38,9 +38,9 @@ import {
 
 import { Hooks } from '../Hooks'
 import { OrmConfig } from '../Config'
-// import { Preloader } from '../Preloader'
-import { proxyHandler } from './proxyHandler'
+import { Preloader } from '../Preloader'
 import { HasOne } from '../Relations/HasOne'
+import { proxyHandler } from './proxyHandler'
 import { HasMany } from '../Relations/HasMany'
 import { BelongsTo } from '../Relations/BelongsTo'
 import { ManyToMany } from '../Relations/ManyToMany'
@@ -1107,18 +1107,19 @@ export class BaseModel implements ModelContract {
   /**
    * Preloads one or more relationships for the current model
    */
-  public async preload (_relationName: any, _callback?: any) {
-    // const constructor = this.constructor as ModelConstructorContract
-    // const preloader = new Preloader(constructor)
+  public async preload (relationName: any, callback?: any) {
+    const constructor = this.constructor as ModelConstructorContract
+    const preloader = new Preloader(constructor)
 
-    // if (typeof (relationName) === 'function') {
-    //   relationName(preloader)
-    // } else {
-    //   preloader.preload(relationName, callback)
-    // }
+    if (typeof (relationName) === 'function') {
+      relationName(preloader)
+    } else {
+      preloader.preload(relationName, callback)
+    }
 
-    // preloader.sideload(this.$sideloaded)
-    // await preloader.processAllForOne(this, constructor.query(this.$options).client)
+    await preloader
+      .sideload(this.$sideloaded)
+      .processAllForOne(this, constructor.$adapter.modelClient(this))
   }
 
   /**

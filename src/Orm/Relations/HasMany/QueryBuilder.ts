@@ -29,8 +29,9 @@ ModelConstructorContract
     client: QueryClientContract,
     private parent: ModelContract | ModelContract[],
     private relation: HasMany,
+    isEager: boolean = false,
   ) {
-    super(builder, client, relation, (userFn) => {
+    super(builder, client, relation, isEager, (userFn) => {
       return (__builder) => {
         userFn(new HasManyQueryBuilder(__builder, this.client, this.parent, this.relation))
       }
@@ -64,5 +65,12 @@ ModelConstructorContract
      */
     const value = getValue(this.parent, this.relation.$localKey, this.relation, queryAction)
     this.$knexBuilder.where(this.relation.$foreignCastAsKey, value)
+  }
+
+  /**
+   * The keys for constructing the join query
+   */
+  public getRelationKeys (): string[] {
+    return [this.relation.$foreignCastAsKey]
   }
 }

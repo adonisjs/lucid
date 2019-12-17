@@ -484,701 +484,508 @@ test.group('Model | HasMany | bulk operations', (group) => {
   })
 })
 
-// test.group('Model | HasMany', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
-
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
-
-//   group.afterEach(async () => {
-//     await resetTables()
-//   })
-
-//   test('get eager query', (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     User.$getRelation('posts')!.boot()
-//     const user = new User()
-//     user.id = 1
-
-//     const { sql, bindings } = User.$getRelation('posts')!
-//       .getEagerQuery([user], User.query().client)
-//       .applyConstraints()
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.query()
-//       .from('posts')
-//       .whereIn('user_id', [1])
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('get query', (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     User.$getRelation('posts')!.boot()
-//     const user = new User()
-//     user.id = 1
-
-//     const { sql, bindings } = User.$getRelation('posts')!
-//       .getQuery(user, User.query().client)
-//       .applyConstraints()
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.query()
-//       .from('posts')
-//       .where('user_id', 1)
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('queries must be instance of has many query builder', (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     User.$getRelation('posts')!.boot()
-//     const user = new User()
-//     user.id = 1
-
-//     const query = User.$getRelation('posts')!.getQuery(user, User.query().client)
-//     const eagerQuery = User.$getRelation('posts')!.getEagerQuery([user], User.query().client)
-
-//     assert.instanceOf(query, HasManyQueryBuilder)
-//     assert.instanceOf(eagerQuery, HasManyQueryBuilder)
-//   })
-
-//   test('preload has many relationship', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }])
-
-//     const users = await db.query().from('users')
-//     await db.insertQuery().table('posts').insert([
-//       {
-//         user_id: users[0].id,
-//         title: 'Adonis 101',
-//       },
-//       {
-//         user_id: users[0].id,
-//         title: 'Lucid 101',
-//       },
-//     ])
-
-//     User.$boot()
-//     const user = await User.query().preload('posts').where('username', 'virk').first()
-//     assert.lengthOf(user!.posts, 2)
-//     assert.instanceOf(user!.posts[0], Post)
-//     assert.equal(user!.posts[0].userId, user!.id)
-
-//     assert.instanceOf(user!.posts[1], Post)
-//     assert.equal(user!.posts[1].userId, user!.id)
-//   })
-
-//   test('preload has many relationship for many rows', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('posts').insert([
-//       {
-//         user_id: 1,
-//         title: 'Adonis 101',
-//       },
-//       {
-//         user_id: 1,
-//         title: 'Lucid 101',
-//       },
-//       {
-//         user_id: 2,
-//         title: 'Lucid 102',
-//       },
-//     ])
-
-//     User.$boot()
-//     const users = await User.query().preload('posts')
-
-//     assert.lengthOf(users[0]!.posts, 2)
-//     assert.instanceOf(users[0].posts[0], Post)
-//     assert.equal(users[0].posts[0].userId, users[0].id)
-//     assert.instanceOf(users[0].posts[1], Post)
-//     assert.equal(users[0].posts[1].userId, users[0].id)
-
-//     assert.lengthOf(users[1]!.posts, 1)
-//     assert.instanceOf(users[1].posts[0], Post)
-//     assert.equal(users[1].posts[0].userId, users[1].id)
-//   })
-
-//   test('preload has many relationship using model instance', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('posts').insert([
-//       {
-//         user_id: 1,
-//         title: 'Adonis 101',
-//       },
-//       {
-//         user_id: 1,
-//         title: 'Lucid 101',
-//       },
-//       {
-//         user_id: 2,
-//         title: 'Lucid 102',
-//       },
-//     ])
-
-//     User.$boot()
-//     const users = await User.query().orderBy('id', 'asc')
-
-//     await users[0].preload('posts')
-//     await users[1].preload('posts')
-
-//     assert.lengthOf(users[0]!.posts, 2)
-//     assert.instanceOf(users[0].posts[0], Post)
-//     assert.equal(users[0].posts[0].userId, users[0].id)
-//     assert.instanceOf(users[0].posts[1], Post)
-//     assert.equal(users[0].posts[1].userId, users[0].id)
-
-//     assert.lengthOf(users[1]!.posts, 1)
-//     assert.instanceOf(users[1].posts[0], Post)
-//     assert.equal(users[1].posts[0].userId, users[1].id)
-//   })
-
-//   test('raise exception when local key is not selected', async (assert) => {
-//     assert.plan(1)
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-
-//     const users = await db.query().from('users')
-//     await db.insertQuery().table('posts').insert([
-//       {
-//         user_id: users[0].id,
-//         title: 'Adonis 101',
-//       },
-//       {
-//         user_id: users[1].id,
-//         title: 'Lucid 101',
-//       },
-//     ])
-
-//     try {
-//       await User.query().select('username').preload('posts').where('username', 'virk').first()
-//     } catch ({ message }) {
-//       assert.equal(message, 'Cannot preload posts, value of User.id is undefined')
-//     }
-//   })
-
-//   test('pass callback to preload', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public displayName: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('posts').insert([
-//       {
-//         user_id: 1,
-//         title: 'Adonis 101',
-//       },
-//       {
-//         user_id: 2,
-//         title: 'Lucid 101',
-//       },
-//     ])
-
-//     User.$boot()
-
-//     const user = await User.query().preload('posts', (builder) => {
-//       builder.whereNull('title')
-//     }).where('username', 'virk').first()
-
-//     assert.lengthOf(user!.posts, 0)
-//   })
-
-//   test('preload nested relations', async (assert) => {
-//     class Comment extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public postId: number
-
-//       @column()
-//       public body: string
-//     }
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-
-//       @hasMany(() => Comment)
-//       public comments: Comment[]
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('posts').insert([
-//       {
-//         user_id: 1,
-//         title: 'Adonis 101',
-//       },
-//       {
-//         user_id: 2,
-//         title: 'Lucid 101',
-//       },
-//     ])
-
-//     await db.insertQuery().table('comments').insert([
-//       {
-//         post_id: 1,
-//         body: 'Looks nice',
-//       },
-//       {
-//         post_id: 2,
-//         body: 'Wow! Never knew that',
-//       },
-//     ])
-
-//     const user = await User.query()
-//       .preload('posts.comments')
-//       .where('username', 'virk')
-//       .first()
-
-//     assert.lengthOf(user!.posts, 1)
-//     assert.lengthOf(user!.posts[0].comments, 1)
-//     assert.equal(user!.posts[0].comments[0].postId, user!.posts[0].id)
-//   })
-
-//   test('preload nested relations with primary relation repeating twice', async (assert) => {
-//     class Comment extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public postId: number
-
-//       @column()
-//       public body: string
-//     }
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-
-//       @hasMany(() => Comment)
-//       public comments: Comment[]
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('posts').insert([
-//       {
-//         user_id: 1,
-//         title: 'Adonis 101',
-//       },
-//       {
-//         user_id: 2,
-//         title: 'Lucid 101',
-//       },
-//     ])
-
-//     await db.insertQuery().table('comments').insert([
-//       {
-//         post_id: 1,
-//         body: 'Looks nice',
-//       },
-//       {
-//         post_id: 2,
-//         body: 'Wow! Never knew that',
-//       },
-//     ])
-
-//     const query = User.query()
-//       .preload('posts')
-//       .preload('posts.comments')
-//       .where('username', 'virk')
-
-//     const user = await query.first()
-//     assert.lengthOf(user!.posts, 1)
-//     assert.lengthOf(user!.posts[0].comments, 1)
-//     assert.equal(user!.posts[0].comments[0].postId, user!.posts[0].id)
-
-//     assert.lengthOf(Object.keys(query['_preloader']['_preloads']), 1)
-//     assert.property(query['_preloader']['_preloads'], 'posts')
-//     assert.lengthOf(query['_preloader']['_preloads'].posts.children, 1)
-//     assert.equal(query['_preloader']['_preloads'].posts.children[0].relationName, 'comments')
-//   })
-
-//   test('preload nested relations using model instance', async (assert) => {
-//     class Comment extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public postId: number
-
-//       @column()
-//       public body: string
-//     }
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-
-//       @hasMany(() => Comment)
-//       public comments: Comment[]
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('posts').insert([
-//       {
-//         user_id: 1,
-//         title: 'Adonis 101',
-//       },
-//       {
-//         user_id: 2,
-//         title: 'Lucid 101',
-//       },
-//     ])
-
-//     await db.insertQuery().table('comments').insert([
-//       {
-//         post_id: 1,
-//         body: 'Looks nice',
-//       },
-//       {
-//         post_id: 2,
-//         body: 'Wow! Never knew that',
-//       },
-//     ])
-
-//     const users = await User.all()
-
-//     await users[0].preload((preloader) => {
-//       preloader.preload('posts').preload('posts.comments')
-//     })
-
-//     await users[1].preload((preloader) => {
-//       preloader.preload('posts').preload('posts.comments')
-//     })
-
-//     assert.lengthOf(users[0].posts, 1)
-//     assert.lengthOf(users[0].posts[0].comments, 1)
-//     assert.equal(users[0].posts[0].comments[0].postId, users[0].posts[0].id)
-
-//     assert.lengthOf(users[1].posts, 1)
-//     assert.lengthOf(users[1].posts[0].comments, 1)
-//     assert.equal(users[1].posts[0].comments[0].postId, users[1].posts[0].id)
-//   })
-
-//   test('pass main query options down the chain', async (assert) => {
-//     class Comment extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public postId: number
-
-//       @column()
-//       public body: string
-//     }
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-
-//       @hasMany(() => Comment)
-//       public comments: Comment[]
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('posts').insert([
-//       {
-//         user_id: 1,
-//         title: 'Adonis 101',
-//       },
-//       {
-//         user_id: 2,
-//         title: 'Lucid 101',
-//       },
-//     ])
-
-//     await db.insertQuery().table('comments').insert([
-//       {
-//         post_id: 1,
-//         body: 'Looks nice',
-//       },
-//       {
-//         post_id: 2,
-//         body: 'Wow! Never knew that',
-//       },
-//     ])
-
-//     const query = User.query({ connection: 'secondary' })
-//       .preload('posts')
-//       .preload('posts.comments')
-//       .where('username', 'virk')
-
-//     const user = await query.first()
-//     assert.lengthOf(user!.posts, 1)
-//     assert.lengthOf(user!.posts[0].comments, 1)
-//     assert.equal(user!.posts[0].comments[0].postId, user!.posts[0].id)
-
-//     assert.equal(user!.$options!.connection, 'secondary')
-//     assert.equal(user!.posts[0].$options!.connection, 'secondary')
-//     assert.equal(user!.posts[0].comments[0].$options!.connection, 'secondary')
-//   })
-
-//   test('push to existing relations when preloading using model instance', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('posts').insert([
-//       {
-//         user_id: 1,
-//         title: 'Adonis 101',
-//       },
-//       {
-//         user_id: 1,
-//         title: 'Lucid 101',
-//       },
-//       {
-//         user_id: 2,
-//         title: 'Lucid 102',
-//       },
-//     ])
-
-//     User.$boot()
-//     const users = await User.query().orderBy('id', 'asc')
-
-//     const dummyPost = new Post()
-//     dummyPost.fill({ userId: users[0].id, title: 'Dummy 101' })
-//     users[0].$setRelated('posts', [dummyPost])
-
-//     await users[0].preload('posts')
-//     await users[1].preload('posts')
-
-//     assert.lengthOf(users[0]!.posts, 3)
-//     assert.equal(users[0].posts[0].title, 'Dummy 101')
-
-//     assert.lengthOf(users[1]!.posts, 1)
-//     assert.equal(users[1].posts[0].title, 'Lucid 102')
-//   })
-// })
+test.group('Model | HasMany | preload', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('preload relationship', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const [user0, user1] = await db.query().from('users')
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: user0.id,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: user1.id,
+        title: 'Lucid 101',
+      },
+    ])
+
+    User.$boot()
+
+    const users = await User.query().preload('posts')
+    assert.lengthOf(users, 2)
+
+    assert.equal(users[0].posts[0].userId, users[0].id)
+    assert.equal(users[1].posts[0].userId, users[1].id)
+  })
+
+  test('preload relationship for many rows', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 1,
+        title: 'Lucid 101',
+      },
+      {
+        user_id: 2,
+        title: 'Lucid 102',
+      },
+    ])
+
+    User.$boot()
+    const users = await User.query().preload('posts')
+
+    assert.lengthOf(users[0]!.posts, 2)
+    assert.instanceOf(users[0].posts[0], Post)
+    assert.equal(users[0].posts[0].userId, users[0].id)
+    assert.instanceOf(users[0].posts[1], Post)
+    assert.equal(users[0].posts[1].userId, users[0].id)
+
+    assert.lengthOf(users[1]!.posts, 1)
+    assert.instanceOf(users[1].posts[0], Post)
+    assert.equal(users[1].posts[0].userId, users[1].id)
+  })
+
+  test('add constraints during preload', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 1,
+        title: 'Lucid 101',
+      },
+      {
+        user_id: 2,
+        title: 'Lucid 102',
+      },
+    ])
+
+    User.$boot()
+
+    const users = await User.query().preload('posts', (builder) => builder.where('title', 'Lucid 101'))
+    assert.lengthOf(users, 2)
+
+    assert.lengthOf(users[0].posts, 1)
+    assert.equal(users[0].posts[0].title, 'Lucid 101')
+    assert.lengthOf(users[1].posts, 0)
+  })
+
+  test('cherry pick columns during preload', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 1,
+        title: 'Lucid 101',
+      },
+      {
+        user_id: 2,
+        title: 'Lucid 102',
+      },
+    ])
+
+    User.$boot()
+
+    const users = await User.query().preload('posts', (builder) => {
+      return builder.select('title')
+    })
+
+    assert.lengthOf(users, 2)
+    assert.deepEqual(users[0].posts[0].$extras, {})
+    assert.deepEqual(users[1].posts[0].$extras, {})
+  })
+
+  test('do not repeat fk when already defined', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 1,
+        title: 'Lucid 101',
+      },
+      {
+        user_id: 2,
+        title: 'Lucid 102',
+      },
+    ])
+
+    User.$boot()
+
+    const users = await User.query().preload('posts', (builder) => {
+      return builder.select('title', 'user_id')
+    })
+
+    assert.lengthOf(users, 2)
+    assert.deepEqual(users[0].posts[0].$extras, {})
+    assert.deepEqual(users[1].posts[0].$extras, {})
+  })
+
+  test('raise exception when local key is not selected', async (assert) => {
+    assert.plan(1)
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 1,
+        title: 'Lucid 101',
+      },
+      {
+        user_id: 2,
+        title: 'Lucid 102',
+      },
+    ])
+
+    try {
+      await User.query().select('username').preload('posts').where('username', 'virk').first()
+    } catch ({ message }) {
+      assert.equal(message, 'Cannot preload "posts", value of "User.id" is undefined')
+    }
+  })
+
+  test('preload nested relations', async (assert) => {
+    class Comment extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public postId: number
+
+      @column()
+      public body: string
+    }
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+
+      @hasMany(() => Comment)
+      public comments: HasMany<Comment>
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 2,
+        title: 'Lucid 101',
+      },
+    ])
+
+    await db.insertQuery().table('comments').insert([
+      {
+        post_id: 1,
+        body: 'Looks nice',
+      },
+      {
+        post_id: 2,
+        body: 'Wow! Never knew that',
+      },
+    ])
+
+    const user = await User.query()
+      .preload('posts', (builder) => builder.preload('comments'))
+      .where('username', 'virk')
+      .first()
+
+    assert.lengthOf(user!.posts, 1)
+    assert.lengthOf(user!.posts[0].comments, 1)
+    assert.equal(user!.posts[0].comments[0].postId, user!.posts[0].id)
+  })
+
+  test('preload nested relations using model instance', async (assert) => {
+    class Comment extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public postId: number
+
+      @column()
+      public body: string
+    }
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+
+      @hasMany(() => Comment)
+      public comments: HasMany<Comment>
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 2,
+        title: 'Lucid 101',
+      },
+    ])
+
+    await db.insertQuery().table('comments').insert([
+      {
+        post_id: 1,
+        body: 'Looks nice',
+      },
+      {
+        post_id: 2,
+        body: 'Wow! Never knew that',
+      },
+    ])
+
+    const users = await User.all()
+
+    await users[0].preload((preloader) => {
+      preloader.preload('posts', (builder) => builder.preload('comments'))
+    })
+
+    await users[1].preload((preloader) => {
+      preloader.preload('posts', (builder) => builder.preload('comments'))
+    })
+
+    assert.lengthOf(users[0].posts, 1)
+    assert.lengthOf(users[0].posts[0].comments, 1)
+    assert.equal(users[0].posts[0].comments[0].postId, users[0].posts[0].id)
+
+    assert.lengthOf(users[1].posts, 1)
+    assert.lengthOf(users[1].posts[0].comments, 1)
+    assert.equal(users[1].posts[0].comments[0].postId, users[1].posts[0].id)
+  })
+
+  test('pass main query options down the chain', async (assert) => {
+    class Comment extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public postId: number
+
+      @column()
+      public body: string
+    }
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+
+      @hasMany(() => Comment)
+      public comments: HasMany<Comment>
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+    await db.insertQuery().table('posts').insert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 2,
+        title: 'Lucid 101',
+      },
+    ])
+
+    await db.insertQuery().table('comments').insert([
+      {
+        post_id: 1,
+        body: 'Looks nice',
+      },
+      {
+        post_id: 2,
+        body: 'Wow! Never knew that',
+      },
+    ])
+
+    const query = User.query({ connection: 'secondary' })
+      .preload('posts', (builder) => builder.preload('comments'))
+      .where('username', 'virk')
+
+    const user = await query.first()
+    assert.lengthOf(user!.posts, 1)
+    assert.lengthOf(user!.posts[0].comments, 1)
+    assert.equal(user!.posts[0].comments[0].postId, user!.posts[0].id)
+
+    assert.equal(user!.$options!.connection, 'secondary')
+    assert.equal(user!.posts[0].$options!.connection, 'secondary')
+    assert.equal(user!.posts[0].comments[0].$options!.connection, 'secondary')
+  })
+})
 
 // test.group('Model | HasMany | fetch related', (group) => {
 //   group.before(async () => {

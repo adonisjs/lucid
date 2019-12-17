@@ -34,6 +34,6 @@ ModelConstructorContract
   }
 
   public eagerQuery (): any {
-    return this.query()
+    return new HasOneQueryBuilder(this.client.knexQuery(), this.client, this.parent, this.relation, true)
   }
 }

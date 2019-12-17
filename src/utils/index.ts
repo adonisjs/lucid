@@ -50,7 +50,7 @@ export function getValue (
 ) {
   return ensureValue(model, key, () => {
     throw new Exception(
-      `Cannot ${action} ${relation.$relationName}, value of ${relation.$model.name}.${key} is undefined`,
+      `Cannot ${action} "${relation.$relationName}", value of "${relation.$model.name}.${key}" is undefined`,
       500,
     )
   })

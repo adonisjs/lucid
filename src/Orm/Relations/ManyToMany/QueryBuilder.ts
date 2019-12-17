@@ -13,7 +13,7 @@ import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model
 import { ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { ManyToMany } from './index'
-import { getValue, unique } from '../../../utils'
+import { getValue, unique, isObject } from '../../../utils'
 import { BaseQueryBuilder } from '../Base/QueryBuilder'
 
 /**
@@ -24,13 +24,16 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder implements ManyToMa
 ModelConstructorContract,
 ModelConstructorContract
 > {
+  private cherryPickingKeys: boolean = false
+
   constructor (
     builder: knex.QueryBuilder,
     client: QueryClientContract,
     private parent: ModelContract | ModelContract[],
     private relation: ManyToMany,
+    isEager: boolean = false,
   ) {
-    super(builder, client, relation, (userFn) => {
+    super(builder, client, relation, isEager, (userFn) => {
       return (__builder) => {
         userFn(new ManyToManyQueryBuilder(__builder, this.client, this.parent, this.relation))
       }
@@ -65,6 +68,42 @@ ModelConstructorContract
      */
     const value = getValue(this.parent, this.relation.$localKey, this.relation, queryAction)
     this.wherePivot(this.relation.$pivotForeignKey, value)
+  }
+
+  /**
+   * Transforms the selected column names by prefixing the
+   * table name
+   */
+  private transformRelatedTableColumns (columns: any[]) {
+    const relatedTable = this.relation.$relatedModel().$table
+
+    return columns.map((column) => {
+      if (typeof (column) === 'string') {
+        return `${relatedTable}.${column}`
+      }
+
+      if (Array.isArray(column)) {
+        return this.transformRelatedTableColumns(column)
+      }
+
+      if (isObject(column)) {
+        return Object.keys(column).reduce((result, alias) => {
+          result[alias] = `${relatedTable}.${column[alias]}`
+          return result
+        }, {})
+      }
+
+      return column
+    })
+  }
+
+  /**
+   * Select keys from the related table
+   */
+  public select (...args: any): this {
+    this.cherryPickingKeys = true
+    this.$knexBuilder.select(this.transformRelatedTableColumns(args))
+    return this
   }
 
   /**
@@ -246,9 +285,12 @@ ModelConstructorContract
     }
 
     /**
-     * Select * from related model
+     * Select * from related model when user is not cherry picking
+     * keys
      */
-    this.select(`${this.relation.$relatedModel().$table}.*`)
+    if (!this.cherryPickingKeys) {
+      this.select('*')
+    }
 
     /**
      * Select columns from the pivot table
@@ -270,5 +312,14 @@ ModelConstructorContract
     )
 
     this.addWhereConstraints()
+  }
+
+  /**
+   * The keys for constructing the join query
+   */
+  public getRelationKeys (): string[] {
+    return [
+      `${this.relation.$relatedModel().$table}.${this.relation.$relatedCastAsKey}`,
+    ]
   }
 }
