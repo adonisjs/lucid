@@ -56,7 +56,7 @@ class SeedDatabase extends Command {
   }
 
   /**
-   * Throws exception when trying to run migrations are
+   * Throws exception when trying to run seeds are
    * executed in production and not using force flag.
    *
    * @method _validateState
@@ -104,7 +104,7 @@ class SeedDatabase extends Command {
 
   /**
    * Method called when command is executed. This method will
-   * require all files from the migrations directory
+   * require all files from the seeds directory
    * and execute all pending schema files
    *
    * @method handle
