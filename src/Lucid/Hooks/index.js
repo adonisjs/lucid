@@ -161,7 +161,7 @@ class Hooks {
     /**
      * Execute all handlers in sequence
      */
-    for (let handler of allHandlers) {
+    for (const handler of allHandlers) {
       const { method } = resolver.forDir('modelHooks').resolveFunc(handler.handler)
       await method(...args)
     }

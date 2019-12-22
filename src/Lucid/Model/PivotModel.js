@@ -154,8 +154,8 @@ class PivotModel extends BaseModel {
      * relationship via `withTimestamps` method.
      */
     if (this.$withTimestamps) {
-      this.$attributes['created_at'] = moment().format(DATE_FORMAT)
-      this.$attributes['updated_at'] = moment().format(DATE_FORMAT)
+      this.$attributes.created_at = moment().format(DATE_FORMAT)
+      this.$attributes.updated_at = moment().format(DATE_FORMAT)
     }
 
     const query = this.query(this.$table, this.$connection)

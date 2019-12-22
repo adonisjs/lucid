@@ -193,7 +193,7 @@ class DatabaseFactory {
   async createMany (numberOfRows, data = {}) {
     const rows = []
 
-    for (let index of _.range(numberOfRows)) {
+    for (const index of _.range(numberOfRows)) {
       const row = await this.create(data, index)
       rows.push(row)
     }

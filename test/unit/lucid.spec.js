@@ -1032,7 +1032,7 @@ test.group('Model', (group) => {
     await ioc.use('Database').table('users').insert({ username: 'virk' })
     await User.query().where('username', 'virk').update({ username: 'nikk' })
     const users = await User.query().pair('id', 'updated_at')
-    assert.deepEqual(users, { '1': null })
+    assert.deepEqual(users, { 1: null })
     assert.deepEqual(formatting, [])
   })
 
@@ -1527,7 +1527,7 @@ test.group('Model', (group) => {
     }
 
     const count = await ioc.use('Database').table('users').count('* as total')
-    assert.deepEqual(count, [{ 'total': helpers.formatNumber(0) }])
+    assert.deepEqual(count, [{ total: helpers.formatNumber(0) }])
   })
 
   test('rollback update operation via transaction', async (assert) => {
@@ -1576,7 +1576,7 @@ test.group('Model', (group) => {
     }
 
     const count = await ioc.use('Database').table('users').count('* as total')
-    assert.deepEqual(count, [{ 'total': helpers.formatNumber(0) }])
+    assert.deepEqual(count, [{ total: helpers.formatNumber(0) }])
   })
 
   test('createMany inside a transaction', async (assert) => {
@@ -1598,7 +1598,7 @@ test.group('Model', (group) => {
     }
 
     const count = await ioc.use('Database').table('users').count('* as total')
-    assert.deepEqual(count, [{ 'total': helpers.formatNumber(0) }])
+    assert.deepEqual(count, [{ total: helpers.formatNumber(0) }])
   })
 
   test('define runtime visible fields', async (assert) => {

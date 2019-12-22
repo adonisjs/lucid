@@ -24,7 +24,7 @@ const proxyHandler = {
     const queryScope = util.makeScopeName(name)
 
     if (name === 'then') {
-      throw new Error(`Make sure to call fetch to execute the query`)
+      throw new Error('Make sure to call fetch to execute the query')
     }
 
     /**

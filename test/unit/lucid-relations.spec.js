@@ -1178,7 +1178,7 @@ test.group('Relations | HasOne', (group) => {
     await ioc.use('Database').table('profiles').insert([{ user_id: 1, likes: 3 }])
 
     const users = () => User.query().withCount('profile.picture')
-    assert.throw(users, `E_CANNOT_NEST_RELATION: withCount does not allowed nested relations. Instead use .with('profile', (builder) => builder.withCount('picture'))`)
+    assert.throw(users, 'E_CANNOT_NEST_RELATION: withCount does not allowed nested relations. Instead use .with(\'profile\', (builder) => builder.withCount(\'picture\'))')
   })
 
   test('allow withCount on nested query builder', async (assert) => {

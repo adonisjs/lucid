@@ -228,7 +228,7 @@ test.group('Database | QueryBuilder', (group) => {
     let c1 = 0
     let c2 = 0
 
-    let q = this.database.table('profiles').select('country_id').sum('likes as like_total').groupBy('country_id')
+    const q = this.database.table('profiles').select('country_id').sum('likes as like_total').groupBy('country_id')
 
     c1 = (await q)
     c2 = await q.getCount()
