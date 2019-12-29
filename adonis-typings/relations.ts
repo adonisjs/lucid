@@ -249,7 +249,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     client (
       model: InstanceType<Model> | InstanceType<Model>[],
       client: QueryClientContract,
-    ): RelationBaseQueryClientContract<Model, RelatedModel>
+    ): HasOneClientContract<Model, RelatedModel>
   }
 
   /**
@@ -282,7 +282,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     client (
       model: InstanceType<Model> | InstanceType<Model>[],
       client: QueryClientContract,
-    ): RelationBaseQueryClientContract<Model, RelatedModel>
+    ): HasManyClientContract<Model, RelatedModel>
   }
 
   /**
@@ -315,7 +315,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     client (
       model: InstanceType<Model> | InstanceType<Model>[],
       client: QueryClientContract,
-    ): RelationBaseQueryClientContract<Model, RelatedModel>
+    ): BelongsToClientContract<Model, RelatedModel>
   }
 
   /**
@@ -414,6 +414,47 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     & ExcutableQueryBuilderContract<InstanceType<RelatedModel>[]>
   }
 
+  /**
+   * Query client for has one relationship
+   */
+  export interface HasOneClientContract<
+    Model extends ModelConstructorContract,
+    RelatedModel extends ModelConstructorContract
+  > extends RelationBaseQueryClientContract<Model, RelatedModel> {
+    save (related: InstanceType<RelatedModel>): Promise<void>
+    create (values: ModelObject): Promise<InstanceType<RelatedModel>>
+
+    firstOrCreate (search: ModelObject, savePayload?: ModelObject): Promise<InstanceType<RelatedModel>>
+    updateOrCreate (search: ModelObject, updatePayload: ModelObject): Promise<InstanceType<RelatedModel>>
+  }
+
+  /**
+   * Query client for has many relationship. Extends hasOne and
+   * adds support for saving many relations
+   */
+  export interface HasManyClientContract<
+    Model extends ModelConstructorContract,
+    RelatedModel extends ModelConstructorContract
+  > extends HasOneClientContract<Model, RelatedModel> {
+    saveMany (related: InstanceType<RelatedModel>[]): Promise<void>
+    createMany (values: ModelObject[]): Promise<InstanceType<RelatedModel>[]>
+  }
+
+  /**
+   * Query client for belongs to relationship. Uses `associate` and
+   * `dissociate` over save.
+   */
+  export interface BelongsToClientContract<
+    Model extends ModelConstructorContract,
+    RelatedModel extends ModelConstructorContract
+  > extends RelationBaseQueryClientContract<Model, RelatedModel> {
+    associate (related: InstanceType<RelatedModel>): Promise<void>
+    dissociate (): Promise<void>
+  }
+
+  /**
+   * Query client for many to many relationship.
+   */
   export interface ManyToManyClientContract<
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
@@ -427,6 +468,17 @@ declare module '@ioc:Adonis/Lucid/Relations' {
      */
     eagerQuery (): ManyToManyQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
     & ExcutableQueryBuilderContract<InstanceType<RelatedModel>[]>
+
+    save (related: InstanceType<RelatedModel>): Promise<void>
+    create (values: ModelObject): Promise<InstanceType<RelatedModel>>
+
+    saveMany (related: InstanceType<RelatedModel>[]): Promise<void>
+    createMany (values: ModelObject[]): Promise<InstanceType<RelatedModel>[]>
+
+    attach (ids: (string | number)[] | { [key: string]: ModelObject }): Promise<void>
+    detach (ids: (string | number)[]): Promise<void>
+
+    sync (ids: (string | number)[] | { [key: string]: ModelObject }, checkExisting?: boolean): Promise<void>
   }
 
   /**
