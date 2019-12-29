@@ -371,8 +371,8 @@ export class BaseModel implements ModelContract {
   }
 
   /**
-   * Returns a fresh instance of model by applying attributes
-   * to the model instance
+   * Returns a fresh persisted instance of model by applying
+   * attributes to the model instance
    */
   public static async create<T extends ModelConstructorContract> (
     this: T,
@@ -385,6 +385,39 @@ export class BaseModel implements ModelContract {
 
     await instance.save()
     return instance as InstanceType<T>
+  }
+
+  /**
+   * Same as [[BaseModel.create]], but persists multiple instances. The create
+   * calls are wrapped inside a transaction.
+   */
+  public static async createMany<T extends ModelConstructorContract> (
+    this: T,
+    values: ModelObject[],
+    options?: ModelAdapterOptions,
+  ): Promise<InstanceType<T>[]> {
+    const trx = await this.$adapter.modelConstructorClient(this, options).transaction()
+    const collection: InstanceType<T>[] = []
+
+    try {
+      for (let row of values) {
+        const instance = new this() as InstanceType<T>
+
+        instance.fill(row)
+        instance.$trx = trx
+        instance.$options = options
+
+        await instance.save()
+        collection.push(instance)
+      }
+
+      await trx.commit()
+    } catch (error) {
+      await trx.rollback()
+      throw error
+    }
+
+    return collection
   }
 
   /**
@@ -1137,6 +1170,7 @@ export class BaseModel implements ModelContract {
       await Model.hooks.execute('before', 'save', this)
 
       await Model.$adapter.insert(this, this.$prepareForAdapter(this.$attributes))
+
       this.$hydrateOriginals()
       this.$isPersisted = true
 

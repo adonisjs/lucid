@@ -28,7 +28,10 @@ export class Adapter implements AdapterContract {
   /**
    * Returns the query client based upon the model instance
    */
-  private _getModelClient (modelConstructor: ModelConstructorContract, options?: ModelAdapterOptions) {
+  public modelConstructorClient (
+    modelConstructor: ModelConstructorContract,
+    options?: ModelAdapterOptions,
+  ) {
     if (options && options.client) {
       return options.client
     }
@@ -42,7 +45,7 @@ export class Adapter implements AdapterContract {
    * Returns the model query builder instance for a given model
    */
   public query (modelConstructor: ModelConstructorContract, options?: ModelAdapterOptions): any {
-    const client = this._getModelClient(modelConstructor, options)
+    const client = this.modelConstructorClient(modelConstructor, options)
     return client.modelQuery(modelConstructor)
   }
 
@@ -51,7 +54,7 @@ export class Adapter implements AdapterContract {
    */
   public modelClient (instance: ModelContract): any {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    return instance.$trx ? instance.$trx : this._getModelClient(modelConstructor, instance.$options)
+    return instance.$trx ? instance.$trx : this.modelConstructorClient(modelConstructor, instance.$options)
   }
 
   /**

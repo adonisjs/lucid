@@ -12,20 +12,8 @@
 import test from 'japa'
 import { ManyToMany } from '@ioc:Adonis/Lucid/Orm'
 
-// import { ManyToMany } from '../../src/Orm/Relations/ManyToMany'
-// import { ManyToManyQueryBuilder } from '../../src/Orm/Relations/ManyToMany/QueryBuilder'
 import { manyToMany, column } from '../../src/Orm/Decorators'
 import { getDb, getBaseModel, ormAdapter, setup, resetTables, cleanup } from '../../test-helpers'
-
-// import {
-//   setup,
-//   getDb,
-//   cleanup,
-//   resetTables,
-//   ormAdapter,
-//   getBaseModel,
-//   getManyToManyQueryBuilder,
-// } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
@@ -1024,1083 +1012,911 @@ test.group('Model | ManyToMany | preload', (group) => {
   })
 })
 
-// test.group('ManyToMany Query Builder | where', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
-
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
-
-//   test('add where clause', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .wherePivot('username', 'virk')
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = connection.getWriteClient()!
-//       .from('skills')
-//       .where('skill_user.username', 'virk')
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add where wrapped clause', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .where((builder) => builder.wherePivot('username', 'virk'))
-//       ['toSQL']()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .where((builder) => builder.where('skill_user.username', 'virk'))
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add where clause with operator', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .wherePivot('age', '>', 22)
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .where('skill_user.age', '>', 22)
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add where clause as a raw query', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .wherePivot('age', '>', db.raw('select min_age from ages limit 1;'))
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .where(
-//         'skill_user.age',
-//         '>',
-//         db.connection().getWriteClient().raw('select min_age from ages limit 1;'),
-//       )
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add orWhere clause', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .wherePivot('age', '>', 22)
-//       .orWherePivot('age', 18)
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .where('skill_user.age', '>', 22)
-//       .orWhere('skill_user.age', 18)
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add orWhere wrapped clause', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .wherePivot('age', '>', 22)
-//       .orWhere((builder) => {
-//         builder.wherePivot('age', 18)
-//       })
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .where('skill_user.age', '>', 22)
-//       .orWhere((builder) => {
-//         builder.where('skill_user.age', 18)
-//       })
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-// })
-
-// test.group('ManyToMany Query Builder | whereNot', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
-
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
-
-//   test('add where no clause', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereNotPivot('username', 'virk')
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereNot('skill_user.username', 'virk')
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add where not clause with operator', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereNotPivot('age', '>', 22)
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereNot('skill_user.age', '>', 22)
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add where not clause as a raw query', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereNotPivot('age', '>', db.raw('select min_age from ages limit 1;'))
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereNot(
-//         'skill_user.age',
-//         '>',
-//         db.connection().getWriteClient().raw('select min_age from ages limit 1;'),
-//       )
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add orWhereNot clause', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereNotPivot('age', '>', 22)
-//       .orWhereNotPivot('age', 18)
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereNot('skill_user.age', '>', 22)
-//       .orWhereNot('skill_user.age', 18)
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-// })
-
-// test.group('ManyToMany Query Builder | whereIn', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
-
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
-
-//   test('add whereIn clause', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereInPivot('username', ['virk', 'nikk'])
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereIn('skill_user.username', ['virk', 'nikk'])
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add whereIn as a query callback', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereInPivot('username', (builder) => {
-//         builder.from('accounts')
-//       })
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereIn('skill_user.username', (builder) => {
-//         builder.from('accounts')
-//       })
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add whereIn as a subquery', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereInPivot('username', db.query().select('id').from('accounts'))
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereIn('skill_user.username', db.connection().getWriteClient().select('id').from('accounts'))
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add whereIn as a rawquery', async (assert) => {
-//     const ref = db.connection().getWriteClient().ref.bind(db.connection().getWriteClient())
-
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereInPivot('username', [
-//         db.raw(`select ${ref('id')} from ${ref('accounts')}`),
-//       ])
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereIn('skill_user.username', [
-//         db.connection().getWriteClient().raw(`select ${ref('id')} from ${ref('accounts')}`),
-//       ])
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add whereIn as a subquery with array of keys', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereInPivot(
-//         ['username', 'email'],
-//         db.query().select('username', 'email').from('accounts'),
-//       )
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereIn(
-//         ['skill_user.username', 'skill_user.email'],
-//         db.connection().getWriteClient().select('username', 'email').from('accounts'),
-//       )
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add whereIn as a 2d array', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereInPivot(['username', 'email'], [['foo', 'bar']])
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereIn(['skill_user.username', 'skill_user.email'], [['foo', 'bar']])
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add orWhereIn clause', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereInPivot('username', ['virk', 'nikk'])
-//       .orWhereInPivot('username', ['foo'])
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereIn('skill_user.username', ['virk', 'nikk'])
-//       .orWhereIn('skill_user.username', ['foo'])
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add orWhereIn as a query callback', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereInPivot('username', (builder) => {
-//         builder.from('accounts')
-//       })
-//       .orWhereInPivot('username', (builder) => {
-//         builder.from('employees')
-//       })
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereIn('skill_user.username', (builder) => {
-//         builder.from('accounts')
-//       })
-//       .orWhereIn('skill_user.username', (builder) => {
-//         builder.from('employees')
-//       })
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-// })
-
-// test.group('ManyToMany Query Builder | whereNotIn', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
-
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
-
-//   test('add whereNotIn clause', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereNotInPivot('username', ['virk', 'nikk'])
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereNotIn('skill_user.username', ['virk', 'nikk'])
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add whereNotIn as a query callback', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereNotInPivot('username', (builder) => {
-//         builder.from('accounts')
-//       })
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereNotIn('skill_user.username', (builder) => {
-//         builder.from('accounts')
-//       })
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add whereNotIn as a sub query', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereNotInPivot('username', db.query().select('username').from('accounts'))
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereNotIn(
-//         'skill_user.username',
-//         db.connection().getWriteClient().select('username').from('accounts'),
-//       )
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add whereNotIn as a 2d array', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereNotInPivot(['username', 'email'], [['foo', 'bar']])
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereNotIn(['skill_user.username', 'skill_user.email'], [['foo', 'bar']])
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add orWhereNotIn clause', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereNotInPivot('username', ['virk', 'nikk'])
-//       .orWhereNotInPivot('username', ['foo'])
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereNotIn('skill_user.username', ['virk', 'nikk'])
-//       .orWhereNotIn('skill_user.username', ['foo'])
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('add orWhereNotIn as a subquery', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     const connection = db.connection()
-//     const relation = User.$getRelation('skills')!
-//     const query = getManyToManyQueryBuilder(new User(), relation as ManyToMany, connection)
-//     query['$appliedConstraints'] = true
-
-//     const { sql, bindings } = query
-//       .whereNotInPivot('username', (builder) => {
-//         builder.from('accounts')
-//       })
-//       .orWhereNotInPivot('username', (builder) => {
-//         builder.from('employees')
-//       })
-//       .toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
-//       .from('skills')
-//       .whereNotIn('skill_user.username', (builder) => {
-//         builder.from('accounts')
-//       })
-//       .orWhereNotIn('skill_user.username', (builder) => {
-//         builder.from('employees')
-//       })
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-// })
-
-// test.group('Model | ManyToMany | fetch', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
-
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
-
-//   group.afterEach(async () => {
-//     await resetTables()
-//   })
-
-//   test('fetch using model instance', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public name: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
-//     await db.insertQuery().table('skill_user').insert([
-//       {
-//         user_id: 1,
-//         skill_id: 1,
-//       },
-//       {
-//         user_id: 1,
-//         skill_id: 2,
-//       },
-//       {
-//         user_id: 2,
-//         skill_id: 2,
-//       },
-//     ])
-
-//     const users = await User.query().firstOrFail()
-//     const skills = await users.related('skills')
-
-//     assert.lengthOf(skills, 2)
-
-//     assert.equal(skills[0].name, 'Programming')
-//     assert.equal(skills[0].$extras.pivot_user_id, 1)
-//     assert.equal(skills[0].$extras.pivot_skill_id, 1)
-
-//     assert.equal(skills[1].name, 'Dancing')
-//     assert.equal(skills[1].$extras.pivot_user_id, 1)
-//     assert.equal(skills[1].$extras.pivot_skill_id, 2)
-//   })
-
-//   test('fetch using parent model options', async (assert) => {
-//     class Skill extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public name: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @manyToMany(() => Skill)
-//       public skills: Skill[]
-//     }
-
-//     User.$boot()
-//     User.$getRelation('skills')!.boot()
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
-//     await db.insertQuery().table('skill_user').insert([
-//       {
-//         user_id: 1,
-//         skill_id: 1,
-//       },
-//       {
-//         user_id: 1,
-//         skill_id: 2,
-//       },
-//       {
-//         user_id: 2,
-//         skill_id: 2,
-//       },
-//     ])
-
-//     const users = await User.query({ connection: 'secondary' }).firstOrFail()
-//     const skills = await users.related<'manyToMany', 'skills'>('skills')
-
-//     assert.lengthOf(skills, 2)
-
-//     assert.equal(skills[0].name, 'Programming')
-//     assert.equal(skills[0].$options!.connection, 'secondary')
-//     assert.equal(skills[0].$extras.pivot_user_id, 1)
-//     assert.equal(skills[0].$extras.pivot_skill_id, 1)
-
-//     assert.equal(skills[1].name, 'Dancing')
-//     assert.equal(skills[1].$options!.connection, 'secondary')
-//     assert.equal(skills[1].$extras.pivot_user_id, 1)
-//     assert.equal(skills[1].$extras.pivot_skill_id, 2)
-//   })
-// })
+test.group('Model | ManyToMany | wherePivot', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  test('add where clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .wherePivot('username', 'virk')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .where('skill_user.username', 'virk')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add where wrapped clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .where((builder) => builder.wherePivot('username', 'virk'))
+      ['toSQL']()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .where((builder) => builder.where('skill_user.username', 'virk'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add where clause with operator', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .wherePivot('age', '>', 22)
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .where('skill_user.age', '>', 22)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add where clause as a raw query', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .wherePivot('age', '>', db.raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .where(
+        'skill_user.age',
+        '>',
+        db.connection().getWriteClient().raw('select min_age from ages limit 1;'),
+      )
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add orWhere clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .wherePivot('age', '>', 22)
+      .orWherePivot('age', 18)
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .where('skill_user.age', '>', 22)
+      .orWhere('skill_user.age', 18)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add orWhere wrapped clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .wherePivot('age', '>', 22)
+      .orWhere((builder) => {
+        builder.wherePivot('age', 18)
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .where('skill_user.age', '>', 22)
+      .orWhere((builder) => {
+        builder.where('skill_user.age', 18)
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})
+
+test.group('Model | ManyToMany | whereNotPivot', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  test('add where no clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+    const { sql, bindings } = query.whereNotPivot('username', 'virk').toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereNot('skill_user.username', 'virk')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add where not clause with operator', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereNotPivot('age', '>', 22)
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereNot('skill_user.age', '>', 22)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add where not clause as a raw query', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereNotPivot('age', '>', db.raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereNot(
+        'skill_user.age',
+        '>',
+        db.connection().getWriteClient().raw('select min_age from ages limit 1;'),
+      )
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add orWhereNot clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereNotPivot('age', '>', 22)
+      .orWhereNotPivot('age', 18)
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereNot('skill_user.age', '>', 22)
+      .orWhereNot('skill_user.age', 18)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})
+
+test.group('Model | ManyToMany | whereInPivot', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  test('add whereIn clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereInPivot('username', ['virk', 'nikk'])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereIn('skill_user.username', ['virk', 'nikk'])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add whereIn as a query callback', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereInPivot('username', (builder) => {
+        builder.from('accounts')
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereIn('skill_user.username', (builder) => {
+        builder.from('accounts')
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add whereIn as a subquery', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereInPivot('username', db.query().select('id').from('accounts'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereIn('skill_user.username', db.connection().getWriteClient().select('id').from('accounts'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add whereIn as a rawquery', async (assert) => {
+    const ref = db.connection().getWriteClient().ref.bind(db.connection().getWriteClient())
+
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereInPivot('username', [
+        db.raw(`select ${ref('id')} from ${ref('accounts')}`),
+      ])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereIn('skill_user.username', [
+        db.connection().getWriteClient().raw(`select ${ref('id')} from ${ref('accounts')}`),
+      ])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add whereIn as a subquery with array of keys', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereInPivot(
+        ['username', 'email'],
+        db.query().select('username', 'email').from('accounts'),
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereIn(
+        ['skill_user.username', 'skill_user.email'],
+        db.connection().getWriteClient().select('username', 'email').from('accounts'),
+      )
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add whereIn as a 2d array', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereInPivot(['username', 'email'], [['foo', 'bar']])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereIn(['skill_user.username', 'skill_user.email'], [['foo', 'bar']])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add orWhereIn clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereInPivot('username', ['virk', 'nikk'])
+      .orWhereInPivot('username', ['foo'])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereIn('skill_user.username', ['virk', 'nikk'])
+      .orWhereIn('skill_user.username', ['foo'])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add orWhereIn as a query callback', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereInPivot('username', (builder) => {
+        builder.from('accounts')
+      })
+      .orWhereInPivot('username', (builder) => {
+        builder.from('employees')
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereIn('skill_user.username', (builder) => {
+        builder.from('accounts')
+      })
+      .orWhereIn('skill_user.username', (builder) => {
+        builder.from('employees')
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})
+
+test.group('Model | ManyToMany | whereNotInPivot', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  test('add whereNotIn clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereNotInPivot('username', ['virk', 'nikk'])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereNotIn('skill_user.username', ['virk', 'nikk'])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add whereNotIn as a query callback', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereNotInPivot('username', (builder) => {
+        builder.from('accounts')
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereNotIn('skill_user.username', (builder) => {
+        builder.from('accounts')
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add whereNotIn as a sub query', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereNotInPivot('username', db.query().select('username').from('accounts'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereNotIn(
+        'skill_user.username',
+        db.connection().getWriteClient().select('username').from('accounts'),
+      )
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add whereNotIn as a 2d array', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereNotInPivot(['username', 'email'], [['foo', 'bar']])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereNotIn(['skill_user.username', 'skill_user.email'], [['foo', 'bar']])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add orWhereNotIn clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereNotInPivot('username', ['virk', 'nikk'])
+      .orWhereNotInPivot('username', ['foo'])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereNotIn('skill_user.username', ['virk', 'nikk'])
+      .orWhereNotIn('skill_user.username', ['foo'])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add orWhereNotIn as a subquery', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['$appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereNotInPivot('username', (builder) => {
+        builder.from('accounts')
+      })
+      .orWhereNotInPivot('username', (builder) => {
+        builder.from('employees')
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
+      .from('skills')
+      .whereNotIn('skill_user.username', (builder) => {
+        builder.from('accounts')
+      })
+      .orWhereNotIn('skill_user.username', (builder) => {
+        builder.from('employees')
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})
 
 // test.group('Model | ManyToMany | persist', (group) => {
 //   group.before(async () => {
@@ -2135,7 +1951,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -2181,7 +1997,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -2232,7 +2048,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -2280,7 +2096,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -2335,7 +2151,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -2390,7 +2206,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -2449,7 +2265,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -2489,7 +2305,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -2530,7 +2346,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -2570,7 +2386,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -2613,7 +2429,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -2656,7 +2472,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const trx = await db.transaction()
@@ -2699,7 +2515,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const trx = await db.transaction()
@@ -2746,7 +2562,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const trx = await db.transaction()
@@ -2792,7 +2608,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const trx = await db.transaction()
@@ -2842,7 +2658,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const trx = await db.transaction()
@@ -2887,7 +2703,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const trx = await db.transaction()
@@ -2948,7 +2764,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -2991,7 +2807,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -3024,7 +2840,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -3067,7 +2883,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -3137,7 +2953,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -3178,7 +2994,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -3221,7 +3037,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -3251,7 +3067,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -3315,7 +3131,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     await db.table('users').insert({ username: 'virk' })
@@ -3351,7 +3167,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     await db.table('users').insert({ username: 'virk' })
@@ -3404,7 +3220,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -3445,7 +3261,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -3492,7 +3308,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -3526,7 +3342,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -3564,7 +3380,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -3605,7 +3421,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()
@@ -3651,7 +3467,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 //       public username: string
 
 //       @manyToMany(() => Skill)
-//       public skills: Skill[]
+//       public skills: ManyToMany<Skill>
 //     }
 
 //     const user = new User()

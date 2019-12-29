@@ -12,10 +12,8 @@
 import test from 'japa'
 import { HasMany } from '@ioc:Adonis/Lucid/Orm'
 
-// import { HasManyQueryBuilder } from '../../src/Orm/Relations/HasMany/QueryBuilder'
-
-import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb } from '../../test-helpers'
 import { column, hasMany } from '../../src/Orm/Decorators'
+import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
@@ -987,1440 +985,576 @@ test.group('Model | HasMany | preload', (group) => {
   })
 })
 
-// test.group('Model | HasMany | fetch related', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
-
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
-
-//   group.afterEach(async () => {
-//     await resetTables()
-//   })
-
-//   test('fetch using model instance', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('posts').insert([
-//       {
-//         user_id: 1,
-//         title: 'Adonis 101',
-//       },
-//       {
-//         user_id: 2,
-//         title: 'Lucid 101',
-//       },
-//     ])
-
-//     const user = await User.query().firstOrFail()
-//     const posts = await user.related('posts')
-
-//     assert.lengthOf(posts, 1)
-//     assert.equal(posts[0].userId, user.id)
-//   })
-
-//   test('fetch with preloads using model instance', async (assert) => {
-//     class Comment extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public postId: number
-
-//       @column()
-//       public body: string
-//     }
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-
-//       @hasMany(() => Comment)
-//       public comments: Comment[]
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('posts').insert([
-//       {
-//         user_id: 1,
-//         title: 'Adonis 101',
-//       },
-//       {
-//         user_id: 2,
-//         title: 'Lucid 101',
-//       },
-//     ])
-
-//     await db.insertQuery().table('comments').insert([
-//       {
-//         post_id: 1,
-//         body: 'Looks nice',
-//       },
-//       {
-//         post_id: 1,
-//         body: 'Wow! Never knew that',
-//       },
-//     ])
-
-//     const user = await User.query().firstOrFail()
-//     const posts = await user.related<'hasMany', 'posts'>('posts').preload<'hasMany'>('comments')
-
-//     assert.lengthOf(posts, 1)
-//     assert.equal(posts[0].userId, user.id)
-//     assert.lengthOf(posts[0].comments, 2)
-
-//     assert.equal(posts[0].comments[0].postId, 1)
-//     assert.equal(posts[0].comments[0].body, 'Looks nice')
-
-//     assert.equal(posts[0].comments[1].postId, 1)
-//     assert.equal(posts[0].comments[1].body, 'Wow! Never knew that')
-//   })
-
-//   test('fetch with preloads using parent model options', async (assert) => {
-//     class Comment extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public postId: number
-
-//       @column()
-//       public body: string
-//     }
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-
-//       @hasMany(() => Comment)
-//       public comments: Comment[]
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
-//     await db.insertQuery().table('posts').insert([
-//       {
-//         user_id: 1,
-//         title: 'Adonis 101',
-//       },
-//       {
-//         user_id: 2,
-//         title: 'Lucid 101',
-//       },
-//     ])
-
-//     await db.insertQuery().table('comments').insert([
-//       {
-//         post_id: 1,
-//         body: 'Looks nice',
-//       },
-//       {
-//         post_id: 1,
-//         body: 'Wow! Never knew that',
-//       },
-//     ])
-
-//     const user = await User.query({ connection: 'secondary' }).firstOrFail()
-//     const posts = await user.related<'hasMany', 'posts'>('posts').preload<'hasMany'>('comments')
-
-//     assert.lengthOf(posts, 1)
-//     assert.equal(posts[0].$options!.connection, 'secondary')
-//     assert.equal(posts[0].comments[0].$options!.connection, 'secondary')
-//     assert.equal(posts[0].comments[1].$options!.connection, 'secondary')
-//   })
-// })
-
-// test.group('Model | HasMany | persist', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
-
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
-
-//   group.afterEach(async () => {
-//     await resetTables()
-//   })
-
-//   test('save related instance', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const user = new User()
-//     user.username = 'virk'
-//     await user.save()
-
-//     const post = new Post()
-//     post.title = 'Adonis 101'
-
-//     await user.related('posts').save(post)
-
-//     assert.isTrue(post.$persisted)
-//     assert.equal(user.id, post.userId)
-
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
-
-//     assert.equal(totalUsers[0].total, 1)
-//     assert.equal(totalPosts[0].total, 1)
-//   })
-
-//   test('save many related instance', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const user = new User()
-//     user.username = 'virk'
-//     await user.save()
+test.group('Model | HasMany | persist', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
 
-//     const post = new Post()
-//     post.title = 'Adonis 101'
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
 
-//     const post1 = new Post()
-//     post1.title = 'Lucid 101'
+  group.afterEach(async () => {
+    await resetTables()
+  })
 
-//     await user.related('posts').saveMany([post, post1])
-
-//     assert.isTrue(post.$persisted)
-//     assert.equal(user.id, post.userId)
+  test('save related instance', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//     assert.isTrue(post1.$persisted)
-//     assert.equal(user.id, post1.userId)
-
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
-
-//     assert.equal(totalUsers[0].total, 1)
-//     assert.equal(totalPosts[0].total, 2)
-//   })
-
-//   test('wrap save calls inside transaction', async (assert) => {
-//     assert.plan(5)
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
+      @column()
+      public userId: number
 
-//       @column()
-//       public title: string
-//     }
+      @column()
+      public title: string
+    }
 
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @column()
-//       public username: string
+      @column()
+      public username: string
 
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
 
-//     const user = new User()
-//     user.username = 'virk'
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
 
-//     const post = new Post()
+    const post = new Post()
+    post.title = 'Adonis 101'
 
-//     try {
-//       await user.related('posts').save(post)
-//     } catch (error) {
-//       assert.exists(error)
-//     }
+    await user.related('posts').save(post)
 
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
-
-//     assert.equal(totalUsers[0].total, 0)
-//     assert.equal(totalPosts[0].total, 0)
-//     assert.isUndefined(user.$trx)
-//     assert.isUndefined(post.$trx)
-//   })
+    assert.isTrue(post.$isPersisted)
+    assert.equal(user.id, post.userId)
 
-//   test('wrap save many calls inside transaction', async (assert) => {
-//     assert.plan(6)
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('posts').count('*', 'total')
 
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+  })
 
-//       @column()
-//       public userId: number
+  test('save many related instances', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @column()
-//       public title: string
-//     }
+      @column()
+      public userId: number
 
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+      @column()
+      public title: string
+    }
 
-//       @column()
-//       public username: string
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
+      @column()
+      public username: string
 
-//     const user = new User()
-//     user.username = 'virk'
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
 
-//     const post = new Post()
-//     post.title = 'Adonis 101'
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
 
-//     const post1 = new Post()
+    const post = new Post()
+    post.title = 'Adonis 101'
 
-//     try {
-//       await user.related('posts').saveMany([post, post1])
-//     } catch (error) {
-//       assert.exists(error)
-//     }
+    const post1 = new Post()
+    post1.title = 'Lucid 101'
 
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
+    await user.related('posts').saveMany([post, post1])
 
-//     assert.equal(totalUsers[0].total, 0)
-//     assert.equal(totalPosts[0].total, 0)
-//     assert.isUndefined(user.$trx)
-//     assert.isUndefined(post.$trx)
-//     assert.isUndefined(post1.$trx)
-//   })
+    assert.isTrue(post.$isPersisted)
+    assert.equal(user.id, post.userId)
 
-//   test('do not wrap when wrapInTransaction is set to false', async (assert) => {
-//     assert.plan(5)
+    assert.isTrue(post1.$isPersisted)
+    assert.equal(user.id, post1.userId)
 
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('posts').count('*', 'total')
 
-//       @column()
-//       public userId: number
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 2)
+  })
 
-//       @column()
-//       public title: string
-//     }
+  test('wrap save many calls inside transaction', async (assert) => {
+    assert.plan(6)
 
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @column()
-//       public username: string
+      @column()
+      public userId: number
 
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
+      @column()
+      public title: string
+    }
 
-//     const user = new User()
-//     user.username = 'virk'
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//     const post = new Post()
+      @column()
+      public username: string
 
-//     try {
-//       await user.related('posts').save(post, false)
-//     } catch (error) {
-//       assert.exists(error)
-//     }
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
 
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
+    const user = new User()
+    user.username = 'virk'
 
-//     assert.equal(totalUsers[0].total, 1)
-//     assert.equal(totalPosts[0].total, 0)
-//     assert.isUndefined(user.$trx)
-//     assert.isUndefined(post.$trx)
-//   })
+    const post = new Post()
+    post.title = 'Adonis 101'
 
-//   test('do not wrap with saveMany when wrapInTransaction is set to false', async (assert) => {
-//     assert.plan(5)
+    const post1 = new Post()
 
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+    try {
+      await user.related('posts').saveMany([post, post1])
+    } catch (error) {
+      assert.exists(error)
+    }
 
-//       @column()
-//       public userId: number
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('posts').count('*', 'total')
 
-//       @column()
-//       public title: string
-//     }
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 0)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(post.$trx)
+    assert.isUndefined(post1.$trx)
+  })
 
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+  test('wrap save many calls inside a save point when parent is in transaction', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @column()
-//       public username: string
+      @column()
+      public userId: number
 
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
+      @column()
+      public title: string
+    }
 
-//     const user = new User()
-//     user.username = 'virk'
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//     const post = new Post()
-//     post.title = 'Adonis 101'
+      @column()
+      public username: string
 
-//     const post1 = new Post()
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
 
-//     try {
-//       await user.related('posts').saveMany([post, post1], false)
-//     } catch (error) {
-//       assert.exists(error)
-//     }
+    const trx = await db.transaction()
+    const user = new User()
+    user.$trx = trx
+    user.username = 'virk'
 
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
+    const post = new Post()
+    post.title = 'Adonis 101'
 
-//     assert.equal(totalUsers[0].total, 1)
-//     assert.equal(totalPosts[0].total, 1)
-//     assert.isUndefined(user.$trx)
-//     assert.isUndefined(post.$trx)
-//   })
+    await user.related('posts').saveMany([post])
+    assert.isFalse(user.$trx.isCompleted)
+    await trx.rollback()
 
-//   test('do not wrap in transaction when parent has been persisted', async (assert) => {
-//     assert.plan(5)
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('posts').count('*', 'total')
 
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalPosts[0].total, 0)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(post.$trx)
+  })
 
-//       @column()
-//       public userId: number
+  test('create related instance', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @column()
-//       public title: string
-//     }
+      @column()
+      public userId: number
 
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+      @column()
+      public title: string
+    }
 
-//       @column()
-//       public username: string
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
+      @column()
+      public username: string
 
-//     const user = new User()
-//     user.username = 'virk'
-//     await user.save()
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
 
-//     const post = new Post()
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
 
-//     try {
-//       await user.related('posts').save(post)
-//     } catch (error) {
-//       assert.exists(error)
-//     }
+    const post = await user.related('posts').create({ title: 'Adonis 101' })
 
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
+    assert.isTrue(post.$isPersisted)
+    assert.equal(user.id, post.userId)
 
-//     assert.equal(totalUsers[0].total, 1)
-//     assert.equal(totalPosts[0].total, 0)
-//     assert.isUndefined(user.$trx)
-//     assert.isUndefined(post.$trx)
-//   })
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('posts').count('*', 'total')
 
-//   test('do wrap in transaction with saveMany even when parent has been persisted', async (assert) => {
-//     assert.plan(6)
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+  })
 
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+  test('create many related instances', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @column()
-//       public userId: number
+      @column()
+      public userId: number
 
-//       @column()
-//       public title: string
-//     }
+      @column()
+      public title: string
+    }
 
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @column()
-//       public username: string
+      @column()
+      public username: string
 
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
 
-//     const user = new User()
-//     user.username = 'virk'
-//     await user.save()
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
 
-//     const post = new Post()
-//     post.title = 'Adonis 101'
+    const [post, post1] = await user.related('posts').createMany([
+      {
+        title: 'Adonis 101',
+      },
+      {
+        title: 'Lucid 101',
+      },
+    ])
 
-//     const post1 = new Post()
+    assert.isTrue(post.$isPersisted)
+    assert.equal(user.id, post.userId)
 
-//     try {
-//       await user.related('posts').saveMany([post, post1])
-//     } catch (error) {
-//       assert.exists(error)
-//     }
+    assert.isTrue(post1.$isPersisted)
+    assert.equal(user.id, post1.userId)
 
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('posts').count('*', 'total')
 
-//     assert.equal(totalUsers[0].total, 1)
-//     assert.equal(totalPosts[0].total, 0)
-//     assert.isUndefined(user.$trx)
-//     assert.isUndefined(post.$trx)
-//     assert.isUndefined(post1.$trx)
-//   })
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 2)
+  })
 
-//   test('use parent model transaction when defined', async (assert) => {
-//     assert.plan(5)
+  test('wrap create many calls inside transaction', async (assert) => {
+    assert.plan(4)
 
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @column()
-//       public userId: number
+      @column()
+      public userId: number
 
-//       @column()
-//       public title: string
-//     }
+      @column()
+      public title: string
+    }
 
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//       @column()
-//       public username: string
+      @column()
+      public username: string
 
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
 
-//     const trx = await db.transaction()
+    const user = new User()
+    user.username = 'virk'
 
-//     const user = new User()
-//     user.username = 'virk'
-//     user.$trx = trx
-//     await user.save()
+    try {
+      await user.related('posts').createMany([{ title: 'Adonis 101' }, {}])
+    } catch (error) {
+      assert.exists(error)
+    }
 
-//     const post = new Post()
-//     post.title = 'Adonis 101'
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('posts').count('*', 'total')
 
-//     await user.related('posts').save(post)
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 0)
+    assert.isUndefined(user.$trx)
+  })
 
-//     /**
-//      * Ensure that related save has not committed the transaction
-//      */
-//     assert.deepEqual(user.$trx, trx)
+  test('wrap create many calls inside a save point when parent is in transaction', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
 
-//     await trx.rollback()
+      @column()
+      public title: string
+    }
 
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
 
-//     assert.equal(totalUsers[0].total, 0)
-//     assert.equal(totalPosts[0].total, 0)
-//     assert.isUndefined(user.$trx)
-//     assert.isUndefined(post.$trx)
-//   })
+      @column()
+      public username: string
 
-//   test('create save point with saveMany even when parent model is persisted', async (assert) => {
-//     assert.plan(8)
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
 
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
+    const trx = await db.transaction()
+    const user = new User()
+    user.$trx = trx
+    user.username = 'virk'
 
-//       @column()
-//       public userId: number
+    const [post] = await user.related('posts').createMany([{ title: 'Adonis 101' }])
+    assert.isFalse(user.$trx.isCompleted)
+    await trx.rollback()
 
-//       @column()
-//       public title: string
-//     }
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('posts').count('*', 'total')
 
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const trx = await db.transaction()
-
-//     const user = new User()
-//     user.username = 'virk'
-//     user.$trx = trx
-//     await user.save()
-
-//     const post = new Post()
-//     post.title = 'Adonis 101'
-
-//     const post1 = new Post()
-//     post1.title = 'Lucid 101'
-
-//     await user.related('posts').saveMany([post, post1])
-
-//     /**
-//      * Ensure that related save has not committed the transaction
-//      */
-//     assert.isUndefined(user.$trx)
-//     assert.isUndefined(post.$trx)
-//     assert.isUndefined(post1.$trx)
-
-//     await trx.rollback()
-
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
-
-//     assert.equal(totalUsers[0].total, 0)
-//     assert.equal(totalPosts[0].total, 0)
-//     assert.isUndefined(user.$trx)
-//     assert.isUndefined(post.$trx)
-//     assert.isUndefined(post1.$trx)
-//   })
-
-//   test('create save point when parent is in transaction and not persisted', async (assert) => {
-//     assert.plan(5)
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const trx = await db.transaction()
-
-//     const user = new User()
-//     user.username = 'virk'
-//     user.$trx = trx
-
-//     const post = new Post()
-
-//     try {
-//       await user.related('posts').save(post)
-//     } catch (error) {
-//       assert.exists(error)
-//     }
-//     await trx.commit()
-
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
-
-//     assert.equal(totalUsers[0].total, 0)
-//     assert.equal(totalPosts[0].total, 0)
-//     assert.isUndefined(user.$trx)
-//     assert.isUndefined(post.$trx)
-//   })
-
-//   test('create save point with saveMany when parent is in transaction and not persisted', async (assert) => {
-//     assert.plan(5)
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const trx = await db.transaction()
-
-//     const user = new User()
-//     user.username = 'virk'
-//     user.$trx = trx
-
-//     const post = new Post()
-//     post.title = 'Adonis 101'
-
-//     const post1 = new Post()
-
-//     try {
-//       await user.related('posts').saveMany([post, post1])
-//     } catch (error) {
-//       assert.exists(error)
-//     }
-//     await trx.commit()
-
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
-
-//     assert.equal(totalUsers[0].total, 0)
-//     assert.equal(totalPosts[0].total, 0)
-//     assert.isUndefined(user.$trx)
-//     assert.isUndefined(post.$trx)
-//   })
-
-//   test('invoke hooks for related model', async (assert) => {
-//     assert.plan(1)
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-
-//       public static $boot () {
-//         if (this.$booted) {
-//           return
-//         }
-
-//         super.$boot()
-//         this.$before('save', (model) => {
-//           assert.instanceOf(model, Post)
-//         })
-//       }
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const user = new User()
-//     user.username = 'virk'
-//     await user.save()
-
-//     const post = new Post()
-//     post.title = 'Adonis 101'
-
-//     await user.related('posts').save(post)
-//   })
-
-//   test('invoke hooks when called saveMany', async (assert) => {
-//     assert.plan(2)
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-
-//       public static $boot () {
-//         if (this.$booted) {
-//           return
-//         }
-
-//         super.$boot()
-//         this.$before('save', (model) => {
-//           assert.instanceOf(model, Post)
-//         })
-//       }
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const user = new User()
-//     user.username = 'virk'
-//     await user.save()
-
-//     const post = new Post()
-//     post.title = 'Adonis 101'
-
-//     const post1 = new Post()
-//     post1.title = 'Lucid 101'
-
-//     await user.related('posts').saveMany([post, post1])
-//   })
-
-//   test('create related instance', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const user = new User()
-//     user.username = 'virk'
-//     await user.save()
-
-//     const post = await user.related('posts').create({ title: 'Adonis 101' })
-
-//     assert.isTrue(post.$persisted)
-//     assert.equal(user.id, post.userId)
-
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
-
-//     assert.equal(totalUsers[0].total, 1)
-//     assert.equal(totalPosts[0].total, 1)
-//   })
-
-//   test('create many related instance', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const user = new User()
-//     user.username = 'virk'
-//     await user.save()
-
-//     const [post, post1] = await user
-//       .related('posts')
-//       .createMany([{ title: 'Adonis 101' }, { title: 'Lucid 101' }])
-
-//     assert.isTrue(post.$persisted)
-//     assert.equal(user.id, post.userId)
-
-//     assert.isTrue(post1.$persisted)
-//     assert.equal(user.id, post1.userId)
-
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
-
-//     assert.equal(totalUsers[0].total, 1)
-//     assert.equal(totalPosts[0].total, 2)
-//   })
-
-//   test('wrap create calls inside transaction', async (assert) => {
-//     assert.plan(4)
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const user = new User()
-//     user.username = 'virk'
-
-//     try {
-//       await user.related('posts').create({})
-//     } catch (error) {
-//       assert.exists(error)
-//     }
-
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
-
-//     assert.equal(totalUsers[0].total, 0)
-//     assert.equal(totalPosts[0].total, 0)
-//     assert.isUndefined(user.$trx)
-//   })
-
-//   test('wrap create many calls inside transaction', async (assert) => {
-//     assert.plan(4)
-
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const user = new User()
-//     user.username = 'virk'
-
-//     try {
-//       await user.related('posts').createMany([{ title: 'Adonis 101' }, {}])
-//     } catch (error) {
-//       assert.exists(error)
-//     }
-
-//     const totalUsers = await db.query().from('users').count('*', 'total')
-//     const totalPosts = await db.query().from('posts').count('*', 'total')
-
-//     assert.equal(totalUsers[0].total, 0)
-//     assert.equal(totalPosts[0].total, 0)
-//     assert.isUndefined(user.$trx)
-//   })
-
-//   test('create related instance when there isn\'t any existing row', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const user = new User()
-//     user.username = 'virk'
-//     await user.save()
-
-//     const post = await user.related('posts').updateOrCreate({}, {
-//       title: 'Adonis 101',
-//     })
-
-//     assert.isTrue(post.$persisted)
-//     assert.equal(user.id, post.userId)
-//     assert.equal(post.title, 'Adonis 101')
-//   })
-
-//   test('update related instance when row already exists', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('posts').insert({ title: 'Adonis 101', user_id: 1 })
-//     const user = new User()
-//     user.username = 'virk'
-//     await user.save()
-
-//     const post = await user.related('posts').updateOrCreate({}, {
-//       title: 'Adonis 102',
-//     })
-
-//     assert.isTrue(post.$persisted)
-//     assert.equal(user.id, post.userId)
-//     assert.equal(post.title, 'Adonis 102')
-//   })
-
-//   test('only update the first matching row', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('posts').multiInsert(
-//       [
-//         { title: 'Adonis 101', user_id: 1 },
-//         { title: 'Lucid 101', user_id: 1 },
-//       ]
-//     )
-//     const user = new User()
-//     user.username = 'virk'
-//     await user.save()
-
-//     await user.related('posts').updateOrCreate({}, {
-//       title: 'Adonis 102',
-//     })
-
-//     const posts = await db.query().from('posts').orderBy('id', 'desc')
-//     assert.lengthOf(posts, 2)
-
-//     assert.equal(posts[0].title, 'Adonis 102')
-//     assert.equal(posts[1].title, 'Lucid 101')
-//   })
-
-//   test('do not update rows that belongs to a different entity', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('posts').multiInsert(
-//       [
-//         { title: 'Adonis 101', user_id: 2 },
-//         { title: 'Lucid 101', user_id: 2 },
-//       ]
-//     )
-//     const user = new User()
-//     user.username = 'virk'
-//     await user.save()
-
-//     await user.related('posts').updateOrCreate({}, {
-//       title: 'Adonis 102',
-//     })
-
-//     const posts = await db.query().from('posts')
-//     assert.lengthOf(posts, 3)
-
-//     assert.equal(posts[0].title, 'Adonis 101')
-//     assert.equal(posts[1].title, 'Lucid 101')
-//     assert.equal(posts[2].title, 'Adonis 102')
-//   })
-
-//   test('create using parent model transaction instance', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const trx = await db.transaction()
-
-//     const user = new User()
-//     user.username = 'virk'
-//     user.$trx = trx
-//     await user.save()
-
-//     await user.related('posts').updateOrCreate({}, {
-//       title: 'Adonis 101',
-//     })
-
-//     await trx.rollback()
-//     const posts = await db.query().from('posts')
-//     assert.lengthOf(posts, 0)
-//   })
-
-//   test('update using parent model transaction instance', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.insertQuery().table('posts').insert({ title: 'Adonis 101', user_id: 1 })
-//     const trx = await db.transaction()
-
-//     const user = new User()
-//     user.username = 'virk'
-//     user.$trx = trx
-//     await user.save()
-
-//     await user.related('posts').updateOrCreate({}, {
-//       title: 'Adonis 102',
-//     })
-
-//     await trx.rollback()
-//     const posts = await db.query().from('posts')
-//     assert.lengthOf(posts, 1)
-//     assert.equal(posts[0].title, 'Adonis 101')
-//   })
-
-//   test('create save point when parent is not peristed', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     const trx = await db.transaction()
-
-//     const user = new User()
-//     user.username = 'virk'
-//     user.$trx = trx
-
-//     try {
-//       await user.related('posts').updateOrCreate({}, {})
-//     } catch (error) {
-//       assert.exists(error)
-//     }
-
-//     assert.isFalse(trx.isCompleted)
-//     assert.isUndefined(user.$trx)
-//     await trx.commit()
-
-//     const posts = await db.query().from('posts')
-//     assert.lengthOf(posts, 0)
-//   })
-// })
-
-// test.group('Model | HasMany | bulk operation', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
-
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
-
-//   group.afterEach(async () => {
-//     await resetTables()
-//   })
-
-//   test('generate correct sql for deleting related rows', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.table('users').insert({ username: 'virk' })
-
-//     const user = await User.find(1)
-//     const { sql, bindings } = user!.related('posts').del().toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection()
-//       .getWriteClient()
-//       .from('posts')
-//       .where('user_id', 1)
-//       .del()
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-
-//   test('generate correct sql for updating related rows', async (assert) => {
-//     class Post extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public userId: number
-
-//       @column()
-//       public title: string
-//     }
-
-//     class User extends BaseModel {
-//       @column({ primary: true })
-//       public id: number
-
-//       @column()
-//       public username: string
-
-//       @hasMany(() => Post)
-//       public posts: Post[]
-//     }
-
-//     await db.table('users').insert({ username: 'virk' })
-
-//     const user = await User.find(1)
-//     const { sql, bindings } = user!.related('posts').update({ title: 'Adonis 101' }).toSQL()
-
-//     const { sql: knexSql, bindings: knexBindings } = db.connection()
-//       .getWriteClient()
-//       .from('posts')
-//       .where('user_id', 1)
-//       .update({ title: 'Adonis 101' })
-//       .toSQL()
-
-//     assert.equal(sql, knexSql)
-//     assert.deepEqual(bindings, knexBindings)
-//   })
-// })
+    assert.equal(totalUsers[0].total, 0)
+    assert.equal(totalPosts[0].total, 0)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(post.$trx)
+  })
+})
+
+test.group('Model | HasMany | firstOrCreate', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('create related instance when there isn\'t any existing row', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await db.insertQuery().table('posts').insert({ title: 'Lucid 101' })
+    const post = await user.related('posts').firstOrCreate({}, {
+      title: 'Adonis 101',
+    })
+
+    assert.isTrue(post.$isPersisted)
+    assert.isTrue(post.$isLocal)
+    assert.equal(user.id, post.userId)
+    assert.equal(post.title, 'Adonis 101')
+
+    const posts = await db.query().from('posts').orderBy('id', 'asc')
+    assert.lengthOf(posts, 2)
+    assert.equal(posts[1].user_id, user.id)
+  })
+
+  test('return existing instance vs creating one', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await db.insertQuery().table('posts').insert({ title: 'Lucid 101', user_id: user.id })
+    const post = await user.related('posts').firstOrCreate({}, {
+      title: 'Adonis 101',
+    })
+
+    assert.isTrue(post.$isPersisted)
+    assert.isFalse(post.$isLocal)
+    assert.equal(user.id, post.userId)
+    assert.equal(post.title, 'Lucid 101')
+
+    const posts = await db.query().from('posts').orderBy('id', 'asc')
+    assert.lengthOf(posts, 1)
+    assert.equal(posts[0].user_id, user.id)
+  })
+})
+
+test.group('Model | HasMany | updateOrCreate', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('create related instance when there isn\'t any existing row', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await db.insertQuery().table('posts').insert({ title: 'Lucid 101' })
+    const post = await user.related('posts').updateOrCreate({}, {
+      title: 'Adonis 101',
+    })
+
+    assert.isTrue(post.$isPersisted)
+    assert.isTrue(post.$isLocal)
+    assert.equal(user.id, post.userId)
+    assert.equal(post.title, 'Adonis 101')
+
+    const posts = await db.query().from('posts').orderBy('id', 'asc')
+    assert.lengthOf(posts, 2)
+    assert.equal(posts[1].user_id, user.id)
+  })
+
+  test('update existing instance vs creating one', async (assert) => {
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await db.insertQuery().table('posts').insert({ title: 'Lucid 101', user_id: user.id })
+    const post = await user.related('posts').updateOrCreate({}, {
+      title: 'Adonis 101',
+    })
+
+    assert.isTrue(post.$isPersisted)
+    assert.isFalse(post.$isLocal)
+    assert.equal(user.id, post.userId)
+    assert.equal(post.title, 'Adonis 101')
+
+    const posts = await db.query().from('posts').orderBy('id', 'asc')
+    assert.lengthOf(posts, 1)
+    assert.equal(posts[0].user_id, user.id)
+    assert.equal(posts[0].title, 'Adonis 101')
+  })
+})

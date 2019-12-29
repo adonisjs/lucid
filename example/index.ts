@@ -49,7 +49,7 @@ user.preload((preloader) => {
 
 // user.preload('profile')
 
-const profile = (User.$getRelation('profile').$relatedModel() as typeof Profile)
+// const profile = (User.$getRelation('profile').$relatedModel() as typeof Profile)
 
 // const profile = User.$getRelation('profile')!
 

@@ -469,6 +469,15 @@ declare module '@ioc:Adonis/Lucid/Model' {
     ): Promise<InstanceType<T>>
 
     /**
+     * Creating many of model instance
+     */
+    createMany<T extends ModelConstructorContract> (
+      this: T,
+      values: ModelObject[],
+      options?: ModelAdapterOptions,
+    ): Promise<InstanceType<T>[]>
+
+    /**
      * Find one using the primary key
      */
     find<T extends ModelConstructorContract> (
@@ -595,6 +604,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Returns query client for a model instance by inspecting it's options
      */
     modelClient (instance: ModelContract): QueryClientContract
+
+    modelConstructorClient (
+      modelConstructor: ModelConstructorContract,
+      options?: ModelAdapterOptions,
+    ): QueryClientContract
 
     /**
      * Delete model instance
