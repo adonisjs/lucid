@@ -12,6 +12,7 @@
 import test from 'japa'
 import 'reflect-metadata'
 import { join } from 'path'
+import { Kernel } from '@adonisjs/ace'
 import { Filesystem } from '@poppinss/dev-utils'
 import { Application } from '@adonisjs/application/build/standalone'
 
@@ -46,7 +47,7 @@ test.group('MakeMigration', (group) => {
     `)
 
     const app = new Application(fs.basePath, {} as any, {} as any, {})
-    const migrate = new Migrate(app, db)
+    const migrate = new Migrate(app, new Kernel(app), db)
 
     await migrate.handle()
     db = getDb()
@@ -64,7 +65,7 @@ test.group('MakeMigration', (group) => {
     await fs.fsExtra.ensureDir(join(fs.basePath, 'database/migrations'))
 
     const app = new Application(fs.basePath, {} as any, {} as any, {})
-    const migrate = new Migrate(app, db)
+    const migrate = new Migrate(app, new Kernel(app), db)
 
     await migrate.handle()
 
@@ -86,7 +87,7 @@ test.group('MakeMigration', (group) => {
     `)
 
     const app = new Application(fs.basePath, {} as any, {} as any, {})
-    const migrate = new Migrate(app, db)
+    const migrate = new Migrate(app, new Kernel(app), db)
     migrate.dryRun = true
 
     await migrate.handle()

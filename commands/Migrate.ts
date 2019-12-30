@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
 */
 
-import { flags } from '@adonisjs/ace'
 import { inject } from '@adonisjs/fold'
+import { flags, Kernel } from '@adonisjs/ace'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
@@ -37,8 +37,8 @@ export default class Migrate extends MigrationsBase {
     loadApp: true,
   }
 
-  constructor (app: ApplicationContract, private _db: DatabaseContract) {
-    super(app)
+  constructor (app: ApplicationContract, kernel: Kernel, private _db: DatabaseContract) {
+    super(app, kernel)
   }
 
   /**
