@@ -15,7 +15,7 @@ import { BaseCommand, Kernel, args, flags } from '@adonisjs/ace'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
-@inject([null, 'Adonis/Lucid/Database'])
+@inject([null, null, 'Adonis/Lucid/Database'])
 export default class MakeMigration extends BaseCommand {
   public static commandName = 'make:migration'
   public static description = 'Make a new migration file'
