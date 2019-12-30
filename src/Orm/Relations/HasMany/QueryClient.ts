@@ -104,7 +104,7 @@ ModelConstructorContract
        * Saving many of the related instances by wrapping all of them
        * inside a transaction
        */
-      Promise.all(related.map((row) => {
+      await Promise.all(related.map((row) => {
         row[this.$relation.$foreignKey] = foreignKeyValue
         row.$trx = trx
         return row.save()
@@ -136,9 +136,10 @@ ModelConstructorContract
     this.ensureSingleParent(this.parent)
     await this.parent.save()
 
-    return this.$relation.$relatedModel().createMany(Object.assign({
-      [this.$relation.$foreignKey]: this.getForeignKeyValue(this.parent, 'createMany'),
-    }, values), this.$clientOptions)
+    const foreignKeyValue = this.getForeignKeyValue(this.parent, 'saveMany')
+    return this.$relation.$relatedModel().createMany(values.map((value) => {
+      return Object.assign({ [this.$relation.$foreignKey]: foreignKeyValue }, value)
+    }), this.$clientOptions)
   }
 
   /**
