@@ -18,7 +18,7 @@ import MigrationsBase from './MigrationsBase'
  * The command is meant to migrate the database by execute migrations
  * in `up` direction.
  */
-@inject([null, 'Adonis/Lucid/Database'])
+@inject([null, null, 'Adonis/Lucid/Database'])
 export default class Migrate extends MigrationsBase {
   public static commandName = 'migration:run'
   public static description = 'Run pending migrations'

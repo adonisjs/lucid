@@ -18,7 +18,7 @@ import { MigrationListNode } from '@ioc:Adonis/Lucid/Migrator'
  * The command is meant to migrate the database by execute migrations
  * in `up` direction.
  */
-@inject([null, 'Adonis/Lucid/Database'])
+@inject([null, null, 'Adonis/Lucid/Database'])
 export default class Status extends BaseCommand {
   public static commandName = 'migration:status'
   public static description = 'Drop existing tables and re-run migrations from start'
