@@ -74,6 +74,9 @@ ModelConstructorContract
     )
   }
 
+  /**
+   * Associate the related model with the parent model
+   */
   public async associate (related: ModelContract) {
     this.ensureSingleParent(this.parent)
     await related.save()
@@ -82,6 +85,9 @@ ModelConstructorContract
     await this.parent.save()
   }
 
+  /**
+   * Drop association
+   */
   public async dissociate () {
     this.ensureSingleParent(this.parent)
     this.parent[this.$relation.$foreignKey] = null

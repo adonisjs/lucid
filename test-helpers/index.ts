@@ -300,7 +300,7 @@ export function getLogger () {
   return new FakeLogger({
     enabled: true,
     name: 'lucid',
-    level: 'info',
+    level: 'debug',
   })
 }
 

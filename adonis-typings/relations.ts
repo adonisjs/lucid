@@ -469,7 +469,13 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     eagerQuery (): ManyToManyQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
     & ExcutableQueryBuilderContract<InstanceType<RelatedModel>[]>
 
-    save (related: InstanceType<RelatedModel>): Promise<void>
+    /**
+     * Pivot query just targets the pivot table without any joins
+     */
+    pivotQuery (): ManyToManyQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
+    & ExcutableQueryBuilderContract<InstanceType<RelatedModel>[]>
+
+    save (related: InstanceType<RelatedModel>, checkExisting?: boolean): Promise<void>
     create (values: ModelObject): Promise<InstanceType<RelatedModel>>
 
     saveMany (related: InstanceType<RelatedModel>[]): Promise<void>
