@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/lucid",
-  "version": "7.2.1",
+  "version": "7.3.0",
   "description": "SQL ORM built on top of Active Record pattern",
   "main": "build/providers/DatabaseProvider.js",
   "files": [
