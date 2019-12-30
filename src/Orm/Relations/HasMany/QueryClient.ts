@@ -86,7 +86,7 @@ ModelConstructorContract
     await this.parent.save()
 
     related[this.$relation.$foreignKey] = this.getForeignKeyValue(this.parent, 'save')
-    await this.$persist(related)
+    await related.save()
   }
 
   /**
@@ -100,10 +100,15 @@ ModelConstructorContract
     const trx = await this.$client.transaction()
 
     try {
-      for (let row of related) {
+      /**
+       * Saving many of the related instances by wrapping all of them
+       * inside a transaction
+       */
+      Promise.all(related.map((row) => {
         row[this.$relation.$foreignKey] = foreignKeyValue
-        await this.$persist(row, trx)
-      }
+        row.$trx = trx
+        return row.save()
+      }))
 
       await trx.commit()
     } catch (error) {
@@ -119,10 +124,9 @@ ModelConstructorContract
     this.ensureSingleParent(this.parent)
     await this.parent.save()
 
-    const foreignKeyValue = this.getForeignKeyValue(this.parent, 'create')
-    return this.$createAndPersist(Object.assign({
-      [this.$relation.$foreignKey]: foreignKeyValue,
-    }, values))
+    return this.$relation.$relatedModel().create(Object.assign({
+      [this.$relation.$foreignKey]: this.getForeignKeyValue(this.parent, 'create'),
+    }, values), this.$clientOptions)
   }
 
   /**
@@ -132,10 +136,9 @@ ModelConstructorContract
     this.ensureSingleParent(this.parent)
     await this.parent.save()
 
-    const foreignKeyValue = this.getForeignKeyValue(this.parent, 'createMany')
-    return this.$createAndPersistMany(values.map((row) => {
-      return Object.assign({ [this.$relation.$foreignKey]: foreignKeyValue }, row)
-    }))
+    return this.$relation.$relatedModel().createMany(Object.assign({
+      [this.$relation.$foreignKey]: this.getForeignKeyValue(this.parent, 'createMany'),
+    }, values), this.$clientOptions)
   }
 
   /**
@@ -147,6 +150,7 @@ ModelConstructorContract
   ): Promise<ModelContract> {
     this.ensureSingleParent(this.parent)
     await this.parent.save()
+
     return this.$relation.$relatedModel().firstOrCreate(Object.assign({
       [this.$relation.$foreignKey]: this.getForeignKeyValue(this.parent, 'firstOrCreate'),
     }, search), savePayload, this.$clientOptions)
@@ -161,6 +165,7 @@ ModelConstructorContract
   ): Promise<ModelContract> {
     this.ensureSingleParent(this.parent)
     await this.parent.save()
+
     return this.$relation.$relatedModel().updateOrCreate(Object.assign({
       [this.$relation.$foreignKey]: this.getForeignKeyValue(this.parent, 'updateOrCreate'),
     }, search), updatePayload, this.$clientOptions)

@@ -31,11 +31,14 @@ ModelConstructorContract
     client: QueryClientContract,
     private parent: ModelContract | ModelContract[],
     private relation: ManyToMany,
+    private pivotOnly: boolean,
     isEager: boolean = false,
   ) {
     super(builder, client, relation, isEager, (userFn) => {
       return (__builder) => {
-        userFn(new ManyToManyQueryBuilder(__builder, this.client, this.parent, this.relation))
+        userFn(
+          new ManyToManyQueryBuilder(__builder, this.client, this.parent, this.relation, this.pivotOnly, isEager),
+        )
       }
     })
   }
@@ -44,7 +47,7 @@ ModelConstructorContract
    * Prefixes the pivot table name to the key
    */
   private prefixPivotTable (key: string) {
-    return `${this.relation.$pivotTable}.${key}`
+    return this.pivotOnly ? key : `${this.relation.$pivotTable}.${key}`
   }
 
   /**
@@ -75,8 +78,11 @@ ModelConstructorContract
    * table name
    */
   private transformRelatedTableColumns (columns: any[]) {
-    const relatedTable = this.relation.$relatedModel().$table
+    if (this.pivotOnly) {
+      return columns
+    }
 
+    const relatedTable = this.relation.$relatedModel().$table
     return columns.map((column) => {
       if (typeof (column) === 'string') {
         return `${relatedTable}.${column}`
@@ -278,7 +284,7 @@ ModelConstructorContract
     }
 
     this.$appliedConstraints = true
-    if (['delete', 'update'].includes(this.$queryAction())) {
+    if (this.pivotOnly || ['delete', 'update'].includes(this.$queryAction())) {
       this.from(this.relation.$pivotTable)
       this.addWhereConstraints()
       return

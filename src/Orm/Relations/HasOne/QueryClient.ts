@@ -70,8 +70,12 @@ ModelConstructorContract
     this.ensureSingleParent(this.parent)
     await this.parent.save()
 
+    /**
+     * Do not copy options or trx from the parent model, the end user must do
+     * it themselves for explicit behavior
+     */
     related[this.$relation.$foreignKey] = this.getForeignKeyValue(this.parent, 'save')
-    await this.$persist(related)
+    await related.save()
   }
 
   /**
@@ -81,9 +85,9 @@ ModelConstructorContract
     this.ensureSingleParent(this.parent)
     await this.parent.save()
 
-    return this.$createAndPersist(Object.assign({
+    return this.$relation.$relatedModel().create(Object.assign({
       [this.$relation.$foreignKey]: this.getForeignKeyValue(this.parent, 'create'),
-    }, values))
+    }, values), this.$clientOptions)
   }
 
   /**
@@ -95,6 +99,7 @@ ModelConstructorContract
   ): Promise<ModelContract> {
     this.ensureSingleParent(this.parent)
     await this.parent.save()
+
     return this.$relation.$relatedModel().firstOrCreate(Object.assign({
       [this.$relation.$foreignKey]: this.getForeignKeyValue(this.parent, 'firstOrCreate'),
     }, search), savePayload, this.$clientOptions)
@@ -109,6 +114,7 @@ ModelConstructorContract
   ): Promise<ModelContract> {
     this.ensureSingleParent(this.parent)
     await this.parent.save()
+
     return this.$relation.$relatedModel().updateOrCreate(Object.assign({
       [this.$relation.$foreignKey]: this.getForeignKeyValue(this.parent, 'updateOrCreate'),
     }, search), updatePayload, this.$clientOptions)
