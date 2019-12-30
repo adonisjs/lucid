@@ -30,8 +30,8 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
   /**
    * Required by macroable
    */
-  protected static _macros = {}
-  protected static _getters = {}
+  protected static macros = {}
+  protected static getters = {}
 
   /**
    * Returns the client to be used for the query. Even though the insert query

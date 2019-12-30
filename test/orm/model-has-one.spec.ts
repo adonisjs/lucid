@@ -1166,51 +1166,6 @@ test.group('Model | HasOne | persist', (group) => {
     assert.equal(user.id, profile.userId)
   })
 
-  test('use parent model transaction when defined', async (assert) => {
-    class Profile extends BaseModel {
-      @column({ primary: true })
-      public id: number
-
-      @column()
-      public userId: number
-
-      @column()
-      public displayName: string
-    }
-
-    class User extends BaseModel {
-      @column({ primary: true })
-      public id: number
-
-      @column()
-      public username: string
-
-      @hasOne(() => Profile)
-      public profile: HasOne<Profile>
-    }
-
-    const trx = await db.transaction()
-
-    const user = new User()
-    user.username = 'virk'
-    user.$trx = trx
-    await user.save()
-
-    const profile = new Profile()
-    profile.displayName = 'virk'
-
-    await user.related('profile').save(profile)
-    await trx.rollback()
-
-    const totalUsers = await db.query().from('users').count('*', 'total')
-    const totalProfiles = await db.query().from('profiles').count('*', 'total')
-
-    assert.equal(totalUsers[0].total, 0)
-    assert.equal(totalProfiles[0].total, 0)
-    assert.isUndefined(user.$trx)
-    assert.isUndefined(profile.$trx)
-  })
-
   test('create related instance', async (assert) => {
     class Profile extends BaseModel {
       @column({ primary: true })

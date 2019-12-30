@@ -54,8 +54,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Required by macroable
    */
-  protected static _macros = {}
-  protected static _getters = {}
+  protected static macros = {}
+  protected static getters = {}
 
   /**
    * Options that must be passed to all new model instances
