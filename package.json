@@ -64,7 +64,7 @@
     "@adonisjs/sink": "^2.4.2",
     "@poppinss/dev-utils": "^1.0.3",
     "@types/dotenv": "^8.2.0",
-    "@types/node": "^13.1.1",
+    "@types/node": "^13.1.4",
     "@types/pluralize": "0.0.29",
     "clone": "^2.1.2",
     "commitizen": "^4.0.3",
