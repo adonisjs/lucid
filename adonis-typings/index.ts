@@ -4,3 +4,4 @@
 /// <reference path="./orm.ts" />
 /// <reference path="./schema.ts" />
 /// <reference path="./migrator.ts" />
+/// <reference path="./relations.ts" />
