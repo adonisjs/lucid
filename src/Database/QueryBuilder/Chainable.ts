@@ -24,7 +24,7 @@ import { RawQueryBuilder } from './Raw'
 export abstract class Chainable extends Macroable implements ChainableContract {
   constructor (
     public $knexBuilder: knex.QueryBuilder, // Needs to be public for Executable trait
-    private _queryCallback: DBQueryCallback,
+    private queryCallback: DBQueryCallback,
   ) {
     super()
   }
@@ -32,7 +32,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   /**
    * Returns the value pair for the `whereBetween` clause
    */
-  private _getBetweenPair (value: any[]): any {
+  private getBetweenPair (value: any[]): any {
     const [lhs, rhs] = value
     if (!lhs || !rhs) {
       throw new Error('Invalid array for whereBetween value')
@@ -45,7 +45,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Normalizes the columns aggregates functions to something
    * knex can process.
    */
-  private _normalizeAggregateColumns (columns: any, alias?: any): any {
+  private normalizeAggregateColumns (columns: any, alias?: any): any {
     if (columns.constructor === Object) {
       return Object.keys(columns).reduce((result, key) => {
         result[key] = this.$transformValue(columns[key])
@@ -87,7 +87,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   protected $transformCallback (value: any) {
     if (typeof (value) === 'function') {
-      return this._queryCallback(value)
+      return this.queryCallback(value)
     }
 
     return value
@@ -358,7 +358,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add where between clause
    */
   public whereBetween (key: any, value: [any, any]): this {
-    this.$knexBuilder.whereBetween(key, this._getBetweenPair(value))
+    this.$knexBuilder.whereBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -366,7 +366,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add where between clause
    */
   public orWhereBetween (key: any, value: any): this {
-    this.$knexBuilder.orWhereBetween(key, this._getBetweenPair(value))
+    this.$knexBuilder.orWhereBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -381,7 +381,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add where between clause
    */
   public whereNotBetween (key: any, value: any): this {
-    this.$knexBuilder.whereNotBetween(key, this._getBetweenPair(value))
+    this.$knexBuilder.whereNotBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -389,7 +389,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add where between clause
    */
   public orWhereNotBetween (key: any, value: any): this {
-    this.$knexBuilder.orWhereNotBetween(key, this._getBetweenPair(value))
+    this.$knexBuilder.orWhereNotBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -766,7 +766,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `having between` clause
    */
   public havingBetween (key: any, value: any): this {
-    this.$knexBuilder.havingBetween(key, this._getBetweenPair(value))
+    this.$knexBuilder.havingBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -774,7 +774,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `or having between` clause
    */
   public orHavingBetween (key: any, value: any): this {
-    this.$knexBuilder.orHavingBetween(key, this._getBetweenPair(value))
+    this.$knexBuilder.orHavingBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -789,7 +789,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `having not between` clause
    */
   public havingNotBetween (key: any, value: any): this {
-    this.$knexBuilder.havingNotBetween(key, this._getBetweenPair(value))
+    this.$knexBuilder.havingNotBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -797,7 +797,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `or having not between` clause
    */
   public orHavingNotBetween (key: any, value: any): this {
-    this.$knexBuilder.orHavingNotBetween(key, this._getBetweenPair(value))
+    this.$knexBuilder.orHavingNotBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -1047,7 +1047,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Count rows for the current query
    */
   public count (columns: any, alias?: any): this {
-    this.$knexBuilder.count(this._normalizeAggregateColumns(columns, alias))
+    this.$knexBuilder.count(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 
@@ -1055,7 +1055,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Count distinct rows for the current query
    */
   public countDistinct (columns: any, alias?: any): this {
-    this.$knexBuilder.countDistinct(this._normalizeAggregateColumns(columns, alias))
+    this.$knexBuilder.countDistinct(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 
@@ -1063,7 +1063,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of `min` aggregate function
    */
   public min (columns: any, alias?: any): this {
-    this.$knexBuilder.min(this._normalizeAggregateColumns(columns, alias))
+    this.$knexBuilder.min(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 
@@ -1071,7 +1071,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of `max` aggregate function
    */
   public max (columns: any, alias?: any): this {
-    this.$knexBuilder.max(this._normalizeAggregateColumns(columns, alias))
+    this.$knexBuilder.max(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 
@@ -1079,7 +1079,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of `avg` aggregate function
    */
   public avg (columns: any, alias?: any): this {
-    this.$knexBuilder.avg(this._normalizeAggregateColumns(columns, alias))
+    this.$knexBuilder.avg(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 
@@ -1087,7 +1087,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of distinct `avg` aggregate function
    */
   public avgDistinct (columns: any, alias?: any): this {
-    this.$knexBuilder.avgDistinct(this._normalizeAggregateColumns(columns, alias))
+    this.$knexBuilder.avgDistinct(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 
@@ -1095,7 +1095,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of `sum` aggregate function
    */
   public sum (columns: any, alias?: any): this {
-    this.$knexBuilder.sum(this._normalizeAggregateColumns(columns, alias))
+    this.$knexBuilder.sum(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 }

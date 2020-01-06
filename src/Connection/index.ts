@@ -51,27 +51,27 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Config for one or more read replicas. Only exists, when replicas are
    * defined
    */
-  private _readReplicas: any[] = []
+  private readReplicas: any[] = []
 
   /**
    * The round robin counter for reading config
    */
-  private _roundRobinCounter = 0
+  private roundRobinCounter = 0
 
   constructor (
     public readonly name: string,
     public config: ConnectionConfigContract,
-    private _logger: LoggerContract,
+    private logger: LoggerContract,
   ) {
     super()
-    this._validateConfig()
+    this.validateConfig()
   }
 
   /**
    * Validates the config to ensure that read/write replicas are defined
    * properly.
    */
-  private _validateConfig (): void {
+  private validateConfig (): void {
     if (this.config.replicas) {
       if (!this.config.replicas.read || !this.config.replicas.write) {
         throw new Exception(
@@ -94,11 +94,11 @@ export class Connection extends EventEmitter implements ConnectionContract {
   /**
    * Cleanup references
    */
-  private _cleanup (): void {
+  private cleanup (): void {
     this.client = undefined
     this.readClient = undefined
-    this._readReplicas = []
-    this._roundRobinCounter = 0
+    this.readReplicas = []
+    this.roundRobinCounter = 0
   }
 
   /**
@@ -106,22 +106,22 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * For the same of simplicity, we get rid of both read and write
    * clients, when anyone of them disconnects.
    */
-  private _monitorPoolResources (): void {
+  private monitorPoolResources (): void {
     /**
      * Pool has destroyed and hence we must cleanup resources
      * as well.
      */
     this.pool!.on('poolDestroySuccess', () => {
-      this._logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
-      this._cleanup()
+      this.logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
+      this.cleanup()
       this.emit('disconnect', this)
       this.removeAllListeners()
     })
 
     if (this.readPool !== this.pool) {
-      this._logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
+      this.logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
       this.readPool!.on('poolDestroySuccess', () => {
-        this._cleanup()
+        this.cleanup()
         this.emit('disconnect', this)
         this.removeAllListeners()
       })
@@ -132,7 +132,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Returns normalized config object for write replica to be
    * used by knex
    */
-  private _getWriteConfig (): knex.Config {
+  private getWriteConfig (): knex.Config {
     if (!this.config.replicas) {
       return this.config
     }
@@ -163,7 +163,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
   /**
    * Returns the config for read replicas.
    */
-  private _getReadConfig (): knex.Config {
+  private getReadConfig (): knex.Config {
     if (!this.config.replicas) {
       return this.config
     }
@@ -174,7 +174,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
      * Reading replicas and storing them as a reference, so that we
      * can pick a config from replicas as round robin.
      */
-    this._readReplicas = (replicas.read.connection as Array<any>).map((one) => {
+    this.readReplicas = (replicas.read.connection as Array<any>).map((one) => {
       if (typeof (one) === 'string' || typeof (config.connection) === 'string') {
         return one
       } else {
@@ -187,7 +187,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
      * internally
      */
     config.connection = {
-      database: this._readReplicas[0].database,
+      database: this.readReplicas[0].database,
     }
 
     /**
@@ -204,58 +204,58 @@ export class Connection extends EventEmitter implements ConnectionContract {
   /**
    * Resolves connection config for the writer connection
    */
-  private _writeConfigResolver (originalConfig: ConnectionConfigContract) {
+  private writeConfigResolver (originalConfig: ConnectionConfigContract) {
     return originalConfig.connection
   }
 
   /**
    * Resolves connection config for the reader connection
    */
-  private _readConfigResolver (originalConfig: ConnectionConfigContract) {
-    if (!this._readReplicas.length) {
+  private readConfigResolver (originalConfig: ConnectionConfigContract) {
+    if (!this.readReplicas.length) {
       return originalConfig.connection
     }
 
-    const index = this._roundRobinCounter++ % this._readReplicas.length
-    this._logger.trace({ connection: this.name }, `round robin using host at ${index} index`)
-    return this._readReplicas[index]
+    const index = this.roundRobinCounter++ % this.readReplicas.length
+    this.logger.trace({ connection: this.name }, `round robin using host at ${index} index`)
+    return this.readReplicas[index]
   }
 
   /**
    * Creates the write connection
    */
-  private _setupWriteConnection () {
-    this.client = knex(Object.assign({ log: new Logger(this._logger) }, this._getWriteConfig()))
-    patchKnex(this.client, this._writeConfigResolver.bind(this))
+  private setupWriteConnection () {
+    this.client = knex(Object.assign({ log: new Logger(this.logger) }, this.getWriteConfig()))
+    patchKnex(this.client, this.writeConfigResolver.bind(this))
   }
 
   /**
    * Creates the read connection. If there aren't any replicas in use, then
    * it will use reference the write client
    */
-  private _setupReadConnection () {
+  private setupReadConnection () {
     if (!this.hasReadWriteReplicas) {
       this.readClient = this.client
       return
     }
 
-    this._logger.trace({ connection: this.name }, 'setting up read/write replicas')
+    this.logger.trace({ connection: this.name }, 'setting up read/write replicas')
 
-    this.readClient = knex(Object.assign({ log: new Logger(this._logger) }, this._getReadConfig()))
-    patchKnex(this.readClient, this._readConfigResolver.bind(this))
+    this.readClient = knex(Object.assign({ log: new Logger(this.logger) }, this.getReadConfig()))
+    patchKnex(this.readClient, this.readConfigResolver.bind(this))
   }
 
   /**
    * Checks all the read hosts by running a query on them. Stops
    * after first error.
    */
-  private async _checkReadHosts () {
-    const configCopy = Object.assign({ log: new Logger(this._logger) }, this.config)
+  private async checkReadHosts () {
+    const configCopy = Object.assign({ log: new Logger(this.logger) }, this.config)
     let error: any = null
 
-    for (let _replica of this._readReplicas) {
-      configCopy.connection = this._readConfigResolver(this.config)
-      this._logger.trace({ connection: this.name }, 'spawing health check read connection')
+    for (let _ of this.readReplicas) {
+      configCopy.connection = this.readConfigResolver(this.config)
+      this.logger.trace({ connection: this.name }, 'spawing health check read connection')
       const client = knex(configCopy)
 
       try {
@@ -268,7 +268,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
        * Cleanup client connection
        */
       await client.destroy()
-      this._logger.trace({ connection: this.name }, 'destroying health check read connection')
+      this.logger.trace({ connection: this.name }, 'destroying health check read connection')
 
       /**
        * Return early when there is an error
@@ -284,7 +284,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
   /**
    * Checks for the write host
    */
-  private async _checkWriteHost () {
+  private async checkWriteHost () {
     try {
       await this.client!.raw('SELECT 1 + 1 AS result')
     } catch (error) {
@@ -320,9 +320,9 @@ export class Connection extends EventEmitter implements ConnectionContract {
    */
   public connect () {
     try {
-      this._setupWriteConnection()
-      this._setupReadConnection()
-      this._monitorPoolResources()
+      this.setupWriteConnection()
+      this.setupReadConnection()
+      this.monitorPoolResources()
       this.emit('connect', this)
     } catch (error) {
       this.emit('error', error, this)
@@ -338,7 +338,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * by the `close` event.
    */
   public async disconnect (): Promise<void> {
-    this._logger.trace({ connection: this.name }, 'destroying connection')
+    this.logger.trace({ connection: this.name }, 'destroying connection')
 
     /**
      * Disconnect write client
@@ -368,11 +368,11 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Returns the healthcheck report for the connection
    */
   public async getReport (): Promise<ReportNode> {
-    const error = await this._checkWriteHost()
+    const error = await this.checkWriteHost()
     let readError: Error | undefined
 
     if (!error && this.hasReadWriteReplicas) {
-      readError = await this._checkReadHosts()
+      readError = await this.checkReadHosts()
     }
 
     return {

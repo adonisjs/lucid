@@ -34,26 +34,26 @@ import { MigrationSource } from './MigrationSource'
  * for a given connection at a time.
  */
 export class Migrator extends EventEmitter implements MigratorContract {
-  private _client = this._db.connection(this._options.connectionName || this._db.primaryConnectionName)
-  private _config = this._db.getRawConnection(this._client.connectionName)!.config
+  private client = this.db.connection(this.options.connectionName || this.db.primaryConnectionName)
+  private config = this.db.getRawConnection(this.client.connectionName)!.config
 
   /**
    * Reference to the migrations config for the given connection
    */
-  private _migrationsConfig = Object.assign({
+  private migrationsConfig = Object.assign({
     tableName: 'adonis_schema',
     disableTransactions: false,
-  }, this._config.migrations)
+  }, this.config.migrations)
 
   /**
    * Whether or not the migrator has been booted
    */
-  private _booted: boolean = false
+  private booted: boolean = false
 
   /**
    * Migration source to collect schema files from the disk
    */
-  private _migrationSource = new MigrationSource(this._config, this._app)
+  private migrationSource = new MigrationSource(this.config, this.app)
 
   /**
    * Mode decides in which mode the migrator is executing migrations. The migrator
@@ -61,12 +61,12 @@ export class Migrator extends EventEmitter implements MigratorContract {
    *
    * The value is set when `migrate` or `rollback` method is invoked
    */
-  public direction: 'up' | 'down' = this._options.direction
+  public direction: 'up' | 'down' = this.options.direction
 
   /**
    * Instead of executing migrations, just return the generated SQL queries
    */
-  public dryRun: boolean = !!this._options.dryRun
+  public dryRun: boolean = !!this.options.dryRun
 
   /**
    * An array of files we have successfully migrated. The files are
@@ -83,7 +83,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Current status of the migrator
    */
   public get status () {
-    return !this._booted
+    return !this.booted
       ? 'pending'
       : (
         this.error
@@ -93,9 +93,9 @@ export class Migrator extends EventEmitter implements MigratorContract {
   }
 
   constructor (
-    private _db: DatabaseContract,
-    private _app: ApplicationContract,
-    private _options: MigratorOptions,
+    private db: DatabaseContract,
+    private app: ApplicationContract,
+    private options: MigratorOptions,
   ) {
     super()
   }
@@ -104,7 +104,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Returns the client for a given schema file. Schema instructions are
    * wrapped in a transaction unless transaction is not disabled
    */
-  private async _getClient (disableTransactions: boolean) {
+  private async getClient (disableTransactions: boolean) {
     /**
      * We do not create a transaction when
      *
@@ -114,19 +114,19 @@ export class Migrator extends EventEmitter implements MigratorContract {
      */
     if (
       disableTransactions ||
-      this._migrationsConfig.disableTransactions ||
+      this.migrationsConfig.disableTransactions ||
       this.dryRun
     ) {
-      return this._client
+      return this.client
     }
 
-    return this._client.transaction()
+    return this.client.transaction()
   }
 
   /**
    * Roll back the transaction when it's client is a transaction client
    */
-  private async _rollback (client: QueryClientContract) {
+  private async rollback (client: QueryClientContract) {
     if (client.isTransaction) {
       await (client as TransactionClientContract).rollback()
     }
@@ -135,7 +135,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
   /**
    * Commits a transaction when it's client is a transaction client
    */
-  private async _commit (client: QueryClientContract) {
+  private async commit (client: QueryClientContract) {
     if (client.isTransaction) {
       await (client as TransactionClientContract).commit()
     }
@@ -145,7 +145,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Writes the migrated file to the migrations table. This ensures that
    * we are not re-running the same migration again
    */
-  private async _recordMigrated (
+  private async recordMigrated (
     client: QueryClientContract,
     name: string,
     executionResponse: boolean | string[],
@@ -155,7 +155,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
       return
     }
 
-    await client.insertQuery().table(this._migrationsConfig.tableName).insert({
+    await client.insertQuery().table(this.migrationsConfig.tableName).insert({
       name,
       batch: this.migratedFiles[name].batch,
     })
@@ -165,7 +165,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Removes the migrated file from the migrations table. This allows re-running
    * the migration
    */
-  private async _recordRollback (
+  private async recordRollback (
     client: QueryClientContract,
     name: string,
     executionResponse: boolean | string[],
@@ -175,15 +175,15 @@ export class Migrator extends EventEmitter implements MigratorContract {
       return
     }
 
-    await client.query().from(this._migrationsConfig.tableName).where({ name }).del()
+    await client.query().from(this.migrationsConfig.tableName).where({ name }).del()
   }
 
   /**
    * Executes a given migration node and cleans up any created transactions
    * in case of failure
    */
-  private async _executeMigration (migration: MigrationNode) {
-    const client = await this._getClient(migration.source.disableTransactions)
+  private async executeMigration (migration: MigrationNode) {
+    const client = await this.getClient(migration.source.disableTransactions)
 
     try {
       const schema = new migration.source(client, migration.name, this.dryRun)
@@ -191,13 +191,13 @@ export class Migrator extends EventEmitter implements MigratorContract {
 
       if (this.direction === 'up') {
         const response = await schema.execUp() // Handles dry run itself
-        await this._recordMigrated(client, migration.name, response) // Handles dry run itself
+        await this.recordMigrated(client, migration.name, response) // Handles dry run itself
       } else if (this.direction === 'down') {
         const response = await schema.execDown() // Handles dry run itself
-        await this._recordRollback(client, migration.name, response) // Handles dry run itself
+        await this.recordRollback(client, migration.name, response) // Handles dry run itself
       }
 
-      await this._commit(client)
+      await this.commit(client)
       this.migratedFiles[migration.name].status = 'completed'
       this.emit('migration:completed', this.migratedFiles[migration.name])
     } catch (error) {
@@ -205,7 +205,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
       this.migratedFiles[migration.name].status = 'error'
       this.emit('migration:error', this.migratedFiles[migration.name])
 
-      await this._rollback(client)
+      await this.rollback(client)
       throw error
     }
   }
@@ -220,12 +220,12 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Locks are always acquired in dry run too, since we want to stay close
    * to the real execution cycle
    */
-  private async _acquireLock () {
-    if (!this._client.dialect.supportsAdvisoryLocks) {
+  private async acquireLock () {
+    if (!this.client.dialect.supportsAdvisoryLocks) {
       return
     }
 
-    const acquired = await this._client.dialect.getAdvisoryLock(1)
+    const acquired = await this.client.dialect.getAdvisoryLock(1)
     if (!acquired) {
       throw new Exception('Unable to acquire lock. Concurrent migrations are not allowed')
     }
@@ -236,12 +236,12 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Release a lock once complete the migration process. Only works with
    * `Mysql`, `PostgreSQL` and `MariaDb` for now.
    */
-  private async _releaseLock () {
-    if (!this._client.dialect.supportsAdvisoryLocks) {
+  private async releaseLock () {
+    if (!this.client.dialect.supportsAdvisoryLocks) {
       return
     }
 
-    const released = await this._client.dialect.releaseAdvisoryLock(1)
+    const released = await this.client.dialect.releaseAdvisoryLock(1)
     if (!released) {
       throw new Exception('Migration completed, but unable to release database lock')
     }
@@ -253,16 +253,16 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * we always reads from the schema table to find which migrations files to
    * execute and that cannot done without missing table.
    */
-  private async _makeMigrationsTable () {
-    const client = this._client
+  private async makeMigrationsTable () {
+    const client = this.client
 
-    const hasTable = await client.schema.hasTable(this._migrationsConfig.tableName)
+    const hasTable = await client.schema.hasTable(this.migrationsConfig.tableName)
     if (hasTable) {
       return
     }
 
     this.emit('create:schema:table')
-    await client.schema.createTable(this._migrationsConfig.tableName, (table) => {
+    await client.schema.createTable(this.migrationsConfig.tableName, (table) => {
       table.increments().notNullable()
       table.string('name').notNullable()
       table.integer('batch').notNullable()
@@ -274,9 +274,9 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Returns the latest batch from the migrations
    * table
    */
-  private async _getLatestBatch () {
-    const rows = await this._client
-      .from(this._migrationsConfig.tableName)
+  private async getLatestBatch () {
+    const rows = await this.client
+      .from(this.migrationsConfig.tableName)
       .max('batch as batch')
 
     return Number(rows[0].batch)
@@ -285,10 +285,10 @@ export class Migrator extends EventEmitter implements MigratorContract {
   /**
    * Returns an array of files migrated till now
    */
-  private async _getMigratedFiles () {
-    const rows = await this._client
+  private async getMigratedFiles () {
+    const rows = await this.client
       .query<{ name: string }[]>()
-      .from(this._migrationsConfig.tableName)
+      .from(this.migrationsConfig.tableName)
       .select('name')
 
     return new Set(rows.map(({ name }) => name))
@@ -298,10 +298,10 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Returns an array of files migrated till now. The latest
    * migrations are on top
    */
-  private async _getMigratedFilesTillBatch (batch: number) {
-    return this._client
+  private async getMigratedFilesTillBatch (batch: number) {
+    return this.client
       .query<{ name: string, batch: number, migration_time: Date }[]>()
-      .from(this._migrationsConfig.tableName)
+      .from(this.migrationsConfig.tableName)
       .select('name', 'batch', 'migration_time')
       .where('batch', '>', batch)
       .orderBy('id', 'desc')
@@ -311,27 +311,27 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Boot the migrator to perform actions. All boot methods must
    * work regardless of dryRun is enabled or not.
    */
-  private async _boot () {
+  private async boot () {
     this.emit('start')
-    this._booted = true
-    await this._acquireLock()
-    await this._makeMigrationsTable()
+    this.booted = true
+    await this.acquireLock()
+    await this.makeMigrationsTable()
   }
 
   /**
    * Shutdown gracefully
    */
-  private async _shutdown () {
-    await this._releaseLock()
+  private async shutdown () {
+    await this.releaseLock()
   }
 
   /**
    * Migrate up
    */
-  private async _runUp () {
-    const batch = await this._getLatestBatch()
-    const existing = await this._getMigratedFiles()
-    const collected = await this._migrationSource.getMigrations()
+  private async runUp () {
+    const batch = await this.getLatestBatch()
+    const existing = await this.getMigratedFiles()
+    const collected = await this.migrationSource.getMigrations()
 
     /**
      * Upfront collecting the files to be executed
@@ -349,20 +349,20 @@ export class Migrator extends EventEmitter implements MigratorContract {
 
     const filesToMigrate = Object.keys(this.migratedFiles)
     for (let name of filesToMigrate) {
-      await this._executeMigration(this.migratedFiles[name].migration)
+      await this.executeMigration(this.migratedFiles[name].migration)
     }
   }
 
   /**
    * Migrate down (aka rollback)
    */
-  private async _runDown (batch?: number) {
+  private async runDown (batch?: number) {
     if (batch === undefined) {
-      batch = await this._getLatestBatch() - 1
+      batch = await this.getLatestBatch() - 1
     }
 
-    const existing = await this._getMigratedFilesTillBatch(batch)
-    const collected = await this._migrationSource.getMigrations()
+    const existing = await this.getMigratedFilesTillBatch(batch)
+    const collected = await this.migrationSource.getMigrations()
 
     /**
      * Finding schema files for migrations to rollback. We do not perform
@@ -388,7 +388,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
 
     const filesToMigrate = Object.keys(this.migratedFiles)
     for (let name of filesToMigrate) {
-      await this._executeMigration(this.migratedFiles[name].migration)
+      await this.executeMigration(this.migratedFiles[name].migration)
     }
   }
 
@@ -408,8 +408,8 @@ export class Migrator extends EventEmitter implements MigratorContract {
    */
   public async getList (): Promise<MigrationListNode[]> {
     const existingCollected: Set<string> = new Set()
-    const existing = await this._getMigratedFilesTillBatch(0)
-    const collected = await this._migrationSource.getMigrations()
+    const existing = await this.getMigratedFilesTillBatch(0)
+    const collected = await this.migrationSource.getMigrations()
 
     const list: MigrationListNode[] = collected.map((migration) => {
       const migrated = existing.find(({ name }) => migration.name === name)
@@ -452,24 +452,24 @@ export class Migrator extends EventEmitter implements MigratorContract {
    */
   public async run () {
     try {
-      await this._boot()
+      await this.boot()
 
       if (this.direction === 'up') {
-        await this._runUp()
-      } else if (this._options.direction === 'down') {
-        await this._runDown(this._options.batch)
+        await this.runUp()
+      } else if (this.options.direction === 'down') {
+        await this.runDown(this.options.batch)
       }
     } catch (error) {
       this.error = error
     }
 
-    await this._shutdown()
+    await this.shutdown()
   }
 
   /**
    * Close database connections
    */
   public async close () {
-    await this._db.manager.closeAll(true)
+    await this.db.manager.closeAll(true)
   }
 }

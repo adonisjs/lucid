@@ -22,7 +22,7 @@ import {
  * model instances from it.
  */
 export class Adapter implements AdapterContract {
-  constructor (private _db: DatabaseContract) {
+  constructor (private db: DatabaseContract) {
   }
 
   /**
@@ -38,7 +38,7 @@ export class Adapter implements AdapterContract {
 
     const connection = options && options.connection || modelConstructor.$connection
     const profiler = options && options.profiler
-    return this._db.connection(connection, { profiler })
+    return this.db.connection(connection, { profiler })
   }
 
   /**

@@ -46,7 +46,7 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
   /**
    * Ends the profile action
    */
-  private _endProfilerAction (action: null | ProfilerActionContract, error?: any) {
+  private endProfilerAction (action: null | ProfilerActionContract, error?: any) {
     if (!action) {
       return
     }
@@ -57,15 +57,15 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
   /**
    * Executes the knex query builder
    */
-  private async _executeQuery () {
+  private async executeQuery () {
     const action = this.getProfilerAction()
 
     try {
       const result = await this.$knexBuilder
-      this._endProfilerAction(action)
+      this.endProfilerAction(action)
       return result
     } catch (error) {
-      this._endProfilerAction(action, error)
+      this.endProfilerAction(action, error)
       throw error
     }
   }
@@ -74,7 +74,7 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
    * Executes the query by acquiring a connection from a custom
    * knex client
    */
-  private async _executeQueryWithCustomConnection (knexClient: knex) {
+  private async executeQueryWithCustomConnection (knexClient: knex) {
     const action = this.getProfilerAction()
 
     /**
@@ -94,10 +94,10 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
      */
     try {
       queryResult = await this.$knexBuilder
-      this._endProfilerAction(action)
+      this.endProfilerAction(action)
     } catch (error) {
       queryError = error
-      this._endProfilerAction(action, error)
+      this.endProfilerAction(action, error)
     }
 
     /**
@@ -179,13 +179,13 @@ export class Executable implements ExcutableQueryBuilderContract<any> {
       || this.client.isTransaction
       || this.$knexBuilder['client'].transacting
     ) {
-      result = await this._executeQuery()
+      result = await this.executeQuery()
     } else {
       const knexClient = this.getQueryClient()
       if (knexClient) {
-        result = await this._executeQueryWithCustomConnection(knexClient)
+        result = await this.executeQueryWithCustomConnection(knexClient)
       } else {
-        result = await this._executeQuery()
+        result = await this.executeQuery()
       }
     }
 

@@ -58,7 +58,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Ensures that we are not executing `update` or `del` when using read only
    * client
    */
-  private _ensureCanPerformWrites () {
+  private ensureCanPerformWrites () {
     if (this.client && this.client.mode === 'read') {
       throw new Exception('Updates and deletes cannot be performed in read mode')
     }
@@ -68,7 +68,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Delete rows under the current query
    */
   public del (): this {
-    this._ensureCanPerformWrites()
+    this.ensureCanPerformWrites()
     this.$knexBuilder.del()
     return this
   }
@@ -117,7 +117,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Perform update
    */
   public update (columns: any): this {
-    this._ensureCanPerformWrites()
+    this.ensureCanPerformWrites()
     this.$knexBuilder.update(columns)
     return this
   }
@@ -144,7 +144,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
      * Use write client for updates and deletes
      */
     if (['update', 'del'].includes(this.$knexBuilder['_method'])) {
-      this._ensureCanPerformWrites()
+      this.ensureCanPerformWrites()
       return this.client!.getWriteClient().client
     }
 

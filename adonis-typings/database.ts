@@ -48,7 +48,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    */
   export interface DialectContract {
     readonly name: string
-    supportsAdvisoryLocks: boolean
+    readonly supportsAdvisoryLocks: boolean
     getAdvisoryLock (key: string | number, timeout?: number): Promise<boolean>
     releaseAdvisoryLock (key: string | number): Promise<boolean>
   }
@@ -155,6 +155,12 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Get instance of transaction client
      */
     transaction (): Promise<TransactionClientContract>,
+
+    /**
+     * Work with advisory locks
+     */
+    getAdvisoryLock (key: string | number, timeout?: number): Promise<boolean>
+    releaseAdvisoryLock (key: string | number): Promise<boolean>
   }
 
   /**

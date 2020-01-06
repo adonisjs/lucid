@@ -16,7 +16,7 @@ import { IocContract, IocResolverContract, IocResolverLookupNode } from '@adonis
  * A generic class to implement before and after lifecycle hooks
  */
 export class Hooks {
-  private _hooks: {
+  private hooks: {
     [event: string]: {
       before: Set<Exclude<HooksHandler<any>, string> | IocResolverLookupNode>,
       after: Set<Exclude<HooksHandler<any>, string> | IocResolverLookupNode>,
@@ -26,17 +26,17 @@ export class Hooks {
   /**
    * Resolver to resolve IoC container bindings
    */
-  private _resolver: IocResolverContract
+  private resolver: IocResolverContract
 
   constructor (container: IocContract) {
-    this._resolver = container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')
+    this.resolver = container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')
   }
 
   /**
    * Add hook for a given event and lifecycle
    */
   public add (lifecycle: 'before' | 'after', event: EventsList, handler: HooksHandler<any>) {
-    this._hooks[event] = this._hooks[event] || { before: new Set(), after: new Set() }
+    this.hooks[event] = this.hooks[event] || { before: new Set(), after: new Set() }
 
     let resolvedHook
 
@@ -44,12 +44,12 @@ export class Hooks {
      * If hook is a string, then resolve it from the container
      */
     if (typeof (handler) === 'string') {
-      resolvedHook = this._resolver.resolve(handler)
+      resolvedHook = this.resolver.resolve(handler)
     } else {
       resolvedHook = handler
     }
 
-    this._hooks[event][lifecycle].add(resolvedHook)
+    this.hooks[event][lifecycle].add(resolvedHook)
     return this
   }
 
@@ -57,15 +57,15 @@ export class Hooks {
    * Execute hooks for a given event and lifecycle
    */
   public async execute (lifecycle: 'before' | 'after', event: EventsList, payload: any): Promise<void> {
-    if (!this._hooks[event]) {
+    if (!this.hooks[event]) {
       return
     }
 
-    for (let hook of this._hooks[event][lifecycle]) {
+    for (let hook of this.hooks[event][lifecycle]) {
       if (typeof (hook) === 'function') {
         await hook(payload)
       } else {
-        await this._resolver.call(hook, undefined, [payload])
+        await this.resolver.call(hook, undefined, [payload])
       }
     }
   }
@@ -74,17 +74,17 @@ export class Hooks {
    * Remove hooks for a given event
    */
   public clear (event: EventsList): void {
-    if (!this._hooks[event]) {
+    if (!this.hooks[event]) {
       return
     }
 
-    delete this._hooks[event]
+    delete this.hooks[event]
   }
 
   /**
    * Remove all hooks
    */
   public clearAll (): void {
-    this._hooks = {}
+    this.hooks = {}
   }
 }

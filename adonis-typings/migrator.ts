@@ -8,8 +8,8 @@
 */
 
 declare module '@ioc:Adonis/Lucid/Migrator' {
-  import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
   import { EventEmitter } from 'events'
+  import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
 
   /**
    * Migration node returned by the migration source

@@ -9,6 +9,10 @@
 
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
 
+/**
+ * Custom knex logger that uses adonisjs logger under the
+ * hood.
+ */
 export class Logger {
   public warn = function (message: any) {
     this.adonisLogger.warn(message)

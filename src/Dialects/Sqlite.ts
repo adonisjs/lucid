@@ -13,7 +13,7 @@ import { DialectContract } from '@ioc:Adonis/Lucid/Database'
 
 export class SqliteDialect implements DialectContract {
   public readonly name = 'sqlite3'
-  public supportsAdvisoryLocks = false
+  public readonly supportsAdvisoryLocks = false
 
   /**
    * Attempts to add advisory lock to the database and
