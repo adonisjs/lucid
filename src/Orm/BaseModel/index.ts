@@ -1324,13 +1324,13 @@ export class BaseModel implements ModelContract {
     if (!freshModelInstance) {
       throw new Exception(
         [
-          '"Model.reload" failed. ',
+          '"Model.refresh" failed. ',
           `Unable to lookup "${$table}" table where "${primaryAdapterKey}" = ${this.$primaryKeyValue}`,
         ].join(''),
       )
     }
 
-    this.fill(freshModelInstance!.$attributes)
+    this.fill(freshModelInstance.$attributes)
     this.$hydrateOriginals()
   }
 }
