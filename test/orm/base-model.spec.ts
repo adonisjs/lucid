@@ -583,7 +583,7 @@ test.group('Base Model | persist', (group) => {
     try {
       await user.refresh()
     } catch ({ message }) {
-      assert.equal(message, '"Model.reload" failed. Unable to lookup "users" table where "id" = 1')
+      assert.equal(message, '"Model.refresh" failed. Unable to lookup "users" table where "id" = 1')
     }
   })
 })
