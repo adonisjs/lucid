@@ -28,12 +28,12 @@ ModelConstructorContract
     builder: knex.QueryBuilder,
     client: QueryClientContract,
     private parent: ModelContract | ModelContract[],
-    private relation: HasOne,
+    protected $relation: HasOne,
     isEager: boolean = false,
   ) {
-    super(builder, client, relation, isEager, (userFn) => {
+    super(builder, client, $relation, isEager, (userFn) => {
       return (__builder) => {
-        userFn(new HasOneQueryBuilder(__builder, this.client, this.parent, this.relation))
+        userFn(new HasOneQueryBuilder(__builder, this.client, this.parent, this.$relation))
       }
     })
   }
@@ -54,8 +54,8 @@ ModelConstructorContract
      * Eager query contraints
      */
     if (Array.isArray(this.parent)) {
-      this.$knexBuilder.whereIn(this.relation.$foreignCastAsKey, unique(this.parent.map((model) => {
-        return getValue(model, this.relation.$localKey, this.relation, queryAction)
+      this.$knexBuilder.whereIn(this.$relation.$foreignCastAsKey, unique(this.parent.map((model) => {
+        return getValue(model, this.$relation.$localKey, this.$relation, queryAction)
       })))
       return
     }
@@ -63,8 +63,8 @@ ModelConstructorContract
     /**
      * Query constraints
      */
-    const value = getValue(this.parent, this.relation.$localKey, this.relation, queryAction)
-    this.$knexBuilder.where(this.relation.$foreignCastAsKey, value)
+    const value = getValue(this.parent, this.$relation.$localKey, this.$relation, queryAction)
+    this.$knexBuilder.where(this.$relation.$foreignCastAsKey, value)
 
     /**
      * Do not add limit when updating or deleting
@@ -78,6 +78,6 @@ ModelConstructorContract
    * The keys for constructing the join query
    */
   public getRelationKeys (): string[] {
-    return [this.relation.$foreignCastAsKey]
+    return [this.$relation.$foreignCastAsKey]
   }
 }

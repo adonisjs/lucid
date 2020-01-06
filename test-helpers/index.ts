@@ -307,8 +307,8 @@ export function getLogger () {
 /**
  * Returns profiler instance
  */
-export function getProfiler () {
-  return new Profiler({ enabled: false })
+export function getProfiler (enabled: boolean = false) {
+  return new Profiler({ enabled })
 }
 
 /**

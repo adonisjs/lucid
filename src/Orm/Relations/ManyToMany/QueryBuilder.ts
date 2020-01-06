@@ -30,14 +30,14 @@ ModelConstructorContract
     builder: knex.QueryBuilder,
     client: QueryClientContract,
     private parent: ModelContract | ModelContract[],
-    private relation: ManyToMany,
+    protected $relation: ManyToMany,
     private pivotOnly: boolean,
     isEager: boolean = false,
   ) {
-    super(builder, client, relation, isEager, (userFn) => {
+    super(builder, client, $relation, isEager, (userFn) => {
       return (__builder) => {
         userFn(
-          new ManyToManyQueryBuilder(__builder, this.client, this.parent, this.relation, this.pivotOnly, isEager),
+          new ManyToManyQueryBuilder(__builder, this.client, this.parent, this.$relation, this.pivotOnly, isEager),
         )
       }
     })
@@ -47,7 +47,7 @@ ModelConstructorContract
    * Prefixes the pivot table name to the key
    */
   private prefixPivotTable (key: string) {
-    return this.pivotOnly ? key : `${this.relation.$pivotTable}.${key}`
+    return this.pivotOnly ? key : `${this.$relation.$pivotTable}.${key}`
   }
 
   /**
@@ -60,8 +60,8 @@ ModelConstructorContract
      * Eager query contraints
      */
     if (Array.isArray(this.parent)) {
-      this.whereInPivot(this.relation.$pivotForeignKey, unique(this.parent.map((model) => {
-        return getValue(model, this.relation.$localKey, this.relation, queryAction)
+      this.whereInPivot(this.$relation.$pivotForeignKey, unique(this.parent.map((model) => {
+        return getValue(model, this.$relation.$localKey, this.$relation, queryAction)
       })))
       return
     }
@@ -69,8 +69,8 @@ ModelConstructorContract
     /**
      * Query constraints
      */
-    const value = getValue(this.parent, this.relation.$localKey, this.relation, queryAction)
-    this.wherePivot(this.relation.$pivotForeignKey, value)
+    const value = getValue(this.parent, this.$relation.$localKey, this.$relation, queryAction)
+    this.wherePivot(this.$relation.$pivotForeignKey, value)
   }
 
   /**
@@ -82,7 +82,7 @@ ModelConstructorContract
       return columns
     }
 
-    const relatedTable = this.relation.$relatedModel().$table
+    const relatedTable = this.$relation.$relatedModel().$table
     return columns.map((column) => {
       if (typeof (column) === 'string') {
         return `${relatedTable}.${column}`
@@ -269,7 +269,7 @@ ModelConstructorContract
    */
   public pivotColumns (columns: string[]): this {
     this.$knexBuilder.select(columns.map((column) => {
-      return `${this.prefixPivotTable(column)} as ${this.relation.pivotAlias(column)}`
+      return `${this.prefixPivotTable(column)} as ${this.$relation.pivotAlias(column)}`
     }))
     return this
   }
@@ -285,7 +285,7 @@ ModelConstructorContract
 
     this.$appliedConstraints = true
     if (this.pivotOnly || ['delete', 'update'].includes(this.$queryAction())) {
-      this.from(this.relation.$pivotTable)
+      this.from(this.$relation.$pivotTable)
       this.addWhereConstraints()
       return
     }
@@ -303,18 +303,18 @@ ModelConstructorContract
      */
     this.pivotColumns(
       [
-        this.relation.$pivotForeignKey,
-        this.relation.$pivotRelatedForeignKey,
-      ].concat(this.relation.$extrasPivotColumns),
+        this.$relation.$pivotForeignKey,
+        this.$relation.$pivotRelatedForeignKey,
+      ].concat(this.$relation.$extrasPivotColumns),
     )
 
     /**
      * Add inner join between related model and pivot table
      */
     this.innerJoin(
-      this.relation.$pivotTable,
-      `${this.relation.$relatedModel().$table}.${this.relation.$relatedCastAsKey}`,
-      `${this.relation.$pivotTable}.${this.relation.$pivotRelatedForeignKey}`,
+      this.$relation.$pivotTable,
+      `${this.$relation.$relatedModel().$table}.${this.$relation.$relatedCastAsKey}`,
+      `${this.$relation.$pivotTable}.${this.$relation.$pivotRelatedForeignKey}`,
     )
 
     this.addWhereConstraints()
@@ -325,7 +325,7 @@ ModelConstructorContract
    */
   public getRelationKeys (): string[] {
     return [
-      `${this.relation.$relatedModel().$table}.${this.relation.$relatedCastAsKey}`,
+      `${this.$relation.$relatedModel().$table}.${this.$relation.$relatedCastAsKey}`,
     ]
   }
 }

@@ -13,7 +13,7 @@ import test from 'japa'
 import { ManyToMany } from '@ioc:Adonis/Lucid/Orm'
 
 import { manyToMany, column } from '../../src/Orm/Decorators'
-import { getDb, getBaseModel, ormAdapter, setup, resetTables, cleanup } from '../../test-helpers'
+import { getDb, getBaseModel, ormAdapter, setup, resetTables, cleanup, getProfiler } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
@@ -1232,6 +1232,53 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('preload self referenced relationship', async (assert) => {
+    assert.plan(1)
+
+    class Skill extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.$boot()
+    await db.insertQuery().table('users').insert([{ username: 'virk' }])
+    await db.insertQuery().table('skills').insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+    ])
+
+    const profiler = getProfiler(true)
+
+    let profilerPacketIndex = 0
+    profiler.subscribe((packet) => {
+      if (profilerPacketIndex === 1) {
+        assert.deepEqual(packet.data.relation, {
+          model: 'User',
+          relatedModel: 'Skill',
+          pivotTable: 'skill_user',
+          relation: 'manyToMany',
+        })
+      }
+      profilerPacketIndex++
+    })
+
+    await User.query({ profiler }).preload('skills')
   })
 })
 

@@ -49,6 +49,15 @@ ModelConstructorContract
   public $throughForeignKey: string
   public $throughForeignCastAsKey: string
 
+  public get $profilerData () {
+    return {
+      model: this.$model.name,
+      relatedModel: this.$relatedModel().name,
+      throughModel: this.$throughModel().name,
+      relation: this.$type,
+    }
+  }
+
   constructor (
     relationName: string,
     private throughOptions: ThroughRelationOptions,
