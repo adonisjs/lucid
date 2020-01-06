@@ -13,7 +13,7 @@ import test from 'japa'
 import { HasManyThrough } from '@ioc:Adonis/Lucid/Orm'
 
 import { hasManyThrough, column } from '../../src/Orm/Decorators'
-import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb } from '../../test-helpers'
+import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb, getProfiler } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
@@ -979,5 +979,69 @@ test.group('Model | Has Many Through | preload', (group) => {
     } catch ({ message }) {
       assert.equal(message, 'Cannot preload "posts", value of "Country.id" is undefined')
     }
+  })
+
+  test('preload through relationships', async (assert) => {
+    assert.plan(1)
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.$boot()
+
+    class Post extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.$boot()
+
+    class Country extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<Post>
+    }
+    Country.$boot()
+
+    await db.insertQuery().table('countries').insert([{ name: 'India' }])
+
+    await db.insertQuery().table('users').insert([
+      { username: 'virk', country_id: 1 },
+      { username: 'nikk', country_id: 1 },
+    ])
+
+    await db.insertQuery().table('posts').insert([
+      { title: 'Adonis 101', user_id: 1 },
+      { title: 'Lucid 101', user_id: 1 },
+      { title: 'Adonis5', user_id: 2 },
+    ])
+
+    const profiler = getProfiler(true)
+
+    let profilerPacketIndex = 0
+    profiler.subscribe((packet) => {
+      if (profilerPacketIndex === 1) {
+        assert.deepEqual(packet.data.relation, {
+          model: 'Country',
+          relatedModel: 'Post',
+          throughModel: 'User',
+          relation: 'hasManyThrough',
+        })
+      }
+      profilerPacketIndex++
+    })
+
+    await Country.query({ profiler }).preload('posts')
   })
 })

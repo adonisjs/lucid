@@ -38,6 +38,15 @@ ModelConstructorContract
   public $pivotTable: string
   public $extrasPivotColumns: string[] = this.manyToManyOptions.pivotColumns || []
 
+  public get $profilerData () {
+    return {
+      model: this.$model.name,
+      relatedModel: this.$relatedModel().name,
+      pivotTable: this.$pivotTable,
+      relation: this.$type,
+    }
+  }
+
   constructor (
     relationName: string,
     private manyToManyOptions: ManyToManyRelationOptions,

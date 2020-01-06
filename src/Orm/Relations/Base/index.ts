@@ -25,6 +25,14 @@ ModelConstructorContract
   public $serializeAs = this.$options.serializeAs || this.$relationName
   public $relatedModel = this.$options.relatedModel
 
+  public get $profilerData () {
+    return {
+      model: this.$model.name,
+      relatedModel: this.$relatedModel().name,
+      relation: this.$type,
+    }
+  }
+
   constructor (
     public $relationName: string,
     protected $options: RelationOptions,

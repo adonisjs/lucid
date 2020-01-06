@@ -214,6 +214,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     $serializeAs: string
     $booted: boolean
     $model: Model
+    $profilerData: { [key: string]: any },
 
     $boot (): void
     $relatedModel (): RelatedModel

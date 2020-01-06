@@ -13,7 +13,7 @@ import test from 'japa'
 import { HasOne, BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 
 import { hasOne, column, belongsTo } from '../../src/Orm/Decorators'
-import { getDb, getBaseModel, ormAdapter, setup, cleanup, resetTables } from '../../test-helpers'
+import { getDb, getBaseModel, ormAdapter, setup, cleanup, resetTables, getProfiler } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
@@ -1111,6 +1111,56 @@ test.group('Model | HasOne | preload', (group) => {
     assert.equal(user!.$options!.connection, 'secondary')
     assert.equal(user!.profile.$options!.connection, 'secondary')
     assert.equal(user!.profile.identity.$options!.connection, 'secondary')
+  })
+
+  test('pass relationship metadata to the profiler', async (assert) => {
+    assert.plan(1)
+
+    class Profile extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ primary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
+
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const [user0, user1] = await db.query().from('users')
+    await db.insertQuery().table('profiles').insert([
+      {
+        user_id: user0.id,
+        display_name: 'virk',
+      },
+      {
+        user_id: user1.id,
+        display_name: 'nikk',
+      },
+    ])
+
+    const profiler = getProfiler(true)
+
+    let profilerPacketIndex = 0
+    profiler.subscribe((packet) => {
+      if (profilerPacketIndex === 1) {
+        assert.deepEqual(packet.data.relation, { model: 'User', relatedModel: 'Profile', relation: 'hasOne' })
+      }
+      profilerPacketIndex++
+    })
+
+    User.$boot()
+    await User.query({ profiler }).preload('profile')
   })
 })
 

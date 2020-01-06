@@ -27,11 +27,11 @@ ModelConstructorContract
   constructor (
     builder: knex.QueryBuilder,
     client: QueryClientContract,
-    relation: RelationshipsContract,
+    protected $relation: RelationshipsContract,
     private isEager: boolean,
     dbCallback: DBQueryCallback,
   ) {
-    super(builder, relation.$relatedModel(), client, dbCallback)
+    super(builder, $relation.$relatedModel(), client, dbCallback)
   }
 
   /**
@@ -91,5 +91,21 @@ ModelConstructorContract
   public toSQL () {
     this.applyConstraints()
     return super['toSQL']()
+  }
+
+  /**
+   * Returns the profiler action
+   */
+  public getProfilerAction () {
+    if (!this.client.profiler) {
+      return null
+    }
+
+    return this.client.profiler.profile('sql:query', Object.assign(this['toSQL'](), {
+      connection: this.client.connectionName,
+      inTransaction: this.client.isTransaction,
+      model: this.model.name,
+      relation: this.$relation.$profilerData,
+    }))
   }
 }
