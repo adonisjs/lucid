@@ -35,16 +35,16 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
    * Connections for which the config was patched. They must get removed
    * overtime, unless application is behaving unstable.
    */
-  private _orphanConnections: Set<ConnectionContract> = new Set()
+  private orphanConnections: Set<ConnectionContract> = new Set()
 
-  constructor (private _logger: LoggerContract) {
+  constructor (private logger: LoggerContract) {
     super()
   }
 
   /**
    * Monitors a given connection by listening for lifecycle events
    */
-  private _monitorConnection (connection: ConnectionContract): void {
+  private monitorConnection (connection: ConnectionContract): void {
     /**
      * Listens for disconnect to set the connection state and cleanup
      * memory
@@ -54,11 +54,11 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
        * We received the close event on the orphan connection and not the connection
        * that is in use
        */
-      if (this._orphanConnections.has($connection)) {
-        this._orphanConnections.delete($connection)
+      if (this.orphanConnections.has($connection)) {
+        this.orphanConnections.delete($connection)
 
         this.emit('disconnect', $connection)
-        this._logger.trace({ connection: $connection.name }, 'disconnecting connection inside manager')
+        this.logger.trace({ connection: $connection.name }, 'disconnecting connection inside manager')
         return
       }
 
@@ -73,7 +73,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
       }
 
       this.emit('disconnect', $connection)
-      this._logger.trace({ connection: $connection.name }, 'disconnecting connection inside manager')
+      this.logger.trace({ connection: $connection.name }, 'disconnecting connection inside manager')
 
       delete internalConnection.connection
       internalConnection.state = 'closed'
@@ -113,7 +113,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
       return
     }
 
-    this._logger.trace({ connection: connectionName }, 'adding new connection to the manager')
+    this.logger.trace({ connection: connectionName }, 'adding new connection to the manager')
     this.connections.set(connectionName, {
       name: connectionName,
       config: config,
@@ -144,8 +144,8 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
     /**
      * Create a new connection and monitor it's state
      */
-    connection.connection = new Connection(connection.name, connection.config, this._logger)
-    this._monitorConnection(connection.connection)
+    connection.connection = new Connection(connection.name, connection.config, this.logger)
+    this.monitorConnection(connection.connection)
     connection.connection.connect()
   }
 
@@ -168,12 +168,13 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
      * they cleanup after some time
      */
     if (connection.connection) {
-      this._orphanConnections.add(connection.connection)
+      this.orphanConnections.add(connection.connection)
       connection.connection.disconnect()
     }
 
     /**
-     * Updating config and state. Next call to connect will use this
+     * Updating config and state. Next call to connect will use the
+     * new config
      */
     connection.state = 'migrating'
     connection.config = config

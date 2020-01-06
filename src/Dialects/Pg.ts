@@ -13,9 +13,9 @@ import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database
 
 export class PgDialect implements DialectContract {
   public readonly name = 'postgres'
-  public supportsAdvisoryLocks = true
+  public readonly supportsAdvisoryLocks = true
 
-  constructor (private _client: QueryClientContract) {
+  constructor (private client: QueryClientContract) {
   }
 
   /**
@@ -23,7 +23,7 @@ export class PgDialect implements DialectContract {
    * returns it's status.
    */
   public async getAdvisoryLock (key: string): Promise<boolean> {
-    const response = await this._client.raw(`SELECT PG_TRY_ADVISORY_LOCK('${key}') as lock_status;`)
+    const response = await this.client.raw(`SELECT PG_TRY_ADVISORY_LOCK('${key}') as lock_status;`)
     return response.rows[0] && response.rows[0].lock_status === true
   }
 
@@ -31,7 +31,7 @@ export class PgDialect implements DialectContract {
    * Releases the advisory lock
    */
   public async releaseAdvisoryLock (key: string): Promise<boolean> {
-    const response = await this._client.raw(`SELECT PG_ADVISORY_UNLOCK('${key}') as lock_status;`)
+    const response = await this.client.raw(`SELECT PG_ADVISORY_UNLOCK('${key}') as lock_status;`)
     return response.rows[0] && response.rows[0].lock_status === true
   }
 }

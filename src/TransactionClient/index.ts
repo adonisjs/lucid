@@ -187,4 +187,18 @@ export class TransactionClient extends EventEmitter implements TransactionClient
       throw error
     }
   }
+
+  /**
+   * Get advisory lock on the selected connection
+   */
+  public getAdvisoryLock (key: string, timeout?: number): any {
+    return this.dialect.getAdvisoryLock(key, timeout)
+  }
+
+  /**
+   * Release advisory lock
+   */
+  public releaseAdvisoryLock (key: string): any {
+    return this.dialect.releaseAdvisoryLock(key)
+  }
 }

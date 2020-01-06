@@ -13,7 +13,7 @@ import { DialectContract } from '@ioc:Adonis/Lucid/Database'
 
 export class RedshiftDialect implements DialectContract {
   public readonly name = 'redshift'
-  public supportsAdvisoryLocks = false
+  public readonly supportsAdvisoryLocks = false
 
   /**
    * Redshift doesn't support advisory locks. Learn more:

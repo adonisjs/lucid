@@ -23,12 +23,12 @@ export class Schema implements SchemaContract {
    * All calls to `schema` and `defer` are tracked to be
    * executed later
    */
-  private _trackedCalls: (SchemaBuilder | DeferCallback)[] = []
+  private trackedCalls: (SchemaBuilder | DeferCallback)[] = []
 
   /**
-   * The lifecycle method that was invoked
+   * The state of the schema. It cannot be re-executed after completion
    */
-  private _isFresh: boolean = true
+  private state: 'pending' | 'completed' = 'pending'
 
   /**
    * Enable/disable transactions for this schema
@@ -40,7 +40,7 @@ export class Schema implements SchemaContract {
    */
   public get schema () {
     const schema = this.db.schema
-    this._trackedCalls.push(schema)
+    this.trackedCalls.push(schema)
     return schema
   }
 
@@ -53,8 +53,8 @@ export class Schema implements SchemaContract {
   /**
    * Returns schema queries sql without executing them
    */
-  private _getQueries (): string[] {
-    return this._trackedCalls
+  private getQueries (): string[] {
+    return this.trackedCalls
       .filter((schema) => typeof (schema['toQuery']) === 'function')
       .map((schema) => (schema as SchemaBuilder).toQuery())
   }
@@ -62,8 +62,8 @@ export class Schema implements SchemaContract {
   /**
    * Executes schema queries and defer calls in sequence
    */
-  private async _executeQueries () {
-    for (let trackedCall of this._trackedCalls) {
+  private async executeQueries () {
+    for (let trackedCall of this.trackedCalls) {
       if (typeof (trackedCall) === 'function') {
         await trackedCall(this.db)
       } else {
@@ -87,7 +87,7 @@ export class Schema implements SchemaContract {
    * schema is invoked to return the SQL queries
    */
   public defer (cb: DeferCallback): void {
-    this._trackedCalls.push(cb)
+    this.trackedCalls.push(cb)
   }
 
   /**
@@ -95,18 +95,18 @@ export class Schema implements SchemaContract {
    * when `dryRun` is set to true
    */
   public async execUp () {
-    if (!this._isFresh) {
+    if (this.state === 'completed') {
       throw new Exception('Cannot execute a given schema twice')
     }
 
     await this.up()
-    this._isFresh = false
+    this.state = 'completed'
 
     if (this.dryRun) {
-      return this._getQueries()
+      return this.getQueries()
     }
 
-    await this._executeQueries()
+    await this.executeQueries()
     return true
   }
 
@@ -115,18 +115,18 @@ export class Schema implements SchemaContract {
    * when `dryRun` is set to true
    */
   public async execDown () {
-    if (!this._isFresh) {
+    if (this.state === 'completed') {
       throw new Exception('Cannot execute a given schema twice')
     }
 
     await this.down()
-    this._isFresh = false
+    this.state = 'completed'
 
     if (this.dryRun) {
-      return this._getQueries()
+      return this.getQueries()
     }
 
-    await this._executeQueries()
+    await this.executeQueries()
     return true
   }
 

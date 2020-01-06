@@ -36,17 +36,15 @@ import { dialects } from '../Dialects'
  * it doesn't real matter what are the return types from this class
  */
 export class QueryClient implements QueryClientContract {
-  private _dialect: DialectContract
-
   /**
    * Not a transaction client
    */
   public readonly isTransaction = false
 
   /**
-   * The name of the dialect in use
+   * The dialect in use
    */
-  public dialect = new (dialects[resolveClientNameWithAliases(this._connection.config.client)])(this)
+  public dialect: DialectContract = new (dialects[resolveClientNameWithAliases(this.connection.config.client)])(this)
 
   /**
    * The profiler to be used for profiling queries
@@ -56,11 +54,11 @@ export class QueryClient implements QueryClientContract {
   /**
    * Name of the connection in use
    */
-  public readonly connectionName = this._connection.name
+  public readonly connectionName = this.connection.name
 
   constructor (
     public readonly mode: 'dual' | 'write' | 'read',
-    private _connection: ConnectionContract,
+    private connection: ConnectionContract,
   ) {
   }
 
@@ -77,10 +75,10 @@ export class QueryClient implements QueryClientContract {
    */
   public getReadClient (): knex {
     if (this.mode === 'read' || this.mode === 'dual') {
-      return this._connection.readClient!
+      return this.connection.readClient!
     }
 
-    return this._connection.client!
+    return this.connection.client!
   }
 
   /**
@@ -88,7 +86,7 @@ export class QueryClient implements QueryClientContract {
    */
   public getWriteClient (): knex {
     if (this.mode === 'write' || this.mode === 'dual') {
-      return this._connection.client!
+      return this.connection.client!
     }
 
     throw new Exception(
@@ -134,7 +132,7 @@ export class QueryClient implements QueryClientContract {
    * Returns the knex query builder instance
    */
   public knexQuery (): knex.QueryBuilder {
-    return this._connection.client!.queryBuilder()
+    return this.connection.client!.queryBuilder()
   }
 
   /**
@@ -165,7 +163,7 @@ export class QueryClient implements QueryClientContract {
    * Returns instance of raw query builder
    */
   public raw (sql: any, bindings?: any): any {
-    return new RawQueryBuilder(this._connection.client!.raw(sql, bindings), this)
+    return new RawQueryBuilder(this.connection.client!.raw(sql, bindings), this)
   }
 
   /**
@@ -183,11 +181,17 @@ export class QueryClient implements QueryClientContract {
     return this.insertQuery().table(table)
   }
 
+  /**
+   * Get advisory lock on the selected connection
+   */
   public getAdvisoryLock (key: string, timeout?: number): any {
-    return this._dialect.getAdvisoryLock(key, timeout)
+    return this.dialect.getAdvisoryLock(key, timeout)
   }
 
+  /**
+   * Release advisory lock
+   */
   public releaseAdvisoryLock (key: string): any {
-    return this._dialect.releaseAdvisoryLock(key)
+    return this.dialect.releaseAdvisoryLock(key)
   }
 }

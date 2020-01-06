@@ -39,7 +39,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * or not, since we don't transform return types of non-select
    * queries
    */
-  private _isSelectQuery: boolean = true
+  private isSelectQuery: boolean = true
 
   /**
    * Sideloaded attributes that will be passed to the model instances
@@ -49,7 +49,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * A copy of defined preloads on the model instance
    */
-  private _preloader = new Preloader(this.model)
+  private preloader = new Preloader(this.model)
 
   /**
    * Required by macroable
@@ -84,7 +84,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Ensures that we are not executing `update` or `del` when using read only
    * client
    */
-  private _ensureCanPerformWrites () {
+  private ensureCanPerformWrites () {
     if (this.client && this.client.mode === 'read') {
       throw new Exception('Updates and deletes cannot be performed in read mode')
     }
@@ -95,7 +95,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    */
   public async beforeExecute () {
     if (['update', 'del'].includes(this.$knexBuilder['_method'])) {
-      this._isSelectQuery = false
+      this.isSelectQuery = false
     }
   }
 
@@ -104,7 +104,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Executable trait.
    */
   public async afterExecute (rows: any[]): Promise<any[]> {
-    if (!this._isSelectQuery) {
+    if (!this.isSelectQuery) {
       return Array.isArray(rows) ? rows : [rows]
     }
 
@@ -114,7 +114,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
       this.clientOptions,
     )
 
-    await this._preloader.sideload(this.sideloaded).processAllForMany(modelInstances, this.client)
+    await this.preloader.sideload(this.sideloaded).processAllForMany(modelInstances, this.client)
     return modelInstances
   }
 
@@ -159,7 +159,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Define a relationship to be preloaded
    */
   public preload (relationName: any, userCallback?: any): this {
-    this._preloader.preload(relationName, userCallback)
+    this.preloader.preload(relationName, userCallback)
     return this
   }
 
@@ -172,7 +172,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
      * Use write client for updates and deletes
      */
     if (['update', 'del'].includes(this.$knexBuilder['_method'])) {
-      this._ensureCanPerformWrites()
+      this.ensureCanPerformWrites()
       return this.client!.getWriteClient().client
     }
 
@@ -199,7 +199,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * can be clubbed with `update` as well
    */
   public increment (column: any, counter?: any): any {
-    this._ensureCanPerformWrites()
+    this.ensureCanPerformWrites()
     this.$knexBuilder.increment(column, counter)
     return this
   }
@@ -209,7 +209,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * can be clubbed with `update` as well
    */
   public decrement (column: any, counter?: any): any {
-    this._ensureCanPerformWrites()
+    this.ensureCanPerformWrites()
     this.$knexBuilder.decrement(column, counter)
     return this
   }
@@ -218,7 +218,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Perform update
    */
   public update (columns: any): any {
-    this._ensureCanPerformWrites()
+    this.ensureCanPerformWrites()
     this.$knexBuilder.update(columns)
     return this
   }
@@ -227,7 +227,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Delete rows under the current query
    */
   public del (): any {
-    this._ensureCanPerformWrites()
+    this.ensureCanPerformWrites()
     this.$knexBuilder.del()
     return this
   }
