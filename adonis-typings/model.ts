@@ -640,7 +640,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
   export type OrmConfigContract = {
     getTableName (model: ModelConstructorContract): string
-    getCastKey (model: ModelConstructorContract, key: string): string
+    getCastAsKey (model: ModelConstructorContract, key: string): string
     getSerializeAsKey (model: ModelConstructorContract, key: string): string
     serialize (model: ModelConstructorContract, key: string): boolean
 

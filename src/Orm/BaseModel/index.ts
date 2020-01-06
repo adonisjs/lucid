@@ -250,7 +250,7 @@ export class BaseModel implements ModelContract {
 
     const column: ColumnOptions = {
       primary: options.primary || false,
-      castAs: options.castAs || this.$configurator.getCastKey(this, name),
+      castAs: options.castAs || this.$configurator.getCastAsKey(this, name),
       hasGetter: !!(descriptor && descriptor.get),
       hasSetter: !!(descriptor && descriptor.set),
       serializeAs: options.serializeAs || this.$configurator.getSerializeAsKey(this, name),
