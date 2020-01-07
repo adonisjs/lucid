@@ -249,20 +249,20 @@ export class BaseModel implements ModelContract {
     const descriptor = Object.getOwnPropertyDescriptor(this.prototype, name)
 
     const column: ColumnOptions = {
-      primary: options.primary || false,
+      isPrimary: options.isPrimary || false,
       castAs: options.castAs || this.$configurator.getCastAsKey(this, name),
       hasGetter: !!(descriptor && descriptor.get),
       hasSetter: !!(descriptor && descriptor.set),
-      serializeAs: options.serializeAs || this.$configurator.getSerializeAsKey(this, name),
-      serialize: (options.serialize === undefined || options.serialize === null)
-        ? this.$configurator.serialize(this, name)
-        : options.serialize,
+      serializeAs: options.serializeAs !== undefined
+        ? options.serializeAs
+        : this.$configurator.getSerializeAsKey(this, name),
+      serialize: options.serialize,
     }
 
     /**
      * Set column as the primary column, when `primary` is to true
      */
-    if (column.primary) {
+    if (column.isPrimary) {
       this.$primaryKey = name
     }
 
@@ -1221,28 +1221,48 @@ export class BaseModel implements ModelContract {
    * Converting model to it's JSON representation
    */
   public serialize () {
-    const Model = this.constructor as typeof BaseModel
+    const Model = this.constructor as ModelConstructorContract
     const results = {}
 
+    /**
+     * Serializing attributes
+     */
     Object.keys(this.$attributes).forEach((key) => {
       const column = Model.$getColumn(key)!
-      if (column.serialize) {
-        results[column.serializeAs] = this.$attributes[key]
+      if (!column.serializeAs) {
+        return
       }
+
+      const value = this[key]
+      results[column.serializeAs] = typeof (column.serialize) === 'function'
+        ? column.serialize(value, key, this)
+        : value
     })
 
+    /**
+     * Serializing relationships
+     */
+    Object.keys(this.$preloaded).forEach((key) => {
+      const relation = Model.$getRelation(key as any)! as RelationshipsContract
+      if (!relation.$serializeAs) {
+        return
+      }
+
+      const value = this.$preloaded[key]
+      results[relation.$serializeAs] = Array.isArray(value)
+        ? value.map((one) => one.toJSON())
+        : value.toJSON()
+    })
+
+    /**
+     * Serializing computed properties as last. This gives the option to re-write
+     * keys which are defined as attributes or relations.
+     */
     Model.$computed.forEach((value, key) => {
       const computedValue = this[key]
-      if (computedValue !== undefined) {
+      if (computedValue !== undefined && value.serializeAs) {
         results[value.serializeAs] = computedValue
       }
-    })
-
-    Object.keys(this.$preloaded).forEach((key) => {
-      const relationValue = this.$preloaded[key]
-      results[Model.$getRelation(key)!.$serializeAs] = Array.isArray(relationValue)
-        ? relationValue.map((one) => one.toJSON())
-        : relationValue.toJSON()
     })
 
     return results
