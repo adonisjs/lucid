@@ -43,7 +43,7 @@ test.group('Model query builder', (group) => {
 
   test('get instance of query builder for the given model', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -56,7 +56,7 @@ test.group('Model query builder', (group) => {
 
   test('pre select the table for the query builder instance', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -69,7 +69,7 @@ test.group('Model query builder', (group) => {
 
   test('execute select queries', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -87,7 +87,7 @@ test.group('Model query builder', (group) => {
 
   test('pass custom connection to the model instance', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -106,7 +106,7 @@ test.group('Model query builder', (group) => {
 
   test('pass sideloaded attributes to the model instance', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -129,7 +129,7 @@ test.group('Model query builder', (group) => {
 
   test('pass custom profiler to the model instance', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -149,7 +149,7 @@ test.group('Model query builder', (group) => {
 
   test('perform update using model query builder', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -169,7 +169,7 @@ test.group('Model query builder', (group) => {
 
   test('perform increment using model query builder', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -189,7 +189,7 @@ test.group('Model query builder', (group) => {
 
   test('perform decrement using model query builder', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -209,7 +209,7 @@ test.group('Model query builder', (group) => {
 
   test('delete in bulk', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()

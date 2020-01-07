@@ -81,24 +81,26 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
   export type ColumnOptions = {
     castAs: string,
-    serializeAs: string,
-    serialize: boolean,
-    primary: boolean,
+    serializeAs: string | null,
+    isPrimary: boolean,
     hasGetter: boolean,
     hasSetter: boolean,
+    serialize?: (value: any, attribute: string, model: ModelContract) => any,
   }
 
   /**
    * Represents a computed property on the model
    */
   export type ComputedOptions = {
-    serializeAs: string,
+    serializeAs: string | null,
   }
 
   /**
    * Signature for decorator functions
    */
-  export type ColumnDecorator = (options?: Partial<ColumnOptions>) => (target, property) => void
+  export type ColumnDecorator = (
+    options?: Partial<Omit<ColumnOptions, 'hasGetter' | 'hasSetter'>>,
+  ) => (target, property) => void
   export type ComputedDecorator = (options?: Partial<ComputedOptions>) => (target, property) => void
 
   /**

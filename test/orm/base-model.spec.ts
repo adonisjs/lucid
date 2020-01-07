@@ -38,7 +38,7 @@ test.group('Base model | boot', (group) => {
 
   test('compute table name from model name', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -53,7 +53,7 @@ test.group('Base model | boot', (group) => {
     class User extends BaseModel {
       public static $table = 'my_users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -66,7 +66,7 @@ test.group('Base model | boot', (group) => {
 
   test('set increments to true by default', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -81,7 +81,7 @@ test.group('Base model | boot', (group) => {
     class User extends BaseModel {
       public static $increments = false
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -107,7 +107,7 @@ test.group('Base model | boot', (group) => {
     class User extends BaseModel {
       public static $increments = false
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -206,7 +206,7 @@ test.group('Base Model | getter-setters', (group) => {
 
   test('get value for primary key', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -221,7 +221,7 @@ test.group('Base Model | getter-setters', (group) => {
 
   test('invoke getter when accessing value using $primaryKeyValue', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public get id () {
         return String(this.$getAttribute('id'))
       }
@@ -234,6 +234,27 @@ test.group('Base Model | getter-setters', (group) => {
     user.$attributes = { username: 'virk', id: 1 }
 
     assert.deepEqual(user.$primaryKeyValue, '1')
+  })
+
+  test('invoke column serialize method when serializing model', (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public get id () {
+        return String(this.$getAttribute('id'))
+      }
+
+      @column({
+        serialize (value) {
+          return value.toUpperCase()
+        },
+      })
+      public username: string
+    }
+
+    const user = new User()
+    user.$attributes = { username: 'virk', id: 1 }
+    assert.equal(user.username, 'virk')
+    assert.equal(user.toJSON().username, 'VIRK')
   })
 })
 
@@ -526,7 +547,7 @@ test.group('Base Model | persist', (group) => {
 
   test('refresh model instance', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -557,7 +578,7 @@ test.group('Base Model | persist', (group) => {
     assert.plan(4)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -818,9 +839,9 @@ test.group('Base Model | toJSON', (group) => {
     assert.deepEqual(user.toJSON(), { theUsername: 'virk' })
   })
 
-  test('do not serialize when serialize is set to false', async (assert) => {
+  test('do not serialize when serializeAs is set to null', async (assert) => {
     class User extends BaseModel {
-      @column({ serialize: false })
+      @column({ serializeAs: null })
       public username: string
     }
 
@@ -1210,7 +1231,7 @@ test.group('Base Model | relations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasOne(() => Profile)
@@ -1236,7 +1257,7 @@ test.group('Base Model | relations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasOne(() => Profile)
@@ -1263,7 +1284,7 @@ test.group('Base Model | relations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasOne(() => Profile)
@@ -1294,7 +1315,7 @@ test.group('Base Model | relations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasOne(() => Profile, { serializeAs: 'social' })
@@ -1325,7 +1346,7 @@ test.group('Base Model | relations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Profile)
@@ -1358,7 +1379,7 @@ test.group('Base Model | relations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Profile)
@@ -1395,7 +1416,7 @@ test.group('Base Model | relations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Profile)
@@ -1434,7 +1455,7 @@ test.group('Base Model | relations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasOne(() => Profile)
@@ -1463,7 +1484,7 @@ test.group('Base Model | relations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Profile)
@@ -1499,7 +1520,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('find using the primary key', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1519,7 +1540,7 @@ test.group('Base Model | fetch', (group) => {
   test('raise exception when row is not found', async (assert) => {
     assert.plan(1)
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1538,7 +1559,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('find many using the primary key', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1561,7 +1582,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('return the existing row when search criteria matches', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column({ castAs: 'username' })
@@ -1584,7 +1605,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('create new row when search criteria doesn\'t match', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column({ castAs: 'username' })
@@ -1610,7 +1631,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('return the existing row when search criteria matches using firstOrNew', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column({ castAs: 'username' })
@@ -1633,7 +1654,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('instantiate new row when search criteria doesn\'t match using firstOrNew', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column({ castAs: 'username' })
@@ -1659,7 +1680,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('update the existing row when search criteria matches', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column({ castAs: 'username' })
@@ -1686,7 +1707,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('execute updateOrCreate update action inside a transaction', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column({ castAs: 'username' })
@@ -1719,7 +1740,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('create a new row when search criteria fails', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1751,7 +1772,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('execute updateOrCreate create action inside a transaction', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1784,7 +1805,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('persist records to db when find call returns zero rows', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1834,7 +1855,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('sync records by avoiding duplicates', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1893,7 +1914,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('wrap create calls inside a transaction', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1942,7 +1963,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('handle columns with different cast key name', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column({ castAs: 'username' })
@@ -2003,7 +2024,7 @@ test.group('Base Model | fetch', (group) => {
     assert.plan(2)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2054,7 +2075,7 @@ test.group('Base Model | fetch', (group) => {
     assert.plan(2)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2098,7 +2119,7 @@ test.group('Base Model | fetch', (group) => {
     assert.plan(2)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2137,7 +2158,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('persist records to db when find call returns zero rows', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2187,7 +2208,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('update records and avoiding duplicates', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2247,7 +2268,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('wrap create calls inside a transaction using updateOrCreateMany', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2296,7 +2317,7 @@ test.group('Base Model | fetch', (group) => {
 
   test('wrap update calls inside a transaction using updateOrCreateMany', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2366,7 +2387,7 @@ test.group('Base Model | hooks', (group) => {
     assert.plan(8)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2413,7 +2434,7 @@ test.group('Base Model | hooks', (group) => {
     assert.plan(3)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2466,7 +2487,7 @@ test.group('Base Model | hooks', (group) => {
     assert.plan(1)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2506,7 +2527,7 @@ test.group('Base Model | hooks', (group) => {
     assert.plan(1)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2546,7 +2567,7 @@ test.group('Base Model | hooks', (group) => {
     assert.plan(10)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2599,7 +2620,7 @@ test.group('Base Model | hooks', (group) => {
     assert.plan(5)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2658,7 +2679,7 @@ test.group('Base Model | hooks', (group) => {
     assert.plan(3)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2696,7 +2717,7 @@ test.group('Base Model | hooks', (group) => {
     assert.plan(3)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2749,7 +2770,7 @@ test.group('Base model | extend', (group) => {
 
   test('extend model query builder', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2775,7 +2796,7 @@ test.group('Base model | extend', (group) => {
 
   test('extend model insert query builder', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()

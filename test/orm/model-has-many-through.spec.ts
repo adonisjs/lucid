@@ -64,7 +64,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       Post.$boot()
 
       class Country extends BaseModel {
-        @column({ primary: true })
+        @column({ isPrimary: true })
         public id: number
 
         @hasManyThrough([() => Post, () => User])
@@ -96,7 +96,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       Post.$boot()
 
       class Country extends BaseModel {
-        @column({ primary: true })
+        @column({ isPrimary: true })
         public id: number
 
         @hasManyThrough([() => Post, () => User])
@@ -118,7 +118,7 @@ test.group('Model | Has Many Through | Options', (group) => {
 
     try {
       class User extends BaseModel {
-        @column({ primary: true })
+        @column({ isPrimary: true })
         public id: number
 
         @column()
@@ -131,7 +131,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       Post.$boot()
 
       class Country extends BaseModel {
-        @column({ primary: true })
+        @column({ isPrimary: true })
         public id: number
 
         @hasManyThrough([() => Post, () => User])
@@ -150,7 +150,7 @@ test.group('Model | Has Many Through | Options', (group) => {
 
   test('compute all required keys', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -165,7 +165,7 @@ test.group('Model | Has Many Through | Options', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -192,7 +192,7 @@ test.group('Model | Has Many Through | Options', (group) => {
 
   test('compute custom keys', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public uid: number
 
       @column()
@@ -207,7 +207,7 @@ test.group('Model | Has Many Through | Options', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public uid: number
 
       @hasManyThrough([() => Post, () => User], {
@@ -246,7 +246,7 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
 
   test('set related model instance', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -261,7 +261,7 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -280,7 +280,7 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
 
   test('push related model instance', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -295,7 +295,7 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -316,7 +316,7 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
 
   test('set many of related instances', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -331,7 +331,7 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -393,7 +393,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
 
   test('generate correct sql for selecting related rows', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -408,7 +408,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -435,7 +435,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
 
   test('generate correct sql for selecting many related rows', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -450,7 +450,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -483,7 +483,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
 
   test('generate correct sql for updating related rows', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -498,7 +498,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -530,7 +530,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
 
   test('generate correct sql for updating many related rows', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -545,7 +545,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -582,7 +582,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
 
   test('generate correct sql for deleting related rows', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -597,7 +597,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -625,7 +625,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
 
   test('generate correct sql for deleting many related rows', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -640,7 +640,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -691,7 +691,7 @@ test.group('Model | Has Many Through | preload', (group) => {
 
   test('preload through relationships', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -700,7 +700,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     User.$boot()
 
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -712,7 +712,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -748,7 +748,7 @@ test.group('Model | Has Many Through | preload', (group) => {
 
   test('preload many relationships', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -757,7 +757,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     User.$boot()
 
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -769,7 +769,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -807,7 +807,7 @@ test.group('Model | Has Many Through | preload', (group) => {
 
   test('preload many relationships using model instance', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -816,7 +816,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     User.$boot()
 
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -828,7 +828,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -870,7 +870,7 @@ test.group('Model | Has Many Through | preload', (group) => {
 
   test('cherry pick columns during preload', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -879,7 +879,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     User.$boot()
 
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -891,7 +891,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -932,7 +932,7 @@ test.group('Model | Has Many Through | preload', (group) => {
 
   test('raise error when local key is not selected', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -941,7 +941,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     User.$boot()
 
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -953,7 +953,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])
@@ -985,7 +985,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.plan(1)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -994,7 +994,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     User.$boot()
 
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1006,7 +1006,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     Post.$boot()
 
     class Country extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasManyThrough([() => Post, () => User])

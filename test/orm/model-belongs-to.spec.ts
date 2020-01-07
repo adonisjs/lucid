@@ -52,7 +52,7 @@ test.group('Model | BelongsTo | Options', (group) => {
 
     try {
       class User extends BaseModel {
-        @column({ primary: true })
+        @column({ isPrimary: true })
         public id: number
       }
 
@@ -75,7 +75,7 @@ test.group('Model | BelongsTo | Options', (group) => {
 
   test('use primary key is as the local key', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -95,7 +95,7 @@ test.group('Model | BelongsTo | Options', (group) => {
 
   test('use custom defined local key', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column({ castAs: 'user_uid' })
@@ -118,7 +118,7 @@ test.group('Model | BelongsTo | Options', (group) => {
 
   test('compute foreign key from model name and primary key', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -138,7 +138,7 @@ test.group('Model | BelongsTo | Options', (group) => {
 
   test('use pre defined foreign key', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -165,7 +165,7 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
 
   test('set related model instance', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -188,7 +188,7 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
 
   test('push related model instance', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -214,7 +214,7 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
 
   test('set many of related instances', (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -268,7 +268,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
 
   test('generate correct sql for selecting related rows', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -298,7 +298,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
 
   test('generate correct sql for selecting many related rows', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -333,7 +333,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
 
   test('generate correct sql for updating related row', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -365,7 +365,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
 
   test('generate correct sql for updating many rows', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -402,7 +402,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
 
   test('generate correct sql for deleting related row', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -432,7 +432,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
 
   test('generate correct sql for deleting many rows', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -485,7 +485,7 @@ test.group('Model | BelongsTo | preload', (group) => {
 
   test('preload relationship', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -510,7 +510,7 @@ test.group('Model | BelongsTo | preload', (group) => {
 
   test('preload relationship for many rows', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -544,7 +544,7 @@ test.group('Model | BelongsTo | preload', (group) => {
 
   test('add runtime constraints to related query', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -578,7 +578,7 @@ test.group('Model | BelongsTo | preload', (group) => {
 
   test('cherry pick columns during preload', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -618,7 +618,7 @@ test.group('Model | BelongsTo | preload', (group) => {
 
   test('do not repeat fk when already defined', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -660,7 +660,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.plan(1)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -698,12 +698,12 @@ test.group('Model | BelongsTo | preload', (group) => {
 
   test('preload using model instance', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class Profile extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -739,12 +739,12 @@ test.group('Model | BelongsTo | preload', (group) => {
 
   test('preload nested relations', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class Profile extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -758,7 +758,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     }
 
     class Identity extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -805,12 +805,12 @@ test.group('Model | BelongsTo | preload', (group) => {
 
   test('preload nested relations using model instance', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class Profile extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -824,7 +824,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     }
 
     class Identity extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -871,12 +871,12 @@ test.group('Model | BelongsTo | preload', (group) => {
 
   test('pass main query options down the chain', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class Profile extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -890,7 +890,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     }
 
     class Identity extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -943,7 +943,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.plan(1)
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
@@ -989,7 +989,7 @@ test.group('Model | BelongsTo | persist', (group) => {
 
   test('associate related instance', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1025,7 +1025,7 @@ test.group('Model | BelongsTo | persist', (group) => {
 
   test('dissociate relation', async (assert) => {
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()

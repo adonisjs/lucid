@@ -6,9 +6,8 @@ The document contains the list of features that must be completed before the alp
 
 - [ ] Complete `ManyToMany.sync` method.
 - [ ] Implement `fetchOrCreateMany`, `updateOrCreateMany`, `firstOrCreate` and `updateOrCreate` for all relationships.
-- [ ] Add support for default value for `@columns`.
 - [ ] Related models aggregrates query.
-- [ ] Support for casting columns using a custom function. Both on column and model level.
+- [x] Support for serializing columns using a custom function. Both on column and model level.
 
 ## Final Release targeting `@adonisjs/core v5`
 

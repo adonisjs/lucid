@@ -48,12 +48,12 @@ test.group('Model | ManyToMany | Options', (group) => {
 
   test('use primary key as the local key', (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -68,12 +68,12 @@ test.group('Model | ManyToMany | Options', (group) => {
 
   test('use custom defined local key', (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -99,7 +99,7 @@ test.group('Model | ManyToMany | Options', (group) => {
       Skill.$boot()
 
       class User extends BaseModel {
-        @column({ primary: true })
+        @column({ isPrimary: true })
         public id: number
 
         @manyToMany(() => Skill)
@@ -118,12 +118,12 @@ test.group('Model | ManyToMany | Options', (group) => {
 
   test('use related model primary key as the related key', (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -138,7 +138,7 @@ test.group('Model | ManyToMany | Options', (group) => {
 
   test('use custom defined related key', (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -146,7 +146,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill, { relatedKey: 'uid' })
@@ -161,12 +161,12 @@ test.group('Model | ManyToMany | Options', (group) => {
 
   test('compute pivotForeignKey from table name + primary key', (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -180,12 +180,12 @@ test.group('Model | ManyToMany | Options', (group) => {
 
   test('use custom defined pivotForeignKey', (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill, { pivotForeignKey: 'user_uid' })
@@ -199,12 +199,12 @@ test.group('Model | ManyToMany | Options', (group) => {
 
   test('compute relatedPivotForeignKey from related model name + primary key', (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -219,12 +219,12 @@ test.group('Model | ManyToMany | Options', (group) => {
 
   test('use custom defined relatedPivotForeignKey', (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill, { pivotRelatedForeignKey: 'skill_uid' })
@@ -246,12 +246,12 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
 
   test('set related model instance', (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -268,12 +268,12 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
 
   test('push related model instance', (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -293,7 +293,7 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
 
   test('set many of related instances', (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => User)
@@ -301,7 +301,7 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -360,12 +360,12 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
 
   test('generate correct sql for selecting related rows', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -391,12 +391,12 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
 
   test('generate correct sql for selecting related for many rows', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -428,12 +428,12 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
 
   test('select extra columns', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill, {
@@ -466,12 +466,12 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
 
   test('select extra columns at runtime', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -502,12 +502,12 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
 
   test('generate correct sql for updating rows', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -534,12 +534,12 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
 
   test('generate correct sql for updating many rows', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -572,12 +572,12 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
 
   test('generate correct sql for deleting rows', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -602,12 +602,12 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
 
   test('generate correct sql for deleting many rows', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -655,7 +655,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 
   test('preload relation', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -663,7 +663,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -690,7 +690,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 
   test('preload relation for many', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -698,7 +698,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -744,7 +744,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 
   test('preload relation using model instance', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -752,7 +752,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -802,7 +802,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 
   test('select extra pivot columns', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -813,7 +813,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill, { pivotColumns: ['proficiency'] })
@@ -865,7 +865,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 
   test('select extra pivot columns at runtime', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -876,7 +876,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -931,7 +931,7 @@ test.group('Model | ManyToMany | preload', (group) => {
 
   test('cherry pick columns during preload', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -939,7 +939,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -970,7 +970,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.plan(1)
 
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -978,7 +978,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1026,12 +1026,12 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
 
   test('add where clause', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1059,12 +1059,12 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
 
   test('add where wrapped clause', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1092,12 +1092,12 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
 
   test('add where clause with operator', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1125,12 +1125,12 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
 
   test('add where clause as a raw query', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1162,12 +1162,12 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
 
   test('add orWhere clause', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1197,12 +1197,12 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
 
   test('add orWhere wrapped clause', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1238,7 +1238,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     assert.plan(1)
 
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1246,7 +1246,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1296,12 +1296,12 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
 
   test('add where no clause', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1326,12 +1326,12 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
 
   test('add where not clause with operator', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1359,12 +1359,12 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
 
   test('add where not clause as a raw query', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1396,12 +1396,12 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
 
   test('add orWhereNot clause', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1444,12 +1444,12 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
 
   test('add whereIn clause', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1477,12 +1477,12 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
 
   test('add whereIn as a query callback', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1514,12 +1514,12 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
 
   test('add whereIn as a subquery', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1549,12 +1549,12 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     const ref = db.connection().getWriteClient().ref.bind(db.connection().getWriteClient())
 
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1586,12 +1586,12 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
 
   test('add whereIn as a subquery with array of keys', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1625,12 +1625,12 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
 
   test('add whereIn as a 2d array', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1658,12 +1658,12 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
 
   test('add orWhereIn clause', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1693,12 +1693,12 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
 
   test('add orWhereIn as a query callback', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1749,12 +1749,12 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
 
   test('add whereNotIn clause', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1782,12 +1782,12 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
 
   test('add whereNotIn as a query callback', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1819,12 +1819,12 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
 
   test('add whereNotIn as a sub query', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1855,12 +1855,12 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
 
   test('add whereNotIn as a 2d array', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1888,12 +1888,12 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
 
   test('add orWhereNotIn clause', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1923,12 +1923,12 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
 
   test('add orWhereNotIn as a subquery', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @manyToMany(() => Skill)
@@ -1983,7 +1983,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
   test('save related instance', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1991,7 +1991,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2029,7 +2029,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
   test('attach duplicates when save is called twice and check existing is false', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2037,7 +2037,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2080,7 +2080,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
   test('do not attach duplicates when checkExisting is true', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2088,7 +2088,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2128,7 +2128,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
   test('attach when related pivot entry exists but for a different parent @sanityCheck', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2136,7 +2136,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2183,7 +2183,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
   test('save many of the related instances', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2191,7 +2191,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2238,7 +2238,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
   test('save many do not add duplicates', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2246,7 +2246,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2294,7 +2294,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
   test('attach ids with extra attributes', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2302,7 +2302,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2339,7 +2339,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
   test('detach related', async (assert) => {
     class Skill extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2347,7 +2347,7 @@ test.group('Model | ManyToMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -2383,7 +2383,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
 //   test('create related instance', async (assert) => {
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2391,7 +2391,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2426,7 +2426,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
 //   test('create many of related instance', async (assert) => {
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2434,7 +2434,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2496,7 +2496,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
 //   test('attach pivot ids', async (assert) => {
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2504,7 +2504,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2537,7 +2537,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
 //   test('attach pivot ids avoid duplicates', async (assert) => {
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2545,7 +2545,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2580,7 +2580,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     assert.plan(1)
 
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2588,7 +2588,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2610,7 +2610,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
 //   test('attach with extra data', async (assert) => {
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2618,7 +2618,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2674,7 +2674,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
 //   test('generate correct sql for deleting related rows', async (assert) => {
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2682,7 +2682,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2710,7 +2710,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
 //   test('generate correct sql for updating related rows', async (assert) => {
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2718,7 +2718,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2763,7 +2763,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
 //   test('detach existing pivot ids', async (assert) => {
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2771,7 +2771,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2804,7 +2804,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     assert.plan(1)
 
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2812,7 +2812,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2851,7 +2851,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
 //   test('do not perform deletes when not removing any ids', async (assert) => {
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2859,7 +2859,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2885,7 +2885,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
 //   test('remove ids except one defined in the sync method', async (assert) => {
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2893,7 +2893,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2923,7 +2923,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
 //   test('insert new ids mentioned in sync', async (assert) => {
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2931,7 +2931,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2964,7 +2964,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
 //   test('sync with extra properties', async (assert) => {
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -2972,7 +2972,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -3010,7 +3010,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 
 //   test('sync update extra properties when rows are same', async (assert) => {
 //     class Skill extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -3018,7 +3018,7 @@ test.group('Model | ManyToMany | persist', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()

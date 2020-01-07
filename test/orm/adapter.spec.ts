@@ -36,7 +36,7 @@ test.group('Adapter', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -59,7 +59,7 @@ test.group('Adapter', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -87,7 +87,7 @@ test.group('Adapter', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -115,7 +115,7 @@ test.group('Adapter', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -144,7 +144,7 @@ test.group('Adapter', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -174,7 +174,7 @@ test.group('Adapter', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -204,7 +204,7 @@ test.group('Adapter', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -229,7 +229,7 @@ test.group('Adapter', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -261,7 +261,7 @@ test.group('Adapter', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()

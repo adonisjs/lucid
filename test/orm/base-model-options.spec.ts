@@ -39,7 +39,7 @@ test.group('Model options | QueryBuilder', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -59,7 +59,7 @@ test.group('Model options | QueryBuilder', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -78,7 +78,7 @@ test.group('Model options | QueryBuilder', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -104,7 +104,7 @@ test.group('Model options | QueryBuilder', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -147,7 +147,7 @@ test.group('Model options | Adapter', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -165,7 +165,7 @@ test.group('Model options | Adapter', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -184,7 +184,7 @@ test.group('Model options | Adapter', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -203,7 +203,7 @@ test.group('Model options | Adapter', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -240,7 +240,7 @@ test.group('Model options | Model.find', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -258,7 +258,7 @@ test.group('Model options | Model.find', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -276,7 +276,7 @@ test.group('Model options | Model.find', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -312,7 +312,7 @@ test.group('Model options | Model.findOrFail', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -330,7 +330,7 @@ test.group('Model options | Model.findOrFail', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -349,7 +349,7 @@ test.group('Model options | Model.findOrFail', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -385,7 +385,7 @@ test.group('Model options | Model.findMany', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -403,7 +403,7 @@ test.group('Model options | Model.findMany', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -421,7 +421,7 @@ test.group('Model options | Model.findMany', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -457,7 +457,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -478,7 +478,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -499,7 +499,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -521,7 +521,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -542,7 +542,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -564,7 +564,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -586,7 +586,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -610,7 +610,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -650,7 +650,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -676,7 +676,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -700,7 +700,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -727,7 +727,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -752,7 +752,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -779,7 +779,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -807,7 +807,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -840,7 +840,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -873,7 +873,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -919,7 +919,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 //   test('pass query options to preloaded models', async (assert) => {
 //     class Profile extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -930,7 +930,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -955,7 +955,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 //   test('use transaction client to execute preload queries', async (assert) => {
 //     class Profile extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -966,7 +966,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -994,7 +994,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 //   test('pass profiler to preload models', async (assert) => {
 //     class Profile extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1005,7 +1005,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1032,7 +1032,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 //   test('pass sideloaded data to preloads', async (assert) => {
 //     class Profile extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1043,7 +1043,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1067,7 +1067,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 //   test('custom sideloaded data on preload query must win', async (assert) => {
 //     class Profile extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1078,7 +1078,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1104,7 +1104,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 //   test('use transaction client to update preloaded rows', async (assert) => {
 //     class Profile extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1115,7 +1115,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1145,7 +1145,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 //   test('cleanup transaction reference after commit or rollback', async (assert) => {
 //     class Profile extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1156,7 +1156,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1205,7 +1205,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 //   test('pass query options to preloaded models', async (assert) => {
 //     class Profile extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1216,7 +1216,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1240,7 +1240,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 //   test('pass profiler to preload models', async (assert) => {
 //     class Profile extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1251,7 +1251,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1278,7 +1278,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 //   test('pass sideloaded data to preloads', async (assert) => {
 //     class Profile extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1289,7 +1289,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1311,7 +1311,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 //   test('custom sideloaded data on preload query must win', async (assert) => {
 //     class Profile extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()
@@ -1322,7 +1322,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 //     }
 
 //     class User extends BaseModel {
-//       @column({ primary: true })
+//       @column({ isPrimary: true })
 //       public id: number
 
 //       @column()

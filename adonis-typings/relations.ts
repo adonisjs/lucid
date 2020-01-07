@@ -34,7 +34,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     relatedModel: (() => ModelConstructorContract),
     localKey?: string,
     foreignKey?: string,
-    serializeAs?: string,
+    serializeAs?: string | null,
   }
 
   /**

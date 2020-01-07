@@ -55,7 +55,7 @@ test.group('Model | HasMany | Options', (group) => {
       Post.$boot()
 
       class User extends BaseModel {
-        @column({ primary: true })
+        @column({ isPrimary: true })
         public id: number
 
         @hasMany(() => Post)
@@ -79,7 +79,7 @@ test.group('Model | HasMany | Options', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -100,7 +100,7 @@ test.group('Model | HasMany | Options', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column({ castAs: 'user_uid' })
@@ -124,7 +124,7 @@ test.group('Model | HasMany | Options', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -145,7 +145,7 @@ test.group('Model | HasMany | Options', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post, { foreignKey: 'userUid' })
@@ -173,7 +173,7 @@ test.group('Model | HasMany | Set Relations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -196,7 +196,7 @@ test.group('Model | HasMany | Set Relations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -223,7 +223,7 @@ test.group('Model | HasMany | Set Relations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -281,7 +281,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -313,7 +313,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -350,7 +350,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -385,7 +385,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -422,7 +422,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -452,7 +452,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -505,7 +505,7 @@ test.group('Model | HasMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -537,7 +537,7 @@ test.group('Model | HasMany | preload', (group) => {
 
   test('preload relationship for many rows', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -548,7 +548,7 @@ test.group('Model | HasMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -587,7 +587,7 @@ test.group('Model | HasMany | preload', (group) => {
 
   test('add constraints during preload', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -598,7 +598,7 @@ test.group('Model | HasMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -633,7 +633,7 @@ test.group('Model | HasMany | preload', (group) => {
 
   test('cherry pick columns during preload', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -644,7 +644,7 @@ test.group('Model | HasMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -680,7 +680,7 @@ test.group('Model | HasMany | preload', (group) => {
 
   test('do not repeat fk when already defined', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -691,7 +691,7 @@ test.group('Model | HasMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -729,7 +729,7 @@ test.group('Model | HasMany | preload', (group) => {
     assert.plan(1)
 
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -740,7 +740,7 @@ test.group('Model | HasMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -772,7 +772,7 @@ test.group('Model | HasMany | preload', (group) => {
 
   test('preload nested relations', async (assert) => {
     class Comment extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -783,7 +783,7 @@ test.group('Model | HasMany | preload', (group) => {
     }
 
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -797,7 +797,7 @@ test.group('Model | HasMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -839,7 +839,7 @@ test.group('Model | HasMany | preload', (group) => {
 
   test('preload nested relations using model instance', async (assert) => {
     class Comment extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -850,7 +850,7 @@ test.group('Model | HasMany | preload', (group) => {
     }
 
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -864,7 +864,7 @@ test.group('Model | HasMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -915,7 +915,7 @@ test.group('Model | HasMany | preload', (group) => {
 
   test('pass main query options down the chain', async (assert) => {
     class Comment extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -926,7 +926,7 @@ test.group('Model | HasMany | preload', (group) => {
     }
 
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -940,7 +940,7 @@ test.group('Model | HasMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -993,7 +993,7 @@ test.group('Model | HasMany | preload', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @hasMany(() => Post)
@@ -1047,7 +1047,7 @@ test.group('Model | HasMany | persist', (group) => {
 
   test('save related instance', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1058,7 +1058,7 @@ test.group('Model | HasMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1089,7 +1089,7 @@ test.group('Model | HasMany | persist', (group) => {
 
   test('save many related instances', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1100,7 +1100,7 @@ test.group('Model | HasMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1139,7 +1139,7 @@ test.group('Model | HasMany | persist', (group) => {
     assert.plan(6)
 
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1150,7 +1150,7 @@ test.group('Model | HasMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1186,7 +1186,7 @@ test.group('Model | HasMany | persist', (group) => {
 
   test('wrap save many calls inside a save point when parent is in transaction', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1197,7 +1197,7 @@ test.group('Model | HasMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1230,7 +1230,7 @@ test.group('Model | HasMany | persist', (group) => {
 
   test('create related instance', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1241,7 +1241,7 @@ test.group('Model | HasMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1269,7 +1269,7 @@ test.group('Model | HasMany | persist', (group) => {
 
   test('create many related instances', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1280,7 +1280,7 @@ test.group('Model | HasMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1320,7 +1320,7 @@ test.group('Model | HasMany | persist', (group) => {
     assert.plan(4)
 
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1331,7 +1331,7 @@ test.group('Model | HasMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1360,7 +1360,7 @@ test.group('Model | HasMany | persist', (group) => {
 
   test('wrap create many calls inside a save point when parent is in transaction', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1371,7 +1371,7 @@ test.group('Model | HasMany | persist', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1418,7 +1418,7 @@ test.group('Model | HasMany | firstOrCreate', (group) => {
 
   test('create related instance when there isn\'t any existing row', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1429,7 +1429,7 @@ test.group('Model | HasMany | firstOrCreate', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1460,7 +1460,7 @@ test.group('Model | HasMany | firstOrCreate', (group) => {
 
   test('return existing instance vs creating one', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1471,7 +1471,7 @@ test.group('Model | HasMany | firstOrCreate', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1519,7 +1519,7 @@ test.group('Model | HasMany | updateOrCreate', (group) => {
 
   test('create related instance when there isn\'t any existing row', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1530,7 +1530,7 @@ test.group('Model | HasMany | updateOrCreate', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1561,7 +1561,7 @@ test.group('Model | HasMany | updateOrCreate', (group) => {
 
   test('update existing instance vs creating one', async (assert) => {
     class Post extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
@@ -1572,7 +1572,7 @@ test.group('Model | HasMany | updateOrCreate', (group) => {
     }
 
     class User extends BaseModel {
-      @column({ primary: true })
+      @column({ isPrimary: true })
       public id: number
 
       @column()
