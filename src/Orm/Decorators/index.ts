@@ -31,7 +31,7 @@ import {
 export const column: ColumnDecorator = (options?) => {
   return function decorateAsColumn (target, property) {
     const Model = target.constructor as ModelConstructorContract
-    Model.$boot()
+    Model.boot()
     Model.$addColumn(property, options || {})
   }
 }
@@ -44,7 +44,7 @@ export const computed: ComputedDecorator = (options) => {
   return function decorateAsComputed (target, property) {
     const Model = target.constructor as ModelConstructorContract
 
-    Model.$boot()
+    Model.boot()
     Model.$addComputed(property, options || {})
   }
 }
@@ -55,7 +55,7 @@ export const computed: ComputedDecorator = (options) => {
 export const belongsTo: BelongsToDecorator = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
-    Model.$boot()
+    Model.boot()
     Model.$addRelation(property, 'belongsTo', Object.assign({ relatedModel }, relation))
   }
 }
@@ -66,7 +66,7 @@ export const belongsTo: BelongsToDecorator = (relatedModel, relation?) => {
 export const hasOne: HasOneDecorator = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
-    Model.$boot()
+    Model.boot()
     Model.$addRelation(property, 'hasOne', Object.assign({ relatedModel }, relation))
   }
 }
@@ -77,7 +77,7 @@ export const hasOne: HasOneDecorator = (relatedModel, relation?) => {
 export const hasMany: HasManyDecorator = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
-    Model.$boot()
+    Model.boot()
     Model.$addRelation(property, 'hasMany', Object.assign({ relatedModel }, relation))
   }
 }
@@ -88,7 +88,7 @@ export const hasMany: HasManyDecorator = (relatedModel, relation?) => {
 export const manyToMany: ManyToManyDecorator = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
-    Model.$boot()
+    Model.boot()
     Model.$addRelation(property, 'manyToMany', Object.assign({ relatedModel }, relation))
   }
 }
@@ -99,7 +99,7 @@ export const manyToMany: ManyToManyDecorator = (relatedModel, relation?) => {
 export const hasManyThrough: HasManyThroughDecorator = ([relatedModel, throughModel], relation) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
-    Model.$boot()
+    Model.boot()
     Model.$addRelation(property, 'hasManyThrough', Object.assign({ relatedModel, throughModel }, relation))
   }
 }

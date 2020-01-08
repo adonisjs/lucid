@@ -36,8 +36,8 @@ test.group('Model | HasMany | Options', (group) => {
         public posts: HasMany<Post>
       }
 
-      User.$boot()
-      User.$getRelation('posts').$boot()
+      User.boot()
+      User.$getRelation('posts').boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -52,7 +52,7 @@ test.group('Model | HasMany | Options', (group) => {
     try {
       class Post extends BaseModel {
       }
-      Post.$boot()
+      Post.boot()
 
       class User extends BaseModel {
         @column({ isPrimary: true })
@@ -62,8 +62,8 @@ test.group('Model | HasMany | Options', (group) => {
         public posts: HasMany<Post>
       }
 
-      User.$boot()
-      User.$getRelation('posts').$boot()
+      User.boot()
+      User.$getRelation('posts').boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -86,11 +86,11 @@ test.group('Model | HasMany | Options', (group) => {
       public posts: HasMany<Post>
     }
 
-    User.$boot()
-    User.$getRelation('posts').$boot()
+    User.boot()
+    User.$getRelation('posts').boot()
 
-    assert.equal(User.$getRelation('posts')!['$localKey'], 'id')
-    assert.equal(User.$getRelation('posts')!['$localCastAsKey'], 'id')
+    assert.equal(User.$getRelation('posts')!['localKey'], 'id')
+    assert.equal(User.$getRelation('posts')!['localCastAsKey'], 'id')
   })
 
   test('use custom defined primary key', (assert) => {
@@ -110,11 +110,11 @@ test.group('Model | HasMany | Options', (group) => {
       public posts: HasMany<Post>
     }
 
-    User.$boot()
-    User.$getRelation('posts').$boot()
+    User.boot()
+    User.$getRelation('posts').boot()
 
-    assert.equal(User.$getRelation('posts')!['$localKey'], 'uid')
-    assert.equal(User.$getRelation('posts')!['$localCastAsKey'], 'user_uid')
+    assert.equal(User.$getRelation('posts')!['localKey'], 'uid')
+    assert.equal(User.$getRelation('posts')!['localCastAsKey'], 'user_uid')
   })
 
   test('compute foreign key from model name and primary key', (assert) => {
@@ -131,11 +131,11 @@ test.group('Model | HasMany | Options', (group) => {
       public posts: HasMany<Post>
     }
 
-    User.$boot()
-    User.$getRelation('posts').$boot()
+    User.boot()
+    User.$getRelation('posts').boot()
 
-    assert.equal(User.$getRelation('posts')!['$foreignKey'], 'userId')
-    assert.equal(User.$getRelation('posts')!['$foreignCastAsKey'], 'user_id')
+    assert.equal(User.$getRelation('posts')!['foreignKey'], 'userId')
+    assert.equal(User.$getRelation('posts')!['foreignCastAsKey'], 'user_id')
   })
 
   test('use pre defined foreign key', (assert) => {
@@ -152,11 +152,11 @@ test.group('Model | HasMany | Options', (group) => {
       public posts: HasMany<Post>
     }
 
-    User.$boot()
-    User.$getRelation('posts').$boot()
+    User.boot()
+    User.$getRelation('posts').boot()
 
-    assert.equal(User.$getRelation('posts')!['$foreignKey'], 'userUid')
-    assert.equal(User.$getRelation('posts')!['$foreignCastAsKey'], 'user_id')
+    assert.equal(User.$getRelation('posts')!['foreignKey'], 'userUid')
+    assert.equal(User.$getRelation('posts')!['foreignCastAsKey'], 'user_id')
   })
 })
 
@@ -180,8 +180,8 @@ test.group('Model | HasMany | Set Relations', (group) => {
       public posts: HasMany<Post>
     }
 
-    User.$boot()
-    User.$getRelation('posts').$boot()
+    User.boot()
+    User.$getRelation('posts').boot()
 
     const user = new User()
     const post = new Post()
@@ -203,8 +203,8 @@ test.group('Model | HasMany | Set Relations', (group) => {
       public posts: HasMany<Post>
     }
 
-    User.$boot()
-    User.$getRelation('posts').$boot()
+    User.boot()
+    User.$getRelation('posts').boot()
 
     const user = new User()
     const post = new Post()
@@ -230,8 +230,8 @@ test.group('Model | HasMany | Set Relations', (group) => {
       public posts: HasMany<Post>
     }
 
-    User.$boot()
-    User.$getRelation('posts').$boot()
+    User.boot()
+    User.$getRelation('posts').boot()
 
     const user = new User()
     user.fill({ id: 1 })
@@ -288,8 +288,8 @@ test.group('Model | HasMany | bulk operations', (group) => {
       public posts: HasMany<Post>
     }
 
-    User.$boot()
-    User.$getRelation('posts').$boot()
+    User.boot()
+    User.$getRelation('posts').boot()
 
     await db.table('users').insert({ username: 'virk' })
 
@@ -320,8 +320,8 @@ test.group('Model | HasMany | bulk operations', (group) => {
       public posts: HasMany<Post>
     }
 
-    User.$boot()
-    User.$getRelation('posts').$boot()
+    User.boot()
+    User.$getRelation('posts').boot()
 
     await db.table('users').multiInsert([
       { username: 'virk' },
@@ -357,8 +357,8 @@ test.group('Model | HasMany | bulk operations', (group) => {
       public posts: HasMany<Post>
     }
 
-    User.$boot()
-    User.$getRelation('posts').$boot()
+    User.boot()
+    User.$getRelation('posts').boot()
 
     await db.table('users').insert({ username: 'virk' })
 
@@ -398,7 +398,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     ])
 
     const users = await User.all()
-    User.$getRelation('posts').$boot()
+    User.$getRelation('posts').boot()
 
     const now = new Date()
     const related = User.$getRelation('posts').client(users, db.connection())
@@ -465,7 +465,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     ])
 
     const users = await User.all()
-    User.$getRelation('posts').$boot()
+    User.$getRelation('posts').boot()
 
     const related = User.$getRelation('posts').client(users, db.connection())
     const { sql, bindings } = related.query().del().toSQL()
@@ -526,7 +526,7 @@ test.group('Model | HasMany | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const users = await User.query().preload('posts')
     assert.lengthOf(users, 2)
@@ -571,7 +571,7 @@ test.group('Model | HasMany | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
     const users = await User.query().preload('posts')
 
     assert.lengthOf(users[0]!.posts, 2)
@@ -621,7 +621,7 @@ test.group('Model | HasMany | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const users = await User.query().preload('posts', (builder) => builder.where('title', 'Lucid 101'))
     assert.lengthOf(users, 2)
@@ -667,7 +667,7 @@ test.group('Model | HasMany | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const users = await User.query().preload('posts', (builder) => {
       return builder.select('title')
@@ -714,7 +714,7 @@ test.group('Model | HasMany | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const users = await User.query().preload('posts', (builder) => {
       return builder.select('title', 'user_id')
@@ -979,9 +979,9 @@ test.group('Model | HasMany | preload', (group) => {
     assert.lengthOf(user!.posts[0].comments, 1)
     assert.equal(user!.posts[0].comments[0].postId, user!.posts[0].id)
 
-    assert.equal(user!.$options!.connection, 'secondary')
-    assert.equal(user!.posts[0].$options!.connection, 'secondary')
-    assert.equal(user!.posts[0].comments[0].$options!.connection, 'secondary')
+    assert.equal(user!.options!.connection, 'secondary')
+    assert.equal(user!.posts[0].options!.connection, 'secondary')
+    assert.equal(user!.posts[0].comments[0].options!.connection, 'secondary')
   })
 
   test('pass relationship metadata to the profiler', async (assert) => {
@@ -1024,7 +1024,7 @@ test.group('Model | HasMany | preload', (group) => {
       profilerPacketIndex++
     })
 
-    User.$boot()
+    User.boot()
     await User.query({ profiler }).preload('posts')
   })
 })
@@ -1077,7 +1077,7 @@ test.group('Model | HasMany | persist', (group) => {
 
     await user.related('posts').save(post)
 
-    assert.isTrue(post.$isPersisted)
+    assert.isTrue(post.isPersisted)
     assert.equal(user.id, post.userId)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -1122,10 +1122,10 @@ test.group('Model | HasMany | persist', (group) => {
 
     await user.related('posts').saveMany([post, post1])
 
-    assert.isTrue(post.$isPersisted)
+    assert.isTrue(post.isPersisted)
     assert.equal(user.id, post.userId)
 
-    assert.isTrue(post1.$isPersisted)
+    assert.isTrue(post1.isPersisted)
     assert.equal(user.id, post1.userId)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -1179,9 +1179,9 @@ test.group('Model | HasMany | persist', (group) => {
 
     assert.equal(totalUsers[0].total, 1)
     assert.equal(totalPosts[0].total, 0)
-    assert.isUndefined(user.$trx)
-    assert.isUndefined(post.$trx)
-    assert.isUndefined(post1.$trx)
+    assert.isUndefined(user.trx)
+    assert.isUndefined(post.trx)
+    assert.isUndefined(post1.trx)
   })
 
   test('wrap save many calls inside a save point when parent is in transaction', async (assert) => {
@@ -1209,14 +1209,14 @@ test.group('Model | HasMany | persist', (group) => {
 
     const trx = await db.transaction()
     const user = new User()
-    user.$trx = trx
+    user.trx = trx
     user.username = 'virk'
 
     const post = new Post()
     post.title = 'Adonis 101'
 
     await user.related('posts').saveMany([post])
-    assert.isFalse(user.$trx.isCompleted)
+    assert.isFalse(user.trx.isCompleted)
     await trx.rollback()
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -1224,8 +1224,8 @@ test.group('Model | HasMany | persist', (group) => {
 
     assert.equal(totalUsers[0].total, 0)
     assert.equal(totalPosts[0].total, 0)
-    assert.isUndefined(user.$trx)
-    assert.isUndefined(post.$trx)
+    assert.isUndefined(user.trx)
+    assert.isUndefined(post.trx)
   })
 
   test('create related instance', async (assert) => {
@@ -1257,7 +1257,7 @@ test.group('Model | HasMany | persist', (group) => {
 
     const post = await user.related('posts').create({ title: 'Adonis 101' })
 
-    assert.isTrue(post.$isPersisted)
+    assert.isTrue(post.isPersisted)
     assert.equal(user.id, post.userId)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -1303,10 +1303,10 @@ test.group('Model | HasMany | persist', (group) => {
       },
     ])
 
-    assert.isTrue(post.$isPersisted)
+    assert.isTrue(post.isPersisted)
     assert.equal(user.id, post.userId)
 
-    assert.isTrue(post1.$isPersisted)
+    assert.isTrue(post1.isPersisted)
     assert.equal(user.id, post1.userId)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -1355,7 +1355,7 @@ test.group('Model | HasMany | persist', (group) => {
 
     assert.equal(totalUsers[0].total, 1)
     assert.equal(totalPosts[0].total, 0)
-    assert.isUndefined(user.$trx)
+    assert.isUndefined(user.trx)
   })
 
   test('wrap create many calls inside a save point when parent is in transaction', async (assert) => {
@@ -1383,11 +1383,11 @@ test.group('Model | HasMany | persist', (group) => {
 
     const trx = await db.transaction()
     const user = new User()
-    user.$trx = trx
+    user.trx = trx
     user.username = 'virk'
 
     const [post] = await user.related('posts').createMany([{ title: 'Adonis 101' }])
-    assert.isFalse(user.$trx.isCompleted)
+    assert.isFalse(user.trx.isCompleted)
     await trx.rollback()
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -1395,8 +1395,8 @@ test.group('Model | HasMany | persist', (group) => {
 
     assert.equal(totalUsers[0].total, 0)
     assert.equal(totalPosts[0].total, 0)
-    assert.isUndefined(user.$trx)
-    assert.isUndefined(post.$trx)
+    assert.isUndefined(user.trx)
+    assert.isUndefined(post.trx)
   })
 })
 
@@ -1448,8 +1448,8 @@ test.group('Model | HasMany | firstOrCreate', (group) => {
       title: 'Adonis 101',
     })
 
-    assert.isTrue(post.$isPersisted)
-    assert.isTrue(post.$isLocal)
+    assert.isTrue(post.isPersisted)
+    assert.isTrue(post.isLocal)
     assert.equal(user.id, post.userId)
     assert.equal(post.title, 'Adonis 101')
 
@@ -1490,8 +1490,8 @@ test.group('Model | HasMany | firstOrCreate', (group) => {
       title: 'Adonis 101',
     })
 
-    assert.isTrue(post.$isPersisted)
-    assert.isFalse(post.$isLocal)
+    assert.isTrue(post.isPersisted)
+    assert.isFalse(post.isLocal)
     assert.equal(user.id, post.userId)
     assert.equal(post.title, 'Lucid 101')
 
@@ -1549,8 +1549,8 @@ test.group('Model | HasMany | updateOrCreate', (group) => {
       title: 'Adonis 101',
     })
 
-    assert.isTrue(post.$isPersisted)
-    assert.isTrue(post.$isLocal)
+    assert.isTrue(post.isPersisted)
+    assert.isTrue(post.isLocal)
     assert.equal(user.id, post.userId)
     assert.equal(post.title, 'Adonis 101')
 
@@ -1591,8 +1591,8 @@ test.group('Model | HasMany | updateOrCreate', (group) => {
       title: 'Adonis 101',
     })
 
-    assert.isTrue(post.$isPersisted)
-    assert.isFalse(post.$isLocal)
+    assert.isTrue(post.isPersisted)
+    assert.isFalse(post.isLocal)
     assert.equal(user.id, post.userId)
     assert.equal(post.title, 'Adonis 101')
 

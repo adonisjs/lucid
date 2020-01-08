@@ -36,8 +36,8 @@ test.group('Model | HasOne | Options', (group) => {
         public profile: HasOne<Profile>
       }
 
-      User.$boot()
-      User.$getRelation('profile').$boot()
+      User.boot()
+      User.$getRelation('profile').boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -52,7 +52,7 @@ test.group('Model | HasOne | Options', (group) => {
     try {
       class Profile extends BaseModel {
       }
-      Profile.$boot()
+      Profile.boot()
 
       class User extends BaseModel {
         @column({ isPrimary: true })
@@ -62,8 +62,8 @@ test.group('Model | HasOne | Options', (group) => {
         public profile: HasOne<Profile>
       }
 
-      User.$boot()
-      User.$getRelation('profile')!.$boot()
+      User.boot()
+      User.$getRelation('profile')!.boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -77,7 +77,7 @@ test.group('Model | HasOne | Options', (group) => {
       @column()
       public userId: number
     }
-    Profile.$boot()
+    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -87,11 +87,11 @@ test.group('Model | HasOne | Options', (group) => {
       public profile: HasOne<Profile>
     }
 
-    User.$boot()
-    User.$getRelation('profile').$boot()
+    User.boot()
+    User.$getRelation('profile').boot()
 
-    assert.equal(User.$getRelation('profile')['$localKey'], 'id')
-    assert.equal(User.$getRelation('profile')!['$localCastAsKey'], 'id')
+    assert.equal(User.$getRelation('profile')['localKey'], 'id')
+    assert.equal(User.$getRelation('profile')!['localCastAsKey'], 'id')
   })
 
   test('use custom defined local key', (assert) => {
@@ -99,7 +99,7 @@ test.group('Model | HasOne | Options', (group) => {
       @column()
       public userId: number
     }
-    Profile.$boot()
+    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -112,11 +112,11 @@ test.group('Model | HasOne | Options', (group) => {
       public profile: HasOne<Profile>
     }
 
-    User.$boot()
-    User.$getRelation('profile').$boot()
+    User.boot()
+    User.$getRelation('profile').boot()
 
-    assert.equal(User.$getRelation('profile')['$localKey'], 'uid')
-    assert.equal(User.$getRelation('profile')['$localCastAsKey'], 'user_uid')
+    assert.equal(User.$getRelation('profile')['localKey'], 'uid')
+    assert.equal(User.$getRelation('profile')['localCastAsKey'], 'user_uid')
   })
 
   test('compute foreign key from model name and primary key', (assert) => {
@@ -124,7 +124,7 @@ test.group('Model | HasOne | Options', (group) => {
       @column()
       public userId: number
     }
-    Profile.$boot()
+    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -134,11 +134,11 @@ test.group('Model | HasOne | Options', (group) => {
       public profile: HasOne<Profile>
     }
 
-    User.$boot()
-    User.$getRelation('profile').$boot()
+    User.boot()
+    User.$getRelation('profile').boot()
 
-    assert.equal(User.$getRelation('profile')['$foreignKey'], 'userId')
-    assert.equal(User.$getRelation('profile')['$foreignCastAsKey'], 'user_id')
+    assert.equal(User.$getRelation('profile')['foreignKey'], 'userId')
+    assert.equal(User.$getRelation('profile')['foreignCastAsKey'], 'user_id')
   })
 
   test('use pre defined foreign key', (assert) => {
@@ -146,7 +146,7 @@ test.group('Model | HasOne | Options', (group) => {
       @column({ castAs: 'user_id' })
       public userUid: number
     }
-    Profile.$boot()
+    Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -156,11 +156,11 @@ test.group('Model | HasOne | Options', (group) => {
       public profile: HasOne<Profile>
     }
 
-    User.$boot()
-    User.$getRelation('profile').$boot()
+    User.boot()
+    User.$getRelation('profile').boot()
 
-    assert.equal(User.$getRelation('profile')!['$foreignKey'], 'userUid')
-    assert.equal(User.$getRelation('profile')!['$foreignCastAsKey'], 'user_id')
+    assert.equal(User.$getRelation('profile')!['foreignKey'], 'userUid')
+    assert.equal(User.$getRelation('profile')!['foreignCastAsKey'], 'user_id')
   })
 })
 
@@ -184,8 +184,8 @@ test.group('Model | HasOne | Set Relations', (group) => {
       public profile: HasOne<Profile>
     }
 
-    User.$boot()
-    User.$getRelation('profile').$boot()
+    User.boot()
+    User.$getRelation('profile').boot()
 
     const user = new User()
     const profile = new Profile()
@@ -207,8 +207,8 @@ test.group('Model | HasOne | Set Relations', (group) => {
       public profile: HasOne<Profile>
     }
 
-    User.$boot()
-    User.$getRelation('profile').$boot()
+    User.boot()
+    User.$getRelation('profile').boot()
 
     const user = new User()
     const profile = new Profile()
@@ -230,8 +230,8 @@ test.group('Model | HasOne | Set Relations', (group) => {
       public profile: HasOne<Profile>
     }
 
-    User.$boot()
-    User.$getRelation('profile').$boot()
+    User.boot()
+    User.$getRelation('profile').boot()
 
     const user = new User()
     user.fill({ id: 1 })
@@ -339,7 +339,7 @@ test.group('Model | HasOne | bulk operations', (group) => {
     ])
 
     const users = await User.all()
-    User.$getRelation('profile').$boot()
+    User.$getRelation('profile').boot()
 
     const related = User.$getRelation('profile').client(users, db.connection())
     const { sql, bindings } = related.query().toSQL()
@@ -424,7 +424,7 @@ test.group('Model | HasOne | bulk operations', (group) => {
     ])
 
     const users = await User.all()
-    User.$getRelation('profile').$boot()
+    User.$getRelation('profile').boot()
 
     const now = new Date()
     const related = User.$getRelation('profile').client(users, db.connection())
@@ -509,7 +509,7 @@ test.group('Model | HasOne | bulk operations', (group) => {
     ])
 
     const users = await User.all()
-    User.$getRelation('profile').$boot()
+    User.$getRelation('profile').boot()
 
     const related = User.$getRelation('profile').client(users, db.connection())
     const { sql, bindings } = related.query().del().toSQL()
@@ -576,7 +576,7 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const users = await User.query().preload('profile')
     assert.lengthOf(users, 2)
@@ -642,7 +642,7 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const user = await User.query()
       .preload('profile', (builder) => builder.preload('identity'))
@@ -690,7 +690,7 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const users = await User.query().preload('profile', (builder) => builder.preload('user'))
     assert.lengthOf(users, 2)
@@ -733,7 +733,7 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const users = await User.query().preload('profile', (builder) => builder.where('display_name', 'foo'))
     assert.lengthOf(users, 2)
@@ -776,7 +776,7 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const users = await User.query().preload('profile', (builder) => {
       return builder.select('display_name')
@@ -821,7 +821,7 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const users = await User.query().preload('profile', (builder) => {
       return builder.select('display_name', 'user_id')
@@ -866,15 +866,15 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const users = await User.query().preload('profile').sideload({ id: 1 })
     assert.lengthOf(users, 2)
 
-    assert.deepEqual(users[0].$sideloaded, { id: 1 })
-    assert.deepEqual(users[1].$sideloaded, { id: 1 })
-    assert.deepEqual(users[0].profile.$sideloaded, { id: 1 })
-    assert.deepEqual(users[1].profile.$sideloaded, { id: 1 })
+    assert.deepEqual(users[0].sideloaded, { id: 1 })
+    assert.deepEqual(users[1].sideloaded, { id: 1 })
+    assert.deepEqual(users[0].profile.sideloaded, { id: 1 })
+    assert.deepEqual(users[1].profile.sideloaded, { id: 1 })
   })
 
   test('preload using model instance', async (assert) => {
@@ -909,7 +909,7 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const users = await User.all()
     assert.lengthOf(users, 2)
@@ -1021,7 +1021,7 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const users = await User.all()
     assert.lengthOf(users, 2)
@@ -1098,7 +1098,7 @@ test.group('Model | HasOne | preload', (group) => {
       },
     ])
 
-    User.$boot()
+    User.boot()
 
     const query = User.query({ connection: 'secondary' })
       .preload('profile', (builder) => builder.preload('identity'))
@@ -1108,9 +1108,9 @@ test.group('Model | HasOne | preload', (group) => {
     assert.instanceOf(user!.profile, Profile)
     assert.instanceOf(user!.profile.identity, Identity)
 
-    assert.equal(user!.$options!.connection, 'secondary')
-    assert.equal(user!.profile.$options!.connection, 'secondary')
-    assert.equal(user!.profile.identity.$options!.connection, 'secondary')
+    assert.equal(user!.options!.connection, 'secondary')
+    assert.equal(user!.profile.options!.connection, 'secondary')
+    assert.equal(user!.profile.identity.options!.connection, 'secondary')
   })
 
   test('pass relationship metadata to the profiler', async (assert) => {
@@ -1159,7 +1159,7 @@ test.group('Model | HasOne | preload', (group) => {
       profilerPacketIndex++
     })
 
-    User.$boot()
+    User.boot()
     await User.query({ profiler }).preload('profile')
   })
 })
@@ -1212,7 +1212,7 @@ test.group('Model | HasOne | persist', (group) => {
 
     await user.related('profile').save(profile)
 
-    assert.isTrue(profile.$isPersisted)
+    assert.isTrue(profile.isPersisted)
     assert.equal(user.id, profile.userId)
   })
 
@@ -1247,7 +1247,7 @@ test.group('Model | HasOne | persist', (group) => {
       displayName: 'Hvirk',
     })
 
-    assert.isTrue(profile.$isPersisted)
+    assert.isTrue(profile.isPersisted)
     assert.equal(user.id, profile.userId)
   })
 
@@ -1278,7 +1278,7 @@ test.group('Model | HasOne | persist', (group) => {
 
     const user = new User()
     user.username = 'virk'
-    user.$trx = trx
+    user.trx = trx
     await user.save()
 
     const profile = await user.related('profile').create({
@@ -1292,8 +1292,8 @@ test.group('Model | HasOne | persist', (group) => {
 
     assert.equal(totalUsers[0].total, 0)
     assert.equal(totalProfiles[0].total, 0)
-    assert.isUndefined(user.$trx)
-    assert.isUndefined(profile.$trx)
+    assert.isUndefined(user.trx)
+    assert.isUndefined(profile.trx)
   })
 })
 
@@ -1344,8 +1344,8 @@ test.group('Model | HasOne | firstOrCreate', (group) => {
       displayName: 'Hvirk',
     })
 
-    assert.isTrue(profile.$isPersisted)
-    assert.isTrue(profile.$isLocal)
+    assert.isTrue(profile.isPersisted)
+    assert.isTrue(profile.isLocal)
     assert.equal(user.id, profile.userId)
     assert.equal(profile.displayName, 'Hvirk')
   })
@@ -1382,8 +1382,8 @@ test.group('Model | HasOne | firstOrCreate', (group) => {
       displayName: 'Hvirk',
     })
 
-    assert.isTrue(profile.$isPersisted)
-    assert.isFalse(profile.$isLocal)
+    assert.isTrue(profile.isPersisted)
+    assert.isFalse(profile.isLocal)
     assert.equal(user.id, profile.userId)
     assert.equal(profile.displayName, 'Hvirk')
 
@@ -1439,8 +1439,8 @@ test.group('Model | HasOne | updateOrCreate', (group) => {
       displayName: 'Virk',
     })
 
-    assert.isTrue(profile.$isPersisted)
-    assert.isTrue(profile.$isLocal)
+    assert.isTrue(profile.isPersisted)
+    assert.isTrue(profile.isLocal)
     assert.equal(user.id, profile.userId)
     assert.equal(profile.displayName, 'Virk')
 
@@ -1481,8 +1481,8 @@ test.group('Model | HasOne | updateOrCreate', (group) => {
       displayName: 'Virk',
     })
 
-    assert.isTrue(profile.$isPersisted)
-    assert.isFalse(profile.$isLocal)
+    assert.isTrue(profile.isPersisted)
+    assert.isFalse(profile.isLocal)
     assert.equal(user.id, profile.userId)
     assert.equal(profile.displayName, 'Virk')
 

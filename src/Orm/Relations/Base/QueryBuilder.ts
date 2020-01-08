@@ -22,22 +22,50 @@ export abstract class BaseQueryBuilder extends ModelQueryBuilder implements Rela
 ModelConstructorContract,
 ModelConstructorContract
 > {
-  protected $appliedConstraints: boolean = false
-
   constructor (
     builder: knex.QueryBuilder,
     client: QueryClientContract,
-    protected $relation: RelationshipsContract,
+    relation: RelationshipsContract,
     private isEager: boolean,
     dbCallback: DBQueryCallback,
   ) {
-    super(builder, $relation.$relatedModel(), client, dbCallback)
+    super(builder, relation.relatedModel(), client, dbCallback)
   }
+
+  /**
+   * Returns the profiler action. Protected, since the class is extended
+   * by relationships
+   */
+  protected getProfilerAction () {
+    if (!this.client.profiler) {
+      return null
+    }
+
+    return this.client.profiler.profile('sql:query', Object.assign(this['toSQL'](), {
+      connection: this.client.connectionName,
+      inTransaction: this.client.isTransaction,
+      model: this.model.name,
+      relation: this.profilerData(),
+    }))
+  }
+
+  protected abstract profilerData (): any
+
+  /**
+   * The relationship query builder must implement this method
+   * to apply relationship related constraints
+   */
+  protected abstract applyConstraints (): void
+
+  /**
+   * Each relationship query builder
+   */
+  public abstract getRelationKeys (): string[]
 
   /**
    * Returns the name of the query action
    */
-  protected $queryAction (): string {
+  protected queryAction (): string {
     let action = this.knexQuery['_method']
     if (action === 'del') {
       action = 'delete'
@@ -50,14 +78,11 @@ ModelConstructorContract
     return action
   }
 
-  public abstract applyConstraints ()
-  public abstract getRelationKeys (): string[]
-
   /**
    * Selects the relation keys. Invoked by the preloader
    */
-  public selectRelationKeys (): this {
-    const columns = this.knexQuery['_statements'].find((statement) => {
+  public $selectRelationKeys (): this {
+    const columns = this.knexQuery['_statements'].find((statement: any) => {
       return statement.grouping && statement.grouping === 'columns'
     })
 
@@ -79,33 +104,18 @@ ModelConstructorContract
   }
 
   /**
-   * Adds neccessary where clause to the query to perform the select
-   */
-  public async beforeExecute () {
-    this.applyConstraints()
-  }
-
-  /**
    * Get query sql
    */
   public toSQL () {
     this.applyConstraints()
-    return super['toSQL']()
+    return super.toSQL()
   }
 
   /**
-   * Returns the profiler action
+   * Execute query
    */
-  protected getProfilerAction () {
-    if (!this.client.profiler) {
-      return null
-    }
-
-    return this.client.profiler.profile('sql:query', Object.assign(this['toSQL'](), {
-      connection: this.client.connectionName,
-      inTransaction: this.client.isTransaction,
-      model: this.model.name,
-      relation: this.$relation.$profilerData,
-    }))
+  public exec () {
+    this.applyConstraints()
+    return super.exec()
   }
 }

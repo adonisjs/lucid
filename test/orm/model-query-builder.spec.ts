@@ -50,7 +50,7 @@ test.group('Model query builder', (group) => {
       public username: string
     }
 
-    User.$boot()
+    User.boot()
     assert.instanceOf(User.query(), ModelQueryBuilder)
   })
 
@@ -63,7 +63,7 @@ test.group('Model query builder', (group) => {
       public username: string
     }
 
-    User.$boot()
+    User.boot()
     assert.equal(User.query().knexQuery['_single'].table, 'users')
   })
 
@@ -76,7 +76,7 @@ test.group('Model query builder', (group) => {
       public username: string
     }
 
-    User.$boot()
+    User.boot()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const users = await User.query().where('username', 'virk')
@@ -94,14 +94,14 @@ test.group('Model query builder', (group) => {
       public username: string
     }
 
-    User.$boot()
+    User.boot()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const users = await User.query({ connection: 'secondary' }).where('username', 'virk')
     assert.lengthOf(users, 1)
     assert.instanceOf(users[0], User)
     assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
-    assert.deepEqual(users[0].$options!.connection, 'secondary')
+    assert.deepEqual(users[0].options!.connection, 'secondary')
   })
 
   test('pass sideloaded attributes to the model instance', async (assert) => {
@@ -113,7 +113,7 @@ test.group('Model query builder', (group) => {
       public username: string
     }
 
-    User.$boot()
+    User.boot()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const users = await User
@@ -124,7 +124,7 @@ test.group('Model query builder', (group) => {
     assert.lengthOf(users, 1)
     assert.instanceOf(users[0], User)
     assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
-    assert.deepEqual(users[0].$sideloaded, { loggedInUser: { id: 1 } })
+    assert.deepEqual(users[0].sideloaded, { loggedInUser: { id: 1 } })
   })
 
   test('pass custom profiler to the model instance', async (assert) => {
@@ -136,7 +136,7 @@ test.group('Model query builder', (group) => {
       public username: string
     }
 
-    User.$boot()
+    User.boot()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const profiler = getProfiler()
@@ -144,7 +144,7 @@ test.group('Model query builder', (group) => {
     assert.lengthOf(users, 1)
     assert.instanceOf(users[0], User)
     assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
-    assert.deepEqual(users[0].$options!.profiler, profiler)
+    assert.deepEqual(users[0].options!.profiler, profiler)
   })
 
   test('perform update using model query builder', async (assert) => {
@@ -156,7 +156,7 @@ test.group('Model query builder', (group) => {
       public username: string
     }
 
-    User.$boot()
+    User.boot()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const rows = await User.query().where('username', 'virk').update({ username: 'hvirk' })
@@ -176,7 +176,7 @@ test.group('Model query builder', (group) => {
       public username: string
     }
 
-    User.$boot()
+    User.boot()
     await db.insertQuery().table('users').insert([{ username: 'virk', points: 1 }])
 
     const rows = await User.query().where('username', 'virk').increment('points', 1)
@@ -196,7 +196,7 @@ test.group('Model query builder', (group) => {
       public username: string
     }
 
-    User.$boot()
+    User.boot()
     await db.insertQuery().table('users').insert([{ username: 'virk', points: 3 }])
 
     const rows = await User.query().where('username', 'virk').decrement('points', 1)
@@ -216,7 +216,7 @@ test.group('Model query builder', (group) => {
       public username: string
     }
 
-    User.$boot()
+    User.boot()
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const rows = await User.query().where('username', 'virk').del()

@@ -82,7 +82,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
   export type ColumnOptions = {
     castAs: string,
-    serializeAs: string | null,
+    serializeAs: string | null, // null means do not serialize column
     isPrimary: boolean,
     hasGetter: boolean,
     hasSetter: boolean,
@@ -101,8 +101,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
   export type ColumnDecorator = (
     options?: Partial<Omit<ColumnOptions, 'hasGetter' | 'hasSetter'>>,
-  ) => (target, property) => void
-  export type ComputedDecorator = (options?: Partial<ComputedOptions>) => (target, property) => void
+  ) => (target: any, property: any) => void
+
+  export type ComputedDecorator = (
+    options?: Partial<ComputedOptions>,
+  ) => (target: any, property: any) => void
 
   /**
    * ------------------------------------------------------
@@ -160,7 +163,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Reference to query client used for making queries
      */
     client: QueryClientContract
-    knexQuery: knex.QueryBuilder,
+    knexQuery: knex.QueryBuilder
 
     /**
      * A custom set of sideloaded properties defined on the query
@@ -168,11 +171,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * by the query builder
      */
     sideload (value: ModelObject): this
-
-    /**
-     * The connection name used by the model query builder
-     */
-    connection: string
 
     /**
      * Execute and get first result
@@ -214,18 +212,20 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $attributes: ModelObject
     $extras: ModelObject
     $original: ModelObject
-    $dirty: ModelObject
-    $isPersisted: boolean
-    $isNew: boolean
-    $isLocal: boolean
-    $isDirty: boolean
-    $isDeleted: boolean
     $preloaded: { [relation: string]: ModelContract | ModelContract[] }
-    $sideloaded: ModelObject
-    $primaryKeyValue?: number | string
-    $options?: ModelOptions
-    $trx?: TransactionClientContract,
 
+    sideloaded: ModelObject
+
+    primaryKeyValue?: number | string
+    isPersisted: boolean
+    isNew: boolean
+    isLocal: boolean
+    dirty: ModelObject
+    isDirty: boolean
+    isDeleted: boolean
+
+    options?: ModelOptions
+    trx?: TransactionClientContract,
     $setOptionsAndTrx (options?: ModelAdapterOptions): void
 
     /**
@@ -290,6 +290,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     $consumeAdapterResult (adapterResult: ModelObject, sideloadAttributes?: ModelObject): void
 
+    hydrateOriginals(): void
     fill (value: ModelObject): void
     merge (value: ModelObject): void
     save (): Promise<void>
@@ -297,9 +298,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     serialize (): ModelObject
     toJSON (): ModelObject
     refresh (): Promise<void>
-
     preload: ModelBuilderPreloadFn<this>
-
     related<
       Name extends keyof ExtractRelations<this>,
       RelationType extends TypedRelations = this[Name] extends TypedRelations ? this[Name] : never
@@ -323,7 +322,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Whether or not model has been booted. After this model configurations
      * are ignored
      */
-    $booted: boolean
+    readonly booted: boolean
 
     /**
      * A map of defined columns
@@ -344,12 +343,12 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * The primary key for finding unique referencing to a
      * model
      */
-    $primaryKey: string
+    readonly primaryKey: string
 
     /**
      * Custom database connection to use
      */
-    $connection?: string
+    readonly connection?: string
 
     /**
      * Adapter to work as a bridge between query builder and the model
@@ -365,38 +364,18 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Whether primary key is auto incrementing or not. If not, then
      * end user must provide the value for the primary key
      */
-    $increments: boolean
+    readonly increments: boolean
 
     /**
      * Database table to use
      */
-    $table: string
+    readonly table: string
 
     /**
      * Refs are named value pair on model used mainly for autocompleting
      * the query constraints
      */
-    $refs: { [key: string]: string }
-
-    $boot (): void
-
-    /**
-     * Register a before hook
-     */
-    $before<T extends ModelConstructorContract> (
-      this: T,
-      event: EventsList,
-      handler: HooksHandler<InstanceType<T>>,
-    ): void
-
-    /**
-     * Register an after hook
-     */
-    $after<T extends ModelConstructorContract> (
-      this: T,
-      event: EventsList,
-      handler: HooksHandler<InstanceType<T>>,
-    ): void
+    readonly $refs: { [key: string]: string }
 
     /**
      * Creating model from adapter results
@@ -462,6 +441,26 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     $resolveCastKey (key: string): string
     $mapKeysToCastKeys (values: ModelObject): ModelObject
+
+    boot (): void
+
+    /**
+     * Register a before hook
+     */
+    before<T extends ModelConstructorContract> (
+      this: T,
+      event: EventsList,
+      handler: HooksHandler<InstanceType<T>>,
+    ): void
+
+    /**
+     * Register an after hook
+     */
+    after<T extends ModelConstructorContract> (
+      this: T,
+      event: EventsList,
+      handler: HooksHandler<InstanceType<T>>,
+    ): void
 
     /**
      * Creating model
@@ -640,32 +639,55 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * defaults
    */
   export type OrmConfigContract = {
+    /**
+     * Return the default table name for a given model
+     */
     getTableName (model: ModelConstructorContract): string
-    getCastAsKey (model: ModelConstructorContract, key: string): string
-    getSerializeAsKey (model: ModelConstructorContract, key: string): string
-    serialize (model: ModelConstructorContract, key: string): boolean
 
+    /**
+     * Return the `castAs` key (database column name) for a given model
+     * property.
+     */
+    getCastAsKey (model: ModelConstructorContract, key: string): string
+
+    /**
+     * Return the `serializeAs` key for a given model property
+     */
+    getSerializeAsKey (model: ModelConstructorContract, key: string): string
+
+    /**
+     * Return the local key property name for a given relationship
+     */
     getLocalKey (
       relation: TypedRelations['type'],
       model: ModelConstructorContract,
       relatedModel: ModelConstructorContract,
     ): string
 
+    /**
+     * Return the foreign key property name for a given relationship
+     */
     getForeignKey (
       relation: TypedRelations['type'],
       model: ModelConstructorContract,
       relatedModel: ModelConstructorContract,
     ): string
 
+    /**
+     * Return the pivot table name for many to many relationship
+     */
     getPivotTableName (
-      relation: TypedRelations['type'],
+      relation: 'manyToMany',
       model: ModelConstructorContract,
       relatedModel: ModelConstructorContract,
       relationName: string,
     ): string
 
+    /**
+     * Return the pivot foreign key for many to many relationship
+     */
     getPivotForeignKey (
-      relation: TypedRelations['type'],
+      relation: 'manyToMany',
       model: ModelConstructorContract,
       relatedModel: ModelConstructorContract,
       relationName: string,

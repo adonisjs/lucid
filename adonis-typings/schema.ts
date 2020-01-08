@@ -8,7 +8,7 @@
 */
 
 declare module '@ioc:Adonis/Lucid/Schema' {
-  import { QueryClientContract, ExcutableQueryBuilderContract } from '@ioc:Adonis/Lucid/Database'
+  import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
   import { RawContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
   import { SchemaBuilder, Raw } from 'knex'
 

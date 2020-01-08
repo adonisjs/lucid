@@ -53,12 +53,12 @@ export class Preloader implements PreloaderContract<ModelContract> {
       callback(query)
     }
 
-    const result = await query.selectRelationKeys().exec()
+    const result = await query.$selectRelationKeys().exec()
 
     /**
      * hasOne and belongsTo will always return an array of a single row (if done right)
      */
-    if (relation.$type === 'hasOne' || relation.$type === 'belongsTo') {
+    if (relation.type === 'hasOne' || relation.type === 'belongsTo') {
       relation.$setRelated(parent, result[0])
       return
     }
@@ -88,7 +88,7 @@ export class Preloader implements PreloaderContract<ModelContract> {
       callback(query)
     }
 
-    const result = await query.selectRelationKeys().exec()
+    const result = await query.$selectRelationKeys().exec()
 
     /**
      * Set array of related instances
@@ -100,7 +100,7 @@ export class Preloader implements PreloaderContract<ModelContract> {
    * Define a relationship to preload
    */
   public preload (name: any, callback?: any): this {
-    const relation = this.model.$getRelation(name)
+    const relation = this.model.$getRelation(name) as RelationshipsContract
     if (!relation) {
       throw new Exception(
         `"${name}" is not defined as a relationship on "${this.model.name}" model`,
@@ -109,7 +109,7 @@ export class Preloader implements PreloaderContract<ModelContract> {
       )
     }
 
-    relation.$boot()
+    relation.boot()
     this.preloads[name] = {
       relation: relation,
       callback: callback,
@@ -130,7 +130,7 @@ export class Preloader implements PreloaderContract<ModelContract> {
   /**
    * Process of all the preloaded relationships for a single parent
    */
-  public async processAllForOne (parent: ModelContract, client: QueryClientContract) {
+  public async $processAllForOne (parent: ModelContract, client: QueryClientContract) {
     await Promise.all(Object.keys(this.preloads).map((relationName) => {
       return this.processRelation(relationName, parent, client)
     }))
@@ -139,7 +139,7 @@ export class Preloader implements PreloaderContract<ModelContract> {
   /**
    * Process of all the preloaded relationships for many parents
    */
-  public async processAllForMany (parent: ModelContract[], client: QueryClientContract) {
+  public async $processAllForMany (parent: ModelContract[], client: QueryClientContract) {
     await Promise.all(Object.keys(this.preloads).map((relationName) => {
       return this.processRelationForMany(relationName, parent, client)
     }))

@@ -45,13 +45,13 @@ test.group('Base model | boot', (group) => {
       public username: string
     }
 
-    User.$boot()
-    assert.equal(User.$table, 'users')
+    User.boot()
+    assert.equal(User.table, 'users')
   })
 
   test('allow overriding table name', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'my_users'
+      public static table = 'my_users'
 
       @column({ isPrimary: true })
       public id: number
@@ -60,8 +60,8 @@ test.group('Base model | boot', (group) => {
       public username: string
     }
 
-    User.$boot()
-    assert.equal(User.$table, 'my_users')
+    User.boot()
+    assert.equal(User.table, 'my_users')
   })
 
   test('set increments to true by default', async (assert) => {
@@ -73,13 +73,13 @@ test.group('Base model | boot', (group) => {
       public username: string
     }
 
-    User.$boot()
-    assert.isTrue(User.$increments)
+    User.boot()
+    assert.isTrue(User.increments)
   })
 
   test('allow overriding increments', async (assert) => {
     class User extends BaseModel {
-      public static $increments = false
+      public static increments = false
 
       @column({ isPrimary: true })
       public id: number
@@ -88,15 +88,15 @@ test.group('Base model | boot', (group) => {
       public username: string
     }
 
-    User.$boot()
-    assert.isFalse(User.$increments)
+    User.boot()
+    assert.isFalse(User.increments)
   })
 
   test('initiate all required static properties', async (assert) => {
     class User extends BaseModel {
     }
 
-    User.$boot()
+    User.boot()
     assert.deepEqual(mapToObj(User.$columns), {})
     assert.deepEqual(mapToObj(User.$relations), {})
     assert.deepEqual(mapToObj(User.$computed), {})
@@ -114,7 +114,7 @@ test.group('Base model | boot', (group) => {
       public userName: string
     }
 
-    User.$boot()
+    User.boot()
     assert.deepEqual(User.$refs, { id: 'id', userName: 'user_name' })
   })
 })
@@ -159,7 +159,7 @@ test.group('Base Model | getter-setters', (group) => {
     class User extends BaseModel {
       public username: string
     }
-    User.$boot()
+    User.boot()
 
     const user = new User()
     user.username = 'virk'
@@ -199,7 +199,7 @@ test.group('Base Model | getter-setters', (group) => {
       public username = 'virk'
     }
 
-    User.$boot()
+    User.boot()
     const user = new User()
     assert.equal(user.username, 'virk')
   })
@@ -216,10 +216,10 @@ test.group('Base Model | getter-setters', (group) => {
     const user = new User()
     user.$attributes = { username: 'virk', id: 1 }
 
-    assert.deepEqual(user.$primaryKeyValue, 1)
+    assert.deepEqual(user.primaryKeyValue, 1)
   })
 
-  test('invoke getter when accessing value using $primaryKeyValue', (assert) => {
+  test('invoke getter when accessing value using primaryKeyValue', (assert) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public get id () {
@@ -233,7 +233,7 @@ test.group('Base Model | getter-setters', (group) => {
     const user = new User()
     user.$attributes = { username: 'virk', id: 1 }
 
-    assert.deepEqual(user.$primaryKeyValue, '1')
+    assert.deepEqual(user.primaryKeyValue, '1')
   })
 
   test('invoke column serialize method when serializing model', (assert) => {
@@ -277,8 +277,8 @@ test.group('Base Model | dirty', (group) => {
     const user = new User()
     user.username = 'virk'
 
-    assert.deepEqual(user.$dirty, { username: 'virk' })
-    assert.isTrue(user.$isDirty)
+    assert.deepEqual(user.dirty, { username: 'virk' })
+    assert.isTrue(user.isDirty)
   })
 
   test('get empty object when model is not dirty', (assert) => {
@@ -288,12 +288,13 @@ test.group('Base Model | dirty', (group) => {
     }
 
     const user = new User()
-    user.username = 'virk'
+    user.$attributes = { username: 'virk' }
     user.$original = { username: 'virk' }
-    user.$isPersisted = true
 
-    assert.deepEqual(user.$dirty, {})
-    assert.isFalse(user.$isDirty)
+    user.isPersisted = true
+
+    assert.deepEqual(user.dirty, {})
+    assert.isFalse(user.isDirty)
   })
 
   test('get empty object when model is not dirty with null values', (assert) => {
@@ -306,10 +307,10 @@ test.group('Base Model | dirty', (group) => {
 
     user.$attributes = { username: null }
     user.$original = { username: null }
-    user.$isPersisted = true
+    user.isPersisted = true
 
-    assert.deepEqual(user.$dirty, {})
-    assert.isFalse(user.$isDirty)
+    assert.deepEqual(user.dirty, {})
+    assert.isFalse(user.isDirty)
   })
 
   test('get empty object when model is not dirty with false values', (assert) => {
@@ -322,10 +323,10 @@ test.group('Base Model | dirty', (group) => {
 
     user.$attributes = { username: false }
     user.$original = { username: false }
-    user.$isPersisted = true
+    user.isPersisted = true
 
-    assert.deepEqual(user.$dirty, {})
-    assert.isFalse(user.$isDirty)
+    assert.deepEqual(user.dirty, {})
+    assert.isFalse(user.isDirty)
   })
 
   test('get values removed as a side-effect of fill as dirty', async (assert) => {
@@ -344,12 +345,12 @@ test.group('Base Model | dirty', (group) => {
     user.age = 22
     await user.save()
 
-    assert.deepEqual(user.$dirty, {})
-    assert.isFalse(user.$isDirty)
-    assert.isTrue(user.$isPersisted)
+    assert.deepEqual(user.dirty, {})
+    assert.isFalse(user.isDirty)
+    assert.isTrue(user.isPersisted)
 
     user.fill({ username: 'virk' })
-    assert.deepEqual(user.$dirty, { age: null })
+    assert.deepEqual(user.dirty, { age: null })
   })
 })
 
@@ -387,8 +388,8 @@ test.group('Base Model | persist', (group) => {
     user.fullName = 'H virk'
 
     await user.save()
-    assert.isTrue(user.$isPersisted)
-    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.isPersisted)
+    assert.isFalse(user.isDirty)
     assert.deepEqual(adapter.operations, [{
       type: 'insert',
       instance: user,
@@ -419,8 +420,8 @@ test.group('Base Model | persist', (group) => {
     user.username = 'virk'
 
     await user.save()
-    assert.isTrue(user.$isPersisted)
-    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.isPersisted)
+    assert.isFalse(user.isDirty)
     assert.deepEqual(adapter.operations, [{
       type: 'insert',
       instance: user,
@@ -448,8 +449,8 @@ test.group('Base Model | persist', (group) => {
     user.username = 'virk'
 
     await user.save()
-    assert.isTrue(user.$isPersisted)
-    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.isPersisted)
+    assert.isFalse(user.isDirty)
     assert.deepEqual(adapter.operations, [{
       type: 'insert',
       instance: user,
@@ -472,11 +473,11 @@ test.group('Base Model | persist', (group) => {
 
     const user = new User()
     user.username = 'virk'
-    user.$isPersisted = true
+    user.isPersisted = true
 
     await user.save()
-    assert.isTrue(user.$isPersisted)
-    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.isPersisted)
+    assert.isFalse(user.isDirty)
     assert.deepEqual(adapter.operations, [{
       type: 'update',
       instance: user,
@@ -506,11 +507,11 @@ test.group('Base Model | persist', (group) => {
 
     const user = new User()
     user.username = 'virk'
-    user.$isPersisted = true
+    user.isPersisted = true
 
     await user.save()
-    assert.isTrue(user.$isPersisted)
-    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.isPersisted)
+    assert.isFalse(user.isDirty)
     assert.deepEqual(adapter.operations, [{
       type: 'update',
       instance: user,
@@ -535,11 +536,11 @@ test.group('Base Model | persist', (group) => {
     User.$adapter = adapter
 
     const user = new User()
-    user.$isPersisted = true
+    user.isPersisted = true
 
     await user.save()
-    assert.isTrue(user.$isPersisted)
-    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.isPersisted)
+    assert.isFalse(user.isDirty)
     assert.deepEqual(adapter.operations, [])
     assert.deepEqual(user.$attributes, {})
     assert.deepEqual(user.$original, {})
@@ -564,13 +565,13 @@ test.group('Base Model | persist', (group) => {
     user.username = 'virk'
     await user.save()
 
-    assert.isTrue(user.$isPersisted)
-    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.isPersisted)
+    assert.isFalse(user.isDirty)
     assert.isUndefined(user.updatedAt)
 
     await user.refresh()
-    assert.isTrue(user.$isPersisted)
-    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.isPersisted)
+    assert.isFalse(user.isDirty)
     assert.isDefined(user.updatedAt)
   })
 
@@ -595,8 +596,8 @@ test.group('Base Model | persist', (group) => {
     user.username = 'virk'
     await user.save()
 
-    assert.isTrue(user.$isPersisted)
-    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.isPersisted)
+    assert.isFalse(user.isDirty)
     assert.isUndefined(user.updatedAt)
 
     await db.from('users').del()
@@ -631,9 +632,9 @@ test.group('Base Model | create from adapter results', (group) => {
     const user = User.$createFromAdapterResult({ username: 'virk' })
     user!.username = 'virk'
 
-    assert.isTrue(user!.$isPersisted)
-    assert.isFalse(user!.$isDirty)
-    assert.isFalse(user!.$isLocal)
+    assert.isTrue(user!.isPersisted)
+    assert.isFalse(user!.isDirty)
+    assert.isFalse(user!.isLocal)
     assert.deepEqual(user!.$attributes, { username: 'virk' })
     assert.deepEqual(user!.$original, { username: 'virk' })
   })
@@ -649,10 +650,10 @@ test.group('Base Model | create from adapter results', (group) => {
 
     const user = User.$createFromAdapterResult({ username: 'virk' }, [], { connection: 'foo' })
 
-    assert.deepEqual(user!.$options, { connection: 'foo' })
-    assert.isTrue(user!.$isPersisted)
-    assert.isFalse(user!.$isDirty)
-    assert.isFalse(user!.$isLocal)
+    assert.deepEqual(user!.options, { connection: 'foo' })
+    assert.isTrue(user!.isPersisted)
+    assert.isFalse(user!.isDirty)
+    assert.isFalse(user!.isLocal)
     assert.deepEqual(user!.$attributes, { username: 'virk' })
     assert.deepEqual(user!.$original, { username: 'virk' })
   })
@@ -685,15 +686,15 @@ test.group('Base Model | create from adapter results', (group) => {
     ])
     assert.lengthOf(users, 2)
 
-    assert.isTrue(users[0].$isPersisted)
-    assert.isFalse(users[0].$isDirty)
-    assert.isFalse(users[0].$isLocal)
+    assert.isTrue(users[0].isPersisted)
+    assert.isFalse(users[0].isDirty)
+    assert.isFalse(users[0].isLocal)
     assert.deepEqual(users[0].$attributes, { username: 'virk', fullName: 'H virk' })
     assert.deepEqual(users[0].$original, { username: 'virk', fullName: 'H virk' })
 
-    assert.isTrue(users[1].$isPersisted)
-    assert.isFalse(users[1].$isDirty)
-    assert.isFalse(users[1].$isLocal)
+    assert.isTrue(users[1].isPersisted)
+    assert.isFalse(users[1].isDirty)
+    assert.isFalse(users[1].isLocal)
     assert.deepEqual(users[1].$attributes, { username: 'prasan' })
     assert.deepEqual(users[1].$original, { username: 'prasan' })
   })
@@ -715,17 +716,17 @@ test.group('Base Model | create from adapter results', (group) => {
 
     assert.lengthOf(users, 2)
 
-    assert.isTrue(users[0].$isPersisted)
-    assert.isFalse(users[0].$isDirty)
-    assert.isFalse(users[0].$isLocal)
-    assert.deepEqual(users[0].$options, { connection: 'foo' })
+    assert.isTrue(users[0].isPersisted)
+    assert.isFalse(users[0].isDirty)
+    assert.isFalse(users[0].isLocal)
+    assert.deepEqual(users[0].options, { connection: 'foo' })
     assert.deepEqual(users[0].$attributes, { username: 'virk', fullName: 'H virk' })
     assert.deepEqual(users[0].$original, { username: 'virk', fullName: 'H virk' })
 
-    assert.isTrue(users[1].$isPersisted)
-    assert.isFalse(users[1].$isDirty)
-    assert.isFalse(users[1].$isLocal)
-    assert.deepEqual(users[1].$options, { connection: 'foo' })
+    assert.isTrue(users[1].isPersisted)
+    assert.isFalse(users[1].isDirty)
+    assert.isFalse(users[1].isLocal)
+    assert.deepEqual(users[1].options, { connection: 'foo' })
     assert.deepEqual(users[1].$attributes, { username: 'prasan' })
     assert.deepEqual(users[1].$original, { username: 'prasan' })
   })
@@ -745,9 +746,9 @@ test.group('Base Model | create from adapter results', (group) => {
     )
     assert.lengthOf(users, 1)
 
-    assert.isTrue(users[0].$isPersisted)
-    assert.isFalse(users[0].$isDirty)
-    assert.isFalse(users[0].$isLocal)
+    assert.isTrue(users[0].isPersisted)
+    assert.isFalse(users[0].isDirty)
+    assert.isFalse(users[0].isLocal)
     assert.deepEqual(users[0].$attributes, { username: 'virk', fullName: 'H virk' })
     assert.deepEqual(users[0].$original, { username: 'virk', fullName: 'H virk' })
   })
@@ -780,7 +781,7 @@ test.group('Base Model | delete', (group) => {
       instance: user,
     }])
 
-    assert.isTrue(user.$isDeleted)
+    assert.isTrue(user.isDeleted)
   })
 
   test('raise exception when trying to mutate model after deletion', async (assert) => {
@@ -1060,7 +1061,7 @@ test.group('Base | apdater', (group) => {
     User.$adapter = adapter
     const user = new User()
     user.username = 'virk'
-    user.$options = { connection: 'foo' }
+    user.options = { connection: 'foo' }
 
     await user.save()
 
@@ -1082,7 +1083,7 @@ test.group('Base | apdater', (group) => {
     User.$adapter = adapter
     const user = new User()
     user.username = 'virk'
-    user.$options = { connection: 'foo' }
+    user.options = { connection: 'foo' }
 
     await user.save()
 
@@ -1114,7 +1115,7 @@ test.group('Base | apdater', (group) => {
     User.$adapter = adapter
     const user = new User()
     user.username = 'virk'
-    user.$options = { connection: 'foo' }
+    user.options = { connection: 'foo' }
 
     await user.save()
     await user.delete()
@@ -1175,7 +1176,7 @@ test.group('Base Model | sideloaded', (group) => {
     user.$consumeAdapterResult({ username: 'virk' }, { loggedInUser: { id: 1 } })
 
     assert.deepEqual(user.$attributes, { username: 'virk' })
-    assert.deepEqual(user.$sideloaded, { loggedInUser: { id: 1 } })
+    assert.deepEqual(user.sideloaded, { loggedInUser: { id: 1 } })
   })
 
   test('define sideloaded properties using $createFromAdapterResult method', (assert) => {
@@ -1186,7 +1187,7 @@ test.group('Base Model | sideloaded', (group) => {
 
     const user = User.$createFromAdapterResult({ username: 'virk' }, { loggedInUser: { id: 1 } })!
     assert.deepEqual(user.$attributes, { username: 'virk' })
-    assert.deepEqual(user.$sideloaded, { loggedInUser: { id: 1 } })
+    assert.deepEqual(user.sideloaded, { loggedInUser: { id: 1 } })
   })
 
   test('define sideloaded properties using $createMultipleFromAdapterResult method', (assert) => {
@@ -1201,10 +1202,10 @@ test.group('Base Model | sideloaded', (group) => {
     )
 
     assert.deepEqual(users[0].$attributes, { username: 'virk' })
-    assert.deepEqual(users[0].$sideloaded, { loggedInUser: { id: 1 } })
+    assert.deepEqual(users[0].sideloaded, { loggedInUser: { id: 1 } })
 
     assert.deepEqual(users[1].$attributes, { username: 'nikk' })
-    assert.deepEqual(users[1].$sideloaded, { loggedInUser: { id: 1 } })
+    assert.deepEqual(users[1].sideloaded, { loggedInUser: { id: 1 } })
   })
 
   // @todo: PASS SIDELOADED PROPERTIES TO RELATIONSHIPS AS WELL
@@ -1534,7 +1535,7 @@ test.group('Base Model | fetch', (group) => {
     const user = await User.find(1)
 
     assert.instanceOf(user, User)
-    assert.equal(user!.$primaryKeyValue, 1)
+    assert.equal(user!.primaryKeyValue, 1)
   })
 
   test('raise exception when row is not found', async (assert) => {
@@ -1576,8 +1577,8 @@ test.group('Base Model | fetch', (group) => {
 
     const users = await User.findMany([1, 2])
     assert.lengthOf(users, 2)
-    assert.equal(users[0].$primaryKeyValue, 2)
-    assert.equal(users[1].$primaryKeyValue, 1)
+    assert.equal(users[0].primaryKeyValue, 2)
+    assert.equal(users[1].primaryKeyValue, 1)
   })
 
   test('return the existing row when search criteria matches', async (assert) => {
@@ -1598,9 +1599,9 @@ test.group('Base Model | fetch', (group) => {
     const totalUsers = await db.query().from('users').count('*', 'total')
 
     assert.equal(totalUsers[0].total, 1)
-    assert.isTrue(user.$isPersisted)
+    assert.isTrue(user.isPersisted)
     assert.instanceOf(user, User)
-    assert.equal(user!.$primaryKeyValue, 1)
+    assert.equal(user!.primaryKeyValue, 1)
   })
 
   test('create new row when search criteria doesn\'t match', async (assert) => {
@@ -1623,8 +1624,8 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(totalUsers[0].total, 2)
     assert.instanceOf(user, User)
 
-    assert.equal(user!.$primaryKeyValue, 2)
-    assert.isTrue(user.$isPersisted)
+    assert.equal(user!.primaryKeyValue, 2)
+    assert.isTrue(user.isPersisted)
     assert.equal(user!.email, 'nikk@gmail.com')
     assert.equal(user!.userName, 'nikk')
   })
@@ -1648,8 +1649,8 @@ test.group('Base Model | fetch', (group) => {
 
     assert.equal(totalUsers[0].total, 1)
     assert.instanceOf(user, User)
-    assert.isTrue(user.$isPersisted)
-    assert.equal(user!.$primaryKeyValue, 1)
+    assert.isTrue(user.isPersisted)
+    assert.equal(user!.primaryKeyValue, 1)
   })
 
   test('instantiate new row when search criteria doesn\'t match using firstOrNew', async (assert) => {
@@ -1672,8 +1673,8 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(totalUsers[0].total, 1)
     assert.instanceOf(user, User)
 
-    assert.isUndefined(user!.$primaryKeyValue)
-    assert.isFalse(user.$isPersisted)
+    assert.isUndefined(user!.primaryKeyValue)
+    assert.isFalse(user.isPersisted)
     assert.equal(user!.email, 'nikk@gmail.com')
     assert.equal(user!.userName, 'nikk')
   })
@@ -1695,7 +1696,7 @@ test.group('Base Model | fetch', (group) => {
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const user = await User.updateOrCreate({ userName: 'virk' }, { points: 20 })
-    assert.isTrue(user.$isPersisted)
+    assert.isTrue(user.isPersisted)
     assert.equal(user.points, 20)
     assert.equal(user.userName, 'virk')
 
@@ -1725,7 +1726,7 @@ test.group('Base Model | fetch', (group) => {
 
     const user = await User.updateOrCreate({ userName: 'virk' }, { points: 20 }, { client: trx })
 
-    assert.isTrue(user.$isPersisted)
+    assert.isTrue(user.isPersisted)
     assert.equal(user.points, 20)
     assert.equal(user.userName, 'virk')
 
@@ -1756,7 +1757,7 @@ test.group('Base Model | fetch', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const user = await User.updateOrCreate({ username: 'nikk' }, { points: 20 })
 
-    assert.isTrue(user.$isPersisted)
+    assert.isTrue(user.isPersisted)
     assert.equal(user.points, 20)
     assert.equal(user.username, 'nikk')
 
@@ -1790,7 +1791,7 @@ test.group('Base Model | fetch', (group) => {
 
     const user = await User.updateOrCreate({ username: 'nikk' }, { points: 20 }, { client: trx })
 
-    assert.isTrue(user.$isPersisted)
+    assert.isTrue(user.isPersisted)
     assert.equal(user.points, 20)
     assert.equal(user.username, 'nikk')
 
@@ -1837,15 +1838,15 @@ test.group('Base Model | fetch', (group) => {
     )
 
     assert.lengthOf(users, 3)
-    assert.isTrue(users[0].$isPersisted)
+    assert.isTrue(users[0].isPersisted)
     assert.equal(users[0].username, 'virk')
     assert.equal(users[0].email, 'virk@adonisjs.com')
 
-    assert.isTrue(users[1].$isPersisted)
+    assert.isTrue(users[1].isPersisted)
     assert.equal(users[1].username, 'nikk')
     assert.equal(users[1].email, 'nikk@adonisjs.com')
 
-    assert.isTrue(users[2].$isPersisted)
+    assert.isTrue(users[2].isPersisted)
     assert.equal(users[2].username, 'romain')
     assert.equal(users[2].email, 'romain@adonisjs.com')
 
@@ -1893,17 +1894,17 @@ test.group('Base Model | fetch', (group) => {
     )
 
     assert.lengthOf(users, 3)
-    assert.isTrue(users[0].$isPersisted)
+    assert.isTrue(users[0].isPersisted)
     assert.equal(users[0].username, 'virk')
     assert.equal(users[0].email, 'virk@adonisjs.com')
     assert.equal(users[0].points, 10)
 
-    assert.isTrue(users[1].$isPersisted)
+    assert.isTrue(users[1].isPersisted)
     assert.equal(users[1].username, 'nikk')
     assert.equal(users[1].email, 'nikk@adonisjs.com')
     assert.isUndefined(users[1].points)
 
-    assert.isTrue(users[2].$isPersisted)
+    assert.isTrue(users[2].isPersisted)
     assert.equal(users[2].username, 'romain')
     assert.equal(users[2].email, 'romain@adonisjs.com')
     assert.isUndefined(users[2].points)
@@ -2001,17 +2002,17 @@ test.group('Base Model | fetch', (group) => {
     )
 
     assert.lengthOf(users, 3)
-    assert.isTrue(users[0].$isPersisted)
+    assert.isTrue(users[0].isPersisted)
     assert.equal(users[0].userName, 'virk')
     assert.equal(users[0].email, 'virk@adonisjs.com')
     assert.equal(users[0].points, 10)
 
-    assert.isTrue(users[1].$isPersisted)
+    assert.isTrue(users[1].isPersisted)
     assert.equal(users[1].userName, 'nikk')
     assert.equal(users[1].email, 'nikk@adonisjs.com')
     assert.isUndefined(users[1].points)
 
-    assert.isTrue(users[2].$isPersisted)
+    assert.isTrue(users[2].isPersisted)
     assert.equal(users[2].userName, 'romain')
     assert.equal(users[2].email, 'romain@adonisjs.com')
     assert.isUndefined(users[2].points)
@@ -2190,15 +2191,15 @@ test.group('Base Model | fetch', (group) => {
     )
 
     assert.lengthOf(users, 3)
-    assert.isTrue(users[0].$isPersisted)
+    assert.isTrue(users[0].isPersisted)
     assert.equal(users[0].username, 'virk')
     assert.equal(users[0].email, 'virk@adonisjs.com')
 
-    assert.isTrue(users[1].$isPersisted)
+    assert.isTrue(users[1].isPersisted)
     assert.equal(users[1].username, 'nikk')
     assert.equal(users[1].email, 'nikk@adonisjs.com')
 
-    assert.isTrue(users[2].$isPersisted)
+    assert.isTrue(users[2].isPersisted)
     assert.equal(users[2].username, 'romain')
     assert.equal(users[2].email, 'romain@adonisjs.com')
 
@@ -2247,17 +2248,17 @@ test.group('Base Model | fetch', (group) => {
     )
 
     assert.lengthOf(users, 3)
-    assert.isTrue(users[0].$isPersisted)
+    assert.isTrue(users[0].isPersisted)
     assert.equal(users[0].username, 'virk')
     assert.equal(users[0].email, 'virk@adonisjs.com')
     assert.equal(users[0].points, 4)
 
-    assert.isTrue(users[1].$isPersisted)
+    assert.isTrue(users[1].isPersisted)
     assert.equal(users[1].username, 'nikk')
     assert.equal(users[1].email, 'nikk@adonisjs.com')
     assert.isUndefined(users[1].points)
 
-    assert.isTrue(users[2].$isPersisted)
+    assert.isTrue(users[2].isPersisted)
     assert.equal(users[2].username, 'romain')
     assert.equal(users[2].email, 'romain@adonisjs.com')
     assert.isUndefined(users[2].points)
@@ -2396,31 +2397,31 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static $boot () {
-        if (this.$booted) {
+      public static boot () {
+        if (this.booted) {
           return
         }
 
-        super.$boot()
+        super.boot()
 
-        this.$before('create', (model) => {
+        this.before('create', (model) => {
           assert.instanceOf(model, User)
-          assert.isFalse(model.$isPersisted)
+          assert.isFalse(model.isPersisted)
         })
 
-        this.$before('save', (model) => {
+        this.before('save', (model) => {
           assert.instanceOf(model, User)
-          assert.isFalse(model.$isPersisted)
+          assert.isFalse(model.isPersisted)
         })
 
-        this.$after('create', (model) => {
+        this.after('create', (model) => {
           assert.instanceOf(model, User)
-          assert.isTrue(model.$isPersisted)
+          assert.isTrue(model.isPersisted)
         })
 
-        this.$after('save', (model) => {
+        this.after('save', (model) => {
           assert.instanceOf(model, User)
-          assert.isTrue(model.$isPersisted)
+          assert.isTrue(model.isPersisted)
         })
       }
     }
@@ -2443,32 +2444,32 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static $boot () {
-        if (this.$booted) {
+      public static boot () {
+        if (this.booted) {
           return
         }
 
-        super.$boot()
+        super.boot()
 
-        this.$before('create', (model) => {
+        this.before('create', (model) => {
           assert.instanceOf(model, User)
-          assert.isFalse(model.$isPersisted)
+          assert.isFalse(model.isPersisted)
           throw new Error('Wait')
         })
 
-        this.$before('save', (model) => {
+        this.before('save', (model) => {
           assert.instanceOf(model, User)
-          assert.isFalse(model.$isPersisted)
+          assert.isFalse(model.isPersisted)
         })
 
-        this.$after('create', (model) => {
+        this.after('create', (model) => {
           assert.instanceOf(model, User)
-          assert.isTrue(model.$isPersisted)
+          assert.isTrue(model.isPersisted)
         })
 
-        this.$after('save', (model) => {
+        this.after('save', (model) => {
           assert.instanceOf(model, User)
-          assert.isTrue(model.$isPersisted)
+          assert.isTrue(model.isPersisted)
         })
       }
     }
@@ -2496,16 +2497,16 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static $boot () {
-        if (this.$booted) {
+      public static boot () {
+        if (this.booted) {
           return
         }
 
-        super.$boot()
+        super.boot()
 
-        this.$after('save', (model) => {
-          if (model.$trx) {
-            model.$trx.on('commit', () => {
+        this.after('save', (model) => {
+          if (model.trx) {
+            model.trx.on('commit', () => {
               assert.isTrue(true)
             })
           }
@@ -2517,7 +2518,7 @@ test.group('Base Model | hooks', (group) => {
 
     const user = new User()
     user.username = 'virk'
-    user.$trx = trx
+    user.trx = trx
     await user.save()
 
     await trx.commit()
@@ -2536,16 +2537,16 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static $boot () {
-        if (this.$booted) {
+      public static boot () {
+        if (this.booted) {
           return
         }
 
-        super.$boot()
+        super.boot()
 
-        this.$after('save', (model) => {
-          if (model.$trx) {
-            model.$trx.on('rollback', () => {
+        this.after('save', (model) => {
+          if (model.trx) {
+            model.trx.on('rollback', () => {
               assert.isTrue(true)
             })
           }
@@ -2557,7 +2558,7 @@ test.group('Base Model | hooks', (group) => {
 
     const user = new User()
     user.username = 'virk'
-    user.$trx = trx
+    user.trx = trx
     await user.save()
 
     await trx.rollback()
@@ -2576,31 +2577,31 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static $boot () {
-        if (this.$booted) {
+      public static boot () {
+        if (this.booted) {
           return
         }
 
-        super.$boot()
+        super.boot()
 
-        this.$before('update', (model) => {
+        this.before('update', (model) => {
           assert.instanceOf(model, User)
-          assert.isTrue(model.$isDirty)
+          assert.isTrue(model.isDirty)
         })
 
-        this.$before('save', (model) => {
+        this.before('save', (model) => {
           assert.instanceOf(model, User)
-          assert.isTrue(model.$isDirty)
+          assert.isTrue(model.isDirty)
         })
 
-        this.$after('update', (model) => {
+        this.after('update', (model) => {
           assert.instanceOf(model, User)
-          assert.isFalse(model.$isDirty)
+          assert.isFalse(model.isDirty)
         })
 
-        this.$after('save', (model) => {
+        this.after('save', (model) => {
           assert.instanceOf(model, User)
-          assert.isFalse(model.$isDirty)
+          assert.isFalse(model.isDirty)
         })
       }
     }
@@ -2629,32 +2630,32 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static $boot () {
-        if (this.$booted) {
+      public static boot () {
+        if (this.booted) {
           return
         }
 
-        super.$boot()
+        super.boot()
 
-        this.$before('update', (model) => {
+        this.before('update', (model) => {
           assert.instanceOf(model, User)
-          assert.isTrue(model.$isDirty)
+          assert.isTrue(model.isDirty)
           throw new Error('Wait')
         })
 
-        this.$before('save', (model) => {
+        this.before('save', (model) => {
           assert.instanceOf(model, User)
-          assert.isTrue(model.$isDirty)
+          assert.isTrue(model.isDirty)
         })
 
-        this.$after('update', (model) => {
+        this.after('update', (model) => {
           assert.instanceOf(model, User)
-          assert.isFalse(model.$isDirty)
+          assert.isFalse(model.isDirty)
         })
 
-        this.$after('save', (model) => {
+        this.after('save', (model) => {
           assert.instanceOf(model, User)
-          assert.isFalse(model.$isDirty)
+          assert.isFalse(model.isDirty)
         })
       }
     }
@@ -2688,18 +2689,18 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static $boot () {
-        if (this.$booted) {
+      public static boot () {
+        if (this.booted) {
           return
         }
 
-        super.$boot()
+        super.boot()
 
-        this.$before('delete', (model) => {
+        this.before('delete', (model) => {
           assert.instanceOf(model, User)
         })
 
-        this.$after('delete', (model) => {
+        this.after('delete', (model) => {
           assert.instanceOf(model, User)
         })
       }
@@ -2726,19 +2727,19 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static $boot () {
-        if (this.$booted) {
+      public static boot () {
+        if (this.booted) {
           return
         }
 
-        super.$boot()
+        super.boot()
 
-        this.$before('delete', (model) => {
+        this.before('delete', (model) => {
           assert.instanceOf(model, User)
           throw new Error('Wait')
         })
 
-        this.$after('delete', (model) => {
+        this.after('delete', (model) => {
           assert.instanceOf(model, User)
         })
       }
@@ -2776,7 +2777,7 @@ test.group('Base model | extend', (group) => {
       @column()
       public username: string
     }
-    User.$boot()
+    User.boot()
 
     db.ModelQueryBuilder.macro('whereActive', function () {
       this.where('is_active', true)
@@ -2806,7 +2807,7 @@ test.group('Base model | extend', (group) => {
         return client.insertQuery().table('users').withId()
       }
     }
-    User.$boot()
+    User.boot()
 
     db.InsertQueryBuilder.macro('withId', function () {
       this.returning('id')

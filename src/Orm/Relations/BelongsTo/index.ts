@@ -11,81 +11,86 @@ import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 import { BelongsToRelationContract, RelationOptions } from '@ioc:Adonis/Lucid/Relations'
 
-import { BaseRelation } from '../Base'
+import { KeysExtractor } from '../KeysExtractor'
 import { BelongsToQueryClient } from './QueryClient'
+import { ensureRelationIsBooted } from '../../../utils'
 
 /**
  * Manages loading and persisting belongs to relationship
  */
-export class BelongsTo extends BaseRelation implements BelongsToRelationContract<
+export class BelongsTo implements BelongsToRelationContract<
 ModelConstructorContract,
 ModelConstructorContract
 > {
-  public $type = 'belongsTo' as const
+  public type = 'belongsTo' as const
+  public booted: boolean = false
+  public relatedModel = this.options.relatedModel
+  public serializeAs = this.options.serializeAs || this.relationName
 
   /**
    * Available after boot is invoked
    */
-  public $localKey: string
-  public $localCastAsKey: string
-  public $foreignKey: string
-  public $foreignCastAsKey: string
+  public localKey: string
+  public foreignKey: string
+  public localCastAsKey: string
+  public foreignCastAsKey: string
 
   constructor (
-    relationName: string,
-    options: RelationOptions,
-    model: ModelConstructorContract,
+    public relationName: string,
+    private options: RelationOptions,
+    public model: ModelConstructorContract,
   ) {
-    super(relationName, options, model)
   }
 
   /**
    * Boot the relationship and ensure that all keys are in
    * place for queries to do their job.
    */
-  public $boot () {
-    if (this.$booted) {
+  public boot () {
+    if (this.booted) {
       return
     }
+
+    const relatedModel = this.relatedModel()
 
     /**
      * Extracting keys from the model and the relation model. The keys
      * extractor ensures all the required columns are defined on
      * the models for the relationship to work
      */
-    const { localKey, foreignKey } = this.$extractKeys({
+    const { localKey, foreignKey } = new KeysExtractor(this.model, this.relationName, {
       localKey: {
-        model: this.$relatedModel(),
+        model: relatedModel,
         key: (
-          this.$options.localKey ||
-          this.$model.$configurator.getLocalKey(this.$type, this.$model, this.$relatedModel())
+          this.options.localKey ||
+          this.model.$configurator.getLocalKey(this.type, this.model, relatedModel)
         ),
       },
       foreignKey: {
-        model: this.$model,
+        model: this.model,
         key: (
-          this.$options.foreignKey ||
-          this.$model.$configurator.getForeignKey(this.$type, this.$model, this.$relatedModel())
+          this.options.foreignKey ||
+          this.model.$configurator.getForeignKey(this.type, this.model, relatedModel)
         ),
       },
-    })
+    }).extract()
 
     /**
      * Keys on the related model
      */
-    this.$localKey = localKey.attributeName
-    this.$localCastAsKey = localKey.castAsKey
+    this.localKey = localKey.attributeName
+    this.localCastAsKey = localKey.castAsKey
 
     /**
      * Keys on the parent model
      */
-    this.$foreignKey = foreignKey.attributeName
-    this.$foreignCastAsKey = foreignKey.castAsKey
+    this.foreignKey = foreignKey.attributeName
+    this.foreignCastAsKey = foreignKey.castAsKey
 
     /**
      * Booted successfully
      */
-    this.$booted = true
+    this.booted = true
   }
 
   /**
@@ -95,12 +100,12 @@ ModelConstructorContract
     parent: ModelContract,
     related: ModelContract | null
   ): void {
-    this.$ensureIsBooted()
+    ensureRelationIsBooted(this)
     if (!related) {
       return
     }
 
-    parent.$setRelated(this.$relationName as any, related)
+    parent.$setRelated(this.relationName as any, related)
   }
 
   /**
@@ -110,12 +115,12 @@ ModelConstructorContract
     parent: ModelContract,
     related: ModelContract | null
   ): void {
-    this.$ensureIsBooted()
+    ensureRelationIsBooted(this)
     if (!related) {
       return
     }
 
-    parent.$setRelated(this.$relationName as any, related)
+    parent.$setRelated(this.relationName as any, related)
   }
 
   /**
@@ -123,12 +128,12 @@ ModelConstructorContract
    * models.
    */
   public $setRelatedForMany (parent: ModelContract[], related: ModelContract[]): void {
-    this.$ensureIsBooted()
+    ensureRelationIsBooted(this)
 
     parent.forEach((parentModel) => {
       const match = related.find((relatedModel) => {
-        const value = relatedModel[this.$localKey]
-        return value !== undefined && parentModel[this.$foreignKey] === value
+        const value = relatedModel[this.localKey]
+        return value !== undefined && parentModel[this.foreignKey] === value
       })
       this.$setRelated(parentModel, match || null)
     })
@@ -138,7 +143,7 @@ ModelConstructorContract
    * Returns an instance of query client for the given relationship
    */
   public client (parent: ModelContract | ModelContract[], client: QueryClientContract): any {
-    this.$ensureIsBooted()
+    ensureRelationIsBooted(this)
     return new BelongsToQueryClient(parent, client, this)
   }
 }

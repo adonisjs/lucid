@@ -36,7 +36,7 @@ export class Adapter implements AdapterContract {
       return options.client
     }
 
-    const connection = options && options.connection || modelConstructor.$connection
+    const connection = options && options.connection || modelConstructor.connection
     const profiler = options && options.profiler
     return this.db.connection(connection, { profiler })
   }
@@ -54,7 +54,7 @@ export class Adapter implements AdapterContract {
    */
   public modelClient (instance: ModelContract): any {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    return instance.$trx ? instance.$trx : this.modelConstructorClient(modelConstructor, instance.$options)
+    return instance.trx ? instance.trx : this.modelConstructorClient(modelConstructor, instance.options)
   }
 
   /**
@@ -65,8 +65,8 @@ export class Adapter implements AdapterContract {
     const query = instance.$getQueryFor('insert', this.modelClient(instance))
 
     const result = await query.insert(attributes)
-    if (modelConstructor.$increments) {
-      instance.$consumeAdapterResult({ [modelConstructor.$refs[modelConstructor.$primaryKey]]: result[0] })
+    if (modelConstructor.increments) {
+      instance.$consumeAdapterResult({ [modelConstructor.$refs[modelConstructor.primaryKey]]: result[0] })
     }
   }
 

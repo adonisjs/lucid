@@ -15,11 +15,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     ModelQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/Model'
 
-  import {
-    QueryClientContract,
-    ExcutableQueryBuilderContract,
-  } from '@ioc:Adonis/Lucid/Database'
-
+  import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
   import {
     StrictValues,
     QueryCallback,
@@ -72,7 +68,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   export type HasOneDecorator = (
     model: RelationOptions['relatedModel'],
     options?: Omit<RelationOptions, 'relatedModel'>,
-  ) => (target, property) => void
+  ) => (target: any, property: string | Symbol) => void
 
   /**
    * Decorator signature to define has many relationship
@@ -80,7 +76,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   export type HasManyDecorator = (
     model: RelationOptions['relatedModel'],
     options?: Omit<RelationOptions, 'relatedModel'>,
-  ) => (target, property) => void
+  ) => (target: any, property: string | Symbol) => void
 
   /**
    * Decorator signature to define belongs to relationship
@@ -88,7 +84,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   export type BelongsToDecorator = (
     model: RelationOptions['relatedModel'],
     options?: Omit<RelationOptions, 'relatedModel'>,
-  ) => (target, property) => void
+  ) => (target: any, property: string | Symbol) => void
 
   /**
    * Decorator signature to define many to many relationship
@@ -96,7 +92,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   export type ManyToManyDecorator = (
     model: ManyToManyRelationOptions['relatedModel'],
     column?: Omit<ManyToManyRelationOptions, 'relatedModel'>,
-  ) => (target, property) => void
+  ) => (target: any, property: string | Symbol) => void
 
   /**
    * Decorator signature to define has many through relationship
@@ -104,7 +100,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   export type HasManyThroughDecorator = (
     model: [ThroughRelationOptions['relatedModel'], ThroughRelationOptions['throughModel']],
     column?: Omit<ThroughRelationOptions, 'relatedModel' | 'throughModel'>,
-  ) => (target, property) => void
+  ) => (target: any, property: string | Symbol) => void
 
   /**
    * ------------------------------------------------------
@@ -193,8 +189,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    */
   export type ExtractRelationModel<
     Relation extends TypedRelations,
-  > =
-    Relation['type'] extends 'hasOne' | 'belongsTo' ? Relation['instance'] : Relation['instance'][]
+  > = Relation['type'] extends 'hasOne' | 'belongsTo' ? Relation['instance'] : Relation['instance'][]
 
   /**
    * ------------------------------------------------------
@@ -209,15 +204,13 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
   > {
-    $type: TypedRelations['type']
-    $relationName: string
-    $serializeAs: string
-    $booted: boolean
-    $model: Model
-    $profilerData: { [key: string]: any },
-
-    $boot (): void
-    $relatedModel (): RelatedModel
+    readonly type: TypedRelations['type']
+    readonly relationName: string
+    readonly serializeAs: string
+    readonly booted: boolean
+    readonly model: Model
+    relatedModel (): RelatedModel
+    boot (): void
   }
 
   /**
@@ -227,7 +220,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
   > extends BaseRelationContract<Model, RelatedModel> {
-    $type: 'hasOne'
+    type: 'hasOne'
 
     $setRelated (
       parent: InstanceType<Model>,
@@ -260,7 +253,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
   > extends BaseRelationContract<Model, RelatedModel> {
-    $type: 'hasMany'
+    type: 'hasMany'
 
     $setRelated (
       parent: InstanceType<Model>,
@@ -293,7 +286,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
   > extends BaseRelationContract<Model, RelatedModel> {
-    $type: 'belongsTo'
+    type: 'belongsTo'
 
     $setRelated (
       parent: InstanceType<Model>,
@@ -326,7 +319,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
   > extends BaseRelationContract<Model, RelatedModel> {
-    $type: 'manyToMany'
+    type: 'manyToMany'
 
     $setRelated (
       parent: InstanceType<Model>,
@@ -359,7 +352,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
   > extends BaseRelationContract<Model, RelatedModel> {
-    $type: 'hasManyThrough'
+    type: 'hasManyThrough'
 
     $setRelated (
       parent: InstanceType<Model>,
@@ -404,15 +397,16 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
   > {
+    /**
+     * Return a query builder instance of the relationship
+     */
     query (): RelationBaseQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
-    & ExcutableQueryBuilderContract<InstanceType<RelatedModel>[]>
 
     /**
      * Eager query only works when client instance is created using multiple
      * parent model instances
      */
     eagerQuery (): RelationBaseQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
-    & ExcutableQueryBuilderContract<InstanceType<RelatedModel>[]>
   }
 
   /**
@@ -424,7 +418,6 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   > extends RelationBaseQueryClientContract<Model, RelatedModel> {
     save (related: InstanceType<RelatedModel>): Promise<void>
     create (values: ModelObject): Promise<InstanceType<RelatedModel>>
-
     firstOrCreate (search: ModelObject, savePayload?: ModelObject): Promise<InstanceType<RelatedModel>>
     updateOrCreate (search: ModelObject, updatePayload: ModelObject): Promise<InstanceType<RelatedModel>>
   }
@@ -461,31 +454,52 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     RelatedModel extends ModelConstructorContract
   > {
     query (): ManyToManyQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
-    & ExcutableQueryBuilderContract<InstanceType<RelatedModel>[]>
 
     /**
      * Eager query only works when client instance is created using multiple
      * parent model instances
      */
     eagerQuery (): ManyToManyQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
-    & ExcutableQueryBuilderContract<InstanceType<RelatedModel>[]>
 
     /**
      * Pivot query just targets the pivot table without any joins
      */
     pivotQuery (): ManyToManyQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
-    & ExcutableQueryBuilderContract<InstanceType<RelatedModel>[]>
 
-    save (related: InstanceType<RelatedModel>, checkExisting?: boolean): Promise<void>
+    /**
+     * Save related model instance.
+     */
+    save (related: InstanceType<RelatedModel>): Promise<void>
+
+    /**
+     * Create related model instance
+     */
     create (values: ModelObject): Promise<InstanceType<RelatedModel>>
 
+    /**
+     * Save many of related model instance.
+     */
     saveMany (related: InstanceType<RelatedModel>[]): Promise<void>
+
+    /**
+     * Create many of related model instances
+     */
     createMany (values: ModelObject[]): Promise<InstanceType<RelatedModel>[]>
 
+    /**
+     * Attach new pivot rows
+     */
     attach (ids: (string | number)[] | { [key: string]: ModelObject }): Promise<void>
+
+    /**
+     * Detach existing pivot rows
+     */
     detach (ids: (string | number)[]): Promise<void>
 
-    sync (ids: (string | number)[] | { [key: string]: ModelObject }, checkExisting?: boolean): Promise<void>
+    /**
+     * Sync pivot rows.
+     */
+    sync (ids: (string | number)[] | { [key: string]: ModelObject }): Promise<void>
   }
 
   /**
@@ -501,8 +515,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     Related extends ModelConstructorContract,
     Result extends any = InstanceType<Related>
   > extends ModelQueryBuilderContract<Related, Result> {
-    applyConstraints (): void
-    selectRelationKeys (): this
+    $selectRelationKeys (): this
   }
 
   /**
@@ -579,8 +592,8 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    * Shape of the preloader to preload relationships
    */
   export interface PreloaderContract<Model extends ModelContract> {
-    processAllForOne (parent: Model, client: QueryClientContract): Promise<void>
-    processAllForMany (parent: Model[], client: QueryClientContract): Promise<void>
+    $processAllForOne (parent: Model, client: QueryClientContract): Promise<void>
+    $processAllForMany (parent: Model[], client: QueryClientContract): Promise<void>
     preload: QueryBuilderPreloadFn<Model, this>
     sideload (values: ModelObject): this
   }

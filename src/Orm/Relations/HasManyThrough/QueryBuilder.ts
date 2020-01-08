@@ -25,36 +25,46 @@ ModelConstructorContract,
 ModelConstructorContract
 > {
   private cherryPickingKeys: boolean = false
+  private appliedConstraints: boolean = false
 
   constructor (
     builder: knex.QueryBuilder,
     client: QueryClientContract,
     private parent: ModelContract | ModelContract[],
-    protected $relation: HasManyThrough,
+    private relation: HasManyThrough,
     isEager: boolean = false,
   ) {
-    super(builder, client, $relation, isEager, (userFn) => {
+    super(builder, client, relation, isEager, (userFn) => {
       return (__builder) => {
-        userFn(new HasManyThroughQueryBuilder(__builder, this.client, this.parent, this.$relation))
+        userFn(new HasManyThroughQueryBuilder(__builder, this.client, this.parent, this.relation))
       }
     })
+  }
+
+  protected profilerData () {
+    return {
+      relation: this.relation.type,
+      model: this.relation.model.name,
+      throughModel: this.relation.throughModel().name,
+      relatedModel: this.relation.relatedModel().name,
+    }
   }
 
   /**
    * Adds where constraint to the pivot table
    */
   private addWhereConstraints (builder: HasManyThroughQueryBuilder) {
-    const queryAction = this.$queryAction()
-    const throughTable = this.$relation.$throughModel().$table
+    const queryAction = this.queryAction()
+    const throughTable = this.relation.throughModel().table
 
     /**
      * Eager query contraints
      */
     if (Array.isArray(this.parent)) {
       builder.whereIn(
-        `${throughTable}.${this.$relation.$foreignCastAsKey}`,
+        `${throughTable}.${this.relation.foreignCastAsKey}`,
         unique(this.parent.map((model) => {
-          return getValue(model, this.$relation.$localKey, this.$relation, queryAction)
+          return getValue(model, this.relation.localKey, this.relation, queryAction)
         })),
       )
       return
@@ -63,8 +73,8 @@ ModelConstructorContract
     /**
      * Query constraints
      */
-    const value = getValue(this.parent, this.$relation.$localKey, this.$relation, queryAction)
-    builder.where(`${throughTable}.${this.$relation.$foreignCastAsKey}`, value)
+    const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
+    builder.where(`${throughTable}.${this.relation.foreignCastAsKey}`, value)
   }
 
   /**
@@ -72,7 +82,7 @@ ModelConstructorContract
    * table name
    */
   private transformRelatedTableColumns (columns: any[]) {
-    const relatedTable = this.$relation.$relatedModel().$table
+    const relatedTable = this.relation.relatedModel().table
 
     return columns.map((column) => {
       if (typeof (column) === 'string') {
@@ -108,17 +118,17 @@ ModelConstructorContract
    * only.
    */
   public applyConstraints () {
-    if (this.$appliedConstraints) {
+    if (this.appliedConstraints) {
       return
     }
 
-    this.$appliedConstraints = true
+    this.appliedConstraints = true
 
-    const throughTable = this.$relation.$throughModel().$table
-    const relatedTable = this.$relation.$relatedModel().$table
+    const throughTable = this.relation.throughModel().table
+    const relatedTable = this.relation.relatedModel().table
 
-    if (['delete', 'update'].includes(this.$queryAction())) {
-      this.whereIn(`${relatedTable}.${this.$relation.$throughForeignCastAsKey}`, (subQuery) => {
+    if (['delete', 'update'].includes(this.queryAction())) {
+      this.whereIn(`${relatedTable}.${this.relation.throughForeignCastAsKey}`, (subQuery) => {
         subQuery.from(throughTable)
         this.addWhereConstraints(subQuery)
       })
@@ -138,7 +148,7 @@ ModelConstructorContract
      * through table.
      */
     this.knexQuery.select(
-      `${throughTable}.${this.$relation.$foreignCastAsKey} as ${this.$relation.throughAlias(this.$relation.$foreignCastAsKey)}`,
+      `${throughTable}.${this.relation.foreignCastAsKey} as ${this.relation.throughAlias(this.relation.foreignCastAsKey)}`,
     )
 
     /**
@@ -146,8 +156,8 @@ ModelConstructorContract
      */
     this.innerJoin(
       throughTable,
-      `${throughTable}.${this.$relation.$throughLocalCastAsKey}`,
-      `${relatedTable}.${this.$relation.$throughForeignCastAsKey}`,
+      `${throughTable}.${this.relation.throughLocalCastAsKey}`,
+      `${relatedTable}.${this.relation.throughForeignCastAsKey}`,
     )
 
     /**
@@ -160,6 +170,6 @@ ModelConstructorContract
    * The keys for constructing the join query
    */
   public getRelationKeys (): string[] {
-    return [this.$relation.$throughForeignCastAsKey]
+    return [this.relation.throughForeignCastAsKey]
   }
 }
