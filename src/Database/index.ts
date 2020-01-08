@@ -21,11 +21,10 @@ import {
 } from '@ioc:Adonis/Lucid/Database'
 
 import { QueryClient } from '../QueryClient'
+import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { ConnectionManager } from '../Connection/Manager'
-
 import { InsertQueryBuilder } from './QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from './QueryBuilder/Database'
-import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 
 /**
  * Database class exposes the API to manage multiple connections and obtain an instance
@@ -43,7 +42,8 @@ export class Database implements DatabaseContract {
   public primaryConnectionName = this.config.connection
 
   /**
-   * Reference to query builders
+   * Reference to query builders. We expose them, so that they can be
+   * extended from outside using macros.
    */
   public DatabaseQueryBuilder = DatabaseQueryBuilder
   public InsertQueryBuilder = InsertQueryBuilder
@@ -84,6 +84,10 @@ export class Database implements DatabaseContract {
   ) {
     options = options || {}
 
+    /**
+     * Use default profiler, when no profiler is defined when obtaining
+     * the query client for a given connection.
+     */
     if (!options.profiler) {
       options.profiler = this.profiler
     }

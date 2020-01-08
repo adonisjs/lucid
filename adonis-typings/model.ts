@@ -8,6 +8,7 @@
 */
 
 declare module '@ioc:Adonis/Lucid/Model' {
+  import knex from 'knex'
   import { ProfilerContract, ProfilerRowContract } from '@ioc:Adonis/Core/Profiler'
   import {
     Update,
@@ -15,12 +16,12 @@ declare module '@ioc:Adonis/Lucid/Model' {
     StrictValues,
     QueryCallback,
     ChainableContract,
+    ExcutableQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
   import {
     QueryClientContract,
     TransactionClientContract,
-    ExcutableQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/Database'
 
   import {
@@ -146,7 +147,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     Model extends ModelConstructorContract,
     Result extends any = InstanceType<Model>
   >
-    extends ChainableContract
+    extends ChainableContract, ExcutableQueryBuilderContract<Result[]>
   {
     model: Model
 
@@ -159,6 +160,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Reference to query client used for making queries
      */
     client: QueryClientContract
+    knexQuery: knex.QueryBuilder,
 
     /**
      * A custom set of sideloaded properties defined on the query
@@ -185,10 +187,10 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Mutations (update and increment can be one query aswell)
      */
-    update: Update<ModelQueryBuilderContract<Model> & ExcutableQueryBuilderContract<number[]>>
-    increment: Counter<ModelQueryBuilderContract<Model> & ExcutableQueryBuilderContract<number[]>>
-    decrement: Counter<ModelQueryBuilderContract<Model> & ExcutableQueryBuilderContract<number[]>>
-    del (): ModelQueryBuilderContract<Model> & ExcutableQueryBuilderContract<number[]>
+    update: Update<ModelQueryBuilderContract<Model, number>>
+    increment: Counter<ModelQueryBuilderContract<Model, number>>
+    decrement: Counter<ModelQueryBuilderContract<Model, number>>
+    del (): ModelQueryBuilderContract<Model, number>
 
     /**
      * Define relationships to be preloaded
@@ -584,10 +586,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     query<
       Model extends ModelConstructorContract,
       Result extends any = InstanceType<Model>,
-    > (
-      this: Model,
-      options?: ModelAdapterOptions,
-    ): ModelQueryBuilderContract<Model, Result> & ExcutableQueryBuilderContract<Result[]>
+    > (this: Model, options?: ModelAdapterOptions): ModelQueryBuilderContract<Model, Result>
 
     new (): Model
   }
@@ -633,7 +632,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     query (
       modelConstructor: ModelConstructorContract,
       options?: ModelAdapterOptions,
-    ): ModelQueryBuilderContract<ModelConstructorContract> & ExcutableQueryBuilderContract<ModelContract[]>
+    ): ModelQueryBuilderContract<ModelConstructorContract, ModelContract>
   }
 
   /**

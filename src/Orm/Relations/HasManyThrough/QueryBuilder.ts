@@ -99,7 +99,7 @@ ModelConstructorContract
    */
   public select (...args: any): this {
     this.cherryPickingKeys = true
-    this.$knexBuilder.select(this.transformRelatedTableColumns(args))
+    this.knexQuery.select(this.transformRelatedTableColumns(args))
     return this
   }
 
@@ -137,7 +137,7 @@ ModelConstructorContract
      * Selecting all from the related table, along with the foreign key of the
      * through table.
      */
-    this.$knexBuilder.select(
+    this.knexQuery.select(
       `${throughTable}.${this.$relation.$foreignCastAsKey} as ${this.$relation.throughAlias(this.$relation.$foreignCastAsKey)}`,
     )
 

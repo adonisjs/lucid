@@ -21,19 +21,16 @@ import {
   TransactionClientContract,
 } from '@ioc:Adonis/Lucid/Database'
 
+import { dialects } from '../Dialects'
 import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { TransactionClient } from '../TransactionClient'
 import { RawQueryBuilder } from '../Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../Database/QueryBuilder/Database'
-import { dialects } from '../Dialects'
 
 /**
  * Query client exposes the API to fetch instance of different query builders
- * to perform queries on a selection connection.
- *
- * Many of the methods returns `any`, since this class is type casted to an interface,
- * it doesn't real matter what are the return types from this class
+ * to perform queries on a selecte connection.
  */
 export class QueryClient implements QueryClientContract {
   /**
@@ -44,7 +41,9 @@ export class QueryClient implements QueryClientContract {
   /**
    * The dialect in use
    */
-  public dialect: DialectContract = new (dialects[resolveClientNameWithAliases(this.connection.config.client)])(this)
+  public dialect: DialectContract = new (
+    dialects[resolveClientNameWithAliases(this.connection.config.client)]
+  )(this)
 
   /**
    * The profiler to be used for profiling queries
@@ -129,16 +128,16 @@ export class QueryClient implements QueryClientContract {
   }
 
   /**
-   * Returns the knex query builder instance
+   * Returns the knex query builder instance. The query builder is always
+   * created from the `write` client, so before executing the query, you
+   * may want to decide which client to use.
    */
   public knexQuery (): knex.QueryBuilder {
     return this.connection.client!.queryBuilder()
   }
 
   /**
-   * Returns a query builder instance for a given model. The `connection`
-   * and `profiler` is passed down to the model, so that it continue
-   * using the same options
+   * Returns a query builder instance for a given model.
    */
   public modelQuery (model: any): any {
     return new ModelQueryBuilder(this.knexQuery(), model, this)

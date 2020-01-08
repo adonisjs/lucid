@@ -12,6 +12,7 @@
 import knex from 'knex'
 import { Macroable } from 'macroable'
 import { ChainableContract, DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+
 import { RawQueryBuilder } from './Raw'
 
 /**
@@ -23,7 +24,7 @@ import { RawQueryBuilder } from './Raw'
  */
 export abstract class Chainable extends Macroable implements ChainableContract {
   constructor (
-    public $knexBuilder: knex.QueryBuilder, // Needs to be public for Executable trait
+    public knexQuery: knex.QueryBuilder,
     private queryCallback: DBQueryCallback,
   ) {
     super()
@@ -71,7 +72,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   protected $transformValue (value: any) {
     if (value instanceof Chainable) {
-      return value.$knexBuilder
+      return value.knexQuery
     }
 
     if (typeof (value) === 'function') {
@@ -99,7 +100,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   protected $transformRaw (value: any) {
     if (value instanceof RawQueryBuilder) {
-      return value['$knexBuilder']
+      return value['knexQuery']
     }
 
     return value
@@ -109,7 +110,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Define columns for selection
    */
   public select (...args: any): this {
-    this.$knexBuilder.select(...args)
+    this.knexQuery.select(...args)
     return this
   }
 
@@ -118,7 +119,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * use the last selected table
    */
   public from (table: any): this {
-    this.$knexBuilder.from(this.$transformCallback(table))
+    this.knexQuery.from(this.$transformCallback(table))
     return this
   }
 
@@ -127,15 +128,15 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public where (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
-      this.$knexBuilder.where(key, operator, this.$transformValue(value))
+      this.knexQuery.where(key, operator, this.$transformValue(value))
     } else if (operator) {
-      this.$knexBuilder.where(key, this.$transformValue(operator))
+      this.knexQuery.where(key, this.$transformValue(operator))
     } else {
       /**
        * Only callback is allowed as a standalone param. One must use `whereRaw`
        * for raw/sub queries. This is our limitation to have consistent API
        */
-      this.$knexBuilder.where(this.$transformCallback(key))
+      this.knexQuery.where(this.$transformCallback(key))
     }
 
     return this
@@ -146,11 +147,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public orWhere (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
-      this.$knexBuilder.orWhere(key, operator, this.$transformValue(value))
+      this.knexQuery.orWhere(key, operator, this.$transformValue(value))
     } else if (operator) {
-      this.$knexBuilder.orWhere(key, this.$transformValue(operator))
+      this.knexQuery.orWhere(key, this.$transformValue(operator))
     } else {
-      this.$knexBuilder.orWhere(this.$transformCallback(key))
+      this.knexQuery.orWhere(this.$transformCallback(key))
     }
 
     return this
@@ -168,11 +169,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public whereNot (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
-      this.$knexBuilder.whereNot(key, operator, this.$transformValue(value))
+      this.knexQuery.whereNot(key, operator, this.$transformValue(value))
     } else if (operator) {
-      this.$knexBuilder.whereNot(key, this.$transformValue(operator))
+      this.knexQuery.whereNot(key, this.$transformValue(operator))
     } else {
-      this.$knexBuilder.whereNot(this.$transformCallback(key))
+      this.knexQuery.whereNot(this.$transformCallback(key))
     }
 
     return this
@@ -183,11 +184,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public orWhereNot (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
-      this.$knexBuilder.orWhereNot(key, operator, this.$transformValue(value))
+      this.knexQuery.orWhereNot(key, operator, this.$transformValue(value))
     } else if (operator) {
-      this.$knexBuilder.orWhereNot(key, this.$transformValue(operator))
+      this.knexQuery.orWhereNot(key, this.$transformValue(operator))
     } else {
-      this.$knexBuilder.orWhereNot(this.$transformCallback(key))
+      this.knexQuery.orWhereNot(this.$transformCallback(key))
     }
 
     return this
@@ -208,7 +209,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? value.map((one) => this.$transformValue(one))
       : this.$transformValue(value)
 
-    this.$knexBuilder.whereIn(key, value)
+    this.knexQuery.whereIn(key, value)
     return this
   }
 
@@ -220,7 +221,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? value.map((one) => this.$transformValue(one))
       : this.$transformValue(value)
 
-    this.$knexBuilder.orWhereIn(key, value)
+    this.knexQuery.orWhereIn(key, value)
     return this
   }
 
@@ -239,7 +240,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? value.map((one) => this.$transformValue(one))
       : this.$transformValue(value)
 
-    this.$knexBuilder.whereNotIn(key, value)
+    this.knexQuery.whereNotIn(key, value)
     return this
   }
 
@@ -251,7 +252,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? value.map((one) => this.$transformValue(one))
       : this.$transformValue(value)
 
-    this.$knexBuilder.orWhereNotIn(key, value)
+    this.knexQuery.orWhereNotIn(key, value)
     return this
   }
 
@@ -266,7 +267,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `where not null` clause
    */
   public whereNull (key: any): this {
-    this.$knexBuilder.whereNull(key)
+    this.knexQuery.whereNull(key)
     return this
   }
 
@@ -274,7 +275,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `or where not null` clause
    */
   public orWhereNull (key: any): this {
-    this.$knexBuilder.orWhereNull(key)
+    this.knexQuery.orWhereNull(key)
     return this
   }
 
@@ -289,7 +290,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `where not null` clause
    */
   public whereNotNull (key: any): this {
-    this.$knexBuilder.whereNotNull(key)
+    this.knexQuery.whereNotNull(key)
     return this
   }
 
@@ -297,7 +298,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `or where not null` clause
    */
   public orWhereNotNull (key: any): this {
-    this.$knexBuilder.orWhereNotNull(key)
+    this.knexQuery.orWhereNotNull(key)
     return this
   }
 
@@ -312,7 +313,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add a `where exists` clause
    */
   public whereExists (value: any) {
-    this.$knexBuilder.whereExists(this.$transformValue(value))
+    this.knexQuery.whereExists(this.$transformValue(value))
     return this
   }
 
@@ -320,7 +321,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add a `or where exists` clause
    */
   public orWhereExists (value: any) {
-    this.$knexBuilder.orWhereExists(this.$transformValue(value))
+    this.knexQuery.orWhereExists(this.$transformValue(value))
     return this
   }
 
@@ -335,7 +336,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add a `where not exists` clause
    */
   public whereNotExists (value: any) {
-    this.$knexBuilder.whereNotExists(this.$transformValue(value))
+    this.knexQuery.whereNotExists(this.$transformValue(value))
     return this
   }
 
@@ -343,7 +344,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add a `or where not exists` clause
    */
   public orWhereNotExists (value: any) {
-    this.$knexBuilder.orWhereNotExists(this.$transformValue(value))
+    this.knexQuery.orWhereNotExists(this.$transformValue(value))
     return this
   }
 
@@ -358,7 +359,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add where between clause
    */
   public whereBetween (key: any, value: [any, any]): this {
-    this.$knexBuilder.whereBetween(key, this.getBetweenPair(value))
+    this.knexQuery.whereBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -366,7 +367,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add where between clause
    */
   public orWhereBetween (key: any, value: any): this {
-    this.$knexBuilder.orWhereBetween(key, this.getBetweenPair(value))
+    this.knexQuery.orWhereBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -381,7 +382,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add where between clause
    */
   public whereNotBetween (key: any, value: any): this {
-    this.$knexBuilder.whereNotBetween(key, this.getBetweenPair(value))
+    this.knexQuery.whereNotBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -389,7 +390,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add where between clause
    */
   public orWhereNotBetween (key: any, value: any): this {
-    this.$knexBuilder.orWhereNotBetween(key, this.getBetweenPair(value))
+    this.knexQuery.orWhereNotBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -405,9 +406,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public whereRaw (sql: any, bindings?: any): this {
     if (bindings) {
-      this.$knexBuilder.whereRaw(sql, bindings)
+      this.knexQuery.whereRaw(sql, bindings)
     } else {
-      this.$knexBuilder.whereRaw(this.$transformRaw(sql))
+      this.knexQuery.whereRaw(this.$transformRaw(sql))
     }
 
     return this
@@ -418,9 +419,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public orWhereRaw (sql: any, bindings?: any): this {
     if (bindings) {
-      this.$knexBuilder.orWhereRaw(sql, bindings)
+      this.knexQuery.orWhereRaw(sql, bindings)
     } else {
-      this.$knexBuilder.orWhereRaw(this.$transformRaw(sql))
+      this.knexQuery.orWhereRaw(this.$transformRaw(sql))
     }
     return this
   }
@@ -437,11 +438,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public join (table: any, first: any, operator?: any, second?: any): this {
     if (second) {
-      this.$knexBuilder.join(table, first, operator, this.$transformRaw(second))
+      this.knexQuery.join(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
-      this.$knexBuilder.join(table, first, this.$transformRaw(operator))
+      this.knexQuery.join(table, first, this.$transformRaw(operator))
     } else {
-      this.$knexBuilder.join(table, this.$transformRaw(first))
+      this.knexQuery.join(table, this.$transformRaw(first))
     }
 
     return this
@@ -452,11 +453,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public innerJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
-      this.$knexBuilder.innerJoin(table, first, operator, this.$transformRaw(second))
+      this.knexQuery.innerJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
-      this.$knexBuilder.innerJoin(table, first, this.$transformRaw(operator))
+      this.knexQuery.innerJoin(table, first, this.$transformRaw(operator))
     } else {
-      this.$knexBuilder.innerJoin(table, this.$transformRaw(first))
+      this.knexQuery.innerJoin(table, this.$transformRaw(first))
     }
 
     return this
@@ -467,11 +468,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public leftJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
-      this.$knexBuilder.leftJoin(table, first, operator, this.$transformRaw(second))
+      this.knexQuery.leftJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
-      this.$knexBuilder.leftJoin(table, first, this.$transformRaw(operator))
+      this.knexQuery.leftJoin(table, first, this.$transformRaw(operator))
     } else {
-      this.$knexBuilder.leftJoin(table, this.$transformRaw(first))
+      this.knexQuery.leftJoin(table, this.$transformRaw(first))
     }
 
     return this
@@ -482,11 +483,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public leftOuterJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
-      this.$knexBuilder.leftOuterJoin(table, first, operator, this.$transformRaw(second))
+      this.knexQuery.leftOuterJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
-      this.$knexBuilder.leftOuterJoin(table, first, this.$transformRaw(operator))
+      this.knexQuery.leftOuterJoin(table, first, this.$transformRaw(operator))
     } else {
-      this.$knexBuilder.leftOuterJoin(table, this.$transformRaw(first))
+      this.knexQuery.leftOuterJoin(table, this.$transformRaw(first))
     }
 
     return this
@@ -497,11 +498,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public rightJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
-      this.$knexBuilder.rightJoin(table, first, operator, this.$transformRaw(second))
+      this.knexQuery.rightJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
-      this.$knexBuilder.rightJoin(table, first, this.$transformRaw(operator))
+      this.knexQuery.rightJoin(table, first, this.$transformRaw(operator))
     } else {
-      this.$knexBuilder.rightJoin(table, this.$transformRaw(first))
+      this.knexQuery.rightJoin(table, this.$transformRaw(first))
     }
 
     return this
@@ -512,11 +513,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public rightOuterJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
-      this.$knexBuilder.rightOuterJoin(table, first, operator, this.$transformRaw(second))
+      this.knexQuery.rightOuterJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
-      this.$knexBuilder.rightOuterJoin(table, first, this.$transformRaw(operator))
+      this.knexQuery.rightOuterJoin(table, first, this.$transformRaw(operator))
     } else {
-      this.$knexBuilder.rightOuterJoin(table, this.$transformRaw(first))
+      this.knexQuery.rightOuterJoin(table, this.$transformRaw(first))
     }
 
     return this
@@ -527,11 +528,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public fullOuterJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
-      this.$knexBuilder.fullOuterJoin(table, first, operator, this.$transformRaw(second))
+      this.knexQuery.fullOuterJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
-      this.$knexBuilder.fullOuterJoin(table, first, this.$transformRaw(operator))
+      this.knexQuery.fullOuterJoin(table, first, this.$transformRaw(operator))
     } else {
-      this.$knexBuilder.fullOuterJoin(table, this.$transformRaw(first))
+      this.knexQuery.fullOuterJoin(table, this.$transformRaw(first))
     }
 
     return this
@@ -542,11 +543,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public crossJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
-      this.$knexBuilder.crossJoin(table, first, operator, this.$transformRaw(second))
+      this.knexQuery.crossJoin(table, first, operator, this.$transformRaw(second))
     } else if (operator) {
-      this.$knexBuilder.crossJoin(table, first, this.$transformRaw(operator))
+      this.knexQuery.crossJoin(table, first, this.$transformRaw(operator))
     } else {
-      this.$knexBuilder.crossJoin(table, this.$transformRaw(first))
+      this.knexQuery.crossJoin(table, this.$transformRaw(first))
     }
 
     return this
@@ -557,9 +558,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public joinRaw (sql: any, bindings?: any) {
     if (bindings) {
-      this.$knexBuilder.joinRaw(sql, bindings)
+      this.knexQuery.joinRaw(sql, bindings)
     } else {
-      this.$knexBuilder.joinRaw(this.$transformRaw(sql))
+      this.knexQuery.joinRaw(this.$transformRaw(sql))
     }
 
     return this
@@ -573,11 +574,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public having (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
-      this.$knexBuilder.having(key, operator, this.$transformValue(value))
+      this.knexQuery.having(key, operator, this.$transformValue(value))
     } else if (operator) {
-      this.$knexBuilder.having(key, this.$transformValue(operator))
+      this.knexQuery.having(key, this.$transformValue(operator))
     } else {
-      this.$knexBuilder.having(this.$transformCallback(key))
+      this.knexQuery.having(this.$transformCallback(key))
     }
 
     return this
@@ -591,11 +592,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public orHaving (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
-      this.$knexBuilder.orHaving(key, operator, this.$transformValue(value))
+      this.knexQuery.orHaving(key, operator, this.$transformValue(value))
     } else if (operator) {
-      this.$knexBuilder.orHaving(key, this.$transformValue(operator))
+      this.knexQuery.orHaving(key, this.$transformValue(operator))
     } else {
-      this.$knexBuilder.orHaving(this.$transformCallback(key))
+      this.knexQuery.orHaving(this.$transformCallback(key))
     }
 
     return this
@@ -616,7 +617,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? value.map((one) => this.$transformValue(one))
       : this.$transformValue(value)
 
-    this.$knexBuilder.havingIn(key, value)
+    this.knexQuery.havingIn(key, value)
     return this
   }
 
@@ -628,7 +629,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? value.map((one) => this.$transformValue(one))
       : this.$transformValue(value)
 
-    this.$knexBuilder['orHavingIn'](key, value)
+    this.knexQuery['orHavingIn'](key, value)
     return this
   }
 
@@ -647,7 +648,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? value.map((one) => this.$transformValue(one))
       : this.$transformValue(value)
 
-    this.$knexBuilder['havingNotIn'](key, value)
+    this.knexQuery['havingNotIn'](key, value)
     return this
   }
 
@@ -659,7 +660,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? value.map((one) => this.$transformValue(one))
       : this.$transformValue(value)
 
-    this.$knexBuilder['orHavingNotIn'](key, value)
+    this.knexQuery['orHavingNotIn'](key, value)
     return this
   }
 
@@ -674,7 +675,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding having null clause
    */
   public havingNull (key: any): this {
-    this.$knexBuilder['havingNull'](key)
+    this.knexQuery['havingNull'](key)
     return this
   }
 
@@ -682,7 +683,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding or having null clause
    */
   public orHavingNull (key: any): this {
-    this.$knexBuilder['orHavingNull'](key)
+    this.knexQuery['orHavingNull'](key)
     return this
   }
 
@@ -697,7 +698,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding having not null clause
    */
   public havingNotNull (key: any): this {
-    this.$knexBuilder['havingNotNull'](key)
+    this.knexQuery['havingNotNull'](key)
     return this
   }
 
@@ -705,7 +706,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding or having not null clause
    */
   public orHavingNotNull (key: any): this {
-    this.$knexBuilder['orHavingNotNull'](key)
+    this.knexQuery['orHavingNotNull'](key)
     return this
   }
 
@@ -720,7 +721,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `having exists` clause
    */
   public havingExists (value: any): this {
-    this.$knexBuilder['havingExists'](this.$transformValue(value))
+    this.knexQuery['havingExists'](this.$transformValue(value))
     return this
   }
 
@@ -728,7 +729,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `or having exists` clause
    */
   public orHavingExists (value: any): this {
-    this.$knexBuilder['orHavingExists'](this.$transformValue(value))
+    this.knexQuery['orHavingExists'](this.$transformValue(value))
     return this
   }
 
@@ -743,7 +744,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `having not exists` clause
    */
   public havingNotExists (value: any): this {
-    this.$knexBuilder['havingNotExists'](this.$transformValue(value))
+    this.knexQuery['havingNotExists'](this.$transformValue(value))
     return this
   }
 
@@ -751,7 +752,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `or having not exists` clause
    */
   public orHavingNotExists (value: any): this {
-    this.$knexBuilder['orHavingNotExists'](this.$transformValue(value))
+    this.knexQuery['orHavingNotExists'](this.$transformValue(value))
     return this
   }
 
@@ -766,7 +767,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `having between` clause
    */
   public havingBetween (key: any, value: any): this {
-    this.$knexBuilder.havingBetween(key, this.getBetweenPair(value))
+    this.knexQuery.havingBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -774,7 +775,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `or having between` clause
    */
   public orHavingBetween (key: any, value: any): this {
-    this.$knexBuilder.orHavingBetween(key, this.getBetweenPair(value))
+    this.knexQuery.orHavingBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -789,7 +790,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `having not between` clause
    */
   public havingNotBetween (key: any, value: any): this {
-    this.$knexBuilder.havingNotBetween(key, this.getBetweenPair(value))
+    this.knexQuery.havingNotBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -797,7 +798,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `or having not between` clause
    */
   public orHavingNotBetween (key: any, value: any): this {
-    this.$knexBuilder.orHavingNotBetween(key, this.getBetweenPair(value))
+    this.knexQuery.orHavingNotBetween(key, this.getBetweenPair(value))
     return this
   }
 
@@ -813,9 +814,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public havingRaw (sql: any, bindings?: any): this {
     if (bindings) {
-      this.$knexBuilder.havingRaw(sql, bindings)
+      this.knexQuery.havingRaw(sql, bindings)
     } else {
-      this.$knexBuilder.havingRaw(this.$transformRaw(sql))
+      this.knexQuery.havingRaw(this.$transformRaw(sql))
     }
 
     return this
@@ -826,9 +827,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public orHavingRaw (sql: any, bindings?: any): this {
     if (bindings) {
-      this.$knexBuilder.orHavingRaw(sql, bindings)
+      this.knexQuery.orHavingRaw(sql, bindings)
     } else {
-      this.$knexBuilder.orHavingRaw(this.$transformRaw(sql))
+      this.knexQuery.orHavingRaw(this.$transformRaw(sql))
     }
 
     return this
@@ -845,7 +846,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add distinct clause
    */
   public distinct (...columns: any[]): this {
-    this.$knexBuilder.distinct(...columns)
+    this.knexQuery.distinct(...columns)
     return this
   }
 
@@ -853,7 +854,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add group by clause
    */
   public groupBy (...columns: any[]): this {
-    this.$knexBuilder.groupBy(...columns)
+    this.knexQuery.groupBy(...columns)
     return this
   }
 
@@ -862,9 +863,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public groupByRaw (sql: any, bindings?: any): this {
     if (bindings) {
-      this.$knexBuilder.groupByRaw(sql, bindings)
+      this.knexQuery.groupByRaw(sql, bindings)
     } else {
-      this.$knexBuilder.groupByRaw(this.$transformRaw(sql))
+      this.knexQuery.groupByRaw(this.$transformRaw(sql))
     }
 
     return this
@@ -874,7 +875,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add order by clause
    */
   public orderBy (column: any, direction?: any): this {
-    this.$knexBuilder.orderBy(column, direction)
+    this.knexQuery.orderBy(column, direction)
     return this
   }
 
@@ -883,9 +884,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public orderByRaw (sql: any, bindings?: any): this {
     if (bindings) {
-      this.$knexBuilder.orderByRaw(sql, bindings)
+      this.knexQuery.orderByRaw(sql, bindings)
     } else {
-      this.$knexBuilder.orderByRaw(this.$transformRaw(sql))
+      this.knexQuery.orderByRaw(this.$transformRaw(sql))
     }
 
     return this
@@ -895,7 +896,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Define select offset
    */
   public offset (value: number): this {
-    this.$knexBuilder.offset(value)
+    this.knexQuery.offset(value)
     return this
   }
 
@@ -903,7 +904,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Define results limit
    */
   public limit (value: number): this {
-    this.$knexBuilder.limit(value)
+    this.knexQuery.limit(value)
     return this
   }
 
@@ -915,7 +916,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? queries.map((one) => this.$transformValue(one))
       : this.$transformValue(queries)
 
-    wrap ? this.$knexBuilder.union(queries, wrap) : this.$knexBuilder.union(queries)
+    wrap ? this.knexQuery.union(queries, wrap) : this.knexQuery.union(queries)
     return this
   }
 
@@ -927,7 +928,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? queries.map((one) => this.$transformValue(one))
       : this.$transformValue(queries)
 
-    wrap ? this.$knexBuilder.unionAll(queries, wrap) : this.$knexBuilder.unionAll(queries)
+    wrap ? this.knexQuery.unionAll(queries, wrap) : this.knexQuery.unionAll(queries)
     return this
   }
 
@@ -939,7 +940,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? queries.map((one) => this.$transformValue(one))
       : this.$transformValue(queries)
 
-    wrap ? this.$knexBuilder.intersect(queries, wrap) : this.$knexBuilder.intersect(queries)
+    wrap ? this.knexQuery.intersect(queries, wrap) : this.knexQuery.intersect(queries)
     return this
   }
 
@@ -947,7 +948,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Clear select columns
    */
   public clearSelect (): this {
-    this.$knexBuilder.clearSelect()
+    this.knexQuery.clearSelect()
     return this
   }
 
@@ -955,7 +956,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Clear where clauses
    */
   public clearWhere (): this {
-    this.$knexBuilder.clearWhere()
+    this.knexQuery.clearWhere()
     return this
   }
 
@@ -963,7 +964,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Clear order by
    */
   public clearOrder (): this {
-    this.$knexBuilder.clearOrder()
+    this.knexQuery.clearOrder()
     return this
   }
 
@@ -971,7 +972,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Clear having
    */
   public clearHaving (): this {
-    this.$knexBuilder.clearHaving()
+    this.knexQuery.clearHaving()
     return this
   }
 
@@ -980,7 +981,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * query
    */
   public forUpdate (...tableNames: string[]): this {
-    this.$knexBuilder.forUpdate(...tableNames)
+    this.knexQuery.forUpdate(...tableNames)
 
     return this
   }
@@ -990,7 +991,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * query
    */
   public forShare (...tableNames: string[]): this {
-    this.$knexBuilder.forShare(...tableNames)
+    this.knexQuery.forShare(...tableNames)
 
     return this
   }
@@ -999,7 +1000,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Skip locked rows
    */
   public skipLocked (): this {
-    this.$knexBuilder.skipLocked()
+    this.knexQuery.skipLocked()
     return this
   }
 
@@ -1007,7 +1008,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Fail when query wants a locked row
    */
   public noWait (): this {
-    this.$knexBuilder.noWait()
+    this.knexQuery.noWait()
     return this
   }
 
@@ -1015,7 +1016,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Define `with` CTE
    */
   public with (alias: any, query: any): this {
-    this.$knexBuilder.with(alias, query)
+    this.knexQuery.with(alias, query)
     return this
   }
 
@@ -1023,7 +1024,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Define `with` CTE with recursive keyword
    */
   public withRecursive (alias: any, query: any): this {
-    this.$knexBuilder.withRecursive(alias, query)
+    this.knexQuery.withRecursive(alias, query)
     return this
   }
 
@@ -1031,7 +1032,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Define schema for the table
    */
   public withSchema (schema: any): this {
-    this.$knexBuilder.withSchema(schema)
+    this.knexQuery.withSchema(schema)
     return this
   }
 
@@ -1039,7 +1040,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Define table alias
    */
   public as (alias: any): this {
-    this.$knexBuilder.as(alias)
+    this.knexQuery.as(alias)
     return this
   }
 
@@ -1047,7 +1048,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Count rows for the current query
    */
   public count (columns: any, alias?: any): this {
-    this.$knexBuilder.count(this.normalizeAggregateColumns(columns, alias))
+    this.knexQuery.count(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 
@@ -1055,7 +1056,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Count distinct rows for the current query
    */
   public countDistinct (columns: any, alias?: any): this {
-    this.$knexBuilder.countDistinct(this.normalizeAggregateColumns(columns, alias))
+    this.knexQuery.countDistinct(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 
@@ -1063,7 +1064,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of `min` aggregate function
    */
   public min (columns: any, alias?: any): this {
-    this.$knexBuilder.min(this.normalizeAggregateColumns(columns, alias))
+    this.knexQuery.min(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 
@@ -1071,7 +1072,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of `max` aggregate function
    */
   public max (columns: any, alias?: any): this {
-    this.$knexBuilder.max(this.normalizeAggregateColumns(columns, alias))
+    this.knexQuery.max(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 
@@ -1079,7 +1080,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of `avg` aggregate function
    */
   public avg (columns: any, alias?: any): this {
-    this.$knexBuilder.avg(this.normalizeAggregateColumns(columns, alias))
+    this.knexQuery.avg(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 
@@ -1087,7 +1088,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of distinct `avg` aggregate function
    */
   public avgDistinct (columns: any, alias?: any): this {
-    this.$knexBuilder.avgDistinct(this.normalizeAggregateColumns(columns, alias))
+    this.knexQuery.avgDistinct(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 
@@ -1095,7 +1096,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of `sum` aggregate function
    */
   public sum (columns: any, alias?: any): this {
-    this.$knexBuilder.sum(this.normalizeAggregateColumns(columns, alias))
+    this.knexQuery.sum(this.normalizeAggregateColumns(columns, alias))
     return this
   }
 }

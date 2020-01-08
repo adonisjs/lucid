@@ -64,7 +64,7 @@ test.group('Model query builder', (group) => {
     }
 
     User.$boot()
-    assert.equal(User.query()['$knexBuilder']._single.table, 'users')
+    assert.equal(User.query().knexQuery['_single'].table, 'users')
   })
 
   test('execute select queries', async (assert) => {

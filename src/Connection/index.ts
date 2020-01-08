@@ -119,8 +119,8 @@ export class Connection extends EventEmitter implements ConnectionContract {
     })
 
     if (this.readPool !== this.pool) {
-      this.logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
       this.readPool!.on('poolDestroySuccess', () => {
+        this.logger.trace({ connection: this.name }, 'pool destroyed, cleaning up resource')
         this.cleanup()
         this.emit('disconnect', this)
         this.removeAllListeners()
@@ -222,7 +222,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
   }
 
   /**
-   * Creates the write connection
+   * Creates the write connection.
    */
   private setupWriteConnection () {
     this.client = knex(Object.assign({ log: new Logger(this.logger) }, this.getWriteConfig()))
@@ -231,7 +231,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
 
   /**
    * Creates the read connection. If there aren't any replicas in use, then
-   * it will use reference the write client
+   * it will use the write client instead.
    */
   private setupReadConnection () {
     if (!this.hasReadWriteReplicas) {
@@ -240,7 +240,6 @@ export class Connection extends EventEmitter implements ConnectionContract {
     }
 
     this.logger.trace({ connection: this.name }, 'setting up read/write replicas')
-
     this.readClient = knex(Object.assign({ log: new Logger(this.logger) }, this.getReadConfig()))
     patchKnex(this.readClient, this.readConfigResolver.bind(this))
   }

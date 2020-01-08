@@ -10,8 +10,8 @@
 declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   import * as knex from 'knex'
   import { Dictionary } from 'ts-essentials'
+  import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
   import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
-  import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
   /**
    * Get one or many of a generic
@@ -407,12 +407,12 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
      * Accepts an array of object of named key/value pair and returns an array
      * of Generic return columns.
      */
-    (values: Dictionary<any, string>): Builder
+    (values: Dictionary<any, string>, returning?: string | string[]): Builder
 
     /**
      * Accepts a key/value pair to update.
      */
-    (column: string, value: any): Builder
+    (column: string, value: any, returning?: string | string[]): Builder
   }
 
   /**
@@ -590,9 +590,9 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    * Shape of the raw query that can also be passed as a value to
    * other queries
    */
-  interface RawContract {
+  interface RawContract<Result extends any = any> extends ExcutableQueryBuilderContract<Result> {
+    knexQuery: knex.Raw,
     client: QueryClientContract,
-    toKnex (): knex.Raw,
     wrap (before: string, after: string): this
   }
 
@@ -602,8 +602,9 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   */
   export interface DatabaseQueryBuilderContract <
     Result extends any = Dictionary<any, string>,
-  > extends ChainableContract {
+  > extends ChainableContract, ExcutableQueryBuilderContract<Result[]> {
     client: QueryClientContract,
+    knexQuery: knex.QueryBuilder,
 
     /**
      * Clone current query
@@ -628,7 +629,10 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   /**
    * Insert query builder to perform database inserts.
    */
-  export interface InsertQueryBuilderContract {
+  export interface InsertQueryBuilderContract<
+    Result extends any = any,
+  > extends ExcutableQueryBuilderContract<Result> {
+    knexQuery: knex.QueryBuilder,
     client: QueryClientContract,
 
     /**
@@ -650,5 +654,17 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
      * Inserting multiple columns at once
      */
     multiInsert: MultiInsert<this>
+  }
+
+  /**
+   * A executable query builder will always have these methods on it.
+   */
+  export interface ExcutableQueryBuilderContract<Result extends any> extends Promise<Result> {
+    debug (debug: boolean): this
+    timeout (time: number, options?: { cancel: boolean }): this
+    useTransaction (trx: TransactionClientContract): this
+    toQuery (): string
+    exec (): Promise<Result>
+    toSQL (): knex.Sql
   }
 }

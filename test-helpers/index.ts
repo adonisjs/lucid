@@ -22,7 +22,6 @@ import {
   ConnectionContract,
   QueryClientContract,
   ConnectionConfigContract,
-  ExcutableQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Database'
 
 import {
@@ -253,24 +252,8 @@ export function getQueryBuilder (client: QueryClientContract) {
   return new DatabaseQueryBuilder(
     client.getWriteClient().queryBuilder(),
     client,
-  ) as unknown as DatabaseQueryBuilderContract & ExcutableQueryBuilderContract<any>
+  ) as unknown as DatabaseQueryBuilderContract
 }
-
-/**
- * Returns many to many query builder
- */
-// export function getManyToManyQueryBuilder (
-//   parent: ModelContract,
-//   relation: ManyToMany,
-//   client: QueryClientContract,
-// ) {
-//   return new ManyToManyQueryBuilder(
-//     client.getWriteClient().queryBuilder(),
-//     relation,
-//     client,
-//     parent,
-//   ) as unknown as ManyToManyQueryBuilderContract<any> & ExcutableQueryBuilderContract<any>
-// }
 
 /**
  * Returns raw query builder instance for a given connection
@@ -280,7 +263,7 @@ export function getRawQueryBuilder (client: QueryClientContract, sql: string, bi
   return new RawQueryBuilder(
     bindings ? writeClient.raw(sql, bindings) : writeClient.raw(sql),
     client,
-  ) as unknown as RawContract & ExcutableQueryBuilderContract<any>
+  ) as unknown as RawContract
 }
 
 /**
@@ -290,7 +273,7 @@ export function getInsertBuilder (client: QueryClientContract) {
   return new InsertQueryBuilder(
     client.getWriteClient().queryBuilder(),
     client,
-  ) as unknown as InsertQueryBuilderContract & ExcutableQueryBuilderContract<any>
+  ) as unknown as InsertQueryBuilderContract
 }
 
 /**
