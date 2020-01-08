@@ -11,19 +11,17 @@
 
 import knex from 'knex'
 import { Macroable } from 'macroable'
-import { trait } from '@poppinss/traits'
 
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { InsertQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
-import { Executable, ExecutableConstructor } from '../../Traits/Executable'
+import { executeQuery } from '../../helpers/executeQuery'
 
 /**
  * Exposes the API for performing SQL inserts
  */
-@trait<ExecutableConstructor>(Executable)
 export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderContract {
-  constructor (public $knexBuilder: knex.QueryBuilder, public client: QueryClientContract) {
+  constructor (public knexQuery: knex.QueryBuilder, public client: QueryClientContract) {
     super()
   }
 
@@ -34,22 +32,9 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
   protected static getters = {}
 
   /**
-   * Returns the client to be used for the query. Even though the insert query
-   * is always using the `write` client, we still go through the process of
-   * self defining the connection, so that we can discover any bugs during
-   * this process.
-   */
-  public getQueryClient () {
-    /**
-     * Always use write client for write queries
-     */
-    return this.client!.getWriteClient().client
-  }
-
-  /**
    * Returns the profiler action
    */
-  public getProfilerAction () {
+  private getProfilerAction () {
     if (!this.client.profiler) {
       return null
     }
@@ -64,7 +49,7 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
    * Define table for performing the insert query
    */
   public table (table: any): this {
-    this.$knexBuilder.table(table)
+    this.knexQuery.table(table)
     return this
   }
 
@@ -79,7 +64,7 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
       return this
     }
 
-    this.$knexBuilder.returning(column)
+    this.knexQuery.returning(column)
     return this
   }
 
@@ -87,7 +72,7 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
    * Perform insert query
    */
   public insert (columns: any): this {
-    this.$knexBuilder.insert(columns)
+    this.knexQuery.insert(columns)
     return this
   }
 
@@ -96,5 +81,78 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
    */
   public multiInsert (columns: any): this {
     return this.insert(columns)
+  }
+
+  /**
+   * Turn on/off debugging for this query
+   */
+  public debug (debug: boolean): this {
+    this.knexQuery.debug(debug)
+    return this
+  }
+
+  /**
+   * Define query timeout
+   */
+  public timeout (time: number, options?: { cancel: boolean }): this {
+    this.knexQuery['timeout'](time, options)
+    return this
+  }
+
+  /**
+   * Returns SQL query as a string
+   */
+  public toQuery (): string {
+    return this.knexQuery.toQuery()
+  }
+
+  /**
+   * Run query inside the given transaction
+   */
+  public useTransaction (transaction: TransactionClientContract) {
+    this.knexQuery.transacting(transaction.knexClient)
+    return this
+  }
+
+  /**
+   * Executes the query
+   */
+  public async exec (): Promise<any> {
+    return executeQuery(this.knexQuery, this.client, this.getProfilerAction())
+  }
+
+  /**
+   * Get sql representation of the query
+   */
+  public toSQL (): knex.Sql {
+    return this.knexQuery.toSQL()
+  }
+
+  /**
+   * Implementation of `then` for the promise API
+   */
+  public then (resolve: any, reject?: any): any {
+    return this.exec().then(resolve, reject)
+  }
+
+  /**
+   * Implementation of `catch` for the promise API
+   */
+  public catch (reject: any): any {
+    return this.exec().catch(reject)
+  }
+
+  /**
+   * Implementation of `finally` for the promise API
+   */
+  public finally (fullfilled: any) {
+    return this.exec().finally(fullfilled)
+  }
+
+  /**
+   * Required when Promises are extended
+   */
+  public get [Symbol.toStringTag] () {
+    return this.constructor.name
   }
 }

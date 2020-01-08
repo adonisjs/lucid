@@ -54,7 +54,7 @@ ModelConstructorContract
      * Eager query contraints
      */
     if (Array.isArray(this.parent)) {
-      this.$knexBuilder.whereIn(this.$relation.$foreignCastAsKey, unique(this.parent.map((model) => {
+      this.knexQuery.whereIn(this.$relation.$foreignCastAsKey, unique(this.parent.map((model) => {
         return getValue(model, this.$relation.$localKey, this.$relation, queryAction)
       })))
       return
@@ -64,13 +64,13 @@ ModelConstructorContract
      * Query constraints
      */
     const value = getValue(this.parent, this.$relation.$localKey, this.$relation, queryAction)
-    this.$knexBuilder.where(this.$relation.$foreignCastAsKey, value)
+    this.knexQuery.where(this.$relation.$foreignCastAsKey, value)
 
     /**
      * Do not add limit when updating or deleting
      */
     if (!['update', 'delete'].includes(queryAction)) {
-      this.$knexBuilder.limit(1)
+      this.knexQuery.limit(1)
     }
   }
 

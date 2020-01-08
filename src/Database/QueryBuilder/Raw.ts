@@ -10,33 +10,22 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
-import { trait } from '@poppinss/traits'
 
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { RawContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-
-import { Executable, ExecutableConstructor } from '../../Traits/Executable'
+import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+import { executeQuery } from '../../helpers/executeQuery'
 
 /**
  * Exposes the API to execute raw queries
  */
-@trait<ExecutableConstructor>(Executable)
 export class RawQueryBuilder implements RawContract {
-  constructor (public $knexBuilder: knex.Raw, public client: QueryClientContract) {
-  }
-
-  /**
-   * It's impossible to judge the client for the raw query and
-   * hence we always use the default client
-   */
-  public getQueryClient () {
-    return undefined
+  constructor (public knexQuery: knex.Raw, public client: QueryClientContract) {
   }
 
   /**
    * Returns the profiler action
    */
-  public getProfilerAction () {
+  private getProfilerAction () {
     if (!this.client.profiler) {
       return null
     }
@@ -51,14 +40,80 @@ export class RawQueryBuilder implements RawContract {
    * Wrap the query with before/after strings.
    */
   public wrap (before: string, after: string): this {
-    this.$knexBuilder.wrap(before, after)
+    this.knexQuery.wrap(before, after)
     return this
   }
 
   /**
-   * Returns reference to knex raw query
+   * Turn on/off debugging for this query
    */
-  public toKnex () {
-    return this.$knexBuilder
+  public debug (debug: boolean): this {
+    this.knexQuery.debug(debug)
+    return this
+  }
+
+  /**
+   * Define query timeout
+   */
+  public timeout (time: number, options?: { cancel: boolean }): this {
+    this.knexQuery['timeout'](time, options)
+    return this
+  }
+
+  /**
+   * Returns SQL query as a string
+   */
+  public toQuery (): string {
+    return this.knexQuery.toQuery()
+  }
+
+  /**
+   * Run query inside the given transaction
+   */
+  public useTransaction (transaction: TransactionClientContract) {
+    this.knexQuery.transacting(transaction.knexClient)
+    return this
+  }
+
+  /**
+   * Executes the query
+   */
+  public async exec (): Promise<any> {
+    return executeQuery(this.knexQuery, this.client, this.getProfilerAction())
+  }
+
+  /**
+   * Get sql representation of the query
+   */
+  public toSQL (): knex.Sql {
+    return this.knexQuery.toSQL()
+  }
+
+  /**
+   * Implementation of `then` for the promise API
+   */
+  public then (resolve: any, reject?: any): any {
+    return this.exec().then(resolve, reject)
+  }
+
+  /**
+   * Implementation of `catch` for the promise API
+   */
+  public catch (reject: any): any {
+    return this.exec().catch(reject)
+  }
+
+  /**
+   * Implementation of `finally` for the promise API
+   */
+  public finally (fullfilled: any) {
+    return this.exec().finally(fullfilled)
+  }
+
+  /**
+   * Required when Promises are extended
+   */
+  public get [Symbol.toStringTag] () {
+    return this.constructor.name
   }
 }

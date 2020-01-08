@@ -10,14 +10,13 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
-import { trait } from '@poppinss/traits'
 import { Exception } from '@poppinss/utils'
 
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import { DatabaseQueryBuilderContract, QueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 import { Chainable } from './Chainable'
-import { Executable, ExecutableConstructor } from '../../Traits/Executable'
+import { executeQuery } from '../../helpers/executeQuery'
 
 /**
  * Wrapping the user function for a query callback and give them
@@ -42,7 +41,6 @@ function queryCallback (userFn: QueryCallback<DatabaseQueryBuilderContract>) {
  * Database query builder exposes the API to construct and run queries for selecting,
  * updating and deleting records.
  */
-@trait<ExecutableConstructor>(Executable)
 export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuilderContract {
   constructor (builder: knex.QueryBuilder, public client: QueryClientContract) {
     super(builder, queryCallback)
@@ -65,11 +63,25 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   }
 
   /**
+   * Returns the profiler action
+   */
+  private getProfilerAction () {
+    if (!this.client.profiler) {
+      return null
+    }
+
+    return this.client.profiler.profile('sql:query', Object.assign(this['toSQL'](), {
+      connection: this.client.connectionName,
+      inTransaction: this.client.isTransaction,
+    }))
+  }
+
+  /**
    * Delete rows under the current query
    */
   public del (): this {
     this.ensureCanPerformWrites()
-    this.$knexBuilder.del()
+    this.knexQuery.del()
     return this
   }
 
@@ -77,7 +89,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Clone the current query builder
    */
   public clone (): DatabaseQueryBuilder {
-    return new DatabaseQueryBuilder(this.$knexBuilder.clone(), this.client)
+    return new DatabaseQueryBuilder(this.knexQuery.clone(), this.client)
   }
 
   /**
@@ -91,7 +103,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
       return this
     }
 
-    this.$knexBuilder.returning(columns)
+    this.knexQuery.returning(columns)
     return this
   }
 
@@ -100,7 +112,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * can be clubbed with `update` as well
    */
   public increment (column: any, counter?: any): this {
-    this.$knexBuilder.increment(column, counter)
+    this.knexQuery.increment(column, counter)
     return this
   }
 
@@ -109,16 +121,23 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * can be clubbed with `update` as well
    */
   public decrement (column: any, counter?: any): this {
-    this.$knexBuilder.decrement(column, counter)
+    this.knexQuery.decrement(column, counter)
     return this
   }
 
   /**
    * Perform update
    */
-  public update (columns: any): this {
+  public update (column: any, value?: any, returning?: string[]): this {
     this.ensureCanPerformWrites()
-    this.$knexBuilder.update(columns)
+    if (!value && !returning) {
+      this.knexQuery.update(column)
+    } else if (!returning) {
+      this.knexQuery.update(column, value)
+    } else {
+      this.knexQuery.update(column, value, returning)
+    }
+
     return this
   }
 
@@ -132,36 +151,75 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   }
 
   /**
-   * Returns the client to be used for the query. This method relies on the
-   * query method and will choose the read or write connection whenever
-   * required.
-   *
-   * This method is invoked by the `Executable` Trait, only when actually
-   * query isn't using the transaction
+   * Turn on/off debugging for this query
    */
-  public getQueryClient () {
-    /**
-     * Use write client for updates and deletes
-     */
-    if (['update', 'del'].includes(this.$knexBuilder['_method'])) {
-      this.ensureCanPerformWrites()
-      return this.client!.getWriteClient().client
-    }
-
-    return this.client!.getReadClient().client
+  public debug (debug: boolean): this {
+    this.knexQuery.debug(debug)
+    return this
   }
 
   /**
-   * Returns the profiler action
+   * Define query timeout
    */
-  public getProfilerAction () {
-    if (!this.client.profiler) {
-      return null
-    }
+  public timeout (time: number, options?: { cancel: boolean }): this {
+    this.knexQuery['timeout'](time, options)
+    return this
+  }
 
-    return this.client.profiler.profile('sql:query', Object.assign(this['toSQL'](), {
-      connection: this.client.connectionName,
-      inTransaction: this.client.isTransaction,
-    }))
+  /**
+   * Returns SQL query as a string
+   */
+  public toQuery (): string {
+    return this.knexQuery.toQuery()
+  }
+
+  /**
+   * Run query inside the given transaction
+   */
+  public useTransaction (transaction: TransactionClientContract) {
+    this.knexQuery.transacting(transaction.knexClient)
+    return this
+  }
+
+  /**
+   * Executes the query
+   */
+  public async exec (): Promise<any> {
+    return executeQuery(this.knexQuery, this.client, this.getProfilerAction())
+  }
+
+  /**
+   * Get sql representation of the query
+   */
+  public toSQL (): knex.Sql {
+    return this.knexQuery.toSQL()
+  }
+
+  /**
+   * Implementation of `then` for the promise API
+   */
+  public then (resolve: any, reject?: any): any {
+    return this.exec().then(resolve, reject)
+  }
+
+  /**
+   * Implementation of `catch` for the promise API
+   */
+  public catch (reject: any): any {
+    return this.exec().catch(reject)
+  }
+
+  /**
+   * Implementation of `finally` for the promise API
+   */
+  public finally (fullfilled: any) {
+    return this.exec().finally(fullfilled)
+  }
+
+  /**
+   * Required when Promises are extended
+   */
+  public get [Symbol.toStringTag] () {
+    return this.constructor.name
   }
 }

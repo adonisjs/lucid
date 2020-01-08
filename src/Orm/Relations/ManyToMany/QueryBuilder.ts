@@ -108,7 +108,7 @@ ModelConstructorContract
    */
   public select (...args: any): this {
     this.cherryPickingKeys = true
-    this.$knexBuilder.select(this.transformRelatedTableColumns(args))
+    this.knexQuery.select(this.transformRelatedTableColumns(args))
     return this
   }
 
@@ -117,11 +117,11 @@ ModelConstructorContract
    */
   public wherePivot (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
-      this.$knexBuilder.where(this.prefixPivotTable(key), operator, this.$transformValue(value))
+      this.knexQuery.where(this.prefixPivotTable(key), operator, this.$transformValue(value))
     } else if (operator) {
-      this.$knexBuilder.where(this.prefixPivotTable(key), this.$transformValue(operator))
+      this.knexQuery.where(this.prefixPivotTable(key), this.$transformValue(operator))
     } else {
-      this.$knexBuilder.where(this.$transformCallback(key))
+      this.knexQuery.where(this.$transformCallback(key))
     }
 
     return this
@@ -132,11 +132,11 @@ ModelConstructorContract
    */
   public orWherePivot (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
-      this.$knexBuilder.orWhere(this.prefixPivotTable(key), operator, this.$transformValue(value))
+      this.knexQuery.orWhere(this.prefixPivotTable(key), operator, this.$transformValue(value))
     } else if (operator) {
-      this.$knexBuilder.orWhere(this.prefixPivotTable(key), this.$transformValue(operator))
+      this.knexQuery.orWhere(this.prefixPivotTable(key), this.$transformValue(operator))
     } else {
-      this.$knexBuilder.orWhere(this.$transformCallback(key))
+      this.knexQuery.orWhere(this.$transformCallback(key))
     }
 
     return this
@@ -154,11 +154,11 @@ ModelConstructorContract
    */
   public whereNotPivot (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
-      this.$knexBuilder.whereNot(this.prefixPivotTable(key), operator, this.$transformValue(value))
+      this.knexQuery.whereNot(this.prefixPivotTable(key), operator, this.$transformValue(value))
     } else if (operator) {
-      this.$knexBuilder.whereNot(this.prefixPivotTable(key), this.$transformValue(operator))
+      this.knexQuery.whereNot(this.prefixPivotTable(key), this.$transformValue(operator))
     } else {
-      this.$knexBuilder.whereNot(this.$transformCallback(key))
+      this.knexQuery.whereNot(this.$transformCallback(key))
     }
 
     return this
@@ -169,11 +169,11 @@ ModelConstructorContract
    */
   public orWhereNotPivot (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
-      this.$knexBuilder.orWhereNot(this.prefixPivotTable(key), operator, this.$transformValue(value))
+      this.knexQuery.orWhereNot(this.prefixPivotTable(key), operator, this.$transformValue(value))
     } else if (operator) {
-      this.$knexBuilder.orWhereNot(this.prefixPivotTable(key), this.$transformValue(operator))
+      this.knexQuery.orWhereNot(this.prefixPivotTable(key), this.$transformValue(operator))
     } else {
-      this.$knexBuilder.orWhereNot(this.$transformCallback(key))
+      this.knexQuery.orWhereNot(this.$transformCallback(key))
     }
 
     return this
@@ -198,7 +198,7 @@ ModelConstructorContract
       ? key.map((one) => this.prefixPivotTable(one))
       : this.prefixPivotTable(key)
 
-    this.$knexBuilder.whereIn(key, value)
+    this.knexQuery.whereIn(key, value)
     return this
   }
 
@@ -214,7 +214,7 @@ ModelConstructorContract
       ? key.map((one) => this.prefixPivotTable(one))
       : this.prefixPivotTable(key)
 
-    this.$knexBuilder.orWhereIn(key, value)
+    this.knexQuery.orWhereIn(key, value)
     return this
   }
 
@@ -237,7 +237,7 @@ ModelConstructorContract
       ? key.map((one) => this.prefixPivotTable(one))
       : this.prefixPivotTable(key)
 
-    this.$knexBuilder.whereNotIn(key, value)
+    this.knexQuery.whereNotIn(key, value)
     return this
   }
 
@@ -253,7 +253,7 @@ ModelConstructorContract
       ? key.map((one) => this.prefixPivotTable(one))
       : this.prefixPivotTable(key)
 
-    this.$knexBuilder.orWhereNotIn(key, value)
+    this.knexQuery.orWhereNotIn(key, value)
     return this
   }
 
@@ -268,7 +268,7 @@ ModelConstructorContract
    * Select pivot columns
    */
   public pivotColumns (columns: string[]): this {
-    this.$knexBuilder.select(columns.map((column) => {
+    this.knexQuery.select(columns.map((column) => {
       return `${this.prefixPivotTable(column)} as ${this.$relation.pivotAlias(column)}`
     }))
     return this

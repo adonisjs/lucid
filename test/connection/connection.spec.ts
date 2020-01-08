@@ -41,7 +41,7 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const connection = new Connection('primary', config, getLogger())
-      const writeConfig = connection['_getWriteConfig']()
+      const writeConfig = connection['getWriteConfig']()
 
       assert.equal(writeConfig.client, config.client)
       assert.equal(writeConfig.connection!['host'], '10.0.0.1')
@@ -63,7 +63,7 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const connection = new Connection('primary', config, getLogger())
-      const readConfig = connection['_getReadConfig']()
+      const readConfig = connection['getReadConfig']()
 
       assert.equal(readConfig.client, config.client)
       assert.deepEqual(readConfig.connection, { database: 'lucid' })

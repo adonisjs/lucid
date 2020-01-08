@@ -32,18 +32,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
   } from '@ioc:Adonis/Lucid/Model'
 
   /**
-   * A executable query builder will always have these methods on it.
-   */
-  export interface ExcutableQueryBuilderContract<Result extends any> extends Promise<Result> {
-    debug (debug: boolean): this
-    timeout (time: number, options?: { cancel: boolean }): this
-    useTransaction (trx: TransactionClientContract): this
-    toQuery (): string
-    exec (): Promise<Result>
-    toSQL (): knex.Sql
-  }
-
-  /**
    * Dialect specfic methods
    */
   export interface DialectContract {
@@ -98,7 +86,10 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns the query builder for a given model
      */
-    modelQuery<T extends ModelConstructorContract> (model: T): ModelQueryBuilderContract<T>
+    modelQuery<
+      T extends ModelConstructorContract,
+      Result extends any = T,
+    > (model: T): ModelQueryBuilderContract<T>
 
     /**
      * Returns the knex query builder instance
@@ -109,14 +100,12 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Get new query builder instance for select, update and
      * delete calls
      */
-    query<Result extends any = any> (
-    ): DatabaseQueryBuilderContract<Result> & ExcutableQueryBuilderContract<Result>,
+    query<Result extends any = any> (): DatabaseQueryBuilderContract<Result>,
 
     /**
      * Get new query builder instance inserts
      */
-    insertQuery<ReturnColumns extends any = any> (
-    ): InsertQueryBuilderContract & ExcutableQueryBuilderContract<ReturnColumns[]>,
+    insertQuery<ReturnColumns extends any = any> (): InsertQueryBuilderContract<ReturnColumns[]>,
 
     /**
      * Get raw query builder instance
@@ -124,7 +113,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     raw<Result extends any = any> (
       sql: string,
       bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw,
-    ): RawContract & ExcutableQueryBuilderContract<Result>
+    ): RawContract<Result>
 
     /**
      * Truncate a given table
@@ -142,14 +131,14 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * doesn't allow defining the return type and one must use `query` to define
      * that.
      */
-    from: SelectTable<DatabaseQueryBuilderContract & ExcutableQueryBuilderContract<any>>,
+    from: SelectTable<DatabaseQueryBuilderContract<any>>,
 
     /**
      * Same as `insertQuery()`, but also selects the table for the query.
      * The `table` method doesn't allow defining the return type and
      * one must use `insertQuery` to define that.
      */
-    table: Table<InsertQueryBuilderContract & ExcutableQueryBuilderContract<any>>,
+    table: Table<InsertQueryBuilderContract<any>>,
 
     /**
      * Get instance of transaction client
@@ -625,14 +614,14 @@ declare module '@ioc:Adonis/Lucid/Database' {
      */
     query<Result extends any = any> (
       options?: DatabaseClientOptions,
-    ): DatabaseQueryBuilderContract<Result> & ExcutableQueryBuilderContract<Result>,
+    ): DatabaseQueryBuilderContract<Result>,
 
     /**
      * Get insert query builder instance for a given connection.
      */
     insertQuery<ReturnColumns extends any = any> (
       options?: DatabaseClientOptions,
-    ): InsertQueryBuilderContract & ExcutableQueryBuilderContract<ReturnColumns[]>,
+    ): InsertQueryBuilderContract<ReturnColumns[]>,
 
     /**
      * Get raw query builder instance
@@ -641,7 +630,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
       sql: string,
       bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[],
       options?: DatabaseClientOptions,
-    ): RawContract & ExcutableQueryBuilderContract<Result>
+    ): RawContract<Result>
 
     /**
      * Selects a table on the default connection by instantiating a new query

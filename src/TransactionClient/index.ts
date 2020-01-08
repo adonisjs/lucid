@@ -87,7 +87,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
 
   /**
    * Get columns info inside a transaction. You won't need it here, however
-   * added for API compatibility with the [[Connection]] class
+   * added for API compatibility with the [[QueryClient]] class
    */
   public async columnsInfo (table: string, column?: string): Promise<any> {
     const query = this.knexClient.select(table)

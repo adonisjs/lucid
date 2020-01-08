@@ -38,7 +38,7 @@ ModelConstructorContract
    * Returns the name of the query action
    */
   protected $queryAction (): string {
-    let action = this.$knexBuilder['_method']
+    let action = this.knexQuery['_method']
     if (action === 'del') {
       action = 'delete'
     }
@@ -57,7 +57,7 @@ ModelConstructorContract
    * Selects the relation keys. Invoked by the preloader
    */
   public selectRelationKeys (): this {
-    const columns = this.$knexBuilder['_statements'].find((statement) => {
+    const columns = this.knexQuery['_statements'].find((statement) => {
       return statement.grouping && statement.grouping === 'columns'
     })
 
@@ -96,7 +96,7 @@ ModelConstructorContract
   /**
    * Returns the profiler action
    */
-  public getProfilerAction () {
+  protected getProfilerAction () {
     if (!this.client.profiler) {
       return null
     }

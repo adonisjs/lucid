@@ -287,7 +287,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    */
   private async getMigratedFiles () {
     const rows = await this.client
-      .query<{ name: string }[]>()
+      .query<{ name: string }>()
       .from(this.migrationsConfig.tableName)
       .select('name')
 
@@ -300,7 +300,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    */
   private async getMigratedFilesTillBatch (batch: number) {
     return this.client
-      .query<{ name: string, batch: number, migration_time: Date }[]>()
+      .query<{ name: string, batch: number, migration_time: Date }>()
       .from(this.migrationsConfig.tableName)
       .select('name', 'batch', 'migration_time')
       .where('batch', '>', batch)
