@@ -14,23 +14,23 @@ import { ModelConstructorContract, ModelContract, ModelObject } from '@ioc:Adoni
 
 import { ManyToMany } from './index'
 import { unique, getValue } from '../../../utils'
-import { BaseQueryClient } from '../Base/QueryClient'
+// import { BaseQueryClient } from '../Base/QueryClient'
 import { ManyToManyQueryBuilder } from './QueryBuilder'
 
 /**
  * Query client for executing queries in scope to the defined
  * relationship
  */
-export class ManyToManyQueryClient extends BaseQueryClient implements ManyToManyClientContract<
+export class ManyToManyQueryClient implements ManyToManyClientContract<
 ModelConstructorContract,
 ModelConstructorContract
 > {
   constructor (
     private parent: ModelContract | ModelContract[],
-    protected $client: QueryClientContract,
-    protected $relation: ManyToMany,
+    private client: QueryClientContract,
+    private relation: ManyToMany,
   ) {
-    super($client, $relation)
+    // super($client, $relation)
   }
 
   /**
@@ -46,19 +46,19 @@ ModelConstructorContract
    * Returns value for the foreign key
    */
   private getForeignKeyValue (parent: ModelContract, action: string) {
-    return getValue(parent, this.$relation.$localKey, this.$relation, action)
+    return getValue(parent, this.relation.localKey, this.relation, action)
   }
 
   public query (): any {
-    return new ManyToManyQueryBuilder(this.$client.knexQuery(), this.$client, this.parent, this.$relation, false, false)
+    return new ManyToManyQueryBuilder(this.client.knexQuery(), this.client, this.parent, this.relation, false, false)
   }
 
   public eagerQuery (): any {
-    return new ManyToManyQueryBuilder(this.$client.knexQuery(), this.$client, this.parent, this.$relation, false, true)
+    return new ManyToManyQueryBuilder(this.client.knexQuery(), this.client, this.parent, this.relation, false, true)
   }
 
   public pivotQuery (): any {
-    return new ManyToManyQueryBuilder(this.$client.knexQuery(), this.$client, this.parent, this.$relation, true, false)
+    return new ManyToManyQueryBuilder(this.client.knexQuery(), this.client, this.parent, this.relation, true, false)
   }
 
   public async create (): Promise<ModelContract> {
@@ -73,18 +73,18 @@ ModelConstructorContract
     this.ensureSingleParent(this.parent)
     await this.parent.save()
 
-    const trx = await this.$client.transaction()
+    const trx = await this.client.transaction()
 
     try {
-      related.$trx = trx
+      related.trx = trx
       await related.save()
-      const relatedKeyValue = related[this.$relation.$relatedKey]
+      const relatedKeyValue = related[this.relation.relatedKey]
 
       let hasRow = false
       if (checkExisting) {
         hasRow = await this
           .pivotQuery()
-          .wherePivot(this.$relation.$pivotRelatedForeignKey, relatedKeyValue)
+          .wherePivot(this.relation.pivotRelatedForeignKey, relatedKeyValue)
           .useTransaction(trx)
           .first()
       }
@@ -104,27 +104,27 @@ ModelConstructorContract
     this.ensureSingleParent(this.parent)
     await this.parent.save()
 
-    const trx = await this.$client.transaction()
+    const trx = await this.client.transaction()
 
     try {
       await Promise.all(related.map((one) => {
-        one.$trx = trx
+        one.trx = trx
         return one.save()
       }))
 
-      const relatedKeyValues = related.map((one) => one[this.$relation.$relatedKey])
+      const relatedKeyValues = related.map((one) => one[this.relation.relatedKey])
       let existingsRows: ModelContract[] = []
 
       if (checkExisting) {
         existingsRows = await this
           .pivotQuery()
-          .select(this.$relation.$pivotRelatedForeignKey)
-          .whereInPivot(this.$relation.$pivotRelatedForeignKey, relatedKeyValues)
+          .select(this.relation.pivotRelatedForeignKey)
+          .whereInPivot(this.relation.pivotRelatedForeignKey, relatedKeyValues)
           .useTransaction(trx)
       }
 
       const nonExistingRows = relatedKeyValues.filter((id) => !existingsRows.find((existingRow) => {
-        return existingRow.$extras[this.$relation.$pivotRelatedForeignKey] === id
+        return existingRow.$extras[this.relation.pivotRelatedForeignKey] === id
       }))
 
       await this.attach(nonExistingRows, trx)
@@ -157,7 +157,7 @@ ModelConstructorContract
      * Use existing transaction or create a new one
      */
     let selfTransaction = !trx
-    trx = trx || await this.$client.transaction()
+    trx = trx || await this.client.transaction()
 
     /**
      * Perform multi insert
@@ -165,11 +165,11 @@ ModelConstructorContract
     try {
       await trx
         .insertQuery()
-        .table(this.$relation.$pivotTable)
+        .table(this.relation.pivotTable)
         .multiInsert(unique(relatedForeignKeyValues).map((id) => {
           return Object.assign({}, hasAttributes ? ids[id] : {}, {
-            [this.$relation.$pivotForeignKey]: foreignKeyValue,
-            [this.$relation.$pivotRelatedForeignKey]: id,
+            [this.relation.pivotForeignKey]: foreignKeyValue,
+            [this.relation.pivotRelatedForeignKey]: id,
           })
         }))
 
@@ -185,7 +185,7 @@ ModelConstructorContract
   }
 
   public async detach (ids: string[]) {
-    await this.pivotQuery().whereInPivot(this.$relation.$pivotRelatedForeignKey, ids).del()
+    await this.pivotQuery().whereInPivot(this.relation.pivotRelatedForeignKey, ids).del()
   }
 
   public async sync () {

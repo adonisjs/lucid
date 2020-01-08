@@ -68,7 +68,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     },
   ) {
     super(builder, customFn)
-    builder.table(model.$table)
+    builder.table(model.table)
   }
 
   /**
@@ -103,13 +103,6 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   public sideload (value: ModelObject) {
     this.sideloaded = value
     return this
-  }
-
-  /**
-   * Returns the connection name used by the query client
-   */
-  public get connection () {
-    return this.client!.connectionName
   }
 
   /**
@@ -238,7 +231,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     /**
      * Preload for model instances
      */
-    await this.preloader.sideload(this.sideloaded).processAllForMany(modelInstances, this.client)
+    await this.preloader.sideload(this.sideloaded).$processAllForMany(modelInstances, this.client)
     return modelInstances
   }
 

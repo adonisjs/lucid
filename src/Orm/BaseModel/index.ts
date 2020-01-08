@@ -82,13 +82,13 @@ export class BaseModel implements ModelContract {
   /**
    * Primary key is required to build relationships across models
    */
-  public static $primaryKey: string
+  public static primaryKey: string
 
   /**
    * Whether or not the model has been booted. Booting the model initializes it's
    * static properties. Base models must not be initialized.
    */
-  public static $booted: boolean
+  public static booted: boolean
 
   /**
    * A set of properties marked as computed. Computed properties are included in
@@ -114,13 +114,13 @@ export class BaseModel implements ModelContract {
    * value. If this is set to false, then the user must provide
    * the `$primaryKeyValue` themselves.
    */
-  public static $increments: boolean
+  public static increments: boolean
 
   /**
    * The name of database table. It is auto generated from the model name, unless
    * specified
    */
-  public static $table: string
+  public static table: string
 
   /**
    * Refs are helpful of autocompleting the model props
@@ -131,7 +131,7 @@ export class BaseModel implements ModelContract {
    * A custom connection to use for queries. The connection defined on
    * query builder is preferred over the model connection
    */
-  public static $connection?: string
+  public static connection?: string
 
   /**
    * Mappings are required, so that we can quickly lookup
@@ -145,22 +145,6 @@ export class BaseModel implements ModelContract {
    * Storing model hooks
    */
   private static hooks: Hooks
-
-  /**
-   * Register before hooks
-   */
-  public static $before (event: EventsList, handler: HooksHandler<any>) {
-    this.hooks.add('before', event, handler)
-    return this
-  }
-
-  /**
-   * Register after hooks
-   */
-  public static $after (event: EventsList, handler: HooksHandler<any>) {
-    this.hooks.add('after', event, handler)
-    return this
-  }
 
   /**
    * Returns the model query instance for the given model
@@ -184,11 +168,11 @@ export class BaseModel implements ModelContract {
 
     const instance = new this()
     instance.$consumeAdapterResult(adapterResult, sideloadAttributes)
-    instance.$hydrateOriginals()
+    instance.hydrateOriginals()
 
     instance.$setOptionsAndTrx(options)
-    instance.$isPersisted = true
-    instance.$isLocal = false
+    instance.isPersisted = true
+    instance.isLocal = false
 
     return instance
   }
@@ -219,29 +203,6 @@ export class BaseModel implements ModelContract {
   }
 
   /**
-   * Boot the model
-   */
-  public static $boot () {
-    if (this.$booted) {
-      return
-    }
-
-    this.$booted = true
-    this.$primaryKey = this.$primaryKey || 'id'
-
-    Object.defineProperty(this, '$refs', { value: {} })
-    Object.defineProperty(this, '$columns', { value: new Map() })
-    Object.defineProperty(this, '$computed', { value: new Map() })
-    Object.defineProperty(this, '$relations', { value: new Map() })
-
-    Object.defineProperty(this, 'hooks', { value: new Hooks(this.$container) })
-    Object.defineProperty(this, 'mappings', { value: { cast: new Map() }})
-
-    this.$increments = this.$increments === undefined ? true : this.$increments
-    this.$table = this.$table === undefined ? this.$configurator.getTableName(this) : this.$table
-  }
-
-  /**
    * Define a new column on the model. This is required, so that
    * we differentiate between plain properties vs model attributes.
    */
@@ -263,7 +224,7 @@ export class BaseModel implements ModelContract {
      * Set column as the primary column, when `primary` is to true
      */
     if (column.isPrimary) {
-      this.$primaryKey = name
+      this.primaryKey = name
     }
 
     this.$columns.set(name, column)
@@ -371,6 +332,45 @@ export class BaseModel implements ModelContract {
   }
 
   /**
+   * Boot the model
+   */
+  public static boot () {
+    if (this.booted) {
+      return
+    }
+
+    this.booted = true
+    this.primaryKey = this.primaryKey || 'id'
+
+    Object.defineProperty(this, '$refs', { value: {} })
+    Object.defineProperty(this, '$columns', { value: new Map() })
+    Object.defineProperty(this, '$computed', { value: new Map() })
+    Object.defineProperty(this, '$relations', { value: new Map() })
+
+    Object.defineProperty(this, 'hooks', { value: new Hooks(this.$container) })
+    Object.defineProperty(this, 'mappings', { value: { cast: new Map() }})
+
+    this.increments = this.increments === undefined ? true : this.increments
+    this.table = this.table === undefined ? this.$configurator.getTableName(this) : this.table
+  }
+
+  /**
+   * Register before hooks
+   */
+  public static before (event: EventsList, handler: HooksHandler<any>) {
+    this.hooks.add('before', event, handler)
+    return this
+  }
+
+  /**
+   * Register after hooks
+   */
+  public static after (event: EventsList, handler: HooksHandler<any>) {
+    this.hooks.add('after', event, handler)
+    return this
+  }
+
+  /**
    * Returns a fresh persisted instance of model by applying
    * attributes to the model instance
    */
@@ -404,8 +404,8 @@ export class BaseModel implements ModelContract {
         const instance = new this() as InstanceType<T>
 
         instance.fill(row)
-        instance.$trx = trx
-        instance.$options = options
+        instance.trx = trx
+        instance.options = options
 
         await instance.save()
         collection.push(instance)
@@ -428,7 +428,7 @@ export class BaseModel implements ModelContract {
     value: any,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).where(this.$resolveCastKey(this.$primaryKey), value).first()
+    return this.query(options).where(this.$resolveCastKey(this.primaryKey), value).first()
   }
 
   /**
@@ -439,7 +439,7 @@ export class BaseModel implements ModelContract {
     value: any,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).where(this.$resolveCastKey(this.$primaryKey), value).firstOrFail()
+    return this.query(options).where(this.$resolveCastKey(this.primaryKey), value).firstOrFail()
   }
 
   /**
@@ -452,8 +452,8 @@ export class BaseModel implements ModelContract {
   ) {
     return this
       .query(options)
-      .whereIn(this.$resolveCastKey(this.$primaryKey), value)
-      .orderBy(this.$resolveCastKey(this.$primaryKey), 'desc')
+      .whereIn(this.$resolveCastKey(this.primaryKey), value)
+      .orderBy(this.$resolveCastKey(this.primaryKey), 'desc')
       .exec()
   }
 
@@ -488,7 +488,7 @@ export class BaseModel implements ModelContract {
     options?: ModelAdapterOptions,
   ) {
     const row = await this.firstOrNew(search, savePayload, options)
-    if (!row.$isPersisted) {
+    if (!row.isPersisted) {
       await row.save()
     }
 
@@ -509,7 +509,7 @@ export class BaseModel implements ModelContract {
     /**
      * Update if row was found
      */
-    if (row.$isPersisted) {
+    if (row.isPersisted) {
       row.merge(updatedPayload)
     }
 
@@ -595,9 +595,8 @@ export class BaseModel implements ModelContract {
 
     try {
       await Promise.all(rows.map((row) => {
-        row.$trx = trx
-
-        if (!row.$isPersisted) {
+        row.trx = trx
+        if (!row.isPersisted) {
           return row.save()
         }
         return Promise.resolve()
@@ -636,7 +635,7 @@ export class BaseModel implements ModelContract {
 
     try {
       await Promise.all(rows.map((row) => {
-        row.$trx = trx
+        row.trx = trx
         return row.save()
       }))
       await trx.commit()
@@ -655,7 +654,7 @@ export class BaseModel implements ModelContract {
     this: T,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).orderBy(this.$resolveCastKey(this.$primaryKey), 'desc').exec()
+    return this.query(options).orderBy(this.$resolveCastKey(this.primaryKey), 'desc').exec()
   }
 
   constructor () {
@@ -679,7 +678,7 @@ export class BaseModel implements ModelContract {
    * cleansup the `$trx` reference
    */
   private transactionListener = function listener () {
-    this.$trx = undefined
+    this.modelTrx = undefined
   }.bind(this)
 
   /**
@@ -698,7 +697,7 @@ export class BaseModel implements ModelContract {
    * Raises exception when mutations are performed on a delete model
    */
   private ensureIsntDeleted () {
-    if (this.$isDeleted) {
+    if (this.isDeleted) {
       throw new Exception('Cannot mutate delete model instance', 500, 'E_MODEL_DELETED')
     }
   }
@@ -708,7 +707,7 @@ export class BaseModel implements ModelContract {
    * to create the object with the property names to be
    * used by the adapter.
    */
-  protected $prepareForAdapter (attributes: ModelObject) {
+  protected prepareForAdapter (attributes: ModelObject) {
     return (this.constructor as typeof BaseModel).$mapKeysToCastKeys(attributes)
   }
 
@@ -729,6 +728,15 @@ export class BaseModel implements ModelContract {
   public $preloaded: { [relation: string]: ModelContract | ModelContract[] } = {}
 
   /**
+   * Extras are dynamic properties set on the model instance, which
+   * are not serialized and neither casted for adapter calls.
+   *
+   * This is helpful when adapter wants to load some extra data conditionally
+   * and that data must not be persisted back the adapter.
+   */
+  public $extras: ModelObject = {}
+
+  /**
    * Sideloaded are dynamic properties set on the model instance, which
    * are not serialized and neither casted for adapter calls.
    *
@@ -742,68 +750,59 @@ export class BaseModel implements ModelContract {
    * - Sideloaded are shared across multiple model instances created via `$createMultipleFromAdapterResult`.
    * - Sideloaded are passed to the relationships as well.
    */
-  public $sideloaded: ModelObject = {}
-
-  /**
-   * Extras are dynamic properties set on the model instance, which
-   * are not serialized and neither casted for adapter calls.
-   *
-   * This is helpful when adapter wants to load some extra data conditionally
-   * and that data must not be persisted back the adapter.
-   */
-  public $extras: ModelObject = {}
+  public sideloaded: ModelObject = {}
 
   /**
    * Persisted means the model has been persisted with the adapter. This will
    * also be true, when model instance is created as a result of fetch
    * call from the adapter.
    */
-  public $isPersisted: boolean = false
+  public isPersisted: boolean = false
 
   /**
    * Once deleted the model instance cannot make calls to the adapter
    */
-  public $isDeleted: boolean = false
+  public isDeleted: boolean = false
 
   /**
    * `$isLocal` tells if the model instance was created locally vs
    * one generated as a result of fetch call from the adapter.
    */
-  public $isLocal: boolean = true
+  public isLocal: boolean = true
 
   /**
    * Returns the value of primary key. The value must be
    * set inside attributes object
    */
-  public get $primaryKeyValue (): any | undefined {
+  public get primaryKeyValue (): any | undefined {
     const model = this.constructor as typeof BaseModel
-    const column = model.$getColumn(model.$primaryKey)
+    const column = model.$getColumn(model.primaryKey)
 
     if (column && column.hasGetter) {
-      return this[model.$primaryKey]
+      return this[model.primaryKey]
     }
 
-    return this.$getAttribute(model.$primaryKey)
+    return this.$getAttribute(model.primaryKey)
   }
 
   /**
-   * Opposite of [[this.$isPersisted]]
+   * Opposite of [[this.isPersisted]]
    */
-  public get $isNew (): boolean {
-    return !this.$isPersisted
+  public get isNew (): boolean {
+    return !this.isPersisted
   }
 
   /**
    * Returns dirty properties of a model by doing a diff
    * between original values and current attributes
    */
-  public get $dirty (): any {
+  public get dirty (): any {
     const processedKeys: string[] = []
 
     /**
      * Do not compute diff, when model has never been persisted
      */
-    if (!this.$isPersisted) {
+    if (!this.isPersisted) {
       return this.$attributes
     }
 
@@ -840,21 +839,21 @@ export class BaseModel implements ModelContract {
   /**
    * Finding if model is dirty with changes or not
    */
-  public get $isDirty () {
-    return Object.keys(this.$dirty).length > 0
+  public get isDirty () {
+    return Object.keys(this.dirty).length > 0
   }
 
   /**
    * Returns the transaction
    */
-  public get $trx (): TransactionClientContract | undefined {
+  public get trx (): TransactionClientContract | undefined {
     return this.modelTrx
   }
 
   /**
    * Set the trx to be used by the model to executing queries
    */
-  public set $trx (trx: TransactionClientContract | undefined) {
+  public set trx (trx: TransactionClientContract | undefined) {
     if (!trx) {
       this.modelTrx = undefined
       return
@@ -863,9 +862,9 @@ export class BaseModel implements ModelContract {
     /**
      * Remove old listeners
      */
-    if (this.$trx) {
-      this.$trx.removeListener('commit', this.transactionListener)
-      this.$trx.removeListener('rollback', this.transactionListener)
+    if (this.modelTrx) {
+      this.modelTrx.removeListener('commit', this.transactionListener)
+      this.modelTrx.removeListener('rollback', this.transactionListener)
     }
 
     /**
@@ -879,14 +878,14 @@ export class BaseModel implements ModelContract {
   /**
    * Get options
    */
-  public get $options (): ModelOptions | undefined {
+  public get options (): ModelOptions | undefined {
     return this.modelOptions
   }
 
   /**
    * Set options
    */
-  public set $options (options: ModelOptions | undefined) {
+  public set options (options: ModelOptions | undefined) {
     if (!options) {
       return
     }
@@ -910,9 +909,9 @@ export class BaseModel implements ModelContract {
     }
 
     if (options.client && options.client.isTransaction) {
-      this.$trx = options.client as TransactionClientContract
+      this.trx = options.client as TransactionClientContract
     }
-    this.$options = options
+    this.options = options
   }
 
   /**
@@ -1000,10 +999,10 @@ export class BaseModel implements ModelContract {
     /**
      * Reset array before invoking $pushRelated
      */
-    if (MANY_RELATIONS.includes(relation.$type)) {
+    if (MANY_RELATIONS.includes(relation.type)) {
       if (!Array.isArray(models)) {
         throw new Exception(
-          `"${Model.name}.${key}" must be an array when setting "${relation.$type}" relationship`,
+          `"${Model.name}.${key}" must be an array when setting "${relation.type}" relationship`,
         )
       }
       this.$preloaded[key] = []
@@ -1029,7 +1028,7 @@ export class BaseModel implements ModelContract {
     /**
      * Create multiple for `hasMany` `manyToMany` and `hasManyThrough`
      */
-    if (MANY_RELATIONS.includes(relation.$type)) {
+    if (MANY_RELATIONS.includes(relation.type)) {
       this.$preloaded[key] = ((this.$preloaded[key] || []) as ModelContract[]).concat(models)
       return
     }
@@ -1039,7 +1038,7 @@ export class BaseModel implements ModelContract {
      */
     if (Array.isArray(models)) {
       throw new Error(
-        `"${Model.name}.${key}" cannot reference more than one instance of "${relation.$relatedModel().name}" model`
+        `"${Model.name}.${key}" cannot reference more than one instance of "${relation.relatedModel().name}" model`
       )
     }
 
@@ -1058,7 +1057,7 @@ export class BaseModel implements ModelContract {
      * on the model instance
      */
     if (sideloadedAttributes) {
-      this.$sideloaded = Object.assign({}, this.$sideloaded, sideloadedAttributes)
+      this.sideloaded = Object.assign({}, this.sideloaded, sideloadedAttributes)
     }
 
     /**
@@ -1099,7 +1098,7 @@ export class BaseModel implements ModelContract {
    * Sync originals with the attributes. After this `isDirty` will
    * return false
    */
-  public $hydrateOriginals () {
+  public hydrateOriginals () {
     this.$original = Object.assign({}, this.$attributes)
   }
 
@@ -1151,8 +1150,8 @@ export class BaseModel implements ModelContract {
     }
 
     await preloader
-      .sideload(this.$sideloaded)
-      .processAllForOne(this, constructor.$adapter.modelClient(this))
+      .sideload(this.sideloaded)
+      .$processAllForOne(this, constructor.$adapter.modelClient(this))
   }
 
   /**
@@ -1165,21 +1164,21 @@ export class BaseModel implements ModelContract {
     /**
      * Persit the model when it's not persisted already
      */
-    if (!this.$isPersisted) {
+    if (!this.isPersisted) {
       await Model.hooks.execute('before', 'create', this)
       await Model.hooks.execute('before', 'save', this)
 
-      await Model.$adapter.insert(this, this.$prepareForAdapter(this.$attributes))
+      await Model.$adapter.insert(this, this.prepareForAdapter(this.$attributes))
 
-      this.$hydrateOriginals()
-      this.$isPersisted = true
+      this.hydrateOriginals()
+      this.isPersisted = true
 
       await Model.hooks.execute('after', 'create', this)
       await Model.hooks.execute('after', 'save', this)
       return
     }
 
-    const dirty = this.$dirty
+    const dirty = this.dirty
 
     /**
      * Do not issue updates when model doesn't have any mutations
@@ -1194,9 +1193,9 @@ export class BaseModel implements ModelContract {
     /**
      * Perform update
      */
-    await Model.$adapter.update(this, this.$prepareForAdapter(dirty))
-    this.$hydrateOriginals()
-    this.$isPersisted = true
+    await Model.$adapter.update(this, this.prepareForAdapter(dirty))
+    this.hydrateOriginals()
+    this.isPersisted = true
 
     await Model.hooks.execute('after', 'update', this)
     await Model.hooks.execute('after', 'save', this)
@@ -1212,7 +1211,7 @@ export class BaseModel implements ModelContract {
     await Model.hooks.execute('before', 'delete', this)
 
     await Model.$adapter.delete(this)
-    this.$isDeleted = true
+    this.isDeleted = true
 
     await Model.hooks.execute('after', 'delete', this)
   }
@@ -1244,12 +1243,12 @@ export class BaseModel implements ModelContract {
      */
     Object.keys(this.$preloaded).forEach((key) => {
       const relation = Model.$getRelation(key as any)! as RelationshipsContract
-      if (!relation.$serializeAs) {
+      if (!relation.serializeAs) {
         return
       }
 
       const value = this.$preloaded[key]
-      results[relation.$serializeAs] = Array.isArray(value)
+      results[relation.serializeAs] = Array.isArray(value)
         ? value.map((one) => one.toJSON())
         : value.toJSON()
     })
@@ -1291,10 +1290,10 @@ export class BaseModel implements ModelContract {
      * Returning insert query for the inserts
      */
     if (action === 'insert') {
-      const insertQuery = client.insertQuery().table(modelConstructor.$table)
+      const insertQuery = client.insertQuery().table(modelConstructor.table)
 
-      if (modelConstructor.$increments) {
-        insertQuery.returning(modelConstructor.$resolveCastKey(modelConstructor.$primaryKey))
+      if (modelConstructor.increments) {
+        insertQuery.returning(modelConstructor.$resolveCastKey(modelConstructor.primaryKey))
       }
       return insertQuery
     }
@@ -1304,8 +1303,8 @@ export class BaseModel implements ModelContract {
      */
     return client
       .query()
-      .from(modelConstructor.$table)
-      .where(modelConstructor.$resolveCastKey(modelConstructor.$primaryKey), this.$primaryKeyValue)
+      .from(modelConstructor.table)
+      .where(modelConstructor.$resolveCastKey(modelConstructor.primaryKey), this.primaryKeyValue)
   }
 
   /**
@@ -1316,7 +1315,7 @@ export class BaseModel implements ModelContract {
     const relation = Model.$getRelation(relationName as string)
     ensureRelation(relationName, relation)
 
-    relation!.$boot()
+    relation!.boot()
     return relation!.client(this, Model.$adapter.modelClient(this))
   }
 
@@ -1326,13 +1325,13 @@ export class BaseModel implements ModelContract {
   public async refresh () {
     this.ensureIsntDeleted()
     const modelConstructor = this.constructor as typeof BaseModel
-    const { $table } = modelConstructor
-    const primaryAdapterKey = modelConstructor.$resolveCastKey(modelConstructor.$primaryKey)
+    const { table } = modelConstructor
+    const primaryAdapterKey = modelConstructor.$resolveCastKey(modelConstructor.primaryKey)
 
     /**
      * Noop when model instance is not persisted
      */
-    if (!this.$isPersisted) {
+    if (!this.isPersisted) {
       return
     }
 
@@ -1340,17 +1339,17 @@ export class BaseModel implements ModelContract {
      * This will occur, when some other part of the application removes
      * the row
      */
-    const freshModelInstance = await modelConstructor.find(this.$primaryKeyValue)
+    const freshModelInstance = await modelConstructor.find(this.primaryKeyValue)
     if (!freshModelInstance) {
       throw new Exception(
         [
           '"Model.refresh" failed. ',
-          `Unable to lookup "${$table}" table where "${primaryAdapterKey}" = ${this.$primaryKeyValue}`,
+          `Unable to lookup "${table}" table where "${primaryAdapterKey}" = ${this.primaryKeyValue}`,
         ].join(''),
       )
     }
 
     this.fill(freshModelInstance.$attributes)
-    this.$hydrateOriginals()
+    this.hydrateOriginals()
   }
 }

@@ -38,6 +38,16 @@ export function ensureValue (collection: any, key: string, missingCallback: () =
   return value
 }
 
+export function ensureRelationIsBooted (relation: RelationshipsContract) {
+  if (!relation.booted) {
+    throw new Exception(
+      'Relationship is not booted. Make sure to call boot first',
+      500,
+      'E_RUNTIME_EXCEPTION',
+    )
+  }
+}
+
 /**
  * Returns the value for a key from the model instance and raises descriptive
  * exception when the value is missing
@@ -50,7 +60,7 @@ export function getValue (
 ) {
   return ensureValue(model, key, () => {
     throw new Exception(
-      `Cannot ${action} "${relation.$relationName}", value of "${relation.$model.name}.${key}" is undefined`,
+      `Cannot ${action} "${relation.relationName}", value of "${relation.model.name}.${key}" is undefined`,
       500,
     )
   })

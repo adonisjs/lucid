@@ -14,23 +14,22 @@ import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model
 
 import { BelongsTo } from './index'
 import { getValue } from '../../../utils'
-import { BaseQueryClient } from '../Base/QueryClient'
+// import { BaseQueryClient } from '../Base/QueryClient'
 import { BelongsToQueryBuilder } from './QueryBuilder'
 
 /**
  * Query client for executing queries in scope to the defined
  * relationship
  */
-export class BelongsToQueryClient extends BaseQueryClient implements BelongsToClientContract<
+export class BelongsToQueryClient implements BelongsToClientContract<
 ModelConstructorContract,
 ModelConstructorContract
 > {
   constructor (
     private parent: ModelContract | ModelContract[],
-    protected $client: QueryClientContract,
-    protected $relation: BelongsTo,
+    private client: QueryClientContract,
+    private relation: BelongsTo,
   ) {
-    super($client, $relation)
   }
 
   /**
@@ -46,7 +45,7 @@ ModelConstructorContract
    * Returns value for the foreign key from the related model
    */
   private getForeignKeyValue (related: ModelContract, action: string) {
-    return getValue(related, this.$relation.$localKey, this.$relation, action)
+    return getValue(related, this.relation.localKey, this.relation, action)
   }
 
   /**
@@ -54,10 +53,10 @@ ModelConstructorContract
    */
   public query (): any {
     return new BelongsToQueryBuilder(
-      this.$client.knexQuery(),
-      this.$client,
+      this.client.knexQuery(),
+      this.client,
       this.parent,
-      this.$relation,
+      this.relation,
     )
   }
 
@@ -66,10 +65,10 @@ ModelConstructorContract
    */
   public eagerQuery (): any {
     return new BelongsToQueryBuilder(
-      this.$client.knexQuery(),
-      this.$client,
+      this.client.knexQuery(),
+      this.client,
       this.parent,
-      this.$relation,
+      this.relation,
       true,
     )
   }
@@ -81,7 +80,7 @@ ModelConstructorContract
     this.ensureSingleParent(this.parent)
     await related.save()
 
-    this.parent[this.$relation.$foreignKey] = this.getForeignKeyValue(related, 'associate')
+    this.parent[this.relation.foreignKey] = this.getForeignKeyValue(related, 'associate')
     await this.parent.save()
   }
 
@@ -90,7 +89,7 @@ ModelConstructorContract
    */
   public async dissociate () {
     this.ensureSingleParent(this.parent)
-    this.parent[this.$relation.$foreignKey] = null
+    this.parent[this.relation.foreignKey] = null
     await this.parent.save()
   }
 }

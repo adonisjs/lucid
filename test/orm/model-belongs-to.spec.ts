@@ -30,15 +30,15 @@ test.group('Model | BelongsTo | Options', (group) => {
     try {
       class User extends BaseModel {
       }
-      User.$boot()
+      User.boot()
 
       class Profile extends BaseModel {
         @belongsTo(() => User)
         public user: BelongsTo<User>
       }
 
-      Profile.$boot()
-      Profile.$getRelation('user').$boot()
+      Profile.boot()
+      Profile.$getRelation('user').boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -56,15 +56,15 @@ test.group('Model | BelongsTo | Options', (group) => {
         public id: number
       }
 
-      User.$boot()
+      User.boot()
 
       class Profile extends BaseModel {
         @belongsTo(() => User)
         public user: BelongsTo<User>
       }
 
-      Profile.$boot()
-      Profile.$getRelation('user').$boot()
+      Profile.boot()
+      Profile.$getRelation('user').boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -87,10 +87,10 @@ test.group('Model | BelongsTo | Options', (group) => {
       public user: BelongsTo<User>
     }
 
-    Profile.$getRelation('user').$boot()
+    Profile.$getRelation('user').boot()
 
-    assert.equal(Profile.$getRelation('user')!['$localKey'], 'id')
-    assert.equal(Profile.$getRelation('user')!['$localCastAsKey'], 'id')
+    assert.equal(Profile.$getRelation('user')!['localKey'], 'id')
+    assert.equal(Profile.$getRelation('user')!['localCastAsKey'], 'id')
   })
 
   test('use custom defined local key', (assert) => {
@@ -110,10 +110,10 @@ test.group('Model | BelongsTo | Options', (group) => {
       public user: BelongsTo<User>
     }
 
-    Profile.$getRelation('user').$boot()
+    Profile.$getRelation('user').boot()
 
-    assert.equal(Profile.$getRelation('user')!['$localKey'], 'uid')
-    assert.equal(Profile.$getRelation('user')!['$localCastAsKey'], 'user_uid')
+    assert.equal(Profile.$getRelation('user')!['localKey'], 'uid')
+    assert.equal(Profile.$getRelation('user')!['localCastAsKey'], 'user_uid')
   })
 
   test('compute foreign key from model name and primary key', (assert) => {
@@ -130,10 +130,10 @@ test.group('Model | BelongsTo | Options', (group) => {
       public user: BelongsTo<User>
     }
 
-    Profile.$getRelation('user').$boot()
+    Profile.$getRelation('user').boot()
 
-    assert.equal(Profile.$getRelation('user')!['$foreignKey'], 'userId')
-    assert.equal(Profile.$getRelation('user')!['$foreignCastAsKey'], 'user_id')
+    assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userId')
+    assert.equal(Profile.$getRelation('user')!['foreignCastAsKey'], 'user_id')
   })
 
   test('use pre defined foreign key', (assert) => {
@@ -150,10 +150,10 @@ test.group('Model | BelongsTo | Options', (group) => {
       public user: BelongsTo<User>
     }
 
-    Profile.$getRelation('user').$boot()
+    Profile.$getRelation('user').boot()
 
-    assert.equal(Profile.$getRelation('user')!['$foreignKey'], 'userUid')
-    assert.equal(Profile.$getRelation('user')!['$foreignCastAsKey'], 'user_id')
+    assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userUid')
+    assert.equal(Profile.$getRelation('user')!['foreignCastAsKey'], 'user_id')
   })
 })
 
@@ -177,7 +177,7 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
       public user: BelongsTo<User>
     }
 
-    Profile.$getRelation('user').$boot()
+    Profile.$getRelation('user').boot()
 
     const user = new User()
     const profile = new Profile()
@@ -200,7 +200,7 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
       public user: BelongsTo<User>
     }
 
-    Profile.$getRelation('user').$boot()
+    Profile.$getRelation('user').boot()
 
     const profile = new Profile()
     const user = new User()
@@ -226,7 +226,7 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
       public user: BelongsTo<User>
     }
 
-    Profile.$getRelation('user').$boot()
+    Profile.$getRelation('user').boot()
 
     const profile = new Profile()
     profile.fill({ userId: 1 })
@@ -316,7 +316,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     ])
 
     const profiles = await Profile.all()
-    Profile.$getRelation('user').$boot()
+    Profile.$getRelation('user').boot()
 
     const related = Profile.$getRelation('user').client(profiles, db.connection())
     const { sql, bindings } = related.query().toSQL()
@@ -383,7 +383,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     ])
 
     const profiles = await Profile.all()
-    Profile.$getRelation('user').$boot()
+    Profile.$getRelation('user').boot()
 
     const now = new Date()
     const related = Profile.$getRelation('user').client(profiles, db.connection())
@@ -450,7 +450,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     ])
 
     const profiles = await Profile.all()
-    Profile.$getRelation('user').$boot()
+    Profile.$getRelation('user').boot()
 
     const related = Profile.$getRelation('user').client(profiles, db.connection())
     const { sql, bindings } = related.query().del().toSQL()
@@ -500,7 +500,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
 
-    Profile.$boot()
+    Profile.boot()
 
     const profiles = await Profile.query().preload('user')
     assert.lengthOf(profiles, 1)
@@ -534,7 +534,7 @@ test.group('Model | BelongsTo | preload', (group) => {
       },
     ])
 
-    Profile.$boot()
+    Profile.boot()
     const profiles = await Profile.query().preload('user')
 
     assert.lengthOf(profiles, 2)
@@ -568,7 +568,7 @@ test.group('Model | BelongsTo | preload', (group) => {
       },
     ])
 
-    Profile.$boot()
+    Profile.boot()
     const profiles = await Profile.query().preload('user', (builder) => builder.where('username', 'foo'))
 
     assert.lengthOf(profiles, 2)
@@ -605,7 +605,7 @@ test.group('Model | BelongsTo | preload', (group) => {
       },
     ])
 
-    Profile.$boot()
+    Profile.boot()
 
     const profiles = await Profile.query().preload('user', (builder) => {
       return builder.select('username')
@@ -645,7 +645,7 @@ test.group('Model | BelongsTo | preload', (group) => {
       },
     ])
 
-    Profile.$boot()
+    Profile.boot()
 
     const profiles = await Profile.query().preload('user', (builder) => {
       return builder.select('username', 'id')
@@ -687,7 +687,7 @@ test.group('Model | BelongsTo | preload', (group) => {
       },
     ])
 
-    Profile.$boot()
+    Profile.boot()
 
     try {
       await Profile.query().select('display_name').preload('user')
@@ -934,9 +934,9 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.instanceOf(identity!.profile, Profile)
     assert.instanceOf(identity!.profile!.user, User)
 
-    assert.equal(identity!.$options!.connection, 'secondary')
-    assert.equal(identity!.profile.$options!.connection, 'secondary')
-    assert.equal(identity!.profile.user.$options!.connection, 'secondary')
+    assert.equal(identity!.options!.connection, 'secondary')
+    assert.equal(identity!.profile.options!.connection, 'secondary')
+    assert.equal(identity!.profile.user.options!.connection, 'secondary')
   })
 
   test('pass relationship metadata to the profiler', async (assert) => {
@@ -960,7 +960,11 @@ test.group('Model | BelongsTo | preload', (group) => {
     let profilerPacketIndex = 0
     profiler.subscribe((packet) => {
       if (profilerPacketIndex === 1) {
-        assert.deepEqual(packet.data.relation, { model: 'Profile', relatedModel: 'User', relation: 'belongsTo' })
+        assert.deepEqual(packet.data.relation, {
+          model: 'Profile',
+          relatedModel: 'User',
+          relation: 'belongsTo',
+        })
       }
       profilerPacketIndex++
     })
@@ -1015,7 +1019,7 @@ test.group('Model | BelongsTo | persist', (group) => {
 
     await profile.related('user').associate(user)
 
-    assert.isTrue(profile.$isPersisted)
+    assert.isTrue(profile.isPersisted)
     assert.equal(user.id, profile.userId)
 
     const profiles = await db.query().from('profiles')
@@ -1049,7 +1053,7 @@ test.group('Model | BelongsTo | persist', (group) => {
     const profile = await Profile.query().first()
     await profile!.related('user').dissociate()
 
-    assert.isTrue(profile!.$isPersisted)
+    assert.isTrue(profile!.isPersisted)
     assert.isNull(profile!.userId)
 
     const profiles = await db.query().from('profiles')

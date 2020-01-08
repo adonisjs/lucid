@@ -24,53 +24,27 @@ export class BelongsToQueryBuilder extends BaseQueryBuilder implements RelationB
 ModelConstructorContract,
 ModelConstructorContract
 > {
+  private appliedConstraints: boolean = false
+
   constructor (
     builder: knex.QueryBuilder,
     client: QueryClientContract,
     private parent: ModelContract | ModelContract[],
-    protected $relation: BelongsTo,
+    private relation: BelongsTo,
     isEager: boolean = false,
   ) {
-    super(builder, client, $relation, isEager, (userFn) => {
+    super(builder, client, relation, isEager, (userFn) => {
       return (__builder) => {
-        userFn(new BelongsToQueryBuilder(__builder, this.client, this.parent, this.$relation))
+        userFn(new BelongsToQueryBuilder(__builder, this.client, this.parent, this.relation))
       }
     })
   }
 
-  /**
-   * Applies constraint to limit rows to the current relationship
-   * only.
-   */
-  public applyConstraints () {
-    if (this.$appliedConstraints) {
-      return
-    }
-
-    this.$appliedConstraints = true
-    const queryAction = this.$queryAction()
-
-    /**
-     * Eager query contraints
-     */
-    if (Array.isArray(this.parent)) {
-      this.knexQuery.whereIn(this.$relation.$localCastAsKey, unique(this.parent.map((model) => {
-        return getValue(model, this.$relation.$foreignKey, this.$relation, queryAction)
-      })))
-      return
-    }
-
-    /**
-     * Query constraints
-     */
-    const value = getValue(this.parent, this.$relation.$foreignKey, this.$relation, queryAction)
-    this.knexQuery.where(this.$relation.$localCastAsKey, value)
-
-    /**
-     * Do not add limit when updating or deleting
-     */
-    if (!['update', 'delete'].includes(queryAction)) {
-      this.knexQuery.limit(1)
+  protected profilerData () {
+    return {
+      relation: this.relation.type,
+      model: this.relation.model.name,
+      relatedModel: this.relation.relatedModel().name,
     }
   }
 
@@ -78,6 +52,42 @@ ModelConstructorContract
    * The keys for constructing the join query
    */
   public getRelationKeys (): string[] {
-    return [this.$relation.$localKey]
+    return [this.relation.localKey]
+  }
+
+  /**
+   * Applies constraint to limit rows to the current relationship
+   * only.
+   */
+  public applyConstraints () {
+    if (this.appliedConstraints) {
+      return
+    }
+
+    this.appliedConstraints = true
+    const queryAction = this.queryAction()
+
+    /**
+     * Eager query contraints
+     */
+    if (Array.isArray(this.parent)) {
+      this.knexQuery.whereIn(this.relation.localCastAsKey, unique(this.parent.map((model) => {
+        return getValue(model, this.relation.foreignKey, this.relation, queryAction)
+      })))
+      return
+    }
+
+    /**
+     * Query constraints
+     */
+    const value = getValue(this.parent, this.relation.foreignKey, this.relation, queryAction)
+    this.knexQuery.where(this.relation.localCastAsKey, value)
+
+    /**
+     * Do not add limit when updating or deleting
+     */
+    if (!['update', 'delete'].includes(queryAction)) {
+      this.knexQuery.limit(1)
+    }
   }
 }

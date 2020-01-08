@@ -24,18 +24,28 @@ export class HasManyQueryBuilder extends BaseQueryBuilder implements RelationBas
 ModelConstructorContract,
 ModelConstructorContract
 > {
+  private appliedConstraints: boolean = false
+
   constructor (
     builder: knex.QueryBuilder,
     client: QueryClientContract,
     private parent: ModelContract | ModelContract[],
-    protected $relation: HasMany,
+    private relation: HasMany,
     isEager: boolean = false,
   ) {
-    super(builder, client, $relation, isEager, (userFn) => {
+    super(builder, client, relation, isEager, (userFn) => {
       return (__builder) => {
-        userFn(new HasManyQueryBuilder(__builder, this.client, this.parent, this.$relation))
+        userFn(new HasManyQueryBuilder(__builder, this.client, this.parent, this.relation))
       }
     })
+  }
+
+  protected profilerData () {
+    return {
+      relation: this.relation.type,
+      model: this.relation.model.name,
+      relatedModel: this.relation.relatedModel().name,
+    }
   }
 
   /**
@@ -43,19 +53,19 @@ ModelConstructorContract
    * only.
    */
   public applyConstraints () {
-    if (this.$appliedConstraints) {
+    if (this.appliedConstraints) {
       return
     }
 
-    const queryAction = this.$queryAction()
-    this.$appliedConstraints = true
+    const queryAction = this.queryAction()
+    this.appliedConstraints = true
 
     /**
      * Eager query contraints
      */
     if (Array.isArray(this.parent)) {
-      this.knexQuery.whereIn(this.$relation.$foreignCastAsKey, unique(this.parent.map((model) => {
-        return getValue(model, this.$relation.$localKey, this.$relation, queryAction)
+      this.knexQuery.whereIn(this.relation.foreignCastAsKey, unique(this.parent.map((model) => {
+        return getValue(model, this.relation.localKey, this.relation, queryAction)
       })))
       return
     }
@@ -63,14 +73,14 @@ ModelConstructorContract
     /**
      * Query constraints
      */
-    const value = getValue(this.parent, this.$relation.$localKey, this.$relation, queryAction)
-    this.knexQuery.where(this.$relation.$foreignCastAsKey, value)
+    const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
+    this.knexQuery.where(this.relation.foreignCastAsKey, value)
   }
 
   /**
    * The keys for constructing the join query
    */
   public getRelationKeys (): string[] {
-    return [this.$relation.$foreignCastAsKey]
+    return [this.relation.foreignCastAsKey]
   }
 }

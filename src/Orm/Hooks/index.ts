@@ -38,7 +38,7 @@ export class Hooks {
   public add (lifecycle: 'before' | 'after', event: EventsList, handler: HooksHandler<any>) {
     this.hooks[event] = this.hooks[event] || { before: new Set(), after: new Set() }
 
-    let resolvedHook
+    let resolvedHook: Exclude<HooksHandler<any>, 'string'> | IocResolverLookupNode
 
     /**
      * If hook is a string, then resolve it from the container
