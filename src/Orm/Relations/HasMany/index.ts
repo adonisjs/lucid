@@ -11,7 +11,6 @@ import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 import { HasManyRelationContract, RelationOptions } from '@ioc:Adonis/Lucid/Relations'
 
-// import { BaseRelation } from '../Base'
 import { HasManyQueryClient } from './QueryClient'
 import { KeysExtractor } from '../KeysExtractor'
 import { ensureRelationIsBooted } from '../../../utils'

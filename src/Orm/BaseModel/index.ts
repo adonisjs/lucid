@@ -11,6 +11,7 @@
 
 import { IocContract } from '@adonisjs/fold'
 import { Exception } from '@poppinss/utils'
+import { Hooks } from '@poppinss/hooks'
 
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import {
@@ -36,7 +37,6 @@ import {
   ManyToManyRelationOptions,
 } from '@ioc:Adonis/Lucid/Relations'
 
-import { Hooks } from '../Hooks'
 import { OrmConfig } from '../Config'
 import { Preloader } from '../Preloader'
 import { HasOne } from '../Relations/HasOne'
@@ -123,7 +123,7 @@ export class BaseModel implements ModelContract {
   public static table: string
 
   /**
-   * Refs are helpful of autocompleting the model props
+   * A key-value pair of model properties and their `castAs` keys
    */
   public static $refs: { [key: string]: string }
 
@@ -134,17 +134,14 @@ export class BaseModel implements ModelContract {
   public static connection?: string
 
   /**
-   * Mappings are required, so that we can quickly lookup
-   * the model attribute names from the adapter keys
-   */
-  private static mappings: {
-    cast: Map<string, string>,
-  }
-
-  /**
    * Storing model hooks
    */
   private static hooks: Hooks
+
+  /**
+   * Reverse of `$refs`
+   */
+  private static $dbRefs: { [key: string]: string }
 
   /**
    * Returns the model query instance for the given model
@@ -229,7 +226,7 @@ export class BaseModel implements ModelContract {
 
     this.$columns.set(name, column)
     this.$refs[name] = column.castAs
-    this.mappings.cast.set(column.castAs!, name)
+    this.$dbRefs[column.castAs] = name
   }
 
   /**
@@ -295,7 +292,7 @@ export class BaseModel implements ModelContract {
         this.$relations.set(name, new HasManyThrough(name, options as ThroughRelationOptions, this))
         break
       default:
-        throw new Error(`${type} relationship has not been implemented yet`)
+        throw new Error(`${type} is not a supported relation type`)
     }
   }
 
@@ -343,12 +340,15 @@ export class BaseModel implements ModelContract {
     this.primaryKey = this.primaryKey || 'id'
 
     Object.defineProperty(this, '$refs', { value: {} })
+    Object.defineProperty(this, '$dbRefs', { value: {} })
+
     Object.defineProperty(this, '$columns', { value: new Map() })
     Object.defineProperty(this, '$computed', { value: new Map() })
     Object.defineProperty(this, '$relations', { value: new Map() })
 
-    Object.defineProperty(this, 'hooks', { value: new Hooks(this.$container) })
-    Object.defineProperty(this, 'mappings', { value: { cast: new Map() }})
+    Object.defineProperty(this, 'hooks', {
+      value: new Hooks(this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')),
+    })
 
     this.increments = this.increments === undefined ? true : this.increments
     this.table = this.table === undefined ? this.$configurator.getTableName(this) : this.table
@@ -458,7 +458,8 @@ export class BaseModel implements ModelContract {
   }
 
   /**
-   * Find model instance using a key/value pair
+   * Find model instance using a key/value pair or create a
+   * new one without persisting it.
    */
   public static async firstOrNew<T extends ModelConstructorContract> (
     this: T,
@@ -472,6 +473,11 @@ export class BaseModel implements ModelContract {
     if (!row) {
       row = new this() as InstanceType<T>
       row.fill(Object.assign({}, search, savePayload))
+
+      /**
+       * Pass client options to the newly created row. If row was found
+       * the query builder will set the same options.
+       */
       row.$setOptionsAndTrx(query.clientOptions)
     }
 
@@ -479,7 +485,7 @@ export class BaseModel implements ModelContract {
   }
 
   /**
-   * Find model instance using a key/value pair
+   * Same as `firstOrNew`, but persists the newly created model instance
    */
   public static async firstOrCreate<T extends ModelConstructorContract> (
     this: T,
@@ -528,6 +534,10 @@ export class BaseModel implements ModelContract {
     options?: ModelAdapterOptions,
     mergeAttributes: boolean = false,
   ) {
+    /**
+     * Make sure that the unique key is defined as a column
+     * on the current model.
+     */
     const castKey = this.$refs[uniqueKey]
     if (!castKey) {
       throw new Exception(
@@ -536,12 +546,12 @@ export class BaseModel implements ModelContract {
     }
 
     /**
-     * A array of values for the unique key
+     * An array of values for the unique key
      */
     const uniqueKeyValues = payload.map((row) => {
       return ensureValue(row, uniqueKey, () => {
         throw new Exception(
-          `Value for "${uniqueKey}" is null or undefined inside "fetchOrNewUpMany" payload`,
+          `Value for the "${uniqueKey}" is null or undefined inside "fetchOrNewUpMany" payload`,
         )
       })
     })
@@ -556,6 +566,10 @@ export class BaseModel implements ModelContract {
     return payload.map((row) => {
       /* eslint-disable-next-line eqeqeq */
       const existingRow = existingRows.find((one) => one[uniqueKey] == row[uniqueKey])
+
+      /**
+       * Return the row found from the select call
+       */
       if (existingRow) {
         if (mergeAttributes) {
           existingRow.merge(row)
@@ -563,6 +577,9 @@ export class BaseModel implements ModelContract {
         return existingRow
       }
 
+      /**
+       * Otherwise create a new one
+       */
       const instance = new this() as InstanceType<T>
       instance.fill(row)
       instance.$setOptionsAndTrx(query.clientOptions)
@@ -648,13 +665,13 @@ export class BaseModel implements ModelContract {
   }
 
   /**
-   * Create a array of model instances from the adapter result
+   * Returns all rows from the model table
    */
   public static async all <T extends ModelConstructorContract> (
     this: T,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).orderBy(this.$resolveCastKey(this.primaryKey), 'desc').exec()
+    return this.query(options).orderBy(this.$resolveCastKey(this.primaryKey), 'desc')
   }
 
   constructor () {
@@ -1046,8 +1063,11 @@ export class BaseModel implements ModelContract {
   }
 
   /**
-   * Persisting the model with adapter insert/update results. This
-   * method is invoked after adapter insert/update action.
+   * Merges the object with the model attributes, assuming object keys
+   * are coming the database.
+   *
+   * 1. If key is unknown, it will be added to the `$extras` object.
+   * 2. If key is defined as a relationship, it will be ignored and one must call `$setRelated`.
    */
   public $consumeAdapterResult (adapterResult: ModelObject, sideloadedAttributes?: ModelObject) {
     const Model = this.constructor as typeof BaseModel
@@ -1068,15 +1088,16 @@ export class BaseModel implements ModelContract {
     if (isObject(adapterResult)) {
       Object.keys(adapterResult).forEach((key) => {
         /**
-         * The adapter will return the values as per `normalizeAs` key. We
+         * The adapter will return the values as per `castAs` key. We
          * need to pull the actual column name for that key and then
          * set the value.
-         *
-         * Key/value that are not part of defined columns will be ignored
-         * silently.
          */
-        const columnName = Model.mappings.cast.get(key)
+        const columnName = Model.$dbRefs[key]
         if (columnName) {
+          /**
+           * When consuming the adapter result, we must always set the attributes
+           * directly, as we do not want to invoke getters.
+           */
           this.$setAttribute(columnName, adapterResult[key])
           return
         }
@@ -1115,19 +1136,28 @@ export class BaseModel implements ModelContract {
 
   /**
    * Merge bulk attributes with existing attributes.
+   *
+   * 1. If key is unknown, it will be added to the `$extras` object.
+   * 2. If key is defined as a relationship, it will be ignored and one must call `$setRelated`.
    */
   public merge (values: ModelObject) {
     const Model = this.constructor as typeof BaseModel
 
     /**
-     * Merge result of adapter with the attributes. This enables
-     * the adapter to hydrate models with properties generated
-     * as a result of insert or update
+     * Merge values with the attributes
      */
     if (isObject(values)) {
       Object.keys(values).forEach((key) => {
-        if (Model.$hasColumn(key)) {
+        if (Model.$refs[key]) {
           this[key] = values[key]
+          return
+        }
+
+        /**
+         * If key is defined as a relation, then ignore it, since one
+         * must pass a qualified model to `this.$setRelated()`
+         */
+        if (Model.$relations.has(key)) {
           return
         }
 
@@ -1165,16 +1195,16 @@ export class BaseModel implements ModelContract {
      * Persit the model when it's not persisted already
      */
     if (!this.isPersisted) {
-      await Model.hooks.execute('before', 'create', this)
-      await Model.hooks.execute('before', 'save', this)
+      await Model.hooks.exec('before', 'create', this)
+      await Model.hooks.exec('before', 'save', this)
 
       await Model.$adapter.insert(this, this.prepareForAdapter(this.$attributes))
 
       this.hydrateOriginals()
       this.isPersisted = true
 
-      await Model.hooks.execute('after', 'create', this)
-      await Model.hooks.execute('after', 'save', this)
+      await Model.hooks.exec('after', 'create', this)
+      await Model.hooks.exec('after', 'save', this)
       return
     }
 
@@ -1187,8 +1217,8 @@ export class BaseModel implements ModelContract {
       return
     }
 
-    await Model.hooks.execute('before', 'update', this)
-    await Model.hooks.execute('before', 'save', this)
+    await Model.hooks.exec('before', 'update', this)
+    await Model.hooks.exec('before', 'save', this)
 
     /**
      * Perform update
@@ -1197,8 +1227,8 @@ export class BaseModel implements ModelContract {
     this.hydrateOriginals()
     this.isPersisted = true
 
-    await Model.hooks.execute('after', 'update', this)
-    await Model.hooks.execute('after', 'save', this)
+    await Model.hooks.exec('after', 'update', this)
+    await Model.hooks.exec('after', 'save', this)
   }
 
   /**
@@ -1208,12 +1238,12 @@ export class BaseModel implements ModelContract {
     this.ensureIsntDeleted()
     const Model = this.constructor as typeof BaseModel
 
-    await Model.hooks.execute('before', 'delete', this)
+    await Model.hooks.exec('before', 'delete', this)
 
     await Model.$adapter.delete(this)
     this.isDeleted = true
 
-    await Model.hooks.execute('after', 'delete', this)
+    await Model.hooks.exec('after', 'delete', this)
   }
 
   /**

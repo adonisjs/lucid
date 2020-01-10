@@ -10,8 +10,8 @@
 declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   import * as knex from 'knex'
   import { Dictionary } from 'ts-essentials'
-  import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
   import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
+  import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
   /**
    * Get one or many of a generic
@@ -616,6 +616,9 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
      */
     first (): Promise<Result | null>
 
+    /**
+     * Perform delete operation
+     */
     del (): this
 
     /**

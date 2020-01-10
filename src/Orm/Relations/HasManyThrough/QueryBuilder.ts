@@ -41,6 +41,9 @@ ModelConstructorContract
     })
   }
 
+  /**
+   * Profiler data for HasManyThrough relationship
+   */
   protected profilerData () {
     return {
       relation: this.relation.type,
@@ -48,6 +51,13 @@ ModelConstructorContract
       throughModel: this.relation.throughModel().name,
       relatedModel: this.relation.relatedModel().name,
     }
+  }
+
+  /**
+   * The keys for constructing the join query
+   */
+  protected getRelationKeys (): string[] {
+    return [this.relation.throughForeignCastAsKey]
   }
 
   /**
@@ -164,12 +174,5 @@ ModelConstructorContract
      * Adding where constraints
      */
     this.addWhereConstraints(this)
-  }
-
-  /**
-   * The keys for constructing the join query
-   */
-  public getRelationKeys (): string[] {
-    return [this.relation.throughForeignCastAsKey]
   }
 }

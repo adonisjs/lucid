@@ -11,6 +11,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   import {
     ColumnDecorator,
     ComputedDecorator,
+    OrmConfigContract,
     ModelConstructorContract,
   } from '@ioc:Adonis/Lucid/Model'
 

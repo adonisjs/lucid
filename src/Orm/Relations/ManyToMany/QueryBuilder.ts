@@ -44,6 +44,9 @@ ModelConstructorContract
     })
   }
 
+  /**
+   * Profiler data for ManyToMany relationship
+   */
   protected profilerData () {
     return {
       relation: this.relation.type,
@@ -51,6 +54,15 @@ ModelConstructorContract
       pivotTable: this.relation.pivotTable,
       relatedModel: this.relation.relatedModel().name,
     }
+  }
+
+  /**
+   * The keys for constructing the join query
+   */
+  protected getRelationKeys (): string[] {
+    return [
+      `${this.relation.relatedModel().table}.${this.relation.relatedCastAsKey}`,
+    ]
   }
 
   /**
@@ -328,14 +340,5 @@ ModelConstructorContract
     )
 
     this.addWhereConstraints()
-  }
-
-  /**
-   * The keys for constructing the join query
-   */
-  public getRelationKeys (): string[] {
-    return [
-      `${this.relation.relatedModel().table}.${this.relation.relatedCastAsKey}`,
-    ]
   }
 }

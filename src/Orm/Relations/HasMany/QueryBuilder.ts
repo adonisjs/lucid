@@ -40,12 +40,22 @@ ModelConstructorContract
     })
   }
 
+  /**
+   * Profiler data for HasMany relationship
+   */
   protected profilerData () {
     return {
       relation: this.relation.type,
       model: this.relation.model.name,
       relatedModel: this.relation.relatedModel().name,
     }
+  }
+
+  /**
+   * The keys for constructing the join query
+   */
+  protected getRelationKeys (): string[] {
+    return [this.relation.foreignCastAsKey]
   }
 
   /**
@@ -75,12 +85,5 @@ ModelConstructorContract
      */
     const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
     this.knexQuery.where(this.relation.foreignCastAsKey, value)
-  }
-
-  /**
-   * The keys for constructing the join query
-   */
-  public getRelationKeys (): string[] {
-    return [this.relation.foreignCastAsKey]
   }
 }

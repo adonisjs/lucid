@@ -7,9 +7,10 @@
 
 import Env from '@ioc:Adonis/Core/Env'
 import Application from '@ioc:Adonis/Core/Application'
+import { OrmConfigContract } from '@ioc:Adonis/Lucid/Orm'
 import { DatabaseConfigContract } from '@ioc:Adonis/Lucid/Database'
 
-const databaseConfig: DatabaseConfigContract = {
+const databaseConfig: DatabaseConfigContract & { orm: Partial<OrmConfigContract> } = {
   /*
   |--------------------------------------------------------------------------
   | Connection
@@ -89,6 +90,21 @@ const databaseConfig: DatabaseConfigContract = {
       healthCheck: false,
     },
   },
+
+  /*
+  |--------------------------------------------------------------------------
+  | Orm Configuration
+  |--------------------------------------------------------------------------
+  |
+  | Following are some of the configuration options to tweak the conventional
+  | settings of the ORM. For example:
+  |
+  | - Define a custom function to compute the default table name for a given model.
+  | - Or define a custom function to compute the primary key for a given model.
+  |
+  */
+  orm: {
+  }
 }
 
 export default databaseConfig

@@ -18,7 +18,6 @@ import { HasManyClientContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { HasMany } from './index'
 import { getValue } from '../../../utils'
-// import { BaseQueryClient } from '../Base/QueryClient'
 import { HasManyQueryBuilder } from './QueryBuilder'
 
 /**

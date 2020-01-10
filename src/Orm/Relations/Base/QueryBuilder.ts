@@ -58,9 +58,9 @@ ModelConstructorContract
   protected abstract applyConstraints (): void
 
   /**
-   * Each relationship query builder
+   * Returns the sql query keys for the join query
    */
-  public abstract getRelationKeys (): string[]
+  protected abstract getRelationKeys (): string[]
 
   /**
    * Returns the name of the query action
