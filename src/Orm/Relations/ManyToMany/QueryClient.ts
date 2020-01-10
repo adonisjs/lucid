@@ -14,7 +14,6 @@ import { ModelConstructorContract, ModelContract, ModelObject } from '@ioc:Adoni
 
 import { ManyToMany } from './index'
 import { unique, getValue } from '../../../utils'
-// import { BaseQueryClient } from '../Base/QueryClient'
 import { ManyToManyQueryBuilder } from './QueryBuilder'
 
 /**
@@ -30,7 +29,6 @@ ModelConstructorContract
     private client: QueryClientContract,
     private relation: ManyToMany,
   ) {
-    // super($client, $relation)
   }
 
   /**
@@ -49,16 +47,46 @@ ModelConstructorContract
     return getValue(parent, this.relation.localKey, this.relation, action)
   }
 
+  /**
+   * Returns query builder instance
+   */
   public query (): any {
-    return new ManyToManyQueryBuilder(this.client.knexQuery(), this.client, this.parent, this.relation, false, false)
+    return new ManyToManyQueryBuilder(
+      this.client.knexQuery(),
+      this.client,
+      this.parent,
+      this.relation,
+      false,
+      false,
+    )
   }
 
+  /**
+   * Returns the eager query builder instance
+   */
   public eagerQuery (): any {
-    return new ManyToManyQueryBuilder(this.client.knexQuery(), this.client, this.parent, this.relation, false, true)
+    return new ManyToManyQueryBuilder(
+      this.client.knexQuery(),
+      this.client,
+      this.parent,
+      this.relation,
+      false,
+      true,
+    )
   }
 
+  /**
+   * Returns a query builder instance for the pivot table only
+   */
   public pivotQuery (): any {
-    return new ManyToManyQueryBuilder(this.client.knexQuery(), this.client, this.parent, this.relation, true, false)
+    return new ManyToManyQueryBuilder(
+      this.client.knexQuery(),
+      this.client,
+      this.parent,
+      this.relation,
+      true,
+      false,
+    )
   }
 
   public async create (): Promise<ModelContract> {

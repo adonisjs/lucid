@@ -30,6 +30,10 @@ export class Preloader implements PreloaderContract<ModelContract> {
     }
   } = {}
 
+  /**
+   * When invoked via query builder. The preloader will get the sideloaded
+   * object, that should be transferred to relationship model instances.
+   */
   private sideloaded: ModelObject = {}
 
   constructor (private model: ModelConstructorContract) {

@@ -40,12 +40,22 @@ ModelConstructorContract
     })
   }
 
+  /**
+   * Profiler data for HasOne relationship
+   */
   protected profilerData () {
     return {
       relation: this.relation.type,
       model: this.relation.model.name,
       relatedModel: this.relation.relatedModel().name,
     }
+  }
+
+  /**
+   * The keys for constructing the join query
+   */
+  protected getRelationKeys (): string[] {
+    return [this.relation.foreignCastAsKey]
   }
 
   /**
@@ -82,12 +92,5 @@ ModelConstructorContract
     if (!['update', 'delete'].includes(queryAction)) {
       this.knexQuery.limit(1)
     }
-  }
-
-  /**
-   * The keys for constructing the join query
-   */
-  public getRelationKeys (): string[] {
-    return [this.relation.foreignCastAsKey]
   }
 }

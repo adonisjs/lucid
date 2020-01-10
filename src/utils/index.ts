@@ -9,7 +9,6 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { extname } from 'path'
 import { Exception } from '@poppinss/utils'
 import { ModelContract } from '@ioc:Adonis/Lucid/Model'
 import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
@@ -28,6 +27,9 @@ export function ensureRelation<T extends RelationshipsContract> (
   return true
 }
 
+/**
+ * Ensure a key value is not null or undefined inside an object.
+ */
 export function ensureValue (collection: any, key: string, missingCallback: () => void) {
   const value = collection[key]
   if (value === undefined || value === null) {
@@ -38,6 +40,9 @@ export function ensureValue (collection: any, key: string, missingCallback: () =
   return value
 }
 
+/**
+ * Raises exception when a relationship `booted` property is false.
+ */
 export function ensureRelationIsBooted (relation: RelationshipsContract) {
   if (!relation.booted) {
     throw new Exception(
@@ -94,14 +99,6 @@ export function difference (main: any[], other: []) {
       return !b.find((one) => c == one)
     })
   })
-}
-
-/**
- * A helper to know file ends with a script file
- * extension or not
- */
-export function isJavaScriptFile (file: string) {
-  return ['.js', '.ts'].includes(extname(file))
 }
 
 /**

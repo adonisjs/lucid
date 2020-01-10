@@ -40,6 +40,9 @@ ModelConstructorContract
     })
   }
 
+  /**
+   * The profiler data for belongsTo relatioship
+   */
   protected profilerData () {
     return {
       relation: this.relation.type,
@@ -51,7 +54,7 @@ ModelConstructorContract
   /**
    * The keys for constructing the join query
    */
-  public getRelationKeys (): string[] {
+  protected getRelationKeys (): string[] {
     return [this.relation.localKey]
   }
 

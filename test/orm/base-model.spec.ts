@@ -2109,7 +2109,7 @@ test.group('Base Model | fetch', (group) => {
         ],
       )
     } catch ({ message }) {
-      assert.equal(message, 'Value for "username" is null or undefined inside "fetchOrNewUpMany" payload')
+      assert.equal(message, 'Value for the "username" is null or undefined inside "fetchOrNewUpMany" payload')
     }
 
     const usersList = await db.query().from('users')

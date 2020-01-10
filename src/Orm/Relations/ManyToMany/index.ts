@@ -11,7 +11,6 @@ import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 import { ManyToManyRelationContract, ManyToManyRelationOptions } from '@ioc:Adonis/Lucid/Relations'
 
-// import { BaseRelation } from '../Base'
 import { ManyToManyQueryClient } from './QueryClient'
 import { KeysExtractor } from '../KeysExtractor'
 import { ensureRelationIsBooted } from '../../../utils'
@@ -43,21 +42,11 @@ ModelConstructorContract
   public pivotTable: string
   public extrasPivotColumns: string[] = this.options.pivotColumns || []
 
-  // public get profilerData () {
-  //   return {
-  //     model: this.model.name,
-  //     relatedModel: this.relatedModel().name,
-  //     pivotTable: this.pivotTable,
-  //     relation: this.type,
-  //   }
-  // }
-
   constructor (
     public relationName: string,
     private options: ManyToManyRelationOptions,
     public model: ModelConstructorContract,
   ) {
-    // super(relationName, options, model)
   }
 
   /**

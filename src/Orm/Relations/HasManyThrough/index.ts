@@ -11,7 +11,6 @@ import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 import { HasManyThroughRelationContract, ThroughRelationOptions } from '@ioc:Adonis/Lucid/Relations'
 
-// import { BaseRelation } from '../Base'
 import { HasManyThroughClient } from './QueryClient'
 import { KeysExtractor } from '../KeysExtractor'
 import { ensureRelationIsBooted } from '../../../utils'
@@ -54,21 +53,11 @@ ModelConstructorContract
   public throughForeignKey: string
   public throughForeignCastAsKey: string
 
-  // public get $profilerData () {
-  //   return {
-  //     model: this.model.name,
-  //     relatedModel: this.relatedModel().name,
-  //     throughModel: this.throughModel().name,
-  //     relation: this.type,
-  //   }
-  // }
-
   constructor (
     public relationName: string,
     private options: ThroughRelationOptions,
     public model: ModelConstructorContract,
   ) {
-    // super(relationName, throughOptions, model)
   }
 
   /**

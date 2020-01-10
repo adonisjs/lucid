@@ -39,6 +39,7 @@
   },
   "homepage": "https://github.com/adonisjs/adonis-lucid#readme",
   "dependencies": {
+    "@poppinss/hooks": "^1.0.1",
     "@poppinss/utils": "^2.1.1",
     "camelcase": "^5.3.1",
     "columnify": "^1.5.4",

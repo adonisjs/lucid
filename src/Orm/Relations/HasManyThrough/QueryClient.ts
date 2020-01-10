@@ -29,11 +29,28 @@ ModelConstructorContract
   ) {
   }
 
+  /**
+   * Returns an instance of has many through query builder
+   */
   public query (): any {
-    return new HasManyThroughQueryBuilder(this.client.knexQuery(), this.client, this.parent, this.relation)
+    return new HasManyThroughQueryBuilder(
+      this.client.knexQuery(),
+      this.client,
+      this.parent,
+      this.relation,
+    )
   }
 
+  /**
+   * Returns an instance of has many through eager query builder
+   */
   public eagerQuery (): any {
-    return new HasManyThroughQueryBuilder(this.client.knexQuery(), this.client, this.parent, this.relation, true)
+    return new HasManyThroughQueryBuilder(
+      this.client.knexQuery(),
+      this.client,
+      this.parent,
+      this.relation,
+      true,
+    )
   }
 }
