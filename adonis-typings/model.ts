@@ -87,6 +87,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     hasGetter: boolean,
     hasSetter: boolean,
     serialize?: (value: any, attribute: string, model: ModelContract) => any,
+    cast?: (value: any, attribute: string, model: ModelContract) => any,
   }
 
   /**
