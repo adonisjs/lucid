@@ -26,6 +26,9 @@ export default class Migrate extends MigrationsBase {
   @flags.string({ description: 'Define a custom database connection' })
   public connection: string
 
+  @flags.boolean({ description: 'Explictly force to run migrations in production' })
+  public force: boolean
+
   @flags.boolean({ description: 'Print SQL queries, instead of running the migrations' })
   public dryRun: boolean
 
@@ -46,6 +49,7 @@ export default class Migrate extends MigrationsBase {
    */
   public async handle (): Promise<void> {
     const connection = this._db.getRawConnection(this.connection || this._db.primaryConnectionName)
+    let continueMigrations = !this.application.inProduction || this.force
 
     /**
      * Ensure the define connection name does exists in the
@@ -55,6 +59,26 @@ export default class Migrate extends MigrationsBase {
       this.logger.error(
         `${this.connection} is not a valid connection name. Double check config/database file`,
       )
+      return
+    }
+
+    /**
+     * Ask for prompt when running in production and `force` flag is
+     * not defined
+     */
+    if (!continueMigrations) {
+      try {
+        continueMigrations = await this.prompt
+          .confirm('You are in production environment. Want to continue running migrations?')
+      } catch (error) {
+        continueMigrations = false
+      }
+    }
+
+    /**
+     * Prompt cancelled or rejected and hence do not continue
+     */
+    if (!continueMigrations) {
       return
     }
 
