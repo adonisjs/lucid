@@ -608,6 +608,36 @@ test.group('Base Model | persist', (group) => {
       assert.equal(message, '"Model.refresh" failed. Unable to lookup "users" table where "id" = 1')
     }
   })
+
+  test('invoke column cast method before passing values to the adapter', async (assert) => {
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column({ castAs: 'full_name', cast: (value) => value.toUpperCase() })
+      public fullName: string
+    }
+
+    User.$adapter = adapter
+
+    const user = new User()
+    user.username = 'virk'
+    user.fullName = 'H virk'
+
+    await user.save()
+    assert.isTrue(user.isPersisted)
+    assert.isFalse(user.isDirty)
+    assert.deepEqual(adapter.operations, [{
+      type: 'insert',
+      instance: user,
+      attributes: { username: 'virk', full_name: 'H VIRK' },
+    }])
+
+    assert.deepEqual(user.$attributes, { username: 'virk', fullName: 'H virk' })
+    assert.deepEqual(user.$original, { username: 'virk', fullName: 'H virk' })
+  })
 })
 
 test.group('Base Model | create from adapter results', (group) => {

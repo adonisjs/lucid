@@ -215,6 +215,7 @@ export class BaseModel implements ModelContract {
         ? options.serializeAs
         : this.$configurator.getSerializeAsKey(this, name),
       serialize: options.serialize,
+      cast: options.cast,
     }
 
     /**
@@ -725,7 +726,18 @@ export class BaseModel implements ModelContract {
    * used by the adapter.
    */
   protected prepareForAdapter (attributes: ModelObject) {
-    return (this.constructor as typeof BaseModel).$mapKeysToCastKeys(attributes)
+    const Model = this.constructor as typeof BaseModel
+
+    return Object.keys(attributes).reduce((result, key) => {
+      const column = Model.$getColumn(key)!
+
+      const value = typeof (column.cast) === 'function'
+        ? column.cast(attributes[key], key, this)
+        : attributes[key]
+
+      result[Model.$resolveCastKey(key)] = value
+      return result
+    }, {})
   }
 
   /**
