@@ -45,7 +45,7 @@ import { HasMany } from '../Relations/HasMany'
 import { BelongsTo } from '../Relations/BelongsTo'
 import { ManyToMany } from '../Relations/ManyToMany'
 import { HasManyThrough } from '../Relations/HasManyThrough'
-import { ensureRelation, isObject, ensureValue } from '../../utils'
+import { ensureRelation, isObject, ensureValue, managedTransaction } from '../../utils'
 
 const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
 
@@ -390,35 +390,20 @@ export class BaseModel implements ModelContract {
 
   /**
    * Same as [[BaseModel.create]], but persists multiple instances. The create
-   * calls are wrapped inside a transaction.
+   * many call will be wrapped inside a managed transaction for consistency.
+   * If required, you can also pass a transaction client and the method
+   * will use that instead of create a new one.
    */
   public static async createMany<T extends ModelConstructorContract> (
     this: T,
     values: ModelObject[],
     options?: ModelAdapterOptions,
   ): Promise<InstanceType<T>[]> {
-    const trx = await this.$adapter.modelConstructorClient(this, options).transaction()
-    const collection: InstanceType<T>[] = []
+    const client = this.$adapter.modelConstructorClient(this, options)
 
-    try {
-      for (let row of values) {
-        const instance = new this() as InstanceType<T>
-
-        instance.fill(row)
-        instance.trx = trx
-        instance.options = options
-
-        await instance.save()
-        collection.push(instance)
-      }
-
-      await trx.commit()
-    } catch (error) {
-      await trx.rollback()
-      throw error
-    }
-
-    return collection
+    return managedTransaction(client, async (trx) => {
+      return Promise.all(values.map((row) => this.create(row, { client: trx })))
+    })
   }
 
   /**
@@ -598,32 +583,28 @@ export class BaseModel implements ModelContract {
     uniqueKey: string,
     payload: ModelObject[],
     options?: ModelAdapterOptions,
-  ) {
+  ): Promise<InstanceType<T>[]> {
     const rows = await this.fetchOrNewUpMany(uniqueKey, payload, options)
     if (!rows.length) {
       return rows
     }
 
-    /**
-     * Creating a new transaction to have consistent writes. If the
-     * model is already using a transaction, then we will create
-     * a save point instead
-     */
-    const trx = await this.$adapter.modelClient(rows[0]).transaction()
-
-    try {
+    const client = this.$adapter.modelClient(rows[0])
+    await managedTransaction(client, async (trx) => {
       await Promise.all(rows.map((row) => {
+        /**
+         * If transaction `client` was passed, then the row will have
+         * the `trx` already set. But since, the trx of row will be
+         * same as the `trx` passed to this callback, we can safely
+         * re-set it.
+         */
         row.trx = trx
         if (!row.isPersisted) {
           return row.save()
         }
         return Promise.resolve()
       }))
-      await trx.commit()
-    } catch (error) {
-      await trx.rollback()
-      throw error
-    }
+    })
 
     return rows
   }
@@ -644,23 +625,19 @@ export class BaseModel implements ModelContract {
       return rows
     }
 
-    /**
-     * Creating a new transaction to have consistent writes. If the
-     * model is already using a transaction, then we will create
-     * a save point instead
-     */
-    const trx = await this.$adapter.modelClient(rows[0]).transaction()
-
-    try {
+    const client = this.$adapter.modelClient(rows[0])
+    await managedTransaction(client, async (trx) => {
       await Promise.all(rows.map((row) => {
+        /**
+         * If transaction `client` was passed, then the row will have
+         * the `trx` already set. But since, the trx of row will be
+         * same as the `trx` passed to this callback, we can safely
+         * re-set it.
+         */
         row.trx = trx
         return row.save()
       }))
-      await trx.commit()
-    } catch (error) {
-      await trx.rollback()
-      throw error
-    }
+    })
 
     return rows
   }

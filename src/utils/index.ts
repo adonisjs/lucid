@@ -12,6 +12,7 @@
 import { Exception } from '@poppinss/utils'
 import { ModelContract } from '@ioc:Adonis/Lucid/Model'
 import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
+import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 /**
  * Ensure that relation is defined
@@ -156,4 +157,29 @@ export function syncDiff (
 
     return result
   }, { insert: [], update: [] })
+}
+
+/**
+ * Invokes a callback by wrapping it inside managed transaction
+ * when passed client is not transaction itself.
+ */
+export async function managedTransaction<T> (
+  client: QueryClientContract | TransactionClientContract,
+  callback: (trx: TransactionClientContract) => Promise<T>,
+): Promise<T> {
+  const isManagedTransaction = !client.isTransaction
+  const trx = client.isTransaction ? client as TransactionClientContract : await client.transaction()
+
+  if (!isManagedTransaction) {
+    return callback(trx)
+  }
+
+  try {
+    const response = await callback(trx)
+    await trx.commit()
+    return response
+  } catch (error) {
+    trx.rollback()
+    throw error
+  }
 }

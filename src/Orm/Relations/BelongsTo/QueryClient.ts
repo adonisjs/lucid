@@ -13,9 +13,8 @@ import { BelongsToClientContract } from '@ioc:Adonis/Lucid/Relations'
 import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 
 import { BelongsTo } from './index'
-import { getValue } from '../../../utils'
-// import { BaseQueryClient } from '../Base/QueryClient'
 import { BelongsToQueryBuilder } from './QueryBuilder'
+import { getValue, managedTransaction } from '../../../utils'
 
 /**
  * Query client for executing queries in scope to the defined
@@ -77,11 +76,17 @@ ModelConstructorContract
    * Associate the related model with the parent model
    */
   public async associate (related: ModelContract) {
-    this.ensureSingleParent(this.parent)
-    await related.save()
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
-    this.parent[this.relation.foreignKey] = this.getForeignKeyValue(related, 'associate')
-    await this.parent.save()
+    await managedTransaction(parent.trx || this.client, async (trx) => {
+      related.trx = trx
+      await related.save()
+
+      parent[this.relation.foreignKey] = this.getForeignKeyValue(related, 'associate')
+      parent.trx = trx
+      await parent.save()
+    })
   }
 
   /**

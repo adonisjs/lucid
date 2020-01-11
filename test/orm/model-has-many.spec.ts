@@ -1177,14 +1177,14 @@ test.group('Model | HasMany | persist', (group) => {
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalPosts = await db.query().from('posts').count('*', 'total')
 
-    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalUsers[0].total, 0)
     assert.equal(totalPosts[0].total, 0)
     assert.isUndefined(user.trx)
     assert.isUndefined(post.trx)
     assert.isUndefined(post1.trx)
   })
 
-  test('wrap save many calls inside a save point when parent is in transaction', async (assert) => {
+  test('use parent model transaction when exists', async (assert) => {
     class Post extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1215,7 +1215,12 @@ test.group('Model | HasMany | persist', (group) => {
     const post = new Post()
     post.title = 'Adonis 101'
 
-    await user.related('posts').saveMany([post])
+    try {
+      await user.related('posts').saveMany([post])
+    } catch (error) {
+      console.log(error)
+    }
+
     assert.isFalse(user.trx.isCompleted)
     await trx.rollback()
 
@@ -1353,12 +1358,12 @@ test.group('Model | HasMany | persist', (group) => {
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalPosts = await db.query().from('posts').count('*', 'total')
 
-    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalUsers[0].total, 0)
     assert.equal(totalPosts[0].total, 0)
     assert.isUndefined(user.trx)
   })
 
-  test('wrap create many calls inside a save point when parent is in transaction', async (assert) => {
+  test('use parent model transaction when already exists', async (assert) => {
     class Post extends BaseModel {
       @column({ isPrimary: true })
       public id: number
