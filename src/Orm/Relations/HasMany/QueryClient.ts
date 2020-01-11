@@ -17,8 +17,8 @@ import {
 import { HasManyClientContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { HasMany } from './index'
-import { getValue } from '../../../utils'
 import { HasManyQueryBuilder } from './QueryBuilder'
+import { getValue, managedTransaction } from '../../../utils'
 
 /**
  * Query client for executing queries in scope to the defined
@@ -80,54 +80,53 @@ ModelConstructorContract
    * Save related model instance
    */
   public async save (related: ModelContract) {
-    this.ensureSingleParent(this.parent)
-    await this.parent.save()
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
-    related[this.relation.foreignKey] = this.getForeignKeyValue(this.parent, 'save')
-    await related.save()
+    await managedTransaction(parent.trx || this.client, async (trx) => {
+      parent.trx = trx
+      await parent.save()
+
+      related[this.relation.foreignKey] = this.getForeignKeyValue(parent, 'save')
+      related.trx = trx
+      await related.save()
+    })
   }
 
   /**
    * Save related model instance
    */
   public async saveMany (related: ModelContract[]) {
-    this.ensureSingleParent(this.parent)
-    await this.parent.save()
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
-    const foreignKeyValue = this.getForeignKeyValue(this.parent, 'saveMany')
-    const trx = await this.client.transaction()
+    await managedTransaction(parent.trx || this.client, async (trx) => {
+      parent.trx = trx
+      await parent.save()
 
-    try {
-      /**
-       * Saving many of the related instances by wrapping all of them
-       * inside a transaction
-       */
+      const foreignKeyValue = this.getForeignKeyValue(parent, 'saveMany')
       await Promise.all(related.map((row) => {
         row[this.relation.foreignKey] = foreignKeyValue
         row.trx = trx
         return row.save()
       }))
-
-      await trx.commit()
-    } catch (error) {
-      await trx.rollback()
-      throw error
-    }
+    })
   }
 
   /**
    * Create instance of the related model
    */
   public async create (values: ModelObject): Promise<ModelContract> {
-    this.ensureSingleParent(this.parent)
-    await this.parent.save()
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
-    return this.relation.relatedModel().create(Object.assign({
-      [this.relation.foreignKey]: this.getForeignKeyValue(this.parent, 'create'),
-    }, values), {
-      client: this.client,
-      connection: this.client.connectionName,
-      profiler: this.client.profiler,
+    return managedTransaction(parent.trx || this.client, async (trx) => {
+      parent.trx = trx
+      await parent.save()
+
+      return this.relation.relatedModel().create(Object.assign({
+        [this.relation.foreignKey]: this.getForeignKeyValue(parent, 'create'),
+      }, values), { client: trx })
     })
   }
 
@@ -135,35 +134,34 @@ ModelConstructorContract
    * Create instance of the related model
    */
   public async createMany (values: ModelObject[]): Promise<ModelContract[]> {
-    this.ensureSingleParent(this.parent)
-    await this.parent.save()
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
-    const foreignKeyValue = this.getForeignKeyValue(this.parent, 'saveMany')
-    return this.relation.relatedModel().createMany(values.map((value) => {
-      return Object.assign({ [this.relation.foreignKey]: foreignKeyValue }, value)
-    }), {
-      client: this.client,
-      connection: this.client.connectionName,
-      profiler: this.client.profiler,
+    return managedTransaction(parent.trx || this.client, async (trx) => {
+      parent.trx = trx
+      await parent.save()
+
+      const foreignKeyValue = this.getForeignKeyValue(parent, 'createMany')
+      return this.relation.relatedModel().createMany(values.map((value) => {
+        return Object.assign({ [this.relation.foreignKey]: foreignKeyValue }, value)
+      }), { client: trx })
     })
   }
 
   /**
    * Get the first matching related instance or create a new one
    */
-  public async firstOrCreate (
-    search: any,
-    savePayload?: any,
-  ): Promise<ModelContract> {
-    this.ensureSingleParent(this.parent)
-    await this.parent.save()
+  public async firstOrCreate (search: any, savePayload?: any): Promise<ModelContract> {
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
-    return this.relation.relatedModel().firstOrCreate(Object.assign({
-      [this.relation.foreignKey]: this.getForeignKeyValue(this.parent, 'firstOrCreate'),
-    }, search), savePayload, {
-      client: this.client,
-      connection: this.client.connectionName,
-      profiler: this.client.profiler,
+    return managedTransaction(parent.trx || this.client, async (trx) => {
+      parent.trx = trx
+      await parent.save()
+
+      return this.relation.relatedModel().firstOrCreate(Object.assign({
+        [this.relation.foreignKey]: this.getForeignKeyValue(parent, 'firstOrCreate'),
+      }, search), savePayload, { client: trx })
     })
   }
 
@@ -174,15 +172,16 @@ ModelConstructorContract
     search: ModelObject,
     updatePayload: ModelObject,
   ): Promise<ModelContract> {
-    this.ensureSingleParent(this.parent)
-    await this.parent.save()
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
-    return this.relation.relatedModel().updateOrCreate(Object.assign({
-      [this.relation.foreignKey]: this.getForeignKeyValue(this.parent, 'updateOrCreate'),
-    }, search), updatePayload, {
-      client: this.client,
-      connection: this.client.connectionName,
-      profiler: this.client.profiler,
+    return managedTransaction(parent.trx || this.client, async (trx) => {
+      parent.trx = trx
+      await parent.save()
+
+      return this.relation.relatedModel().updateOrCreate(Object.assign({
+        [this.relation.foreignKey]: this.getForeignKeyValue(parent, 'updateOrCreate'),
+      }, search), updatePayload, { client: trx })
     })
   }
 }

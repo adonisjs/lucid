@@ -1027,6 +1027,45 @@ test.group('Model | BelongsTo | persist', (group) => {
     assert.equal(profiles[0].user_id, user.id)
   })
 
+  test('wrap associate call inside transaction', async (assert) => {
+    assert.plan(3)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: BelongsTo<User>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    const profile = new Profile()
+
+    try {
+      await profile.related('user').associate(user)
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    const profiles = await db.query().from('profiles')
+    const users = await db.query().from('users')
+    assert.lengthOf(profiles, 0)
+    assert.lengthOf(users, 0)
+  })
+
   test('dissociate relation', async (assert) => {
     class User extends BaseModel {
       @column({ isPrimary: true })

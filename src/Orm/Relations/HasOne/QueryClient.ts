@@ -13,8 +13,8 @@ import { HasOneClientContract } from '@ioc:Adonis/Lucid/Relations'
 import { ModelObject, ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 
 import { HasOne } from './index'
-import { getValue } from '../../../utils'
 import { HasOneQueryBuilder } from './QueryBuilder'
+import { getValue, managedTransaction } from '../../../utils'
 
 /**
  * Query client for executing queries in scope to the defined
@@ -65,30 +65,33 @@ ModelConstructorContract
    * Save related model instance
    */
   public async save (related: ModelContract) {
-    this.ensureSingleParent(this.parent)
-    await this.parent.save()
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
-    /**
-     * Do not copy options or trx from the parent model, the end user must do
-     * it themselves for explicit behavior
-     */
-    related[this.relation.foreignKey] = this.getForeignKeyValue(this.parent, 'save')
-    await related.save()
+    await managedTransaction(parent.trx || this.client, async (trx) => {
+      parent.trx = trx
+      await parent.save()
+
+      related[this.relation.foreignKey] = this.getForeignKeyValue(parent, 'save')
+      related.trx = trx
+      await related.save()
+    })
   }
 
   /**
    * Create instance of the related model
    */
   public async create (values: ModelObject): Promise<ModelContract> {
-    this.ensureSingleParent(this.parent)
-    await this.parent.save()
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
-    return this.relation.relatedModel().create(Object.assign({
-      [this.relation.foreignKey]: this.getForeignKeyValue(this.parent, 'create'),
-    }, values), {
-      client: this.client,
-      connection: this.client.connectionName,
-      profiler: this.client.profiler,
+    return managedTransaction(parent.trx || this.client, async (trx) => {
+      parent.trx = trx
+      await parent.save()
+
+      return this.relation.relatedModel().create(Object.assign({
+        [this.relation.foreignKey]: this.getForeignKeyValue(parent, 'create'),
+      }, values), { client: trx })
     })
   }
 
@@ -99,15 +102,16 @@ ModelConstructorContract
     search: ModelObject,
     savePayload?: ModelObject,
   ): Promise<ModelContract> {
-    this.ensureSingleParent(this.parent)
-    await this.parent.save()
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
-    return this.relation.relatedModel().firstOrCreate(Object.assign({
-      [this.relation.foreignKey]: this.getForeignKeyValue(this.parent, 'firstOrCreate'),
-    }, search), savePayload, {
-      client: this.client,
-      connection: this.client.connectionName,
-      profiler: this.client.profiler,
+    return managedTransaction(parent.trx || this.client, async (trx) => {
+      parent.trx = trx
+      await parent.save()
+
+      return this.relation.relatedModel().firstOrCreate(Object.assign({
+        [this.relation.foreignKey]: this.getForeignKeyValue(parent, 'firstOrCreate'),
+      }, search), savePayload, { client: trx })
     })
   }
 
@@ -118,15 +122,16 @@ ModelConstructorContract
     search: ModelObject,
     updatePayload: ModelObject,
   ): Promise<ModelContract> {
-    this.ensureSingleParent(this.parent)
-    await this.parent.save()
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
-    return this.relation.relatedModel().updateOrCreate(Object.assign({
-      [this.relation.foreignKey]: this.getForeignKeyValue(this.parent, 'updateOrCreate'),
-    }, search), updatePayload, {
-      client: this.client,
-      connection: this.client.connectionName,
-      profiler: this.client.profiler,
+    return managedTransaction(parent.trx || this.client, async (trx) => {
+      parent.trx = trx
+      await parent.save()
+
+      return this.relation.relatedModel().updateOrCreate(Object.assign({
+        [this.relation.foreignKey]: this.getForeignKeyValue(parent, 'updateOrCreate'),
+      }, search), updatePayload, { client: trx })
     })
   }
 }

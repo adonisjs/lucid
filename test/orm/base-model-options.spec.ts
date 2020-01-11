@@ -11,9 +11,9 @@
 
 import test from 'japa'
 import { Profiler } from '@adonisjs/profiler/build/standalone'
-// import { HasOne } from '@ioc:Adonis/Lucid/Relations'
+import { HasOne } from '@ioc:Adonis/Lucid/Relations'
 
-import { column } from '../../src/Orm/Decorators'
+import { column, hasOne } from '../../src/Orm/Decorators'
 import { setup, cleanup, getDb, resetTables, getBaseModel, ormAdapter } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
@@ -834,42 +834,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     assert.equal(total[0].total, 0)
   })
 
-  test('wrap update calls inside a transaction', async (assert) => {
-    assert.plan(3)
-
-    class User extends BaseModel {
-      public static $table = 'users'
-
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public username: string
-
-      @column()
-      public email: string
-    }
-
-    await db.insertQuery().table('users').insert({ username: 'virk' })
-    try {
-      await User.updateOrCreateMany(
-        'username',
-        [
-          { username: 'virk', email: 'foo@bar.com' },
-          { username: 'nikk', email: 'foo@bar.com' },
-          { username: 'romain', email: 'foo@bar.com' },
-        ],
-      )
-    } catch (error) {
-      assert.exists(error)
-    }
-
-    const users = await db.from('users')
-    assert.lengthOf(users, 1)
-    assert.isNull(users[0].email)
-  })
-
-  test('create save point when already using transaction', async (assert) => {
+  test('use existing transaction when passed', async (assert) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -884,6 +849,9 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     }
 
     const trx = await db.transaction()
+    trx.transaction = async function () {
+      throw new Error('Never expected to be invoked')
+    }
 
     await User.fetchOrCreateMany(
       'username',
@@ -901,444 +869,683 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
   })
 })
 
-// test.group('Model options | Query Builder Preloads', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
+test.group('Model options | Model.updateOrCreateMany', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('define custom connection', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+
+    const [user] = await User.updateOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { connection: 'secondary' },
+    )
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 1)
+    assert.equal(user.options!.connection, 'secondary')
+    assert.instanceOf(user.options!.profiler, Profiler)
+  })
+
+  test('define custom connection when search fails', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
 
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
+    const [user] = await User.updateOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { connection: 'secondary' },
+    )
 
-//   group.afterEach(async () => {
-//     await resetTables()
-//   })
+    const total = await db.from('users').count('*', 'total')
 
-//   test('pass query options to preloaded models', async (assert) => {
-//     class Profile extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    assert.equal(total[0].total, 1)
+    assert.equal(user.options!.connection, 'secondary')
+    assert.instanceOf(user.options!.profiler, Profiler)
+  })
+
+  test('define custom profiler', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ isPrimary: true })
+      public id: number
 
-//       @column()
-//       public userId: number
+      @column()
+      public username: string
+    }
 
-//       @column()
-//       public displayName: string
-//     }
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const profiler = new Profiler({})
 
-//     class User extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    const [user] = await User.updateOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { profiler },
+    )
 
-//       @column()
-//       public username: string
+    const total = await db.from('users').count('*', 'total')
 
-//       @hasOne(() => Profile)
-//       public profile: HasOne<Profile>
-//     }
+    assert.equal(total[0].total, 1)
+    assert.equal(user.options!.connection, 'primary')
+    assert.deepEqual(user.options!.profiler, profiler)
+  })
 
-//     await db.insertQuery().table('users').insert({ username: 'virk' })
-//     await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+  test('define custom profiler when search fails', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    const profiler = new Profiler({})
+    const [user] = await User.updateOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { profiler },
+    )
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 1)
+    assert.equal(user.options!.connection, 'primary')
+    assert.deepEqual(user.options!.profiler, profiler)
+  })
+
+  test('define custom client', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const client = db.connection('secondary')
+
+    const [user] = await User.updateOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { client },
+    )
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 1)
+    assert.deepEqual(user.options!.profiler, client.profiler)
+    assert.deepEqual(user.options!.connection, client.connectionName)
+  })
+
+  test('define custom client when search fails', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    const client = db.connection('secondary')
+
+    const [user] = await User.updateOrCreateMany(
+      'username',
+      [{ username: 'virk' }],
+      { client },
+    )
+
+    const total = await db.from('users').count('*', 'total')
+
+    assert.equal(total[0].total, 1)
+    assert.deepEqual(user.options!.profiler, client.profiler)
+    assert.deepEqual(user.options!.connection, client.connectionName)
+  })
+
+  test('wrap update many calls inside a transaction', async (assert) => {
+    assert.plan(2)
+
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    try {
+      await User.updateOrCreateMany(
+        'username',
+        [
+          { username: 'virk', email: 'foo@bar.com' },
+          { username: 'nikk', email: 'foo@bar.com' },
+          { username: 'romain', email: 'foo@bar.com' },
+        ],
+      )
+    } catch (error) {
+      assert.exists(error)
+    }
+
+    const total = await db.from('users').count('*', 'total')
+    assert.equal(total[0].total, 0)
+  })
+
+  test('use existing transaction when passed', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    const trx = await db.transaction()
+    trx.transaction = async function () {
+      throw new Error('Never expected to be invoked')
+    }
+
+    await User.updateOrCreateMany(
+      'username',
+      [
+        { username: 'virk', email: 'foo@bar.com' },
+      ],
+      { client: trx },
+    )
+
+    assert.isFalse(trx.isCompleted)
+    await trx.rollback()
+
+    const total = await db.from('users').count('*', 'total')
+    assert.equal(total[0].total, 0)
+  })
+})
+
+test.group('Model options | Query Builder Preloads', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('pass query options to preloaded models', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     const users = await User.query({ connection: 'secondary' }).preload('profile').exec()
-//     assert.lengthOf(users, 1)
+      @column()
+      public userId: number
 
-//     assert.equal(users[0].options!.connection, 'secondary')
-//     assert.instanceOf(users[0].options!.profiler, Profiler)
+      @column()
+      public displayName: string
+    }
 
-//     assert.equal(users[0].profile.options!.connection, 'secondary')
-//     assert.instanceOf(users[0].profile.options!.profiler, Profiler)
-//   })
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//   test('use transaction client to execute preload queries', async (assert) => {
-//     class Profile extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+      @column()
+      public username: string
 
-//       @column()
-//       public userId: number
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
 
-//       @column()
-//       public displayName: string
-//     }
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-//     class User extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    const users = await User.query({ connection: 'secondary' }).preload('profile').exec()
+    assert.lengthOf(users, 1)
 
-//       @column()
-//       public username: string
+    assert.equal(users[0].options!.connection, 'secondary')
+    assert.instanceOf(users[0].options!.profiler, Profiler)
 
-//       @hasOne(() => Profile)
-//       public profile: Profile
-//     }
+    assert.equal(users[0].profile.options!.connection, 'secondary')
+    assert.instanceOf(users[0].profile.options!.profiler, Profiler)
+  })
 
-//     await db.insertQuery().table('users').insert({ username: 'virk' })
-//     await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+  test('use transaction client to execute preload queries', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     const trx = await db.transaction()
-//     const users = await User.query({ client: trx }).preload('profile').exec()
-//     await trx.commit()
+      @column()
+      public userId: number
 
-//     assert.lengthOf(users, 1)
+      @column()
+      public displayName: string
+    }
 
-//     assert.equal(users[0].options!.connection, 'primary')
-//     assert.instanceOf(users[0].options!.profiler, Profiler)
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     assert.equal(users[0].profile.options!.connection, 'primary')
-//     assert.instanceOf(users[0].profile.options!.profiler, Profiler)
-//   })
+      @column()
+      public username: string
 
-//   test('pass profiler to preload models', async (assert) => {
-//     class Profile extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
 
-//       @column()
-//       public userId: number
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-//       @column()
-//       public displayName: string
-//     }
+    const trx = await db.transaction()
+    const users = await User.query({ client: trx }).preload('profile').exec()
+    await trx.commit()
 
-//     class User extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    assert.lengthOf(users, 1)
 
-//       @column()
-//       public username: string
+    assert.equal(users[0].options!.connection, 'primary')
+    assert.instanceOf(users[0].options!.profiler, Profiler)
 
-//       @hasOne(() => Profile)
-//       public profile: Profile
-//     }
+    assert.equal(users[0].profile.options!.connection, 'primary')
+    assert.instanceOf(users[0].profile.options!.profiler, Profiler)
+  })
 
-//     await db.insertQuery().table('users').insert({ username: 'virk' })
-//     await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+  test('pass profiler to preload models', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     const profiler = new Profiler({})
-//     const users = await User.query({ profiler }).preload('profile').exec()
+      @column()
+      public userId: number
 
-//     assert.lengthOf(users, 1)
+      @column()
+      public displayName: string
+    }
 
-//     assert.equal(users[0].options!.connection, 'primary')
-//     assert.deepEqual(users[0].options!.profiler, profiler)
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     assert.equal(users[0].profile.options!.connection, 'primary')
-//     assert.deepEqual(users[0].profile.options!.profiler, profiler)
-//   })
+      @column()
+      public username: string
 
-//   test('pass sideloaded data to preloads', async (assert) => {
-//     class Profile extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
 
-//       @column()
-//       public userId: number
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-//       @column()
-//       public displayName: string
-//     }
+    const profiler = new Profiler({})
+    const users = await User.query({ profiler }).preload('profile').exec()
 
-//     class User extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    assert.lengthOf(users, 1)
 
-//       @column()
-//       public username: string
+    assert.equal(users[0].options!.connection, 'primary')
+    assert.deepEqual(users[0].options!.profiler, profiler)
 
-//       @hasOne(() => Profile)
-//       public profile: Profile
-//     }
+    assert.equal(users[0].profile.options!.connection, 'primary')
+    assert.deepEqual(users[0].profile.options!.profiler, profiler)
+  })
 
-//     await db.insertQuery().table('users').insert({ username: 'virk' })
-//     await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+  test('pass sideloaded data to preloads', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     const users = await User.query().sideload({ id: 1 }).preload('profile').exec()
+      @column()
+      public userId: number
 
-//     assert.lengthOf(users, 1)
+      @column()
+      public displayName: string
+    }
 
-//     assert.equal(users[0].options!.connection, 'primary')
-//     assert.deepEqual(users[0].$sideloaded, { id: 1 })
-//     assert.deepEqual(users[0].profile.$sideloaded, { id: 1 })
-//   })
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//   test('custom sideloaded data on preload query must win', async (assert) => {
-//     class Profile extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+      @column()
+      public username: string
 
-//       @column()
-//       public userId: number
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
 
-//       @column()
-//       public displayName: string
-//     }
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-//     class User extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    const users = await User.query().sideload({ id: 1 }).preload('profile').exec()
 
-//       @column()
-//       public username: string
+    assert.lengthOf(users, 1)
 
-//       @hasOne(() => Profile)
-//       public profile: Profile
-//     }
+    assert.equal(users[0].options!.connection, 'primary')
+    assert.deepEqual(users[0].sideloaded, { id: 1 })
+    assert.deepEqual(users[0].profile.sideloaded, { id: 1 })
+  })
 
-//     await db.insertQuery().table('users').insert({ username: 'virk' })
-//     await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+  test('custom sideloaded data on preload query must win', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     const users = await User.query().sideload({ id: 1 }).preload('profile', (builder) => {
-//       builder.sideload({ id: 2 })
-//     }).exec()
+      @column()
+      public userId: number
 
-//     assert.lengthOf(users, 1)
+      @column()
+      public displayName: string
+    }
 
-//     assert.equal(users[0].options!.connection, 'primary')
-//     assert.deepEqual(users[0].$sideloaded, { id: 1 })
-//     assert.deepEqual(users[0].profile.$sideloaded, { id: 2 })
-//   })
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//   test('use transaction client to update preloaded rows', async (assert) => {
-//     class Profile extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+      @column()
+      public username: string
 
-//       @column()
-//       public userId: number
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
 
-//       @column()
-//       public displayName: string
-//     }
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-//     class User extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    const users = await User.query().sideload({ id: 1 }).preload('profile', (builder) => {
+      builder.sideload({ id: 2 })
+    }).exec()
 
-//       @column()
-//       public username: string
+    assert.lengthOf(users, 1)
 
-//       @hasOne(() => Profile)
-//       public profile: Profile
-//     }
+    assert.equal(users[0].options!.connection, 'primary')
+    assert.deepEqual(users[0].sideloaded, { id: 1 })
+    assert.deepEqual(users[0].profile.sideloaded, { id: 2 })
+  })
 
-//     await db.insertQuery().table('users').insert({ username: 'virk' })
-//     await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+  test('use transaction client to update preloaded rows', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     const trx = await db.transaction()
-//     const users = await User.query({ client: trx }).preload('profile').exec()
+      @column()
+      public userId: number
 
-//     assert.lengthOf(users, 1)
+      @column()
+      public displayName: string
+    }
 
-//     users[0].profile.displayName = 'Nikk'
-//     await users[0].profile.save()
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     await trx.rollback()
+      @column()
+      public username: string
 
-//     const profiles = await Profile.all()
-//     assert.lengthOf(profiles, 1)
-//     assert.equal(profiles[0].displayName, 'Virk')
-//   })
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
 
-//   test('cleanup transaction reference after commit or rollback', async (assert) => {
-//     class Profile extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-//       @column()
-//       public userId: number
+    const trx = await db.transaction()
+    const users = await User.query({ client: trx }).preload('profile').exec()
 
-//       @column()
-//       public displayName: string
-//     }
+    assert.lengthOf(users, 1)
 
-//     class User extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    users[0].profile.displayName = 'Nikk'
+    await users[0].profile.save()
 
-//       @column()
-//       public username: string
+    await trx.rollback()
 
-//       @hasOne(() => Profile)
-//       public profile: Profile
-//     }
+    const profiles = await Profile.all()
+    assert.lengthOf(profiles, 1)
+    assert.equal(profiles[0].displayName, 'Virk')
+  })
 
-//     await db.insertQuery().table('users').insert({ username: 'virk' })
-//     await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+  test('cleanup transaction reference after commit or rollback', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     const trx = await db.transaction()
-//     const users = await User.query({ client: trx }).preload('profile').exec()
+      @column()
+      public userId: number
 
-//     assert.lengthOf(users, 1)
-//     await trx.commit()
+      @column()
+      public displayName: string
+    }
 
-//     assert.isUndefined(users[0].$trx)
-//     assert.isUndefined(users[0].profile.$trx)
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     users[0].profile.displayName = 'Nikk'
-//     await users[0].profile.save()
+      @column()
+      public username: string
 
-//     const profiles = await Profile.all()
-//     assert.lengthOf(profiles, 1)
-//     assert.equal(profiles[0].displayName, 'Nikk')
-//   })
-// })
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
 
-// test.group('Model options | Model Preloads', (group) => {
-//   group.before(async () => {
-//     db = getDb()
-//     BaseModel = getBaseModel(ormAdapter(db))
-//     await setup()
-//   })
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-//   group.after(async () => {
-//     await cleanup()
-//     await db.manager.closeAll()
-//   })
+    const trx = await db.transaction()
+    const users = await User.query({ client: trx }).preload('profile').exec()
 
-//   group.afterEach(async () => {
-//     await resetTables()
-//   })
+    assert.lengthOf(users, 1)
+    await trx.commit()
 
-//   test('pass query options to preloaded models', async (assert) => {
-//     class Profile extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    assert.isUndefined(users[0].trx)
+    assert.isUndefined(users[0].profile.trx)
 
-//       @column()
-//       public userId: number
+    users[0].profile.displayName = 'Nikk'
+    await users[0].profile.save()
 
-//       @column()
-//       public displayName: string
-//     }
+    const profiles = await Profile.all()
+    assert.lengthOf(profiles, 1)
+    assert.equal(profiles[0].displayName, 'Nikk')
+  })
+})
 
-//     class User extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+test.group('Model options | Model Preloads', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
 
-//       @column()
-//       public username: string
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
 
-//       @hasOne(() => Profile)
-//       public profile: Profile
-//     }
+  group.afterEach(async () => {
+    await resetTables()
+  })
 
-//     await db.insertQuery().table('users').insert({ username: 'virk' })
-//     await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+  test('pass query options to preloaded models', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     const user = await User.query({ connection: 'secondary' }).firstOrFail()
-//     assert.equal(user.options!.connection, 'secondary')
+      @column()
+      public userId: number
 
-//     await user.preload('profile')
+      @column()
+      public displayName: string
+    }
 
-//     assert.equal(user.profile.options!.connection, 'secondary')
-//     assert.instanceOf(user.profile.options!.profiler, Profiler)
-//   })
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//   test('pass profiler to preload models', async (assert) => {
-//     class Profile extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+      @column()
+      public username: string
 
-//       @column()
-//       public userId: number
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
 
-//       @column()
-//       public displayName: string
-//     }
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-//     class User extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    const user = await User.query({ connection: 'secondary' }).firstOrFail()
+    assert.equal(user.options!.connection, 'secondary')
 
-//       @column()
-//       public username: string
+    await user.preload('profile')
 
-//       @hasOne(() => Profile)
-//       public profile: Profile
-//     }
+    assert.equal(user.profile.options!.connection, 'secondary')
+    assert.instanceOf(user.profile.options!.profiler, Profiler)
+  })
 
-//     await db.insertQuery().table('users').insert({ username: 'virk' })
-//     await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+  test('pass profiler to preload models', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     const profiler = new Profiler({})
-//     const user = await User.query({ profiler }).firstOrFail()
+      @column()
+      public userId: number
 
-//     assert.equal(user.options!.connection, 'primary')
-//     assert.deepEqual(user.options!.profiler, profiler)
+      @column()
+      public displayName: string
+    }
 
-//     await user.preload('profile')
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     assert.equal(user.profile.options!.connection, 'primary')
-//     assert.deepEqual(user.profile.options!.profiler, profiler)
-//   })
+      @column()
+      public username: string
 
-//   test('pass sideloaded data to preloads', async (assert) => {
-//     class Profile extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
 
-//       @column()
-//       public userId: number
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-//       @column()
-//       public displayName: string
-//     }
+    const profiler = new Profiler({})
+    const user = await User.query({ profiler }).firstOrFail()
 
-//     class User extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    assert.equal(user.options!.connection, 'primary')
+    assert.deepEqual(user.options!.profiler, profiler)
 
-//       @column()
-//       public username: string
+    await user.preload('profile')
 
-//       @hasOne(() => Profile)
-//       public profile: Profile
-//     }
+    assert.equal(user.profile.options!.connection, 'primary')
+    assert.deepEqual(user.profile.options!.profiler, profiler)
+  })
 
-//     await db.insertQuery().table('users').insert({ username: 'virk' })
-//     await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+  test('pass sideloaded data to preloads', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     const user = await User.query().sideload({ id: 1 }).firstOrFail()
-//     assert.deepEqual(user.$sideloaded, { id: 1 })
+      @column()
+      public userId: number
 
-//     await user.preload('profile')
-//     assert.deepEqual(user.profile.$sideloaded, { id: 1 })
-//   })
+      @column()
+      public displayName: string
+    }
 
-//   test('custom sideloaded data on preload query must win', async (assert) => {
-//     class Profile extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//       @column()
-//       public userId: number
+      @column()
+      public username: string
 
-//       @column()
-//       public displayName: string
-//     }
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
 
-//     class User extends BaseModel {
-//       @column({ isPrimary: true })
-//       public id: number
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-//       @column()
-//       public username: string
+    const user = await User.query().sideload({ id: 1 }).firstOrFail()
+    assert.deepEqual(user.sideloaded, { id: 1 })
 
-//       @hasOne(() => Profile)
-//       public profile: Profile
-//     }
+    await user.preload('profile')
+    assert.deepEqual(user.profile.sideloaded, { id: 1 })
+  })
 
-//     await db.insertQuery().table('users').insert({ username: 'virk' })
-//     await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+  test('custom sideloaded data on preload query must win', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
 
-//     const user = await User.query().sideload({ id: 1 }).firstOrFail()
-//     assert.deepEqual(user.$sideloaded, { id: 1 })
+      @column()
+      public userId: number
 
-//     await user.preload('profile', (query) => query.sideload({ id: 2 }))
-//     assert.deepEqual(user.profile.$sideloaded, { id: 2 })
-//   })
-// })
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
+
+    const user = await User.query().sideload({ id: 1 }).firstOrFail()
+    assert.deepEqual(user.sideloaded, { id: 1 })
+
+    await user.preload('profile', (query) => query.sideload({ id: 2 }))
+    assert.deepEqual(user.profile.sideloaded, { id: 2 })
+  })
+})
