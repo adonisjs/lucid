@@ -179,7 +179,7 @@ export async function managedTransaction<T> (
     await trx.commit()
     return response
   } catch (error) {
-    trx.rollback()
+    await trx.rollback()
     throw error
   }
 }
