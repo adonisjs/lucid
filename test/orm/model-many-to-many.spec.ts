@@ -3067,7 +3067,7 @@ test.group('Model | ManyToMany | sync', (group) => {
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalSkills = await db.query().from('skills').count('*', 'total')
-    const skillUsers = await db.query().from('skill_user')
+    const skillUsers = await db.query().from('skill_user').orderBy('id', 'asc')
 
     assert.equal(totalUsers[0].total, 1)
     assert.equal(totalSkills[0].total, 0)
