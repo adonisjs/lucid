@@ -91,18 +91,6 @@ export function unique (value: any[]) {
 }
 
 /**
- * Finds the diff between 2 arrays
- */
-export function difference (main: any[], other: []) {
-  return [main, other].reduce((a, b) => {
-    return a.filter(c => {
-      /* eslint-disable-next-line eqeqeq */
-      return !b.find((one) => c == one)
-    })
-  })
-}
-
-/**
  * Returns a diff of rows to be updated or inserted when performing
  * a many to many `attach`
  */
