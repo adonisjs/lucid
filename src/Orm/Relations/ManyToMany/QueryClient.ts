@@ -13,8 +13,8 @@ import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Luci
 import { ModelConstructorContract, ModelContract, ModelObject } from '@ioc:Adonis/Lucid/Model'
 
 import { ManyToMany } from './index'
-import { unique, getValue } from '../../../utils'
 import { ManyToManyQueryBuilder } from './QueryBuilder'
+import { getValue, managedTransaction, syncDiff } from '../../../utils'
 
 /**
  * Query client for executing queries in scope to the defined
@@ -48,9 +48,16 @@ ModelConstructorContract
   }
 
   /**
+   * Returns related foreign key value
+   */
+  private getRelatedForeignKeyValue (related: ModelContract, action: string) {
+    return getValue(related, this.relation.relatedKey, this.relation, action)
+  }
+
+  /**
    * Returns query builder instance
    */
-  public query (): any {
+  public query () {
     return new ManyToManyQueryBuilder(
       this.client.knexQuery(),
       this.client,
@@ -64,7 +71,7 @@ ModelConstructorContract
   /**
    * Returns the eager query builder instance
    */
-  public eagerQuery (): any {
+  public eagerQuery () {
     return new ManyToManyQueryBuilder(
       this.client.knexQuery(),
       this.client,
@@ -78,7 +85,7 @@ ModelConstructorContract
   /**
    * Returns a query builder instance for the pivot table only
    */
-  public pivotQuery (): any {
+  public pivotQuery () {
     return new ManyToManyQueryBuilder(
       this.client.knexQuery(),
       this.client,
@@ -89,78 +96,134 @@ ModelConstructorContract
     )
   }
 
-  public async create (): Promise<ModelContract> {
-    return {} as Promise<ModelContract>
-  }
-
-  public async createMany (): Promise<ModelContract[]> {
-    return {} as Promise<ModelContract[]>
-  }
-
+  /**
+   * Save related model instance.
+   */
   public async save (related: ModelContract, checkExisting: boolean = true) {
-    this.ensureSingleParent(this.parent)
-    await this.parent.save()
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
-    const trx = await this.client.transaction()
+    await managedTransaction(parent.trx || this.client, async (trx) => {
+      /**
+       * Persist parent
+       */
+      parent.trx = trx
+      await parent.save()
 
-    try {
+      /**
+       * Persist related
+       */
       related.trx = trx
       await related.save()
-      const relatedKeyValue = related[this.relation.relatedKey]
 
-      let hasRow = false
+      /**
+       * Sync when checkExisting = true, to avoid duplicate rows. Otherwise
+       * perform insert
+       */
+      const relatedForeignKeyValue = this.getRelatedForeignKeyValue(related, 'save')
       if (checkExisting) {
-        hasRow = await this
-          .pivotQuery()
-          .wherePivot(this.relation.pivotRelatedForeignKey, relatedKeyValue)
-          .useTransaction(trx)
-          .first()
+        await this.sync([relatedForeignKeyValue], false, trx)
+      } else {
+        await this.attach([relatedForeignKeyValue], trx)
       }
-
-      if (!hasRow) {
-        await this.attach([relatedKeyValue], trx)
-      }
-
-      await trx.commit()
-    } catch (error) {
-      await trx.rollback()
-      throw error
-    }
+    })
   }
 
+  /**
+   * Save many of related model instances
+   */
   public async saveMany (related: ModelContract[], checkExisting: boolean = true) {
-    this.ensureSingleParent(this.parent)
-    await this.parent.save()
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
-    const trx = await this.client.transaction()
+    await managedTransaction(parent.trx || this.client, async (trx) => {
+      /**
+       * Persist parent
+       */
+      parent.trx = trx
+      await parent.save()
 
-    try {
+      /**
+       * Persist all related models
+       */
       await Promise.all(related.map((one) => {
         one.trx = trx
         return one.save()
       }))
 
-      const relatedKeyValues = related.map((one) => one[this.relation.relatedKey])
-      let existingsRows: ModelContract[] = []
-
+      /**
+       * Sync when checkExisting = true, to avoid duplicate rows. Otherwise
+       * perform insert
+       */
+      const relatedForeignKeyValues = related.map((one) => this.getRelatedForeignKeyValue(one, 'saveMany'))
       if (checkExisting) {
-        existingsRows = await this
-          .pivotQuery()
-          .select(this.relation.pivotRelatedForeignKey)
-          .whereInPivot(this.relation.pivotRelatedForeignKey, relatedKeyValues)
-          .useTransaction(trx)
+        await this.sync(relatedForeignKeyValues, false, trx)
+      } else {
+        await this.attach(relatedForeignKeyValues, trx)
+      }
+    })
+  }
+
+  /**
+   * Create and persist an instance of related model. Also makes the pivot table
+   * entry to create the relationship
+   */
+  public async create (values: ModelObject, checkExisting?: boolean): Promise<ModelContract> {
+    const parent = this.parent
+    this.ensureSingleParent(parent)
+
+    return managedTransaction(parent.trx || this.client, async (trx) => {
+      parent.trx = trx
+      await parent.save()
+
+      /**
+       * Create and persist related model instance
+       */
+      const related = await this.relation.relatedModel().create(values, { client: trx })
+
+      /**
+       * Sync or attach a new one row
+       */
+      const relatedForeignKeyValue = this.getRelatedForeignKeyValue(related, 'save')
+      if (checkExisting) {
+        await this.sync([relatedForeignKeyValue], false, trx)
+      } else {
+        await this.attach([relatedForeignKeyValue], trx)
       }
 
-      const nonExistingRows = relatedKeyValues.filter((id) => !existingsRows.find((existingRow) => {
-        return existingRow.$extras[this.relation.pivotRelatedForeignKey] === id
-      }))
+      return related
+    })
+  }
 
-      await this.attach(nonExistingRows, trx)
-      await trx.commit()
-    } catch (error) {
-      await trx.rollback()
-      throw error
-    }
+  /**
+   * Create and persist multiple of instances of related model. Also makes
+   * the pivot table entries to create the relationship.
+   */
+  public async createMany (values: ModelObject[], checkExisting?: boolean): Promise<ModelContract[]> {
+    const parent = this.parent
+    this.ensureSingleParent(parent)
+
+    return managedTransaction(parent.trx || this.client, async (trx) => {
+      parent.trx = trx
+      await parent.save()
+
+      /**
+       * Create and persist related model instance
+       */
+      const related = await this.relation.relatedModel().createMany(values, { client: trx })
+
+      /**
+       * Sync or attach new rows
+       */
+      const relatedForeignKeyValues = related.map((one) => this.getRelatedForeignKeyValue(one, 'saveMany'))
+      if (checkExisting) {
+        await this.sync(relatedForeignKeyValues, false, trx)
+      } else {
+        await this.attach(relatedForeignKeyValues, trx)
+      }
+
+      return related
+    })
   }
 
   /**
@@ -171,51 +234,143 @@ ModelConstructorContract
     ids: (string | number)[] | { [key: string]: ModelObject },
     trx?: TransactionClientContract,
   ): Promise<void> {
-    this.ensureSingleParent(this.parent)
-    const foreignKeyValue = this.getForeignKeyValue(this.parent, 'attach')
+    const parent = this.parent
+    this.ensureSingleParent(parent)
 
+    /**
+     * Pivot foreign key value (On the parent model)
+     */
+    const foreignKeyValue = this.getForeignKeyValue(parent, 'attach')
+
+    /**
+     * Finding if `ids` parameter is an object or not
+     */
     const hasAttributes = !Array.isArray(ids)
-    const relatedForeignKeyValues = Array.isArray(ids) ? ids : Object.keys(ids)
 
-    if (relatedForeignKeyValues.length === 0) {
+    /**
+     * Extracting pivot related foreign keys (On the related model)
+     */
+    const pivotRows = (!hasAttributes ? ids as (string | number)[] : Object.keys(ids)).map((id) => {
+      return Object.assign({}, hasAttributes ? ids[id] : {}, {
+        [this.relation.pivotForeignKey]: foreignKeyValue,
+        [this.relation.pivotRelatedForeignKey]: id,
+      })
+    })
+
+    if (!pivotRows.length) {
       return
     }
 
     /**
-     * Use existing transaction or create a new one
+     * Perform bulk insert
      */
-    let selfTransaction = !trx
-    trx = trx || await this.client.transaction()
+    const query = trx ? trx.insertQuery() : this.client.insertQuery()
+    await query.table(this.relation.pivotTable).multiInsert(pivotRows)
+  }
+
+  /**
+   * Detach related ids from the pivot table
+   */
+  public async detach (ids?: (string | number)[], trx?: TransactionClientContract) {
+    const query = this.pivotQuery()
 
     /**
-     * Perform multi insert
+     * Scope deletion to specific rows when `id` is defined. Otherwise
+     * delete all the rows
      */
-    try {
-      await trx
-        .insertQuery()
-        .table(this.relation.pivotTable)
-        .multiInsert(unique(relatedForeignKeyValues).map((id) => {
-          return Object.assign({}, hasAttributes ? ids[id] : {}, {
-            [this.relation.pivotForeignKey]: foreignKeyValue,
-            [this.relation.pivotRelatedForeignKey]: id,
-          })
-        }))
-
-      if (selfTransaction) {
-        await trx.commit()
-      }
-    } catch (error) {
-      if (selfTransaction) {
-        await trx.rollback()
-      }
-      throw error
+    if (ids && ids.length) {
+      query.whereInPivot(this.relation.pivotRelatedForeignKey, ids)
     }
+
+    /**
+     * Use transaction when defined
+     */
+    if (trx) {
+      query.useTransaction(trx)
+    }
+
+    await query.del()
   }
 
-  public async detach (ids: string[]) {
-    await this.pivotQuery().whereInPivot(this.relation.pivotRelatedForeignKey, ids).del()
-  }
+  /**
+   * Sync pivot rows by
+   *
+   * - Dropping the non-existing one's.
+   * - Creating the new one's.
+   * - Updating the existing one's with different attributes.
+   */
+  public async sync (
+    ids: (string | number)[] | { [key: string]: ModelObject },
+    detach: boolean = true,
+    trx?: TransactionClientContract,
+  ) {
+    await managedTransaction(trx || this.client, async (transaction) => {
+      /**
+       * An object of pivot rows from from the incoming ids or
+       * an object of key-value pair.
+       */
+      const pivotRows = Array.isArray(ids) ? ids.reduce((result, id) => {
+        result[id] = {}
+        return result
+      }, {}) : ids
 
-  public async sync () {
+      const query = this.pivotQuery().useTransaction(transaction)
+
+      /**
+       * Scope query to passed ids, when don't want to detach the missing one's
+       * in the current payload.
+       */
+      const pivotRelatedForeignKeys = Object.keys(pivotRows)
+      if (!this.detach && pivotRelatedForeignKeys.length) {
+        query.whereIn(this.relation.pivotRelatedForeignKey, pivotRelatedForeignKeys)
+      }
+
+      /**
+       * Fetch existing pivot rows for the relationship
+       */
+      const existingPivotRows = await query.exec()
+
+      /**
+       * Find a diff of rows being removed, added or updated in comparison
+       * to the existing pivot rows.
+       */
+      const { added, removed, updated } = syncDiff(existingPivotRows.reduce((result, row) => {
+        result[row[this.relation.pivotRelatedForeignKey]] = row
+        return result
+      }, {}), pivotRows)
+
+      /**
+       * Add new rows
+       */
+      await this.attach(added, transaction)
+
+      /**
+       * Update
+       */
+      await Promise.all(Object.keys(updated).map((id) => {
+        const attributes = updated[id]
+        if (!attributes) {
+          return Promise.resolve()
+        }
+
+        return this
+          .pivotQuery()
+          .useTransaction(transaction)
+          .wherePivot(this.relation.pivotRelatedForeignKey, id)
+          .update(attributes)
+      }))
+
+      /**
+       * Return early when detach is disabled.
+       */
+      if (!detach) {
+        return
+      }
+
+      /**
+       * Detach the removed one's
+       */
+      await this.detach(Object.keys(removed), transaction)
+    })
   }
 }

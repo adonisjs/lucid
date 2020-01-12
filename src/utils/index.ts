@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
-import { ModelContract } from '@ioc:Adonis/Lucid/Model'
+import { ModelContract, ModelObject } from '@ioc:Adonis/Lucid/Model'
 import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
@@ -106,57 +106,43 @@ export function difference (main: any[], other: []) {
  * Returns a diff of rows to be updated or inserted when performing
  * a many to many `attach`
  */
-export function syncDiff (
-  dbRows: any[],
-  attributesToSync: any[] | { [key: string]: any },
-  rowIdResolver: (rows: any, forId: string) => any,
-) {
-  /**
-   * When attributes to sync are not defined as an array. Then we expect it
-   * to be an object
-   */
-  const hasExtraAttributes = !Array.isArray(attributesToSync)
-
-  /**
-   * An array of ids we want to sync
-   */
-  const idsToSync = (hasExtraAttributes ? Object.keys(attributesToSync) : attributesToSync) as string[]
-
-  return idsToSync.reduce((result: { insert: any[], update: any[] }, id) => {
-    /**
-     * Find the matching row for the given id
-     */
-    const matchingRow = rowIdResolver(dbRows, id)
+export function syncDiff (original: ModelObject, incoming: ModelObject) {
+  const diff = Object
+    .keys(incoming)
+    .reduce<{ added: ModelObject, updated: ModelObject, removed: ModelObject }>((
+    result,
+    incomingRowId,
+  ) => {
+    const originalRow = original[incomingRowId]
 
     /**
      * When there isn't any matching row, we need to insert
-     * the id
+     * the upcoming row
      */
-    if (!matchingRow) {
-      result.insert.push(id)
-      return result
-    }
-
-    /**
-     * When there aren't any extra attributes to check, we skip the
-     * given id, since it already exists.
-     */
-    if (!hasExtraAttributes) {
-      return result
-    }
-
-    /**
-     * When one or more attributes inside the update payload are different
-     * from the actual row, then we perform an update
-     */
-    const attributes = attributesToSync[id]
-    /* eslint-disable-next-line eqeqeq */
-    if (Object.keys(attributes).find((key) => matchingRow[key] != attributes[key])) {
-      result.update.push(id)
+    if (!originalRow) {
+      result.added[incomingRowId] = incoming[incomingRowId]
+    } else if (Object.keys(incoming[incomingRowId]).find((key) => incoming[incomingRowId][key] !== originalRow[key])) {
+      /**
+       * If any of the row attributes are different, then we must
+       * update that row
+       */
+      result.updated[incomingRowId] = incoming[incomingRowId]
     }
 
     return result
-  }, { insert: [], update: [] })
+  }, { added: {}, updated: {}, removed: {} })
+
+  /**
+   * Deleted rows
+   */
+  diff.removed = Object.keys(original).reduce((result, originalRowId) => {
+    if (!incoming[originalRowId]) {
+      result[originalRowId] = {}
+    }
+    return result
+  }, {})
+
+  return diff
 }
 
 /**

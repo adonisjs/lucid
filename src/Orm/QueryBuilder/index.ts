@@ -49,6 +49,12 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   protected static getters = {}
 
   /**
+   * Control whether or not to wrap adapter result to model
+   * instances or not
+   */
+  protected wrapResultsToModelInstances: boolean = true
+
+  /**
    * Options that must be passed to all new model instances
    */
   public clientOptions: ModelAdapterOptions = {
@@ -207,15 +213,14 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Executes the query
    */
-  public async exec (): Promise<any> {
+  public async exec (): Promise<any[]> {
     const isWriteQuery = ['update', 'del', 'insert'].includes(this.knexQuery['_method'])
-
     const rows = await executeQuery(this.knexQuery, this.client, this.getProfilerAction())
 
     /**
      * Return the rows as it is when query is a write query
      */
-    if (isWriteQuery) {
+    if (isWriteQuery || !this.wrapResultsToModelInstances) {
       return Array.isArray(rows) ? rows : [rows]
     }
 
