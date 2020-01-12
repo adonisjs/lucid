@@ -975,7 +975,7 @@ test.group('Model | BelongsTo | preload', (group) => {
   })
 })
 
-test.group('Model | BelongsTo | persist', (group) => {
+test.group('Model | BelongsTo | associate', (group) => {
   group.before(async () => {
     db = getDb()
     BaseModel = getBaseModel(ormAdapter(db))
@@ -1064,6 +1064,23 @@ test.group('Model | BelongsTo | persist', (group) => {
     const users = await db.query().from('users')
     assert.lengthOf(profiles, 0)
     assert.lengthOf(users, 0)
+  })
+})
+
+test.group('Model | BelongsTo | dissociate', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
   })
 
   test('dissociate relation', async (assert) => {

@@ -1029,7 +1029,7 @@ test.group('Model | HasMany | preload', (group) => {
   })
 })
 
-test.group('Model | HasMany | persist', (group) => {
+test.group('Model | HasMany | save', (group) => {
   group.before(async () => {
     db = getDb()
     BaseModel = getBaseModel(ormAdapter(db))
@@ -1085,6 +1085,23 @@ test.group('Model | HasMany | persist', (group) => {
 
     assert.equal(totalUsers[0].total, 1)
     assert.equal(totalPosts[0].total, 1)
+  })
+})
+
+test.group('Model | HasMany | saveMany', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
   })
 
   test('save many related instances', async (assert) => {
@@ -1232,6 +1249,23 @@ test.group('Model | HasMany | persist', (group) => {
     assert.isUndefined(user.trx)
     assert.isUndefined(post.trx)
   })
+})
+
+test.group('Model | HasMany | create', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
 
   test('create related instance', async (assert) => {
     class Post extends BaseModel {
@@ -1270,6 +1304,23 @@ test.group('Model | HasMany | persist', (group) => {
 
     assert.equal(totalUsers[0].total, 1)
     assert.equal(totalPosts[0].total, 1)
+  })
+})
+
+test.group('Model | HasMany | createMany', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
   })
 
   test('create many related instances', async (assert) => {

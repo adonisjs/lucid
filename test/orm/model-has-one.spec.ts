@@ -1164,7 +1164,7 @@ test.group('Model | HasOne | preload', (group) => {
   })
 })
 
-test.group('Model | HasOne | persist', (group) => {
+test.group('Model | HasOne | save', (group) => {
   group.before(async () => {
     db = getDb()
     BaseModel = getBaseModel(ormAdapter(db))
@@ -1303,6 +1303,23 @@ test.group('Model | HasOne | persist', (group) => {
 
     assert.lengthOf(users, 0)
     assert.lengthOf(profiles, 0)
+  })
+})
+
+test.group('Model | HasOne | create', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
   })
 
   test('create related instance', async (assert) => {
