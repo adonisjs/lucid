@@ -1947,4 +1947,106 @@ test.group('Relations | HasOne', (group) => {
     const user = await User.query().with('profile').first()
     assert.equal(user.toJSON().profile.user_id, 0)
   })
+
+  test('load relation inside the context of a transaction', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    let car = null
+    let error = null
+    try {
+      await ioc.use('Database').transaction(async (trx) => {
+        await trx.table('users').insert({ username: 'virk' })
+        await trx.table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 1 })
+        car = await Car.query(trx).select(['id', 'name', 'user_id']).where('id', 1).first()
+        await car.load('user', null, trx)
+      })
+    } catch (e) {
+      error = e
+    }
+
+    assert.equal(error, null)
+    assert.instanceOf(car.$relations.user, User)
+    assert.equal(car.$relations.user.$attributes.id, 1)
+  })
+
+  test('loadMany inside the context of a transaction', async (assert) => {
+    class Car extends Model {
+    }
+
+    class Profile extends Model {
+    }
+
+    class User extends Model {
+      car () {
+        return this.hasOne(Car)
+      }
+
+      profile () {
+        return this.hasOne(Profile)
+      }
+    }
+
+    Profile._bootIfNotBooted()
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    let user = null
+    try {
+      await ioc.use('Database').transaction(async (trx) => {
+        await trx.table('users').insert({ username: 'virk' })
+        await trx.table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 1 })
+        await trx.table('profiles').insert({ user_id: 1, profile_name: 'virk' })
+        user = await User.query(trx).where('username', 'virk').first()
+        await user.loadMany(['car', 'profile'], trx)
+      })
+    } catch (e) {
+
+    }
+
+    assert.instanceOf(user.$relations.car, Car)
+    assert.instanceOf(user.$relations.profile, Profile)
+    assert.equal(user.$relations.car.$attributes.id, 1)
+    assert.equal(user.$relations.profile.$attributes.id, 1)
+  })
+
+  test.failing('throw a TimeoutError exception when trying to load relation of models inside the context of a transaction without using it for the load', async (assert) => {
+    class User extends Model {
+    }
+
+    class Car extends Model {
+      user () {
+        return this.belongsTo(User)
+      }
+    }
+
+    User._bootIfNotBooted()
+    Car._bootIfNotBooted()
+
+    let car = null
+    let error = null
+    try {
+      await ioc.use('Database').transaction(async (trx) => {
+        await trx.table('users').insert({ username: 'virk' })
+        await trx.table('cars').insert({ name: 'E180', model: 'Mercedes', user_id: 1 })
+        car = await Car.query(trx).select(['id', 'name', 'user_id']).where('id', 1).first()
+        await car.load('user')
+      })
+    } catch (e) {
+      error = e
+    }
+
+    assert.equal(error, null)
+    assert.instanceOf(car.$relations.user, User)
+    assert.equal(car.$relations.user.$attributes.id, 1)
+  })
 })

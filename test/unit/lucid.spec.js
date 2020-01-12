@@ -2068,4 +2068,17 @@ test.group('Model', (group) => {
 
     assert.equal(helpers.formatTime(user.updated_at), helpers.formatTime(updatedAt))
   })
+
+  test('usage of query in context of a transaction', async (assert) => {
+    class User extends Model {
+    }
+
+    User._bootIfNotBooted()
+
+    let trx = await ioc.use('Database').beginTransaction()
+    const user = await User.create({ username: 'virk' }, trx)
+    const userFromQuery = await User.query(trx).select(['username', 'id', 'created_at', 'updated_at']).where('id', 1).first()
+    await trx.commit()
+    assert.deepEqual(user.toJSON(), userFromQuery.toJSON())
+  })
 })
