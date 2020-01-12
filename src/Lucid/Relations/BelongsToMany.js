@@ -79,7 +79,8 @@ class BelongsToMany extends BaseRelation {
       table: util.makePivotTableName(parentInstance.constructor.name, relatedModel.name),
       withTimestamps: false,
       withFields: [],
-      pivotPrimaryKey: 'id'
+      pivotPrimaryKey: 'id',
+      pivotAttribute: 'pivot'
     }
 
     this._relatedFields = []
@@ -152,6 +153,30 @@ class BelongsToMany extends BaseRelation {
    */
   get $pivotColumns () {
     return [this.relatedForeignKey, this.foreignKey].concat(this._pivot.withFields)
+  }
+
+  /**
+   * Returns the pivot attribute name.
+   *
+   * If this is `false` the attribute `pivot` not display.
+   *
+   * @attribute $pivotAttribute
+   *
+   * @return {String|Boolean}
+   */
+  get $pivotAttribute () {
+    let pivotAttribute = this._pivot.pivotAttribute
+
+    if (this._PivotModel && !_.isUndefined(this._PivotModel.pivotAttribute)) {
+      pivotAttribute = this._PivotModel.pivotAttribute
+    }
+
+    // Is `true`. set default value `pivot`.
+    if (pivotAttribute === true) {
+      pivotAttribute = 'pivot'
+    }
+
+    return pivotAttribute
   }
 
   /**
@@ -323,8 +348,45 @@ class BelongsToMany extends BaseRelation {
     })
 
     const pivotModel = this._newUpPivotModel()
-    pivotModel.newUp(pivotAttributes)
-    row.setRelated('pivot', pivotModel)
+
+    /**
+     * Not continue to add `pivot` attribute if exists `$pivot` field to hidden.
+     *
+     * @link https://github.com/adonisjs/adonis-lucid/issues/366
+     */
+    if (!this._isHiddenPivotAttribute(pivotModel)) {
+      pivotModel.newUp(pivotAttributes)
+      row.setRelated(this.$pivotAttribute, pivotModel)
+    }
+  }
+
+  /**
+   * If exists `$pivot` field into `static get hidden() {}` list of PivotModel
+   * this return `true`.
+   *
+   * This method resolve enhancement of "Issue #366":
+   * @link https://github.com/adonisjs/adonis-lucid/issues/366
+   *
+   * @method  _isHiddenPivotAttribute
+   *
+   * @param   {Object}  pivotModel
+   *
+   * @return  {Boolean}
+   *
+   * @private
+   */
+  _isHiddenPivotAttribute (pivotModel) {
+    /**
+     * Get hidden field list.
+     *
+     * @type {Array}
+     */
+    let hidden = _.get(pivotModel, '$hidden', [])
+
+    return (
+      (_.isArray(hidden) && hidden.includes('$pivot') === true) ||
+      this.$pivotAttribute === false
+    )
   }
 
   /**
@@ -486,6 +548,22 @@ class BelongsToMany extends BaseRelation {
     }
 
     this._pivot.table = table
+    return this
+  }
+
+  /**
+   * Define the pivot attribute.
+   *
+   * If this is `true` the pivot attribute return default value `pivot`.
+   * If this is `false` the pivot attribute not displayed.
+   * If this is an `string` the pivot table renamed to passed `string` attr.
+   *
+   * @param {String|Boolean} attr
+   *
+   * @chainable
+   */
+  pivotAttribute (attr) {
+    this._pivot.pivotAttribute = attr
     return this
   }
 
