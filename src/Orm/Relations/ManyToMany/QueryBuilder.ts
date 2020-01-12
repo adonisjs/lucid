@@ -13,8 +13,8 @@ import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model
 import { ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { ManyToMany } from './index'
-import { getValue, unique, isObject } from '../../../utils'
 import { BaseQueryBuilder } from '../Base/QueryBuilder'
+import { getValue, unique, isObject } from '../../../utils'
 
 /**
  * Extends the model query builder for executing queries in scope
@@ -26,6 +26,12 @@ ModelConstructorContract
 > {
   private cherryPickingKeys: boolean = false
   private appliedConstraints: boolean = false
+
+  /**
+   * Do not wrap result to model instances when query builder
+   * is initiated with `pivotOnly` flag.
+   */
+  protected wrapResultsToModelInstances = !this.pivotOnly
 
   constructor (
     builder: knex.QueryBuilder,

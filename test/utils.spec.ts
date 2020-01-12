@@ -12,84 +12,125 @@
 import test from 'japa'
 import { syncDiff } from '../src/utils'
 
-test.group('Utils | attachDiff', () => {
-  test('return ids to be inserted', (assert) => {
-    const dbRows = [{
-      id: '1',
-      user_id: '1',
-      skill_id: '1',
-      score: 1,
-    }]
-
-    const idsToSync = ['1', '2', '3']
-
-    const diff = syncDiff(dbRows, idsToSync, (rows, id) => rows.find(({ skill_id }) => skill_id === id))
-    assert.deepEqual(diff, { insert: ['2', '3'], update: [] })
-  })
-
-  test('return ids when ids to sync are represented as an object', (assert) => {
-    const dbRows = [{
-      id: '1',
-      user_id: '1',
-      skill_id: '1',
-      score: 1,
-    }]
-
-    const idsToSync = {
-      '1': {},
-      '2': {},
-      '3': {},
+test.group('Utils | syncDiff', () => {
+  test('return ids to be added', (assert) => {
+    const dbRows = {
+      1: {
+        id: '1',
+        user_id: '1',
+        skill_id: '1',
+        score: 1,
+      },
     }
 
-    const diff = syncDiff(dbRows, idsToSync, (rows, id) => rows.find(({ skill_id }) => skill_id === id))
-    assert.deepEqual(diff, { insert: ['2', '3'], update: [] })
+    const idsToSync = {
+      1: {},
+      2: {},
+      3: {},
+    }
+
+    const diff = syncDiff(dbRows, idsToSync)
+    assert.deepEqual(diff, {
+      added: { 2: {}, 3: {} },
+      updated: {},
+      removed: {},
+    })
   })
 
   test('return ids to be updated when attributes are different', (assert) => {
-    const dbRows = [{
-      id: '1',
-      user_id: '1',
-      skill_id: '1',
-      score: 1,
-    }]
+    const dbRows = {
+      1: {
+        id: '1',
+        user_id: '1',
+        skill_id: '1',
+        score: 1,
+      },
+    }
 
     const idsToSync = {
-      '1': {
+      1: {
         score: 4,
       },
-      '2': {
-        score: 2,
-      },
-      '3': {
-        score: 1,
-      },
+      2: {},
+      3: {},
     }
 
-    const diff = syncDiff(dbRows, idsToSync, (rows, id) => rows.find(({ skill_id }) => skill_id === id))
-    assert.deepEqual(diff, { insert: ['2', '3'], update: ['1'] })
+    const diff = syncDiff(dbRows, idsToSync)
+    assert.deepEqual(diff, {
+      added: { 2: {}, 3: {} },
+      updated: {
+        1: { score: 4 },
+      },
+      removed: {},
+    })
   })
 
-  test('ignore rows whose attributes value is same', (assert) => {
-    const dbRows = [{
-      id: '1',
-      user_id: '1',
-      skill_id: '1',
-      score: 1,
-    }]
-
-    const idsToSync = {
-      '1': {
-        score: 1,
-      },
-      '2': {
-        score: 2,
-      },
-      '3': {
+  test('ignore rows whose attributes are same', (assert) => {
+    const dbRows = {
+      1: {
+        id: '1',
+        user_id: '1',
+        skill_id: '1',
         score: 1,
       },
     }
 
-    const diff = syncDiff(dbRows, idsToSync, (rows, id) => rows.find(({ skill_id }) => skill_id === id))
-    assert.deepEqual(diff, { insert: ['2', '3'], update: [] })
+    const idsToSync = {
+      1: {
+        score: 1,
+      },
+      2: {
+        score: 4,
+      },
+      3: {
+        score: 4,
+      },
+    }
+
+    const diff = syncDiff(dbRows, idsToSync)
+    assert.deepEqual(diff, {
+      added: {
+        2: { score: 4 },
+        3: { score: 4 },
+      },
+      updated: {},
+      removed: {},
+    })
+  })
+
+  test('return rows to be removed', (assert) => {
+    const dbRows = {
+      1: {
+        id: '1',
+        user_id: '1',
+        skill_id: '1',
+        score: 1,
+      },
+      2: {
+        id: '2',
+        user_id: '1',
+        skill_id: '2',
+        score: 1,
+      },
+    }
+
+    const idsToSync = {
+      1: {
+        score: 1,
+      },
+      3: {
+        score: 4,
+      },
+    }
+
+    const diff = syncDiff(dbRows, idsToSync)
+    assert.deepEqual(diff, {
+      added: {
+        3: { score: 4 },
+      },
+      updated: {
+      },
+      removed: { 2: {} },
+    })
   })
 })

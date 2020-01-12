@@ -15,7 +15,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     ModelQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/Model'
 
-  import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+  import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
   import {
     StrictValues,
     QueryCallback,
@@ -469,37 +469,47 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     /**
      * Save related model instance.
      */
-    save (related: InstanceType<RelatedModel>): Promise<void>
-
-    /**
-     * Create related model instance
-     */
-    create (values: ModelObject): Promise<InstanceType<RelatedModel>>
+    save (related: InstanceType<RelatedModel>, checkExisting?: boolean): Promise<void>
 
     /**
      * Save many of related model instance.
      */
-    saveMany (related: InstanceType<RelatedModel>[]): Promise<void>
+    saveMany (related: InstanceType<RelatedModel>[], checkExisting?: boolean): Promise<void>
+
+    /**
+     * Create related model instance
+     */
+    create (values: ModelObject, checkExisting?: boolean): Promise<InstanceType<RelatedModel>>
 
     /**
      * Create many of related model instances
      */
-    createMany (values: ModelObject[]): Promise<InstanceType<RelatedModel>[]>
+    createMany (values: ModelObject[], checkExisting?: boolean): Promise<InstanceType<RelatedModel>[]>
 
     /**
      * Attach new pivot rows
      */
-    attach (ids: (string | number)[] | { [key: string]: ModelObject }): Promise<void>
+    attach (
+      ids: (string | number)[] | { [key: string]: ModelObject },
+      trx?: TransactionClientContract,
+    ): Promise<void>
 
     /**
      * Detach existing pivot rows
      */
-    detach (ids: (string | number)[]): Promise<void>
+    detach (
+      ids?: (string | number)[],
+      trx?: TransactionClientContract,
+    ): Promise<void>
 
     /**
      * Sync pivot rows.
      */
-    sync (ids: (string | number)[] | { [key: string]: ModelObject }): Promise<void>
+    sync (
+      ids: (string | number)[] | { [key: string]: ModelObject },
+      detach?: boolean,
+      trx?: TransactionClientContract,
+    ): Promise<void>
   }
 
   /**
