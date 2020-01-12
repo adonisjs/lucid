@@ -2,42 +2,70 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Table of contents
 
-- [@adonisjs/lucid](#adonisjslucid)
-  - [Change log](#change-log)
-  - [Contributing](#contributing)
-  - [Authors & License](#authors--license)
+- [Active Record ORM](#active-record-orm)
+- [
+    
+      Website
+    
+     | 
+    
+      Guides
+    
+     | 
+    
+      Contributing
+    
+  ](#website%0A----%0A------%0A----%0A------guides%0A----%0A------%0A----%0A------contributing)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-# @adonisjs/lucid
+<div align="center">
+  <img src="https://res.cloudinary.com/adonisjs/image/upload/q_100/v1558612869/adonis-readme_zscycu.jpg" width="600px">
+</div>
 
-[![appveyor-image]][appveyor-url]
-[![circleci-image]][circleci-url]
-[![npm-image]][npm-url]
-![](https://img.shields.io/badge/Typescript-294E80.svg?style=for-the-badge&logo=typescript)
+<br />
 
-## Change log
+<div align="center">
+  <h3>Active Record ORM</h3>
+  <p>Lucid is an implementation of fully featured Active Record ORM for AdonisJS. It is heavily inspired by Laravel Eloquent.</p>
+</div>
 
-The change log can be found in the [CHANGELOG.md](CHANGELOG.md) file.
+<br />
 
-## Contributing
+<div align="center">
 
-Everyone is welcome to contribute. Please go through the following guides, before getting started.
+[![circleci-image]][circleci-url] [![typescript-image]][typescript-url] [![npm-image]][npm-url] [![license-image]][license-url]
 
-1. [Contributing](https://adonisjs.com/contributing)
-2. [Code of conduct](https://adonisjs.com/code-of-conduct)
+</div>
 
+<div align="center">
+  <h3>
+    <a href="https://adonisjs.com">
+      Website
+    </a>
+    <span> | </span>
+    <a href="https://adonisjs.com/docs">
+      Guides
+    </a>
+    <span> | </span>
+    <a href="CONTRIBUTING.md">
+      Contributing
+    </a>
+  </h3>
+</div>
 
-## Authors & License
-[Harminder virk](https://github.com/Harminder virk) and [contributors](https://github.com/adonisjs/adonis-lucid/graphs/contributors).
-
-MIT License, see the included [MIT](LICENSE.md) file.
-
-[appveyor-image]: https://img.shields.io/appveyor/ci/thetutlage/adonis-lucid/master.svg?style=for-the-badge&logo=appveyor
-[appveyor-url]: https://ci.appveyor.com/project/thetutlage/adonis-lucid "appveyor"
+<div align="center">
+  <sub>Built with ❤︎ by <a href="https://github.com/thetutlage">Harminder Virk</a>
+</div>
 
 [circleci-image]: https://img.shields.io/circleci/project/github/adonisjs/adonis-lucid/master.svg?style=for-the-badge&logo=circleci
 [circleci-url]: https://circleci.com/gh/adonisjs/adonis-lucid "circleci"
 
+[typescript-image]: https://img.shields.io/badge/Typescript-294E80.svg?style=for-the-badge&logo=typescript
+[typescript-url]:  "typescript"
+
 [npm-image]: https://img.shields.io/npm/v/@adonisjs/lucid.svg?style=for-the-badge&logo=npm
 [npm-url]: https://npmjs.org/package/@adonisjs/lucid "npm"
+
+[license-image]: https://img.shields.io/npm/l/@adonisjs/lucid?color=blueviolet&style=for-the-badge
+[license-url]: LICENSE.md "license"
