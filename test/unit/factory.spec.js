@@ -216,6 +216,25 @@ test.group('Factory', (group) => {
     assert.isTrue(users[1].$persisted)
   })
 
+  test('create many model instances sequentially', async (assert) => {
+    Factory.blueprint('App/Model/User', () => {
+      return {
+        username: 'virk'
+      }
+    })
+
+    class User extends Model {
+    }
+
+    ioc.fake('App/Model/User', () => {
+      User._bootIfNotBooted()
+      return User
+    })
+
+    const users = await Factory.model('App/Model/User').createMany(2)
+    assert.deepEqual(users.map(user => user.id), [1, 2])
+  })
+
   test('throw exception when factory blueprint doesn\'t have a callback', async (assert) => {
     const fn = () => Factory.blueprint('App/Model/User')
     assert.throw(fn, 'E_INVALID_PARAMETER: Factory.blueprint expects a callback as 2nd parameter')

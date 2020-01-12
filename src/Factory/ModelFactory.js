@@ -142,7 +142,14 @@ class ModelFactory {
    * @return {Array}
    */
   async createMany (numberOfRows, data = {}) {
-    return Promise.all(_.map(_.range(numberOfRows), (index) => this.create(data, index)))
+    const rows = []
+
+    for (let index of _.range(numberOfRows)) {
+      const row = await this.create(data, index)
+      rows.push(row)
+    }
+
+    return rows
   }
 
   /**
