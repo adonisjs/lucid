@@ -71,7 +71,6 @@
     "copyfiles": "^2.1.1",
     "cz-conventional-changelog": "^3.0.2",
     "del-cli": "^3.0.0",
-    "doctoc": "^1.4.0",
     "dotenv": "^8.2.0",
     "eslint": "^6.8.0",
     "eslint-plugin-adonis": "^1.0.5",
@@ -100,7 +99,6 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "doctoc README.md --title='## Table of contents' && git add README.md",
       "commit-msg": "node ./node_modules/@adonisjs/mrm-preset/validateCommit/conventional/validate.js"
     }
   },
