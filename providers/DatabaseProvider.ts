@@ -41,7 +41,7 @@ export default class DatabaseServiceProvider {
     })
 
     this.$container.singleton('Adonis/Lucid/Orm', () => {
-      const config = this.$container.use('Adonis/Core/Config').get('database.ormConfig', {})
+      const config = this.$container.use('Adonis/Core/Config').get('database.orm', {})
 
       /**
        * Attaching adapter to the base model. Each model is allowed to define
