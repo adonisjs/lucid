@@ -86,7 +86,7 @@
     "typescript": "^3.7.4"
   },
   "publishConfig": {
-    "tag": "next",
+    "tag": "alpha",
     "access": "public"
   },
   "nyc": {
