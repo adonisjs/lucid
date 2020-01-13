@@ -31,6 +31,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     HasManyThrough,
   } from '@ioc:Adonis/Lucid/Relations'
 
+  export { OrmConfigContract } from '@ioc:Adonis/Lucid/Model'
+
   export const BaseModel: ModelConstructorContract
   export const column: ColumnDecorator
   export const computed: ComputedDecorator

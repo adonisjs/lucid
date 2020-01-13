@@ -104,7 +104,7 @@ const databaseConfig: DatabaseConfigContract & { orm: Partial<OrmConfigContract>
   |
   */
   orm: {
-  }
+  },
 }
 
 export default databaseConfig
