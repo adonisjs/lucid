@@ -11,11 +11,11 @@ import { join } from 'path'
 import camelCase from 'camelcase'
 import { snakeCase } from 'snake-case'
 import { inject } from '@adonisjs/fold'
-import { BaseCommand, args, flags } from '@adonisjs/ace'
+import { BaseCommand, Kernel, args, flags } from '@adonisjs/ace'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
-@inject([null, 'Adonis/Lucid/Database'])
+@inject([null, null, 'Adonis/Lucid/Database'])
 export default class MakeMigration extends BaseCommand {
   public static commandName = 'make:migration'
   public static description = 'Make a new migration file'
@@ -61,8 +61,8 @@ export default class MakeMigration extends BaseCommand {
     loadApp: true,
   }
 
-  constructor (app: ApplicationContract, private _db: DatabaseContract) {
-    super(app)
+  constructor (app: ApplicationContract, kernel: Kernel, private _db: DatabaseContract) {
+    super(app, kernel)
   }
 
   /**

@@ -7,235 +7,167 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../../adonis-typings/index.ts" />
-
-import { Exception } from '@poppinss/utils'
-import { snakeCase } from 'snake-case'
-
-import {
-  ModelContract,
-  RelationContract,
-  ManyToManyRelationNode,
-  ModelConstructorContract,
-} from '@ioc:Adonis/Lucid/Model'
-
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ManyToManyQueryBuilder } from './QueryBuilder'
+import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
+import { ManyToManyRelationContract, ManyToManyRelationOptions } from '@ioc:Adonis/Lucid/Relations'
+
+import { ManyToManyQueryClient } from './QueryClient'
+import { KeysExtractor } from '../KeysExtractor'
+import { ensureRelationIsBooted } from '../../../utils'
 
 /**
- * Exposes the API to construct many to many relationship. This also comes
- * with it's own query builder
+ * Manages loading and persisting many to many relationship
  */
-export class ManyToMany implements RelationContract {
-  /**
-   * Relationship type
-   */
+export class ManyToMany implements ManyToManyRelationContract<
+ModelConstructorContract,
+ModelConstructorContract
+> {
   public type = 'manyToMany' as const
+  public booted: boolean = false
+  public relatedModel = this.options.relatedModel
+  public serializeAs = this.options.serializeAs || this.relationName
 
   /**
-   * The related model from which, we want to construct the relationship
-   */
-  public relatedModel = this._options.relatedModel!
-
-  /**
-   * Local key to use for constructing the relationship
+   * Available after boot is invoked
    */
   public localKey: string
+  public localCastAsKey: string
 
-  /**
-   * Adapter local key
-   */
-  public localAdapterKey: string
-
-  /**
-   * Primary key on the related model
-   */
   public relatedKey: string
+  public relatedCastAsKey: string
 
-  /**
-   * Primary adapter key on the related model
-   */
-  public relatedAdapterKey: string
-
-  /**
-   * Foreign key referenced on the pivot table by the current model.
-   * It is the adapter key, since there is no model in play
-   */
   public pivotForeignKey: string
-
-  /**
-   * Alias for the select column for `pivotForeignKey`
-   */
-  public pivotForeignKeyAlias: string
-
-  /**
-   * Foreign key referenced on the pivot table by the related model.
-   * It is the adapter key, since there is no model in play
-   */
   public pivotRelatedForeignKey: string
 
-  /**
-   * Alias for the select column for `pivotRelatedForeignKey`
-   */
-  public pivotRelatedForeignKeyAlias: string
-
-  /**
-   * Pivot table for joining relationships
-   */
   public pivotTable: string
-
-  /**
-   * Extra pivot columns to extra
-   */
-  public extrasPivotColumns: string[] = this._options.pivotColumns || []
-
-  /**
-   * Key to be used for serializing the relationship
-   */
-  public serializeAs = this._options.serializeAs || snakeCase(this.relationName)
-
-  /**
-   * A flag to know if model keys are valid for executing database queries or not
-   */
-  public booted: boolean = false
+  public extrasPivotColumns: string[] = this.options.pivotColumns || []
 
   constructor (
     public relationName: string,
-    private _options: ManyToManyRelationNode,
+    private options: ManyToManyRelationOptions,
     public model: ModelConstructorContract,
   ) {
-    this._ensureRelatedModel()
   }
 
   /**
-   * Ensure that related model is defined, otherwise raise an exception, since
-   * a relationship cannot work with a single model.
+   * Returns the alias for the pivot key
    */
-  private _ensureRelatedModel () {
-    if (!this._options.relatedModel) {
-      throw new Exception(
-        'Related model reference is required to construct the relationship',
-        500,
-        'E_MISSING_RELATED_MODEL',
-      )
-    }
+  public pivotAlias (key: string): string {
+    return `pivot_${key}`
   }
 
   /**
-   * Validating the keys to ensure we are avoiding runtime `undefined` errors. We defer
-   * the keys validation, since they may be added after defining the relationship.
-   */
-  private _validateKeys () {
-    const relationRef = `${this.model.name}.${this.relationName}`
-
-    if (!this.model.$hasColumn(this.localKey)) {
-      const ref = `${this.model.name}.${this.localKey}`
-      throw new Exception(
-        `${ref} required by ${relationRef} relation is missing`,
-        500,
-        'E_MISSING_RELATED_LOCAL_KEY',
-      )
-    }
-
-    if (!this.relatedModel().$hasColumn(this.relatedKey)) {
-      const ref = `${this.relatedModel().name}.${this.relatedKey}`
-      throw new Exception(
-        `${ref} required by ${relationRef} relation is missing`,
-        500,
-        'E_MISSING_RELATED_FOREIGN_KEY',
-      )
-    }
-  }
-
-  /**
-   * Compute keys
+   * Boot the relationship and ensure that all keys are in
+   * place for queries to do their job.
    */
   public boot () {
     if (this.booted) {
       return
     }
 
-    this.pivotTable = this._options.pivotTable || snakeCase(
-      [this.relatedModel().name, this.model.name].sort().join('_'),
+    const relatedModel = this.relatedModel()
+
+    /**
+     * Extracting keys from the model and the relation model. The keys
+     * extractor ensures all the required columns are defined on
+     * the models for the relationship to work
+     */
+    const { localKey, relatedKey } = new KeysExtractor(this.model, this.relationName, {
+      localKey: {
+        model: this.model,
+        key: (
+          this.options.localKey ||
+          this.model.$configurator.getLocalKey(this.type, this.model, relatedModel)
+        ),
+      },
+      relatedKey: {
+        model: relatedModel,
+        key: (
+          this.options.relatedKey ||
+          this.model.$configurator.getLocalKey(this.type, this.model, relatedModel)
+        ),
+      },
+    }).extract()
+
+    this.pivotTable = this.options.pivotTable || this.model.$configurator.getPivotTableName(
+      this.type,
+      this.model,
+      relatedModel,
+      this.relationName,
     )
 
     /**
-     * Parent model and it's foreign key in pivot table
+     * Keys on the parent model
      */
-    this.localKey = this._options.localKey || this.model.$primaryKey
-    this.pivotForeignKey = this._options.pivotForeignKey || snakeCase(
-      `${this.model.name}_${this.model.$primaryKey}`,
-    )
-    this.pivotForeignKeyAlias = `pivot_${this.pivotForeignKey}`
+    this.localKey = localKey.attributeName
+    this.localCastAsKey = localKey.castAsKey
 
     /**
-     * Related model and it's foreign key in pivot table
+     * Keys on the related model
      */
-    this.relatedKey = this._options.relatedKey || this.relatedModel().$primaryKey
-    this.pivotRelatedForeignKey = this._options.pivotRelatedForeignKey || snakeCase(
-      `${this.relatedModel().name}_${this.relatedModel().$primaryKey}`,
-    )
-    this.pivotRelatedForeignKeyAlias = `pivot_${this.pivotRelatedForeignKey}`
+    this.relatedKey = relatedKey.attributeName
+    this.relatedCastAsKey = relatedKey.castAsKey
 
     /**
-     * Validate computed keys to ensure they are valid
+     * Parent model foreign key in the pivot table
      */
-    this._validateKeys()
+    this.pivotForeignKey =
+      this.options.pivotForeignKey ||
+      this.model.$configurator.getPivotForeignKey(this.type, this.model, relatedModel, this.relationName)
 
     /**
-     * Keys for the adapter
+     * Related model foreign key in the pivot table
      */
-    this.localAdapterKey = this.model.$getColumn(this.localKey)!.castAs
-    this.relatedAdapterKey = this.relatedModel().$getColumn(this.relatedKey)!.castAs
+    this.pivotRelatedForeignKey =
+      this.options.pivotRelatedForeignKey ||
+      this.model.$configurator.getPivotForeignKey(this.type, relatedModel, this.model, this.relationName)
+
+    /**
+     * Booted successfully
+     */
     this.booted = true
   }
 
   /**
-   * Must be implemented by main class
+   * Set related model instances
    */
-  public getQuery (parent: ModelContract, client: QueryClientContract): any {
-    return new ManyToManyQueryBuilder(client.knexQuery(), this, client, parent)
+  public $setRelated (parent: ModelContract, related: ModelContract[]): void {
+    ensureRelationIsBooted(this)
+    parent.$setRelated(this.relationName as any, related)
   }
 
   /**
-   * Returns query for the relationship with applied constraints for
-   * eagerloading
+   * Push related model instance(s)
    */
-  public getEagerQuery (parents: ModelContract[], client: QueryClientContract): any {
-    return new ManyToManyQueryBuilder(client.knexQuery(), this, client, parents)
+  public $pushRelated (parent: ModelContract, related: ModelContract | ModelContract[]): void {
+    ensureRelationIsBooted(this)
+    parent.$pushRelated(this.relationName as any, related as any)
   }
 
   /**
-   * Sets the related model instance
+   * Finds and set the related model instances next to the parent
+   * models.
    */
-  public setRelated (model: ModelContract, related?: ModelContract[] | null) {
-    if (!related) {
-      return
-    }
+  public $setRelatedForMany (parent: ModelContract[], related: ModelContract[]): void {
+    ensureRelationIsBooted(this)
+    const pivotForeignKeyAlias = this.pivotAlias(this.pivotForeignKey)
 
-    model.$setRelated(this.relationName as keyof typeof model, related)
-  }
-
-  /**
-   * Push the related model instance
-   */
-  public pushRelated (model: ModelContract, related?: ModelContract[] | null) {
-    if (!related) {
-      return
-    }
-
-    model.$pushRelated(this.relationName as keyof typeof model, related)
-  }
-
-  /**
-   * Must be implemented by parent class
-   */
-  public setRelatedMany (parents: ModelContract[], related: ModelContract[]) {
-    parents.forEach((parent) => {
-      const relations = related.filter((model) => {
-        return parent[this.localKey] === model.$extras[this.pivotForeignKeyAlias]
-      })
-      this.setRelated(parent, relations)
+    parent.forEach((parentModel) => {
+      this.$setRelated(
+        parentModel,
+        related.filter((relatedModel) => {
+          const value = parentModel[this.localKey]
+          return value !== undefined && relatedModel.$extras[pivotForeignKeyAlias] === value
+        }),
+      )
     })
+  }
+
+  /**
+   * Returns an instance of query client for invoking queries
+   */
+  public client (parent: ModelContract | ModelContract[], client: QueryClientContract): any {
+    ensureRelationIsBooted(this)
+    return new ManyToManyQueryClient(parent, client, this)
   }
 }

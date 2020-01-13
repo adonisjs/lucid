@@ -167,7 +167,7 @@ test.group('ConnectionManager', (group) => {
     manager.on('disconnect', async (connection) => {
       try {
         assert.deepEqual(connection, connections[0])
-        assert.equal(manager['_orphanConnections'].size, 0)
+        assert.equal(manager['orphanConnections'].size, 0)
         assert.deepEqual(mapToObj(manager.connections), {
           primary: {
             config: connection.config,

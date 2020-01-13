@@ -10,53 +10,49 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import knex from 'knex'
-import { trait } from '@poppinss/traits'
 import { Exception } from '@poppinss/utils'
 
 import {
   ModelObject,
-  ModelContract,
   ModelAdapterOptions,
   ModelConstructorContract,
   ModelQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { Preloader } from '../Preloader'
 import { Chainable } from '../../Database/QueryBuilder/Chainable'
-import { Executable, ExecutableConstructor } from '../../Traits/Executable'
+import { executeQuery } from '../../helpers/executeQuery'
 
 /**
  * Database query builder exposes the API to construct and run queries for selecting,
  * updating and deleting records.
  */
-@trait<ExecutableConstructor>(Executable)
 export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderContract<ModelConstructorContract
 > {
   /**
-   * A flag to know, if the query being executed is a select query
-   * or not, since we don't transform return types of non-select
-   * queries
-   */
-  private _isSelectQuery: boolean = true
-
-  /**
    * Sideloaded attributes that will be passed to the model instances
    */
-  protected $sideloaded: ModelObject = {}
+  private sideloaded: ModelObject = {}
 
   /**
    * A copy of defined preloads on the model instance
    */
-  private _preloader = new Preloader(this.model)
+  private preloader = new Preloader(this.model)
 
   /**
    * Required by macroable
    */
-  protected static _macros = {}
-  protected static _getters = {}
+  protected static macros = {}
+  protected static getters = {}
+
+  /**
+   * Control whether or not to wrap adapter result to model
+   * instances or not
+   */
+  protected wrapResultsToModelInstances: boolean = true
 
   /**
    * Options that must be passed to all new model instances
@@ -78,77 +74,41 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     },
   ) {
     super(builder, customFn)
-    builder.table(model.$table)
+    builder.table(model.table)
   }
 
   /**
    * Ensures that we are not executing `update` or `del` when using read only
    * client
    */
-  private _ensureCanPerformWrites () {
+  private ensureCanPerformWrites () {
     if (this.client && this.client.mode === 'read') {
       throw new Exception('Updates and deletes cannot be performed in read mode')
     }
   }
 
   /**
-   * Process preloads for a single model instance
+   * Returns the profiler action. Protected, since the class is extended
+   * by relationships
    */
-  protected async $processAllForOne (modelInstance: ModelContract) {
-    this._preloader.sideload(this.$sideloaded)
-    await this._preloader.processAllForOne(modelInstance, this.client)
-    return modelInstance
-  }
-
-  /**
-   * Process preloads for array of model instances
-   */
-  protected async $processAllForMany (modelInstances: ModelContract[]) {
-    this._preloader.sideload(this.$sideloaded)
-    await this._preloader.processAllForMany(modelInstances, this.client)
-    return modelInstances
-  }
-
-  /**
-   * Checks to see that the executed query is update or delete
-   */
-  public async beforeExecute () {
-    if (['update', 'del'].includes(this.$knexBuilder['_method'])) {
-      this._isSelectQuery = false
-    }
-  }
-
-  /**
-   * Wraps the query result to model instances. This method is invoked by the
-   * Executable trait.
-   */
-  public async afterExecute (rows: any[]): Promise<any[]> {
-    if (!this._isSelectQuery) {
-      return Array.isArray(rows) ? rows : [rows]
+  protected getProfilerAction () {
+    if (!this.client.profiler) {
+      return null
     }
 
-    const modelInstances = this.model.$createMultipleFromAdapterResult(
-      rows,
-      this.$sideloaded,
-      this.clientOptions,
-    )
-
-    return this.$processAllForMany(modelInstances)
+    return this.client.profiler.profile('sql:query', Object.assign(this['toSQL'](), {
+      connection: this.client.connectionName,
+      inTransaction: this.client.isTransaction,
+      model: this.model.name,
+    }))
   }
 
   /**
    * Set sideloaded properties to be passed to the model instance
    */
   public sideload (value: ModelObject) {
-    this.$sideloaded = value
+    this.sideloaded = value
     return this
-  }
-
-  /**
-   * Returns the connection name used by the query client
-   */
-  public get connection () {
-    return this.client!.connectionName
   }
 
   /**
@@ -176,48 +136,18 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Define a relationship to be preloaded
    */
-  public preload (relationName: string, userCallback?: any): this {
-    this._preloader.preload(relationName, userCallback)
+  public preload (relationName: any, userCallback?: any): this {
+    this.preloader.preload(relationName, userCallback)
     return this
   }
 
-  /**
-   * Returns the client to be used by the [[Executable]] trait
-   * to running the query
-   */
-  public getQueryClient () {
-    /**
-     * Use write client for updates and deletes
-     */
-    if (['update', 'del'].includes(this.$knexBuilder['_method'])) {
-      this._ensureCanPerformWrites()
-      return this.client!.getWriteClient().client
-    }
-
-    return this.client!.getReadClient().client
-  }
-
-  /**
-   * Returns the profiler action
-   */
-  public getProfilerAction () {
-    if (!this.client.profiler) {
-      return null
-    }
-
-    return this.client.profiler.profile('sql:query', Object.assign(this['toSQL'](), {
-      connection: this.client.connectionName,
-      inTransaction: this.client.isTransaction,
-      model: this.model.name,
-    }))
-  }
   /**
    * Perform update by incrementing value for a given column. Increments
    * can be clubbed with `update` as well
    */
   public increment (column: any, counter?: any): any {
-    this._ensureCanPerformWrites()
-    this.$knexBuilder.increment(column, counter)
+    this.ensureCanPerformWrites()
+    this.knexQuery.increment(column, counter)
     return this
   }
 
@@ -226,8 +156,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * can be clubbed with `update` as well
    */
   public decrement (column: any, counter?: any): any {
-    this._ensureCanPerformWrites()
-    this.$knexBuilder.decrement(column, counter)
+    this.ensureCanPerformWrites()
+    this.knexQuery.decrement(column, counter)
     return this
   }
 
@@ -235,8 +165,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Perform update
    */
   public update (columns: any): any {
-    this._ensureCanPerformWrites()
-    this.$knexBuilder.update(columns)
+    this.ensureCanPerformWrites()
+    this.knexQuery.update(columns)
     return this
   }
 
@@ -244,8 +174,104 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Delete rows under the current query
    */
   public del (): any {
-    this._ensureCanPerformWrites()
-    this.$knexBuilder.del()
+    this.ensureCanPerformWrites()
+    this.knexQuery.del()
     return this
+  }
+
+  /**
+   * Turn on/off debugging for this query
+   */
+  public debug (debug: boolean): this {
+    this.knexQuery.debug(debug)
+    return this
+  }
+
+  /**
+   * Define query timeout
+   */
+  public timeout (time: number, options?: { cancel: boolean }): this {
+    this.knexQuery['timeout'](time, options)
+    return this
+  }
+
+  /**
+   * Returns SQL query as a string
+   */
+  public toQuery (): string {
+    return this.knexQuery.toQuery()
+  }
+
+  /**
+   * Run query inside the given transaction
+   */
+  public useTransaction (transaction: TransactionClientContract) {
+    this.knexQuery.transacting(transaction.knexClient)
+    return this
+  }
+
+  /**
+   * Executes the query
+   */
+  public async exec (): Promise<any[]> {
+    const isWriteQuery = ['update', 'del', 'insert'].includes(this.knexQuery['_method'])
+    const rows = await executeQuery(this.knexQuery, this.client, this.getProfilerAction())
+
+    /**
+     * Return the rows as it is when query is a write query
+     */
+    if (isWriteQuery || !this.wrapResultsToModelInstances) {
+      return Array.isArray(rows) ? rows : [rows]
+    }
+
+    /**
+     * Convert fetch results to an array of model instances
+     */
+    const modelInstances = this.model.$createMultipleFromAdapterResult(
+      rows,
+      this.sideloaded,
+      this.clientOptions,
+    )
+
+    /**
+     * Preload for model instances
+     */
+    await this.preloader.sideload(this.sideloaded).$processAllForMany(modelInstances, this.client)
+    return modelInstances
+  }
+
+  /**
+   * Get sql representation of the query
+   */
+  public toSQL (): knex.Sql {
+    return this.knexQuery.toSQL()
+  }
+
+  /**
+   * Implementation of `then` for the promise API
+   */
+  public then (resolve: any, reject?: any): any {
+    return this.exec().then(resolve, reject)
+  }
+
+  /**
+   * Implementation of `catch` for the promise API
+   */
+  public catch (reject: any): any {
+    return this.exec().catch(reject)
+  }
+
+  /**
+   * Implementation of `finally` for the promise API
+   */
+  public finally (fullfilled: any) {
+    return this.exec().finally(fullfilled)
+  }
+
+  /**
+   * Required when Promises are extended
+   */
+  public get [Symbol.toStringTag] () {
+    return this.constructor.name
   }
 }

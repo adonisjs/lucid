@@ -21,11 +21,10 @@ import {
 } from '@ioc:Adonis/Lucid/Database'
 
 import { QueryClient } from '../QueryClient'
+import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { ConnectionManager } from '../Connection/Manager'
-
 import { InsertQueryBuilder } from './QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from './QueryBuilder/Database'
-import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 
 /**
  * Database class exposes the API to manage multiple connections and obtain an instance
@@ -40,31 +39,32 @@ export class Database implements DatabaseContract {
   /**
    * Primary connection name
    */
-  public primaryConnectionName = this._config.connection
+  public primaryConnectionName = this.config.connection
 
   /**
-   * Reference to query builders
+   * Reference to query builders. We expose them, so that they can be
+   * extended from outside using macros.
    */
   public DatabaseQueryBuilder = DatabaseQueryBuilder
   public InsertQueryBuilder = InsertQueryBuilder
   public ModelQueryBuilder = ModelQueryBuilder
 
   constructor (
-    private _config: DatabaseConfigContract,
-    private _logger: LoggerContract,
-    private _profiler: ProfilerContract,
+    private config: DatabaseConfigContract,
+    private logger: LoggerContract,
+    private profiler: ProfilerContract,
   ) {
-    this.manager = new ConnectionManager(this._logger)
-    this._registerConnections()
+    this.manager = new ConnectionManager(this.logger)
+    this.registerConnections()
   }
 
   /**
    * Registering all connections with the manager, so that we can fetch
    * and connect with them whenver required.
    */
-  private _registerConnections () {
-    Object.keys(this._config.connections).forEach((name) => {
-      this.manager.add(name, this._config.connections[name])
+  private registerConnections () {
+    Object.keys(this.config.connections).forEach((name) => {
+      this.manager.add(name, this.config.connections[name])
     })
   }
 
@@ -84,8 +84,12 @@ export class Database implements DatabaseContract {
   ) {
     options = options || {}
 
+    /**
+     * Use default profiler, when no profiler is defined when obtaining
+     * the query client for a given connection.
+     */
     if (!options.profiler) {
-      options.profiler = this._profiler
+      options.profiler = this.profiler
     }
 
     /**
@@ -109,7 +113,7 @@ export class Database implements DatabaseContract {
      * Generating query client for a given connection and setting appropriate
      * mode on it
      */
-    this._logger.trace({ connection }, 'creating query client in %s mode', [options.mode || 'dual'])
+    this.logger.trace({ connection }, 'creating query client in %s mode', [options.mode || 'dual'])
     const queryClient = options.mode
       ? new QueryClient(options.mode, rawConnection)
       : new QueryClient('dual', rawConnection)

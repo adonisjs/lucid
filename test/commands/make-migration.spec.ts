@@ -12,6 +12,7 @@
 import test from 'japa'
 import 'reflect-metadata'
 import { join } from 'path'
+import { Kernel } from '@adonisjs/ace'
 import { Filesystem } from '@poppinss/dev-utils'
 import { Application } from '@adonisjs/application/build/standalone'
 
@@ -52,7 +53,7 @@ test.group('MakeMigration', (group) => {
     const app = new Application(fs.basePath, {} as any, {} as any, {})
     app.environment = 'test'
 
-    const makeMigration = new MakeMigration(app, db)
+    const makeMigration = new MakeMigration(app, new Kernel(app), db)
     makeMigration.name = 'users'
     await makeMigration.handle()
 
@@ -76,7 +77,7 @@ test.group('MakeMigration', (group) => {
     const app = new Application(fs.basePath, {} as any, {} as any, {})
     app.environment = 'test'
 
-    const makeMigration = new MakeMigration(app, db)
+    const makeMigration = new MakeMigration(app, new Kernel(app), db)
     makeMigration.name = 'users'
     makeMigration.table = 'my_users'
 
@@ -102,7 +103,7 @@ test.group('MakeMigration', (group) => {
     const app = new Application(fs.basePath, {} as any, {} as any, {})
     app.environment = 'test'
 
-    const makeMigration = new MakeMigration(app, db)
+    const makeMigration = new MakeMigration(app, new Kernel(app), db)
     makeMigration.name = 'users'
     makeMigration.create = 'my_users'
 
@@ -128,7 +129,7 @@ test.group('MakeMigration', (group) => {
     const app = new Application(fs.basePath, {} as any, {} as any, {})
     app.environment = 'test'
 
-    const makeMigration = new MakeMigration(app, db)
+    const makeMigration = new MakeMigration(app, new Kernel(app), db)
     makeMigration.name = 'profile/users'
 
     await makeMigration.handle()
@@ -153,7 +154,7 @@ test.group('MakeMigration', (group) => {
     const app = new Application(fs.basePath, {} as any, {} as any, {})
     app.environment = 'test'
 
-    const makeMigration = new MakeMigration(app, db)
+    const makeMigration = new MakeMigration(app, new Kernel(app), db)
     makeMigration.name = 'profile/users'
     makeMigration.connection = 'foo'
 
@@ -179,7 +180,7 @@ test.group('MakeMigration', (group) => {
 
     const customDb = new Database(config, getLogger(), getProfiler())
 
-    const makeMigration = new MakeMigration(app, customDb)
+    const makeMigration = new MakeMigration(app, new Kernel(app), customDb)
     makeMigration.name = 'users'
 
     makeMigration.prompt.on('prompt', (prompt) => {
@@ -219,7 +220,7 @@ test.group('MakeMigration', (group) => {
 
     const customDb = new Database(config, getLogger(), getProfiler())
 
-    const makeMigration = new MakeMigration(app, customDb)
+    const makeMigration = new MakeMigration(app, new Kernel(app), customDb)
     makeMigration.name = 'users'
     makeMigration.folder = 'database/c'
 

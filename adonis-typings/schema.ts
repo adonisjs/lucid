@@ -8,17 +8,26 @@
 */
 
 declare module '@ioc:Adonis/Lucid/Schema' {
-  import { QueryClientContract, ExcutableQueryBuilderContract } from '@ioc:Adonis/Lucid/Database'
-  import { RawContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
   import { SchemaBuilder, Raw } from 'knex'
+  import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+  import { RawContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
+  /**
+   * Shape of callback to defer database calls
+   */
   export type DeferCallback = (client: QueryClientContract) => void | Promise<void>
 
+  /**
+   * Shape of schema class constructor
+   */
   export interface SchemaConstructorContract {
     disableTransactions: boolean
     new (db: QueryClientContract, file: string, dryRun: boolean): SchemaContract
   }
 
+  /**
+   * Shape of schema class
+   */
   export interface SchemaContract {
     dryRun: boolean
     db: QueryClientContract

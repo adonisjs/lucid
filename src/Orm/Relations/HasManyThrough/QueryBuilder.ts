@@ -7,126 +7,172 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../../adonis-typings/index.ts" />
-
 import knex from 'knex'
-import { Exception } from '@poppinss/utils'
-import { HasManyThroughQueryBuilderContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
+import { RelationBaseQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { HasManyThrough } from './index'
-import { unique } from '../../../utils'
-import { BaseRelationQueryBuilder } from '../Base/QueryBuilder'
+import { BaseQueryBuilder } from '../Base/QueryBuilder'
+import { getValue, unique, isObject } from '../../../utils'
 
 /**
- * Exposes the API for interacting with has many relationship
+ * Extends the model query builder for executing queries in scope
+ * to the current relationship
  */
-export class HasManyThroughQueryBuilder
-  extends BaseRelationQueryBuilder
-  implements HasManyThroughQueryBuilderContract<any> {
+export class HasManyThroughQueryBuilder extends BaseQueryBuilder implements RelationBaseQueryBuilderContract<
+ModelConstructorContract,
+ModelConstructorContract
+> {
+  private cherryPickingKeys: boolean = false
+  private appliedConstraints: boolean = false
+
   constructor (
     builder: knex.QueryBuilder,
-    private _relation: HasManyThrough,
     client: QueryClientContract,
-    private _parent: ModelContract | ModelContract[],
+    private parent: ModelContract | ModelContract[],
+    private relation: HasManyThrough,
+    isEager: boolean = false,
   ) {
-    super(builder, _relation, client, (userFn) => {
+    super(builder, client, relation, isEager, (userFn) => {
       return (__builder) => {
-        userFn(new HasManyThroughQueryBuilder(__builder, this._relation, this.client, this._parent))
+        userFn(new HasManyThroughQueryBuilder(__builder, this.client, this.parent, this.relation))
       }
     })
   }
 
   /**
-   * Applies constraints on the query to limit to the parent row(s).
+   * Profiler data for HasManyThrough relationship
    */
-  private _applyParentConstraints (builder: HasManyThroughQueryBuilder) {
-    const throughTable = this._relation.throughModel().$table
-
-    /**
-     * Constraint for multiple parents
-     */
-    if (Array.isArray(this._parent)) {
-      const values = unique(this._parent.map((parentInstance) => {
-        return this.$getRelatedValue(parentInstance, this._relation.localKey)
-      }))
-      return builder.whereIn(`${throughTable}.${this._relation.foreignAdapterKey}`, values)
+  protected profilerData () {
+    return {
+      relation: this.relation.type,
+      model: this.relation.model.name,
+      throughModel: this.relation.throughModel().name,
+      relatedModel: this.relation.relatedModel().name,
     }
-
-    /**
-     * Constraint for one parent
-     */
-    const value = this.$getRelatedValue(this._parent, this._relation.localKey)
-    return builder.where(`${throughTable}.${this._relation.foreignAdapterKey}`, value)
   }
 
   /**
-   * Applies constraints for `select`, `update` and `delete` queries. The
-   * inserts are not allowed directly and one must use `save` method
-   * instead.
+   * The keys for constructing the join query
    */
-  public applyConstraints () {
+  protected getRelationKeys (): string[] {
+    return [this.relation.throughForeignCastAsKey]
+  }
+
+  /**
+   * Adds where constraint to the pivot table
+   */
+  private addWhereConstraints (builder: HasManyThroughQueryBuilder) {
+    const queryAction = this.queryAction()
+    const throughTable = this.relation.throughModel().table
+
     /**
-     * Avoid adding it for multiple times
+     * Eager query contraints
      */
-    if (this.$appliedConstraints) {
-      return this
+    if (Array.isArray(this.parent)) {
+      builder.whereIn(
+        `${throughTable}.${this.relation.foreignCastAsKey}`,
+        unique(this.parent.map((model) => {
+          return getValue(model, this.relation.localKey, this.relation, queryAction)
+        })),
+      )
+      return
     }
-    this.$appliedConstraints = true
-
-    const throughTable = this._relation.throughModel().$table
-    const relatedTable = this._relation.relatedModel().$table
 
     /**
-     * When updating or deleting the through rows, we run a whereIn
-     * subquery to limit to the parent rows.
+     * Query constraints
      */
-    if (['delete', 'update'].includes(this.$queryAction())) {
-      this.whereIn(`${relatedTable}.${this._relation.throughForeignAdapterKey}`, (builder) => {
-        builder.from(throughTable)
-        this._applyParentConstraints(builder)
-      })
-      return this
-    }
+    const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
+    builder.where(`${throughTable}.${this.relation.foreignCastAsKey}`, value)
+  }
 
-    /**
-     * Select * from related model and through foreign adapter key
-     */
-    this.select(
-      `${relatedTable}.*`,
-      `${throughTable}.${this._relation.foreignAdapterKey} as through_${this._relation.foreignAdapterKey}`,
-    )
+  /**
+   * Transforms the selected column names by prefixing the
+   * table name
+   */
+  private transformRelatedTableColumns (columns: any[]) {
+    const relatedTable = this.relation.relatedModel().table
 
-    /**
-     * Add inner join
-     */
-    this.innerJoin(
-      `${throughTable}`,
-      `${throughTable}.${this._relation.throughLocalAdapterKey}`,
-      `${relatedTable}.${this._relation.throughForeignAdapterKey}`,
-    )
+    return columns.map((column) => {
+      if (typeof (column) === 'string') {
+        return `${relatedTable}.${column}`
+      }
 
-    this._applyParentConstraints(this)
+      if (Array.isArray(column)) {
+        return this.transformRelatedTableColumns(column)
+      }
+
+      if (isObject(column)) {
+        return Object.keys(column).reduce((result, alias) => {
+          result[alias] = `${relatedTable}.${column[alias]}`
+          return result
+        }, {})
+      }
+
+      return column
+    })
+  }
+
+  /**
+   * Select keys from the related table
+   */
+  public select (...args: any): this {
+    this.cherryPickingKeys = true
+    this.knexQuery.select(this.transformRelatedTableColumns(args))
     return this
   }
 
-  public async save (): Promise<void> {
-    throw new Exception('Has many through doesn\'t support saving relations')
-  }
+  /**
+   * Applies constraint to limit rows to the current relationship
+   * only.
+   */
+  public applyConstraints () {
+    if (this.appliedConstraints) {
+      return
+    }
 
-  public async saveMany () {
-    return this.save()
-  }
+    this.appliedConstraints = true
 
-  public async create (): Promise<any> {
-    return this.save()
-  }
+    const throughTable = this.relation.throughModel().table
+    const relatedTable = this.relation.relatedModel().table
 
-  public async createMany (): Promise<any> {
-    return this.save()
-  }
+    if (['delete', 'update'].includes(this.queryAction())) {
+      this.whereIn(`${relatedTable}.${this.relation.throughForeignCastAsKey}`, (subQuery) => {
+        subQuery.from(throughTable)
+        this.addWhereConstraints(subQuery)
+      })
+      return
+    }
 
-  public async updateOrCreate (): Promise<any> {
-    return this.save()
+    /**
+     * Select * from related model when user is not cherry picking
+     * keys
+     */
+    if (!this.cherryPickingKeys) {
+      this.select('*')
+    }
+
+    /**
+     * Selecting all from the related table, along with the foreign key of the
+     * through table.
+     */
+    this.knexQuery.select(
+      `${throughTable}.${this.relation.foreignCastAsKey} as ${this.relation.throughAlias(this.relation.foreignCastAsKey)}`,
+    )
+
+    /**
+     * Inner join
+     */
+    this.innerJoin(
+      throughTable,
+      `${throughTable}.${this.relation.throughLocalCastAsKey}`,
+      `${relatedTable}.${this.relation.throughForeignCastAsKey}`,
+    )
+
+    /**
+     * Adding where constraints
+     */
+    this.addWhereConstraints(this)
   }
 }

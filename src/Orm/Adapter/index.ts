@@ -22,27 +22,30 @@ import {
  * model instances from it.
  */
 export class Adapter implements AdapterContract {
-  constructor (private _db: DatabaseContract) {
+  constructor (private db: DatabaseContract) {
   }
 
   /**
    * Returns the query client based upon the model instance
    */
-  private _getModelClient (modelConstructor: ModelConstructorContract, options?: ModelAdapterOptions) {
+  public modelConstructorClient (
+    modelConstructor: ModelConstructorContract,
+    options?: ModelAdapterOptions,
+  ) {
     if (options && options.client) {
       return options.client
     }
 
-    const connection = options && options.connection || modelConstructor.$connection
+    const connection = options && options.connection || modelConstructor.connection
     const profiler = options && options.profiler
-    return this._db.connection(connection, { profiler })
+    return this.db.connection(connection, { profiler })
   }
 
   /**
    * Returns the model query builder instance for a given model
    */
   public query (modelConstructor: ModelConstructorContract, options?: ModelAdapterOptions): any {
-    const client = this._getModelClient(modelConstructor, options)
+    const client = this.modelConstructorClient(modelConstructor, options)
     return client.modelQuery(modelConstructor)
   }
 
@@ -51,7 +54,7 @@ export class Adapter implements AdapterContract {
    */
   public modelClient (instance: ModelContract): any {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    return instance.$trx ? instance.$trx : this._getModelClient(modelConstructor, instance.$options)
+    return instance.trx ? instance.trx : this.modelConstructorClient(modelConstructor, instance.options)
   }
 
   /**
@@ -62,8 +65,8 @@ export class Adapter implements AdapterContract {
     const query = instance.$getQueryFor('insert', this.modelClient(instance))
 
     const result = await query.insert(attributes)
-    if (modelConstructor.$increments) {
-      instance.$consumeAdapterResult({ [modelConstructor.$refs[modelConstructor.$primaryKey]]: result[0] })
+    if (modelConstructor.increments) {
+      instance.$consumeAdapterResult({ [modelConstructor.$refs[modelConstructor.primaryKey]]: result[0] })
     }
   }
 

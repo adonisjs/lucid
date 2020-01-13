@@ -7,172 +7,90 @@
  * file that was distributed with this source code.
 */
 
-/// <reference path="../../../../adonis-typings/index.ts" />
-
 import knex from 'knex'
-import { Exception } from '@poppinss/utils'
-
-import { ModelContract, BelongsToQueryBuilderContract, ModelObject } from '@ioc:Adonis/Lucid/Model'
-import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
+import { RelationBaseQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { BelongsTo } from './index'
-import { unique } from '../../../utils'
-import { BaseRelationQueryBuilder } from '../Base/QueryBuilder'
+import { getValue, unique } from '../../../utils'
+import { BaseQueryBuilder } from '../Base/QueryBuilder'
 
 /**
- * Exposes the API for interacting with belongs relationship
+ * Extends the model query builder for executing queries in scope
+ * to the current relationship
  */
-export class BelongsToQueryBuilder
-  extends BaseRelationQueryBuilder
-  implements BelongsToQueryBuilderContract<any> {
+export class BelongsToQueryBuilder extends BaseQueryBuilder implements RelationBaseQueryBuilderContract<
+ModelConstructorContract,
+ModelConstructorContract
+> {
+  private appliedConstraints: boolean = false
+
   constructor (
     builder: knex.QueryBuilder,
-    private _relation: BelongsTo,
     client: QueryClientContract,
-    private _parent: ModelContract | ModelContract[],
+    private parent: ModelContract | ModelContract[],
+    private relation: BelongsTo,
+    isEager: boolean = false,
   ) {
-    super(builder, _relation, client, (userFn) => {
+    super(builder, client, relation, isEager, (userFn) => {
       return (__builder) => {
-        userFn(new BelongsToQueryBuilder(__builder, this._relation, this.client, this._parent))
+        userFn(new BelongsToQueryBuilder(__builder, this.client, this.parent, this.relation))
       }
     })
   }
 
   /**
-   * Applies constraints for `select`, `update` and `delete` queries. The
-   * inserts are not allowed directly and one must use `save` method
-   * instead.
+   * The profiler data for belongsTo relatioship
+   */
+  protected profilerData () {
+    return {
+      relation: this.relation.type,
+      model: this.relation.model.name,
+      relatedModel: this.relation.relatedModel().name,
+    }
+  }
+
+  /**
+   * The keys for constructing the join query
+   */
+  protected getRelationKeys (): string[] {
+    return [this.relation.localKey]
+  }
+
+  /**
+   * Applies constraint to limit rows to the current relationship
+   * only.
    */
   public applyConstraints () {
-    /**
-     * Avoid adding it for multiple times
-     */
-    if (this.$appliedConstraints) {
-      return this
+    if (this.appliedConstraints) {
+      return
     }
 
-    this.$appliedConstraints = true
+    this.appliedConstraints = true
+    const queryAction = this.queryAction()
 
     /**
-     * Constraint for multiple parents
+     * Eager query contraints
      */
-    if (Array.isArray(this._parent)) {
-      const values = unique(this._parent.map((parentInstance) => {
-        return this.$getRelatedValue(parentInstance, this._relation.foreignKey)
-      }))
-      return this.whereIn(this._relation.localAdapterKey, values)
+    if (Array.isArray(this.parent)) {
+      this.knexQuery.whereIn(this.relation.localCastAsKey, unique(this.parent.map((model) => {
+        return getValue(model, this.relation.foreignKey, this.relation, queryAction)
+      })))
+      return
     }
 
     /**
-     * Constraint for one parent
+     * Query constraints
      */
-    const value = this.$getRelatedValue(this._parent, this._relation.foreignKey)
-    this.where(this._relation.localAdapterKey, value)
-
-    if (!['update', 'delete'].includes(this.$queryAction())) {
-      this.limit(1)
-    }
-
-    return this
-  }
-
-  /**
-   * Persists related model instance by setting the FK
-   */
-  protected async $persist<T extends ModelContract, V extends ModelContract> (
-    parent: T,
-    related: V | V[],
-    cb: (parent: T, related: V) => void,
-  ) {
-    related = related as V
+    const value = getValue(this.parent, this.relation.foreignKey, this.relation, queryAction)
+    this.knexQuery.where(this.relation.localCastAsKey, value)
 
     /**
-     * Copying options and trx to make sure relation is using
-     * the same options from the parent model
+     * Do not add limit when updating or deleting
      */
-    related.$trx = parent.$trx
-    related.$options = parent.$options
-    await related.save()
-
-    cb(parent, related)
-    return parent.save()
-  }
-
-  /**
-   * Save related
-   */
-  public async save (related: ModelContract, wrapInTransaction: boolean = true) {
-    if (Array.isArray(this._parent)) {
-      throw new Error('Cannot save with multiple parents')
+    if (!['update', 'delete'].includes(queryAction)) {
+      this.knexQuery.limit(1)
     }
-
-    /**
-     * Wrap in transaction when related model has not been persisted
-     * to ensure consistency
-     */
-    let trx: TransactionClientContract | undefined
-    if (!related.$persisted && wrapInTransaction) {
-      trx = await this.client.transaction()
-    }
-
-    const callback = (__parent: ModelContract, __related: ModelContract) => {
-      __parent[this._relation.foreignKey] = this.$getRelatedValue(__related, this._relation.localKey)
-    }
-
-    if (trx) {
-      return this.$persistInTrx(this._parent, related, trx, callback)
-    } else {
-      return this.$persist(this._parent, related, callback)
-    }
-  }
-
-  /**
-   * Alias for save, since `associate` feels more natural
-   */
-  public async associate (related: ModelContract, wrapInTransaction: boolean = true) {
-    return this.save(related, wrapInTransaction)
-  }
-
-  /**
-   * Remove relation
-   */
-  public async dissociate () {
-    if (Array.isArray(this._parent)) {
-      throw new Error('Cannot save with multiple parents')
-    }
-
-    this._parent[this._relation.foreignKey] = null
-    await this._parent.save()
-  }
-
-  /**
-   * Save many not allowed for belongsTo
-   */
-  public saveMany (): Promise<void> {
-    throw new Exception(`Cannot save many of ${this._relation.model.name}.${this._relation.relationName}. Use associate instead.`)
-  }
-
-  /**
-   * Alias for save, since `associate` feels more natural
-   */
-  public async create (values: ModelObject, wrapInTransaction: boolean = true): Promise<any> {
-    const related = new (this._relation.relatedModel())()
-    related.fill(values)
-
-    await this.save(related, wrapInTransaction)
-    return related
-  }
-
-  public async updateOrCreate (
-    _search: ModelObject,
-    _updatePayload: ModelObject,
-    _wrapInTransaction?: boolean,
-  ): Promise<any> {}
-
-  /**
-   * Create many not allowed for belongsTo
-   */
-  public createMany (): Promise<any> {
-    throw new Exception(`Cannot create many of ${this._relation.model.name}.${this._relation.relationName}. Use create instead.`)
   }
 }

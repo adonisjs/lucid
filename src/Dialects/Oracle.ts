@@ -13,7 +13,7 @@ import { DialectContract } from '@ioc:Adonis/Lucid/Database'
 
 export class OracleDialect implements DialectContract {
   public readonly name = 'oracledb'
-  public supportsAdvisoryLocks = false
+  public readonly supportsAdvisoryLocks = false
 
   public getAdvisoryLock (): Promise<boolean> {
     throw new Error('Support for advisory locks is not implemented for oracledb. Create a PR to add the feature')

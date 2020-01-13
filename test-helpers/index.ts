@@ -14,7 +14,7 @@ import dotenv from 'dotenv'
 import { join } from 'path'
 import { IocContract, Ioc } from '@adonisjs/fold'
 import { Filesystem } from '@poppinss/dev-utils'
-import { FakeLogger } from '@adonisjs/logger/build/standalone'
+import { Logger } from '@adonisjs/logger/build/standalone'
 import { Profiler } from '@adonisjs/profiler/build/standalone'
 
 import {
@@ -22,7 +22,6 @@ import {
   ConnectionContract,
   QueryClientContract,
   ConnectionConfigContract,
-  ExcutableQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Database'
 
 import {
@@ -35,8 +34,9 @@ import {
   ModelContract,
   AdapterContract,
   ModelConstructorContract,
-  ManyToManyQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
+
+// import { ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
@@ -48,11 +48,11 @@ import { Adapter } from '../src/Orm/Adapter'
 import { BaseModel } from '../src/Orm/BaseModel'
 import { QueryClient } from '../src/QueryClient'
 import { Database } from '../src/Database/index'
-import { ManyToMany } from '../src/Orm/Relations/ManyToMany/index'
+// import { ManyToMany } from '../src/Orm/Relations/ManyToMany/index'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
-import { ManyToManyQueryBuilder } from '../src/Orm/Relations/ManyToMany/QueryBuilder'
+// import { ManyToManyQueryBuilder } from '../src/Orm/Relations/ManyToMany/QueryBuilder'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
 dotenv.config()
@@ -69,6 +69,7 @@ export function getConfig (): ConnectionConfigContract {
           filename: join(fs.basePath, 'db.sqlite'),
         },
         useNullAsDefault: true,
+        debug: false,
       }
     case 'mysql':
       return {
@@ -251,23 +252,7 @@ export function getQueryBuilder (client: QueryClientContract) {
   return new DatabaseQueryBuilder(
     client.getWriteClient().queryBuilder(),
     client,
-  ) as unknown as DatabaseQueryBuilderContract & ExcutableQueryBuilderContract<any>
-}
-
-/**
- * Returns many to many query builder
- */
-export function getManyToManyQueryBuilder (
-  parent: ModelContract,
-  relation: ManyToMany,
-  client: QueryClientContract,
-) {
-  return new ManyToManyQueryBuilder(
-    client.getWriteClient().queryBuilder(),
-    relation,
-    client,
-    parent,
-  ) as unknown as ManyToManyQueryBuilderContract<any> & ExcutableQueryBuilderContract<any>
+  ) as unknown as DatabaseQueryBuilderContract
 }
 
 /**
@@ -278,7 +263,7 @@ export function getRawQueryBuilder (client: QueryClientContract, sql: string, bi
   return new RawQueryBuilder(
     bindings ? writeClient.raw(sql, bindings) : writeClient.raw(sql),
     client,
-  ) as unknown as RawContract & ExcutableQueryBuilderContract<any>
+  ) as unknown as RawContract
 }
 
 /**
@@ -288,25 +273,25 @@ export function getInsertBuilder (client: QueryClientContract) {
   return new InsertQueryBuilder(
     client.getWriteClient().queryBuilder(),
     client,
-  ) as unknown as InsertQueryBuilderContract & ExcutableQueryBuilderContract<any>
+  ) as unknown as InsertQueryBuilderContract
 }
 
 /**
  * Returns fake logger instance
  */
 export function getLogger () {
-  return new FakeLogger({
+  return new Logger({
     enabled: true,
     name: 'lucid',
-    level: 'info',
+    level: 'debug',
   })
 }
 
 /**
  * Returns profiler instance
  */
-export function getProfiler () {
-  return new Profiler({ enabled: false })
+export function getProfiler (enabled: boolean = false) {
+  return new Profiler({ enabled })
 }
 
 /**
@@ -380,6 +365,9 @@ export class FakeAdapter implements AdapterContract {
   }
 
   public modelClient (): any {
+  }
+
+  public modelConstructorClient (): any {
   }
 
   public async insert (instance: ModelContract, attributes: any) {

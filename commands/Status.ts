@@ -9,7 +9,7 @@
 
 import columnify from 'columnify'
 import { inject } from '@adonisjs/fold'
-import { BaseCommand, flags } from '@adonisjs/ace'
+import { BaseCommand, flags, Kernel } from '@adonisjs/ace'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { MigrationListNode } from '@ioc:Adonis/Lucid/Migrator'
@@ -18,7 +18,7 @@ import { MigrationListNode } from '@ioc:Adonis/Lucid/Migrator'
  * The command is meant to migrate the database by execute migrations
  * in `up` direction.
  */
-@inject([null, 'Adonis/Lucid/Database'])
+@inject([null, null, 'Adonis/Lucid/Database'])
 export default class Status extends BaseCommand {
   public static commandName = 'migration:status'
   public static description = 'Drop existing tables and re-run migrations from start'
@@ -34,8 +34,8 @@ export default class Status extends BaseCommand {
     loadApp: true,
   }
 
-  constructor (app: ApplicationContract, private _db: DatabaseContract) {
-    super(app)
+  constructor (app: ApplicationContract, kernel: Kernel, private _db: DatabaseContract) {
+    super(app, kernel)
   }
 
   /**

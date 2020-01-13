@@ -9,14 +9,15 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { extname } from 'path'
 import { Exception } from '@poppinss/utils'
-import { RelationContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
+import { ModelContract, ModelObject } from '@ioc:Adonis/Lucid/Model'
+import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
+import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 /**
  * Ensure that relation is defined
  */
-export function ensureRelation<T extends RelationContract> (
+export function ensureRelation<T extends RelationshipsContract> (
   name: string,
   relation?: T,
 ): relation is T {
@@ -27,6 +28,9 @@ export function ensureRelation<T extends RelationContract> (
   return true
 }
 
+/**
+ * Ensure a key value is not null or undefined inside an object.
+ */
 export function ensureValue (collection: any, key: string, missingCallback: () => void) {
   const value = collection[key]
   if (value === undefined || value === null) {
@@ -38,18 +42,31 @@ export function ensureValue (collection: any, key: string, missingCallback: () =
 }
 
 /**
+ * Raises exception when a relationship `booted` property is false.
+ */
+export function ensureRelationIsBooted (relation: RelationshipsContract) {
+  if (!relation.booted) {
+    throw new Exception(
+      'Relationship is not booted. Make sure to call boot first',
+      500,
+      'E_RUNTIME_EXCEPTION',
+    )
+  }
+}
+
+/**
  * Returns the value for a key from the model instance and raises descriptive
  * exception when the value is missing
  */
 export function getValue (
   model: ModelContract,
   key: string,
-  relation: RelationContract,
+  relation: RelationshipsContract,
   action = 'preload',
 ) {
   return ensureValue(model, key, () => {
     throw new Exception(
-      `Cannot ${action} ${relation.relationName}, value of ${relation.model.name}.${key} is undefined`,
+      `Cannot ${action} "${relation.relationName}", value of "${relation.model.name}.${key}" is undefined`,
       500,
     )
   })
@@ -74,78 +91,69 @@ export function unique (value: any[]) {
 }
 
 /**
- * Finds the diff between 2 arrays
- */
-export function difference (main: any[], other: []) {
-  return [main, other].reduce((a, b) => {
-    return a.filter(c => {
-      /* eslint-disable-next-line eqeqeq */
-      return !b.find((one) => c == one)
-    })
-  })
-}
-
-/**
- * A helper to know file ends with a script file
- * extension or not
- */
-export function isJavaScriptFile (file: string) {
-  return ['.js', '.ts'].includes(extname(file))
-}
-
-/**
  * Returns a diff of rows to be updated or inserted when performing
  * a many to many `attach`
  */
-export function syncDiff (
-  dbRows: any[],
-  attributesToSync: any[] | { [key: string]: any },
-  rowIdResolver: (rows: any, forId: string) => any,
-) {
-  /**
-   * When attributes to sync are not defined as an array. Then we expect it
-   * to be an object
-   */
-  const hasExtraAttributes = !Array.isArray(attributesToSync)
-
-  /**
-   * An array of ids we want to sync
-   */
-  const idsToSync = (hasExtraAttributes ? Object.keys(attributesToSync) : attributesToSync) as string[]
-
-  return idsToSync.reduce((result: { insert: any[], update: any[] }, id) => {
-    /**
-     * Find the matching row for the given id
-     */
-    const matchingRow = rowIdResolver(dbRows, id)
+export function syncDiff (original: ModelObject, incoming: ModelObject) {
+  const diff = Object
+    .keys(incoming)
+    .reduce<{ added: ModelObject, updated: ModelObject, removed: ModelObject }>((
+    result,
+    incomingRowId,
+  ) => {
+    const originalRow = original[incomingRowId]
 
     /**
      * When there isn't any matching row, we need to insert
-     * the id
+     * the upcoming row
      */
-    if (!matchingRow) {
-      result.insert.push(id)
-      return result
-    }
-
-    /**
-     * When there aren't any extra attributes to check, we skip the
-     * given id, since it already exists.
-     */
-    if (!hasExtraAttributes) {
-      return result
-    }
-
-    /**
-     * When one or more attributes inside the update payload are different
-     * from the actual row, then we perform an update
-     */
-    const attributes = attributesToSync[id]
-    /* eslint-disable-next-line eqeqeq */
-    if (Object.keys(attributes).find((key) => matchingRow[key] != attributes[key])) {
-      result.update.push(id)
+    if (!originalRow) {
+      result.added[incomingRowId] = incoming[incomingRowId]
+    } else if (Object.keys(incoming[incomingRowId]).find((key) => incoming[incomingRowId][key] !== originalRow[key])) {
+      /**
+       * If any of the row attributes are different, then we must
+       * update that row
+       */
+      result.updated[incomingRowId] = incoming[incomingRowId]
     }
 
     return result
-  }, { insert: [], update: [] })
+  }, { added: {}, updated: {}, removed: {} })
+
+  /**
+   * Deleted rows
+   */
+  diff.removed = Object.keys(original).reduce((result, originalRowId) => {
+    if (!incoming[originalRowId]) {
+      result[originalRowId] = {}
+    }
+    return result
+  }, {})
+
+  return diff
+}
+
+/**
+ * Invokes a callback by wrapping it inside managed transaction
+ * when passed client is not transaction itself.
+ */
+export async function managedTransaction<T> (
+  client: QueryClientContract | TransactionClientContract,
+  callback: (trx: TransactionClientContract) => Promise<T>,
+): Promise<T> {
+  const isManagedTransaction = !client.isTransaction
+  const trx = client.isTransaction ? client as TransactionClientContract : await client.transaction()
+
+  if (!isManagedTransaction) {
+    return callback(trx)
+  }
+
+  try {
+    const response = await callback(trx)
+    await trx.commit()
+    return response
+  } catch (error) {
+    await trx.rollback()
+    throw error
+  }
 }

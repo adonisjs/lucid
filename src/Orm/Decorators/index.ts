@@ -11,24 +11,27 @@
 
 import 'reflect-metadata'
 import {
-  ColumnFn,
-  HasOneFn,
-  HasManyFn,
-  ComputedFn,
-  BelongsToFn,
-  ManyToManyFn,
-  HasManyThroughFn,
+  ColumnDecorator,
+  ComputedDecorator,
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
+
+import {
+  HasOneDecorator,
+  HasManyDecorator,
+  BelongsToDecorator,
+  ManyToManyDecorator,
+  HasManyThroughDecorator,
+} from '@ioc:Adonis/Lucid/Relations'
 
 /**
  * Define property on a model as a column. The decorator needs a
  * proper model class inheriting the base model
  */
-export const column: ColumnFn = (options?) => {
+export const column: ColumnDecorator = (options?) => {
   return function decorateAsColumn (target, property) {
     const Model = target.constructor as ModelConstructorContract
-    Model.$boot()
+    Model.boot()
     Model.$addColumn(property, options || {})
   }
 }
@@ -37,11 +40,11 @@ export const column: ColumnFn = (options?) => {
  * Define computed property on a model. The decorator needs a
  * proper model class inheriting the base model
  */
-export const computed: ComputedFn = (options) => {
+export const computed: ComputedDecorator = (options) => {
   return function decorateAsComputed (target, property) {
     const Model = target.constructor as ModelConstructorContract
 
-    Model.$boot()
+    Model.boot()
     Model.$addComputed(property, options || {})
   }
 }
@@ -49,10 +52,10 @@ export const computed: ComputedFn = (options) => {
 /**
  * Define belongsTo relationship
  */
-export const belongsTo: BelongsToFn = (relatedModel, relation?) => {
+export const belongsTo: BelongsToDecorator = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
-    Model.$boot()
+    Model.boot()
     Model.$addRelation(property, 'belongsTo', Object.assign({ relatedModel }, relation))
   }
 }
@@ -60,10 +63,10 @@ export const belongsTo: BelongsToFn = (relatedModel, relation?) => {
 /**
  * Define hasOne relationship
  */
-export const hasOne: HasOneFn = (relatedModel, relation?) => {
+export const hasOne: HasOneDecorator = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
-    Model.$boot()
+    Model.boot()
     Model.$addRelation(property, 'hasOne', Object.assign({ relatedModel }, relation))
   }
 }
@@ -71,10 +74,10 @@ export const hasOne: HasOneFn = (relatedModel, relation?) => {
 /**
  * Define hasMany relationship
  */
-export const hasMany: HasManyFn = (relatedModel, relation?) => {
+export const hasMany: HasManyDecorator = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
-    Model.$boot()
+    Model.boot()
     Model.$addRelation(property, 'hasMany', Object.assign({ relatedModel }, relation))
   }
 }
@@ -82,10 +85,10 @@ export const hasMany: HasManyFn = (relatedModel, relation?) => {
 /**
  * Define manyToMany relationship
  */
-export const manyToMany: ManyToManyFn = (relatedModel, relation?) => {
+export const manyToMany: ManyToManyDecorator = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
-    Model.$boot()
+    Model.boot()
     Model.$addRelation(property, 'manyToMany', Object.assign({ relatedModel }, relation))
   }
 }
@@ -93,10 +96,10 @@ export const manyToMany: ManyToManyFn = (relatedModel, relation?) => {
 /**
  * Define hasManyThrough relationship
  */
-export const hasManyThrough: HasManyThroughFn = ([relatedModel, throughModel], relation) => {
+export const hasManyThrough: HasManyThroughDecorator = ([relatedModel, throughModel], relation) => {
   return function decorateAsRelation (target, property: string) {
     const Model = target.constructor as ModelConstructorContract
-    Model.$boot()
+    Model.boot()
     Model.$addRelation(property, 'hasManyThrough', Object.assign({ relatedModel, throughModel }, relation))
   }
 }

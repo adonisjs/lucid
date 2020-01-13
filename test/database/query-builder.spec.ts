@@ -11,12 +11,14 @@
 
 import test from 'japa'
 import { Connection } from '../../src/Connection'
+import { executeQuery } from '../../src/helpers/executeQuery'
 import { DatabaseQueryBuilder } from '../../src/Database/QueryBuilder/Database'
 import {
   setup,
   cleanup,
   getConfig,
   getLogger,
+  resetTables,
   getQueryClient,
   getQueryBuilder,
   getInsertBuilder,
@@ -33,6 +35,10 @@ if (process.env.DB !== 'sqlite') {
       await cleanup()
     })
 
+    group.afterEach(async () => {
+      await resetTables()
+    })
+
     test('use read client when making select query', async (assert) => {
       assert.plan(1)
       const connection = new Connection('primary', getConfig(), getLogger())
@@ -43,11 +49,10 @@ if (process.env.DB !== 'sqlite') {
 
       client.getReadClient = function getReadClient () {
         assert.isTrue(true)
-        return this._connection.client
+        return this.connection.client
       }
 
-      db.select('*').from('users')
-      db['getQueryClient']()
+      await executeQuery(db.select('*').from('users').knexQuery, client, null)
       await connection.disconnect()
     })
 
@@ -61,11 +66,10 @@ if (process.env.DB !== 'sqlite') {
 
       client.getWriteClient = function getWriteClient () {
         assert.isTrue(true)
-        return this._connection.client
+        return this.connection.client
       }
 
-      db.from('users').update('username', 'virk')
-      db['getQueryClient']()
+      await executeQuery(db.from('users').update('username', 'virk').knexQuery, client, null)
       await connection.disconnect()
     })
 
@@ -79,11 +83,27 @@ if (process.env.DB !== 'sqlite') {
 
       client.getWriteClient = function getWriteClient () {
         assert.isTrue(true)
-        return this._connection.client
+        return this.connection.client
       }
 
-      db.from('users').del()
-      db['getQueryClient']()
+      await executeQuery(db.from('users').del().knexQuery, client, null)
+      await connection.disconnect()
+    })
+
+    test('use write client for inserts', async (assert) => {
+      assert.plan(1)
+      const connection = new Connection('primary', getConfig(), getLogger())
+      connection.connect()
+
+      const client = getQueryClient(connection)
+      const db = getInsertBuilder(client)
+
+      client.getWriteClient = function getWriteClient () {
+        assert.isTrue(true)
+        return this.connection.client
+      }
+
+      await executeQuery(db.table('users').insert({ username: 'virk' }).knexQuery, client, null)
       await connection.disconnect()
     })
 
@@ -99,7 +119,7 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const trx = await client.transaction()
-      await db.select('*').from('users').useTransaction(trx).exec()
+      await executeQuery(db.select('*').from('users').useTransaction(trx).knexQuery, client, null)
       await trx.commit()
       await connection.disconnect()
     })
@@ -116,7 +136,11 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const trx = await client.transaction()
-      await db.table('users').useTransaction(trx).insert({ username: 'virk' }).exec()
+      await executeQuery(
+        db.table('users').useTransaction(trx).insert({ username: 'virk' }).knexQuery,
+        client,
+        null,
+      )
       await trx.rollback()
       await connection.disconnect()
     })
@@ -132,7 +156,11 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const trx = await client.transaction()
-      await trx.query().select('*').from('users').exec()
+      await executeQuery(
+        trx.query().select('*').from('users').knexQuery,
+        client,
+        null,
+      )
       await trx.commit()
       await connection.disconnect()
     })
@@ -148,7 +176,11 @@ if (process.env.DB !== 'sqlite') {
         throw new Error('Never expected to reach here')
       }
 
-      await trx.insertQuery().table('users').insert({ username: 'virk' }).exec()
+      await executeQuery(
+        trx.insertQuery().table('users').insert({ username: 'virk' }).knexQuery,
+        trx,
+        null,
+      )
       await trx.commit()
     })
   })

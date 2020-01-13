@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
 */
 
-import { flags } from '@adonisjs/ace'
 import { inject } from '@adonisjs/fold'
+import { flags, Kernel } from '@adonisjs/ace'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
@@ -18,7 +18,7 @@ import MigrationsBase from './MigrationsBase'
  * The command is meant to migrate the database by execute migrations
  * in `up` direction.
  */
-@inject([null, 'Adonis/Lucid/Database'])
+@inject([null, null, 'Adonis/Lucid/Database'])
 export default class Migrate extends MigrationsBase {
   public static commandName = 'migration:rollback'
   public static description = 'Rollback migrations to a given batch number'
@@ -28,6 +28,9 @@ export default class Migrate extends MigrationsBase {
 
   @flags.boolean({ description: 'Print SQL queries, instead of running the migrations' })
   public dryRun: boolean
+
+  @flags.boolean({ description: 'Explictly force to run migrations in production' })
+  public force: boolean
 
   @flags.number({
     description: 'Define custom batch number for rollback. Use 0 to rollback to initial state',
@@ -42,8 +45,8 @@ export default class Migrate extends MigrationsBase {
     loadApp: true,
   }
 
-  constructor (app: ApplicationContract, private _db: DatabaseContract) {
-    super(app)
+  constructor (app: ApplicationContract, kernel: Kernel, private _db: DatabaseContract) {
+    super(app, kernel)
   }
 
   /**
@@ -51,6 +54,7 @@ export default class Migrate extends MigrationsBase {
    */
   public async handle (): Promise<void> {
     const connection = this._db.getRawConnection(this.connection || this._db.primaryConnectionName)
+    let continueMigrations = !this.application.inProduction || this.force
 
     /**
      * Ensure the define connection name does exists in the
@@ -60,6 +64,26 @@ export default class Migrate extends MigrationsBase {
       this.logger.error(
         `${this.connection} is not a valid connection name. Double check config/database file`,
       )
+      return
+    }
+
+    /**
+     * Ask for prompt when running in production and `force` flag is
+     * not defined
+     */
+    if (!continueMigrations) {
+      try {
+        continueMigrations = await this.prompt
+          .confirm('You are in production environment. Want to continue running migrations?')
+      } catch (error) {
+        continueMigrations = false
+      }
+    }
+
+    /**
+     * Prompt cancelled or rejected and hence do not continue
+     */
+    if (!continueMigrations) {
       return
     }
 

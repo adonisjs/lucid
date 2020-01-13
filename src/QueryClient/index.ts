@@ -21,32 +21,29 @@ import {
   TransactionClientContract,
 } from '@ioc:Adonis/Lucid/Database'
 
+import { dialects } from '../Dialects'
 import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { TransactionClient } from '../TransactionClient'
 import { RawQueryBuilder } from '../Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../Database/QueryBuilder/Database'
-import { dialects } from '../Dialects'
 
 /**
  * Query client exposes the API to fetch instance of different query builders
- * to perform queries on a selection connection.
- *
- * Many of the methods returns `any`, since this class is type casted to an interface,
- * it doesn't real matter what are the return types from this class
+ * to perform queries on a selecte connection.
  */
 export class QueryClient implements QueryClientContract {
-  private _dialect: DialectContract
-
   /**
    * Not a transaction client
    */
   public readonly isTransaction = false
 
   /**
-   * The name of the dialect in use
+   * The dialect in use
    */
-  public dialect = new (dialects[resolveClientNameWithAliases(this._connection.config.client)])(this)
+  public dialect: DialectContract = new (
+    dialects[resolveClientNameWithAliases(this.connection.config.client)]
+  )(this)
 
   /**
    * The profiler to be used for profiling queries
@@ -56,11 +53,11 @@ export class QueryClient implements QueryClientContract {
   /**
    * Name of the connection in use
    */
-  public readonly connectionName = this._connection.name
+  public readonly connectionName = this.connection.name
 
   constructor (
     public readonly mode: 'dual' | 'write' | 'read',
-    private _connection: ConnectionContract,
+    private connection: ConnectionContract,
   ) {
   }
 
@@ -77,10 +74,10 @@ export class QueryClient implements QueryClientContract {
    */
   public getReadClient (): knex {
     if (this.mode === 'read' || this.mode === 'dual') {
-      return this._connection.readClient!
+      return this.connection.readClient!
     }
 
-    return this._connection.client!
+    return this.connection.client!
   }
 
   /**
@@ -88,7 +85,7 @@ export class QueryClient implements QueryClientContract {
    */
   public getWriteClient (): knex {
     if (this.mode === 'write' || this.mode === 'dual') {
-      return this._connection.client!
+      return this.connection.client!
     }
 
     throw new Exception(
@@ -131,16 +128,16 @@ export class QueryClient implements QueryClientContract {
   }
 
   /**
-   * Returns the knex query builder instance
+   * Returns the knex query builder instance. The query builder is always
+   * created from the `write` client, so before executing the query, you
+   * may want to decide which client to use.
    */
   public knexQuery (): knex.QueryBuilder {
-    return this._connection.client!.queryBuilder()
+    return this.connection.client!.queryBuilder()
   }
 
   /**
-   * Returns a query builder instance for a given model. The `connection`
-   * and `profiler` is passed down to the model, so that it continue
-   * using the same options
+   * Returns a query builder instance for a given model.
    */
   public modelQuery (model: any): any {
     return new ModelQueryBuilder(this.knexQuery(), model, this)
@@ -165,7 +162,7 @@ export class QueryClient implements QueryClientContract {
    * Returns instance of raw query builder
    */
   public raw (sql: any, bindings?: any): any {
-    return new RawQueryBuilder(this._connection.client!.raw(sql, bindings), this)
+    return new RawQueryBuilder(this.connection.client!.raw(sql, bindings), this)
   }
 
   /**
@@ -183,11 +180,17 @@ export class QueryClient implements QueryClientContract {
     return this.insertQuery().table(table)
   }
 
+  /**
+   * Get advisory lock on the selected connection
+   */
   public getAdvisoryLock (key: string, timeout?: number): any {
-    return this._dialect.getAdvisoryLock(key, timeout)
+    return this.dialect.getAdvisoryLock(key, timeout)
   }
 
+  /**
+   * Release advisory lock
+   */
   public releaseAdvisoryLock (key: string): any {
-    return this._dialect.releaseAdvisoryLock(key)
+    return this.dialect.releaseAdvisoryLock(key)
   }
 }
