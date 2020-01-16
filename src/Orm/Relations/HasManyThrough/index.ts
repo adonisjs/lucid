@@ -177,6 +177,6 @@ ModelConstructorContract
    */
   public client (parent: ModelContract | ModelContract[], client: QueryClientContract): any {
     ensureRelationIsBooted(this)
-    return new HasManyThroughClient(parent, client, this)
+    return new HasManyThroughClient(this, parent, client)
   }
 }

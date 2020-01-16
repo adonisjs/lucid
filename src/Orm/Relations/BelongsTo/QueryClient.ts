@@ -20,14 +20,16 @@ import { getValue, managedTransaction } from '../../../utils'
  * Query client for executing queries in scope to the defined
  * relationship
  */
-export class BelongsToQueryClient implements BelongsToClientContract<
+export class BelongsToQueryClient implements BelongsToClientContract
+<
+BelongsTo,
 ModelConstructorContract,
 ModelConstructorContract
 > {
   constructor (
+    public relation: BelongsTo,
     private parent: ModelContract | ModelContract[],
     private client: QueryClientContract,
-    private relation: BelongsTo,
   ) {
   }
 

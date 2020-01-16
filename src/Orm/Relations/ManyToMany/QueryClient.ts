@@ -21,13 +21,14 @@ import { getValue, managedTransaction, syncDiff } from '../../../utils'
  * relationship
  */
 export class ManyToManyQueryClient implements ManyToManyClientContract<
+ManyToMany,
 ModelConstructorContract,
 ModelConstructorContract
 > {
   constructor (
+    public relation: ManyToMany,
     private parent: ModelContract | ModelContract[],
     private client: QueryClientContract,
-    private relation: ManyToMany,
   ) {
   }
 

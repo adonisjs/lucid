@@ -19,13 +19,14 @@ import { HasManyThroughQueryBuilder } from './QueryBuilder'
  * relationship
  */
 export class HasManyThroughClient implements RelationBaseQueryClientContract<
+HasManyThrough,
 ModelConstructorContract,
 ModelConstructorContract
 > {
   constructor (
+    public relation: HasManyThrough,
     private parent: ModelContract | ModelContract[],
     private client: QueryClientContract,
-    private relation: HasManyThrough,
   ) {
   }
 

@@ -144,6 +144,6 @@ ModelConstructorContract
    */
   public client (parent: ModelContract | ModelContract[], client: QueryClientContract): any {
     ensureRelationIsBooted(this)
-    return new BelongsToQueryClient(parent, client, this)
+    return new BelongsToQueryClient(this, parent, client)
   }
 }

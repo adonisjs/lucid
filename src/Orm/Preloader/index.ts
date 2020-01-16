@@ -13,6 +13,7 @@ import { ModelObject, ModelContract, ModelConstructorContract } from '@ioc:Adoni
 import {
   PreloaderContract,
   RelationshipsContract,
+  RelationBaseQueryClientContract,
   RelationBaseQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Relations'
 
@@ -40,6 +41,17 @@ export class Preloader implements PreloaderContract<ModelContract> {
   }
 
   /**
+   * Returns query client for the given relationship
+   */
+  private getQueryClient (
+    relation: RelationshipsContract,
+    client: QueryClientContract,
+    parent: ModelContract | ModelContract[],
+  ) {
+    return relation.client(parent, client) as RelationBaseQueryClientContract<any, any, any>
+  }
+
+  /**
    * Processes a relationship for a single parent
    */
   private async processRelation (
@@ -48,7 +60,7 @@ export class Preloader implements PreloaderContract<ModelContract> {
     client: QueryClientContract,
   ) {
     const { relation, callback } = this.preloads[name]
-    const query = relation.client(parent, client).eagerQuery().sideload(this.sideloaded)
+    const query = this.getQueryClient(relation, client, parent).eagerQuery().sideload(this.sideloaded)
 
     /**
      * Pass query to end user for adding more constraints
@@ -83,7 +95,7 @@ export class Preloader implements PreloaderContract<ModelContract> {
     client: QueryClientContract,
   ) {
     const { relation, callback } = this.preloads[name]
-    const query = relation.client(parent, client).eagerQuery().sideload(this.sideloaded)
+    const query = this.getQueryClient(relation, client, parent).eagerQuery().sideload(this.sideloaded)
 
     /**
      * Pass query to end user for adding more constraints

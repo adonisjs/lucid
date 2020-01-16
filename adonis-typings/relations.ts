@@ -243,7 +243,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     client (
       model: InstanceType<Model> | InstanceType<Model>[],
       client: QueryClientContract,
-    ): HasOneClientContract<Model, RelatedModel>
+    ): HasOneClientContract<this, Model, RelatedModel>
   }
 
   /**
@@ -276,7 +276,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     client (
       model: InstanceType<Model> | InstanceType<Model>[],
       client: QueryClientContract,
-    ): HasManyClientContract<Model, RelatedModel>
+    ): HasManyClientContract<this, Model, RelatedModel>
   }
 
   /**
@@ -309,7 +309,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     client (
       model: InstanceType<Model> | InstanceType<Model>[],
       client: QueryClientContract,
-    ): BelongsToClientContract<Model, RelatedModel>
+    ): BelongsToClientContract<this, Model, RelatedModel>
   }
 
   /**
@@ -342,7 +342,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     client (
       model: InstanceType<Model> | InstanceType<Model>[],
       client: QueryClientContract,
-    ): ManyToManyClientContract<Model, RelatedModel>
+    ): ManyToManyClientContract<this, Model, RelatedModel>
   }
 
   /**
@@ -375,7 +375,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     client (
       model: InstanceType<Model> | InstanceType<Model>[],
       client: QueryClientContract,
-    ): RelationBaseQueryClientContract<Model, RelatedModel>
+    ): RelationBaseQueryClientContract<this, Model, RelatedModel>
   }
 
   /**
@@ -394,9 +394,11 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    * ------------------------------------------------------
    */
   export interface RelationBaseQueryClientContract<
+    Relation extends RelationshipsContract,
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
   > {
+    relation: Relation,
     /**
      * Return a query builder instance of the relationship
      */
@@ -417,9 +419,10 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    * Query client for has one relationship
    */
   export interface HasOneClientContract<
+    Relation extends RelationshipsContract,
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
-  > extends RelationBaseQueryClientContract<Model, RelatedModel> {
+  > extends RelationBaseQueryClientContract<Relation, Model, RelatedModel> {
     save (related: InstanceType<RelatedModel>): Promise<void>
     create (values: ModelObject): Promise<InstanceType<RelatedModel>>
     firstOrCreate (search: ModelObject, savePayload?: ModelObject): Promise<InstanceType<RelatedModel>>
@@ -431,9 +434,10 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    * adds support for saving many relations
    */
   export interface HasManyClientContract<
+    Relation extends RelationshipsContract,
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
-  > extends HasOneClientContract<Model, RelatedModel> {
+  > extends HasOneClientContract<Relation, Model, RelatedModel> {
     saveMany (related: InstanceType<RelatedModel>[]): Promise<void>
     createMany (values: ModelObject[]): Promise<InstanceType<RelatedModel>[]>
   }
@@ -443,9 +447,10 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    * `dissociate` over save.
    */
   export interface BelongsToClientContract<
+    Relation extends RelationshipsContract,
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
-  > extends RelationBaseQueryClientContract<Model, RelatedModel> {
+  > extends RelationBaseQueryClientContract<Relation, Model, RelatedModel> {
     associate (related: InstanceType<RelatedModel>): Promise<void>
     dissociate (): Promise<void>
   }
@@ -454,9 +459,12 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    * Query client for many to many relationship.
    */
   export interface ManyToManyClientContract<
+    Relation extends RelationshipsContract,
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
   > {
+    relation: Relation,
+
     query<
       Result extends any = InstanceType<RelatedModel>
     > (): ManyToManyQueryBuilderContract<RelatedModel, Result>

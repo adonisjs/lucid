@@ -21,13 +21,14 @@ import { getValue, managedTransaction } from '../../../utils'
  * relationship
  */
 export class HasOneQueryClient implements HasOneClientContract<
+HasOne,
 ModelConstructorContract,
 ModelConstructorContract
 > {
   constructor (
+    public relation: HasOne,
     private parent: ModelContract | ModelContract[],
     private client: QueryClientContract,
-    private relation: HasOne,
   ) {
   }
 
