@@ -400,13 +400,17 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     /**
      * Return a query builder instance of the relationship
      */
-    query (): RelationBaseQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
+    query<
+      Result extends any = InstanceType<RelatedModel>
+    > (): RelationBaseQueryBuilderContract<RelatedModel, Result>
 
     /**
      * Eager query only works when client instance is created using multiple
      * parent model instances
      */
-    eagerQuery (): RelationBaseQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
+    eagerQuery<
+      Result extends any = InstanceType<RelatedModel>
+    > (): RelationBaseQueryBuilderContract<RelatedModel, Result>
   }
 
   /**
@@ -453,18 +457,24 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     Model extends ModelConstructorContract,
     RelatedModel extends ModelConstructorContract
   > {
-    query (): ManyToManyQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
+    query<
+      Result extends any = InstanceType<RelatedModel>
+    > (): ManyToManyQueryBuilderContract<RelatedModel, Result>
 
     /**
      * Eager query only works when client instance is created using multiple
      * parent model instances
      */
-    eagerQuery (): ManyToManyQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
+    eagerQuery<
+      Result extends any = InstanceType<RelatedModel>
+    > (): ManyToManyQueryBuilderContract<RelatedModel, Result>
 
     /**
      * Pivot query just targets the pivot table without any joins
      */
-    pivotQuery (): ManyToManyQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
+    pivotQuery<
+      Result extends any = any
+    > (): ManyToManyQueryBuilderContract<RelatedModel, Result>
 
     /**
      * Save related model instance.
