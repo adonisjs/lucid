@@ -344,12 +344,12 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * The primary key for finding unique referencing to a
      * model
      */
-    readonly primaryKey: string
+    primaryKey: string
 
     /**
      * Custom database connection to use
      */
-    readonly connection?: string
+    connection?: string
 
     /**
      * Adapter to work as a bridge between query builder and the model
@@ -365,18 +365,18 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Whether primary key is auto incrementing or not. If not, then
      * end user must provide the value for the primary key
      */
-    readonly increments: boolean
+    increments: boolean
 
     /**
      * Database table to use
      */
-    readonly table: string
+    table: string
 
     /**
      * Refs are named value pair on model used mainly for autocompleting
      * the query constraints
      */
-    readonly $refs: { [key: string]: string }
+    $refs: { [key: string]: string }
 
     /**
      * Creating model from adapter results
