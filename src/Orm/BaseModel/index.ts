@@ -95,19 +95,19 @@ export class BaseModel implements ModelContract {
    * the `toJSON` result, else they behave the same way as any other instance
    * property.
    */
-  public static $computed: Map<string, ComputedOptions>
+  public static $computedDefinitions: Map<string, ComputedOptions>
 
   /**
    * Columns makes it easier to define extra props on the model
    * and distinguish them with the attributes to be sent
    * over to the adapter
    */
-  public static $columns: Map<string, ColumnOptions>
+  public static $columnsDefinitions: Map<string, ColumnOptions>
 
   /**
    * Registered relationships for the given model
    */
-  public static $relations: Map<string, RelationshipsContract>
+  public static $relationsDefinitions: Map<string, RelationshipsContract>
 
   /**
    * Whether or not to rely on database to return the primaryKey
@@ -123,11 +123,6 @@ export class BaseModel implements ModelContract {
   public static table: string
 
   /**
-   * A key-value pair of model properties and their `castAs` keys
-   */
-  public static $refs: { [key: string]: string }
-
-  /**
    * A custom connection to use for queries. The connection defined on
    * query builder is preferred over the model connection
    */
@@ -139,9 +134,19 @@ export class BaseModel implements ModelContract {
   private static hooks: Hooks
 
   /**
-   * Reverse of `$refs`
+   * A key-value pair of model properties and their `castAs` keys
    */
-  private static $dbRefs: { [key: string]: string }
+  private static $attributesToAdapterKeys: { [key: string]: string }
+
+  /**
+   * Reverse of `$attributesToAdapterKeys`
+   */
+  private static $adapterKeysToAttributes: { [key: string]: string }
+
+  /**
+   * A type only reference to the columns
+   */
+  public static $columns: any = {}
 
   /**
    * Returns the model query instance for the given model
@@ -225,23 +230,23 @@ export class BaseModel implements ModelContract {
       this.primaryKey = name
     }
 
-    this.$columns.set(name, column)
-    this.$refs[name] = column.castAs
-    this.$dbRefs[column.castAs] = name
+    this.$columnsDefinitions.set(name, column)
+    this.$attributesToAdapterKeys[name] = column.castAs
+    this.$adapterKeysToAttributes[column.castAs] = name
   }
 
   /**
    * Returns a boolean telling if column exists on the model
    */
   public static $hasColumn (name: string): boolean {
-    return this.$columns.has(name)
+    return this.$columnsDefinitions.has(name)
   }
 
   /**
    * Returns the column for a given name
    */
   public static $getColumn (name: string): ColumnOptions | undefined {
-    return this.$columns.get(name)
+    return this.$columnsDefinitions.get(name)
   }
 
   /**
@@ -251,21 +256,21 @@ export class BaseModel implements ModelContract {
     const column: ComputedOptions = {
       serializeAs: options.serializeAs || name,
     }
-    this.$computed.set(name, column)
+    this.$computedDefinitions.set(name, column)
   }
 
   /**
    * Find if some property is marked as computed
    */
   public static $hasComputed (name: string): boolean {
-    return this.$computed.has(name)
+    return this.$computedDefinitions.has(name)
   }
 
   /**
    * Get computed node
    */
   public static $getComputed (name: string): ComputedOptions | undefined {
-    return this.$computed.get(name)
+    return this.$computedDefinitions.get(name)
   }
 
   /**
@@ -278,19 +283,19 @@ export class BaseModel implements ModelContract {
   ) {
     switch (type) {
       case 'hasOne':
-        this.$relations.set(name, new HasOne(name, options, this))
+        this.$relationsDefinitions.set(name, new HasOne(name, options, this))
         break
       case 'hasMany':
-        this.$relations.set(name, new HasMany(name, options, this))
+        this.$relationsDefinitions.set(name, new HasMany(name, options, this))
         break
       case 'belongsTo':
-        this.$relations.set(name, new BelongsTo(name, options, this))
+        this.$relationsDefinitions.set(name, new BelongsTo(name, options, this))
         break
       case 'manyToMany':
-        this.$relations.set(name, new ManyToMany(name, options as ManyToManyRelationOptions, this))
+        this.$relationsDefinitions.set(name, new ManyToMany(name, options as ManyToManyRelationOptions, this))
         break
       case 'hasManyThrough':
-        this.$relations.set(name, new HasManyThrough(name, options as ThroughRelationOptions, this))
+        this.$relationsDefinitions.set(name, new HasManyThrough(name, options as ThroughRelationOptions, this))
         break
       default:
         throw new Error(`${type} is not a supported relation type`)
@@ -301,14 +306,14 @@ export class BaseModel implements ModelContract {
    * Find if some property is marked as a relation or not
    */
   public static $hasRelation (name: any): boolean {
-    return this.$relations.has(name)
+    return this.$relationsDefinitions.has(name)
   }
 
   /**
    * Returns relationship node for a given relation
    */
   public static $getRelation (name: any): RelationshipsContract {
-    return this.$relations.get(name)!
+    return this.$relationsDefinitions.get(name)!
   }
 
   /**
@@ -316,7 +321,7 @@ export class BaseModel implements ModelContract {
    * is returned as it is, If property doesn't exists inside refs.
    */
   public static $resolveCastKey (key: string): string {
-    return this.$refs[key] || key
+    return this.$attributesToAdapterKeys[key] || key
   }
 
   /**
@@ -325,6 +330,24 @@ export class BaseModel implements ModelContract {
   public static $mapKeysToCastKeys (values: ModelObject): ModelObject {
     return Object.keys(values).reduce((result, key) => {
       result[this.$resolveCastKey(key)] = values[key]
+      return result
+    }, {})
+  }
+
+  /**
+   * Resolves the module column name for a given property. The original key
+   * is returned as it is, If property doesn't exists inside dbRefs.
+   */
+  public static $resolveColumnName (key: string): string {
+    return this.$adapterKeysToAttributes[key] || key
+  }
+
+  /**
+   * Maps the object keys to their model column names
+   */
+  public static $mapsKeysToColumnNames (values: ModelObject): ModelObject {
+    return Object.keys(values).reduce((result, key) => {
+      result[this.$resolveColumnName(key)] = values[key]
       return result
     }, {})
   }
@@ -340,12 +363,13 @@ export class BaseModel implements ModelContract {
     this.booted = true
     this.primaryKey = this.primaryKey || 'id'
 
-    Object.defineProperty(this, '$refs', { value: {} })
-    Object.defineProperty(this, '$dbRefs', { value: {} })
+    Object.defineProperty(this, '$attributesToAdapterKeys', { value: {} })
+    Object.defineProperty(this, '$adapterKeysToAttributes', { value: {} })
+    Object.defineProperty(this, '$columns', { value: {} })
 
-    Object.defineProperty(this, '$columns', { value: new Map() })
-    Object.defineProperty(this, '$computed', { value: new Map() })
-    Object.defineProperty(this, '$relations', { value: new Map() })
+    Object.defineProperty(this, '$columnsDefinitions', { value: new Map() })
+    Object.defineProperty(this, '$computedDefinitions', { value: new Map() })
+    Object.defineProperty(this, '$relationsDefinitions', { value: new Map() })
 
     Object.defineProperty(this, 'hooks', {
       value: new Hooks(this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')),
@@ -377,7 +401,7 @@ export class BaseModel implements ModelContract {
    */
   public static async create<T extends ModelConstructorContract> (
     this: T,
-    values: ModelObject,
+    values: Partial<T['$columns']>,
     options?: ModelAdapterOptions,
   ): Promise<InstanceType<T>> {
     const instance = new this()
@@ -396,7 +420,7 @@ export class BaseModel implements ModelContract {
    */
   public static async createMany<T extends ModelConstructorContract> (
     this: T,
-    values: ModelObject[],
+    values: Partial<T['$columns']>[],
     options?: ModelAdapterOptions,
   ): Promise<InstanceType<T>[]> {
     const client = this.$adapter.modelConstructorClient(this, options)
@@ -449,8 +473,8 @@ export class BaseModel implements ModelContract {
    */
   public static async firstOrNew<T extends ModelConstructorContract> (
     this: T,
-    search: any,
-    savePayload?: any,
+    search: Partial<T['$columns']>,
+    savePayload?: Partial<T['$columns']>,
     options?: ModelAdapterOptions,
   ) {
     const query = this.query(options)
@@ -475,8 +499,8 @@ export class BaseModel implements ModelContract {
    */
   public static async firstOrCreate<T extends ModelConstructorContract> (
     this: T,
-    search: any,
-    savePayload?: any,
+    search: Partial<T['$columns']>,
+    savePayload?: Partial<T['$columns']>,
     options?: ModelAdapterOptions,
   ) {
     const row = await this.firstOrNew(search, savePayload, options)
@@ -492,8 +516,8 @@ export class BaseModel implements ModelContract {
    */
   public static async updateOrCreate<T extends ModelConstructorContract> (
     this: T,
-    search: any,
-    updatedPayload: any,
+    search: Partial<T['$columns']>,
+    updatedPayload: Partial<T['$columns']>,
     options?: ModelAdapterOptions,
   ) {
     const row = await this.firstOrNew(search, updatedPayload, options)
@@ -515,8 +539,8 @@ export class BaseModel implements ModelContract {
    */
   public static async fetchOrNewUpMany<T extends ModelConstructorContract> (
     this: T,
-    uniqueKey: string,
-    payload: ModelObject[],
+    uniqueKey: keyof T['$columns'],
+    payload: Partial<T['$columns']>[],
     options?: ModelAdapterOptions,
     mergeAttributes: boolean = false,
   ) {
@@ -524,7 +548,7 @@ export class BaseModel implements ModelContract {
      * Make sure that the unique key is defined as a column
      * on the current model.
      */
-    const castKey = this.$refs[uniqueKey]
+    const castKey = this.$getColumn(uniqueKey as string)
     if (!castKey) {
       throw new Exception(
         `"${uniqueKey}" is not defined as a column on the "${this.name}" model`,
@@ -535,7 +559,7 @@ export class BaseModel implements ModelContract {
      * An array of values for the unique key
      */
     const uniqueKeyValues = payload.map((row) => {
-      return ensureValue(row, uniqueKey, () => {
+      return ensureValue(row, uniqueKey as string, () => {
         throw new Exception(
           `Value for the "${uniqueKey}" is null or undefined inside "fetchOrNewUpMany" payload`,
         )
@@ -543,7 +567,7 @@ export class BaseModel implements ModelContract {
     })
 
     const query = this.query(options)
-    const existingRows = await query.whereIn(castKey, uniqueKeyValues)
+    const existingRows = await query.whereIn(castKey.castAs, uniqueKeyValues)
 
     /**
      * Return existing or create missing rows in the same order as the original
@@ -580,8 +604,8 @@ export class BaseModel implements ModelContract {
    */
   public static async fetchOrCreateMany<T extends ModelConstructorContract> (
     this: T,
-    uniqueKey: string,
-    payload: ModelObject[],
+    uniqueKey: keyof T['$columns'],
+    payload: Partial<T['$columns']>[],
     options?: ModelAdapterOptions,
   ): Promise<InstanceType<T>[]> {
     const rows = await this.fetchOrNewUpMany(uniqueKey, payload, options)
@@ -616,8 +640,8 @@ export class BaseModel implements ModelContract {
    */
   public static async updateOrCreateMany<T extends ModelConstructorContract> (
     this: T,
-    uniqueKey: string,
-    payload: ModelObject[],
+    uniqueKey: keyof T['$columns'],
+    payload: Partial<T['$columns']>[],
     options?: ModelAdapterOptions,
   ) {
     const rows = await this.fetchOrNewUpMany(uniqueKey, payload, options, true)
@@ -993,7 +1017,7 @@ export class BaseModel implements ModelContract {
    */
   public $setRelated (key: any, models: ModelContract | ModelContract[]) {
     const Model = this.constructor as typeof BaseModel
-    const relation = Model.$relations.get(key as string)
+    const relation = Model.$relationsDefinitions.get(key as string)
 
     /**
      * Ignore when relation is not defined
@@ -1022,7 +1046,7 @@ export class BaseModel implements ModelContract {
    */
   public $pushRelated (key: any, models: ModelContract | ModelContract[]) {
     const Model = this.constructor as typeof BaseModel
-    const relation = Model.$relations.get(key as string)
+    const relation = Model.$relationsDefinitions.get(key as string)
 
     /**
      * Ignore when relation is not defined
@@ -1081,7 +1105,7 @@ export class BaseModel implements ModelContract {
          * need to pull the actual column name for that key and then
          * set the value.
          */
-        const columnName = Model.$dbRefs[key]
+        const columnName = Model.$adapterKeysToAttributes[key]
         if (columnName) {
           /**
            * When consuming the adapter result, we must always set the attributes
@@ -1095,7 +1119,7 @@ export class BaseModel implements ModelContract {
          * If key is defined as a relation, then ignore it, since one
          * must pass a qualified model to `this.$setRelated()`
          */
-        if (Model.$relations.has(key)) {
+        if (Model.$relationsDefinitions.has(key)) {
           return
         }
 
@@ -1137,7 +1161,7 @@ export class BaseModel implements ModelContract {
      */
     if (isObject(values)) {
       Object.keys(values).forEach((key) => {
-        if (Model.$refs[key]) {
+        if (Model.$attributesToAdapterKeys[key]) {
           this[key] = values[key]
           return
         }
@@ -1146,7 +1170,7 @@ export class BaseModel implements ModelContract {
          * If key is defined as a relation, then ignore it, since one
          * must pass a qualified model to `this.$setRelated()`
          */
-        if (Model.$relations.has(key)) {
+        if (Model.$relationsDefinitions.has(key)) {
           return
         }
 
@@ -1276,7 +1300,7 @@ export class BaseModel implements ModelContract {
      * Serializing computed properties as last. This gives the option to re-write
      * keys which are defined as attributes or relations.
      */
-    Model.$computed.forEach((value, key) => {
+    Model.$computedDefinitions.forEach((value, key) => {
       const computedValue = this[key]
       if (computedValue !== undefined && value.serializeAs) {
         results[value.serializeAs] = computedValue

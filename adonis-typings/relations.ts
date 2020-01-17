@@ -424,9 +424,20 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     RelatedModel extends ModelConstructorContract
   > extends RelationBaseQueryClientContract<Relation, Model, RelatedModel> {
     save (related: InstanceType<RelatedModel>): Promise<void>
-    create (values: ModelObject): Promise<InstanceType<RelatedModel>>
-    firstOrCreate (search: ModelObject, savePayload?: ModelObject): Promise<InstanceType<RelatedModel>>
-    updateOrCreate (search: ModelObject, updatePayload: ModelObject): Promise<InstanceType<RelatedModel>>
+
+    create (
+      values: Partial<RelatedModel['$columns']>,
+    ): Promise<InstanceType<RelatedModel>>
+
+    firstOrCreate (
+      search: Partial<RelatedModel['$columns']>,
+      savePayload?: Partial<RelatedModel['$columns']>,
+    ): Promise<InstanceType<RelatedModel>>
+
+    updateOrCreate (
+      search: ModelObject,
+      updatePayload: ModelObject,
+    ): Promise<InstanceType<RelatedModel>>
   }
 
   /**
@@ -439,7 +450,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     RelatedModel extends ModelConstructorContract
   > extends HasOneClientContract<Relation, Model, RelatedModel> {
     saveMany (related: InstanceType<RelatedModel>[]): Promise<void>
-    createMany (values: ModelObject[]): Promise<InstanceType<RelatedModel>[]>
+    createMany (values: Partial<RelatedModel['$columns']>[]): Promise<InstanceType<RelatedModel>[]>
   }
 
   /**
@@ -497,12 +508,18 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     /**
      * Create related model instance
      */
-    create (values: ModelObject, checkExisting?: boolean): Promise<InstanceType<RelatedModel>>
+    create (
+      values: Partial<RelatedModel['$columns']>,
+      checkExisting?: boolean,
+    ): Promise<InstanceType<RelatedModel>>
 
     /**
      * Create many of related model instances
      */
-    createMany (values: ModelObject[], checkExisting?: boolean): Promise<InstanceType<RelatedModel>[]>
+    createMany (
+      values: Partial<RelatedModel['$columns']>[],
+      checkExisting?: boolean,
+    ): Promise<InstanceType<RelatedModel>[]>
 
     /**
      * Attach new pivot rows

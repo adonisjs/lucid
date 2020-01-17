@@ -97,13 +97,12 @@ test.group('Base model | boot', (group) => {
     }
 
     User.boot()
-    assert.deepEqual(mapToObj(User.$columns), {})
-    assert.deepEqual(mapToObj(User.$relations), {})
-    assert.deepEqual(mapToObj(User.$computed), {})
-    assert.deepEqual(User.$refs, {})
+    assert.deepEqual(mapToObj(User.$columnsDefinitions), {})
+    assert.deepEqual(mapToObj(User.$relationsDefinitions), {})
+    assert.deepEqual(mapToObj(User.$computedDefinitions), {})
   })
 
-  test('compute refs from the added columns', async (assert) => {
+  test('resolve castAs key for a given attribute', async (assert) => {
     class User extends BaseModel {
       public static $increments = false
 
@@ -115,7 +114,22 @@ test.group('Base model | boot', (group) => {
     }
 
     User.boot()
-    assert.deepEqual(User.$refs, { id: 'id', userName: 'user_name' })
+    assert.deepEqual(User.$resolveCastKey('userName'), 'user_name')
+  })
+
+  test('resolve column name key for a given adapter key', async (assert) => {
+    class User extends BaseModel {
+      public static $increments = false
+
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userName: string
+    }
+
+    User.boot()
+    assert.deepEqual(User.$resolveColumnName('user_name'), 'userName')
   })
 })
 

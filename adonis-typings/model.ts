@@ -328,17 +328,23 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * A map of defined columns
      */
-    $columns: Map<string, ColumnOptions>
+    $columnsDefinitions: Map<string, ColumnOptions>
 
     /**
      * A map of defined relationships
      */
-    $relations: Map<string, RelationshipsContract>
+    $relationsDefinitions: Map<string, RelationshipsContract>
 
     /**
      * A map of computed properties
      */
-    $computed: Map<string, ComputedOptions>
+    $computedDefinitions: Map<string, ComputedOptions>
+
+    /**
+     * Columns is a property to get type information for model
+     * attributes. This must be declared by the end user
+     */
+    $columns: any
 
     /**
      * The primary key for finding unique referencing to a
@@ -371,12 +377,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Database table to use
      */
     table: string
-
-    /**
-     * Refs are named value pair on model used mainly for autocompleting
-     * the query constraints
-     */
-    $refs: { [key: string]: string }
 
     /**
      * Creating model from adapter results
@@ -443,6 +443,12 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $resolveCastKey (key: string): string
     $mapKeysToCastKeys (values: ModelObject): ModelObject
 
+    /**
+     * Resolve keys to their model column properties
+     */
+    $resolveColumnName (key: string): string
+    $mapsKeysToColumnNames (values: ModelObject): ModelObject
+
     boot (): void
 
     /**
@@ -468,7 +474,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     create<T extends ModelConstructorContract> (
       this: T,
-      values: ModelObject,
+      values: Partial<T['$columns']>,
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
 
@@ -477,7 +483,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     createMany<T extends ModelConstructorContract> (
       this: T,
-      values: ModelObject[],
+      values: Partial<T['$columns']>[],
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>[]>
 
@@ -514,8 +520,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     firstOrNew<T extends ModelConstructorContract> (
       this: T,
-      search: any,
-      savePayload?: any,
+      search: Partial<T['$columns']>,
+      savePayload?: Partial<T['$columns']>,
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
 
@@ -524,8 +530,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     firstOrCreate<T extends ModelConstructorContract> (
       this: T,
-      search: any,
-      savePayload?: any,
+      search: Partial<T['$columns']>,
+      savePayload?: Partial<T['$columns']>,
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
 
@@ -535,8 +541,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     fetchOrNewUpMany<T extends ModelConstructorContract> (
       this: T,
-      uniqueKey: string,
-      payload: ModelObject[],
+      uniqueKey: keyof T['$columns'],
+      payload: Partial<T['$columns']>[],
       options?: ModelAdapterOptions,
       mergeAttributes?: boolean,
     ): Promise<InstanceType<T>[]>
@@ -547,8 +553,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     fetchOrCreateMany<T extends ModelConstructorContract> (
       this: T,
-      uniqueKey: string,
-      payload: ModelObject[],
+      uniqueKey: keyof T['$columns'],
+      payload: Partial<T['$columns']>[],
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>[]>
 
@@ -557,8 +563,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     updateOrCreate<T extends ModelConstructorContract> (
       this: T,
-      search: any,
-      updatePayload: any,
+      search: Partial<T['$columns']>,
+      updatePayload: Partial<T['$columns']>,
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
 
@@ -567,8 +573,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     updateOrCreateMany<T extends ModelConstructorContract> (
       this: T,
-      uniqueKey: string,
-      payload: ModelObject[],
+      uniqueKey: keyof T['$columns'],
+      payload: Partial<T['$columns']>[],
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>[]>
 
