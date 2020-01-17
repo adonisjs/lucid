@@ -899,6 +899,54 @@ test.group('Base Model | serializeAttributes', () => {
     assert.deepEqual(user.serializeAttributes(), {})
   })
 
+  test('cherry pick fields', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public id: string
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    user.id = '1'
+
+    assert.deepEqual(user.serializeAttributes({ id: true }), { id: '1' })
+  })
+
+  test('ignore fields marked as false', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public id: string
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    user.id = '1'
+
+    assert.deepEqual(user.serializeAttributes({ id: true, username: false }), { id: '1' })
+  })
+
+  test('ignore fields that has serializeAs = null, even when part of cherry picking object', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column({ serializeAs: null })
+      public id: string
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    user.id = '1'
+
+    assert.deepEqual(user.serializeAttributes({ id: true }), {})
+  })
+
   test('do not invoke custom serialize method when raw flag is on', async (assert) => {
     class User extends BaseModel {
       @column({ serialize: (value) => value.toUpperCase() })
@@ -908,7 +956,7 @@ test.group('Base Model | serializeAttributes', () => {
     const user = new User()
     user.username = 'virk'
 
-    assert.deepEqual(user.serializeAttributes(true), { username: 'virk' })
+    assert.deepEqual(user.serializeAttributes(undefined, true), { username: 'virk' })
   })
 
   test('use custom serializeAs key when raw flag is on', async (assert) => {
@@ -920,7 +968,7 @@ test.group('Base Model | serializeAttributes', () => {
     const user = new User()
     user.username = 'virk'
 
-    assert.deepEqual(user.serializeAttributes(true), { uname: 'virk' })
+    assert.deepEqual(user.serializeAttributes(undefined, true), { uname: 'virk' })
   })
 
   test('do not serialize with serializeAs = null, when raw flag is on', async (assert) => {
@@ -932,7 +980,39 @@ test.group('Base Model | serializeAttributes', () => {
     const user = new User()
     user.username = 'virk'
 
-    assert.deepEqual(user.serializeAttributes(true), {})
+    assert.deepEqual(user.serializeAttributes(undefined, true), {})
+  })
+
+  test('cherry pick fields in raw mode', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public id: string
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    user.id = '1'
+
+    assert.deepEqual(user.serializeAttributes({ id: true }, true), { id: '1' })
+  })
+
+  test('ignore fields marked as false in raw mode', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public id: string
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    user.id = '1'
+
+    assert.deepEqual(user.serializeAttributes({ id: true, username: false }, true), { id: '1' })
   })
 })
 
@@ -1048,7 +1128,7 @@ test.group('Base Model | serializeRelations', () => {
     profile.userId = 1
 
     user.$setRelated('profile', profile)
-    assert.deepEqual(user.serializeRelations(true), {
+    assert.deepEqual(user.serializeRelations(undefined, true), {
       profile: profile,
     })
   })
@@ -1076,7 +1156,7 @@ test.group('Base Model | serializeRelations', () => {
     profile.userId = 1
 
     user.$setRelated('profile', profile)
-    assert.deepEqual(user.serializeRelations(true), {
+    assert.deepEqual(user.serializeRelations(undefined, true), {
       userProfile: profile,
     })
   })
@@ -1104,7 +1184,96 @@ test.group('Base Model | serializeRelations', () => {
     profile.userId = 1
 
     user.$setRelated('profile', profile)
-    assert.deepEqual(user.serializeRelations(true), {})
+    assert.deepEqual(user.serializeRelations(undefined, true), {})
+  })
+
+  test('cherry pick relationship fields', async (assert) => {
+    class Profile extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
+
+    const user = new User()
+    const profile = new Profile()
+    profile.username = 'virk'
+    profile.userId = 1
+
+    user.$setRelated('profile', profile)
+    assert.deepEqual(user.serializeRelations({ profile: { user_id: true } }), {
+      profile: {
+        user_id: 1,
+      },
+    })
+  })
+
+  test('select all fields when relationship node value is a boolean', async (assert) => {
+    class Profile extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
+
+    const user = new User()
+    const profile = new Profile()
+    profile.username = 'virk'
+    profile.userId = 1
+
+    user.$setRelated('profile', profile)
+    assert.deepEqual(user.serializeRelations({ profile: true }), {
+      profile: {
+        user_id: 1,
+        username: 'virk',
+      },
+    })
+  })
+
+  test('do not select any fields when relationship node value is an object', async (assert) => {
+    class Profile extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
+
+    const user = new User()
+    const profile = new Profile()
+    profile.username = 'virk'
+    profile.userId = 1
+
+    user.$setRelated('profile', profile)
+    assert.deepEqual(user.serializeRelations({ profile: {} }), {
+      profile: {},
+    })
   })
 })
 
@@ -1186,6 +1355,23 @@ test.group('Base Model | toJSON', (group) => {
     user.username = 'virk'
 
     assert.deepEqual(user.toJSON(), { username: 'virk' })
+  })
+
+  test('cherry pick keys during serialization', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @computed()
+      public get fullName () {
+        return this.username.toUpperCase()
+      }
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    assert.deepEqual(user.toJSON({ username: true }), { username: 'virk' })
   })
 })
 
@@ -1600,6 +1786,40 @@ test.group('Base Model | relations', (group) => {
     user.$setRelated('profile', await Profile.create({ username: 'virk' }))
 
     assert.deepEqual(user.toJSON(), {
+      id: 1,
+      profile: {
+        username: 'virk',
+      },
+    })
+  })
+
+  test('cherry pick relationship keys during toJSON', async (assert) => {
+    const adapter = new FakeAdapter()
+    class Profile extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
+
+    const user = new User()
+    Profile.$adapter = adapter
+    user.$consumeAdapterResult({ id: 1 })
+
+    const profile = await Profile.create({ username: 'virk' })
+    user.$setRelated('profile', profile)
+    profile.userId = 1
+
+    assert.deepEqual(user.toJSON({ id: true, profile: { username: true } }), {
       id: 1,
       profile: {
         username: 'virk',

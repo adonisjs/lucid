@@ -296,17 +296,52 @@ declare module '@ioc:Adonis/Lucid/Model' {
     merge (value: ModelObject): void
     save (): Promise<void>
     delete (): Promise<void>
-    serialize (): ModelObject
-    serializeAttributes (raw?: boolean): ModelObject
-    serializeComputed (): ModelObject
 
-    serializeRelations (raw: true): { [key: string]: ModelContract | ModelContract[] }
-    serializeRelations (raw: false | undefined): ModelObject
-    serializeRelations (raw?: boolean): ModelObject | { [key: string]: ModelContract | ModelContract[] }
+    /**
+     * Serialize attributes to a plain object
+     */
+    serializeAttributes (fieldsToCherryPick?: ModelObject, raw?: boolean): ModelObject
 
-    toJSON (): ModelObject
+    /**
+     * Serialize computed properties to a plain object
+     */
+    serializeComputed (fieldsToCherryPick?: string[]): ModelObject
+
+    /**
+     * Serialize relationships to key-value pair of model instances and
+     * their serializeAs keys
+     */
+    serializeRelations (
+      fieldsToCherryPick: ModelObject | undefined,
+      raw: true,
+    ): { [key: string]: ModelContract | ModelContract[] }
+
+    /**
+     * Serialize relationships to key-value pair of plain nested objects
+     */
+    serializeRelations (
+      fieldsToCherryPick: ModelObject | undefined,
+      raw: false | undefined,
+    ): ModelObject
+
+    /**
+     * Serialize relationships to key-value pair of plain nested objects
+     * or a key-value pair of model instances.
+     */
+    serializeRelations (
+      fieldsToCherryPick?: ModelObject,
+      raw?: boolean,
+    ): ModelObject | { [key: string]: ModelContract | ModelContract[] }
+
+    /**
+     * Serialize model to a plain object
+     */
+    serialize (fieldsToCherryPick?: ModelObject): ModelObject
+    toJSON (fieldsToCherryPick?: ModelObject): ModelObject
+
     refresh (): Promise<void>
     preload: ModelBuilderPreloadFn<this>
+
     related<
       Name extends keyof ExtractRelations<this>,
       RelationType extends TypedRelations = this[Name] extends TypedRelations ? this[Name] : never

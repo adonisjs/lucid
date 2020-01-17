@@ -1259,15 +1259,45 @@ export class BaseModel implements ModelContract {
     await Model.hooks.exec('after', 'delete', this)
   }
 
+  private serializeField (
+    serializeAs: string | null,
+    cherryPickObject?: ModelObject,
+  ): serializeAs is string {
+    /**
+     * If explicit serializing is turned off, then never
+     * return the field
+     */
+    if (!serializeAs) {
+      return false
+    }
+
+    /**
+     * If their is no cherry picking object defined, then always
+     * include the field
+     */
+    if (!cherryPickObject) {
+      return true
+    }
+
+    /**
+     * Otherwise ensure the cherry picking object has marked
+     * the field as true
+     */
+    return cherryPickObject[serializeAs] === true || isObject(cherryPickObject[serializeAs])
+  }
+
   /**
    * Serializes model attributes to a plain object
    */
-  public serializeAttributes (raw: boolean = false): ModelObject {
+  public serializeAttributes (
+    fieldsToCherryPick?: ModelObject,
+    raw: boolean = false,
+  ): ModelObject {
     const Model = this.constructor as ModelConstructorContract
 
     return Object.keys(this.$attributes).reduce<ModelObject>((result, key) => {
       const column = Model.$getColumn(key)!
-      if (!column.serializeAs) {
+      if (!this.serializeField(column.serializeAs, fieldsToCherryPick)) {
         return result
       }
 
@@ -1283,13 +1313,13 @@ export class BaseModel implements ModelContract {
   /**
    * Serializes model compute properties to an object.
    */
-  public serializeComputed (): ModelObject {
+  public serializeComputed (fieldsToCherryPick?: ModelObject): ModelObject {
     const Model = this.constructor as ModelConstructorContract
     const result: ModelObject = {}
 
     Model.$computedDefinitions.forEach((value, key) => {
       const computedValue = this[key]
-      if (computedValue !== undefined && value.serializeAs) {
+      if (computedValue !== undefined && this.serializeField(value.serializeAs, fieldsToCherryPick)) {
         result[value.serializeAs] = computedValue
       }
     })
@@ -1301,16 +1331,25 @@ export class BaseModel implements ModelContract {
    * Serializes relationships to a plain object. When `raw=true`, it will
    * recurisvely serialize the relationships as well.
    */
-  public serializeRelations (raw: true): { [key: string]: ModelContract | ModelContract[] }
-  public serializeRelations (raw: false | undefined): ModelObject
   public serializeRelations (
+    fieldsToCherryPick: ModelObject | undefined,
+    raw: true,
+  ): { [key: string]: ModelContract | ModelContract[] }
+
+  public serializeRelations (
+    fieldsToCherryPick: ModelObject | undefined,
+    raw: false | undefined,
+  ): ModelObject
+
+  public serializeRelations (
+    fieldsToCherryPick?: ModelObject,
     raw: boolean = false,
   ): ModelObject | { [key: string]: ModelContract | ModelContract[] } {
     const Model = this.constructor as ModelConstructorContract
 
     return Object.keys(this.$preloaded).reduce((result, key) => {
       const relation = Model.$getRelation(key as any)! as RelationshipsContract
-      if (!relation.serializeAs) {
+      if (!this.serializeField(relation.serializeAs, fieldsToCherryPick)) {
         return result
       }
 
@@ -1320,9 +1359,16 @@ export class BaseModel implements ModelContract {
         return result
       }
 
+      /**
+       * Always make sure we passing a valid object or undefined
+       * to the relationships
+       */
+      let relationCherryPickKeys = (fieldsToCherryPick || {})[relation.serializeAs]
+      relationCherryPickKeys = isObject(relationCherryPickKeys) ? relationCherryPickKeys : undefined
+
       result[relation.serializeAs] = Array.isArray(value)
-        ? value.map((one) => one.toJSON())
-        : value.toJSON()
+        ? value.map((one) => one.toJSON(relationCherryPickKeys))
+        : value.toJSON(relationCherryPickKeys)
 
       return result
     }, {})
@@ -1331,11 +1377,11 @@ export class BaseModel implements ModelContract {
   /**
    * Converting model to it's JSON representation
    */
-  public serialize () {
+  public serialize (fieldsToCherryPick?: ModelObject) {
     return {
-      ...this.serializeAttributes(),
-      ...this.serializeRelations(false),
-      ...this.serializeComputed(),
+      ...this.serializeAttributes(fieldsToCherryPick, false),
+      ...this.serializeRelations(fieldsToCherryPick, false),
+      ...this.serializeComputed(fieldsToCherryPick),
     }
   }
 
@@ -1343,8 +1389,8 @@ export class BaseModel implements ModelContract {
    * Returns the serialize method output. However, any model can overwrite
    * it to define it's custom serialize output
    */
-  public toJSON () {
-    return this.serialize()
+  public toJSON (fieldsToCherryPick?: ModelObject) {
+    return this.serialize(fieldsToCherryPick)
   }
 
   /**
