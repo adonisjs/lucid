@@ -25,7 +25,9 @@ ModelConstructorContract
   public type = 'belongsTo' as const
   public booted: boolean = false
   public relatedModel = this.options.relatedModel
-  public serializeAs = this.options.serializeAs || this.relationName
+  public serializeAs = this.options.serializeAs === undefined
+    ? this.relationName
+    : this.options.serializeAs
 
   /**
    * Available after boot is invoked

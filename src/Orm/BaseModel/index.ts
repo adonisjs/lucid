@@ -1260,54 +1260,83 @@ export class BaseModel implements ModelContract {
   }
 
   /**
-   * Converting model to it's JSON representation
+   * Serializes model attributes to a plain object
    */
-  public serialize () {
+  public serializeAttributes (raw: boolean = false): ModelObject {
     const Model = this.constructor as ModelConstructorContract
-    const results = {}
 
-    /**
-     * Serializing attributes
-     */
-    Object.keys(this.$attributes).forEach((key) => {
+    return Object.keys(this.$attributes).reduce<ModelObject>((result, key) => {
       const column = Model.$getColumn(key)!
       if (!column.serializeAs) {
-        return
+        return result
       }
 
       const value = this[key]
-      results[column.serializeAs] = typeof (column.serialize) === 'function'
+      result[column.serializeAs] = typeof (column.serialize) === 'function' && !raw
         ? column.serialize(value, key, this)
         : value
-    })
 
-    /**
-     * Serializing relationships
-     */
-    Object.keys(this.$preloaded).forEach((key) => {
-      const relation = Model.$getRelation(key as any)! as RelationshipsContract
-      if (!relation.serializeAs) {
-        return
-      }
+      return result
+    }, {})
+  }
 
-      const value = this.$preloaded[key]
-      results[relation.serializeAs] = Array.isArray(value)
-        ? value.map((one) => one.toJSON())
-        : value.toJSON()
-    })
+  /**
+   * Serializes model compute properties to an object.
+   */
+  public serializeComputed (): ModelObject {
+    const Model = this.constructor as ModelConstructorContract
+    const result: ModelObject = {}
 
-    /**
-     * Serializing computed properties as last. This gives the option to re-write
-     * keys which are defined as attributes or relations.
-     */
     Model.$computedDefinitions.forEach((value, key) => {
       const computedValue = this[key]
       if (computedValue !== undefined && value.serializeAs) {
-        results[value.serializeAs] = computedValue
+        result[value.serializeAs] = computedValue
       }
     })
 
-    return results
+    return result
+  }
+
+  /**
+   * Serializes relationships to a plain object. When `raw=true`, it will
+   * recurisvely serialize the relationships as well.
+   */
+  public serializeRelations (raw: true): { [key: string]: ModelContract | ModelContract[] }
+  public serializeRelations (raw: false | undefined): ModelObject
+  public serializeRelations (
+    raw: boolean = false,
+  ): ModelObject | { [key: string]: ModelContract | ModelContract[] } {
+    const Model = this.constructor as ModelConstructorContract
+
+    return Object.keys(this.$preloaded).reduce((result, key) => {
+      const relation = Model.$getRelation(key as any)! as RelationshipsContract
+      if (!relation.serializeAs) {
+        return result
+      }
+
+      const value = this.$preloaded[key]
+      if (raw) {
+        result[relation.serializeAs] = value
+        return result
+      }
+
+      result[relation.serializeAs] = Array.isArray(value)
+        ? value.map((one) => one.toJSON())
+        : value.toJSON()
+
+      return result
+    }, {})
+  }
+
+  /**
+   * Converting model to it's JSON representation
+   */
+  public serialize () {
+    return {
+      ...this.serializeAttributes(),
+      ...this.serializeRelations(false),
+      ...this.serializeComputed(),
+    }
   }
 
   /**

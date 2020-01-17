@@ -24,7 +24,9 @@ ModelConstructorContract
 > {
   public type = 'hasManyThrough' as const
   public booted: boolean = false
-  public serializeAs = this.options.serializeAs || this.relationName
+  public serializeAs = this.options.serializeAs === undefined
+    ? this.relationName
+    : this.options.serializeAs
 
   public relatedModel = this.options.relatedModel
   public throughModel = this.options.throughModel

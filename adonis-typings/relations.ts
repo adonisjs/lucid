@@ -206,7 +206,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   > {
     readonly type: TypedRelations['type']
     readonly relationName: string
-    readonly serializeAs: string
+    readonly serializeAs: string | null
     readonly booted: boolean
     readonly model: Model
     relatedModel (): RelatedModel

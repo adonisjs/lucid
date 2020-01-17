@@ -297,6 +297,13 @@ declare module '@ioc:Adonis/Lucid/Model' {
     save (): Promise<void>
     delete (): Promise<void>
     serialize (): ModelObject
+    serializeAttributes (raw?: boolean): ModelObject
+    serializeComputed (): ModelObject
+
+    serializeRelations (raw: true): { [key: string]: ModelContract | ModelContract[] }
+    serializeRelations (raw: false | undefined): ModelObject
+    serializeRelations (raw?: boolean): ModelObject | { [key: string]: ModelContract | ModelContract[] }
+
     toJSON (): ModelObject
     refresh (): Promise<void>
     preload: ModelBuilderPreloadFn<this>
