@@ -306,16 +306,31 @@ ModelConstructorContract
     trx?: TransactionClientContract,
   ) {
     await managedTransaction(trx || this.client, async (transaction) => {
+      const hasAttributes = !Array.isArray(ids)
+
       /**
        * An object of pivot rows from from the incoming ids or
        * an object of key-value pair.
        */
-      const pivotRows = Array.isArray(ids) ? ids.reduce((result, id) => {
+      const pivotRows = !hasAttributes ? (ids as (string | number)[]).reduce((result, id) => {
         result[id] = {}
         return result
       }, {}) : ids
 
-      const query = this.pivotQuery().useTransaction(transaction)
+      /**
+       * We must scope the select query to related foreign key when ids
+       * is an array and not on object. Otherwise we select *.
+       */
+      const query = this.pivotQuery().useTransaction(transaction).debug(true)
+
+      /**
+       * We must scope the select query to related foreign key when ids
+       * is an array and not on object. This will help in performance
+       * when their are indexes defined on this key
+       */
+      if (!hasAttributes) {
+        query.select(this.relation.pivotRelatedForeignKey)
+      }
 
       /**
        * Scope query to passed ids, when don't want to detach the missing one's
