@@ -90,7 +90,6 @@ test.group('Model | BelongsTo | Options', (group) => {
     Profile.$getRelation('user').boot()
 
     assert.equal(Profile.$getRelation('user')!['localKey'], 'id')
-    assert.equal(Profile.$getRelation('user')!['localCastAsKey'], 'id')
   })
 
   test('use custom defined local key', (assert) => {
@@ -113,7 +112,6 @@ test.group('Model | BelongsTo | Options', (group) => {
     Profile.$getRelation('user').boot()
 
     assert.equal(Profile.$getRelation('user')!['localKey'], 'uid')
-    assert.equal(Profile.$getRelation('user')!['localCastAsKey'], 'user_uid')
   })
 
   test('compute foreign key from model name and primary key', (assert) => {
@@ -133,7 +131,6 @@ test.group('Model | BelongsTo | Options', (group) => {
     Profile.$getRelation('user').boot()
 
     assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userId')
-    assert.equal(Profile.$getRelation('user')!['foreignCastAsKey'], 'user_id')
   })
 
   test('use pre defined foreign key', (assert) => {
@@ -153,7 +150,6 @@ test.group('Model | BelongsTo | Options', (group) => {
     Profile.$getRelation('user').boot()
 
     assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userUid')
-    assert.equal(Profile.$getRelation('user')!['foreignCastAsKey'], 'user_id')
   })
 })
 

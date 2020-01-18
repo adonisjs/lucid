@@ -55,7 +55,7 @@ ModelConstructorContract
    * The keys for constructing the join query
    */
   protected getRelationKeys (): string[] {
-    return [this.relation.foreignCastAsKey]
+    return [this.relation.foreignKey]
   }
 
   /**
@@ -74,7 +74,7 @@ ModelConstructorContract
      * Eager query contraints
      */
     if (Array.isArray(this.parent)) {
-      this.knexQuery.whereIn(this.relation.foreignCastAsKey, unique(this.parent.map((model) => {
+      this.whereIn(this.relation.foreignKey, unique(this.parent.map((model) => {
         return getValue(model, this.relation.localKey, this.relation, queryAction)
       })))
       return
@@ -84,13 +84,13 @@ ModelConstructorContract
      * Query constraints
      */
     const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
-    this.knexQuery.where(this.relation.foreignCastAsKey, value)
+    this.where(this.relation.foreignKey, value)
 
     /**
      * Do not add limit when updating or deleting
      */
     if (!['update', 'delete'].includes(queryAction)) {
-      this.knexQuery.limit(1)
+      this.limit(1)
     }
   }
 }

@@ -234,7 +234,7 @@ test.group('Query Builder | where', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .where('username', 'virk')
@@ -247,6 +247,24 @@ test.group('Query Builder | where', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .where('username', 'virk')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .where('my_username', 'virk')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
     await connection.disconnect()
   })
 
@@ -254,7 +272,7 @@ test.group('Query Builder | where', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .where({ username: 'virk', age: 22 })
@@ -267,6 +285,22 @@ test.group('Query Builder | where', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .where({ username: 'virk', age: 22 })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .where({ my_username: 'virk', my_age: 22 })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
     await connection.disconnect()
   })
 
@@ -274,7 +308,7 @@ test.group('Query Builder | where', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .where((builder) => builder.where('username', 'virk'))
@@ -287,6 +321,22 @@ test.group('Query Builder | where', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .where((builder) => builder.where('username', 'virk'))
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .where((builder) => builder.where('my_username', 'virk'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
     await connection.disconnect()
   })
 
@@ -294,7 +344,7 @@ test.group('Query Builder | where', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .where('age', '>', 22)
@@ -307,6 +357,22 @@ test.group('Query Builder | where', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .where('age', '>', 22)
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .where('my_age', '>', 22)
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
     await connection.disconnect()
   })
 
@@ -334,7 +400,7 @@ test.group('Query Builder | where', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .where('age', '>', 22)
@@ -349,14 +415,33 @@ test.group('Query Builder | where', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .where('age', '>', 22)
+      .orWhere('age', 18)
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .where('my_age', '>', 22)
+      .orWhere('my_age', 18)
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
-  test('add orWhere wrapped clause', (assert) => {
+  test('add orWhere wrapped clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .where('age', '>', 22)
@@ -376,6 +461,31 @@ test.group('Query Builder | where', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .where('age', '>', 22)
+      .orWhere((builder) => {
+        assert.instanceOf(builder, DatabaseQueryBuilder)
+        builder.where('age', 18)
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .where('my_age', '>', 22)
+      .orWhere((builder) => {
+        builder.where('my_age', 18)
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -388,11 +498,11 @@ test.group('Query Builder | whereNot', (group) => {
     await cleanup()
   })
 
-  test('add where no clause', async (assert) => {
+  test('add where not clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNot('username', 'virk')
@@ -405,6 +515,23 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNot('username', 'virk')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNot('my_username', 'virk')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -412,7 +539,7 @@ test.group('Query Builder | whereNot', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNot({ username: 'virk', age: 22 })
@@ -425,6 +552,22 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNot({ username: 'virk', age: 22 })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNot({ my_username: 'virk', my_age: 22 })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
     await connection.disconnect()
   })
 
@@ -432,7 +575,7 @@ test.group('Query Builder | whereNot', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNot((builder) => builder.where('username', 'virk'))
@@ -445,6 +588,23 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNot((builder) => builder.where('username', 'virk'))
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNot((builder) => builder.where('my_username', 'virk'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -452,7 +612,7 @@ test.group('Query Builder | whereNot', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNot('age', '>', 22)
@@ -465,6 +625,23 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNot('age', '>', 22)
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNot('my_age', '>', 22)
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -472,7 +649,7 @@ test.group('Query Builder | whereNot', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNot('age', '>', getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages limit 1;'))
@@ -485,6 +662,25 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNot(
+        'age', '>', getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages limit 1;'),
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNot('my_age', '>', connection.client!.raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -492,7 +688,7 @@ test.group('Query Builder | whereNot', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNot('age', '>', 22)
@@ -507,6 +703,25 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNot('age', '>', 22)
+      .orWhereNot('age', 18)
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNot('my_age', '>', 22)
+      .orWhereNot('my_age', 18)
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -514,7 +729,7 @@ test.group('Query Builder | whereNot', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .where('age', '>', 22)
@@ -534,6 +749,31 @@ test.group('Query Builder | whereNot', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .where('age', '>', 22)
+      .orWhereNot((builder) => {
+        assert.instanceOf(builder, DatabaseQueryBuilder)
+        builder.where('age', 18)
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .where('my_age', '>', 22)
+      .orWhereNot((builder) => {
+        builder.where('my_age', 18)
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -550,7 +790,7 @@ test.group('Query Builder | whereIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereIn('username', ['virk', 'nikk'])
@@ -563,6 +803,22 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereIn('username', ['virk', 'nikk'])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereIn('my_username', ['virk', 'nikk'])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
     await connection.disconnect()
   })
 
@@ -570,7 +826,7 @@ test.group('Query Builder | whereIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereIn('username', (builder) => {
@@ -587,6 +843,26 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereIn('username', (builder) => {
+        builder.from('accounts')
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereIn('my_username', (builder) => {
+        builder.from('accounts')
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
     await connection.disconnect()
   })
 
@@ -594,7 +870,7 @@ test.group('Query Builder | whereIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereIn('username', getQueryBuilder(getQueryClient(connection)).select('id').from('accounts'))
@@ -607,6 +883,22 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereIn('username', getQueryBuilder(getQueryClient(connection)).select('id').from('accounts'))
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereIn('my_username', connection.client!.select('id').from('accounts'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
     await connection.disconnect()
   })
 
@@ -616,7 +908,7 @@ test.group('Query Builder | whereIn', (group) => {
 
     const ref = connection.client!.ref.bind(connection.client!)
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereIn('username', [
@@ -633,6 +925,27 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereIn('username', [
+        getRawQueryBuilder(getQueryClient(connection), `select ${ref('id')} from ${ref('accounts')}`),
+      ])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereIn('my_username', [
+        connection.client!.raw(`select ${ref('id')} from ${ref('accounts')}`),
+      ])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -640,7 +953,7 @@ test.group('Query Builder | whereIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereIn(
@@ -656,6 +969,28 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereIn(
+        ['username', 'email'],
+        getQueryBuilder(getQueryClient(connection)).select('username', 'email').from('accounts'),
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereIn(
+        ['my_username', 'my_email'], connection.client!.select('username', 'email').from('accounts'),
+      )
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -663,7 +998,7 @@ test.group('Query Builder | whereIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereIn(['username', 'email'], [['foo', 'bar']])
@@ -676,6 +1011,23 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereIn(['username', 'email'], [['foo', 'bar']])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereIn(['my_username', 'my_email'], [['foo', 'bar']])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -683,7 +1035,7 @@ test.group('Query Builder | whereIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereIn('username', ['virk', 'nikk'])
@@ -698,6 +1050,25 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereIn('username', ['virk', 'nikk'])
+      .orWhereIn('username', ['foo'])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereIn('my_username', ['virk', 'nikk'])
+      .orWhereIn('my_username', ['foo'])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -705,7 +1076,7 @@ test.group('Query Builder | whereIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereIn('username', (builder) => {
@@ -728,6 +1099,34 @@ test.group('Query Builder | whereIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereIn('username', (builder) => {
+        builder.from('accounts')
+      })
+      .orWhereIn('username', (builder) => {
+        builder.from('employees')
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereIn('my_username', (builder) => {
+        builder.from('accounts')
+      })
+      .orWhereIn('my_username', (builder) => {
+        builder.from('employees')
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -744,7 +1143,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNotIn('username', ['virk', 'nikk'])
@@ -757,6 +1156,22 @@ test.group('Query Builder | whereNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotIn('username', ['virk', 'nikk'])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNotIn('my_username', ['virk', 'nikk'])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
     await connection.disconnect()
   })
 
@@ -764,7 +1179,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNotIn('username', (builder) => {
@@ -781,6 +1196,26 @@ test.group('Query Builder | whereNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotIn('username', (builder) => {
+        builder.from('accounts')
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNotIn('my_username', (builder) => {
+        builder.from('accounts')
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
     await connection.disconnect()
   })
 
@@ -788,7 +1223,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNotIn('username', getQueryBuilder(getQueryClient(connection)).select('username').from('accounts'))
@@ -801,6 +1236,22 @@ test.group('Query Builder | whereNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotIn('username', getQueryBuilder(getQueryClient(connection)).select('username').from('accounts'))
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNotIn('my_username', connection.client!.select('username').from('accounts'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
     await connection.disconnect()
   })
 
@@ -808,7 +1259,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNotIn(['username', 'email'], [['foo', 'bar']])
@@ -821,6 +1272,23 @@ test.group('Query Builder | whereNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotIn(['username', 'email'], [['foo', 'bar']])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNotIn(['my_username', 'my_email'], [['foo', 'bar']])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -828,7 +1296,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNotIn('username', ['virk', 'nikk'])
@@ -843,6 +1311,25 @@ test.group('Query Builder | whereNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotIn('username', ['virk', 'nikk'])
+      .orWhereNotIn('username', ['foo'])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNotIn('my_username', ['virk', 'nikk'])
+      .orWhereNotIn('my_username', ['foo'])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -850,7 +1337,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNotIn('username', (builder) => {
@@ -873,6 +1360,34 @@ test.group('Query Builder | whereNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotIn('username', (builder) => {
+        builder.from('accounts')
+      })
+      .orWhereNotIn('username', (builder) => {
+        builder.from('employees')
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNotIn('my_username', (builder) => {
+        builder.from('accounts')
+      })
+      .orWhereNotIn('my_username', (builder) => {
+        builder.from('employees')
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -889,7 +1404,7 @@ test.group('Query Builder | whereNull', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNull('deleted_at')
@@ -902,6 +1417,23 @@ test.group('Query Builder | whereNull', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNull('my_deleted_at')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -909,7 +1441,7 @@ test.group('Query Builder | whereNull', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNull('deleted_at')
@@ -924,6 +1456,26 @@ test.group('Query Builder | whereNull', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNull('deleted_at')
+      .orWhereNull('updated_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNull('my_deleted_at')
+      .orWhereNull('my_updated_at')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -940,7 +1492,7 @@ test.group('Query Builder | whereNotNull', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNotNull('deleted_at')
@@ -953,6 +1505,23 @@ test.group('Query Builder | whereNotNull', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNotNull('my_deleted_at')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -960,7 +1529,7 @@ test.group('Query Builder | whereNotNull', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNotNull('deleted_at')
@@ -975,6 +1544,26 @@ test.group('Query Builder | whereNotNull', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotNull('deleted_at')
+      .orWhereNotNull('updated_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNotNull('my_deleted_at')
+      .orWhereNotNull('my_updated_at')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -1028,6 +1617,7 @@ test.group('Query Builder | whereExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1052,6 +1642,7 @@ test.group('Query Builder | whereExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1072,6 +1663,8 @@ test.group('Query Builder | whereExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -1105,6 +1698,7 @@ test.group('Query Builder | whereNotExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1125,6 +1719,7 @@ test.group('Query Builder | whereNotExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1149,6 +1744,7 @@ test.group('Query Builder | whereNotExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1169,6 +1765,8 @@ test.group('Query Builder | whereNotExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -1185,7 +1783,7 @@ test.group('Query Builder | whereBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereBetween('age', [18, 20])
@@ -1198,6 +1796,23 @@ test.group('Query Builder | whereBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereBetween('age', [18, 20])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereBetween('my_age', [18, 20])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -1205,7 +1820,7 @@ test.group('Query Builder | whereBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereBetween('age', [
@@ -1224,6 +1839,29 @@ test.group('Query Builder | whereBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereBetween('age', [
+        getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages;'),
+        getRawQueryBuilder(getQueryClient(connection), 'select max_age from ages;'),
+      ])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereBetween('my_age', [
+        connection.client!.raw('select min_age from ages;'),
+        connection.client!.raw('select max_age from ages;'),
+      ])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -1231,7 +1869,7 @@ test.group('Query Builder | whereBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .orWhereBetween('age', [18, 20])
@@ -1244,6 +1882,23 @@ test.group('Query Builder | whereBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .orWhereBetween('age', [18, 20])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .orWhereBetween('my_age', [18, 20])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -1251,7 +1906,7 @@ test.group('Query Builder | whereBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .orWhereBetween('age', [
@@ -1270,6 +1925,30 @@ test.group('Query Builder | whereBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .orWhereBetween('age', [
+        getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages;'),
+        getRawQueryBuilder(getQueryClient(connection), 'select max_age from ages;'),
+      ])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .orWhereBetween('my_age', [
+        connection.client!.raw('select min_age from ages;'),
+        connection.client!.raw('select max_age from ages;'),
+      ])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -1286,7 +1965,7 @@ test.group('Query Builder | whereNotBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNotBetween('age', [18, 20])
@@ -1299,6 +1978,23 @@ test.group('Query Builder | whereNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotBetween('age', [18, 20])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNotBetween('my_age', [18, 20])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -1306,7 +2002,7 @@ test.group('Query Builder | whereNotBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .whereNotBetween('age', [
@@ -1325,6 +2021,29 @@ test.group('Query Builder | whereNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotBetween('age', [
+        getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages;'),
+        getRawQueryBuilder(getQueryClient(connection), 'select max_age from ages;'),
+      ])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNotBetween('my_age', [
+        connection.client!.raw('select min_age from ages;'),
+        connection.client!.raw('select max_age from ages;'),
+      ])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -1332,7 +2051,7 @@ test.group('Query Builder | whereNotBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .orWhereNotBetween('age', [18, 20])
@@ -1345,6 +2064,23 @@ test.group('Query Builder | whereNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .orWhereNotBetween('age', [18, 20])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .orWhereNotBetween('my_age', [18, 20])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -1352,7 +2088,7 @@ test.group('Query Builder | whereNotBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .orWhereNotBetween('age', [
@@ -1371,6 +2107,30 @@ test.group('Query Builder | whereNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .orWhereNotBetween('age', [
+        getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages;'),
+        getRawQueryBuilder(getQueryClient(connection), 'select max_age from ages;'),
+      ])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .orWhereNotBetween('my_age', [
+        connection.client!.raw('select min_age from ages;'),
+        connection.client!.raw('select max_age from ages;'),
+      ])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -1400,6 +2160,7 @@ test.group('Query Builder | whereRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1420,6 +2181,7 @@ test.group('Query Builder | whereRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1460,6 +2222,7 @@ test.group('Query Builder | whereRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1482,6 +2245,8 @@ test.group('Query Builder | whereRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -1511,6 +2276,7 @@ test.group('Query Builder | join', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1531,6 +2297,7 @@ test.group('Query Builder | join', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1555,6 +2322,7 @@ test.group('Query Builder | join', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1575,6 +2343,8 @@ test.group('Query Builder | join', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -1604,6 +2374,7 @@ test.group('Query Builder | innerJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1624,6 +2395,7 @@ test.group('Query Builder | innerJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1648,6 +2420,7 @@ test.group('Query Builder | innerJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1668,6 +2441,8 @@ test.group('Query Builder | innerJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -1697,6 +2472,7 @@ test.group('Query Builder | leftJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1717,6 +2493,7 @@ test.group('Query Builder | leftJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1741,6 +2518,7 @@ test.group('Query Builder | leftJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1761,6 +2539,8 @@ test.group('Query Builder | leftJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -1790,6 +2570,7 @@ test.group('Query Builder | leftOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1810,6 +2591,7 @@ test.group('Query Builder | leftOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1834,6 +2616,7 @@ test.group('Query Builder | leftOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1854,6 +2637,8 @@ test.group('Query Builder | leftOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -1883,6 +2668,7 @@ test.group('Query Builder | rightJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1903,6 +2689,7 @@ test.group('Query Builder | rightJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1927,6 +2714,7 @@ test.group('Query Builder | rightJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1947,6 +2735,8 @@ test.group('Query Builder | rightJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -1976,6 +2766,7 @@ test.group('Query Builder | rightOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -1996,6 +2787,7 @@ test.group('Query Builder | rightOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2020,6 +2812,7 @@ test.group('Query Builder | rightOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2040,6 +2833,8 @@ test.group('Query Builder | rightOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -2069,6 +2864,7 @@ test.group('Query Builder | fullOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2089,6 +2885,7 @@ test.group('Query Builder | fullOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2113,6 +2910,7 @@ test.group('Query Builder | fullOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2133,6 +2931,8 @@ test.group('Query Builder | fullOuterJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -2162,6 +2962,7 @@ test.group('Query Builder | crossJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2182,6 +2983,7 @@ test.group('Query Builder | crossJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2206,6 +3008,7 @@ test.group('Query Builder | crossJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2226,6 +3029,8 @@ test.group('Query Builder | crossJoin', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -2255,6 +3060,7 @@ test.group('Query Builder | joinRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2275,6 +3081,8 @@ test.group('Query Builder | joinRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -2291,7 +3099,7 @@ test.group('Query Builder | distinct', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .distinct('name', 'age')
@@ -2304,6 +3112,24 @@ test.group('Query Builder | distinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .distinct('name', 'age')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .distinct('my_name', 'my_age')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -2320,7 +3146,7 @@ test.group('Query Builder | groupBy', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .groupBy('name', 'age')
@@ -2333,6 +3159,24 @@ test.group('Query Builder | groupBy', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .groupBy('name', 'age')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .groupBy('my_name', 'my_age')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -2362,6 +3206,8 @@ test.group('Query Builder | groupByRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -2378,7 +3224,7 @@ test.group('Query Builder | orderBy', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .orderBy('name')
@@ -2391,6 +3237,23 @@ test.group('Query Builder | orderBy', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .orderBy('name')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .orderBy('my_name')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -2398,7 +3261,7 @@ test.group('Query Builder | orderBy', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .orderBy('name', 'desc')
@@ -2411,6 +3274,23 @@ test.group('Query Builder | orderBy', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .orderBy('name', 'desc')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .orderBy('my_name', 'desc')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -2418,7 +3298,7 @@ test.group('Query Builder | orderBy', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .orderBy([{ column: 'name', order: 'desc' }, { column: 'age', order: 'desc' }])
@@ -2431,6 +3311,24 @@ test.group('Query Builder | orderBy', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .orderBy([{ column: 'name', order: 'desc' }, { column: 'age', order: 'desc' }])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .orderBy([{ column: 'name', order: 'desc' }, { column: 'age', order: 'desc' }])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -2489,6 +3387,8 @@ test.group('Query Builder | offset', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -2518,6 +3418,8 @@ test.group('Query Builder | limit', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -2551,6 +3453,7 @@ test.group('Query Builder | union', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2571,6 +3474,7 @@ test.group('Query Builder | union', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2591,6 +3495,7 @@ test.group('Query Builder | union', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2615,6 +3520,7 @@ test.group('Query Builder | union', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2635,6 +3541,7 @@ test.group('Query Builder | union', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2655,6 +3562,8 @@ test.group('Query Builder | union', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -2688,6 +3597,7 @@ test.group('Query Builder | unionAll', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2708,6 +3618,7 @@ test.group('Query Builder | unionAll', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2728,6 +3639,7 @@ test.group('Query Builder | unionAll', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2752,6 +3664,7 @@ test.group('Query Builder | unionAll', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2772,6 +3685,7 @@ test.group('Query Builder | unionAll', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2821,6 +3735,7 @@ test.group('Query Builder | forUpdate', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2841,6 +3756,8 @@ test.group('Query Builder | forUpdate', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -2870,6 +3787,7 @@ test.group('Query Builder | forShare', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -2890,6 +3808,8 @@ test.group('Query Builder | forShare', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -2922,6 +3842,8 @@ if (['pg', 'mysql'].includes(process.env.DB!)) {
 
       assert.equal(sql, knexSql)
       assert.deepEqual(bindings, knexBindings)
+
+      await connection.disconnect()
     })
   })
 
@@ -2953,6 +3875,8 @@ if (['pg', 'mysql'].includes(process.env.DB!)) {
 
       assert.equal(sql, knexSql)
       assert.deepEqual(bindings, knexBindings)
+
+      await connection.disconnect()
     })
   })
 }
@@ -2970,7 +3894,7 @@ test.group('Query Builder | having', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .having('count', '>', 10)
@@ -2983,6 +3907,23 @@ test.group('Query Builder | having', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .having('count', '>', 10)
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .having('my_count', '>', 10)
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -2990,7 +3931,7 @@ test.group('Query Builder | having', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .having((builder) => {
@@ -3007,6 +3948,27 @@ test.group('Query Builder | having', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .having((builder) => {
+        builder.where('id', '>', 10)
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .having((builder) => {
+        builder.where('my_id', '>', 10)
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3015,7 +3977,7 @@ test.group('Query Builder | having', (group) => {
     connection.connect()
     const ref = connection.client!.ref.bind(connection.client!)
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .having(
@@ -3036,6 +3998,31 @@ test.group('Query Builder | having', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .having(
+        'user_id',
+        '=',
+        getRawQueryBuilder(getQueryClient(connection), `(select ${ref('user_id')} from ${ref('accounts')})`),
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .having(
+        'my_user_id',
+        '=',
+        connection.client!.raw(`(select ${ref('user_id')} from ${ref('accounts')})`),
+      )
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3043,7 +4030,7 @@ test.group('Query Builder | having', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .having(
@@ -3064,6 +4051,31 @@ test.group('Query Builder | having', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .having(
+        'user_id',
+        '=',
+        getQueryBuilder(getQueryClient(connection)).from('accounts').select('id'),
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .having(
+        'my_user_id',
+        '=',
+        connection.client!.select('id').from('accounts'),
+      )
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3084,6 +4096,7 @@ test.group('Query Builder | having', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -3091,7 +4104,7 @@ test.group('Query Builder | having', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .having('count', '>', 10)
@@ -3106,6 +4119,26 @@ test.group('Query Builder | having', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .having('count', '>', 10)
+      .orHaving('total', '>', 10)
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .having('my_count', '>', 10)
+      .orHaving('my_total', '>', 10)
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -3122,7 +4155,7 @@ test.group('Query Builder | havingIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingIn('id', [10, 20])
@@ -3135,6 +4168,23 @@ test.group('Query Builder | havingIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingIn('id', [10, 20])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .havingIn('my_id', [10, 20])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3142,7 +4192,7 @@ test.group('Query Builder | havingIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingIn('id', [getQueryBuilder(getQueryClient(connection)).select('id').from('accounts')])
@@ -3155,6 +4205,23 @@ test.group('Query Builder | havingIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingIn('id', [getQueryBuilder(getQueryClient(connection)).select('id').from('accounts')])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .havingIn('my_id', [connection.client!.select('id').from('accounts') as any])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3162,7 +4229,7 @@ test.group('Query Builder | havingIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingIn('id', [getRawQueryBuilder(getQueryClient(connection), 'select id from accounts')])
@@ -3175,6 +4242,23 @@ test.group('Query Builder | havingIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingIn('id', [getRawQueryBuilder(getQueryClient(connection), 'select id from accounts')])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .havingIn('my_id', [connection.client!.raw('select id from accounts')])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3186,7 +4270,7 @@ test.group('Query Builder | havingIn', (group) => {
       builder.select('id').from('accounts')
     }
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingIn('id', fn)
@@ -3199,6 +4283,26 @@ test.group('Query Builder | havingIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingIn('id', fn)
+      .toSQL()
+
+    const fnKnex = (builder) => {
+      builder.select('my_id').from('accounts')
+    }
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .havingIn('my_id', fnKnex as any)
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3206,7 +4310,7 @@ test.group('Query Builder | havingIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingIn('id', [10, 20])
@@ -3221,6 +4325,26 @@ test.group('Query Builder | havingIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingIn('id', [10, 20])
+      .orHavingIn('id', [10, 30])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .havingIn('my_id', [10, 20])
+      ['orHavingIn']('my_id', [10, 30])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -3237,7 +4361,7 @@ test.group('Query Builder | havingNotIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingNotIn('id', [10, 20])
@@ -3250,6 +4374,23 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingNotIn('id', [10, 20])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      ['havingNotIn']('my_id', [10, 20])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3257,7 +4398,7 @@ test.group('Query Builder | havingNotIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingNotIn('id', [getQueryBuilder(getQueryClient(connection)).select('id').from('accounts')])
@@ -3270,6 +4411,23 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingNotIn('id', [getQueryBuilder(getQueryClient(connection)).select('id').from('accounts')])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      ['havingNotIn']('my_id', [connection.client!.select('id').from('accounts') as any])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3277,7 +4435,7 @@ test.group('Query Builder | havingNotIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingNotIn('id', [getRawQueryBuilder(getQueryClient(connection), 'select id from accounts')])
@@ -3290,6 +4448,23 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingNotIn('id', [getRawQueryBuilder(getQueryClient(connection), 'select id from accounts')])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      ['havingNotIn']('my_id', [connection.client!.raw('select id from accounts')])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3301,7 +4476,7 @@ test.group('Query Builder | havingNotIn', (group) => {
       builder.select('id').from('accounts')
     }
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingNotIn('id', fn)
@@ -3314,6 +4489,27 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingNotIn('id', fn)
+      .toSQL()
+
+    const fnKnex = (builder) => {
+      builder.select('my_id').from('accounts')
+    }
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      ['havingNotIn']('my_id', fnKnex as any)
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3321,7 +4517,7 @@ test.group('Query Builder | havingNotIn', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingNotIn('id', [10, 20])
@@ -3336,6 +4532,25 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingNotIn('id', [10, 20])
+      .orHavingNotIn('id', [10, 30])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      ['havingNotIn']('my_id', [10, 20])
+      ['orHavingNotIn']('my_id', [10, 30])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
   })
 })
 
@@ -3352,7 +4567,7 @@ test.group('Query Builder | havingNull', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingNull('deleted_at')
@@ -3365,6 +4580,23 @@ test.group('Query Builder | havingNull', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      ['havingNull']('my_deleted_at')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3372,7 +4604,7 @@ test.group('Query Builder | havingNull', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingNull('deleted_at')
@@ -3387,6 +4619,26 @@ test.group('Query Builder | havingNull', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingNull('deleted_at')
+      .orHavingNull('updated_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      ['havingNull']('my_deleted_at')
+      .orHavingNull('my_updated_at')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -3403,7 +4655,7 @@ test.group('Query Builder | havingNotNull', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingNotNull('deleted_at')
@@ -3416,6 +4668,23 @@ test.group('Query Builder | havingNotNull', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingNotNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      ['havingNotNull']('my_deleted_at')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3423,7 +4692,7 @@ test.group('Query Builder | havingNotNull', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingNotNull('deleted_at')
@@ -3438,6 +4707,26 @@ test.group('Query Builder | havingNotNull', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingNotNull('deleted_at')
+      .orHavingNotNull('updated_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      ['havingNotNull']('my_deleted_at')
+      .orHavingNotNull('my_updated_at')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -3491,6 +4780,7 @@ test.group('Query Builder | havingExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -3521,6 +4811,8 @@ test.group('Query Builder | havingExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -3554,6 +4846,7 @@ test.group('Query Builder | havingNotExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -3574,6 +4867,7 @@ test.group('Query Builder | havingNotExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -3604,6 +4898,8 @@ test.group('Query Builder | havingNotExists', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -3620,7 +4916,7 @@ test.group('Query Builder | havingBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingBetween('id', [5, 10])
@@ -3633,6 +4929,23 @@ test.group('Query Builder | havingBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingBetween('id', [5, 10])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .havingBetween('my_id', [5, 10])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3640,7 +4953,7 @@ test.group('Query Builder | havingBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingBetween('id', [
@@ -3659,6 +4972,29 @@ test.group('Query Builder | havingBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingBetween('id', [
+        getRawQueryBuilder(getQueryClient(connection), 'select min(id) from users;'),
+        getRawQueryBuilder(getQueryClient(connection), 'select max(id) from users;'),
+      ])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .havingBetween('my_id', [
+        connection.client!.raw('select min(id) from users;'),
+        connection.client!.raw('select max(id) from users;'),
+      ])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3666,7 +5002,7 @@ test.group('Query Builder | havingBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingBetween('id', [
@@ -3685,6 +5021,29 @@ test.group('Query Builder | havingBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingBetween('id', [
+        getQueryBuilder(getQueryClient(connection)).select('id'),
+        getQueryBuilder(getQueryClient(connection)).select('id'),
+      ])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .havingBetween('my_id', [
+        connection.client!.select('id') as any,
+        connection.client!.select('id') as any,
+      ])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3692,7 +5051,7 @@ test.group('Query Builder | havingBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingBetween('id', [5, 10])
@@ -3707,6 +5066,26 @@ test.group('Query Builder | havingBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingBetween('id', [5, 10])
+      .orHavingBetween('id', [18, 23])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .havingBetween('my_id', [5, 10])
+      .orHavingBetween('my_id', [18, 23])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -3723,7 +5102,7 @@ test.group('Query Builder | havingNotBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingNotBetween('id', [5, 10])
@@ -3736,6 +5115,23 @@ test.group('Query Builder | havingNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingNotBetween('id', [5, 10])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .havingNotBetween('my_id', [5, 10])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3743,7 +5139,7 @@ test.group('Query Builder | havingNotBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingNotBetween('id', [
@@ -3762,6 +5158,29 @@ test.group('Query Builder | havingNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingNotBetween('id', [
+        getRawQueryBuilder(getQueryClient(connection), 'select min(id) from users;'),
+        getRawQueryBuilder(getQueryClient(connection), 'select max(id) from users;'),
+      ])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .havingNotBetween('my_id', [
+        connection.client!.raw('select min(id) from users;'),
+        connection.client!.raw('select max(id) from users;'),
+      ])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3769,7 +5188,7 @@ test.group('Query Builder | havingNotBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingNotBetween('id', [
@@ -3788,6 +5207,29 @@ test.group('Query Builder | havingNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingNotBetween('id', [
+        getQueryBuilder(getQueryClient(connection)).select('id'),
+        getQueryBuilder(getQueryClient(connection)).select('id'),
+      ])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .havingNotBetween('my_id', [
+        connection.client!.select('id') as any,
+        connection.client!.select('id') as any,
+      ])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -3795,7 +5237,7 @@ test.group('Query Builder | havingNotBetween', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .havingNotBetween('id', [5, 10])
@@ -3810,6 +5252,26 @@ test.group('Query Builder | havingNotBetween', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .havingNotBetween('id', [5, 10])
+      .orHavingNotBetween('id', [18, 23])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .havingNotBetween('my_id', [5, 10])
+      .orHavingNotBetween('my_id', [18, 23])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -3839,6 +5301,7 @@ test.group('Query Builder | havingRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -3879,6 +5342,7 @@ test.group('Query Builder | havingRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -3899,6 +5363,7 @@ test.group('Query Builder | havingRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 
@@ -3921,6 +5386,8 @@ test.group('Query Builder | havingRaw', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -3952,6 +5419,8 @@ test.group('Query Builder | clearSelect', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -3983,6 +5452,8 @@ test.group('Query Builder | clearWhere', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -4014,6 +5485,8 @@ test.group('Query Builder | clearOrder', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -4045,6 +5518,8 @@ test.group('Query Builder | clearHaving', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -4061,7 +5536,7 @@ test.group('Query Builder | count', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .count('*', 'total')
@@ -4074,6 +5549,23 @@ test.group('Query Builder | count', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .count('*', 'total')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .count('*', { as: 'total' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4081,7 +5573,7 @@ test.group('Query Builder | count', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .count({ u: 'username', e: 'email' })
@@ -4094,6 +5586,23 @@ test.group('Query Builder | count', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .count({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .count({ u: 'my_username', e: 'my_email' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4101,7 +5610,7 @@ test.group('Query Builder | count', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .count(getRawQueryBuilder(
@@ -4119,6 +5628,28 @@ test.group('Query Builder | count', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .count(getRawQueryBuilder(
+        getQueryClient(connection),
+        'select * from profiles where is_verified = ?', [true],
+      ), 'u')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .count({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4126,7 +5657,7 @@ test.group('Query Builder | count', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .count(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
@@ -4141,6 +5672,25 @@ test.group('Query Builder | count', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .count(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .count({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4148,7 +5698,7 @@ test.group('Query Builder | count', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .count({
@@ -4167,6 +5717,29 @@ test.group('Query Builder | count', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .count({
+        u: getRawQueryBuilder(getQueryClient(connection), 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .count({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4174,7 +5747,7 @@ test.group('Query Builder | count', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .count({
@@ -4193,6 +5766,30 @@ test.group('Query Builder | count', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .count({
+        u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .count({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -4209,7 +5806,7 @@ test.group('Query Builder | countDistinct', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .countDistinct('*', 'total')
@@ -4222,6 +5819,23 @@ test.group('Query Builder | countDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .countDistinct('*', 'total')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .countDistinct('*', { as: 'total' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4229,7 +5843,7 @@ test.group('Query Builder | countDistinct', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .countDistinct({ u: 'username', e: 'email' })
@@ -4242,6 +5856,23 @@ test.group('Query Builder | countDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .countDistinct({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .countDistinct({ u: 'my_username', e: 'my_email' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4249,7 +5880,7 @@ test.group('Query Builder | countDistinct', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .countDistinct(
@@ -4267,6 +5898,28 @@ test.group('Query Builder | countDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .countDistinct(
+        getRawQueryBuilder(getQueryClient(connection), 'select * from profiles where is_verified = ?', [true]),
+        'u',
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .countDistinct({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4274,7 +5927,7 @@ test.group('Query Builder | countDistinct', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .countDistinct(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
@@ -4289,6 +5942,25 @@ test.group('Query Builder | countDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .countDistinct(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .countDistinct({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4296,7 +5968,7 @@ test.group('Query Builder | countDistinct', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .countDistinct({
@@ -4315,6 +5987,29 @@ test.group('Query Builder | countDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .countDistinct({
+        u: getRawQueryBuilder(getQueryClient(connection), 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .countDistinct({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4322,7 +6017,7 @@ test.group('Query Builder | countDistinct', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .countDistinct({
@@ -4341,6 +6036,30 @@ test.group('Query Builder | countDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .countDistinct({
+        u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .countDistinct({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -4357,7 +6076,7 @@ test.group('Query Builder | min', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .min('*', 'smallest')
@@ -4370,6 +6089,23 @@ test.group('Query Builder | min', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .min('*', 'smallest')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .min('*', { as: 'smallest' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4377,7 +6113,7 @@ test.group('Query Builder | min', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .min({ u: 'username', e: 'email' })
@@ -4390,6 +6126,23 @@ test.group('Query Builder | min', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .min({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .min({ u: 'my_username', e: 'my_email' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4397,7 +6150,7 @@ test.group('Query Builder | min', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .min(
@@ -4415,6 +6168,28 @@ test.group('Query Builder | min', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .min(
+        getRawQueryBuilder(getQueryClient(connection), 'select * from profiles where is_verified = ?', [true]),
+        'u',
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .min({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4422,7 +6197,7 @@ test.group('Query Builder | min', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .min(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
@@ -4437,6 +6212,25 @@ test.group('Query Builder | min', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .min(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .min({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4444,7 +6238,7 @@ test.group('Query Builder | min', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .min({
@@ -4463,6 +6257,29 @@ test.group('Query Builder | min', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .min({
+        u: getRawQueryBuilder(getQueryClient(connection), 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .min({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4470,7 +6287,7 @@ test.group('Query Builder | min', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .min({
@@ -4489,6 +6306,29 @@ test.group('Query Builder | min', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .min({
+        u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .min({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
   })
 })
 
@@ -4505,7 +6345,7 @@ test.group('Query Builder | max', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .max('*', 'biggest')
@@ -4518,6 +6358,23 @@ test.group('Query Builder | max', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .max('*', 'biggest')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .max('*', { as: 'biggest' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4525,7 +6382,7 @@ test.group('Query Builder | max', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .max({ u: 'username', e: 'email' })
@@ -4538,6 +6395,23 @@ test.group('Query Builder | max', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .max({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .max({ u: 'my_username', e: 'my_email' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4545,7 +6419,7 @@ test.group('Query Builder | max', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .max(
@@ -4563,6 +6437,28 @@ test.group('Query Builder | max', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .max(
+        getRawQueryBuilder(getQueryClient(connection), 'select * from profiles where is_verified = ?', [true]),
+        'u',
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .max({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4570,7 +6466,7 @@ test.group('Query Builder | max', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .max(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
@@ -4585,6 +6481,25 @@ test.group('Query Builder | max', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .max(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .max({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4592,7 +6507,7 @@ test.group('Query Builder | max', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .max({
@@ -4611,6 +6526,29 @@ test.group('Query Builder | max', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .max({
+        u: getRawQueryBuilder(getQueryClient(connection), 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .max({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4618,7 +6556,7 @@ test.group('Query Builder | max', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .max({
@@ -4637,6 +6575,30 @@ test.group('Query Builder | max', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .max({
+        u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .max({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -4653,7 +6615,7 @@ test.group('Query Builder | sum', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .sum('*', 'total')
@@ -4666,6 +6628,23 @@ test.group('Query Builder | sum', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .sum('*', 'total')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .sum('*', { as: 'total' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4673,7 +6652,7 @@ test.group('Query Builder | sum', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .sum({ u: 'username', e: 'email' })
@@ -4686,6 +6665,23 @@ test.group('Query Builder | sum', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .sum({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .sum({ u: 'my_username', e: 'my_email' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4693,7 +6689,7 @@ test.group('Query Builder | sum', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .sum(
@@ -4711,6 +6707,28 @@ test.group('Query Builder | sum', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .sum(
+        getRawQueryBuilder(getQueryClient(connection), 'select * from profiles where is_verified = ?', [true]),
+        'u',
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .sum({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4718,7 +6736,7 @@ test.group('Query Builder | sum', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .sum(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
@@ -4733,6 +6751,25 @@ test.group('Query Builder | sum', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .sum(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .sum({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4740,7 +6777,7 @@ test.group('Query Builder | sum', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .sum({
@@ -4759,6 +6796,29 @@ test.group('Query Builder | sum', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .sum({
+        u: getRawQueryBuilder(getQueryClient(connection), 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .sum({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4766,7 +6826,7 @@ test.group('Query Builder | sum', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .sum({
@@ -4785,6 +6845,29 @@ test.group('Query Builder | sum', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .sum({
+        u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .sum({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
   })
 })
 
@@ -4801,7 +6884,7 @@ test.group('Query Builder | avg', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .avg('*', 'avg')
@@ -4814,14 +6897,31 @@ test.group('Query Builder | avg', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .avg('*', 'avg')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .avg('*', { as: 'avg' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
-  test('use avg function for multiple times', async (assert) => {
+  test('use avg function for multiple fields', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .avg({ u: 'username', e: 'email' })
@@ -4834,6 +6934,23 @@ test.group('Query Builder | avg', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .avg({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .avg({ u: 'my_username', e: 'my_email' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4841,7 +6958,7 @@ test.group('Query Builder | avg', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .avg(
@@ -4859,6 +6976,28 @@ test.group('Query Builder | avg', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .avg(
+        getRawQueryBuilder(getQueryClient(connection), 'select * from profiles where is_verified = ?', [true]),
+        'u',
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .avg({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4866,7 +7005,7 @@ test.group('Query Builder | avg', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .avg(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
@@ -4881,6 +7020,25 @@ test.group('Query Builder | avg', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .avg(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .avg({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4888,7 +7046,7 @@ test.group('Query Builder | avg', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .avg({
@@ -4907,6 +7065,29 @@ test.group('Query Builder | avg', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .avg({
+        u: getRawQueryBuilder(getQueryClient(connection), 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .avg({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4914,7 +7095,7 @@ test.group('Query Builder | avg', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .avg({
@@ -4933,6 +7114,30 @@ test.group('Query Builder | avg', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .avg({
+        u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .avg({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
   })
 })
 
@@ -4949,7 +7154,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .avgDistinct('*', 'avgDistinct')
@@ -4962,6 +7167,23 @@ test.group('Query Builder | avgDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .avgDistinct('*', 'avgDistinct')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .avgDistinct('*', { as: 'avgDistinct' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4969,7 +7191,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .avgDistinct({ u: 'username', e: 'email' })
@@ -4982,6 +7204,23 @@ test.group('Query Builder | avgDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .avgDistinct({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .avgDistinct({ u: 'my_username', e: 'my_email' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -4989,7 +7228,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .avgDistinct(
@@ -5007,6 +7246,28 @@ test.group('Query Builder | avgDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .avgDistinct(
+        getRawQueryBuilder(getQueryClient(connection), 'select * from profiles where is_verified = ?', [true]),
+        'u',
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .avgDistinct({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -5014,7 +7275,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .avgDistinct(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
@@ -5029,6 +7290,25 @@ test.group('Query Builder | avgDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .avgDistinct(getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'), 'u')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .avgDistinct({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -5036,7 +7316,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .avgDistinct({
@@ -5055,6 +7335,29 @@ test.group('Query Builder | avgDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .avgDistinct({
+        u: getRawQueryBuilder(getQueryClient(connection), 'select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .avgDistinct({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 
@@ -5062,7 +7365,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = getQueryBuilder(getQueryClient(connection))
+    let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
       .avgDistinct({
@@ -5081,6 +7384,29 @@ test.group('Query Builder | avgDistinct', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .avgDistinct({
+        u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .avgDistinct({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 })

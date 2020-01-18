@@ -73,7 +73,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
       }
     },
   ) {
-    super(builder, customFn)
+    super(builder, customFn, model.$resolveCastKey.bind(model))
     builder.table(model.table)
   }
 

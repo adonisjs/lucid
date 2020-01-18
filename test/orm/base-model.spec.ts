@@ -2672,7 +2672,7 @@ test.group('Base Model | fetch', (group) => {
         ],
       )
     } catch ({ message }) {
-      assert.equal(message, '"username" is not defined as a column on the "User" model')
+      assert.equal(message, 'Value for the \"username\" is null or undefined inside \"fetchOrNewUpMany\" payload')
     }
 
     const usersList = await db.query().from('users')

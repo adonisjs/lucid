@@ -33,9 +33,7 @@ ModelConstructorContract
    * Available after boot is invoked
    */
   public localKey: string
-  public localCastAsKey: string
   public foreignKey: string
-  public foreignCastAsKey: string
 
   constructor (
     public relationName: string,
@@ -81,13 +79,11 @@ ModelConstructorContract
      * Keys on the parent model
      */
     this.localKey = localKey.attributeName
-    this.localCastAsKey = localKey.castAsKey
 
     /**
      * Keys on the related model
      */
     this.foreignKey = foreignKey.attributeName
-    this.foreignCastAsKey = foreignKey.castAsKey
 
     /**
      * Booted successfully

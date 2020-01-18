@@ -64,7 +64,10 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    * Function to transform the query callbacks and passing them the right
    * instance
    */
-  type DBQueryCallback = (userFn: QueryCallback<ChainableContract>) => ((builder: knex.QueryBuilder) => void)
+  type DBQueryCallback = (
+    userFn: QueryCallback<ChainableContract>,
+    keysResolver?: (columnName: string) => string,
+  ) => ((builder: knex.QueryBuilder) => void)
 
   /**
    * Possible signatures for a select method on database query builder. The select narrows the result
@@ -444,6 +447,8 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    * methods to execute a query.
    */
   export interface ChainableContract {
+    keysResolver?: (columnName: string) => string,
+
     from: SelectTable<this>
     select: DatabaseQueryBuilderSelect<this>
 

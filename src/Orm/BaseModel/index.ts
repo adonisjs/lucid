@@ -438,7 +438,7 @@ export class BaseModel implements ModelContract {
     value: any,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).where(this.$resolveCastKey(this.primaryKey), value).first()
+    return this.query(options).where(this.primaryKey, value).first()
   }
 
   /**
@@ -449,7 +449,7 @@ export class BaseModel implements ModelContract {
     value: any,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).where(this.$resolveCastKey(this.primaryKey), value).firstOrFail()
+    return this.query(options).where(this.primaryKey, value).firstOrFail()
   }
 
   /**
@@ -462,8 +462,8 @@ export class BaseModel implements ModelContract {
   ) {
     return this
       .query(options)
-      .whereIn(this.$resolveCastKey(this.primaryKey), value)
-      .orderBy(this.$resolveCastKey(this.primaryKey), 'desc')
+      .whereIn(this.primaryKey, value)
+      .orderBy(this.primaryKey, 'desc')
       .exec()
   }
 
@@ -478,7 +478,7 @@ export class BaseModel implements ModelContract {
     options?: ModelAdapterOptions,
   ) {
     const query = this.query(options)
-    let row = await query.where(this.$mapKeysToCastKeys(search)).first()
+    let row = await query.where(search).first()
 
     if (!row) {
       row = new this() as InstanceType<T>
@@ -539,22 +539,11 @@ export class BaseModel implements ModelContract {
    */
   public static async fetchOrNewUpMany<T extends ModelConstructorContract> (
     this: T,
-    uniqueKey: keyof T['$columns'],
+    uniqueKey: Extract<keyof T['$columns'], string>,
     payload: Partial<T['$columns']>[],
     options?: ModelAdapterOptions,
     mergeAttributes: boolean = false,
   ) {
-    /**
-     * Make sure that the unique key is defined as a column
-     * on the current model.
-     */
-    const castKey = this.$getColumn(uniqueKey as string)
-    if (!castKey) {
-      throw new Exception(
-        `"${uniqueKey}" is not defined as a column on the "${this.name}" model`,
-      )
-    }
-
     /**
      * An array of values for the unique key
      */
@@ -567,7 +556,7 @@ export class BaseModel implements ModelContract {
     })
 
     const query = this.query(options)
-    const existingRows = await query.whereIn(castKey.castAs, uniqueKeyValues)
+    const existingRows = await query.whereIn(uniqueKey, uniqueKeyValues)
 
     /**
      * Return existing or create missing rows in the same order as the original
@@ -673,7 +662,7 @@ export class BaseModel implements ModelContract {
     this: T,
     options?: ModelAdapterOptions,
   ) {
-    return this.query(options).orderBy(this.$resolveCastKey(this.primaryKey), 'desc')
+    return this.query(options).orderBy(this.primaryKey, 'desc')
   }
 
   constructor () {
@@ -739,6 +728,37 @@ export class BaseModel implements ModelContract {
       result[Model.$resolveCastKey(key)] = value
       return result
     }, {})
+  }
+
+  /**
+   * Returns true when the field must be included
+   * inside the serialized object.
+   */
+  private shouldSerializeField (
+    serializeAs: string | null,
+    cherryPickObject?: ModelObject,
+  ): serializeAs is string {
+    /**
+     * If explicit serializing is turned off, then never
+     * return the field
+     */
+    if (!serializeAs) {
+      return false
+    }
+
+    /**
+     * If their is no cherry picking object defined, then always
+     * include the field
+     */
+    if (!cherryPickObject) {
+      return true
+    }
+
+    /**
+     * Otherwise ensure the cherry picking object has marked
+     * the field as true
+     */
+    return cherryPickObject[serializeAs] === true || isObject(cherryPickObject[serializeAs])
   }
 
   /**
@@ -1259,33 +1279,6 @@ export class BaseModel implements ModelContract {
     await Model.hooks.exec('after', 'delete', this)
   }
 
-  private serializeField (
-    serializeAs: string | null,
-    cherryPickObject?: ModelObject,
-  ): serializeAs is string {
-    /**
-     * If explicit serializing is turned off, then never
-     * return the field
-     */
-    if (!serializeAs) {
-      return false
-    }
-
-    /**
-     * If their is no cherry picking object defined, then always
-     * include the field
-     */
-    if (!cherryPickObject) {
-      return true
-    }
-
-    /**
-     * Otherwise ensure the cherry picking object has marked
-     * the field as true
-     */
-    return cherryPickObject[serializeAs] === true || isObject(cherryPickObject[serializeAs])
-  }
-
   /**
    * Serializes model attributes to a plain object
    */
@@ -1297,7 +1290,7 @@ export class BaseModel implements ModelContract {
 
     return Object.keys(this.$attributes).reduce<ModelObject>((result, key) => {
       const column = Model.$getColumn(key)!
-      if (!this.serializeField(column.serializeAs, fieldsToCherryPick)) {
+      if (!this.shouldSerializeField(column.serializeAs, fieldsToCherryPick)) {
         return result
       }
 
@@ -1319,7 +1312,7 @@ export class BaseModel implements ModelContract {
 
     Model.$computedDefinitions.forEach((value, key) => {
       const computedValue = this[key]
-      if (computedValue !== undefined && this.serializeField(value.serializeAs, fieldsToCherryPick)) {
+      if (computedValue !== undefined && this.shouldSerializeField(value.serializeAs, fieldsToCherryPick)) {
         result[value.serializeAs] = computedValue
       }
     })
@@ -1349,7 +1342,7 @@ export class BaseModel implements ModelContract {
 
     return Object.keys(this.$preloaded).reduce((result, key) => {
       const relation = Model.$getRelation(key as any)! as RelationshipsContract
-      if (!this.serializeField(relation.serializeAs, fieldsToCherryPick)) {
+      if (!this.shouldSerializeField(relation.serializeAs, fieldsToCherryPick)) {
         return result
       }
 

@@ -13,7 +13,7 @@ import knex from 'knex'
 import { Exception } from '@poppinss/utils'
 
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
-import { DatabaseQueryBuilderContract, QueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { DatabaseQueryBuilderContract, DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 import { Chainable } from './Chainable'
 import { executeQuery } from '../../helpers/executeQuery'
@@ -23,7 +23,7 @@ import { executeQuery } from '../../helpers/executeQuery'
  * a new instance of the `DatabaseQueryBuilder` and not
  * knex.QueryBuilder
  */
-function queryCallback (userFn: QueryCallback<DatabaseQueryBuilderContract>) {
+const queryCallback: DBQueryCallback = (userFn, keysResolver) => {
   return (builder: knex.QueryBuilder) => {
     /**
      * Sub queries don't need the client, since client is used to execute the query
@@ -33,7 +33,7 @@ function queryCallback (userFn: QueryCallback<DatabaseQueryBuilderContract>) {
      * Other option is to have this method for each instance of the class, but this
      * is waste of resources.
      */
-    userFn(new DatabaseQueryBuilder(builder, {} as any))
+    userFn(new DatabaseQueryBuilder(builder, {} as any, keysResolver))
   }
 }
 
@@ -42,8 +42,12 @@ function queryCallback (userFn: QueryCallback<DatabaseQueryBuilderContract>) {
  * updating and deleting records.
  */
 export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuilderContract {
-  constructor (builder: knex.QueryBuilder, public client: QueryClientContract) {
-    super(builder, queryCallback)
+  constructor (
+    builder: knex.QueryBuilder,
+    public client: QueryClientContract,
+    public keysResolver?: (columnName: string) => string,
+  ) {
+    super(builder, queryCallback, keysResolver)
   }
 
   /**
@@ -103,6 +107,10 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
       return this
     }
 
+    columns = Array.isArray(columns)
+      ? columns.map((column) => this.resolveKey(column))
+      : this.resolveKey(columns)
+
     this.knexQuery.returning(columns)
     return this
   }
@@ -112,7 +120,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * can be clubbed with `update` as well
    */
   public increment (column: any, counter?: any): this {
-    this.knexQuery.increment(column, counter)
+    this.knexQuery.increment(this.resolveKey(column, true), counter)
     return this
   }
 
@@ -121,7 +129,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * can be clubbed with `update` as well
    */
   public decrement (column: any, counter?: any): this {
-    this.knexQuery.decrement(column, counter)
+    this.knexQuery.decrement(this.resolveKey(column, true), counter)
     return this
   }
 
@@ -131,11 +139,11 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   public update (column: any, value?: any, returning?: string[]): this {
     this.ensureCanPerformWrites()
     if (!value && !returning) {
-      this.knexQuery.update(column)
+      this.knexQuery.update(this.resolveKey(column, true))
     } else if (!returning) {
-      this.knexQuery.update(column, value)
+      this.knexQuery.update(this.resolveKey(column, true), value)
     } else {
-      this.knexQuery.update(column, value, returning)
+      this.knexQuery.update(this.resolveKey(column), value, returning)
     }
 
     return this

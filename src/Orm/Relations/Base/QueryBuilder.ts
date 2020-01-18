@@ -95,6 +95,7 @@ ModelConstructorContract
      * one or more columns and forgot to define the relation keys.
      */
     this.getRelationKeys().forEach((key) => {
+      key = this.resolveKey(key)
       if (!columns.value.includes(key)) {
         columns.value.push(key)
       }

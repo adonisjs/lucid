@@ -90,7 +90,6 @@ test.group('Model | HasMany | Options', (group) => {
     User.$getRelation('posts').boot()
 
     assert.equal(User.$getRelation('posts')!['localKey'], 'id')
-    assert.equal(User.$getRelation('posts')!['localCastAsKey'], 'id')
   })
 
   test('use custom defined primary key', (assert) => {
@@ -114,7 +113,6 @@ test.group('Model | HasMany | Options', (group) => {
     User.$getRelation('posts').boot()
 
     assert.equal(User.$getRelation('posts')!['localKey'], 'uid')
-    assert.equal(User.$getRelation('posts')!['localCastAsKey'], 'user_uid')
   })
 
   test('compute foreign key from model name and primary key', (assert) => {
@@ -135,7 +133,6 @@ test.group('Model | HasMany | Options', (group) => {
     User.$getRelation('posts').boot()
 
     assert.equal(User.$getRelation('posts')!['foreignKey'], 'userId')
-    assert.equal(User.$getRelation('posts')!['foreignCastAsKey'], 'user_id')
   })
 
   test('use pre defined foreign key', (assert) => {
@@ -156,7 +153,6 @@ test.group('Model | HasMany | Options', (group) => {
     User.$getRelation('posts').boot()
 
     assert.equal(User.$getRelation('posts')!['foreignKey'], 'userUid')
-    assert.equal(User.$getRelation('posts')!['foreignCastAsKey'], 'user_id')
   })
 })
 

@@ -34,8 +34,6 @@ ModelConstructorContract
    */
   public localKey: string
   public foreignKey: string
-  public localCastAsKey: string
-  public foreignCastAsKey: string
 
   constructor (
     public relationName: string,
@@ -81,13 +79,11 @@ ModelConstructorContract
      * Keys on the related model
      */
     this.localKey = localKey.attributeName
-    this.localCastAsKey = localKey.castAsKey
 
     /**
      * Keys on the parent model
      */
     this.foreignKey = foreignKey.attributeName
-    this.foreignCastAsKey = foreignKey.castAsKey
 
     /**
      * Booted successfully

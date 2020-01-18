@@ -91,7 +91,6 @@ test.group('Model | HasOne | Options', (group) => {
     User.$getRelation('profile').boot()
 
     assert.equal(User.$getRelation('profile')['localKey'], 'id')
-    assert.equal(User.$getRelation('profile')!['localCastAsKey'], 'id')
   })
 
   test('use custom defined local key', (assert) => {
@@ -116,7 +115,6 @@ test.group('Model | HasOne | Options', (group) => {
     User.$getRelation('profile').boot()
 
     assert.equal(User.$getRelation('profile')['localKey'], 'uid')
-    assert.equal(User.$getRelation('profile')['localCastAsKey'], 'user_uid')
   })
 
   test('compute foreign key from model name and primary key', (assert) => {
@@ -138,7 +136,6 @@ test.group('Model | HasOne | Options', (group) => {
     User.$getRelation('profile').boot()
 
     assert.equal(User.$getRelation('profile')['foreignKey'], 'userId')
-    assert.equal(User.$getRelation('profile')['foreignCastAsKey'], 'user_id')
   })
 
   test('use pre defined foreign key', (assert) => {
@@ -160,7 +157,6 @@ test.group('Model | HasOne | Options', (group) => {
     User.$getRelation('profile').boot()
 
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userUid')
-    assert.equal(User.$getRelation('profile')!['foreignCastAsKey'], 'user_id')
   })
 })
 
