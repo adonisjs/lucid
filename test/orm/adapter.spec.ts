@@ -287,4 +287,27 @@ test.group('Adapter', (group) => {
     const users = await db.from('users').select('*')
     assert.lengthOf(users, 1)
   })
+
+  test('set primary key value when cast key is different from model key', async (assert) => {
+    class User extends BaseModel {
+      public static $table = 'users'
+
+      @column({ isPrimary: true, castAs: 'id' })
+      public userId: number
+
+      @column()
+      public username: string
+    }
+
+    User.boot()
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    assert.exists(user.userId)
+    assert.deepEqual(user.$attributes, { username: 'virk', userId: user.userId })
+    assert.isFalse(user.isDirty)
+    assert.isTrue(user.isPersisted)
+  })
 })

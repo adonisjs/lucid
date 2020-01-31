@@ -67,7 +67,7 @@ export class Adapter implements AdapterContract {
     const result = await query.insert(attributes)
     if (modelConstructor.increments) {
       instance.$consumeAdapterResult({
-        [modelConstructor.$resolveColumnName(modelConstructor.primaryKey)]: result[0],
+        [modelConstructor.$resolveCastKey(modelConstructor.primaryKey)]: result[0],
       })
     }
   }
