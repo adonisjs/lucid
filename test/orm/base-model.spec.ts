@@ -1371,7 +1371,7 @@ test.group('Base Model | toJSON', (group) => {
     const user = new User()
     user.username = 'virk'
 
-    assert.deepEqual(user.toJSON({ username: true }), { username: 'virk' })
+    assert.deepEqual(user.serialize({ username: true }), { username: 'virk' })
   })
 })
 
@@ -1793,7 +1793,7 @@ test.group('Base Model | relations', (group) => {
     })
   })
 
-  test('cherry pick relationship keys during toJSON', async (assert) => {
+  test('cherry pick relationship keys during serialize', async (assert) => {
     const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
@@ -1819,7 +1819,7 @@ test.group('Base Model | relations', (group) => {
     user.$setRelated('profile', profile)
     profile.userId = 1
 
-    assert.deepEqual(user.toJSON({ id: true, profile: { username: true } }), {
+    assert.deepEqual(user.serialize({ id: true, profile: { username: true } }), {
       id: 1,
       profile: {
         username: 'virk',

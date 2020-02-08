@@ -349,7 +349,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Serialize model to a plain object
      */
     serialize (fieldsToCherryPick?: ModelObject): ModelObject
-    toJSON (fieldsToCherryPick?: ModelObject): ModelObject
+    toJSON (): ModelObject
 
     refresh (): Promise<void>
     preload: ModelBuilderPreloadFn<this>

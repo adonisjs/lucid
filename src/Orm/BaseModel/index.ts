@@ -1360,8 +1360,8 @@ export class BaseModel implements ModelContract {
       relationCherryPickKeys = isObject(relationCherryPickKeys) ? relationCherryPickKeys : undefined
 
       result[relation.serializeAs] = Array.isArray(value)
-        ? value.map((one) => one.toJSON(relationCherryPickKeys))
-        : value.toJSON(relationCherryPickKeys)
+        ? value.map((one) => one.serialize(relationCherryPickKeys))
+        : value.serialize(relationCherryPickKeys)
 
       return result
     }, {})
@@ -1382,8 +1382,8 @@ export class BaseModel implements ModelContract {
    * Returns the serialize method output. However, any model can overwrite
    * it to define it's custom serialize output
    */
-  public toJSON (fieldsToCherryPick?: ModelObject) {
-    return this.serialize(fieldsToCherryPick)
+  public toJSON () {
+    return this.serialize()
   }
 
   /**
