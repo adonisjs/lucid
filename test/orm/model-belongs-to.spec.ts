@@ -999,6 +999,28 @@ test.group('Model | BelongsTo | preload', (group) => {
 
     assert.isUndefined(profiles[0].user)
   })
+
+  test('do not run preload query when parent rows are empty', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @belongsTo(() => User)
+      public user: BelongsTo<User>
+    }
+
+    Profile.boot()
+
+    const profiles = await Profile.query().preload('user', () => {
+      throw new Error('not expected to be here')
+    })
+    assert.lengthOf(profiles, 0)
+  })
 })
 
 test.group('Model | BelongsTo | associate', (group) => {

@@ -1023,6 +1023,29 @@ test.group('Model | HasMany | preload', (group) => {
     User.boot()
     await User.query({ profiler }).preload('posts')
   })
+
+  test('do not run preload query when parent rows are empty', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    User.boot()
+
+    const users = await User.query().preload('posts', () => {
+      throw new Error('not expected to be here')
+    })
+
+    assert.lengthOf(users, 0)
+  })
 })
 
 test.group('Model | HasMany | save', (group) => {

@@ -14,8 +14,8 @@ import dotenv from 'dotenv'
 import { join } from 'path'
 import { IocContract, Ioc } from '@adonisjs/fold'
 import { Filesystem } from '@poppinss/dev-utils'
-import { FakeLogger } from '@adonisjs/logger/build/standalone'
 import { Profiler } from '@adonisjs/profiler/build/standalone'
+import { FakeLogger as Logger } from '@adonisjs/logger/build/standalone'
 
 import {
   DatabaseContract,
@@ -276,7 +276,7 @@ export function getInsertBuilder (client: QueryClientContract) {
  * Returns fake logger instance
  */
 export function getLogger () {
-  return new FakeLogger({
+  return new Logger({
     enabled: true,
     name: 'lucid',
     level: 'debug',

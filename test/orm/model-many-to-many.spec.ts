@@ -1010,6 +1010,31 @@ test.group('Model | ManyToMany | preload', (group) => {
       assert.equal(message, 'Cannot preload "skills", value of "User.id" is undefined')
     }
   })
+
+  test('do not run preload query when parent rows are empty', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    User.boot()
+
+    const users = await User.query().preload('skills', () => {
+      throw new Error('not expected to be here')
+    })
+    assert.lengthOf(users, 0)
+  })
 })
 
 test.group('Model | ManyToMany | wherePivot', (group) => {

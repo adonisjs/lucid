@@ -1158,6 +1158,35 @@ test.group('Model | HasOne | preload', (group) => {
     User.boot()
     await User.query({ profiler }).preload('profile')
   })
+
+  test('do not run preload query when parent rows are empty', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
+
+    User.boot()
+
+    const users = await User.query().preload('profile', () => {
+      throw new Error('not expected to be here')
+    })
+
+    assert.lengthOf(users, 0)
+  })
 })
 
 test.group('Model | HasOne | save', (group) => {

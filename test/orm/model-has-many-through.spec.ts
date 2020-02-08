@@ -1044,4 +1044,41 @@ test.group('Model | Has Many Through | preload', (group) => {
 
     await Country.query({ profiler }).preload('posts')
   })
+
+  test('do not run preload query when parent rows are empty', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<Post>
+    }
+    Country.boot()
+
+    const countries = await Country.query().preload('posts', () => {
+      throw new Error('not expected to be here')
+    })
+    assert.lengthOf(countries, 0)
+  })
 })
