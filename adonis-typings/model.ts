@@ -13,6 +13,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
   import {
     Update,
     Counter,
+    Aggregate,
     StrictValues,
     QueryCallback,
     ChainableContract,
@@ -195,6 +196,17 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Define relationships to be preloaded
      */
     preload: QueryBuilderPreloadFn<InstanceType<Model>, this>
+
+    /**
+     * Aggregates
+     */
+    count: Aggregate<ModelQueryBuilderContract<Model, any>>
+    countDistinct: Aggregate<ModelQueryBuilderContract<Model, any>>
+    min: Aggregate<ModelQueryBuilderContract<Model, any>>
+    max: Aggregate<ModelQueryBuilderContract<Model, any>>
+    sum: Aggregate<ModelQueryBuilderContract<Model, any>>
+    avg: Aggregate<ModelQueryBuilderContract<Model, any>>
+    avgDistinct: Aggregate<ModelQueryBuilderContract<Model, any>>
   }
 
   /**

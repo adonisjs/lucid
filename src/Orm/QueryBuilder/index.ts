@@ -211,6 +211,68 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
+   * Count rows for the current query
+   */
+  public count (columns: any, alias?: any): this {
+    this.wrapResultsToModelInstances = false
+    return super.count(columns, alias)
+  }
+
+  /**
+   * Count distinct rows for the current query
+   */
+  public countDistinct (columns: any, alias?: any): this {
+    this.wrapResultsToModelInstances = false
+    super.countDistinct(columns, alias)
+    return this
+  }
+
+  /**
+   * Make use of `min` aggregate function
+   */
+  public min (columns: any, alias?: any): this {
+    this.wrapResultsToModelInstances = false
+    super.min(columns, alias)
+    return this
+  }
+
+  /**
+   * Make use of `max` aggregate function
+   */
+  public max (columns: any, alias?: any): this {
+    this.wrapResultsToModelInstances = false
+    super.max(columns, alias)
+    return this
+  }
+
+  /**
+   * Make use of `avg` aggregate function
+   */
+  public avg (columns: any, alias?: any): this {
+    this.wrapResultsToModelInstances = false
+    super.avg(columns, alias)
+    return this
+  }
+
+  /**
+   * Make use of distinct `avg` aggregate function
+   */
+  public avgDistinct (columns: any, alias?: any): this {
+    this.wrapResultsToModelInstances = false
+    super.avgDistinct(columns, alias)
+    return this
+  }
+
+  /**
+   * Make use of `sum` aggregate function
+   */
+  public sum (columns: any, alias?: any): this {
+    this.wrapResultsToModelInstances = false
+    super.sum(columns, alias)
+    return this
+  }
+
+  /**
    * Executes the query
    */
   public async exec (): Promise<any[]> {

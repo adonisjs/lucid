@@ -14,7 +14,15 @@ import { Profiler } from '@adonisjs/profiler/build/standalone'
 import { HasOne } from '@ioc:Adonis/Lucid/Relations'
 
 import { column, hasOne } from '../../src/Orm/Decorators'
-import { setup, cleanup, getDb, resetTables, getBaseModel, ormAdapter } from '../../test-helpers'
+import {
+  setup,
+  getDb,
+  cleanup,
+  ormAdapter,
+  getProfiler,
+  resetTables,
+  getBaseModel,
+} from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
@@ -173,7 +181,7 @@ test.group('Model options | Adapter', (group) => {
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const profiler = new Profiler({})
+    const profiler = getProfiler()
 
     const user = await User.query({ profiler }).first()
     assert.equal(user!.options!.connection, 'primary')
@@ -266,7 +274,7 @@ test.group('Model options | Model.find', (group) => {
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const profiler = new Profiler({})
+    const profiler = getProfiler()
 
     const user = await User.find(1, { profiler })
     assert.deepEqual(user!.options!.profiler, profiler)
@@ -339,7 +347,7 @@ test.group('Model options | Model.findOrFail', (group) => {
 
     const customDb = getDb()
     await customDb.insertQuery().table('users').insert({ username: 'virk' })
-    const profiler = new Profiler({})
+    const profiler = getProfiler()
 
     const user = await User.findOrFail(1, { profiler })
     assert.deepEqual(user.options!.profiler, profiler)
@@ -411,7 +419,7 @@ test.group('Model options | Model.findMany', (group) => {
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const profiler = new Profiler({})
+    const profiler = getProfiler()
 
     const users = await User.findMany([1], { profiler })
     assert.deepEqual(users[0].options!.profiler, profiler)
@@ -507,7 +515,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const profiler = new Profiler({})
+    const profiler = getProfiler()
 
     const user = await User.firstOrCreate({ username: 'virk' }, undefined, { profiler })
     const total = await db.from('users').count('*', 'total')
@@ -529,7 +537,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const profiler = new Profiler({})
+    const profiler = getProfiler()
 
     const user = await User.firstOrCreate({ username: 'nikk' }, undefined, { profiler })
     const total = await db.from('users').count('*', 'total')
@@ -708,7 +716,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const profiler = new Profiler({})
+    const profiler = getProfiler()
 
     const [user] = await User.fetchOrCreateMany(
       'username',
@@ -734,7 +742,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
       public username: string
     }
 
-    const profiler = new Profiler({})
+    const profiler = getProfiler()
     const [user] = await User.fetchOrCreateMany(
       'username',
       [{ username: 'virk' }],
@@ -947,7 +955,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
-    const profiler = new Profiler({})
+    const profiler = getProfiler()
 
     const [user] = await User.updateOrCreateMany(
       'username',
@@ -973,7 +981,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
       public username: string
     }
 
-    const profiler = new Profiler({})
+    const profiler = getProfiler()
     const [user] = await User.updateOrCreateMany(
       'username',
       [{ username: 'virk' }],
@@ -1225,7 +1233,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-    const profiler = new Profiler({})
+    const profiler = getProfiler()
     const users = await User.query({ profiler }).preload('profile').exec()
 
     assert.lengthOf(users, 1)
@@ -1471,7 +1479,7 @@ test.group('Model options | Model Preloads', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-    const profiler = new Profiler({})
+    const profiler = getProfiler()
     const user = await User.query({ profiler }).firstOrFail()
 
     assert.equal(user.options!.connection, 'primary')

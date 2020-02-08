@@ -3354,3 +3354,54 @@ test.group('Base model | extend', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 })
+
+test.group('Base Model | aggregates', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('count *', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    await db.insertQuery().table('users').multiInsert([{ username: 'virk' }, { username: 'nikk' }])
+    const usersCount = await User.query().count('* as total')
+    assert.deepEqual(usersCount, [{ total: 2 }])
+  })
+
+  test('count * distinct', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    await db.insertQuery().table('users').multiInsert([{ username: 'virk' }, { username: 'nikk' }])
+    const usersCount = await User.query().countDistinct('username as total')
+    assert.deepEqual(usersCount, [{ total: 2 }])
+  })
+})

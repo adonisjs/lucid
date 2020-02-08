@@ -1148,7 +1148,7 @@ test.group('Model | HasOne | preload', (group) => {
     const profiler = getProfiler(true)
 
     let profilerPacketIndex = 0
-    profiler.subscribe((packet) => {
+    profiler.process((packet) => {
       if (profilerPacketIndex === 1) {
         assert.deepEqual(packet.data.relation, { model: 'User', relatedModel: 'Profile', relation: 'hasOne' })
       }

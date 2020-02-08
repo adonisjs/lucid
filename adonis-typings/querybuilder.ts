@@ -578,17 +578,6 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 
     skipLocked (): this
     noWait (): this
-
-    /**
-     * Aggregates
-    */
-    count: Aggregate<this>
-    countDistinct: Aggregate<this>
-    min: Aggregate<this>
-    max: Aggregate<this>
-    sum: Aggregate<this>
-    avg: Aggregate<this>
-    avgDistinct: Aggregate<this>
   }
 
   /**
@@ -632,6 +621,17 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     update: Update<this>
     increment: Counter<this>
     decrement: Counter<this>
+
+    /**
+     * Aggregates
+    */
+    count: Aggregate<this>
+    countDistinct: Aggregate<this>
+    min: Aggregate<this>
+    max: Aggregate<this>
+    sum: Aggregate<this>
+    avg: Aggregate<this>
+    avgDistinct: Aggregate<this>
   }
 
   /**
