@@ -12,6 +12,9 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
   import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
+  /**
+   * Extracted from ts-essentials
+   */
   type Dictionary<T, K extends string | number = string> = {
     [key in K]: T
   }

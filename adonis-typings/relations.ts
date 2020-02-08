@@ -15,7 +15,11 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     ModelQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/Model'
 
-  import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+  import {
+    QueryClientContract,
+    TransactionClientContract,
+  } from '@ioc:Adonis/Lucid/Database'
+
   import {
     StrictValues,
     QueryCallback,

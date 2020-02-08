@@ -16,10 +16,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
   import { MacroableConstructorContract } from 'macroable'
   import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
-  type Dictionary<T, K extends string | number = string> = {
-    [key in K]: T
-  }
-
   import {
     Table,
     SelectTable,
@@ -33,6 +29,13 @@ declare module '@ioc:Adonis/Lucid/Database' {
     ModelConstructorContract,
     ModelQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/Model'
+
+  /**
+   * Extracted from ts-essentials
+   */
+  type Dictionary<T, K extends string | number = string> = {
+    [key in K]: T
+  }
 
   /**
    * Dialect specfic methods
