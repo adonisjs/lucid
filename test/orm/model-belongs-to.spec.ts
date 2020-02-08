@@ -688,7 +688,13 @@ test.group('Model | BelongsTo | preload', (group) => {
     try {
       await Profile.query().select('display_name').preload('user')
     } catch ({ message }) {
-      assert.equal(message, 'Cannot preload "user", value of "Profile.userId" is undefined')
+      assert.equal(
+        message,
+        [
+          'Cannot preload "user", value of "Profile.userId" is undefined.',
+          'Make sure to set "null" as the default value for foreign keys',
+        ].join(' '),
+      )
     }
   })
 
@@ -954,7 +960,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     const profiler = getProfiler(true)
 
     let profilerPacketIndex = 0
-    profiler.subscribe((packet) => {
+    profiler.process((packet) => {
       if (profilerPacketIndex === 1) {
         assert.deepEqual(packet.data.relation, {
           model: 'Profile',
@@ -968,6 +974,30 @@ test.group('Model | BelongsTo | preload', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
     await Profile.query({ profiler }).preload('user')
+  })
+
+  test('work fine when foreign key is null', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @belongsTo(() => User)
+      public user: BelongsTo<User>
+    }
+
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: null })
+
+    Profile.boot()
+
+    const profiles = await Profile.query().preload('user')
+    assert.lengthOf(profiles, 1)
+
+    assert.isUndefined(profiles[0].user)
   })
 })
 

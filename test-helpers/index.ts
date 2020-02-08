@@ -36,8 +36,6 @@ import {
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
-// import { ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
-
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
 import { MigratorContract, MigratorOptions } from '@ioc:Adonis/Lucid/Migrator'
@@ -48,11 +46,9 @@ import { Adapter } from '../src/Orm/Adapter'
 import { BaseModel } from '../src/Orm/BaseModel'
 import { QueryClient } from '../src/QueryClient'
 import { Database } from '../src/Database/index'
-// import { ManyToMany } from '../src/Orm/Relations/ManyToMany/index'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
-// import { ManyToManyQueryBuilder } from '../src/Orm/Relations/ManyToMany/QueryBuilder'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
 dotenv.config()
@@ -291,7 +287,7 @@ export function getLogger () {
  * Returns profiler instance
  */
 export function getProfiler (enabled: boolean = false) {
-  return new Profiler({ enabled })
+  return new Profiler(__dirname, getLogger(), { enabled })
 }
 
 /**

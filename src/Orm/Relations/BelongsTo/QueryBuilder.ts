@@ -8,12 +8,13 @@
 */
 
 import knex from 'knex'
+import { Exception } from '@poppinss/utils'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 import { RelationBaseQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { BelongsTo } from './index'
-import { getValue, unique } from '../../../utils'
+import { unique } from '../../../utils'
 import { BaseQueryBuilder } from '../Base/QueryBuilder'
 
 /**
@@ -59,6 +60,22 @@ ModelConstructorContract
   }
 
   /**
+   * Raises exception that FK value is null
+   */
+  private enforceFkValueToExist (): never {
+    const { relationName, foreignKey } = this.relation
+    const modelName = this.relation.model.name
+
+    throw new Exception(
+      [
+        `Cannot preload "${relationName}", value of "${modelName}.${foreignKey}" is undefined.`,
+        'Make sure to set "null" as the default value for foreign keys',
+      ].join(' '),
+      500,
+    )
+  }
+
+  /**
    * Applies constraint to limit rows to the current relationship
    * only.
    */
@@ -74,17 +91,26 @@ ModelConstructorContract
      * Eager query contraints
      */
     if (Array.isArray(this.parent)) {
-      this.whereIn(this.relation.localKey, unique(this.parent.map((model) => {
-        return getValue(model, this.relation.foreignKey, this.relation, queryAction)
-      })))
+      const foreignKeyValues = this.parent
+        .map((model) => model[this.relation.foreignKey])
+        .filter((foreignKeyValue) => {
+          if (foreignKeyValue === undefined) {
+            this.enforceFkValueToExist()
+          }
+          return foreignKeyValue !== null
+        })
+
+      this.whereIn(this.relation.localKey, unique(foreignKeyValues))
       return
     }
 
     /**
      * Query constraints
      */
-    const value = getValue(this.parent, this.relation.foreignKey, this.relation, queryAction)
-    this.where(this.relation.localKey, value)
+    if (this.parent[this.relation.foreignKey] === undefined) {
+      this.enforceFkValueToExist()
+    }
+    this.where(this.relation.localKey, this.parent[this.relation.foreignKey])
 
     /**
      * Do not add limit when updating or deleting
