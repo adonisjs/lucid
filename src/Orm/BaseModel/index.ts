@@ -144,11 +144,6 @@ export class BaseModel implements ModelContract {
   private static $adapterKeysToAttributes: { [key: string]: string }
 
   /**
-   * A type only reference to the columns
-   */
-  public static $columns: any = {}
-
-  /**
    * Returns the model query instance for the given model
    */
   public static query (options?: ModelAdapterOptions): any {
@@ -401,7 +396,7 @@ export class BaseModel implements ModelContract {
    */
   public static async create<T extends ModelConstructorContract> (
     this: T,
-    values: Partial<T['$columns']>,
+    values: Partial<InstanceType<T>['$columns']>,
     options?: ModelAdapterOptions,
   ): Promise<InstanceType<T>> {
     const instance = new this()
@@ -420,7 +415,7 @@ export class BaseModel implements ModelContract {
    */
   public static async createMany<T extends ModelConstructorContract> (
     this: T,
-    values: Partial<T['$columns']>[],
+    values: Partial<InstanceType<T>['$columns']>[],
     options?: ModelAdapterOptions,
   ): Promise<InstanceType<T>[]> {
     const client = this.$adapter.modelConstructorClient(this, options)
@@ -473,8 +468,8 @@ export class BaseModel implements ModelContract {
    */
   public static async firstOrNew<T extends ModelConstructorContract> (
     this: T,
-    search: Partial<T['$columns']>,
-    savePayload?: Partial<T['$columns']>,
+    search: Partial<InstanceType<T>['$columns']>,
+    savePayload?: Partial<InstanceType<T>['$columns']>,
     options?: ModelAdapterOptions,
   ) {
     const query = this.query(options)
@@ -499,8 +494,8 @@ export class BaseModel implements ModelContract {
    */
   public static async firstOrCreate<T extends ModelConstructorContract> (
     this: T,
-    search: Partial<T['$columns']>,
-    savePayload?: Partial<T['$columns']>,
+    search: Partial<InstanceType<T>['$columns']>,
+    savePayload?: Partial<InstanceType<T>['$columns']>,
     options?: ModelAdapterOptions,
   ) {
     const row = await this.firstOrNew(search, savePayload, options)
@@ -516,8 +511,8 @@ export class BaseModel implements ModelContract {
    */
   public static async updateOrCreate<T extends ModelConstructorContract> (
     this: T,
-    search: Partial<T['$columns']>,
-    updatedPayload: Partial<T['$columns']>,
+    search: Partial<InstanceType<T>['$columns']>,
+    updatedPayload: Partial<InstanceType<T>['$columns']>,
     options?: ModelAdapterOptions,
   ) {
     const row = await this.firstOrNew(search, updatedPayload, options)
@@ -539,8 +534,8 @@ export class BaseModel implements ModelContract {
    */
   public static async fetchOrNewUpMany<T extends ModelConstructorContract> (
     this: T,
-    uniqueKey: Extract<keyof T['$columns'], string>,
-    payload: Partial<T['$columns']>[],
+    uniqueKey: Extract<keyof InstanceType<T>['$columns'], string>,
+    payload: Partial<InstanceType<T>['$columns']>[],
     options?: ModelAdapterOptions,
     mergeAttributes: boolean = false,
   ) {
@@ -593,8 +588,8 @@ export class BaseModel implements ModelContract {
    */
   public static async fetchOrCreateMany<T extends ModelConstructorContract> (
     this: T,
-    uniqueKey: keyof T['$columns'],
-    payload: Partial<T['$columns']>[],
+    uniqueKey: keyof InstanceType<T>['$columns'],
+    payload: Partial<InstanceType<T>['$columns']>[],
     options?: ModelAdapterOptions,
   ): Promise<InstanceType<T>[]> {
     const rows = await this.fetchOrNewUpMany(uniqueKey, payload, options)
@@ -629,8 +624,8 @@ export class BaseModel implements ModelContract {
    */
   public static async updateOrCreateMany<T extends ModelConstructorContract> (
     this: T,
-    uniqueKey: keyof T['$columns'],
-    payload: Partial<T['$columns']>[],
+    uniqueKey: keyof InstanceType<T>['$columns'],
+    payload: Partial<InstanceType<T>['$columns']>[],
     options?: ModelAdapterOptions,
   ) {
     const rows = await this.fetchOrNewUpMany(uniqueKey, payload, options, true)
@@ -760,6 +755,11 @@ export class BaseModel implements ModelContract {
      */
     return cherryPickObject[serializeAs] === true || isObject(cherryPickObject[serializeAs])
   }
+
+  /**
+   * A type only reference to the columns
+   */
+  public $columns: any = {}
 
   /**
    * A copy of attributes that will be sent over to adapter

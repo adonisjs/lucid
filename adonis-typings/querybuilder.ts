@@ -9,9 +9,12 @@
 
 declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   import * as knex from 'knex'
-  import { Dictionary } from 'ts-essentials'
   import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
   import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+
+  type Dictionary<T, K extends string | number = string> = {
+    [key in K]: T
+  }
 
   /**
    * Get one or many of a generic

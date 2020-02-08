@@ -13,9 +13,12 @@ declare module '@ioc:Adonis/Lucid/Database' {
   import knex from 'knex'
   import { Pool } from 'tarn'
   import { EventEmitter } from 'events'
-  import { Dictionary } from 'ts-essentials'
   import { MacroableConstructorContract } from 'macroable'
   import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
+
+  type Dictionary<T, K extends string | number = string> = {
+    [key in K]: T
+  }
 
   import {
     Table,

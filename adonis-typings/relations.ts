@@ -421,23 +421,24 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   export interface HasOneClientContract<
     Relation extends RelationshipsContract,
     Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract
+    RelatedModel extends ModelConstructorContract,
+    Related extends InstanceType<RelatedModel> = InstanceType<RelatedModel>
   > extends RelationBaseQueryClientContract<Relation, Model, RelatedModel> {
-    save (related: InstanceType<RelatedModel>): Promise<void>
+    save (related: Related): Promise<void>
 
     create (
-      values: Partial<RelatedModel['$columns']>,
-    ): Promise<InstanceType<RelatedModel>>
+      values: Partial<Related['$columns']>,
+    ): Promise<Related>
 
     firstOrCreate (
-      search: Partial<RelatedModel['$columns']>,
-      savePayload?: Partial<RelatedModel['$columns']>,
-    ): Promise<InstanceType<RelatedModel>>
+      search: Partial<Related['$columns']>,
+      savePayload?: Partial<Related['$columns']>,
+    ): Promise<Related>
 
     updateOrCreate (
       search: ModelObject,
       updatePayload: ModelObject,
-    ): Promise<InstanceType<RelatedModel>>
+    ): Promise<Related>
   }
 
   /**
@@ -447,10 +448,11 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   export interface HasManyClientContract<
     Relation extends RelationshipsContract,
     Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract
+    RelatedModel extends ModelConstructorContract,
+    Related extends InstanceType<RelatedModel> = InstanceType<RelatedModel>
   > extends HasOneClientContract<Relation, Model, RelatedModel> {
-    saveMany (related: InstanceType<RelatedModel>[]): Promise<void>
-    createMany (values: Partial<RelatedModel['$columns']>[]): Promise<InstanceType<RelatedModel>[]>
+    saveMany (related: Related[]): Promise<void>
+    createMany (values: Partial<Related['$columns']>[]): Promise<Related[]>
   }
 
   /**
@@ -460,9 +462,10 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   export interface BelongsToClientContract<
     Relation extends RelationshipsContract,
     Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract
+    RelatedModel extends ModelConstructorContract,
+    Related extends InstanceType<RelatedModel> = InstanceType<RelatedModel>
   > extends RelationBaseQueryClientContract<Relation, Model, RelatedModel> {
-    associate (related: InstanceType<RelatedModel>): Promise<void>
+    associate (related: Related): Promise<void>
     dissociate (): Promise<void>
   }
 
@@ -472,12 +475,13 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   export interface ManyToManyClientContract<
     Relation extends RelationshipsContract,
     Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract
+    RelatedModel extends ModelConstructorContract,
+    Related extends InstanceType<RelatedModel> = InstanceType<RelatedModel>
   > {
     relation: Relation,
 
     query<
-      Result extends any = InstanceType<RelatedModel>
+      Result extends any = Related
     > (): ManyToManyQueryBuilderContract<RelatedModel, Result>
 
     /**
@@ -485,7 +489,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
      * parent model instances
      */
     eagerQuery<
-      Result extends any = InstanceType<RelatedModel>
+      Result extends any = Related
     > (): ManyToManyQueryBuilderContract<RelatedModel, Result>
 
     /**
@@ -498,28 +502,28 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     /**
      * Save related model instance.
      */
-    save (related: InstanceType<RelatedModel>, checkExisting?: boolean): Promise<void>
+    save (related: Related, checkExisting?: boolean): Promise<void>
 
     /**
      * Save many of related model instance.
      */
-    saveMany (related: InstanceType<RelatedModel>[], checkExisting?: boolean): Promise<void>
+    saveMany (related: Related[], checkExisting?: boolean): Promise<void>
 
     /**
      * Create related model instance
      */
     create (
-      values: Partial<RelatedModel['$columns']>,
+      values: Partial<Related['$columns']>,
       checkExisting?: boolean,
-    ): Promise<InstanceType<RelatedModel>>
+    ): Promise<Related>
 
     /**
      * Create many of related model instances
      */
     createMany (
-      values: Partial<RelatedModel['$columns']>[],
+      values: Partial<Related['$columns']>[],
       checkExisting?: boolean,
-    ): Promise<InstanceType<RelatedModel>[]>
+    ): Promise<Related[]>
 
     /**
      * Attach new pivot rows
