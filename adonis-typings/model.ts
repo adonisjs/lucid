@@ -82,13 +82,13 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * Options for defining a column
    */
   export type ColumnOptions = {
-    castAs: string,
+    columnName: string,
     serializeAs: string | null, // null means do not serialize column
     isPrimary: boolean,
     hasGetter: boolean,
     hasSetter: boolean,
     serialize?: (value: any, attribute: string, model: ModelContract) => any,
-    cast?: (value: any, attribute: string, model: ModelContract) => any,
+    prepare?: (value: any, attribute: string, model: ModelContract) => any,
   }
 
   /**
@@ -210,6 +210,17 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
+   * Shape of model keys
+   */
+  export interface ModelKeysContract {
+    add (key: string, value: string): void
+    get (key: string, defaultValue: string): string
+    get (key: string, defaultValue?: string): string | undefined
+    resolve (key: string): string
+    all (): ModelObject
+  }
+
+  /**
    * ------------------------------------------------------
    * Shape of Model instance
    * ------------------------------------------------------
@@ -223,7 +234,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
   export interface ModelContract {
     $attributes: ModelObject
-    $extras: ModelObject
+    extras: ModelObject
     $original: ModelObject
     $preloaded: { [relation: string]: ModelContract | ModelContract[] }
 
@@ -234,7 +245,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $columns: any
 
     sideloaded: ModelObject
-
     primaryKeyValue?: number | string
     isPersisted: boolean
     isNew: boolean
@@ -422,6 +432,19 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $configurator: OrmConfigContract,
 
     /**
+     * A copy of internal keys mapping. One should be able to resolve between
+     * all key versions
+     */
+    $keys: {
+      attributesToColumns: ModelKeysContract,
+      attributesToSerialized: ModelKeysContract,
+      columnsToAttributes: ModelKeysContract,
+      columnsToSerialized: ModelKeysContract,
+      serializedToColumns: ModelKeysContract,
+      serializedToAttributes: ModelKeysContract,
+    }
+
+    /**
      * Whether primary key is auto incrementing or not. If not, then
      * end user must provide the value for the primary key
      */
@@ -492,17 +515,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
     > (this: T, name: Name): RelationType['relation']
 
     /**
-     * Resolve keys to their database column names
+     * Boot model
      */
-    $resolveCastKey (key: string): string
-    $mapKeysToCastKeys (values: ModelObject): ModelObject
-
-    /**
-     * Resolve keys to their model column properties
-     */
-    $resolveColumnName (key: string): string
-    $mapsKeysToColumnNames (values: ModelObject): ModelObject
-
     boot (): void
 
     /**
@@ -706,10 +720,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
     getTableName (model: ModelConstructorContract): string
 
     /**
-     * Return the `castAs` key (database column name) for a given model
-     * property.
+     * Return the `columnName` for a given model
      */
-    getCastAsKey (model: ModelConstructorContract, key: string): string
+    getColumnName (model: ModelConstructorContract, key: string): string
 
     /**
      * Return the `serializeAs` key for a given model property

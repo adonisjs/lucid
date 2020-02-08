@@ -104,7 +104,7 @@ test.group('Model | HasOne | Options', (group) => {
       @column({ isPrimary: true })
       public id: number
 
-      @column({ castAs: 'user_uid' })
+      @column({ columnName: 'user_uid' })
       public uid: number
 
       @hasOne(() => Profile, { localKey: 'uid' })
@@ -140,7 +140,7 @@ test.group('Model | HasOne | Options', (group) => {
 
   test('use pre defined foreign key', (assert) => {
     class Profile extends BaseModel {
-      @column({ castAs: 'user_id' })
+      @column({ columnName: 'user_id' })
       public userUid: number
     }
     Profile.boot()
@@ -779,8 +779,8 @@ test.group('Model | HasOne | preload', (group) => {
     })
 
     assert.lengthOf(users, 2)
-    assert.deepEqual(users[0].profile.$extras, {})
-    assert.deepEqual(users[1].profile.$extras, {})
+    assert.deepEqual(users[0].profile.extras, {})
+    assert.deepEqual(users[1].profile.extras, {})
   })
 
   test('do not repeat fk when already defined', async (assert) => {
@@ -824,8 +824,8 @@ test.group('Model | HasOne | preload', (group) => {
     })
 
     assert.lengthOf(users, 2)
-    assert.deepEqual(users[0].profile.$extras, {})
-    assert.deepEqual(users[1].profile.$extras, {})
+    assert.deepEqual(users[0].profile.extras, {})
+    assert.deepEqual(users[1].profile.extras, {})
   })
 
   test('pass sideloaded attributes to the relationship', async (assert) => {

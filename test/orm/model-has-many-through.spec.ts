@@ -178,16 +178,16 @@ test.group('Model | Has Many Through | Options', (group) => {
     relation.boot()
 
     assert.equal(relation['localKey'], 'id')
-    assert.equal(relation['localCastAsKey'], 'id')
+    assert.equal(relation['localKeyColumnName'], 'id')
 
     assert.equal(relation['foreignKey'], 'countryId')
-    assert.equal(relation['foreignCastAsKey'], 'country_id')
+    assert.equal(relation['foreignKeyColumnName'], 'country_id')
 
     assert.equal(relation['throughLocalKey'], 'id')
-    assert.equal(relation['throughLocalCastAsKey'], 'id')
+    assert.equal(relation['throughLocalKeyColumnName'], 'id')
 
     assert.equal(relation['throughForeignKey'], 'userId')
-    assert.equal(relation['throughForeignCastAsKey'], 'user_id')
+    assert.equal(relation['throughForeignKeyColumnName'], 'user_id')
   })
 
   test('compute custom keys', (assert) => {
@@ -225,16 +225,16 @@ test.group('Model | Has Many Through | Options', (group) => {
     relation.boot()
 
     assert.equal(relation['localKey'], 'uid')
-    assert.equal(relation['localCastAsKey'], 'uid')
+    assert.equal(relation['localKeyColumnName'], 'uid')
 
     assert.equal(relation['foreignKey'], 'countryUid')
-    assert.equal(relation['foreignCastAsKey'], 'country_uid')
+    assert.equal(relation['foreignKeyColumnName'], 'country_uid')
 
     assert.equal(relation['throughLocalKey'], 'uid')
-    assert.equal(relation['throughLocalCastAsKey'], 'uid')
+    assert.equal(relation['throughLocalKeyColumnName'], 'uid')
 
     assert.equal(relation['throughForeignKey'], 'userUid')
-    assert.equal(relation['throughForeignCastAsKey'], 'user_uid')
+    assert.equal(relation['throughForeignKeyColumnName'], 'user_uid')
   })
 })
 
@@ -352,19 +352,19 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
 
     const post = new Post()
     post.fill({ userId: 1 })
-    post.$extras = {
+    post.extras = {
       through_country_id: 1,
     }
 
     const post1 = new Post()
     post1.fill({ userId: 2 })
-    post1.$extras = {
+    post1.extras = {
       through_country_id: 2,
     }
 
     const post2 = new Post()
     post2.fill({ userId: 3 })
-    post2.$extras = {
+    post2.extras = {
       through_country_id: 1,
     }
 
@@ -737,13 +737,13 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.lengthOf(countries, 1)
     assert.lengthOf(countries[0].posts, 3)
     assert.equal(countries[0].posts[0].title, 'Adonis 101')
-    assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
+    assert.equal(countries[0].posts[0].extras.through_country_id, 1)
 
     assert.equal(countries[0].posts[1].title, 'Lucid 101')
-    assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
+    assert.equal(countries[0].posts[1].extras.through_country_id, 1)
 
     assert.equal(countries[0].posts[2].title, 'Adonis5')
-    assert.equal(countries[0].posts[2].$extras.through_country_id, 1)
+    assert.equal(countries[0].posts[2].extras.through_country_id, 1)
   })
 
   test('preload many relationships', async (assert) => {
@@ -796,13 +796,13 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.lengthOf(countries[1].posts, 1)
 
     assert.equal(countries[0].posts[0].title, 'Adonis 101')
-    assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
+    assert.equal(countries[0].posts[0].extras.through_country_id, 1)
 
     assert.equal(countries[0].posts[1].title, 'Lucid 101')
-    assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
+    assert.equal(countries[0].posts[1].extras.through_country_id, 1)
 
     assert.equal(countries[1].posts[0].title, 'Adonis5')
-    assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
+    assert.equal(countries[1].posts[0].extras.through_country_id, 2)
   })
 
   test('preload many relationships using model instance', async (assert) => {
@@ -859,13 +859,13 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.lengthOf(countries[1].posts, 1)
 
     assert.equal(countries[0].posts[0].title, 'Adonis 101')
-    assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
+    assert.equal(countries[0].posts[0].extras.through_country_id, 1)
 
     assert.equal(countries[0].posts[1].title, 'Lucid 101')
-    assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
+    assert.equal(countries[0].posts[1].extras.through_country_id, 1)
 
     assert.equal(countries[1].posts[0].title, 'Adonis5')
-    assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
+    assert.equal(countries[1].posts[0].extras.through_country_id, 2)
   })
 
   test('cherry pick columns during preload', async (assert) => {
@@ -921,13 +921,13 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.lengthOf(countries[1].posts, 1)
 
     assert.equal(countries[0].posts[0].title, 'Adonis 101')
-    assert.deepEqual(countries[0].posts[0].$extras, { through_country_id: 1 })
+    assert.deepEqual(countries[0].posts[0].extras, { through_country_id: 1 })
 
     assert.equal(countries[0].posts[1].title, 'Lucid 101')
-    assert.deepEqual(countries[0].posts[1].$extras, { through_country_id: 1 })
+    assert.deepEqual(countries[0].posts[1].extras, { through_country_id: 1 })
 
     assert.equal(countries[1].posts[0].title, 'Adonis5')
-    assert.deepEqual(countries[1].posts[0].$extras, { through_country_id: 2 })
+    assert.deepEqual(countries[1].posts[0].extras, { through_country_id: 2 })
   })
 
   test('raise error when local key is not selected', async (assert) => {

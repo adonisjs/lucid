@@ -97,7 +97,7 @@ test.group('Model | BelongsTo | Options', (group) => {
       @column({ isPrimary: true })
       public id: number
 
-      @column({ castAs: 'user_uid' })
+      @column({ columnName: 'user_uid' })
       public uid: number
     }
 
@@ -140,7 +140,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     }
 
     class Profile extends BaseModel {
-      @column({ castAs: 'user_id' })
+      @column({ columnName: 'user_id' })
       public userUid: number
 
       @belongsTo(() => User, { foreignKey: 'userUid' })
@@ -608,8 +608,8 @@ test.group('Model | BelongsTo | preload', (group) => {
     })
 
     assert.lengthOf(profiles, 2)
-    assert.deepEqual(profiles[0].user.$extras, {})
-    assert.deepEqual(profiles[1].user.$extras, {})
+    assert.deepEqual(profiles[0].user.extras, {})
+    assert.deepEqual(profiles[1].user.extras, {})
   })
 
   test('do not repeat fk when already defined', async (assert) => {
@@ -648,8 +648,8 @@ test.group('Model | BelongsTo | preload', (group) => {
     })
 
     assert.lengthOf(profiles, 2)
-    assert.deepEqual(profiles[0].user.$extras, {})
-    assert.deepEqual(profiles[1].user.$extras, {})
+    assert.deepEqual(profiles[0].user.extras, {})
+    assert.deepEqual(profiles[1].user.extras, {})
   })
 
   test('raise exception when local key is not selected', async (assert) => {

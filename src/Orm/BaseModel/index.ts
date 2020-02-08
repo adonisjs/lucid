@@ -25,6 +25,7 @@ import {
   ComputedOptions,
   AdapterContract,
   OrmConfigContract,
+  ModelKeysContract,
   ModelAdapterOptions,
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
@@ -38,6 +39,7 @@ import {
 } from '@ioc:Adonis/Lucid/Relations'
 
 import { OrmConfig } from '../Config'
+import { ModelKeys } from '../ModelKeys'
 import { Preloader } from '../Preloader'
 import { HasOne } from '../Relations/HasOne'
 import { proxyHandler } from './proxyHandler'
@@ -134,14 +136,16 @@ export class BaseModel implements ModelContract {
   private static hooks: Hooks
 
   /**
-   * A key-value pair of model properties and their `castAs` keys
+   * Keys mappings to make the lookups easy
    */
-  private static $attributesToAdapterKeys: { [key: string]: string }
-
-  /**
-   * Reverse of `$attributesToAdapterKeys`
-   */
-  private static $adapterKeysToAttributes: { [key: string]: string }
+  public static $keys: {
+    attributesToColumns: ModelKeysContract,
+    attributesToSerialized: ModelKeysContract,
+    columnsToAttributes: ModelKeysContract,
+    columnsToSerialized: ModelKeysContract,
+    serializedToColumns: ModelKeysContract,
+    serializedToAttributes: ModelKeysContract,
+  }
 
   /**
    * Returns the model query instance for the given model
@@ -208,14 +212,14 @@ export class BaseModel implements ModelContract {
 
     const column: ColumnOptions = {
       isPrimary: options.isPrimary || false,
-      castAs: options.castAs || this.$configurator.getCastAsKey(this, name),
+      columnName: options.columnName || this.$configurator.getColumnName(this, name),
       hasGetter: !!(descriptor && descriptor.get),
       hasSetter: !!(descriptor && descriptor.set),
       serializeAs: options.serializeAs !== undefined
         ? options.serializeAs
         : this.$configurator.getSerializeAsKey(this, name),
       serialize: options.serialize,
-      cast: options.cast,
+      prepare: options.prepare,
     }
 
     /**
@@ -226,8 +230,15 @@ export class BaseModel implements ModelContract {
     }
 
     this.$columnsDefinitions.set(name, column)
-    this.$attributesToAdapterKeys[name] = column.castAs
-    this.$adapterKeysToAttributes[column.castAs] = name
+
+    this.$keys.attributesToColumns.add(name, column.columnName)
+    column.serializeAs && this.$keys.attributesToSerialized.add(name, column.serializeAs)
+
+    this.$keys.columnsToAttributes.add(column.columnName, name)
+    column.serializeAs && this.$keys.columnsToSerialized.add(column.columnName, column.serializeAs)
+
+    column.serializeAs && this.$keys.serializedToAttributes.add(column.serializeAs, name)
+    column.serializeAs && this.$keys.serializedToColumns.add(column.serializeAs, column.columnName)
   }
 
   /**
@@ -312,42 +323,6 @@ export class BaseModel implements ModelContract {
   }
 
   /**
-   * Resolves the cast key for a given property. The original key
-   * is returned as it is, If property doesn't exists inside refs.
-   */
-  public static $resolveCastKey (key: string): string {
-    return this.$attributesToAdapterKeys[key] || key
-  }
-
-  /**
-   * Maps the object keys to their database column name.
-   */
-  public static $mapKeysToCastKeys (values: ModelObject): ModelObject {
-    return Object.keys(values).reduce((result, key) => {
-      result[this.$resolveCastKey(key)] = values[key]
-      return result
-    }, {})
-  }
-
-  /**
-   * Resolves the module column name for a given property. The original key
-   * is returned as it is, If property doesn't exists inside dbRefs.
-   */
-  public static $resolveColumnName (key: string): string {
-    return this.$adapterKeysToAttributes[key] || key
-  }
-
-  /**
-   * Maps the object keys to their model column names
-   */
-  public static $mapsKeysToColumnNames (values: ModelObject): ModelObject {
-    return Object.keys(values).reduce((result, key) => {
-      result[this.$resolveColumnName(key)] = values[key]
-      return result
-    }, {})
-  }
-
-  /**
    * Boot the model
    */
   public static boot () {
@@ -358,9 +333,16 @@ export class BaseModel implements ModelContract {
     this.booted = true
     this.primaryKey = this.primaryKey || 'id'
 
-    Object.defineProperty(this, '$attributesToAdapterKeys', { value: {} })
-    Object.defineProperty(this, '$adapterKeysToAttributes', { value: {} })
-    Object.defineProperty(this, '$columns', { value: {} })
+    Object.defineProperty(this, '$keys', {
+      value: {
+        attributesToColumns: new ModelKeys(),
+        attributesToSerialized: new ModelKeys(),
+        columnsToAttributes: new ModelKeys(),
+        columnsToSerialized: new ModelKeys(),
+        serializedToColumns: new ModelKeys(),
+        serializedToAttributes: new ModelKeys(),
+      },
+    })
 
     Object.defineProperty(this, '$columnsDefinitions', { value: new Map() })
     Object.defineProperty(this, '$computedDefinitions', { value: new Map() })
@@ -716,11 +698,11 @@ export class BaseModel implements ModelContract {
     return Object.keys(attributes).reduce((result, key) => {
       const column = Model.$getColumn(key)!
 
-      const value = typeof (column.cast) === 'function'
-        ? column.cast(attributes[key], key, this)
+      const value = typeof (column.prepare) === 'function'
+        ? column.prepare(attributes[key], key, this)
         : attributes[key]
 
-      result[Model.$resolveCastKey(key)] = value
+      result[column.columnName] = value
       return result
     }, {})
   }
@@ -784,7 +766,7 @@ export class BaseModel implements ModelContract {
    * This is helpful when adapter wants to load some extra data conditionally
    * and that data must not be persisted back the adapter.
    */
-  public $extras: ModelObject = {}
+  public extras: ModelObject = {}
 
   /**
    * Sideloaded are dynamic properties set on the model instance, which
@@ -793,7 +775,7 @@ export class BaseModel implements ModelContract {
    * This is helpful when you want to add dynamic meta data to the model
    * and it's children as well.
    *
-   * The difference between [[$extras]] and [[$sideloaded]] is:
+   * The difference between [[extras]] and [[sideloaded]] is:
    *
    * - Extras can be different for each model instance
    * - Extras are not shared down the hierarchy (example relationships)
@@ -1099,7 +1081,7 @@ export class BaseModel implements ModelContract {
    * Merges the object with the model attributes, assuming object keys
    * are coming the database.
    *
-   * 1. If key is unknown, it will be added to the `$extras` object.
+   * 1. If key is unknown, it will be added to the `extras` object.
    * 2. If key is defined as a relationship, it will be ignored and one must call `$setRelated`.
    */
   public $consumeAdapterResult (adapterResult: ModelObject, sideloadedAttributes?: ModelObject) {
@@ -1121,17 +1103,16 @@ export class BaseModel implements ModelContract {
     if (isObject(adapterResult)) {
       Object.keys(adapterResult).forEach((key) => {
         /**
-         * The adapter will return the values as per `castAs` key. We
-         * need to pull the actual column name for that key and then
-         * set the value.
+         * Pull the attribute name from the column name, since adapter
+         * results always holds the column names.
          */
-        const columnName = Model.$adapterKeysToAttributes[key]
-        if (columnName) {
+        const attributeName = Model.$keys.columnsToAttributes.get(key)
+        if (attributeName) {
           /**
            * When consuming the adapter result, we must always set the attributes
-           * directly, as we do not want to invoke getters.
+           * directly, as we do not want to invoke setters.
            */
-          this.$setAttribute(columnName, adapterResult[key])
+          this.$setAttribute(attributeName, adapterResult[key])
           return
         }
 
@@ -1143,7 +1124,7 @@ export class BaseModel implements ModelContract {
           return
         }
 
-        this.$extras[key] = adapterResult[key]
+        this.extras[key] = adapterResult[key]
       })
     }
   }
@@ -1170,7 +1151,7 @@ export class BaseModel implements ModelContract {
   /**
    * Merge bulk attributes with existing attributes.
    *
-   * 1. If key is unknown, it will be added to the `$extras` object.
+   * 1. If key is unknown, it will be added to the `extras` object.
    * 2. If key is defined as a relationship, it will be ignored and one must call `$setRelated`.
    */
   public merge (values: ModelObject) {
@@ -1181,7 +1162,7 @@ export class BaseModel implements ModelContract {
      */
     if (isObject(values)) {
       Object.keys(values).forEach((key) => {
-        if (Model.$attributesToAdapterKeys[key]) {
+        if (Model.$hasColumn(key)) {
           this[key] = values[key]
           return
         }
@@ -1194,7 +1175,7 @@ export class BaseModel implements ModelContract {
           return
         }
 
-        this.$extras[key] = values[key]
+        this.extras[key] = values[key]
       })
     }
   }
@@ -1396,13 +1377,17 @@ export class BaseModel implements ModelContract {
     client: QueryClientContract,
   ): any {
     const modelConstructor = this.constructor as typeof BaseModel
+    const primaryKeyColumn = modelConstructor.$keys.attributesToColumns.get(
+      modelConstructor.primaryKey,
+      modelConstructor.primaryKey,
+    )
 
     /**
      * Returning insert query for the inserts
      */
     if (action === 'insert') {
       const insertQuery = client.insertQuery().table(modelConstructor.table)
-      insertQuery.returning(modelConstructor.$resolveCastKey(modelConstructor.primaryKey))
+      insertQuery.returning(primaryKeyColumn)
       return insertQuery
     }
 
@@ -1412,7 +1397,7 @@ export class BaseModel implements ModelContract {
     return client
       .query()
       .from(modelConstructor.table)
-      .where(modelConstructor.$resolveCastKey(modelConstructor.primaryKey), this.primaryKeyValue)
+      .where(primaryKeyColumn, this.primaryKeyValue)
   }
 
   /**
@@ -1434,7 +1419,10 @@ export class BaseModel implements ModelContract {
     this.ensureIsntDeleted()
     const modelConstructor = this.constructor as typeof BaseModel
     const { table } = modelConstructor
-    const primaryAdapterKey = modelConstructor.$resolveCastKey(modelConstructor.primaryKey)
+    const primaryKeyColumn = modelConstructor.$keys.attributesToColumns.get(
+      modelConstructor.primaryKey,
+      modelConstructor.primaryKey,
+    )
 
     /**
      * Noop when model instance is not persisted
@@ -1452,7 +1440,7 @@ export class BaseModel implements ModelContract {
       throw new Exception(
         [
           '"Model.refresh" failed. ',
-          `Unable to lookup "${table}" table where "${primaryAdapterKey}" = ${this.primaryKeyValue}`,
+          `Unable to lookup "${table}" table where "${primaryKeyColumn}" = ${this.primaryKeyValue}`,
         ].join(''),
       )
     }

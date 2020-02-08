@@ -33,10 +33,10 @@ ModelConstructorContract
    * Available after boot is invoked
    */
   public localKey: string
-  public localCastAsKey: string
+  public localKeyColumnName: string
 
   public relatedKey: string
-  public relatedCastAsKey: string
+  public relatedKeyColumnName: string
 
   public pivotForeignKey: string
   public pivotRelatedForeignKey: string
@@ -102,13 +102,13 @@ ModelConstructorContract
      * Keys on the parent model
      */
     this.localKey = localKey.attributeName
-    this.localCastAsKey = localKey.castAsKey
+    this.localKeyColumnName = localKey.columnName
 
     /**
      * Keys on the related model
      */
     this.relatedKey = relatedKey.attributeName
-    this.relatedCastAsKey = relatedKey.castAsKey
+    this.relatedKeyColumnName = relatedKey.columnName
 
     /**
      * Parent model foreign key in the pivot table
@@ -159,7 +159,7 @@ ModelConstructorContract
         parentModel,
         related.filter((relatedModel) => {
           const value = parentModel[this.localKey]
-          return value !== undefined && relatedModel.$extras[pivotForeignKeyAlias] === value
+          return value !== undefined && relatedModel.extras[pivotForeignKeyAlias] === value
         }),
       )
     })

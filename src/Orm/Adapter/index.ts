@@ -64,10 +64,13 @@ export class Adapter implements AdapterContract {
     const modelConstructor = instance.constructor as unknown as ModelConstructorContract
     const query = instance.$getQueryFor('insert', this.modelClient(instance))
 
+    const primaryKeyColumnName = modelConstructor.$keys.attributesToColumns.get(
+      modelConstructor.primaryKey,
+      modelConstructor.primaryKey,
+    )
+
     const result = await query.insert(attributes)
-    instance.$consumeAdapterResult({
-      [modelConstructor.$resolveCastKey(modelConstructor.primaryKey)]: result[0],
-    })
+    instance.$consumeAdapterResult({ [primaryKeyColumnName]: result[0] })
   }
 
   /**

@@ -35,25 +35,25 @@ ModelConstructorContract
    * Available after boot is invoked
    */
   public localKey: string
-  public localCastAsKey: string
+  public localKeyColumnName: string
 
   /**
    * This exists on the through model
    */
   public foreignKey: string
-  public foreignCastAsKey: string
+  public foreignKeyColumnName: string
 
   /**
    * This exists on the through model
    */
   public throughLocalKey: string
-  public throughLocalCastAsKey: string
+  public throughLocalKeyColumnName: string
 
   /**
    * This exists on the related model
    */
   public throughForeignKey: string
-  public throughForeignCastAsKey: string
+  public throughForeignKeyColumnName: string
 
   constructor (
     public relationName: string,
@@ -122,19 +122,19 @@ ModelConstructorContract
      * Keys on the parent model
      */
     this.localKey = localKey.attributeName
-    this.localCastAsKey = localKey.castAsKey
+    this.localKeyColumnName = localKey.columnName
 
     /**
      * Keys on the through model
      */
     this.foreignKey = foreignKey.attributeName
-    this.foreignCastAsKey = foreignKey.castAsKey
+    this.foreignKeyColumnName = foreignKey.columnName
 
     this.throughLocalKey = throughLocalKey.attributeName
-    this.throughLocalCastAsKey = throughLocalKey.castAsKey
+    this.throughLocalKeyColumnName = throughLocalKey.columnName
 
     this.throughForeignKey = throughForeignKey.attributeName
-    this.throughForeignCastAsKey = throughForeignKey.castAsKey
+    this.throughForeignKeyColumnName = throughForeignKey.columnName
 
     /**
      * Booted successfully
@@ -164,12 +164,12 @@ ModelConstructorContract
    */
   public $setRelatedForMany (parent: ModelContract[], related: ModelContract[]): void {
     ensureRelationIsBooted(this)
-    const $foreignCastAsKeyAlias = this.throughAlias(this.foreignCastAsKey)
+    const $foreignCastAsKeyAlias = this.throughAlias(this.foreignKeyColumnName)
 
     parent.forEach((parentModel) => {
       this.$setRelated(parentModel, related.filter((relatedModel) => {
         const value = parentModel[this.localKey]
-        return value !== undefined && relatedModel.$extras[$foreignCastAsKeyAlias] === value
+        return value !== undefined && relatedModel.extras[$foreignCastAsKeyAlias] === value
       }))
     })
   }

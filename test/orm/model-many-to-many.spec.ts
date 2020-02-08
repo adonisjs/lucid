@@ -63,7 +63,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     User.$getRelation('skills').boot()
 
     assert.equal(User.$getRelation('skills')!['localKey'], 'id')
-    assert.equal(User.$getRelation('skills')!['localCastAsKey'], 'id')
+    assert.equal(User.$getRelation('skills')!['localKeyColumnName'], 'id')
   })
 
   test('use custom defined local key', (assert) => {
@@ -87,7 +87,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     User.$getRelation('skills').boot()
 
     assert.equal(User.$getRelation('skills')!['localKey'], 'uid')
-    assert.equal(User.$getRelation('skills')!['localCastAsKey'], 'uid')
+    assert.equal(User.$getRelation('skills')!['localKeyColumnName'], 'uid')
   })
 
   test('raise error when relatedKey is missing', (assert) => {
@@ -133,7 +133,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     User.$getRelation('skills').boot()
 
     assert.equal(User.$getRelation('skills')!['relatedKey'], 'id')
-    assert.equal(User.$getRelation('skills')!['relatedCastAsKey'], 'id')
+    assert.equal(User.$getRelation('skills')!['relatedKeyColumnName'], 'id')
   })
 
   test('use custom defined related key', (assert) => {
@@ -156,7 +156,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     User.$getRelation('skills').boot()
 
     assert.equal(User.$getRelation('skills')!['relatedKey'], 'uid')
-    assert.equal(User.$getRelation('skills')!['relatedCastAsKey'], 'uid')
+    assert.equal(User.$getRelation('skills')!['relatedKeyColumnName'], 'uid')
   })
 
   test('compute pivotForeignKey from table name + primary key', (assert) => {
@@ -321,17 +321,17 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
     user2.fill({ id: 3 })
 
     const skill = new Skill()
-    skill.$extras = {
+    skill.extras = {
       pivot_user_id: 1,
     }
 
     const skill1 = new Skill()
-    skill1.$extras = {
+    skill1.extras = {
       pivot_user_id: 2,
     }
 
     const skill2 = new Skill()
-    skill2.$extras = {
+    skill2.extras = {
       pivot_user_id: 1,
     }
 
@@ -684,8 +684,8 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.lengthOf(users, 1)
     assert.lengthOf(users[0].skills, 1)
     assert.equal(users[0].skills[0].name, 'Programming')
-    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+    assert.equal(users[0].skills[0].extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].extras.pivot_skill_id, 1)
   })
 
   test('preload relation for many', async (assert) => {
@@ -730,16 +730,16 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.lengthOf(users[1].skills, 1)
 
     assert.equal(users[0].skills[0].name, 'Programming')
-    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+    assert.equal(users[0].skills[0].extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].extras.pivot_skill_id, 1)
 
     assert.equal(users[0].skills[1].name, 'Dancing')
-    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
+    assert.equal(users[0].skills[1].extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].extras.pivot_skill_id, 2)
 
     assert.equal(users[1].skills[0].name, 'Dancing')
-    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
-    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
+    assert.equal(users[1].skills[0].extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].extras.pivot_skill_id, 2)
   })
 
   test('preload relation using model instance', async (assert) => {
@@ -788,16 +788,16 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.lengthOf(users[1].skills, 1)
 
     assert.equal(users[0].skills[0].name, 'Programming')
-    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+    assert.equal(users[0].skills[0].extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].extras.pivot_skill_id, 1)
 
     assert.equal(users[0].skills[1].name, 'Dancing')
-    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
+    assert.equal(users[0].skills[1].extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].extras.pivot_skill_id, 2)
 
     assert.equal(users[1].skills[0].name, 'Dancing')
-    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
-    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
+    assert.equal(users[1].skills[0].extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].extras.pivot_skill_id, 2)
   })
 
   test('select extra pivot columns', async (assert) => {
@@ -848,19 +848,19 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.lengthOf(users[1].skills, 1)
 
     assert.equal(users[0].skills[0].name, 'Programming')
-    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
-    assert.equal(users[0].skills[0].$extras.pivot_proficiency, 'expert')
+    assert.equal(users[0].skills[0].extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].extras.pivot_skill_id, 1)
+    assert.equal(users[0].skills[0].extras.pivot_proficiency, 'expert')
 
     assert.equal(users[0].skills[1].name, 'Dancing')
-    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
-    assert.equal(users[0].skills[1].$extras.pivot_proficiency, 'beginner')
+    assert.equal(users[0].skills[1].extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].extras.pivot_skill_id, 2)
+    assert.equal(users[0].skills[1].extras.pivot_proficiency, 'beginner')
 
     assert.equal(users[1].skills[0].name, 'Dancing')
-    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
-    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
-    assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
+    assert.equal(users[1].skills[0].extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].extras.pivot_skill_id, 2)
+    assert.equal(users[1].skills[0].extras.pivot_proficiency, 'beginner')
   })
 
   test('select extra pivot columns at runtime', async (assert) => {
@@ -914,19 +914,19 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.lengthOf(users[1].skills, 1)
 
     assert.equal(users[0].skills[0].name, 'Programming')
-    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
-    assert.equal(users[0].skills[0].$extras.pivot_proficiency, 'expert')
+    assert.equal(users[0].skills[0].extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].extras.pivot_skill_id, 1)
+    assert.equal(users[0].skills[0].extras.pivot_proficiency, 'expert')
 
     assert.equal(users[0].skills[1].name, 'Dancing')
-    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
-    assert.equal(users[0].skills[1].$extras.pivot_proficiency, 'beginner')
+    assert.equal(users[0].skills[1].extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].extras.pivot_skill_id, 2)
+    assert.equal(users[0].skills[1].extras.pivot_proficiency, 'beginner')
 
     assert.equal(users[1].skills[0].name, 'Dancing')
-    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
-    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
-    assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
+    assert.equal(users[1].skills[0].extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].extras.pivot_skill_id, 2)
+    assert.equal(users[1].skills[0].extras.pivot_proficiency, 'beginner')
   })
 
   test('cherry pick columns during preload', async (assert) => {
@@ -963,7 +963,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.lengthOf(users, 1)
     assert.lengthOf(users[0].skills, 1)
     assert.equal(users[0].skills[0].name, 'Programming')
-    assert.deepEqual(users[0].skills[0].$extras, { pivot_user_id: 1, pivot_skill_id: 1 })
+    assert.deepEqual(users[0].skills[0].extras, { pivot_user_id: 1, pivot_skill_id: 1 })
   })
 
   test('raise error when local key is not selected', async (assert) => {

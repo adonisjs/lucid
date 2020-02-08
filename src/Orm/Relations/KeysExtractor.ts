@@ -27,7 +27,7 @@ export class KeysExtractor<
   /**
    * Extract the defined keys from the models
    */
-  public extract (): { [P in keyof Keys]: { attributeName: string, castAsKey: string } } {
+  public extract (): { [P in keyof Keys]: { attributeName: string, columnName: string } } {
     const relationRef = `${this.model.name}.${this.relationName}`
 
     return Object.keys(this.keys).reduce((result, extractKey: keyof Keys) => {
@@ -44,10 +44,10 @@ export class KeysExtractor<
 
       result[extractKey] = {
         attributeName: key,
-        castAsKey: attribute.castAs,
+        columnName: attribute.columnName,
       }
 
       return result
-    }, {} as { [P in keyof Keys]: { attributeName: string, castAsKey: string } })
+    }, {} as { [P in keyof Keys]: { attributeName: string, columnName: string } })
   }
 }

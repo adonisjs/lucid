@@ -57,7 +57,7 @@ ModelConstructorContract
    * The keys for constructing the join query
    */
   protected getRelationKeys (): string[] {
-    return [this.relation.throughForeignCastAsKey]
+    return [this.relation.throughForeignKeyColumnName]
   }
 
   /**
@@ -72,7 +72,7 @@ ModelConstructorContract
      */
     if (Array.isArray(this.parent)) {
       builder.whereIn(
-        `${throughTable}.${this.relation.foreignCastAsKey}`,
+        `${throughTable}.${this.relation.foreignKeyColumnName}`,
         unique(this.parent.map((model) => {
           return getValue(model, this.relation.localKey, this.relation, queryAction)
         })),
@@ -84,7 +84,7 @@ ModelConstructorContract
      * Query constraints
      */
     const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
-    builder.where(`${throughTable}.${this.relation.foreignCastAsKey}`, value)
+    builder.where(`${throughTable}.${this.relation.foreignKeyColumnName}`, value)
   }
 
   /**
@@ -138,7 +138,7 @@ ModelConstructorContract
     const relatedTable = this.relation.relatedModel().table
 
     if (['delete', 'update'].includes(this.queryAction())) {
-      this.whereIn(`${relatedTable}.${this.relation.throughForeignCastAsKey}`, (subQuery) => {
+      this.whereIn(`${relatedTable}.${this.relation.throughForeignKeyColumnName}`, (subQuery) => {
         subQuery.from(throughTable)
         this.addWhereConstraints(subQuery)
       })
@@ -158,7 +158,7 @@ ModelConstructorContract
      * through table.
      */
     this.knexQuery.select(
-      `${throughTable}.${this.relation.foreignCastAsKey} as ${this.relation.throughAlias(this.relation.foreignCastAsKey)}`,
+      `${throughTable}.${this.relation.foreignKeyColumnName} as ${this.relation.throughAlias(this.relation.foreignKeyColumnName)}`,
     )
 
     /**
@@ -166,8 +166,8 @@ ModelConstructorContract
      */
     this.innerJoin(
       throughTable,
-      `${throughTable}.${this.relation.throughLocalCastAsKey}`,
-      `${relatedTable}.${this.relation.throughForeignCastAsKey}`,
+      `${throughTable}.${this.relation.throughLocalKeyColumnName}`,
+      `${relatedTable}.${this.relation.throughForeignKeyColumnName}`,
     )
 
     /**

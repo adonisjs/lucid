@@ -25,9 +25,9 @@ export const OrmConfig: OrmConfigContract = {
   },
 
   /**
-   * Returns the cast key (the column name) for a given model attribute
+   * Returns the column name for a given model attribute
    */
-  getCastAsKey (_: ModelConstructorContract, key: string) {
+  getColumnName (_: ModelConstructorContract, key: string) {
     return snakeCase(key)
   },
 

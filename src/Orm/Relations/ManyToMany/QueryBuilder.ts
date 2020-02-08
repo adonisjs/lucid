@@ -67,7 +67,7 @@ ModelConstructorContract
    */
   protected getRelationKeys (): string[] {
     return [
-      `${this.relation.relatedModel().table}.${this.relation.relatedCastAsKey}`,
+      `${this.relation.relatedModel().table}.${this.relation.relatedKeyColumnName}`,
     ]
   }
 
@@ -341,7 +341,7 @@ ModelConstructorContract
      */
     this.innerJoin(
       this.relation.pivotTable,
-      `${this.relation.relatedModel().table}.${this.relation.relatedCastAsKey}`,
+      `${this.relation.relatedModel().table}.${this.relation.relatedKeyColumnName}`,
       `${this.relation.pivotTable}.${this.relation.pivotRelatedForeignKey}`,
     )
 

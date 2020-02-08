@@ -102,7 +102,7 @@ test.group('Base model | boot', (group) => {
     assert.deepEqual(mapToObj(User.$computedDefinitions), {})
   })
 
-  test('resolve castAs key for a given attribute', async (assert) => {
+  test('resolve column name from attribute name', async (assert) => {
     class User extends BaseModel {
       public static $increments = false
 
@@ -114,10 +114,10 @@ test.group('Base model | boot', (group) => {
     }
 
     User.boot()
-    assert.deepEqual(User.$resolveCastKey('userName'), 'user_name')
+    assert.deepEqual(User.$keys.attributesToColumns.get('userName'), 'user_name')
   })
 
-  test('resolve column name key for a given adapter key', async (assert) => {
+  test('resolve serializeAs name from the attribute name', async (assert) => {
     class User extends BaseModel {
       public static $increments = false
 
@@ -129,7 +129,67 @@ test.group('Base model | boot', (group) => {
     }
 
     User.boot()
-    assert.deepEqual(User.$resolveColumnName('user_name'), 'userName')
+    assert.deepEqual(User.$keys.attributesToSerialized.get('userName'), 'user_name')
+  })
+
+  test('resolve attribute name from column name', async (assert) => {
+    class User extends BaseModel {
+      public static $increments = false
+
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userName: string
+    }
+
+    User.boot()
+    assert.deepEqual(User.$keys.columnsToAttributes.get('user_name'), 'userName')
+  })
+
+  test('resolve serializeAs name from column name', async (assert) => {
+    class User extends BaseModel {
+      public static $increments = false
+
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userName: string
+    }
+
+    User.boot()
+    assert.deepEqual(User.$keys.columnsToSerialized.get('user_name'), 'user_name')
+  })
+
+  test('resolve attribute name from serializeAs name', async (assert) => {
+    class User extends BaseModel {
+      public static $increments = false
+
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userName: string
+    }
+
+    User.boot()
+    assert.deepEqual(User.$keys.serializedToAttributes.get('user_name'), 'userName')
+  })
+
+  test('resolve column name from serializeAs name', async (assert) => {
+    class User extends BaseModel {
+      public static $increments = false
+
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userName: string
+    }
+
+    User.boot()
+    assert.deepEqual(User.$keys.serializedToColumns.get('user_name'), 'user_name')
   })
 })
 
@@ -384,14 +444,14 @@ test.group('Base Model | persist', (group) => {
     await resetTables()
   })
 
-  test('persist model with the adapter', async (assert) => {
+  test('persist model with the column name', async (assert) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
       @column()
       public username: string
 
-      @column({ castAs: 'full_name' })
+      @column({ columnName: 'full_name' })
       public fullName: string
     }
 
@@ -509,7 +569,7 @@ test.group('Base Model | persist', (group) => {
       @column()
       public username: string
 
-      @column({ castAs: 'updated_at' })
+      @column({ columnName: 'updated_at' })
       public updatedAt: string
     }
 
@@ -543,7 +603,7 @@ test.group('Base Model | persist', (group) => {
       @column()
       public username: string
 
-      @column({ castAs: 'updated_at' })
+      @column({ columnName: 'updated_at' })
       public updatedAt: string
     }
 
@@ -571,7 +631,7 @@ test.group('Base Model | persist', (group) => {
       @column()
       public createdAt: string
 
-      @column({ castAs: 'updated_at' })
+      @column({ columnName: 'updated_at' })
       public updatedAt: string
     }
 
@@ -602,7 +662,7 @@ test.group('Base Model | persist', (group) => {
       @column()
       public createdAt: string
 
-      @column({ castAs: 'updated_at' })
+      @column({ columnName: 'updated_at' })
       public updatedAt: string
     }
 
@@ -623,14 +683,14 @@ test.group('Base Model | persist', (group) => {
     }
   })
 
-  test('invoke column cast method before passing values to the adapter', async (assert) => {
+  test('invoke column prepare method before passing values to the adapter', async (assert) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
       @column()
       public username: string
 
-      @column({ castAs: 'full_name', cast: (value) => value.toUpperCase() })
+      @column({ columnName: 'full_name', prepare: (value) => value.toUpperCase() })
       public fullName: string
     }
 
@@ -669,7 +729,7 @@ test.group('Base Model | create from adapter results', (group) => {
       @column()
       public username: string
 
-      @column({ castAs: 'full_name' })
+      @column({ columnName: 'full_name' })
       public fullName: string
     }
 
@@ -688,7 +748,7 @@ test.group('Base Model | create from adapter results', (group) => {
       @column()
       public username: string
 
-      @column({ castAs: 'full_name' })
+      @column({ columnName: 'full_name' })
       public fullName: string
     }
 
@@ -707,7 +767,7 @@ test.group('Base Model | create from adapter results', (group) => {
       @column()
       public username: string
 
-      @column({ castAs: 'full_name' })
+      @column({ columnName: 'full_name' })
       public fullName: string
     }
 
@@ -720,7 +780,7 @@ test.group('Base Model | create from adapter results', (group) => {
       @column()
       public username: string
 
-      @column({ castAs: 'full_name' })
+      @column({ columnName: 'full_name' })
       public fullName: string
     }
 
@@ -748,7 +808,7 @@ test.group('Base Model | create from adapter results', (group) => {
       @column()
       public username: string
 
-      @column({ castAs: 'full_name' })
+      @column({ columnName: 'full_name' })
       public fullName: string
     }
 
@@ -780,7 +840,7 @@ test.group('Base Model | create from adapter results', (group) => {
       @column()
       public username: string
 
-      @column({ castAs: 'full_name' })
+      @column({ columnName: 'full_name' })
       public fullName: string
     }
 
@@ -1467,7 +1527,7 @@ test.group('BaseModel | fill/merge', (group) => {
     const user = new User()
     user.fill({ username: 'virk', isAdmin: true })
     assert.deepEqual(user.$attributes, { username: 'virk' })
-    assert.deepEqual(user.$extras, { isAdmin: true })
+    assert.deepEqual(user.extras, { isAdmin: true })
   })
 
   test('overwrite existing values when using fill', (assert) => {
@@ -1621,10 +1681,10 @@ test.group('Base | apdater', (group) => {
     ])
   })
 
-  test('fill model instance with bulk attributes via cast key is different', async (assert) => {
+  test('fill model instance with bulk attributes via column name is different', async (assert) => {
     const adapter = new FakeAdapter()
     class User extends BaseModel {
-      @column({ castAs: 'first_name' })
+      @column({ columnName: 'first_name' })
       public firstName: string
     }
 
@@ -2108,7 +2168,7 @@ test.group('Base Model | fetch', (group) => {
       @column({ isPrimary: true })
       public id: number
 
-      @column({ castAs: 'username' })
+      @column({ columnName: 'username' })
       public userName: string
 
       @column()
@@ -2131,7 +2191,7 @@ test.group('Base Model | fetch', (group) => {
       @column({ isPrimary: true })
       public id: number
 
-      @column({ castAs: 'username' })
+      @column({ columnName: 'username' })
       public userName: string
 
       @column()
@@ -2157,7 +2217,7 @@ test.group('Base Model | fetch', (group) => {
       @column({ isPrimary: true })
       public id: number
 
-      @column({ castAs: 'username' })
+      @column({ columnName: 'username' })
       public userName: string
 
       @column()
@@ -2180,7 +2240,7 @@ test.group('Base Model | fetch', (group) => {
       @column({ isPrimary: true })
       public id: number
 
-      @column({ castAs: 'username' })
+      @column({ columnName: 'username' })
       public userName: string
 
       @column()
@@ -2206,7 +2266,7 @@ test.group('Base Model | fetch', (group) => {
       @column({ isPrimary: true })
       public id: number
 
-      @column({ castAs: 'username' })
+      @column({ columnName: 'username' })
       public userName: string
 
       @column()
@@ -2233,7 +2293,7 @@ test.group('Base Model | fetch', (group) => {
       @column({ isPrimary: true })
       public id: number
 
-      @column({ castAs: 'username' })
+      @column({ columnName: 'username' })
       public userName: string
 
       @column()
@@ -2489,7 +2549,7 @@ test.group('Base Model | fetch', (group) => {
       @column({ isPrimary: true })
       public id: number
 
-      @column({ castAs: 'username' })
+      @column({ columnName: 'username' })
       public userName: string
 
       @column()

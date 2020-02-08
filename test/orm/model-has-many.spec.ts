@@ -102,7 +102,7 @@ test.group('Model | HasMany | Options', (group) => {
       @column({ isPrimary: true })
       public id: number
 
-      @column({ castAs: 'user_uid' })
+      @column({ columnName: 'user_uid' })
       public uid: number
 
       @hasMany(() => Post, { localKey: 'uid' })
@@ -137,7 +137,7 @@ test.group('Model | HasMany | Options', (group) => {
 
   test('use pre defined foreign key', (assert) => {
     class Post extends BaseModel {
-      @column({ castAs: 'user_id' })
+      @column({ columnName: 'user_id' })
       public userUid: number
     }
 
@@ -670,8 +670,8 @@ test.group('Model | HasMany | preload', (group) => {
     })
 
     assert.lengthOf(users, 2)
-    assert.deepEqual(users[0].posts[0].$extras, {})
-    assert.deepEqual(users[1].posts[0].$extras, {})
+    assert.deepEqual(users[0].posts[0].extras, {})
+    assert.deepEqual(users[1].posts[0].extras, {})
   })
 
   test('do not repeat fk when already defined', async (assert) => {
@@ -717,8 +717,8 @@ test.group('Model | HasMany | preload', (group) => {
     })
 
     assert.lengthOf(users, 2)
-    assert.deepEqual(users[0].posts[0].$extras, {})
-    assert.deepEqual(users[1].posts[0].$extras, {})
+    assert.deepEqual(users[0].posts[0].extras, {})
+    assert.deepEqual(users[1].posts[0].extras, {})
   })
 
   test('raise exception when local key is not selected', async (assert) => {

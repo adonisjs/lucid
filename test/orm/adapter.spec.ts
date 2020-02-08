@@ -288,11 +288,11 @@ test.group('Adapter', (group) => {
     assert.lengthOf(users, 1)
   })
 
-  test('set primary key value when cast key is different from model key', async (assert) => {
+  test('set primary key value when colun name is different from attribute name', async (assert) => {
     class User extends BaseModel {
       public static $table = 'users'
 
-      @column({ isPrimary: true, castAs: 'id' })
+      @column({ isPrimary: true, columnName: 'id' })
       public userId: number
 
       @column()
