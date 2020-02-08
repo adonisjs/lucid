@@ -1402,10 +1402,7 @@ export class BaseModel implements ModelContract {
      */
     if (action === 'insert') {
       const insertQuery = client.insertQuery().table(modelConstructor.table)
-
-      if (modelConstructor.increments) {
-        insertQuery.returning(modelConstructor.$resolveCastKey(modelConstructor.primaryKey))
-      }
+      insertQuery.returning(modelConstructor.$resolveCastKey(modelConstructor.primaryKey))
       return insertQuery
     }
 
