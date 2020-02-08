@@ -87,6 +87,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     isPrimary: boolean,
     hasGetter: boolean,
     hasSetter: boolean,
+    meta?: any,
     serialize?: (value: any, attribute: string, model: ModelContract) => any,
     prepare?: (value: any, attribute: string, model: ModelContract) => any,
   }
@@ -96,6 +97,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
   export type ComputedOptions = {
     serializeAs: string | null,
+    meta?: any,
   }
 
   /**
@@ -479,14 +481,14 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Managing columns
      */
-    $addColumn (name: string, options: Partial<ColumnOptions>): void
+    $addColumn (name: string, options: Partial<ColumnOptions>): ColumnOptions
     $hasColumn (name: string): boolean
     $getColumn (name: string): ColumnOptions | undefined
 
     /**
      * Managing computed columns
      */
-    $addComputed (name: string, options: Partial<ComputedOptions>): void
+    $addComputed (name: string, options: Partial<ComputedOptions>): ComputedOptions
     $hasComputed (name: string): boolean
     $getComputed (name: string): ComputedOptions | undefined
 

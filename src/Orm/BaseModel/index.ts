@@ -220,6 +220,7 @@ export class BaseModel implements ModelContract {
         : this.$configurator.getSerializeAsKey(this, name),
       serialize: options.serialize,
       prepare: options.prepare,
+      meta: options.meta,
     }
 
     /**
@@ -239,6 +240,8 @@ export class BaseModel implements ModelContract {
 
     column.serializeAs && this.$keys.serializedToAttributes.add(column.serializeAs, name)
     column.serializeAs && this.$keys.serializedToColumns.add(column.serializeAs, column.columnName)
+
+    return column
   }
 
   /**
@@ -259,10 +262,12 @@ export class BaseModel implements ModelContract {
    * Adds a computed node
    */
   public static $addComputed (name: string, options: Partial<ComputedOptions>) {
-    const column: ComputedOptions = {
+    const computed: ComputedOptions = {
       serializeAs: options.serializeAs || name,
+      meta: options.meta,
     }
-    this.$computedDefinitions.set(name, column)
+    this.$computedDefinitions.set(name, computed)
+    return computed
   }
 
   /**
