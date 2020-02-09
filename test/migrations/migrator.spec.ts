@@ -886,4 +886,67 @@ test.group('Migrator', (group) => {
 
     assert.equal(migrator.status, 'error')
   })
+
+  test('raise exception when rollbacks in production are disabled', async (assert) => {
+    const app = new Application(fs.basePath, {} as any, {} as any, {})
+    app.inProduction = true
+    const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
+
+    db.getRawConnection('primary')!.config.migrations = {
+      disableRollbacksInProduction: true,
+    }
+
+    await fs.add('database/migrations/users.ts', `
+      import { Schema } from '../../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_users')
+        }
+      }
+    `)
+
+    const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    await migrator.run()
+
+    await fs.add('database/migrations/accounts.ts', `
+      import { Schema } from '../../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_accounts', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_accounts')
+        }
+      }
+    `)
+
+    const migrator1 = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    await migrator1.run()
+
+    const migrator2 = getMigrator(db, app, { direction: 'down', connectionName: 'primary' })
+    await migrator2.run()
+
+    assert.equal(
+      migrator2.error!.message,
+      'Rollback in production environment is disabled. Check "config/database" file for options.',
+    )
+
+    const migrated = await db.connection().from('adonis_schema').select('*')
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+
+    assert.lengthOf(migrated, 2)
+    assert.isTrue(hasUsersTable)
+    assert.isTrue(hasAccountsTable)
+    db.getRawConnection('primary')!.config = originalConfig
+  })
 })

@@ -357,6 +357,10 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Migrate down (aka rollback)
    */
   private async runDown (batch?: number) {
+    if (this.app.inProduction && this.migrationsConfig.disableRollbacksInProduction) {
+      throw new Error('Rollback in production environment is disabled. Check "config/database" file for options.')
+    }
+
     if (batch === undefined) {
       batch = await this.getLatestBatch() - 1
     }

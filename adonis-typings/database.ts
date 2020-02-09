@@ -215,6 +215,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     disableTransactions?: boolean,
     paths?: string[],
     tableName?: string,
+    disableRollbacksInProduction?: boolean,
   }
 
   /**
