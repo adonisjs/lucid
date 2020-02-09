@@ -12,6 +12,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     ColumnDecorator,
     ComputedDecorator,
     OrmConfigContract,
+    DateColumnDecorator,
+    DateTimeColumnDecorator,
     ModelConstructorContract,
   } from '@ioc:Adonis/Lucid/Model'
 
@@ -34,7 +36,12 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   export { OrmConfigContract, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
 
   export const BaseModel: ModelConstructorContract
-  export const column: ColumnDecorator
+
+  export const column: ColumnDecorator & {
+    date: DateColumnDecorator,
+    dateTime: DateTimeColumnDecorator,
+  }
+
   export const computed: ComputedDecorator
   export const hasOne: HasOneDecorator
   export const belongsTo: BelongsToDecorator

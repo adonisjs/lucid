@@ -113,6 +113,26 @@ declare module '@ioc:Adonis/Lucid/Model' {
   ) => (target: any, property: any) => void
 
   /**
+   * Decorator for defining date columns
+   */
+  export type DateColumnDecorator = (
+    options?: Partial<
+    Omit<ColumnOptions, 'hasGetter' | 'hasSetter' | 'isPrimary'>
+    & { autoCreate: boolean, autoUpdate: boolean }
+    >
+  ) => (target: any, property: any) => void
+
+  /**
+   * Decorator for defining date time columns
+   */
+  export type DateTimeColumnDecorator = (
+    options?: Partial<
+    Omit<ColumnOptions, 'hasGetter' | 'hasSetter' | 'isPrimary'>
+    & { autoCreate: boolean, autoUpdate: boolean, timezone: string }
+    >
+  ) => (target: any, property: any) => void
+
+  /**
    * ------------------------------------------------------
    * Model Options
    * ------------------------------------------------------

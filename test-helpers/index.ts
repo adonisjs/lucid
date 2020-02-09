@@ -348,14 +348,14 @@ export class FakeAdapter implements AdapterContract {
   public query (): any {
   }
 
-  public on (action: 'insert', handler: ((model: ModelContract) => void)): void
-  public on (action: 'update', handler: ((model: ModelContract) => void)): void
+  public on (action: 'insert', handler: ((model: ModelContract, attributes: any) => void)): void
+  public on (action: 'update', handler: ((model: ModelContract, attributes: any) => void)): void
   public on (action: 'delete', handler: ((model: ModelContract) => void)): void
   public on (action: 'find', handler: ((model: ModelConstructorContract, options?: any) => void)): void
   public on (action: 'findAll', handler: ((model: ModelConstructorContract, options?: any) => void)): void
   public on (
     action: string,
-    handler: ((model: ModelContract) => void) | ((model: ModelConstructorContract) => void),
+    handler: ((model: ModelContract, attributes?: any) => void) | ((model: ModelConstructorContract) => void),
   ): void {
     this._handlers[action] = handler
   }
@@ -368,7 +368,7 @@ export class FakeAdapter implements AdapterContract {
 
   public async insert (instance: ModelContract, attributes: any) {
     this.operations.push({ type: 'insert', instance, attributes })
-    return this._invokeHandler('insert', instance)
+    return this._invokeHandler('insert', instance, attributes)
   }
 
   public async delete (instance: ModelContract) {
@@ -378,7 +378,7 @@ export class FakeAdapter implements AdapterContract {
 
   public async update (instance: ModelContract, attributes: any) {
     this.operations.push({ type: 'update', instance, attributes })
-    return this._invokeHandler('update', instance)
+    return this._invokeHandler('update', instance, attributes)
   }
 
   public async find (model: ModelConstructorContract, key: string, value: any, options?: any) {

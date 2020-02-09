@@ -133,7 +133,7 @@ export class BaseModel implements ModelContract {
   /**
    * Storing model hooks
    */
-  private static hooks: Hooks
+  public static hooks: Hooks
 
   /**
    * Keys mappings to make the lookups easy

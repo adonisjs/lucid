@@ -13,6 +13,8 @@ import 'reflect-metadata'
 import {
   ColumnDecorator,
   ComputedDecorator,
+  DateColumnDecorator,
+  DateTimeColumnDecorator,
   ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
@@ -24,17 +26,25 @@ import {
   HasManyThroughDecorator,
 } from '@ioc:Adonis/Lucid/Relations'
 
+import { dateColumn, dateTimeColumn } from './date'
+
 /**
  * Define property on a model as a column. The decorator needs a
  * proper model class inheriting the base model
  */
-export const column: ColumnDecorator = (options?) => {
+export const column: ColumnDecorator & {
+  date: DateColumnDecorator,
+  dateTime: DateTimeColumnDecorator,
+} = (options?) => {
   return function decorateAsColumn (target, property) {
     const Model = target.constructor as ModelConstructorContract
     Model.boot()
     Model.$addColumn(property, options || {})
   }
 }
+
+column.date = dateColumn
+column.dateTime = dateTimeColumn
 
 /**
  * Define computed property on a model. The decorator needs a

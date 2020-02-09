@@ -10,6 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
+import { DateTime } from 'luxon'
 import { HasOne, HasMany } from '@ioc:Adonis/Lucid/Relations'
 import { column, computed, hasMany, hasOne } from '../../src/Orm/Decorators'
 import {
@@ -3490,5 +3491,761 @@ test.group('Base Model | aggregates', (group) => {
     await db.insertQuery().table('users').multiInsert([{ username: 'virk' }, { username: 'nikk' }])
     const usersCount = await User.query().countDistinct('username as total')
     assert.deepEqual(usersCount, [{ total: 2 }])
+  })
+})
+
+test.group('Base Model | date', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('define date column', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date()
+      public dob: DateTime
+    }
+
+    assert.deepEqual(User.$getColumn('dob')!.meta, {
+      autoCreate: false,
+      autoUpdate: false,
+      type: 'date',
+    })
+  })
+
+  test('define date column and turn on autoCreate flag', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date({ autoCreate: true })
+      public dob: DateTime
+    }
+
+    assert.deepEqual(User.$getColumn('dob')!.meta, {
+      autoCreate: true,
+      autoUpdate: false,
+      type: 'date',
+    })
+  })
+
+  test('define date column and turn on autoUpdate flag', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date({ autoUpdate: true })
+      public dob: DateTime
+    }
+
+    assert.deepEqual(User.$getColumn('dob')!.meta, {
+      autoCreate: false,
+      autoUpdate: true,
+      type: 'date',
+    })
+  })
+
+  test('initiate date column values with current date when missing', async (assert) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date({ autoCreate: true })
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (model: User) => {
+      assert.instanceOf(model.dob, DateTime)
+    })
+
+    user.username = 'virk'
+    await user.save()
+  })
+
+  test('do initiate date column values with current date when autoCreate is off', async (assert) => {
+    assert.plan(2)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date({ autoCreate: true })
+      public dob: DateTime
+
+      @column.date()
+      public createdAt: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (model: User) => {
+      assert.instanceOf(model.dob, DateTime)
+      assert.isUndefined(model.createdAt)
+    })
+
+    user.username = 'virk'
+    await user.save()
+  })
+
+  test('always update date column value when autoUpdate is on', async (assert) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date({ autoUpdate: true })
+      public updatedAt: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (model: User) => {
+      assert.notStrictEqual(model.updatedAt, localTime)
+    })
+
+    const localTime = DateTime.local()
+    user.username = 'virk'
+    user.updatedAt = localTime
+    await user.save()
+  })
+
+  test('only register one hook, regardless of date columns a model has', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date()
+      public dob: DateTime
+
+      @column.date()
+      public createdAt: DateTime
+    }
+
+    assert.equal(User['hooks'].hooks.before.get('save').size, 1)
+  })
+
+  test('format date instance to string before sending to the adapter', async (assert) => {
+    assert.plan(1)
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date({ autoCreate: true })
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.deepEqual(attributes, { username: 'virk', dob: DateTime.local().toISODate() })
+    })
+
+    user.username = 'virk'
+    await user.save()
+  })
+
+  test('leave date untouched when it is defined as string', async (assert) => {
+    assert.plan(1)
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date()
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.deepEqual(attributes, { username: 'virk', dob: '2010-11-20' })
+    })
+
+    user.username = 'virk'
+    user.dob = '2010-11-20' as any
+    await user.save()
+  })
+
+  test('do not attempt to format undefined values', async (assert) => {
+    assert.plan(1)
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date()
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.deepEqual(attributes, { username: 'virk' })
+    })
+
+    user.username = 'virk'
+    await user.save()
+  })
+
+  test('raise error when date column value is unprocessable', async (assert) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date()
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+
+    user.username = 'virk'
+    user.dob = 10 as any
+    try {
+      await user.save()
+    } catch ({ message }) {
+      assert.equal(
+        message,
+        'E_INVALID_DATE_COLUMN_VALUE: The value for "User.dob" must be an instance of "luxon.DateTime"',
+      )
+    }
+  })
+
+  test('raise error when datetime is invalid', async (assert) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date()
+      public dob: DateTime
+    }
+
+    const user = new User()
+    user.dob = DateTime.fromISO('hello-world')
+    User.$adapter = adapter
+
+    user.username = 'virk'
+    try {
+      await user.save()
+    } catch ({ message }) {
+      assert.equal(
+        message,
+        'E_INVALID_DATE_COLUMN_VALUE: Invalid value for "User.dob". unparsable',
+      )
+    }
+  })
+
+  test('allow overriding prepare method', async (assert) => {
+    assert.plan(1)
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date({
+        autoCreate: true,
+        prepare: (value: DateTime) => value.toISOWeekDate(),
+      })
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.deepEqual(attributes, { username: 'virk', dob: DateTime.local().toISOWeekDate() })
+    })
+
+    user.username = 'virk'
+    await user.save()
+  })
+
+  test('convert date to datetime instance during fetch', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date()
+      public createdAt: DateTime
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.find(1)
+    assert.instanceOf(user!.createdAt, DateTime)
+  })
+
+  test('ignore null or empty values during fetch', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date()
+      public updatedAt: DateTime
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.find(1)
+    assert.isNull(user!.updatedAt)
+  })
+})
+
+test.group('Base Model | datetime', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('define datetime column', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime()
+      public dob: DateTime
+    }
+
+    assert.deepEqual(User.$getColumn('dob')!.meta, {
+      autoCreate: false,
+      autoUpdate: false,
+      type: 'datetime',
+      timezone: undefined,
+    })
+  })
+
+  test('define datetime column and turn on autoCreate flag', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({ autoCreate: true })
+      public dob: DateTime
+    }
+
+    assert.deepEqual(User.$getColumn('dob')!.meta, {
+      autoCreate: true,
+      autoUpdate: false,
+      type: 'datetime',
+      timezone: undefined,
+    })
+  })
+
+  test('define datetime column and turn on autoUpdate flag', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({ autoUpdate: true })
+      public dob: DateTime
+    }
+
+    assert.deepEqual(User.$getColumn('dob')!.meta, {
+      autoCreate: false,
+      autoUpdate: true,
+      type: 'datetime',
+      timezone: undefined,
+    })
+  })
+
+  test('define datetime column with custom timezone', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({ timezone: 'America/New_York' })
+      public dob: DateTime
+    }
+
+    assert.deepEqual(User.$getColumn('dob')!.meta, {
+      autoCreate: false,
+      autoUpdate: false,
+      type: 'datetime',
+      timezone: 'America/New_York',
+    })
+  })
+
+  test('initiate datetime column values with current date when missing', async (assert) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({ autoCreate: true })
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (model: User) => {
+      assert.instanceOf(model.dob, DateTime)
+    })
+
+    user.username = 'virk'
+    await user.save()
+  })
+
+  test('format datetime column values with mentioned timezone', async (assert) => {
+    assert.plan(2)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({ timezone: 'America/New_York', autoCreate: true })
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (model: User, attributes) => {
+      assert.instanceOf(model.dob, DateTime)
+      assert.equal(
+        DateTime.fromFormatExplain(attributes.dob, 'yyyy-MM-dd\'T\'HH:mm:ss.SZZ').zone!.name,
+        'UTC-5',
+      )
+    })
+
+    user.username = 'virk'
+    await user.save()
+  })
+
+  test('format custom datetime column values with mentioned timezone', async (assert) => {
+    assert.plan(2)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({ timezone: 'America/New_York' })
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (model: User, attributes) => {
+      assert.deepEqual(model.dob, currentTime)
+      assert.equal(
+        DateTime.fromFormatExplain(attributes.dob, 'yyyy-MM-dd\'T\'HH:mm:ss.SZZ').zone!.name,
+        'UTC-5',
+      )
+    })
+
+    const currentTime = DateTime.local()
+    user.username = 'virk'
+    user.dob = currentTime
+    await user.save()
+  })
+
+  test('ignore undefined values', async (assert) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime()
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.isUndefined(attributes.dob)
+    })
+
+    user.username = 'virk'
+    await user.save()
+  })
+
+  test('ignore string values', async (assert) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime()
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.equal(attributes.dob, localTime)
+    })
+
+    const localTime = DateTime.local().toISO()
+    user.username = 'virk'
+    user.dob = localTime as any
+    await user.save()
+  })
+
+  test('raise error when datetime column value is unprocessable', async (assert) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime()
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+
+    user.username = 'virk'
+    user.dob = 10 as any
+    try {
+      await user.save()
+    } catch ({ message }) {
+      assert.equal(
+        message,
+        'E_INVALID_DATETIME_COLUMN_VALUE: The value for "User.dob" must be an instance of "luxon.DateTime"',
+      )
+    }
+  })
+
+  test('raise error when timezone is bogus', async (assert) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({ timezone: 'America/Bogus', autoCreate: true })
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+
+    user.username = 'virk'
+    try {
+      await user.save()
+    } catch ({ message }) {
+      assert.equal(
+        message,
+        'E_INVALID_DATETIME_COLUMN_VALUE: Invalid value for "User.dob". unsupported zone',
+      )
+    }
+  })
+
+  test('only register one hook, regardless of date columns a model has', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date()
+      public dob: DateTime
+
+      @column.dateTime()
+      public createdAt: DateTime
+    }
+
+    assert.equal(User['hooks'].hooks.before.get('save').size, 1)
+  })
+
+  test('allow overriding prepare method', async (assert) => {
+    assert.plan(1)
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({
+        autoCreate: true,
+        prepare: (value: DateTime) => value.toISOWeekDate(),
+      })
+      public dob: DateTime
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.deepEqual(attributes, { username: 'virk', dob: DateTime.local().toISOWeekDate() })
+    })
+
+    user.username = 'virk'
+    await user.save()
+  })
+
+  test('convert timestamp to datetime instance during fetch', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime()
+      public createdAt: DateTime
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.find(1)
+    assert.instanceOf(user!.createdAt, DateTime)
+  })
+
+  test('ignore null or empty values during fetch', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime()
+      public updatedAt: DateTime
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    const user = await User.find(1)
+    assert.isNull(user!.updatedAt)
   })
 })
