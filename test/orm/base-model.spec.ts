@@ -3473,7 +3473,10 @@ test.group('Base Model | aggregates', (group) => {
 
     await db.insertQuery().table('users').multiInsert([{ username: 'virk' }, { username: 'nikk' }])
     const usersCount = await User.query().count('* as total')
-    assert.deepEqual(usersCount, [{ total: 2 }])
+    assert.deepEqual(usersCount.map((row) => {
+      row.total = Number(row.total)
+      return row
+    }), [{ total: 2 }])
   })
 
   test('count * distinct', async (assert) => {
@@ -3490,7 +3493,10 @@ test.group('Base Model | aggregates', (group) => {
 
     await db.insertQuery().table('users').multiInsert([{ username: 'virk' }, { username: 'nikk' }])
     const usersCount = await User.query().countDistinct('username as total')
-    assert.deepEqual(usersCount, [{ total: 2 }])
+    assert.deepEqual(usersCount.map((row) => {
+      row.total = Number(row.total)
+      return row
+    }), [{ total: 2 }])
   })
 })
 
