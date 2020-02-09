@@ -448,6 +448,9 @@ test.group('Base Model | persist', (group) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
       @column()
       public username: string
 
@@ -456,12 +459,16 @@ test.group('Base Model | persist', (group) => {
     }
 
     User.$adapter = adapter
+    adapter.on('insert', (model) => {
+      model.$consumeAdapterResult({ id: 1 })
+    })
 
     const user = new User()
     user.username = 'virk'
     user.fullName = 'H virk'
 
     await user.save()
+
     assert.isTrue(user.isPersisted)
     assert.isFalse(user.isDirty)
     assert.deepEqual(adapter.operations, [{
@@ -470,8 +477,8 @@ test.group('Base Model | persist', (group) => {
       attributes: { username: 'virk', full_name: 'H virk' },
     }])
 
-    assert.deepEqual(user.$attributes, { username: 'virk', fullName: 'H virk' })
-    assert.deepEqual(user.$original, { username: 'virk', fullName: 'H virk' })
+    assert.deepEqual(user.$attributes, { username: 'virk', fullName: 'H virk', id: 1 })
+    assert.deepEqual(user.$original, { username: 'virk', fullName: 'H virk', id: 1 })
   })
 
   test('merge adapter insert return value with attributes', async (assert) => {
@@ -855,6 +862,26 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.isFalse(users[0].isLocal)
     assert.deepEqual(users[0].$attributes, { username: 'virk', fullName: 'H virk' })
     assert.deepEqual(users[0].$original, { username: 'virk', fullName: 'H virk' })
+  })
+
+  test('invoke column consume method', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column({
+        consume: (value) => value.toUpperCase(),
+      })
+      public fullName: string
+    }
+
+    const user = User.$createFromAdapterResult({ full_name: 'virk' })
+
+    assert.isTrue(user!.isPersisted)
+    assert.isFalse(user!.isDirty)
+    assert.isFalse(user!.isLocal)
+    assert.deepEqual(user!.$attributes, { fullName: 'VIRK' })
+    assert.deepEqual(user!.$original, { fullName: 'VIRK' })
   })
 })
 

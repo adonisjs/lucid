@@ -90,6 +90,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     meta?: any,
     serialize?: (value: any, attribute: string, model: ModelContract) => any,
     prepare?: (value: any, attribute: string, model: ModelContract) => any,
+    consume?: (value: any, attribute: string, model: ModelContract) => any,
   }
 
   /**

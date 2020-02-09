@@ -220,6 +220,7 @@ export class BaseModel implements ModelContract {
         : this.$configurator.getSerializeAsKey(this, name),
       serialize: options.serialize,
       prepare: options.prepare,
+      consume: options.consume,
       meta: options.meta,
     }
 
@@ -1113,11 +1114,21 @@ export class BaseModel implements ModelContract {
          */
         const attributeName = Model.$keys.columnsToAttributes.get(key)
         if (attributeName) {
+          const attribute = Model.$getColumn(attributeName)!
+
+          /**
+           * Invoke `consume` method for the column, before setting the
+           * attribute
+           */
+          const value = typeof (attribute.consume) === 'function'
+            ? attribute.consume(adapterResult[key], attributeName, this)
+            : adapterResult[key]
+
           /**
            * When consuming the adapter result, we must always set the attributes
            * directly, as we do not want to invoke setters.
            */
-          this.$setAttribute(attributeName, adapterResult[key])
+          this.$setAttribute(attributeName, value)
           return
         }
 
