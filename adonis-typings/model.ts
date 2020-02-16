@@ -343,8 +343,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $consumeAdapterResult (adapterResult: ModelObject, sideloadAttributes?: ModelObject): void
 
     hydrateOriginals(): void
-    fill (value: ModelObject): void
-    merge (value: ModelObject): void
+    fill (value: ModelObject, ignoreUndefined?: boolean): void
+    merge (value: ModelObject, ignoreUndefined?: boolean): void
     save (): Promise<void>
     delete (): Promise<void>
 

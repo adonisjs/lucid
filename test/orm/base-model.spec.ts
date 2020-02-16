@@ -1592,6 +1592,23 @@ test.group('BaseModel | fill/merge', (group) => {
     assert.deepEqual(user.$attributes, { username: 'virk', age: 22 })
   })
 
+  test('do not set properties with explicit undefined values', (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public age: number
+    }
+
+    const user = new User()
+    user.age = 22
+
+    assert.deepEqual(user.$attributes, { age: 22 })
+    user.merge({ username: 'virk', isAdmin: true, age: undefined })
+    assert.deepEqual(user.$attributes, { username: 'virk', age: 22 })
+  })
+
   test('invoke setter when using fill', (assert) => {
     class User extends BaseModel {
       @column()

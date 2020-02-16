@@ -1158,9 +1158,9 @@ export class BaseModel implements ModelContract {
    * fill isn't allowed, since we disallow setting relationships
    * locally
    */
-  public fill (values: ModelObject) {
+  public fill (values: ModelObject, ignoreUndefined: boolean = true) {
     this.$attributes = {}
-    this.merge(values)
+    this.merge(values, ignoreUndefined)
     this.fillInvoked = true
   }
 
@@ -1170,7 +1170,7 @@ export class BaseModel implements ModelContract {
    * 1. If key is unknown, it will be added to the `extras` object.
    * 2. If key is defined as a relationship, it will be ignored and one must call `$setRelated`.
    */
-  public merge (values: ModelObject) {
+  public merge (values: ModelObject, ignoreUndefined: boolean = true) {
     const Model = this.constructor as typeof BaseModel
 
     /**
@@ -1178,6 +1178,11 @@ export class BaseModel implements ModelContract {
      */
     if (isObject(values)) {
       Object.keys(values).forEach((key) => {
+        const value = values[key]
+        if (ignoreUndefined && value === undefined) {
+          return
+        }
+
         if (Model.$hasColumn(key)) {
           this[key] = values[key]
           return
