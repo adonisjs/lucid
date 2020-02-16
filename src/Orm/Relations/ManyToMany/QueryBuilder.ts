@@ -146,7 +146,7 @@ ModelConstructorContract
   public wherePivot (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
       this.knexQuery.where(this.prefixPivotTable(key), operator, this.transformValue(value))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.where(this.prefixPivotTable(key), this.transformValue(operator))
     } else {
       this.knexQuery.where(this.transformCallback(key))
@@ -161,7 +161,7 @@ ModelConstructorContract
   public orWherePivot (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
       this.knexQuery.orWhere(this.prefixPivotTable(key), operator, this.transformValue(value))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.orWhere(this.prefixPivotTable(key), this.transformValue(operator))
     } else {
       this.knexQuery.orWhere(this.transformCallback(key))
@@ -183,7 +183,7 @@ ModelConstructorContract
   public whereNotPivot (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
       this.knexQuery.whereNot(this.prefixPivotTable(key), operator, this.transformValue(value))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.whereNot(this.prefixPivotTable(key), this.transformValue(operator))
     } else {
       this.knexQuery.whereNot(this.transformCallback(key))
@@ -198,7 +198,7 @@ ModelConstructorContract
   public orWhereNotPivot (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
       this.knexQuery.orWhereNot(this.prefixPivotTable(key), operator, this.transformValue(value))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.orWhereNot(this.prefixPivotTable(key), this.transformValue(operator))
     } else {
       this.knexQuery.orWhereNot(this.transformCallback(key))

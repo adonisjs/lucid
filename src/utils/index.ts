@@ -98,27 +98,28 @@ export function syncDiff (original: ModelObject, incoming: ModelObject) {
   const diff = Object
     .keys(incoming)
     .reduce<{ added: ModelObject, updated: ModelObject, removed: ModelObject }>((
-    result,
-    incomingRowId,
-  ) => {
-    const originalRow = original[incomingRowId]
+      result,
+      incomingRowId,
+    ) => {
+      const originalRow = original[incomingRowId]
+      const incomingRow = incoming[incomingRowId]
 
-    /**
-     * When there isn't any matching row, we need to insert
-     * the upcoming row
-     */
-    if (!originalRow) {
-      result.added[incomingRowId] = incoming[incomingRowId]
-    } else if (Object.keys(incoming[incomingRowId]).find((key) => incoming[incomingRowId][key] !== originalRow[key])) {
       /**
-       * If any of the row attributes are different, then we must
-       * update that row
+       * When there isn't any matching row, we need to insert
+       * the upcoming row
        */
-      result.updated[incomingRowId] = incoming[incomingRowId]
-    }
+      if (!originalRow) {
+        result.added[incomingRowId] = incoming[incomingRowId]
+      } else if (Object.keys(incomingRow).find((key) => incomingRow[key] !== originalRow[key])) {
+        /**
+         * If any of the row attributes are different, then we must
+         * update that row
+         */
+        result.updated[incomingRowId] = incoming[incomingRowId]
+      }
 
-    return result
-  }, { added: {}, updated: {}, removed: {} })
+      return result
+    }, { added: {}, updated: {}, removed: {} })
 
   /**
    * Deleted rows

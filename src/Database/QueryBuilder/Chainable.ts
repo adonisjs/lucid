@@ -194,7 +194,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public orWhere (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
       this.knexQuery.orWhere(this.resolveKey(key), operator, this.transformValue(value))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.orWhere(this.resolveKey(key), this.transformValue(operator))
     } else {
       this.knexQuery.orWhere(this.resolveKey(key, true, this.transformCallback(key)))
@@ -216,7 +216,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public whereNot (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
       this.knexQuery.whereNot(this.resolveKey(key), operator, this.transformValue(value))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.whereNot(this.resolveKey(key), this.transformValue(operator))
     } else {
       this.knexQuery.whereNot(this.resolveKey(key, true, this.transformCallback(key)))
@@ -231,7 +231,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public orWhereNot (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
       this.knexQuery.orWhereNot(this.resolveKey(key), operator, this.transformValue(value))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.orWhereNot(this.resolveKey(key), this.transformValue(operator))
     } else {
       this.knexQuery.orWhereNot(this.resolveKey(key, true, this.transformCallback(key)))
@@ -499,9 +499,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add a join clause
    */
   public join (table: any, first: any, operator?: any, second?: any): this {
-    if (second) {
+    if (second !== undefined) {
       this.knexQuery.join(table, first, operator, this.transformRaw(second))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.join(table, first, this.transformRaw(operator))
     } else {
       this.knexQuery.join(table, this.transformRaw(first))
@@ -516,7 +516,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public innerJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
       this.knexQuery.innerJoin(table, first, operator, this.transformRaw(second))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.innerJoin(table, first, this.transformRaw(operator))
     } else {
       this.knexQuery.innerJoin(table, this.transformRaw(first))
@@ -531,7 +531,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public leftJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
       this.knexQuery.leftJoin(table, first, operator, this.transformRaw(second))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.leftJoin(table, first, this.transformRaw(operator))
     } else {
       this.knexQuery.leftJoin(table, this.transformRaw(first))
@@ -546,7 +546,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public leftOuterJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
       this.knexQuery.leftOuterJoin(table, first, operator, this.transformRaw(second))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.leftOuterJoin(table, first, this.transformRaw(operator))
     } else {
       this.knexQuery.leftOuterJoin(table, this.transformRaw(first))
@@ -561,7 +561,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public rightJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
       this.knexQuery.rightJoin(table, first, operator, this.transformRaw(second))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.rightJoin(table, first, this.transformRaw(operator))
     } else {
       this.knexQuery.rightJoin(table, this.transformRaw(first))
@@ -576,7 +576,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public rightOuterJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
       this.knexQuery.rightOuterJoin(table, first, operator, this.transformRaw(second))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.rightOuterJoin(table, first, this.transformRaw(operator))
     } else {
       this.knexQuery.rightOuterJoin(table, this.transformRaw(first))
@@ -591,7 +591,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public fullOuterJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
       this.knexQuery.fullOuterJoin(table, first, operator, this.transformRaw(second))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.fullOuterJoin(table, first, this.transformRaw(operator))
     } else {
       this.knexQuery.fullOuterJoin(table, this.transformRaw(first))
@@ -606,7 +606,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public crossJoin (table: any, first: any, operator?: any, second?: any): this {
     if (second !== undefined) {
       this.knexQuery.crossJoin(table, first, operator, this.transformRaw(second))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.crossJoin(table, first, this.transformRaw(operator))
     } else {
       this.knexQuery.crossJoin(table, this.transformRaw(first))
@@ -637,7 +637,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public having (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
       this.knexQuery.having(this.resolveKey(key), operator, this.transformValue(value))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.having(this.resolveKey(key), this.transformValue(operator))
     } else {
       this.knexQuery.having(this.transformCallback(key))
@@ -655,7 +655,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public orHaving (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
       this.knexQuery.orHaving(this.resolveKey(key), operator, this.transformValue(value))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.orHaving(this.resolveKey(key), this.transformValue(operator))
     } else {
       this.knexQuery.orHaving(this.transformCallback(key))
@@ -978,7 +978,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? queries.map((one) => this.transformValue(one))
       : this.transformValue(queries)
 
-    wrap ? this.knexQuery.union(queries, wrap) : this.knexQuery.union(queries)
+    wrap !== undefined
+      ? this.knexQuery.union(queries, wrap)
+      : this.knexQuery.union(queries)
     return this
   }
 
@@ -990,7 +992,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? queries.map((one) => this.transformValue(one))
       : this.transformValue(queries)
 
-    wrap ? this.knexQuery.unionAll(queries, wrap) : this.knexQuery.unionAll(queries)
+    wrap !== undefined
+      ? this.knexQuery.unionAll(queries, wrap)
+      : this.knexQuery.unionAll(queries)
     return this
   }
 
@@ -1002,7 +1006,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? queries.map((one) => this.transformValue(one))
       : this.transformValue(queries)
 
-    wrap ? this.knexQuery.intersect(queries, wrap) : this.knexQuery.intersect(queries)
+    wrap !== undefined
+      ? this.knexQuery.intersect(queries, wrap)
+      : this.knexQuery.intersect(queries)
     return this
   }
 
