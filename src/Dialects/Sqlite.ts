@@ -16,6 +16,12 @@ export class SqliteDialect implements DialectContract {
   public readonly supportsAdvisoryLocks = false
 
   /**
+   * The default format for datetime column. The date formats is
+   * valid for luxon date parsing library
+   */
+  public readonly dateTimeFormat = 'yyyy-MM-dd HH:mm:ss'
+
+  /**
    * Attempts to add advisory lock to the database and
    * returns it's status.
    */

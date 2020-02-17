@@ -15,6 +15,12 @@ export class PgDialect implements DialectContract {
   public readonly name = 'postgres'
   public readonly supportsAdvisoryLocks = true
 
+  /**
+   * The default format for datetime column. The date formats is
+   * valid for luxon date parsing library
+   */
+  public readonly dateTimeFormat = 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZZ'
+
   constructor (private client: QueryClientContract) {
   }
 

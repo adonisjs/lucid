@@ -6,7 +6,7 @@ export default class ${toClassName(filename)} extends BaseSchema {
   public async up () {
     this.schema.createTable(this.$tableName, (table) => {
       table.increments('id')
-      table.timestamps()
+      table.timestamps(true)
     })
   }
 

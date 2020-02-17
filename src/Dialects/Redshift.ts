@@ -16,6 +16,12 @@ export class RedshiftDialect implements DialectContract {
   public readonly supportsAdvisoryLocks = false
 
   /**
+   * The default format for datetime column. The date formats is
+   * valid for luxon date parsing library
+   */
+  public readonly dateTimeFormat = 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZZ'
+
+  /**
    * Redshift doesn't support advisory locks. Learn more:
    * https://tableplus.com/blog/2018/10/redshift-vs-postgres-database-comparison.html
    */

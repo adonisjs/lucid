@@ -110,15 +110,14 @@ function prepareDateTimeColumn (value: any, attributeName: string, modelInstance
     return value
   }
 
-  const column = (modelInstance.constructor as ModelConstructorContract).$getColumn(attributeName)!
-  const timezone = column.meta?.timezone
-  const modelName = modelInstance.constructor.name
+  const model = modelInstance.constructor as ModelConstructorContract
+  const modelName = model.name
+  const dateTimeFormat = model.query(modelInstance.options).client.dialect.dateTimeFormat
 
   /**
    * Format luxon instances to SQL formatted date
    */
   if (value instanceof DateTime) {
-    value = timezone ? value.setZone(timezone) : value
     if (!value.isValid) {
       throw new Exception(
         `Invalid value for "${modelName}.${attributeName}". ${value.invalidReason}`,
@@ -127,7 +126,7 @@ function prepareDateTimeColumn (value: any, attributeName: string, modelInstance
       )
     }
 
-    return value.toISO()
+    return value.toFormat(dateTimeFormat)
   }
 
   /**
@@ -273,7 +272,6 @@ export const dateTimeColumn: DateTimeColumnDecorator = (options?) => {
       ? false
       : normalizedOptions.autoUpdate
 
-    normalizedOptions.meta.timezone = normalizedOptions.timezone
     Model.$addColumn(property, normalizedOptions)
 
     /**

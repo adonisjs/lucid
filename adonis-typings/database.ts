@@ -43,6 +43,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   export interface DialectContract {
     readonly name: 'mssql' | 'mysql' | 'oracledb' | 'postgres' | 'redshift' | 'sqlite3'
     readonly supportsAdvisoryLocks: boolean
+    readonly dateTimeFormat: string
     getAdvisoryLock (key: string | number, timeout?: number): Promise<boolean>
     releaseAdvisoryLock (key: string | number): Promise<boolean>
   }

@@ -114,6 +114,7 @@ export async function setup () {
       table.string('username').unique()
       table.string('email').unique()
       table.integer('points').defaultTo(0)
+      table.dateTime('joined_at', { useTz: false })
       table.timestamp('created_at').defaultTo(db.fn.now())
       table.timestamp('updated_at').nullable()
     })
@@ -346,6 +347,13 @@ export class FakeAdapter implements AdapterContract {
   }
 
   public query (): any {
+    return {
+      client: {
+        dialect: {
+          dateTimeFormat: 'yyyy-MM-dd HH:mm:ss',
+        },
+      },
+    }
   }
 
   public on (action: 'insert', handler: ((model: ModelContract, attributes: any) => void)): void

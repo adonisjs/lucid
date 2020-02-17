@@ -3925,7 +3925,6 @@ test.group('Base Model | datetime', (group) => {
       autoCreate: false,
       autoUpdate: false,
       type: 'datetime',
-      timezone: undefined,
     })
   })
 
@@ -3945,7 +3944,6 @@ test.group('Base Model | datetime', (group) => {
       autoCreate: true,
       autoUpdate: false,
       type: 'datetime',
-      timezone: undefined,
     })
   })
 
@@ -3965,35 +3963,10 @@ test.group('Base Model | datetime', (group) => {
       autoCreate: false,
       autoUpdate: true,
       type: 'datetime',
-      timezone: undefined,
-    })
-  })
-
-  test('define datetime column with custom timezone', async (assert) => {
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public username: string
-
-      @column.dateTime({ timezone: 'America/New_York' })
-      public dob: DateTime
-    }
-
-    assert.deepEqual(User.$getColumn('dob')!.meta, {
-      autoCreate: false,
-      autoUpdate: false,
-      type: 'datetime',
-      timezone: 'America/New_York',
     })
   })
 
   test('initiate datetime column values with current date when missing', async (assert) => {
-    assert.plan(1)
-
-    const adapter = new FakeAdapter()
-
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4002,79 +3975,25 @@ test.group('Base Model | datetime', (group) => {
       public username: string
 
       @column.dateTime({ autoCreate: true })
-      public dob: DateTime
+      public joinedAt: DateTime
     }
 
     const user = new User()
-    User.$adapter = adapter
-    adapter.on('insert', (model: User) => {
-      assert.instanceOf(model.dob, DateTime)
-    })
-
     user.username = 'virk'
     await user.save()
-  })
+    assert.instanceOf(user.joinedAt, DateTime)
 
-  test('format datetime column values with mentioned timezone', async (assert) => {
-    assert.plan(2)
+    const createdUser = await db.from('users').select('*').first()
 
-    const adapter = new FakeAdapter()
+    const clientDateFormat = User.query().client.dialect.dateTimeFormat
+    const fetchedJoinedAt = createdUser.joined_at instanceof Date
+      ? DateTime.fromJSDate(createdUser.joined_at)
+      : DateTime.fromSQL(createdUser.joined_at)
 
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public username: string
-
-      @column.dateTime({ timezone: 'America/New_York', autoCreate: true })
-      public dob: DateTime
-    }
-
-    const user = new User()
-    User.$adapter = adapter
-    adapter.on('insert', (model: User, attributes) => {
-      assert.instanceOf(model.dob, DateTime)
-      assert.equal(
-        DateTime.fromFormatExplain(attributes.dob, 'yyyy-MM-dd\'T\'HH:mm:ss.SZZ').zone!.name,
-        'UTC-5',
-      )
-    })
-
-    user.username = 'virk'
-    await user.save()
-  })
-
-  test('format custom datetime column values with mentioned timezone', async (assert) => {
-    assert.plan(2)
-
-    const adapter = new FakeAdapter()
-
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public username: string
-
-      @column.dateTime({ timezone: 'America/New_York' })
-      public dob: DateTime
-    }
-
-    const user = new User()
-    User.$adapter = adapter
-    adapter.on('insert', (model: User, attributes) => {
-      assert.deepEqual(model.dob, currentTime)
-      assert.equal(
-        DateTime.fromFormatExplain(attributes.dob, 'yyyy-MM-dd\'T\'HH:mm:ss.SZZ').zone!.name,
-        'UTC-5',
-      )
-    })
-
-    const currentTime = DateTime.local()
-    user.username = 'virk'
-    user.dob = currentTime
-    await user.save()
+    assert.equal(
+      fetchedJoinedAt.toFormat(clientDateFormat),
+      user.joinedAt.toFormat(clientDateFormat),
+    )
   })
 
   test('ignore undefined values', async (assert) => {
@@ -4158,36 +4077,6 @@ test.group('Base Model | datetime', (group) => {
       assert.equal(
         message,
         'E_INVALID_DATETIME_COLUMN_VALUE: The value for "User.dob" must be an instance of "luxon.DateTime"',
-      )
-    }
-  })
-
-  test('raise error when timezone is bogus', async (assert) => {
-    assert.plan(1)
-
-    const adapter = new FakeAdapter()
-
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public username: string
-
-      @column.dateTime({ timezone: 'America/Bogus', autoCreate: true })
-      public dob: DateTime
-    }
-
-    const user = new User()
-    User.$adapter = adapter
-
-    user.username = 'virk'
-    try {
-      await user.save()
-    } catch ({ message }) {
-      assert.equal(
-        message,
-        'E_INVALID_DATETIME_COLUMN_VALUE: Invalid value for "User.dob". unsupported zone',
       )
     }
   })

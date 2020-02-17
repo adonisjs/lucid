@@ -15,6 +15,12 @@ export class OracleDialect implements DialectContract {
   public readonly name = 'oracledb'
   public readonly supportsAdvisoryLocks = false
 
+  /**
+   * The default format for datetime column. The date formats is
+   * valid for luxon date parsing library
+   */
+  public readonly dateTimeFormat = 'yyyy-MM-dd HH:mm:ss'
+
   public getAdvisoryLock (): Promise<boolean> {
     throw new Error('Support for advisory locks is not implemented for oracledb. Create a PR to add the feature')
   }
