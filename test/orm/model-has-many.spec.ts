@@ -478,6 +478,52 @@ test.group('Model | HasMany | bulk operations', (group) => {
   })
 })
 
+test.group('Model | HasMany | aggregates', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('get total of all related rows', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    User.boot()
+    User.$getRelation('posts').boot()
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.table('posts').multiInsert([
+      { title: 'Adonis 101', user_id: 1 },
+      { title: 'Lucid 101', user_id: 1 },
+      { title: 'Profiler 101', user_id: 2 },
+    ])
+
+    const user = await User.find(1)
+    const total = await user!.related('posts').query().count('* as total')
+    assert.equal(Number(total[0].total), 2)
+  })
+})
+
 test.group('Model | HasMany | preload', (group) => {
   group.before(async () => {
     db = getDb()

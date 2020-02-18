@@ -637,6 +637,139 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
   })
 })
 
+test.group('Model | HasMany | aggregates', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('get total of all related rows', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.table('skills').multiInsert([
+      { name: 'Programming' },
+      { name: 'Cooking' },
+      { name: 'Dancing' },
+    ])
+    await db.table('skill_user').multiInsert([
+      { user_id: 1, skill_id: 1 },
+      { user_id: 1, skill_id: 2 },
+      { user_id: 2, skill_id: 2 },
+    ])
+
+    const user = await User.find(1)
+    const total = await user!.related('skills')
+      .query()
+      .count('* as total')
+
+    assert.deepEqual(Number(total[0].total), 2)
+  })
+
+  test('select extra columns with count', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.table('skills').multiInsert([
+      { name: 'Programming' },
+      { name: 'Cooking' },
+      { name: 'Dancing' },
+    ])
+    await db.table('skill_user').multiInsert([
+      { user_id: 1, skill_id: 1 },
+      { user_id: 1, skill_id: 2 },
+      { user_id: 2, skill_id: 2 },
+    ])
+
+    const user = await User.find(1)
+    const total = await user!.related('skills')
+      .query()
+      .select('name')
+      .groupBy('skills.name')
+      .count('* as total')
+
+    assert.lengthOf(total, 2)
+    assert.equal(total[0].name, 'Cooking')
+    assert.equal(Number(total[0].total), 1)
+
+    assert.equal(total[1].name, 'Programming')
+    assert.equal(Number(total[1].total), 1)
+  })
+
+  test('select extra pivot columns with count', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.table('skills').multiInsert([
+      { name: 'Programming' },
+      { name: 'Cooking' },
+      { name: 'Dancing' },
+    ])
+    await db.table('skill_user').multiInsert([
+      { user_id: 1, skill_id: 1, proficiency: 'Beginner' },
+      { user_id: 1, skill_id: 2, proficiency: 'Advanced' },
+      { user_id: 2, skill_id: 2, proficiency: 'Beginner' },
+    ])
+
+    const user = await User.find(1)
+    const total = await user!.related('skills')
+      .query()
+      .pivotColumns(['proficiency'])
+      .groupBy('skill_user.proficiency')
+      .count('* as total')
+
+    assert.lengthOf(total, 2)
+    assert.equal(total[0].pivot_proficiency, 'Advanced')
+    assert.equal(Number(total[0].total), 1)
+
+    assert.equal(total[1].pivot_proficiency, 'Beginner')
+    assert.equal(Number(total[1].total), 1)
+  })
+})
+
 test.group('Model | ManyToMany | preload', (group) => {
   group.before(async () => {
     db = getDb()

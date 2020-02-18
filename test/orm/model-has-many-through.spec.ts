@@ -673,6 +673,135 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
   })
 })
 
+test.group('Model | Has Many Through | aggregates', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('get total of all related rows', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<Post>
+    }
+
+    Country.boot()
+    await db.table('countries').insert({ name: 'India' })
+    await db.table('users').insert({
+      username: 'virk',
+      country_id: 1,
+    })
+
+    await db.table('posts').multiInsert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 1,
+        title: 'Lucid 101',
+      },
+      {
+        user_id: 2,
+        title: 'Profiler 101',
+      },
+    ])
+
+    const country = await Country.find(1)
+    const total = await country!.related('posts').query().count('* as total')
+    assert.deepEqual(Number(total[0].total), 2)
+  })
+
+  test('select extra columns with count', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<Post>
+    }
+
+    Country.boot()
+    await db.table('countries').insert({ name: 'India' })
+    await db.table('users').insert({
+      username: 'virk',
+      country_id: 1,
+    })
+
+    await db.table('posts').multiInsert([
+      {
+        user_id: 1,
+        title: 'Adonis 101',
+      },
+      {
+        user_id: 1,
+        title: 'Lucid 101',
+      },
+      {
+        user_id: 2,
+        title: 'Profiler 101',
+      },
+    ])
+
+    const country = await Country.find(1)
+    const total = await country!
+      .related('posts')
+      .query()
+      .select('title')
+      .groupBy('posts.title')
+      .count('* as total')
+
+    assert.lengthOf(total, 2)
+    assert.deepEqual(Number(total[0].total), 1)
+    assert.equal(total[0].title, 'Adonis 101')
+    assert.deepEqual(Number(total[0].total), 1)
+    assert.equal(total[1].title, 'Lucid 101')
+  })
+})
+
 test.group('Model | Has Many Through | preload', (group) => {
   group.before(async () => {
     db = getDb()

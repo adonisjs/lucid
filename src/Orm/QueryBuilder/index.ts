@@ -55,6 +55,12 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   protected wrapResultsToModelInstances: boolean = true
 
   /**
+   * Whether or not the query builder is using one of the
+   * aggregate functions
+   */
+  protected hasAggregates: boolean = false
+
+  /**
    * Options that must be passed to all new model instances
    */
   public clientOptions: ModelAdapterOptions = {
@@ -214,7 +220,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Count rows for the current query
    */
   public count (columns: any, alias?: any): this {
-    this.wrapResultsToModelInstances = false
+    this.hasAggregates = true
     return super.count(columns, alias)
   }
 
@@ -222,7 +228,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Count distinct rows for the current query
    */
   public countDistinct (columns: any, alias?: any): this {
-    this.wrapResultsToModelInstances = false
+    this.hasAggregates = true
     super.countDistinct(columns, alias)
     return this
   }
@@ -231,7 +237,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Make use of `min` aggregate function
    */
   public min (columns: any, alias?: any): this {
-    this.wrapResultsToModelInstances = false
+    this.hasAggregates = true
     super.min(columns, alias)
     return this
   }
@@ -240,7 +246,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Make use of `max` aggregate function
    */
   public max (columns: any, alias?: any): this {
-    this.wrapResultsToModelInstances = false
+    this.hasAggregates = true
     super.max(columns, alias)
     return this
   }
@@ -249,7 +255,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Make use of `avg` aggregate function
    */
   public avg (columns: any, alias?: any): this {
-    this.wrapResultsToModelInstances = false
+    this.hasAggregates = true
     super.avg(columns, alias)
     return this
   }
@@ -258,7 +264,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Make use of distinct `avg` aggregate function
    */
   public avgDistinct (columns: any, alias?: any): this {
-    this.wrapResultsToModelInstances = false
+    this.hasAggregates = true
     super.avgDistinct(columns, alias)
     return this
   }
@@ -267,7 +273,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Make use of `sum` aggregate function
    */
   public sum (columns: any, alias?: any): this {
-    this.wrapResultsToModelInstances = false
+    this.hasAggregates = true
     super.sum(columns, alias)
     return this
   }
@@ -282,7 +288,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     /**
      * Return the rows as it is when query is a write query
      */
-    if (isWriteQuery || !this.wrapResultsToModelInstances) {
+    if (isWriteQuery || this.hasAggregates || !this.wrapResultsToModelInstances) {
       return Array.isArray(rows) ? rows : [rows]
     }
 

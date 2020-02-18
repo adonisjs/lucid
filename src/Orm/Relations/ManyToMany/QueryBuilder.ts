@@ -312,6 +312,7 @@ ModelConstructorContract
     }
 
     this.appliedConstraints = true
+
     if (this.pivotOnly || ['delete', 'update'].includes(this.queryAction())) {
       this.from(this.relation.pivotTable)
       this.addWhereConstraints()
@@ -319,22 +320,28 @@ ModelConstructorContract
     }
 
     /**
-     * Select * from related model when user is not cherry picking
-     * keys
+     * Add select statements only when not running aggregate
+     * queries. The end user can still select columns
      */
-    if (!this.cherryPickingKeys) {
-      this.select('*')
-    }
+    if (!this.hasAggregates) {
+      /**
+       * Select * from related model when user is not cherry picking
+       * keys
+       */
+      if (!this.cherryPickingKeys) {
+        this.select('*')
+      }
 
-    /**
-     * Select columns from the pivot table
-     */
-    this.pivotColumns(
-      [
-        this.relation.pivotForeignKey,
-        this.relation.pivotRelatedForeignKey,
-      ].concat(this.relation.extrasPivotColumns),
-    )
+      /**
+       * Select columns from the pivot table
+       */
+      this.pivotColumns(
+        [
+          this.relation.pivotForeignKey,
+          this.relation.pivotRelatedForeignKey,
+        ].concat(this.relation.extrasPivotColumns),
+      )
+    }
 
     /**
      * Add inner join between related model and pivot table

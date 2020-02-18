@@ -146,20 +146,26 @@ ModelConstructorContract
     }
 
     /**
-     * Select * from related model when user is not cherry picking
-     * keys
+     * Add select statements only when not running aggregate
+     * queries. The end user can still select columns
      */
-    if (!this.cherryPickingKeys) {
-      this.select('*')
-    }
+    if (!this.hasAggregates) {
+      /**
+       * Select * from related model when user is not cherry picking
+       * keys
+       */
+      if (!this.cherryPickingKeys) {
+        this.select('*')
+      }
 
-    /**
-     * Selecting all from the related table, along with the foreign key of the
-     * through table.
-     */
-    this.knexQuery.select(
-      `${throughTable}.${this.relation.foreignKeyColumnName} as ${this.relation.throughAlias(this.relation.foreignKeyColumnName)}`,
-    )
+      /**
+       * Selecting all from the related table, along with the foreign key of the
+       * through table.
+       */
+      this.knexQuery.select(
+        `${throughTable}.${this.relation.foreignKeyColumnName} as ${this.relation.throughAlias(this.relation.foreignKeyColumnName)}`,
+      )
+    }
 
     /**
      * Inner join
