@@ -106,8 +106,11 @@ export class QueryClient implements QueryClientContract {
    * Get information for a table columns
    */
   public async columnsInfo (table: string, column?: string): Promise<any> {
-    const query = this.getWriteClient().select(table)
-    const result = await (column ? query.columnInfo(column) : query.columnInfo())
+    const result = await this
+      .getWriteClient()
+      .table(table)
+      .columnInfo(column ? column as any : undefined)
+
     return result
   }
 

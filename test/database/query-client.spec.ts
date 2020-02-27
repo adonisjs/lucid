@@ -55,6 +55,38 @@ test.group('Query client', (group) => {
     assert.equal(client.mode, 'write')
     await connection.disconnect()
   })
+
+  test('get columns info', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const client = new QueryClient('write', connection)
+    const columns = await client.columnsInfo('users')
+    assert.deepEqual(Object.keys(columns), [
+      'id',
+      'country_id',
+      'username',
+      'email',
+      'points',
+      'joined_at',
+      'created_at',
+      'updated_at',
+    ])
+  })
+
+  test('get single column info', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const client = new QueryClient('write', connection)
+    const column = await client.columnsInfo('users', 'id')
+    assert.deepEqual(column, {
+      type: 'integer',
+      maxLength: null,
+      nullable: false,
+      defaultValue: null,
+    })
+  })
 })
 
 test.group('Query client | dual mode', (group) => {
