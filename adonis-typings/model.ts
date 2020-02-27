@@ -680,6 +680,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
       Result extends any = InstanceType<Model>,
     > (this: Model, options?: ModelAdapterOptions): ModelQueryBuilderContract<Model, Result>
 
+    /**
+     * Truncate model table
+     */
+    truncate (cascade?: boolean): Promise<void>
+
     new (): Model
   }
 

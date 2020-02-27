@@ -80,7 +80,7 @@ test.group('Query client', (group) => {
 
     const client = new QueryClient('write', connection)
     const column = await client.columnsInfo('users', 'id')
-    assert.equal(column.type, 'integer')
+    assert.oneOf(column.type, ['integer', 'int'])
   })
 
   test('truncate table with cascade', async (_assert) => {
@@ -96,7 +96,7 @@ test.group('Query client', (group) => {
     })
     await connection.client?.schema.createTableIfNotExists('test_profiles', (table) => {
       table.increments('id').primary()
-      table.integer('user_id').references('test_users.id').onDelete('CASCADE')
+      table.integer('user_id').unsigned().references('test_users.id').onDelete('CASCADE')
     })
 
     /**

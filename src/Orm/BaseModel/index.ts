@@ -648,6 +648,13 @@ export class BaseModel implements ModelContract {
     return this.query(options).orderBy(this.primaryKey, 'desc')
   }
 
+  /**
+   * Truncate model table
+   */
+  public static truncate (cascade: boolean = false) {
+    return (this as ModelConstructorContract).query().client.truncate(this.table, cascade)
+  }
+
   constructor () {
     return new Proxy(this, proxyHandler)
   }
