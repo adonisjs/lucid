@@ -45,7 +45,7 @@
     "columnify": "^1.5.4",
     "knex": "^0.20.10",
     "knex-dynamic-connection": "^1.0.4",
-    "log-update": "^3.4.0",
+    "log-update": "^4.0.0",
     "luxon": "^1.22.0",
     "macroable": "^4.0.2",
     "pluralize": "^8.0.0",
@@ -56,7 +56,7 @@
   },
   "devDependencies": {
     "@adonisjs/ace": "^6.8.3",
-    "@adonisjs/application": "^1.3.4",
+    "@adonisjs/application": "^1.3.5",
     "@adonisjs/fold": "^6.3.3",
     "@adonisjs/logger": "^1.1.8",
     "@adonisjs/mrm-preset": "^2.2.4",
@@ -64,7 +64,7 @@
     "@poppinss/dev-utils": "^1.0.4",
     "@types/dotenv": "^8.2.0",
     "@types/luxon": "^1.21.0",
-    "@types/node": "^13.7.1",
+    "@types/node": "^13.7.6",
     "@types/pluralize": "0.0.29",
     "clone": "^2.1.2",
     "commitizen": "^4.0.3",
@@ -79,11 +79,11 @@
     "mrm": "^2.0.4",
     "mysql": "^2.18.1",
     "np": "^5.2.1",
-    "pg": "^7.18.1",
+    "pg": "^7.18.2",
     "reflect-metadata": "^0.1.13",
     "sqlite3": "^4.1.1",
     "ts-node": "^8.6.2",
-    "typescript": "^3.7.5"
+    "typescript": "^3.8.2"
   },
   "publishConfig": {
     "tag": "alpha",
