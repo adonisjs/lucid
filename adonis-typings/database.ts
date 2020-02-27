@@ -44,6 +44,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     readonly name: 'mssql' | 'mysql' | 'oracledb' | 'postgres' | 'redshift' | 'sqlite3'
     readonly supportsAdvisoryLocks: boolean
     readonly dateTimeFormat: string
+    truncate (table: string, cascade?: boolean): Promise<void>
     getAdvisoryLock (key: string | number, timeout?: number): Promise<boolean>
     releaseAdvisoryLock (key: string | number): Promise<boolean>
   }
@@ -125,7 +126,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Truncate a given table
      */
-    truncate (table: string): Promise<void>,
+    truncate (table: string, cascade?: boolean): Promise<void>,
 
     /**
      * Returns columns info for a given table

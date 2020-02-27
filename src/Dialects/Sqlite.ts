@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { DialectContract } from '@ioc:Adonis/Lucid/Database'
+import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
 export class SqliteDialect implements DialectContract {
   public readonly name = 'sqlite3'
@@ -20,6 +20,16 @@ export class SqliteDialect implements DialectContract {
    * valid for luxon date parsing library
    */
   public readonly dateTimeFormat = 'yyyy-MM-dd HH:mm:ss'
+
+  constructor (private client: QueryClientContract) {
+  }
+
+  /**
+   * Truncate SQLITE tables
+   */
+  public async truncate (table: string, _: boolean) {
+    return this.client.knexQuery().table(table).truncate()
+  }
 
   /**
    * Attempts to add advisory lock to the database and

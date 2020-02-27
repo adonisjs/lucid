@@ -25,6 +25,15 @@ export class PgDialect implements DialectContract {
   }
 
   /**
+   * Truncate pg table with option to cascade and restart identity
+   */
+  public async truncate (table: string, cascade: boolean = false) {
+    return cascade
+      ? this.client.rawQuery(`TRUNCATE ${table} RESTART IDENTITY CASCADE;`)
+      : this.client.rawQuery(`TRUNCATE ${table};`)
+  }
+
+  /**
    * Attempts to add advisory lock to the database and
    * returns it's status.
    */

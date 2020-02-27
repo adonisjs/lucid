@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { DialectContract } from '@ioc:Adonis/Lucid/Database'
+import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
 export class MssqlDialect implements DialectContract {
   public readonly name = 'mssql'
@@ -20,6 +20,16 @@ export class MssqlDialect implements DialectContract {
    * valid for luxon date parsing library
    */
   public readonly dateTimeFormat = 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZZ'
+
+  constructor (private client: QueryClientContract) {
+  }
+
+  /**
+   * Truncate mssql table
+   */
+  public async truncate (table: string, _: boolean) {
+    return this.client.knexQuery().table(table).truncate()
+  }
 
   public getAdvisoryLock (): Promise<boolean> {
     throw new Error('Support for advisory locks is not implemented for mssql. Create a PR to add the feature')

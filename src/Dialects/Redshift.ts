@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { DialectContract } from '@ioc:Adonis/Lucid/Database'
+import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
 export class RedshiftDialect implements DialectContract {
   public readonly name = 'redshift'
@@ -20,6 +20,20 @@ export class RedshiftDialect implements DialectContract {
    * valid for luxon date parsing library
    */
   public readonly dateTimeFormat = 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZZ'
+
+  constructor (private client: QueryClientContract) {
+  }
+
+  /**
+   * Truncate redshift table with option to cascade and restart identity.
+   *
+   * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
+   */
+  public async truncate (table: string, cascade: boolean = false) {
+    return cascade
+      ? this.client.rawQuery(`TRUNCATE ${table} RESTART IDENTITY CASCADE;`)
+      : this.client.rawQuery(`TRUNCATE ${table};`)
+  }
 
   /**
    * Redshift doesn't support advisory locks. Learn more:

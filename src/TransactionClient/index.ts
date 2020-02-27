@@ -81,8 +81,8 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   /**
    * Truncate tables inside a transaction
    */
-  public async truncate (table: string): Promise<void> {
-    await this.knexClient.table(table).truncate()
+  public async truncate (table: string, cascade: boolean = false): Promise<void> {
+    await this.dialect.truncate(table, cascade)
   }
 
   /**

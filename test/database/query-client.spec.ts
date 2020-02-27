@@ -80,12 +80,42 @@ test.group('Query client', (group) => {
 
     const client = new QueryClient('write', connection)
     const column = await client.columnsInfo('users', 'id')
-    assert.deepEqual(column, {
-      type: 'integer',
-      maxLength: null,
-      nullable: false,
-      defaultValue: null,
+    assert.equal(column.type, 'integer')
+  })
+
+  test('truncate table with cascade', async (_assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    /**
+     * Create tables
+     */
+    await connection.client?.schema.createTableIfNotExists('test_users', (table) => {
+      table.increments('id').primary()
+      table.string('username')
     })
+    await connection.client?.schema.createTableIfNotExists('test_profiles', (table) => {
+      table.increments('id').primary()
+      table.integer('user_id').references('test_users.id').onDelete('CASCADE')
+    })
+
+    /**
+     * Insert table
+     */
+    const returnValues = await connection.client?.table('test_users').insert({ username: 'virk' })
+    await connection.client?.table('test_profiles').insert({ user_id: returnValues![0] })
+
+    /**
+     * Truncate
+     */
+    const client = new QueryClient('write', connection)
+    await client.truncate('test_users', true)
+
+    /**
+     * Drop tables
+     */
+    await connection.client?.schema.dropTable('test_profiles')
+    await connection.client?.schema.dropTable('test_users')
   })
 })
 

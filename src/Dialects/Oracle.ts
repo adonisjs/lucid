@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { DialectContract } from '@ioc:Adonis/Lucid/Database'
+import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
 export class OracleDialect implements DialectContract {
   public readonly name = 'oracledb'
@@ -20,6 +20,18 @@ export class OracleDialect implements DialectContract {
    * valid for luxon date parsing library
    */
   public readonly dateTimeFormat = 'yyyy-MM-dd HH:mm:ss'
+
+  constructor (private client: QueryClientContract) {
+  }
+
+  /**
+   * Truncate pg table with option to cascade and restart identity
+   */
+  public async truncate (table: string, cascade: boolean = false) {
+    return cascade
+      ? this.client.rawQuery(`TRUNCATE ${table} CASCADE;`)
+      : this.client.rawQuery(`TRUNCATE ${table};`)
+  }
 
   public getAdvisoryLock (): Promise<boolean> {
     throw new Error('Support for advisory locks is not implemented for oracledb. Create a PR to add the feature')

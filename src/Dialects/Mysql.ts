@@ -25,6 +25,29 @@ export class MysqlDialect implements DialectContract {
   }
 
   /**
+   * Truncate mysql table with option to cascade
+   */
+  public async truncate (table: string, cascade: boolean = false) {
+    if (!cascade) {
+      return this.client.knexQuery().table(table).truncate()
+    }
+
+    /**
+     * Cascade and truncate
+     */
+    const trx = await this.client.transaction()
+    try {
+      await trx.rawQuery('SET FOREIGN_KEY_CHECKS=0;')
+      await trx.knexQuery().table(table).truncate()
+      await trx.rawQuery('SET FOREIGN_KEY_CHECKS=1;')
+      await trx.commit()
+    } catch (error) {
+      await trx.rollback()
+      throw error
+    }
+  }
+
+  /**
    * Attempts to add advisory lock to the database and
    * returns it's status.
    */
