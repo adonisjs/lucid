@@ -40,7 +40,7 @@ export default class Migrate extends MigrationsBase {
     loadApp: true,
   }
 
-  constructor (app: ApplicationContract, kernel: Kernel, private _db: DatabaseContract) {
+  constructor (app: ApplicationContract, kernel: Kernel, private db: DatabaseContract) {
     super(app, kernel)
   }
 
@@ -48,7 +48,7 @@ export default class Migrate extends MigrationsBase {
    * Handle command
    */
   public async handle (): Promise<void> {
-    const connection = this._db.getRawConnection(this.connection || this._db.primaryConnectionName)
+    const connection = this.db.getRawConnection(this.connection || this.db.primaryConnectionName)
     let continueMigrations = !this.application.inProduction || this.force
 
     /**
@@ -86,13 +86,13 @@ export default class Migrate extends MigrationsBase {
      * New up migrator
      */
     const { Migrator } = await import('../src/Migrator')
-    const migrator = new Migrator(this._db, this.application, {
+    const migrator = new Migrator(this.db, this.application, {
       direction: 'up',
       connectionName: this.connection,
       dryRun: this.dryRun,
     })
 
     this.printPreviewMessage()
-    await this.$runMigrations(migrator)
+    await this.runMigrations(migrator)
   }
 }

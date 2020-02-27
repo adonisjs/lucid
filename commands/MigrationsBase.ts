@@ -20,7 +20,7 @@ export default abstract class MigrationsBase extends BaseCommand {
   /**
    * Returns beautified log message string
    */
-  protected $getLogMessage (file: MigratedFileNode): string {
+  protected getLogMessage (file: MigratedFileNode): string {
     const message = `${file.migration.name} ${this.colors.gray(`(batch: ${file.batch})`)}`
 
     if (file.status === 'pending') {
@@ -80,7 +80,7 @@ export default abstract class MigrationsBase extends BaseCommand {
   /**
    * Runs the migrations using the migrator
    */
-  protected async $runMigrations (migrator: MigratorContract): Promise<void> {
+  protected async runMigrations (migrator: MigratorContract): Promise<void> {
     /**
      * A set of files processed and emitted using event emitter.
      */
@@ -91,14 +91,14 @@ export default abstract class MigrationsBase extends BaseCommand {
      */
     migrator.on('migration:start', (file) => {
       processedFiles.add(file.migration.name)
-      logUpdate(this.$getLogMessage(file))
+      logUpdate(this.getLogMessage(file))
     })
 
     /**
      * Migration completed
      */
     migrator.on('migration:completed', (file) => {
-      logUpdate(this.$getLogMessage(file))
+      logUpdate(this.getLogMessage(file))
       logUpdate.done()
     })
 
@@ -106,7 +106,7 @@ export default abstract class MigrationsBase extends BaseCommand {
      * Migration error
      */
     migrator.on('migration:error', (file) => {
-      logUpdate(this.$getLogMessage(file))
+      logUpdate(this.getLogMessage(file))
       logUpdate.done()
     })
 
@@ -122,7 +122,7 @@ export default abstract class MigrationsBase extends BaseCommand {
      */
     Object.keys(migrator.migratedFiles).forEach((file) => {
       if (!processedFiles.has(file)) {
-        console.log(this.$getLogMessage(migrator.migratedFiles[file]))
+        console.log(this.getLogMessage(migrator.migratedFiles[file]))
       }
     })
 

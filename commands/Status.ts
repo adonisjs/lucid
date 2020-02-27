@@ -35,14 +35,14 @@ export default class Status extends MigrationsBase {
     loadApp: true,
   }
 
-  constructor (app: ApplicationContract, kernel: Kernel, private _db: DatabaseContract) {
+  constructor (app: ApplicationContract, kernel: Kernel, private db: DatabaseContract) {
     super(app, kernel)
   }
 
   /**
    * Colorizes the status string
    */
-  private _colorizeStatus (status: MigrationListNode['status']): string {
+  private colorizeStatus (status: MigrationListNode['status']): string {
     switch (status) {
       case 'pending':
         return this.colors.yellow('pending')
@@ -57,7 +57,7 @@ export default class Status extends MigrationsBase {
    * Handle command
    */
   public async handle (): Promise<void> {
-    const connection = this._db.getRawConnection(this.connection || this._db.primaryConnectionName)
+    const connection = this.db.getRawConnection(this.connection || this.db.primaryConnectionName)
 
     /**
      * Ensure the define connection name does exists in the
@@ -71,7 +71,7 @@ export default class Status extends MigrationsBase {
     }
 
     const { Migrator } = await import('../src/Migrator')
-    const migrator = new Migrator(this._db, this.application, {
+    const migrator = new Migrator(this.db, this.application, {
       direction: 'up',
       connectionName: this.connection,
     })
@@ -87,7 +87,7 @@ export default class Status extends MigrationsBase {
     const uiList = list.map((node) => {
       return {
         name: node.name,
-        status: this._colorizeStatus(node.status),
+        status: this.colorizeStatus(node.status),
         batch: node.batch || 'NA',
         message: node.status === 'corrupt' ? 'The migration file is missing on filesystem' : '',
       }

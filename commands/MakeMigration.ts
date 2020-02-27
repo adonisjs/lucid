@@ -61,14 +61,14 @@ export default class MakeMigration extends BaseCommand {
     loadApp: true,
   }
 
-  constructor (app: ApplicationContract, kernel: Kernel, private _db: DatabaseContract) {
+  constructor (app: ApplicationContract, kernel: Kernel, private db: DatabaseContract) {
     super(app, kernel)
   }
 
   /**
    * Returns the directory for creating the migration file
    */
-  private async _getDirectory (migrationPaths?: string[]): Promise<string> {
+  private async getDirectory (migrationPaths?: string[]): Promise<string> {
     if (this.folder) {
       return this.folder
     }
@@ -81,8 +81,11 @@ export default class MakeMigration extends BaseCommand {
     return this.prompt.choice('Select the migrations folder', directories, { name: 'folder' })
   }
 
+  /**
+   * Execute command
+   */
   public async handle (): Promise<void> {
-    const connection = this._db.getRawConnection(this.connection || this._db.primaryConnectionName)
+    const connection = this.db.getRawConnection(this.connection || this.db.primaryConnectionName)
 
     /**
      * Ensure the define connection name does exists in the
@@ -105,7 +108,7 @@ export default class MakeMigration extends BaseCommand {
     /**
      * The folder for creating the schema file
      */
-    const folder = await this._getDirectory((connection.config.migrations || {}).paths)
+    const folder = await this.getDirectory((connection.config.migrations || {}).paths)
 
     /**
      * Using the user defined table name or an empty string. We can attempt to
