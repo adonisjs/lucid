@@ -7,7 +7,9 @@
  * file that was distributed with this source code.
 */
 
+import { relative } from 'path'
 import logUpdate from 'log-update'
+import { DateTime } from 'luxon'
 import { BaseCommand } from '@adonisjs/ace'
 import { MigratedFileNode, MigratorContract } from '@ioc:Adonis/Lucid/Migrator'
 
@@ -42,6 +44,37 @@ export default abstract class MigrationsBase extends BaseCommand {
     }
 
     return lines.join('\n')
+  }
+
+  /**
+   * Prints the preview message that gives more context to the
+   * user about their migrations source and the last time
+   * it was compiled.
+   */
+  protected printPreviewMessage () {
+    const sourceDir = this.application.appRoot
+    const rootDir = this.application.cliCwd
+
+    /**
+     * Notify about directory when source dir is different from
+     * the root dir
+     */
+    if (rootDir && sourceDir !== rootDir) {
+      console.log(`
+      ${this.colors.magenta('Migrations source')}: ${relative(rootDir, sourceDir)}
+    `)
+    }
+
+    /**
+     * Notify about the compiled at time, this may shed some light on
+     * when last they compiled their source code
+     */
+    const compiledAt = DateTime.fromISO(this.application.rcFile.raw.lastCompiledAt)
+    if (compiledAt.isValid) {
+      console.log(`
+        ${this.colors.magenta('Source compiled at')}: ${compiledAt.toLocaleString(DateTime.DATETIME_MED)}
+      `)
+    }
   }
 
   /**

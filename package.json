@@ -56,7 +56,7 @@
   },
   "devDependencies": {
     "@adonisjs/ace": "^6.8.3",
-    "@adonisjs/application": "^1.3.5",
+    "@adonisjs/application": "^1.3.6",
     "@adonisjs/fold": "^6.3.3",
     "@adonisjs/logger": "^1.1.8",
     "@adonisjs/mrm-preset": "^2.2.4",
@@ -76,7 +76,7 @@
     "eslint-plugin-adonis": "^1.0.8",
     "husky": "^4.2.3",
     "japa": "^3.0.1",
-    "mrm": "^2.0.4",
+    "mrm": "^2.1.0",
     "mysql": "^2.18.1",
     "np": "^5.2.1",
     "pg": "^7.18.2",
