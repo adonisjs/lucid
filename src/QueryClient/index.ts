@@ -164,7 +164,7 @@ export class QueryClient implements QueryClientContract {
   /**
    * Returns instance of raw query builder
    */
-  public raw (sql: any, bindings?: any): any {
+  public rawQuery (sql: any, bindings?: any): any {
     return new RawQueryBuilder(this.connection.client!.raw(sql, bindings), this)
   }
 

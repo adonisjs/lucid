@@ -117,7 +117,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Get raw query builder instance
      */
-    raw<Result extends any = any> (
+    rawQuery<Result extends any = any> (
       sql: string,
       bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw,
     ): RawContract<Result>
@@ -618,6 +618,14 @@ declare module '@ioc:Adonis/Lucid/Database' {
     connection (connectionName?: string, options?: DatabaseClientOptions): QueryClientContract
 
     /**
+     * Returns the query builder for a given model
+     */
+    modelQuery<T extends ModelConstructorContract, Result extends any = T> (
+      model: T,
+      options?: DatabaseClientOptions,
+    ): ModelQueryBuilderContract<T>
+
+    /**
      * Get query builder instance for a given connection.
      */
     query<Result extends any = any> (
@@ -634,7 +642,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Get raw query builder instance
      */
-    raw<Result extends any = any> (
+    rawQuery<Result extends any = any> (
       sql: string,
       bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[],
       options?: DatabaseClientOptions,

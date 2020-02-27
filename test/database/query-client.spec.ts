@@ -137,7 +137,7 @@ test.group('Query client | dual mode', (group) => {
     const command = process.env.DB === 'sqlite' ? 'DELETE FROM users;' : 'TRUNCATE users;'
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
-    await client.raw(command).exec()
+    await client.rawQuery(command).exec()
     const results = await client.query().from('users')
 
     assert.isArray(results)
@@ -205,7 +205,7 @@ test.group('Query client | read mode', (group) => {
     connection.connect()
     const client = new QueryClient('read', connection)
 
-    const result = await client.raw('SELECT 1 + 1').exec()
+    const result = await client.rawQuery('SELECT 1 + 1').exec()
     assert.isDefined(result)
 
     await connection.disconnect()
@@ -279,7 +279,7 @@ test.group('Query client | write mode', (group) => {
     const command = process.env.DB === 'sqlite' ? 'DELETE FROM users;' : 'TRUNCATE users;'
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
-    await client.raw(command).exec()
+    await client.rawQuery(command).exec()
     const results = await client.query().from('users')
 
     assert.isArray(results)

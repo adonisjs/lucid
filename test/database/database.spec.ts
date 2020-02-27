@@ -123,7 +123,7 @@ test.group('Database', (group) => {
     }
 
     const db = new Database(config, getLogger(), getProfiler())
-    const result = await db.raw('select 1 + 1')
+    const result = await db.rawQuery('select 1 + 1')
     assert.isDefined(result)
     await db.manager.closeAll()
   })
@@ -135,7 +135,7 @@ test.group('Database', (group) => {
     }
 
     const db = new Database(config, getLogger(), getProfiler())
-    const result = await db.raw('select 1 + 1', [], { mode: 'read' })
+    const result = await db.rawQuery('select 1 + 1', [], { mode: 'read' })
     assert.isDefined(result)
     await db.manager.closeAll()
   })
@@ -147,7 +147,7 @@ test.group('Database', (group) => {
     }
 
     const db = new Database(config, getLogger(), getProfiler())
-    const result = await db.raw('select 1 + 1', [], { mode: 'write' })
+    const result = await db.rawQuery('select 1 + 1', [], { mode: 'write' })
     assert.isDefined(result)
     await db.manager.closeAll()
   })

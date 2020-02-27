@@ -1302,7 +1302,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     query['appliedConstraints'] = true
 
     const { sql, bindings } = query
-      .wherePivot('age', '>', db.raw('select min_age from ages limit 1;'))
+      .wherePivot('age', '>', db.rawQuery('select min_age from ages limit 1;'))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
@@ -1536,7 +1536,7 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
     query['appliedConstraints'] = true
 
     const { sql, bindings } = query
-      .whereNotPivot('age', '>', db.raw('select min_age from ages limit 1;'))
+      .whereNotPivot('age', '>', db.rawQuery('select min_age from ages limit 1;'))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = db.connection().getWriteClient()
@@ -1727,7 +1727,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
 
     const { sql, bindings } = query
       .whereInPivot('username', [
-        db.raw(`select ${ref('id')} from ${ref('accounts')}`),
+        db.rawQuery(`select ${ref('id')} from ${ref('accounts')}`),
       ])
       .toSQL()
 

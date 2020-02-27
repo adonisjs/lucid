@@ -29,7 +29,7 @@ export class MysqlDialect implements DialectContract {
    * returns it's status.
    */
   public async getAdvisoryLock (key: string, timeout: number = 0): Promise<boolean> {
-    const response = await this.client.raw(`SELECT GET_LOCK('${key}', ${timeout}) as lock_status;`)
+    const response = await this.client.rawQuery(`SELECT GET_LOCK('${key}', ${timeout}) as lock_status;`)
     return response[0] && response[0][0] && response[0][0].lock_status === 1
   }
 
@@ -37,7 +37,7 @@ export class MysqlDialect implements DialectContract {
    * Releases the advisory lock
    */
   public async releaseAdvisoryLock (key: string): Promise<boolean> {
-    const response = await this.client.raw(`SELECT RELEASE_LOCK('${key}') as lock_status;`)
+    const response = await this.client.rawQuery(`SELECT RELEASE_LOCK('${key}') as lock_status;`)
     return response[0] && response[0][0] && response[0][0].lock_status === 1
   }
 }

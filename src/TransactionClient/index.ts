@@ -142,7 +142,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   /**
    * Execute raw query on transaction
    */
-  public raw (sql: any, bindings?: any): any {
+  public rawQuery (sql: any, bindings?: any): any {
     return new RawQueryBuilder(this.knexClient.raw(sql, bindings), this)
   }
 

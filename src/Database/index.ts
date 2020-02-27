@@ -142,6 +142,13 @@ export class Database implements DatabaseContract {
   }
 
   /**
+   * Returns a query builder instance for a given model.
+   */
+  public modelQuery (model: any, options?: DatabaseClientOptions) {
+    return this.connection(this.primaryConnectionName, options).modelQuery(model)
+  }
+
+  /**
    * Returns instance of a query builder and selects the table
    */
   public from (table: any) {
@@ -168,8 +175,8 @@ export class Database implements DatabaseContract {
    * defined the `read/write` mode in which to execute the
    * query
    */
-  public raw (sql: string, bindings?: any, options?: DatabaseClientOptions) {
-    return this.connection(this.primaryConnectionName, options).raw(sql, bindings)
+  public rawQuery (sql: string, bindings?: any, options?: DatabaseClientOptions) {
+    return this.connection(this.primaryConnectionName, options).rawQuery(sql, bindings)
   }
 
   /**
