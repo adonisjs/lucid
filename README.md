@@ -5,8 +5,8 @@
 <br />
 
 <div align="center">
-  <h3>Active Record ORM</h3>
-  <p>Lucid is an implementation of fully featured Active Record ORM for AdonisJS. It is heavily inspired by Laravel Eloquent.</p>
+  <h3>SQL ORM</h3>
+  <p>Lucid is the official SQL ORM for AdonisJS. It comes with an Active Record ORM, Query Builder, Migrations, Seeds and Factories</p>
 </div>
 
 <br />
