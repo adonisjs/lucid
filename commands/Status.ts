@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
 */
 
-import columnify from 'columnify'
+import CliTable from 'cli-table3'
 import { inject } from '@adonisjs/fold'
 import { flags, Kernel } from '@adonisjs/ace'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
@@ -80,36 +80,22 @@ export default class Status extends MigrationsBase {
     await migrator.close()
 
     this.printPreviewMessage()
-
-    /**
-     * List to be printed on the console
-     */
-    const uiList = list.map((node) => {
-      return {
-        name: node.name,
-        status: this.colorizeStatus(node.status),
-        batch: node.batch || 'NA',
-        message: node.status === 'corrupt' ? 'The migration file is missing on filesystem' : '',
-      }
+    const table = new CliTable({
+      head: ['Name', 'Status', 'Batch', 'Message'],
     })
 
     /**
-     * Columnify options
+     * Push a new row to the table
      */
-    const columnifyOptions = {
-      config: {
-        batch: {
-          minWidth: 8,
-        },
-        name: {
-          minWidth: 60,
-        },
-        status: {
-          minWidth: 14,
-        },
-      },
-    }
+    list.forEach((node) => {
+      table.push([
+        node.name,
+        this.colorizeStatus(node.status),
+        node.batch || 'NA',
+        node.status === 'corrupt' ? 'The migration file is missing on filesystem' : '',
+      ] as any)
+    })
 
-    console.log(columnify(uiList, columnifyOptions))
+    console.log(table.toString())
   }
 }
