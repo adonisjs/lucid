@@ -56,7 +56,7 @@
   },
   "devDependencies": {
     "@adonisjs/ace": "^6.8.3",
-    "@adonisjs/core": "^5.0.0-preview.1",
+    "@adonisjs/core": "^5.0.0-preview.2",
     "@adonisjs/fold": "^6.3.3",
     "@adonisjs/mrm-preset": "^2.2.4",
     "@poppinss/dev-utils": "^1.0.4",
