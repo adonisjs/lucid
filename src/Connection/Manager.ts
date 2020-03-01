@@ -12,6 +12,7 @@
 import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
+import { HealthReportEntry } from '@ioc:Adonis/Core/HealthCheck'
 
 import {
   ReportNode,
@@ -251,7 +252,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
   /**
    * Returns the report for all the connections marked for healthChecks.
    */
-  public async report (): Promise<{ health: { healthy: boolean, message: string }, meta: ReportNode[] }> {
+  public async report (): Promise<HealthReportEntry & { meta: ReportNode[] }> {
     const reports = await Promise.all(
       Array.from(this.connections.keys())
         .filter((one) => this.get(one)!.config.healthCheck)
@@ -264,6 +265,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
     const healthy = !reports.find((report) => !!report.error)
 
     return {
+      displayName: 'Database',
       health: {
         healthy,
         message: healthy ? 'All connections are healthy' : 'One or more connections are not healthy',

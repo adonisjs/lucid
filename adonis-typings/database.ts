@@ -14,6 +14,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   import { Pool } from 'tarn'
   import { EventEmitter } from 'events'
   import { MacroableConstructorContract } from 'macroable'
+  import { HealthReportEntry } from '@ioc:Adonis/Core/HealthCheck'
   import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
   import {
@@ -522,7 +523,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns the health check report for registered connections
      */
-    report (): Promise<{ health: { healthy: boolean, message: string }, meta: ReportNode[] }>
+    report (): Promise<HealthReportEntry & { meta: ReportNode[] }>
   }
 
   /**
@@ -671,7 +672,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns the health check report for registered connections
      */
-    report (): Promise<{ health: { healthy: boolean, message: string }, meta: ReportNode[] }>
+    report (): Promise<HealthReportEntry & { meta: ReportNode[] }>
   }
 
   const Database: DatabaseContract

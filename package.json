@@ -52,15 +52,13 @@
     "snake-case": "^3.0.3"
   },
   "peerDependencies": {
-    "@adonisjs/core": "2.x.x"
+    "@adonisjs/core": ">=5.0.0-preview"
   },
   "devDependencies": {
     "@adonisjs/ace": "^6.8.3",
-    "@adonisjs/application": "^1.3.6",
+    "@adonisjs/core": "^5.0.0-preview.1",
     "@adonisjs/fold": "^6.3.3",
-    "@adonisjs/logger": "^1.1.9",
     "@adonisjs/mrm-preset": "^2.2.4",
-    "@adonisjs/profiler": "^2.0.0",
     "@poppinss/dev-utils": "^1.0.4",
     "@types/dotenv": "^8.2.0",
     "@types/luxon": "^1.21.0",
