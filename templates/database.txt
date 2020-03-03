@@ -71,10 +71,10 @@ const databaseConfig: DatabaseConfigContract & { orm: Partial<OrmConfigContract>
 
     /*
     |--------------------------------------------------------------------------
-    | PostreSQL config
+    | PostgreSQL config
     |--------------------------------------------------------------------------
     |
-    | Configuration for postgreSQL database. Make sure to install the driver
+    | Configuration for PostgreSQL database. Make sure to install the driver
     | from npm when using this connection
     |
     | npm i pg
