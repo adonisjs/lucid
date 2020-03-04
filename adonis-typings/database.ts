@@ -20,8 +20,9 @@ declare module '@ioc:Adonis/Lucid/Database' {
   import {
     Table,
     SelectTable,
-    RawContract,
+    RawBuilderContract,
     StrictValuesWithoutRaw,
+    RawQueryBuilderContract,
     ReferenceBuilderContract,
     InsertQueryBuilderContract,
     DatabaseQueryBuilderContract,
@@ -122,8 +123,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
      */
     rawQuery<Result extends any = any> (
       sql: string,
-      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw,
-    ): RawContract<Result>
+      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[],
+    ): RawQueryBuilderContract<Result>
 
     /**
      * Truncate a given table
@@ -649,7 +650,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
       sql: string,
       bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[],
       options?: DatabaseClientOptions,
-    ): RawContract<Result>
+    ): RawQueryBuilderContract<Result>
 
     /**
      * Selects a table on the default connection by instantiating a new query
@@ -679,6 +680,14 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Returns instance of reference builder
      */
     ref (reference: string): ReferenceBuilderContract
+
+    /**
+     * Returns instance of raw builder
+     */
+    raw (
+      sql: string,
+      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[]
+    ): RawBuilderContract
   }
 
   const Database: DatabaseContract

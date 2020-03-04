@@ -30,6 +30,8 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    */
   type ValueWithSubQueries<T extends any> = T | ChainableContract | RawQueryBuilderContract
 
+  export type RawQuery = RawBuilderContract | RawQueryBuilderContract
+
   /**
    * A known set of values allowed when defining values for different
    * clauses
@@ -44,17 +46,17 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     | Array<Date>
     | Array<boolean>
     | Buffer
-    | RawQueryBuilderContract
+    | RawQuery
     | ReferenceBuilderContract
 
-  export type StrictValuesWithoutRaw = Exclude<StrictValues, RawQueryBuilderContract>
+  export type StrictValuesWithoutRaw = Exclude<StrictValues, RawQuery>
 
   /**
    * A builder method to allow raw queries. However, the return type is the
    * instance of current query builder. This is used for `.{verb}Raw` methods.
    */
   interface RawQueryFn<Builder extends ChainableContract> {
-    (sql: string | RawQueryBuilderContract): Builder
+    (sql: string | RawQuery): Builder
     (sql: string, bindings: { [key: string]: StrictValuesWithoutRaw }): Builder
     (sql: string, bindings: StrictValuesWithoutRaw[]): Builder
   }
@@ -190,7 +192,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
      * Defining the join table with primary and secondary columns
      * to match, where secondary column is output of a raw query
      */
-    (table: string, primaryColumn: string, raw: RawQueryBuilderContract): Builder
+    (table: string, primaryColumn: string, raw: RawQuery): Builder
 
     /**
      * Defining the join table with primary and secondary columns
@@ -290,12 +292,12 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     /**
      * A single subquery or a raw query
      */
-    (subquery: ChainableContract | RawQueryBuilderContract, wrap?: boolean): Builder
+    (subquery: ChainableContract | RawQuery, wrap?: boolean): Builder
 
     /**
      * An array of subqueries or raw queries
      */
-    (subqueries: (ChainableContract | RawQueryBuilderContract)[], wrap?: boolean): Builder
+    (subqueries: (ChainableContract | RawQuery)[], wrap?: boolean): Builder
   }
 
   /**
@@ -373,7 +375,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    * Possible signatures of `with` CTE
    */
   interface With<Builder extends ChainableContract> {
-    (alias: string, query: RawQueryBuilderContract | ChainableContract | QueryCallback<Builder>): Builder
+    (alias: string, query: RawQuery | ChainableContract | QueryCallback<Builder>): Builder
   }
 
   /**
@@ -605,6 +607,15 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   export interface ReferenceBuilderContract {
     withSchema (name: string): this
     as (name: string): this
+    toKnex (client: knex.Client): knex.Ref<string, any>
+  }
+
+  /**
+   * Static raw builder
+   */
+  export interface RawBuilderContract {
+    wrap (before: string, after: string): this
+    toKnex (client: knex.Client): knex.Raw
   }
 
   /**

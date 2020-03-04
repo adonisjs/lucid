@@ -523,6 +523,26 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
+  test('add where clause as a raw builder query', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db
+      .from('users')
+      .where('age', '>', getDb().raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .where('age', '>', connection.client!.raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
   test('add orWhere clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
@@ -849,6 +869,45 @@ test.group('Query Builder | whereNot', (group) => {
     await connection.disconnect()
   })
 
+  test('add where not clause as a raw builder query', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNot('age', '>', getDb().raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .whereNot('age', '>', connection.client!.raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNot(
+        'age', '>', getDb().raw('select min_age from ages limit 1;'),
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereNot('my_age', '>', connection.client!.raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
   test('add orWhereNot clause', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
@@ -1098,6 +1157,53 @@ test.group('Query Builder | whereIn', (group) => {
       .from('users')
       .whereIn('username', [
         getRawQueryBuilder(getQueryClient(connection), `select ${ref('id')} from ${ref('accounts')}`),
+      ])
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .whereIn('my_username', [
+        connection.client!.raw(`select ${ref('id')} from ${ref('accounts')}`),
+      ])
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('add whereIn as a raw builder query', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const ref = connection.client!.ref.bind(connection.client!)
+
+    let db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db
+      .from('users')
+      .whereIn('username', [
+        getDb().raw(`select ${ref('id')} from ${ref('accounts')}`),
+      ])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .whereIn('username', [
+        connection.client!.raw(`select ${ref('id')} from ${ref('accounts')}`),
+      ])
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereIn('username', [
+        getDb().raw(`select ${ref('id')} from ${ref('accounts')}`),
       ])
       .toSQL()
 
@@ -2511,6 +2617,27 @@ test.group('Query Builder | join', (group) => {
 
     await connection.disconnect()
   })
+
+  test('add query join as a raw builder query', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db
+      .from('users')
+      .join('profiles', 'profiles.type', getDb().raw('?', ['social']))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .join('profiles', 'profiles.type', connection.client!.raw('?', ['social']))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
 })
 
 test.group('Query Builder | innerJoin', (group) => {
@@ -2597,6 +2724,27 @@ test.group('Query Builder | innerJoin', (group) => {
     const { sql, bindings } = db
       .from('users')
       .innerJoin('profiles', 'profiles.type', getRawQueryBuilder(getQueryClient(connection), '?', ['social']))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .innerJoin('profiles', 'profiles.type', connection.client!.raw('?', ['social']))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+
+  test('add query innerJoin as a raw query', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db
+      .from('users')
+      .innerJoin('profiles', 'profiles.type', getDb().raw('?', ['social']))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
@@ -4252,6 +4400,27 @@ test.group('Query Builder | having', (group) => {
     const { sql, bindings } = db
       .from('users')
       .havingRaw(getRawQueryBuilder(getQueryClient(connection), 'sum(likes) > ?', [200]))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .having(connection.client!.raw('sum(likes) > ?', [200]))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+
+  test('add having clause as a raw builder query', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db
+      .from('users')
+      .havingRaw(getDb().raw('sum(likes) > ?', [200]))
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!

@@ -21,6 +21,7 @@ import {
 } from '@ioc:Adonis/Lucid/Database'
 
 import { QueryClient } from '../QueryClient'
+import { RawBuilder } from './StaticBuilder/Raw'
 import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { ConnectionManager } from '../Connection/Manager'
 import { InsertQueryBuilder } from './QueryBuilder/Insert'
@@ -188,9 +189,18 @@ export class Database implements DatabaseContract {
   }
 
   /**
-   * Returns reference builder
+   * Returns reference builder.
    */
   public ref (reference: string) {
     return new ReferenceBuilder(reference)
+  }
+
+  /**
+   * Returns an instance of raw builder. This raw builder queries
+   * cannot be executed. Use `rawQuery`, if you want to execute
+   * queries raw queries.
+   */
+  public raw (sql: string, bindings?: any) {
+    return new RawBuilder(sql, bindings)
   }
 }

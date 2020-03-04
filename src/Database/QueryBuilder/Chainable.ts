@@ -15,6 +15,7 @@ import { ChainableContract, DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQu
 
 import { isObject } from '../../utils'
 import { RawQueryBuilder } from './Raw'
+import { RawBuilder } from '../StaticBuilder/Raw'
 import { ReferenceBuilder } from '../StaticBuilder/Reference'
 
 /**
@@ -153,6 +154,10 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   protected transformRaw (value: any) {
     if (value instanceof RawQueryBuilder) {
       return value['knexQuery']
+    }
+
+    if (value instanceof RawBuilder) {
+      return value.toKnex(this.knexQuery.client)
     }
 
     return value
