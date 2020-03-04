@@ -11,14 +11,14 @@
 
 import knex from 'knex'
 
-import { RawContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { RawQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import { executeQuery } from '../../helpers/executeQuery'
 
 /**
  * Exposes the API to execute raw queries
  */
-export class RawQueryBuilder implements RawContract {
+export class RawQueryBuilder implements RawQueryBuilderContract {
   constructor (public knexQuery: knex.Raw, public client: QueryClientContract) {
   }
 

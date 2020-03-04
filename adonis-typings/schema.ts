@@ -10,7 +10,7 @@
 declare module '@ioc:Adonis/Lucid/Schema' {
   import { SchemaBuilder, Raw } from 'knex'
   import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-  import { RawContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+  import { RawQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
   /**
    * Shape of callback to defer database calls

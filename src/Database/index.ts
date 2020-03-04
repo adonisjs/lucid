@@ -24,6 +24,7 @@ import { QueryClient } from '../QueryClient'
 import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { ConnectionManager } from '../Connection/Manager'
 import { InsertQueryBuilder } from './QueryBuilder/Insert'
+import { ReferenceBuilder } from './StaticBuilder/Reference'
 import { DatabaseQueryBuilder } from './QueryBuilder/Database'
 
 /**
@@ -184,5 +185,12 @@ export class Database implements DatabaseContract {
    */
   public report () {
     return this.manager.report()
+  }
+
+  /**
+   * Returns reference builder
+   */
+  public ref (reference: string) {
+    return new ReferenceBuilder(reference)
   }
 }

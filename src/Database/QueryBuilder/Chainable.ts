@@ -15,6 +15,7 @@ import { ChainableContract, DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQu
 
 import { isObject } from '../../utils'
 import { RawQueryBuilder } from './Raw'
+import { ReferenceBuilder } from '../StaticBuilder/Reference'
 
 /**
  * The chainable query builder to consturct SQL queries for selecting, updating and
@@ -112,6 +113,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * handle. It includes.
    *
    * 1. Returning the `knexBuilder` for sub queries.
+   * 2. Returning the `knex.refBuilder` for reference builder.
    * 2. Returning the `knexBuilder` for raw queries.
    * 3. Wrapping callbacks, so that the end user receives an instance Lucid query
    *    builder and not knex query builder.
@@ -119,6 +121,10 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   protected transformValue (value: any) {
     if (value instanceof Chainable) {
       return value.knexQuery
+    }
+
+    if (value instanceof ReferenceBuilder) {
+      return value.toKnex(this.knexQuery.client)
     }
 
     if (typeof (value) === 'function') {

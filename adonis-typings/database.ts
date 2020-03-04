@@ -22,6 +22,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     SelectTable,
     RawContract,
     StrictValuesWithoutRaw,
+    ReferenceBuilderContract,
     InsertQueryBuilderContract,
     DatabaseQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
@@ -673,6 +674,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Returns the health check report for registered connections
      */
     report (): Promise<HealthReportEntry & { meta: ReportNode[] }>
+
+    /**
+     * Returns instance of reference builder
+     */
+    ref (reference: string): ReferenceBuilderContract
   }
 
   const Database: DatabaseContract

@@ -25,7 +25,7 @@ import {
 } from '@ioc:Adonis/Lucid/Database'
 
 import {
-  RawContract,
+  RawQueryBuilderContract,
   InsertQueryBuilderContract,
   DatabaseQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
@@ -260,7 +260,7 @@ export function getRawQueryBuilder (client: QueryClientContract, sql: string, bi
   return new RawQueryBuilder(
     bindings ? writeClient.raw(sql, bindings) : writeClient.raw(sql),
     client,
-  ) as unknown as RawContract
+  ) as unknown as RawQueryBuilderContract
 }
 
 /**

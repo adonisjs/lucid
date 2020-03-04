@@ -16,6 +16,7 @@ import { DatabaseQueryBuilder } from '../../src/Database/QueryBuilder/Database'
 import {
   setup,
   cleanup,
+  getDb,
   getConfig,
   getLogger,
   resetTables,
@@ -611,6 +612,44 @@ test.group('Query Builder | where', (group) => {
     assert.equal(resolverSql, knexResolverSql)
     assert.deepEqual(resolverBindings, knexResolverBindings)
 
+    await connection.disconnect()
+  })
+
+  test('add where clause using ref', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db
+      .from('users')
+      .where('username', 'virk')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .where('username', 'virk')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .where('username', getDb().ref('foo.username'))
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection.client!
+      .from('users')
+      .where('my_username', connection.client!.ref('foo.username'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
     await connection.disconnect()
   })
 })
