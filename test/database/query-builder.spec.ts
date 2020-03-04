@@ -221,6 +221,132 @@ test.group('Query Builder | from', (group) => {
   })
 })
 
+test.group('Query Builder | select', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  test('define columns as array', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db.from('users').select(['username']).toSQL()
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .select('username')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('define columns with aliases', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db.from('users').select(['username as u']).toSQL()
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .select('username as u')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('define columns as multiple arguments', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db.from('users').select(
+      'username',
+      'email'
+    ).toSQL()
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .select('username', 'email')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('define columns as multiple arguments with aliases', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db.from('users').select(
+      'username as u',
+      'email as e'
+    ).toSQL()
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .select('username as u', 'email as e')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('define columns as subqueries', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const db1 = getQueryBuilder(getQueryClient(connection))
+
+    const { sql, bindings } = db.from('users').select(
+      db1.from('addresses').count('* as total').as('addresses_total')
+    ).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .select(
+        connection.client!.from('addresses').count('* as total').as('addresses_total')
+      )
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('define columns as subqueries inside an array', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const db1 = getQueryBuilder(getQueryClient(connection))
+
+    const { sql, bindings } = db.from('users').select([
+      db1.from('addresses').count('* as total').as('addresses_total'),
+    ]).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .select(
+        connection.client!.from('addresses').count('* as total').as('addresses_total')
+      )
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+})
+
 test.group('Query Builder | where', (group) => {
   group.before(async () => {
     await setup()

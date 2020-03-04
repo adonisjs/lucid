@@ -156,7 +156,17 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Define columns for selection
    */
   public select (...args: any[]): this {
-    this.knexQuery.select(...args.map((column) => this.resolveKey(column, true)))
+    let columns = args
+    if (Array.isArray(args[0])) {
+      columns = args[0]
+    }
+
+    this.knexQuery.select(columns.map((column) => {
+      if (typeof (column) === 'string') {
+        return this.resolveKey(column, true)
+      }
+      return this.transformValue(column)
+    }))
     return this
   }
 
