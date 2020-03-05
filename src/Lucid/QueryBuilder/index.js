@@ -233,6 +233,7 @@ class QueryBuilder {
    * @private
    */
   _mapRowsToInstances (rows) {
+    rows = Array.isArray(rows) ? rows : _.values(rows)
     return rows.map((row) => this._mapRowToInstance(row))
   }
 
