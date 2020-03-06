@@ -43,7 +43,7 @@
     "@poppinss/utils": "^2.1.2",
     "camelcase": "^5.3.1",
     "cli-table3": "^0.5.1",
-    "knex": "^0.20.10",
+    "knex": "^0.20.11",
     "knex-dynamic-connection": "^1.0.4",
     "log-update": "^4.0.0",
     "luxon": "^1.22.0",
