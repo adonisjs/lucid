@@ -1,0 +1,53 @@
+/*
+ * @adonisjs/lucid
+ *
+ * (c) Harminder Virk <virk@adonisjs.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+*/
+
+import { join } from 'path'
+import { BaseCommand, args } from '@adonisjs/ace'
+
+export default class MakeModel extends BaseCommand {
+  public static commandName = 'make:model'
+  public static description = 'Make a new Lucid model'
+
+  /**
+   * The name of the model file.
+   */
+  @args.string({ description: 'Name of the model class' })
+  public name: string
+
+  /**
+   * Pull path from the `models` directory declaration from
+   * the `.adonisrc.json` file or fallback to `app/Models`
+   */
+  protected $getDestinationPath (): string {
+    const rcContents = this.application.rcFile
+
+    return rcContents.namespaces['models'] ?? 'app/Models'
+  }
+
+  /**
+   * Execute command
+   */
+  public async handle (): Promise<void> {
+    const stub = join(
+      __dirname,
+      '..',
+      'templates',
+      'model.txt',
+    )
+
+    this
+      .generator
+      .addFile(this.name, { pattern: 'pascalcase', form: 'singular' })
+      .stub(stub)
+      .destinationDir(this.$getDestinationPath())
+      .appRoot(this.application.cliCwd || this.application.appRoot)
+
+    await this.generator.run()
+  }
+}
