@@ -8,7 +8,7 @@
  */
 
 import { join } from 'path'
-import { BaseCommand, args } from '@adonisjs/ace'
+import { BaseCommand, args, flags } from '@adonisjs/ace'
 
 export default class MakeModel extends BaseCommand {
 	public static commandName = 'make:model'
@@ -19,6 +19,26 @@ export default class MakeModel extends BaseCommand {
 	 */
 	@args.string({ description: 'Name of the model class' })
 	public name: string
+
+	/**
+	 * Defines if we generate the migration for the model.
+	 */
+	@flags.boolean({
+		name: 'migration',
+		alias: 'm',
+		description: 'Generate the migration for the model',
+	})
+	public migration: boolean
+
+	/**
+	 * Defines if we generate the controller for the model.
+	 */
+	@flags.boolean({
+		name: 'controller',
+		alias: 'c',
+		description: 'Generate the controller for the model',
+	})
+	public controller: boolean
 
 	/**
 	 * Execute command
@@ -34,6 +54,14 @@ export default class MakeModel extends BaseCommand {
 			.destinationDir(path || 'app/Models')
 			.useMustache()
 			.appRoot(this.application.cliCwd || this.application.appRoot)
+
+		if (this.migration) {
+			this.kernel.exec('make:migration', [this.name])
+		}
+
+		if (this.controller) {
+			this.kernel.exec('make:controller', [this.name, '--resource'])
+		}
 
 		await this.generator.run()
 	}
