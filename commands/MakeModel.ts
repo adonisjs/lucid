@@ -21,16 +21,6 @@ export default class MakeModel extends BaseCommand {
   public name: string
 
   /**
-   * Pull path from the `models` directory declaration from
-   * the `.adonisrc.json` file or fallback to `app/Models`
-   */
-  protected $getDestinationPath (): string {
-    const rcContents = this.application.rcFile
-
-    return rcContents.namespaces['models'] ?? 'app/Models'
-  }
-
-  /**
    * Execute command
    */
   public async handle (): Promise<void> {
@@ -45,7 +35,7 @@ export default class MakeModel extends BaseCommand {
       .generator
       .addFile(this.name, { pattern: 'pascalcase', form: 'singular' })
       .stub(stub)
-      .destinationDir(this.$getDestinationPath())
+      .destinationDir(this.application.resolveNamespaceDirectory('models'))
       .appRoot(this.application.cliCwd || this.application.appRoot)
 
     await this.generator.run()
