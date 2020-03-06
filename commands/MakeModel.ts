@@ -31,11 +31,13 @@ export default class MakeModel extends BaseCommand {
       'model.txt',
     )
 
+    const path = this.application.resolveNamespaceDirectory('models')
+
     this
       .generator
       .addFile(this.name, { pattern: 'pascalcase', form: 'singular' })
       .stub(stub)
-      .destinationDir(this.application.resolveNamespaceDirectory('models'))
+      .destinationDir(path || 'app/Models')
       .appRoot(this.application.cliCwd || this.application.appRoot)
 
     await this.generator.run()
