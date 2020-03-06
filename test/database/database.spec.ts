@@ -280,3 +280,76 @@ test.group('Database | extend', (group) => {
     await db.manager.closeAll()
   })
 })
+
+test.group('Database | global transaction', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  test('perform queries inside a global transaction', async (assert) => {
+    const config = {
+      connection: 'primary',
+      connections: { primary: getConfig() },
+    }
+
+    const db = new Database(config, getLogger(), getProfiler())
+    await db.beginGlobalTransaction()
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.rollbackGlobalTransaction()
+
+    const users = await db.from('users')
+    assert.lengthOf(users, 0)
+    assert.equal(db.connectionGlobalTransactions.size, 0)
+
+    await db.manager.closeAll()
+  })
+
+  test('create transactions inside a global transaction', async (assert) => {
+    const config = {
+      connection: 'primary',
+      connections: { primary: getConfig() },
+    }
+
+    const db = new Database(config, getLogger(), getProfiler())
+    await db.beginGlobalTransaction()
+    const trx = await db.transaction()
+
+    await trx.table('users').insert({ username: 'virk' })
+    await trx.commit()
+
+    await db.rollbackGlobalTransaction()
+
+    const users = await db.from('users')
+    assert.lengthOf(users, 0)
+    assert.equal(db.connectionGlobalTransactions.size, 0)
+
+    await db.manager.closeAll()
+  })
+
+  test('multiple calls to beginGlobalTransaction must be a noop', async (assert) => {
+    const config = {
+      connection: 'primary',
+      connections: { primary: getConfig() },
+    }
+
+    const db = new Database(config, getLogger(), getProfiler())
+    await db.beginGlobalTransaction()
+    await db.beginGlobalTransaction()
+    await db.beginGlobalTransaction()
+
+    await db.table('users').insert({ username: 'virk' })
+
+    await db.rollbackGlobalTransaction()
+
+    const users = await db.from('users')
+    assert.lengthOf(users, 0)
+    assert.equal(db.connectionGlobalTransactions.size, 0)
+
+    await db.manager.closeAll()
+  })
+})

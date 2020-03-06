@@ -17,6 +17,7 @@ import {
   DatabaseContract,
   DatabaseClientOptions,
   DatabaseConfigContract,
+  TransactionClientContract,
   ConnectionManagerContract,
 } from '@ioc:Adonis/Lucid/Database'
 
@@ -50,6 +51,11 @@ export class Database implements DatabaseContract {
   public DatabaseQueryBuilder = DatabaseQueryBuilder
   public InsertQueryBuilder = InsertQueryBuilder
   public ModelQueryBuilder = ModelQueryBuilder
+
+  /**
+   * A store of global transactions
+   */
+  public connectionGlobalTransactions: Map<string, TransactionClientContract> = new Map()
 
   constructor (
     private config: DatabaseConfigContract,
@@ -104,6 +110,16 @@ export class Database implements DatabaseContract {
      */
     if (options.mode && !['read', 'write'].includes(options.mode)) {
       throw new Exception(`Invalid mode ${options.mode}. Must be read or write`)
+    }
+
+    /**
+     * Return the global transaction when it already exists.
+     */
+    if (this.connectionGlobalTransactions.has(connection)) {
+      this.logger.trace({ connection }, 'using pre-existing global transaction connection')
+      const globalTransactionClient = this.connectionGlobalTransactions.get(connection)!
+      globalTransactionClient.profiler = options.profiler
+      return globalTransactionClient
     }
 
     /**
@@ -202,5 +218,73 @@ export class Database implements DatabaseContract {
    */
   public raw (sql: string, bindings?: any) {
     return new RawBuilder(sql, bindings)
+  }
+
+  /**
+   * Begin a new global transaction
+   */
+  public async beginGlobalTransaction (
+    connectionName?: string,
+    options?: Omit<DatabaseClientOptions, 'mode'>,
+  ) {
+    connectionName = connectionName || this.primaryConnectionName
+
+    /**
+     * Return global transaction as it is
+     */
+    const globalTrx = this.connectionGlobalTransactions.get(connectionName)
+    if (globalTrx) {
+      return globalTrx
+    }
+
+    /**
+     * Create a new transaction and store a reference to it
+     */
+    const trx = await this.connection(connectionName, options).transaction()
+    this.connectionGlobalTransactions.set(trx.connectionName, trx)
+
+    /**
+     * Listen for events to drop the reference when transaction
+     * is over
+     */
+    trx.on('commit', ($trx) => {
+      this.connectionGlobalTransactions.delete($trx.connectionName)
+    })
+
+    trx.on('rollback', ($trx) => {
+      this.connectionGlobalTransactions.delete($trx.connectionName)
+    })
+
+    return trx
+  }
+
+  /**
+   * Commit an existing global transaction
+   */
+  public async commitGlobalTransaction (connectionName?: string) {
+    connectionName = connectionName || this.primaryConnectionName
+    const trx = this.connectionGlobalTransactions.get(connectionName)
+
+    if (!trx) {
+      // eslint-disable-next-line max-len
+      throw new Exception('Cannot commit a non-existing global transaction. Make sure you are not calling "commitGlobalTransaction" twice')
+    }
+
+    await trx.commit()
+  }
+
+  /**
+   * Rollback an existing global transaction
+   */
+  public async rollbackGlobalTransaction (connectionName?: string) {
+    connectionName = connectionName || this.primaryConnectionName
+    const trx = this.connectionGlobalTransactions.get(connectionName)
+
+    if (!trx) {
+      // eslint-disable-next-line max-len
+      throw new Exception('Cannot rollback a non-existing global transaction. Make sure you are not calling "commitGlobalTransaction" twice')
+    }
+
+    await trx.rollback()
   }
 }

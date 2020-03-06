@@ -688,6 +688,25 @@ declare module '@ioc:Adonis/Lucid/Database' {
       sql: string,
       bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[]
     ): RawBuilderContract
+
+    /**
+     * Begin a new global transaction. Multiple calls to this
+     * method is a noop
+     */
+    beginGlobalTransaction (
+      connectionName?: string,
+      options?: Exclude<DatabaseClientOptions, 'mode'>,
+    ): Promise<TransactionClientContract>
+
+    /**
+     * Commit an existing global transaction
+     */
+    commitGlobalTransaction (connectionName?: string): Promise<void>
+
+    /**
+     * Rollback an existing global transaction
+     */
+    rollbackGlobalTransaction (connectionName?: string): Promise<void>
   }
 
   const Database: DatabaseContract
