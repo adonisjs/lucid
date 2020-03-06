@@ -10,9 +10,4 @@ export default class ${filename} extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
-
-  public static $columns: Pick<
-    ${filename},
-    'id' | 'createdAt' | 'updatedAt'
-  >
 }
