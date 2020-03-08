@@ -421,6 +421,10 @@ export class BaseModel implements ModelContract {
     value: any,
     options?: ModelAdapterOptions,
   ) {
+    if (value === undefined) {
+      throw new Exception('"find" expects a value. Received undefined')
+    }
+
     return this.query(options).where(this.primaryKey, value).first()
   }
 
@@ -432,6 +436,9 @@ export class BaseModel implements ModelContract {
     value: any,
     options?: ModelAdapterOptions,
   ) {
+    if (value === undefined) {
+      throw new Exception('"findOrFail" expects a value. Received undefined')
+    }
     return this.query(options).where(this.primaryKey, value).firstOrFail()
   }
 
@@ -443,6 +450,10 @@ export class BaseModel implements ModelContract {
     value: any[],
     options?: ModelAdapterOptions,
   ) {
+    if (value === undefined) {
+      throw new Exception('"findMany" expects a value. Received undefined')
+    }
+
     return this
       .query(options)
       .whereIn(this.primaryKey, value)

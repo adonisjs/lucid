@@ -11,6 +11,7 @@
 
 import knex from 'knex'
 import { Macroable } from 'macroable'
+import { Exception } from '@poppinss/utils'
 import { ChainableContract, DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 import { isObject } from '../../utils'
@@ -32,6 +33,16 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     public keysResolver?: (columnName: string) => string,
   ) {
     super()
+  }
+
+  /**
+   * Raises exception when only one argument is passed to a where
+   * clause and it is a string. It means the value is undefined
+   */
+  private validateWhereSingleArgument (value: any, method: string) {
+    if (typeof (value) === 'string') {
+      throw new Exception(`".${method}" expects value to be defined, but undefined is passed`)
+    }
   }
 
   /**
@@ -203,6 +214,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
        * Only callback is allowed as a standalone param. One must use `whereRaw`
        * for raw/sub queries. This is our limitation to have consistent API
        */
+      this.validateWhereSingleArgument(key, 'where')
       this.knexQuery.where(this.resolveKey(key, true, this.transformCallback(key)))
     }
 
@@ -218,6 +230,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     } else if (operator !== undefined) {
       this.knexQuery.orWhere(this.resolveKey(key), this.transformValue(operator))
     } else {
+      this.validateWhereSingleArgument(key, 'orWhere')
       this.knexQuery.orWhere(this.resolveKey(key, true, this.transformCallback(key)))
     }
 
@@ -240,6 +253,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     } else if (operator !== undefined) {
       this.knexQuery.whereNot(this.resolveKey(key), this.transformValue(operator))
     } else {
+      this.validateWhereSingleArgument(key, 'whereNot')
       this.knexQuery.whereNot(this.resolveKey(key, true, this.transformCallback(key)))
     }
 
@@ -255,6 +269,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     } else if (operator !== undefined) {
       this.knexQuery.orWhereNot(this.resolveKey(key), this.transformValue(operator))
     } else {
+      this.validateWhereSingleArgument(key, 'orWhereNot')
       this.knexQuery.orWhereNot(this.resolveKey(key, true, this.transformCallback(key)))
     }
 
