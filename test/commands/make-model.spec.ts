@@ -24,11 +24,13 @@ const templatesFs = new Filesystem(join(__dirname, '..', '..', 'templates'))
 
 test.group('MakeModel', (group) => {
   group.afterEach(async () => {
+    delete process.env.ADONIS_ACE_CWD
     await fs.cleanup()
   })
 
   test('make a model inside the default directory', async (assert) => {
-    const app = new Application(fs.basePath, {} as any, {} as any, {})
+    process.env.ADONIS_ACE_CWD = fs.basePath
+    const app = new Application(join(fs.basePath, 'build'), {} as any, {} as any, {})
 
     const makeModel = new MakeModel(app, new Kernel(app))
     makeModel.name = 'user'
@@ -47,7 +49,8 @@ test.group('MakeModel', (group) => {
   })
 
   test('make a model inside a custom directory', async (assert) => {
-    const app = new Application(fs.basePath, {} as any, {
+    process.env.ADONIS_ACE_CWD = fs.basePath
+    const app = new Application(join(fs.basePath, 'build'), {} as any, {
       namespaces: {
         models: 'App',
       },
