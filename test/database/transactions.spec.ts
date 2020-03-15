@@ -150,4 +150,73 @@ test.group('Transaction | query', (group) => {
 
     await connection.disconnect()
   })
+
+  test('commit insert inside a self managed transaction', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    await new QueryClient('dual', connection).transaction(async (db) => {
+      await db.insertQuery().table('users').insert({ username: 'virk' })
+    })
+
+    const results = await new QueryClient('dual', connection).query().from('users')
+    assert.isArray(results)
+    assert.lengthOf(results, 1)
+    assert.equal(results[0].username, 'virk')
+
+    await connection.disconnect()
+  })
+
+  test('rollback insert inside a self managed transaction', async (assert) => {
+    assert.plan(3)
+
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    try {
+      await new QueryClient('dual', connection).transaction(async (db) => {
+        await db.insertQuery().table('users').insert({ username: 'virk' })
+        throw new Error('should rollback')
+      })
+    } catch (error) {
+      assert.equal(error.message, 'should rollback')
+    }
+
+    const results = await new QueryClient('dual', connection).query().from('users')
+    assert.isArray(results)
+    assert.lengthOf(results, 0)
+
+    await connection.disconnect()
+  })
+
+  test('perform nested managed transactions', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    /**
+     * Transaction 1
+     */
+    await new QueryClient('dual', connection).transaction(async (db) => {
+      await db.insertQuery().table('users').insert({ username: 'virk' })
+
+      /**
+       * Transaction 2: Save point
+       */
+      await db.transaction(async (db1) => {
+        await db1.insertQuery().table('users').insert({ username: 'nikk' })
+
+        /**
+         * Manual callback, should work fine
+         */
+        await db1.rollback()
+      })
+    })
+
+    const results = await new QueryClient('dual', connection).query().from('users')
+    assert.isArray(results)
+    assert.lengthOf(results, 1)
+    assert.equal(results[0].username, 'virk')
+
+    await connection.disconnect()
+  })
 })

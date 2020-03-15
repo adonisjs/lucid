@@ -128,7 +128,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   /**
    * Returns another instance of transaction with save point
    */
-  public async transaction (): Promise<TransactionClientContract> {
+  public async transaction (callback?: (trx: TransactionClientContract) => Promise<any>): Promise<any> {
     const trx = await this.knexClient.transaction()
     const transaction = new TransactionClient(trx, this.dialect, this.connectionName)
 
@@ -136,6 +136,21 @@ export class TransactionClient extends EventEmitter implements TransactionClient
      * Always make sure to pass the profiler down the chain
      */
     transaction.profiler = this.profiler
+
+    /**
+     * Self managed transaction
+     */
+    if (typeof (callback) === 'function') {
+      try {
+        const response = await callback(transaction)
+        !transaction.isCompleted && await transaction.commit()
+        return response
+      } catch (error) {
+        await transaction.rollback()
+        throw error
+      }
+    }
+
     return transaction
   }
 

@@ -53,6 +53,16 @@ declare module '@ioc:Adonis/Lucid/Database' {
   }
 
   /**
+   * Shape of the transaction function to create a new transaction
+   */
+  export interface TransactionFn {
+    <T extends any> (
+      callback: (trx: TransactionClientContract) => Promise<T>,
+    ): Promise<T>,
+    (): Promise<TransactionClientContract>,
+  }
+
+  /**
    * Shape of the query client, that is used to retrive instances
    * of query builder
    */
@@ -154,7 +164,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Get instance of transaction client
      */
-    transaction (): Promise<TransactionClientContract>,
+    transaction: TransactionFn,
 
     /**
      * Work with advisory locks
@@ -669,7 +679,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Start a new transaction
      */
-    transaction (): Promise<TransactionClientContract>
+    transaction: TransactionFn,
 
     /**
      * Returns the health check report for registered connections

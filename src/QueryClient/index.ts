@@ -118,7 +118,7 @@ export class QueryClient implements QueryClientContract {
    * Returns an instance of a transaction. Each transaction will
    * query and hold a single connection for all queries.
    */
-  public async transaction (): Promise<TransactionClientContract> {
+  public async transaction (callback?: (trx: TransactionClientContract) => Promise<any>): Promise<any> {
     const trx = await this.getWriteClient().transaction()
     const transaction = new TransactionClient(trx, this.dialect, this.connectionName)
 
@@ -127,6 +127,21 @@ export class QueryClient implements QueryClientContract {
      * client as well
      */
     transaction.profiler = this.profiler
+
+    /**
+     * Self managed transaction
+     */
+    if (typeof (callback) === 'function') {
+      try {
+        const response = await callback(transaction)
+        !transaction.isCompleted && await transaction.commit()
+        return response
+      } catch (error) {
+        await transaction.rollback()
+        throw error
+      }
+    }
+
     return transaction
   }
 
