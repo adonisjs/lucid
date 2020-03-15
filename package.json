@@ -63,7 +63,7 @@
     "@poppinss/dev-utils": "^1.0.4",
     "@types/dotenv": "^8.2.0",
     "@types/luxon": "^1.21.0",
-    "@types/node": "^13.9.0",
+    "@types/node": "^13.9.1",
     "@types/pluralize": "0.0.29",
     "clone": "^2.1.2",
     "commitizen": "^4.0.3",
