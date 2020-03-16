@@ -14,6 +14,7 @@ import { Database } from '../src/Database'
 import { Adapter } from '../src/Orm/Adapter'
 import { OrmConfig } from '../src/Orm/Config'
 import { BaseModel } from '../src/Orm/BaseModel'
+import { extendValidator } from '../src/Bindings/Validator'
 
 import {
   column,
@@ -71,6 +72,10 @@ export default class DatabaseServiceProvider {
   public boot (): void {
     this.$container.with(['Adonis/Core/HealthCheck', 'Adonis/Lucid/Database'], (HealthCheck) => {
       HealthCheck.addChecker('lucid', 'Adonis/Lucid/Database')
+    })
+
+    this.$container.with(['Adonis/Core/Validator', 'Adonis/Lucid/Database'], (Validator, Db) => {
+      extendValidator(Validator.validator, Db)
     })
   }
 }
