@@ -402,15 +402,15 @@ test.group('Query client | get tables', (group) => {
 
     const client = new QueryClient('dual', connection)
     const tables = await client.getAllTables(['public'])
-    if (process.env.DB !== 'sqlite') {
+    if (process.env.DB !== 'mysql') {
       assert.deepEqual(tables, [
         'comments',
         'countries',
         'identities',
         'posts',
         'profiles',
-        'skills',
         'skill_user',
+        'skills',
         'users',
       ])
     } else {
@@ -420,8 +420,8 @@ test.group('Query client | get tables', (group) => {
         'identities',
         'posts',
         'profiles',
-        'skill_user',
         'skills',
+        'skill_user',
         'users',
       ])
     }

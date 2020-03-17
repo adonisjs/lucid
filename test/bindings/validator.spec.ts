@@ -69,8 +69,16 @@ test.group('Validator | exists', (group) => {
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
     db.connection().getReadClient().on('query', ({ sql, bindings }) => {
-      assert.equal(sql, 'select * from `users` where `id` = ? limit ?')
-      assert.deepEqual(bindings, [1, 1])
+      const { sql: knexSql, bindings: knexBindings } = db
+        .connection()
+        .getReadClient()
+        .from('users')
+        .where('id', userId)
+        .limit(1)
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
     })
 
     await validator.validate({
@@ -93,8 +101,17 @@ test.group('Validator | exists', (group) => {
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
     db.connection().getReadClient().on('query', ({ sql, bindings }) => {
-      assert.equal(sql, 'select * from `users` where `id` = ? and `username` = ? limit ?')
-      assert.deepEqual(bindings, [1, 'nikk', 1])
+      const { sql: knexSql, bindings: knexBindings } = db
+        .connection()
+        .getReadClient()
+        .from('users')
+        .where('id', userId)
+        .where('username', 'nikk')
+        .limit(1)
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
     })
 
     try {
@@ -126,11 +143,21 @@ test.group('Validator | exists', (group) => {
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
     db.connection().getReadClient().on('query', ({ sql, bindings }) => {
-      assert.equal(
-        sql,
-        'select * from `users` where `id` = ? and ((`username` = ?) or (`username` = ? and `email` = ?)) limit ?',
-      )
-      assert.deepEqual(bindings, [1, 'nikk', 'virk', 'foo@bar.com', 1])
+      const { sql: knexSql, bindings: knexBindings } = db
+        .connection()
+        .getReadClient()
+        .from('users')
+        .where('id', userId)
+        .where((builder) => {
+          builder
+            .orWhere({ username: 'nikk' })
+            .orWhere({ username: 'virk', email: 'foo@bar.com' })
+        })
+        .limit(1)
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
     })
 
     try {
@@ -223,8 +250,17 @@ test.group('Validator | unique', (group) => {
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
     db.connection().getReadClient().on('query', ({ sql, bindings }) => {
-      assert.equal(sql, 'select * from `users` where `id` = ? and `username` = ? limit ?')
-      assert.deepEqual(bindings, [1, 'virk', 1])
+      const { sql: knexSql, bindings: knexBindings } = db
+        .connection()
+        .getReadClient()
+        .from('users')
+        .where('id', userId)
+        .where('username', 'virk')
+        .limit(1)
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
     })
 
     try {
@@ -256,11 +292,21 @@ test.group('Validator | unique', (group) => {
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
     db.connection().getReadClient().on('query', ({ sql, bindings }) => {
-      assert.equal(
-        sql,
-        'select * from `users` where `id` = ? and ((`username` = ?) or (`username` = ? and `email` = ?)) limit ?',
-      )
-      assert.deepEqual(bindings, [1, 'nikk', 'virk', 'virk@adonisjs.com', 1])
+      const { sql: knexSql, bindings: knexBindings } = db
+        .connection()
+        .getReadClient()
+        .from('users')
+        .where('id', userId)
+        .where((builder) => {
+          builder
+            .orWhere({ username: 'nikk' })
+            .orWhere({ username: 'virk', email: 'virk@adonisjs.com' })
+        })
+        .limit(1)
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
     })
 
     try {
