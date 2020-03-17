@@ -9,6 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
+import { RawBuilder } from '../Database/StaticBuilder/Raw'
 import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
 export class MssqlDialect implements DialectContract {
@@ -22,6 +23,22 @@ export class MssqlDialect implements DialectContract {
   public readonly dateTimeFormat = 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZZ'
 
   constructor (private client: QueryClientContract) {
+  }
+
+  /**
+   * Returns an array of table names
+   */
+  public async getAllTables () {
+    const tables = await this.client
+      .query()
+      .from('information_schema.tables')
+      .select('table_name')
+      .where('TABLE_TYPE', 'BASE TABLE')
+      .debug(true)
+      .where('table_catalog', new RawBuilder('database()'))
+      .orderBy('table_name', 'asc')
+
+    return tables.map(({ table_name }) => table_name)
   }
 
   /**

@@ -86,6 +86,13 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   }
 
   /**
+   * Returns an array of table names
+   */
+  public async getAllTables (schemas?: string[]): Promise<string[]> {
+    return this.dialect.getAllTables(schemas)
+  }
+
+  /**
    * Get columns info inside a transaction. You won't need it here, however
    * added for API compatibility with the [[QueryClient]] class
    */

@@ -47,6 +47,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     readonly name: 'mssql' | 'mysql' | 'oracledb' | 'postgres' | 'redshift' | 'sqlite3'
     readonly supportsAdvisoryLocks: boolean
     readonly dateTimeFormat: string
+    getAllTables (schemas?: string[]): Promise<string[]>
     truncate (table: string, cascade?: boolean): Promise<void>
     getAdvisoryLock (key: string | number, timeout?: number): Promise<boolean>
     releaseAdvisoryLock (key: string | number): Promise<boolean>
@@ -146,6 +147,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      */
     columnsInfo (table: string): Promise<{ [column: string]: knex.ColumnInfo }>,
     columnsInfo (table: string, column: string): Promise<knex.ColumnInfo>,
+    getAllTables (schemas?: string[]): Promise<string[]>
 
     /**
      * Same as `query()`, but also selects the table for the query. The `from` method

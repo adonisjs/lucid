@@ -382,3 +382,48 @@ if (process.env.DB !== 'sqlite') {
     })
   })
 }
+
+test.group('Query client | get tables', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('get an array of tables', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const client = new QueryClient('dual', connection)
+    const tables = await client.getAllTables(['public'])
+    if (process.env.DB !== 'sqlite') {
+      assert.deepEqual(tables, [
+        'comments',
+        'countries',
+        'identities',
+        'posts',
+        'profiles',
+        'skills',
+        'skill_user',
+        'users',
+      ])
+    } else {
+      assert.deepEqual(tables, [
+        'comments',
+        'countries',
+        'identities',
+        'posts',
+        'profiles',
+        'skill_user',
+        'skills',
+        'users',
+      ])
+    }
+  })
+})

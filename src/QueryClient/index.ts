@@ -115,6 +115,13 @@ export class QueryClient implements QueryClientContract {
   }
 
   /**
+   * Returns an array of table names
+   */
+  public async getAllTables (schemas?: string[]): Promise<string[]> {
+    return this.dialect.getAllTables(schemas)
+  }
+
+  /**
    * Returns an instance of a transaction. Each transaction will
    * query and hold a single connection for all queries.
    */

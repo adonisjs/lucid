@@ -25,6 +25,22 @@ export class RedshiftDialect implements DialectContract {
   }
 
   /**
+   * Returns an array of table names for one or many schemas.
+   *
+   * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
+   */
+  public async getAllTables (schemas: string[]) {
+    const tables = await this.client
+      .query()
+      .from('pg_catalog.pg_tables')
+      .select('tablename')
+      .whereIn('schemaname', schemas)
+      .orderBy('tablename', 'asc')
+
+    return tables.map(({ tablename }) => tablename)
+  }
+
+  /**
    * Truncate redshift table with option to cascade and restart identity.
    *
    * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)

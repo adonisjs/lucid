@@ -25,6 +25,21 @@ export class SqliteDialect implements DialectContract {
   }
 
   /**
+   * Returns an array of table names
+   */
+  public async getAllTables () {
+    const tables = await this.client
+      .query()
+      .from('sqlite_master')
+      .select('name')
+      .where('type', 'table')
+      .whereNot('name', 'like', 'sqlite_%')
+      .orderBy('name', 'asc')
+
+    return tables.map(({ name }) => name)
+  }
+
+  /**
    * Truncate SQLITE tables
    */
   public async truncate (table: string, _: boolean) {

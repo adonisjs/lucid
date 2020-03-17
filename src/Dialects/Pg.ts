@@ -25,6 +25,20 @@ export class PgDialect implements DialectContract {
   }
 
   /**
+   * Returns an array of table names for one or many schemas.
+   */
+  public async getAllTables (schemas: string[]) {
+    const tables = await this.client
+      .query()
+      .from('pg_catalog.pg_tables')
+      .select('tablename')
+      .whereIn('schemaname', schemas)
+      .orderBy('tablename', 'asc')
+
+    return tables.map(({ tablename }) => tablename)
+  }
+
+  /**
    * Truncate pg table with option to cascade and restart identity
    */
   public async truncate (table: string, cascade: boolean = false) {

@@ -25,6 +25,15 @@ export class OracleDialect implements DialectContract {
   }
 
   /**
+   * Not implemented yet
+   */
+  public async getAllTables (): Promise<any> {
+    throw new Error(
+      '"getAllTables" method is not implemented for oracledb. Create a PR to add the feature'
+    )
+  }
+
+  /**
    * Truncate pg table with option to cascade and restart identity
    */
   public async truncate (table: string, cascade: boolean = false) {
