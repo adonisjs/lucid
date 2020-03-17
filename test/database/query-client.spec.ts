@@ -83,40 +83,42 @@ test.group('Query client', (group) => {
     assert.oneOf(column.type, ['integer', 'int'])
   })
 
-  test('truncate table with cascade', async (_assert) => {
-    const connection = new Connection('primary', getConfig(), getLogger())
-    connection.connect()
+  if (process.env.DB !== 'mssql') {
+    test('truncate table with cascade', async () => {
+      const connection = new Connection('primary', getConfig(), getLogger())
+      connection.connect()
 
-    /**
-     * Create tables
-     */
-    await connection.client?.schema.createTableIfNotExists('test_users', (table) => {
-      table.increments('id').primary()
-      table.string('username')
+      /**
+       * Create tables
+       */
+      await connection.client?.schema.createTableIfNotExists('test_users', (table) => {
+        table.increments('id').primary()
+        table.string('username')
+      })
+      await connection.client?.schema.createTableIfNotExists('test_profiles', (table) => {
+        table.increments('id').primary()
+        table.integer('user_id').unsigned().references('test_users.id').onDelete('CASCADE')
+      })
+
+      /**
+       * Insert table
+       */
+      const returnValues = await connection.client?.table('test_users').insert({ username: 'virk' })
+      await connection.client?.table('test_profiles').insert({ user_id: returnValues![0] })
+
+      /**
+       * Truncate
+       */
+      const client = new QueryClient('write', connection)
+      await client.truncate('test_users', true)
+
+      /**
+       * Drop tables
+       */
+      await connection.client?.schema.dropTable('test_profiles')
+      await connection.client?.schema.dropTable('test_users')
     })
-    await connection.client?.schema.createTableIfNotExists('test_profiles', (table) => {
-      table.increments('id').primary()
-      table.integer('user_id').unsigned().references('test_users.id').onDelete('CASCADE')
-    })
-
-    /**
-     * Insert table
-     */
-    const returnValues = await connection.client?.table('test_users').insert({ username: 'virk' })
-    await connection.client?.table('test_profiles').insert({ user_id: returnValues![0] })
-
-    /**
-     * Truncate
-     */
-    const client = new QueryClient('write', connection)
-    await client.truncate('test_users', true)
-
-    /**
-     * Drop tables
-     */
-    await connection.client?.schema.dropTable('test_profiles')
-    await connection.client?.schema.dropTable('test_users')
-  })
+  }
 })
 
 test.group('Query client | dual mode', (group) => {
@@ -164,7 +166,9 @@ test.group('Query client | dual mode', (group) => {
     connection.connect()
     const client = new QueryClient('dual', connection)
 
-    const command = process.env.DB === 'sqlite' ? 'DELETE FROM users;' : 'TRUNCATE users;'
+    const command = process.env.DB === 'sqlite' ? 'DELETE FROM users;' : (
+      process.env.DB === 'mssql' ? 'TRUNCATE table users;' : 'TRUNCATE users;'
+    )
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     await client.rawQuery(command).exec()
@@ -306,7 +310,9 @@ test.group('Query client | write mode', (group) => {
     connection.connect()
     const client = new QueryClient('write', connection)
 
-    const command = process.env.DB === 'sqlite' ? 'DELETE FROM users;' : 'TRUNCATE users;'
+    const command = process.env.DB === 'sqlite' ? 'DELETE FROM users;' : (
+      process.env.DB === 'mssql' ? 'TRUNCATE table users;' : 'TRUNCATE users;'
+    )
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     await client.rawQuery(command).exec()
@@ -336,7 +342,7 @@ test.group('Query client | write mode', (group) => {
   })
 })
 
-if (process.env.DB !== 'sqlite') {
+if (!['sqlite', 'mssql'].includes(process.env.DB as string)) {
   test.group('Query client | advisory locks', (group) => {
     group.before(async () => {
       await setup()

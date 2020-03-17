@@ -98,6 +98,7 @@ export function getConfig (): ConnectionConfigContract {
           user: process.env.MSSQL_USER as string,
           server: process.env.MSSQL_SERVER as string,
           password: process.env.MSSQL_PASSWORD as string,
+          database: 'master',
         },
         pool: {
           min: 0,
@@ -127,7 +128,7 @@ export async function setup () {
       table.string('username').unique()
       table.string('email').unique()
       table.integer('points').defaultTo(0)
-      table.dateTime('joined_at', { useTz: false })
+      table.timestamp('joined_at', { useTz: process.env.DB === 'mssql' })
       table.timestamp('created_at').defaultTo(db.fn.now())
       table.timestamp('updated_at').nullable()
     })
@@ -213,6 +214,7 @@ export async function cleanup (customTables?: string[]) {
 
   if (customTables) {
     await Promise.all(customTables.map((table) => db.schema.dropTableIfExists(table)))
+    await db.destroy()
     return
   }
 

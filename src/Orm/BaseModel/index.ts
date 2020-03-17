@@ -409,7 +409,12 @@ export class BaseModel implements ModelContract {
     const client = this.$adapter.modelConstructorClient(this, options)
 
     return managedTransaction(client, async (trx) => {
-      return Promise.all(values.map((row) => this.create(row, { client: trx })))
+      const modelInstances: InstanceType<T>[] = []
+      for (let row of values) {
+        const modelInstance = await this.create(row, { client: trx })
+        modelInstances.push(modelInstance)
+      }
+      return modelInstances
     })
   }
 
@@ -598,7 +603,7 @@ export class BaseModel implements ModelContract {
 
     const client = this.$adapter.modelClient(rows[0])
     await managedTransaction(client, async (trx) => {
-      await Promise.all(rows.map((row) => {
+      for (let row of rows) {
         /**
          * If transaction `client` was passed, then the row will have
          * the `trx` already set. But since, the trx of row will be
@@ -607,10 +612,9 @@ export class BaseModel implements ModelContract {
          */
         row.trx = trx
         if (!row.isPersisted) {
-          return row.save()
+          await row.save()
         }
-        return Promise.resolve()
-      }))
+      }
     })
 
     return rows
@@ -634,7 +638,7 @@ export class BaseModel implements ModelContract {
 
     const client = this.$adapter.modelClient(rows[0])
     await managedTransaction(client, async (trx) => {
-      await Promise.all(rows.map((row) => {
+      for (let row of rows) {
         /**
          * If transaction `client` was passed, then the row will have
          * the `trx` already set. But since, the trx of row will be
@@ -642,8 +646,8 @@ export class BaseModel implements ModelContract {
          * re-set it.
          */
         row.trx = trx
-        return row.save()
-      }))
+        await row.save()
+      }
     })
 
     return rows

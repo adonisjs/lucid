@@ -106,11 +106,11 @@ ModelConstructorContract
       await parent.save()
 
       const foreignKeyValue = this.getForeignKeyValue(parent, 'saveMany')
-      await Promise.all(related.map((row) => {
+      for (let row of related) {
         row[this.relation.foreignKey] = foreignKeyValue
         row.trx = trx
-        return row.save()
-      }))
+        await row.save()
+      }
     })
   }
 

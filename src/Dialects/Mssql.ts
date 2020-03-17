@@ -33,16 +33,21 @@ export class MssqlDialect implements DialectContract {
       .query()
       .from('information_schema.tables')
       .select('table_name')
-      .where('TABLE_TYPE', 'BASE TABLE')
-      .debug(true)
-      .where('table_catalog', new RawBuilder('database()'))
+      .where('table_type', 'BASE TABLE')
+      .where('table_catalog', new RawBuilder('DB_NAME()'))
+      .whereNot('table_name', 'like', 'spt_%')
+      .andWhereNot('table_name', 'MSreplication_options')
       .orderBy('table_name', 'asc')
 
     return tables.map(({ table_name }) => table_name)
   }
 
   /**
-   * Truncate mssql table
+   * Truncate mssql table. Disabling foreign key constriants alone is
+   * not enough for SQL server.
+   *
+   * One has to drop all FK constraints and then re-create them, and
+   * this all is too much work
    */
   public async truncate (table: string, _: boolean) {
     return this.client.knexQuery().table(table).truncate()

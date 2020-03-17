@@ -147,10 +147,10 @@ ModelConstructorContract
       /**
        * Persist all related models
        */
-      await Promise.all(related.map((one) => {
+      for (let one of related) {
         one.trx = trx
-        return one.save()
-      }))
+        await one.save()
+      }
 
       /**
        * Sync when checkExisting = true, to avoid duplicate rows. Otherwise
@@ -363,18 +363,18 @@ ModelConstructorContract
       /**
        * Update
        */
-      await Promise.all(Object.keys(updated).map((id) => {
+      for (let id of Object.keys(updated)) {
         const attributes = updated[id]
         if (!attributes) {
           return Promise.resolve()
         }
 
-        return this
+        await this
           .pivotQuery()
           .useTransaction(transaction)
           .wherePivot(this.relation.pivotRelatedForeignKey, id)
           .update(attributes)
-      }))
+      }
 
       /**
        * Return early when detach is disabled.

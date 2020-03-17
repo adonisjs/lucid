@@ -66,7 +66,6 @@ if (process.env.DB !== 'sqlite') {
       const readConfig = connection['getReadConfig']()
 
       assert.equal(readConfig.client, config.client)
-      assert.deepEqual(readConfig.connection, { database: 'lucid' })
     })
   })
 }
