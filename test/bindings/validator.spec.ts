@@ -11,7 +11,7 @@
 
 import test from 'japa'
 import { schema } from '@adonisjs/validator/build/src/Schema'
-import { validator } from '@adonisjs/validator/build/src/validator'
+import { validator } from '@adonisjs/validator/build/src/Validator'
 import { extendValidator } from '../../src/Bindings/Validator'
 
 import {

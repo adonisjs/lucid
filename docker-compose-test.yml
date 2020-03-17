@@ -7,4 +7,5 @@ services:
     links:
       - mysql
       - pg
+      - mssql
     command: ["npm", "run", "test:docker"]
