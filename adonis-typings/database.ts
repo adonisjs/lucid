@@ -406,6 +406,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * free to define them (let us know, in case any options are missing)
    */
   type MssqlConnectionNode = {
+    server: string,
     domain?: string,
     connectionTimeout?: number,
     requestTimeout?: number,

@@ -91,6 +91,19 @@ export function getConfig (): ConnectionConfigContract {
         },
         useNullAsDefault: true,
       }
+    case 'mssql':
+      return {
+        client: 'mssql',
+        connection: {
+          user: process.env.MSSQL_USER as string,
+          server: process.env.MSSQL_SERVER as string,
+          password: process.env.MSSQL_PASSWORD as string,
+        },
+        pool: {
+          min: 0,
+          idleTimeoutMillis: 300,
+        },
+      }
     default:
       throw new Error(`Missing test config for ${process.env.DB} connection`)
   }

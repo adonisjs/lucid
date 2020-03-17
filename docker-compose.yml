@@ -21,3 +21,10 @@ services:
       POSTGRES_PASSWORD: password
     ports:
       - 5432:5432
+  mssql:
+      image: microsoft/mssql-server-linux:2017-latest
+      ports:
+        - 1433:1433
+      environment:
+        SA_PASSWORD: 'arandom&233password'
+        ACCEPT_EULA: 'true'
