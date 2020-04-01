@@ -673,12 +673,16 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public having (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
       this.knexQuery.having(this.resolveKey(key), operator, this.transformValue(value))
-    } else if (operator !== undefined) {
-      this.knexQuery.having(this.resolveKey(key), this.transformValue(operator))
-    } else {
-      this.knexQuery.having(this.transformCallback(key))
+      return this
     }
 
+    if (operator !== undefined) {
+      throw new Exception(
+        'Invalid arguments for "queryBuilder.having". Excepts a callback or key-value pair along with an operator',
+      )
+    }
+
+    this.knexQuery.having(this.transformCallback(key))
     return this
   }
 
@@ -691,12 +695,16 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public orHaving (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
       this.knexQuery.orHaving(this.resolveKey(key), operator, this.transformValue(value))
-    } else if (operator !== undefined) {
-      this.knexQuery.orHaving(this.resolveKey(key), this.transformValue(operator))
-    } else {
-      this.knexQuery.orHaving(this.transformCallback(key))
+      return this
     }
 
+    if (operator !== undefined) {
+      throw new Exception(
+        'Invalid arguments for "queryBuilder.orHaving". Excepts a callback or key-value pair along with an operator',
+      )
+    }
+
+    this.knexQuery.orHaving(this.transformCallback(key))
     return this
   }
 
