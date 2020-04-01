@@ -15,8 +15,10 @@ import { TransactionClientContract, DialectContract } from '@ioc:Adonis/Lucid/Da
 import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 import { ModelQueryBuilder } from '../Orm/QueryBuilder'
+import { RawBuilder } from '../Database/StaticBuilder/Raw'
 import { RawQueryBuilder } from '../Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../Database/QueryBuilder/Insert'
+import { ReferenceBuilder } from '../Database/StaticBuilder/Reference'
 import { DatabaseQueryBuilder } from '../Database/QueryBuilder/Database'
 
 /**
@@ -110,6 +112,15 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   }
 
   /**
+   * Returns the knex raw query builder instance. The query builder is always
+   * created from the `write` client, so before executing the query, you
+   * may want to decide which client to use.
+   */
+  public knexRawQuery (sql: string, bindings?: any): knex.Raw {
+    return bindings ? this.knexClient.raw(sql, bindings) : this.knexClient.raw(sql)
+  }
+
+  /**
    * Returns a query builder instance for a given model. The `connection`
    * and `profiler` is passed down to the model, so that it continue
    * using the same options
@@ -130,6 +141,29 @@ export class TransactionClient extends EventEmitter implements TransactionClient
    */
   public insertQuery (): any {
     return new InsertQueryBuilder(this.knexQuery(), this)
+  }
+
+  /**
+   * Execute raw query on transaction
+   */
+  public rawQuery (sql: any, bindings?: any): any {
+    return new RawQueryBuilder(this.knexClient.raw(sql, bindings), this)
+  }
+
+  /**
+   * Returns an instance of raw builder. This raw builder queries
+   * cannot be executed. Use `rawQuery`, if you want to execute
+   * queries raw queries.
+   */
+  public raw (sql: string, bindings?: any) {
+    return new RawBuilder(sql, bindings)
+  }
+
+  /**
+   * Returns reference builder.
+   */
+  public ref (reference: string) {
+    return new ReferenceBuilder(reference)
   }
 
   /**
@@ -159,13 +193,6 @@ export class TransactionClient extends EventEmitter implements TransactionClient
     }
 
     return transaction
-  }
-
-  /**
-   * Execute raw query on transaction
-   */
-  public rawQuery (sql: any, bindings?: any): any {
-    return new RawQueryBuilder(this.knexClient.raw(sql, bindings), this)
   }
 
   /**

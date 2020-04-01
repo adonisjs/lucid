@@ -77,8 +77,15 @@ export class Schema implements SchemaContract {
    */
   public now (precision?: number) {
     return precision
-      ? this.db.rawQuery(`CURRENT_TIMESTAMP(${precision})`).knexQuery
-      : this.db.rawQuery('CURRENT_TIMESTAMP').knexQuery
+      ? this.db.knexRawQuery(`CURRENT_TIMESTAMP(${precision})`)
+      : this.db.knexRawQuery('CURRENT_TIMESTAMP')
+  }
+
+  /**
+   * Instance of raw knex query builder
+   */
+  public raw (query: string, bindings?: any[]) {
+    return this.db.knexRawQuery(query, bindings)
   }
 
   /**

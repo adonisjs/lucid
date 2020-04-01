@@ -144,6 +144,20 @@ export class Database implements DatabaseContract {
   }
 
   /**
+   * Returns the knex query builder
+   */
+  public knexQuery () {
+    return this.connection(this.primaryConnectionName).knexQuery()
+  }
+
+  /**
+   * Returns the knex raw query builder
+   */
+  public knexRawQuery (sql: string, bindings?: any[]) {
+    return this.connection(this.primaryConnectionName).knexRawQuery(sql, bindings)
+  }
+
+  /**
    * Returns query builder. Optionally one can define the mode as well
    */
   public query (options?: DatabaseClientOptions) {
@@ -164,6 +178,31 @@ export class Database implements DatabaseContract {
    */
   public modelQuery (model: any, options?: DatabaseClientOptions) {
     return this.connection(this.primaryConnectionName, options).modelQuery(model)
+  }
+
+  /**
+   * Returns an instance of raw query builder. Optionally one can
+   * defined the `read/write` mode in which to execute the
+   * query
+   */
+  public rawQuery (sql: string, bindings?: any, options?: DatabaseClientOptions) {
+    return this.connection(this.primaryConnectionName, options).rawQuery(sql, bindings)
+  }
+
+  /**
+   * Returns an instance of raw builder. This raw builder queries
+   * cannot be executed. Use `rawQuery`, if you want to execute
+   * queries raw queries.
+   */
+  public raw (sql: string, bindings?: any) {
+    return new RawBuilder(sql, bindings)
+  }
+
+  /**
+   * Returns reference builder.
+   */
+  public ref (reference: string) {
+    return new ReferenceBuilder(reference)
   }
 
   /**
@@ -189,35 +228,10 @@ export class Database implements DatabaseContract {
   }
 
   /**
-   * Returns an instance of raw query builder. Optionally one can
-   * defined the `read/write` mode in which to execute the
-   * query
-   */
-  public rawQuery (sql: string, bindings?: any, options?: DatabaseClientOptions) {
-    return this.connection(this.primaryConnectionName, options).rawQuery(sql, bindings)
-  }
-
-  /**
    * Invokes `manager.report`
    */
   public report () {
     return this.manager.report()
-  }
-
-  /**
-   * Returns reference builder.
-   */
-  public ref (reference: string) {
-    return new ReferenceBuilder(reference)
-  }
-
-  /**
-   * Returns an instance of raw builder. This raw builder queries
-   * cannot be executed. Use `rawQuery`, if you want to execute
-   * queries raw queries.
-   */
-  public raw (sql: string, bindings?: any) {
-    return new RawBuilder(sql, bindings)
   }
 
   /**

@@ -119,6 +119,21 @@ declare module '@ioc:Adonis/Lucid/Database' {
     knexQuery (): knex.QueryBuilder
 
     /**
+     * Returns the knex raw query builder instance
+     */
+    knexRawQuery (
+      sql: string,
+      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[],
+    ): knex.Raw
+
+    /**
+     * Returns the query builder for a given model
+     */
+    modelQuery<T extends ModelConstructorContract, Result extends any = T> (
+      model: T,
+    ): ModelQueryBuilderContract<T>
+
+    /**
      * Get new query builder instance for select, update and
      * delete calls
      */
@@ -136,6 +151,19 @@ declare module '@ioc:Adonis/Lucid/Database' {
       sql: string,
       bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[],
     ): RawQueryBuilderContract<Result>
+
+    /**
+     * Returns instance of reference builder
+     */
+    ref (reference: string): ReferenceBuilderContract
+
+    /**
+     * Returns instance of raw builder
+     */
+    raw (
+      sql: string,
+      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[]
+    ): RawBuilderContract
 
     /**
      * Truncate a given table
@@ -633,6 +661,19 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * the mode of the connection and profiler row
      */
     connection (connectionName?: string, options?: DatabaseClientOptions): QueryClientContract
+
+    /**
+     * Returns the knex query builder instance
+     */
+    knexQuery (): knex.QueryBuilder
+
+    /**
+     * Returns the knex raw query builder instance
+     */
+    knexRawQuery (
+      sql: string,
+      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[],
+    ): knex.Raw
 
     /**
      * Returns the query builder for a given model

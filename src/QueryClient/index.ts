@@ -24,8 +24,10 @@ import {
 import { dialects } from '../Dialects'
 import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { TransactionClient } from '../TransactionClient'
+import { RawBuilder } from '../Database/StaticBuilder/Raw'
 import { RawQueryBuilder } from '../Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../Database/QueryBuilder/Insert'
+import { ReferenceBuilder } from '../Database/StaticBuilder/Reference'
 import { DatabaseQueryBuilder } from '../Database/QueryBuilder/Database'
 
 /**
@@ -162,6 +164,15 @@ export class QueryClient implements QueryClientContract {
   }
 
   /**
+   * Returns the knex raw query builder instance. The query builder is always
+   * created from the `write` client, so before executing the query, you
+   * may want to decide which client to use.
+   */
+  public knexRawQuery (sql: string, bindings?: any): knex.Raw {
+    return bindings ? this.connection.client!.raw(sql, bindings) : this.connection.client!.raw(sql)
+  }
+
+  /**
    * Returns a query builder instance for a given model.
    */
   public modelQuery (model: any): any {
@@ -188,6 +199,22 @@ export class QueryClient implements QueryClientContract {
    */
   public rawQuery (sql: any, bindings?: any): any {
     return new RawQueryBuilder(this.connection.client!.raw(sql, bindings), this)
+  }
+
+  /**
+   * Returns an instance of raw builder. This raw builder queries
+   * cannot be executed. Use `rawQuery`, if you want to execute
+   * queries raw queries.
+   */
+  public raw (sql: string, bindings?: any) {
+    return new RawBuilder(sql, bindings)
+  }
+
+  /**
+   * Returns reference builder.
+   */
+  public ref (reference: string) {
+    return new ReferenceBuilder(reference)
   }
 
   /**
