@@ -196,6 +196,11 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
     return executeQuery(this.knexQuery, this.client, this.getProfilerAction())
   }
 
+  // public async paginate () {
+  //   const countQuery = this.clone()
+  //   countQuery.clearOrder().clearLim
+  // }
+
   /**
    * Get sql representation of the query
    */

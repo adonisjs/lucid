@@ -1089,6 +1089,22 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   }
 
   /**
+   * Clear limit
+   */
+  public clearLimit (): this {
+    this.knexQuery['_single'].limit = null
+    return this
+  }
+
+  /**
+   * Clear offset
+   */
+  public clearOffset (): this {
+    this.knexQuery['_single'].offset = null
+    return this
+  }
+
+  /**
    * Specify `FOR UPDATE` lock mode for a given
    * query
    */

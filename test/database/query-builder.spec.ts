@@ -6049,6 +6049,68 @@ test.group('Query Builder | clearHaving', (group) => {
   })
 })
 
+test.group('Query Builder | clearLimit', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  test('clear limit', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db
+      .from('users')
+      .limit(10)
+      .clearLimit()
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+})
+
+test.group('Query Builder | clearOffset', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  test('clear offset', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const { sql, bindings } = db
+      .from('users')
+      .offset(1)
+      .clearOffset()
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+})
+
 test.group('Query Builder | count', (group) => {
   group.before(async () => {
     await setup()

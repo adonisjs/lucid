@@ -581,6 +581,8 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     clearWhere (): this
     clearOrder (): this
     clearHaving (): this
+    clearLimit (): this
+    clearOffset (): this
 
     forUpdate (...tableNames: string[]): this
     forShare (...tableNames: string[]): this
