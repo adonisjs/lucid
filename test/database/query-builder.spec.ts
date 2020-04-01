@@ -3745,6 +3745,10 @@ test.group('Query Builder | union', (group) => {
     await cleanup()
   })
 
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
   test('define union query as a callback', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
@@ -3876,6 +3880,194 @@ test.group('Query Builder | union', (group) => {
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
 
+    await connection.disconnect()
+  })
+
+  test('add limit to union set', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert([
+      {
+        username: 'virk',
+        email: 'virk@adonisjs.com',
+      },
+      {
+        username: 'romain',
+        email: 'romain@adonisjs.com',
+      },
+      {
+        username: 'nikk',
+        email: 'nikk@adonisjs.com',
+      },
+    ])
+
+    await getInsertBuilder(getQueryClient(connection)).table('friends').multiInsert([
+      {
+        username: 'john',
+      },
+      {
+        username: 'joe',
+      },
+      {
+        username: 'virk',
+      },
+    ])
+
+    const users = await db
+      .from((builder) => {
+        builder.select('username').from('users').as('u').union((unionQuery) => {
+          unionQuery.select('username').from('friends')
+        })
+      })
+      .orderBy('u.username')
+      .limit(2)
+
+    assert.lengthOf(users, 2)
+    assert.equal(users[0].username, 'joe')
+    assert.equal(users[1].username, 'john')
+    await connection.disconnect()
+  })
+
+  test('add limit to union subquery', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert([
+      {
+        username: 'virk',
+        email: 'virk@adonisjs.com',
+      },
+      {
+        username: 'romain',
+        email: 'romain@adonisjs.com',
+      },
+      {
+        username: 'nikk',
+        email: 'nikk@adonisjs.com',
+      },
+    ])
+
+    await getInsertBuilder(getQueryClient(connection)).table('friends').multiInsert([
+      {
+        username: 'john',
+      },
+      {
+        username: 'joe',
+      },
+      {
+        username: 'virk',
+      },
+    ])
+
+    const users = await db
+      .from((builder) => {
+        builder.select('username').from('users').as('u').union((unionQuery) => {
+          unionQuery.from((fromBuilder) => {
+            fromBuilder.select('username').from('friends').as('f').orderBy('id', 'asc').limit(2)
+          })
+        })
+      })
+      .orderBy('u.username')
+
+    assert.lengthOf(users, 5)
+    assert.equal(users[0].username, 'joe')
+    assert.equal(users[1].username, 'john')
+    assert.equal(users[2].username, 'nikk')
+    assert.equal(users[3].username, 'romain')
+    assert.equal(users[4].username, 'virk')
+    await connection.disconnect()
+  })
+
+  test('count union set', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert([
+      {
+        username: 'virk',
+        email: 'virk@adonisjs.com',
+      },
+      {
+        username: 'romain',
+        email: 'romain@adonisjs.com',
+      },
+      {
+        username: 'nikk',
+        email: 'nikk@adonisjs.com',
+      },
+    ])
+
+    await getInsertBuilder(getQueryClient(connection)).table('friends').multiInsert([
+      {
+        username: 'john',
+      },
+      {
+        username: 'joe',
+      },
+      {
+        username: 'virk',
+      },
+    ])
+
+    const users = await db
+      .count('u.username as total')
+      .from((builder) => {
+        builder.select('username').from('users').as('u').union((unionQuery) => {
+          unionQuery.select('username').from('friends')
+        })
+      })
+
+    assert.equal(users[0].total, 5)
+    await connection.disconnect()
+  })
+
+  test('count union set with limit on subquery', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert([
+      {
+        username: 'virk',
+        email: 'virk@adonisjs.com',
+      },
+      {
+        username: 'romain',
+        email: 'romain@adonisjs.com',
+      },
+      {
+        username: 'nikk',
+        email: 'nikk@adonisjs.com',
+      },
+    ])
+
+    await getInsertBuilder(getQueryClient(connection)).table('friends').multiInsert([
+      {
+        username: 'john',
+      },
+      {
+        username: 'joe',
+      },
+      {
+        username: 'virk',
+      },
+    ])
+
+    const users = await db
+      .count('f.username as total')
+      .from((builder) => {
+        builder.select('username').from('friends').as('f').union((unionQuery) => {
+          unionQuery.from((fromBuilder) => {
+            fromBuilder.select('username').from('users').as('u').orderBy('id', 'asc').limit(2)
+          })
+        })
+      })
+
+    assert.equal(users[0].total, 4)
     await connection.disconnect()
   })
 })

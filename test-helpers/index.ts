@@ -15,7 +15,7 @@ import { join } from 'path'
 import { IocContract, Ioc } from '@adonisjs/fold'
 import { Filesystem } from '@poppinss/dev-utils'
 import { Profiler } from '@adonisjs/profiler/build/standalone'
-import { FakeLogger as Logger } from '@adonisjs/logger/build/standalone'
+import { Logger } from '@adonisjs/logger/build/standalone'
 
 import {
   DatabaseContract,
@@ -134,6 +134,16 @@ export async function setup () {
     })
   }
 
+  const hasFriendsTable = await db.schema.hasTable('friends')
+  if (!hasFriendsTable) {
+    await db.schema.createTable('friends', (table) => {
+      table.increments()
+      table.string('username').unique()
+      table.timestamp('created_at').defaultTo(db.fn.now())
+      table.timestamp('updated_at').nullable()
+    })
+  }
+
   const hasCountriesTable = await db.schema.hasTable('countries')
   if (!hasCountriesTable) {
     await db.schema.createTable('countries', (table) => {
@@ -219,6 +229,7 @@ export async function cleanup (customTables?: string[]) {
   }
 
   await db.schema.dropTableIfExists('users')
+  await db.schema.dropTableIfExists('friends')
   await db.schema.dropTableIfExists('countries')
   await db.schema.dropTableIfExists('skills')
   await db.schema.dropTableIfExists('skill_user')
@@ -237,6 +248,7 @@ export async function cleanup (customTables?: string[]) {
 export async function resetTables () {
   const db = knex(getConfig())
   await db.table('users').truncate()
+  await db.table('friends').truncate()
   await db.table('countries').truncate()
   await db.table('skills').truncate()
   await db.table('skill_user').truncate()
