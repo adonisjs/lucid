@@ -225,7 +225,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Creates the write connection.
    */
   private setupWriteConnection () {
-    this.client = knex(Object.assign({ log: new Logger(this.logger) }, this.getWriteConfig()))
+    this.client = knex(Object.assign({ log: new Logger(this.name, this.logger) }, this.getWriteConfig()))
     patchKnex(this.client, this.writeConfigResolver.bind(this))
   }
 
@@ -240,7 +240,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
     }
 
     this.logger.trace({ connection: this.name }, 'setting up read/write replicas')
-    this.readClient = knex(Object.assign({ log: new Logger(this.logger) }, this.getReadConfig()))
+    this.readClient = knex(Object.assign({ log: new Logger(this.name, this.logger) }, this.getReadConfig()))
     patchKnex(this.readClient, this.readConfigResolver.bind(this))
   }
 
@@ -249,7 +249,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * after first error.
    */
   private async checkReadHosts () {
-    const configCopy = Object.assign({ log: new Logger(this.logger) }, this.config)
+    const configCopy = Object.assign({ log: new Logger(this.name, this.logger) }, this.config)
     let error: any = null
 
     for (let _ of this.readReplicas) {

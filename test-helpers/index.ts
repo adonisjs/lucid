@@ -296,6 +296,7 @@ export function getLogger () {
     enabled: true,
     name: 'lucid',
     level: 'debug',
+    prettyPrint: false,
   })
 }
 
