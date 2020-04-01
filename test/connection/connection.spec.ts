@@ -153,9 +153,9 @@ test.group('Connection | setup', (group) => {
         const connection = new Connection('primary', config, getLogger())
         connection.connect()
 
-        assert.equal(connection.client!['_context'].client.constructor.name, 'Client_MySQL')
-        assert.equal(connection.client!['_context'].client.config.connection.charset, 'utf-8')
-        assert.equal(connection.client!['_context'].client.config.connection.typeCast, false)
+        assert.equal(connection.client!['context'].client.constructor.name, 'Client_MySQL')
+        assert.equal(connection.client!['context'].client.config.connection.charset, 'utf-8')
+        assert.equal(connection.client!['context'].client.config.connection.typeCast, false)
         await connection.disconnect()
       })
     })
