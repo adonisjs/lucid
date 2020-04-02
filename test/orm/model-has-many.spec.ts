@@ -13,7 +13,16 @@ import test from 'japa'
 import { HasMany } from '@ioc:Adonis/Lucid/Orm'
 
 import { column, hasMany } from '../../src/Orm/Decorators'
-import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb, getProfiler } from '../../test-helpers'
+import {
+  setup,
+  getDb,
+  cleanup,
+  getPosts,
+  ormAdapter,
+  getProfiler,
+  resetTables,
+  getBaseModel,
+} from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
@@ -1721,5 +1730,99 @@ test.group('Model | HasMany | updateOrCreate', (group) => {
     assert.lengthOf(posts, 1)
     assert.equal(posts[0].user_id, user.id)
     assert.equal(posts[0].title, 'Adonis 101')
+  })
+})
+
+test.group('Model | HasMany | paginate', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('paginate using related model query builder instance', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    User.boot()
+    User.$getRelation('posts').boot()
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.table('posts').multiInsert(getPosts(18, userId))
+
+    const user = await User.find(1)
+    const posts = await user!.related('posts').query().paginate(1, 5)
+    posts.baseUrl('/posts')
+
+    assert.lengthOf(posts.all(), 5)
+    assert.instanceOf(posts.all()[0], Post)
+    assert.equal(posts.perPage, 5)
+    assert.equal(posts.currentPage, 1)
+    assert.equal(posts.lastPage, 4)
+    assert.isTrue(posts.hasPages)
+    assert.isTrue(posts.hasMorePages)
+    assert.isFalse(posts.isEmpty)
+    assert.equal(posts.total, 18)
+    assert.isTrue(posts.hasTotal)
+    assert.deepEqual(posts.getMeta(), {
+      total: 18,
+      per_page: 5,
+      current_page: 1,
+      last_page: 4,
+      first_page: 1,
+      first_page_url: '/posts?page=1',
+      last_page_url: '/posts?page=4',
+      next_page_url: '/posts?page=2',
+      previous_page_url: null,
+    })
+  })
+
+  test('disallow paginate during preload', async (assert) => {
+    assert.plan(1)
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    User.boot()
+    User.$getRelation('posts').boot()
+
+    await db.table('users').insert({ username: 'virk' })
+
+    try {
+      await User.query().preload('posts', (query) => {
+        query.paginate(1, 5)
+      })
+    } catch ({ message }) {
+      assert.equal(message, 'Cannot paginate relationship "posts" during preload')
+    }
   })
 })

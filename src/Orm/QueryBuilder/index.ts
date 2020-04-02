@@ -23,8 +23,9 @@ import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { Preloader } from '../Preloader'
-import { Chainable } from '../../Database/QueryBuilder/Chainable'
 import { executeQuery } from '../../helpers/executeQuery'
+import { Chainable } from '../../Database/QueryBuilder/Chainable'
+import { SimplePaginator } from '../../Database/Paginator/SimplePaginator'
 
 /**
  * Database query builder exposes the API to construct and run queries for selecting,
@@ -53,12 +54,6 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * instances or not
    */
   protected wrapResultsToModelInstances: boolean = true
-
-  /**
-   * Whether or not the query builder is using one of the
-   * aggregate functions
-   */
-  protected hasAggregates: boolean = false
 
   /**
    * Options that must be passed to all new model instances
@@ -107,6 +102,15 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
       inTransaction: this.client.isTransaction,
       model: this.model.name,
     }))
+  }
+
+  /**
+   * Clone the current query builder
+   */
+  public clone (): ModelQueryBuilder {
+    const clonedQuery = new ModelQueryBuilder(this.knexQuery.clone(), this.model, this.client)
+    this.applyQueryFlags(clonedQuery)
+    return clonedQuery
   }
 
   /**
@@ -217,68 +221,6 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
-   * Count rows for the current query
-   */
-  public count (columns: any, alias?: any): this {
-    this.hasAggregates = true
-    return super.count(columns, alias)
-  }
-
-  /**
-   * Count distinct rows for the current query
-   */
-  public countDistinct (columns: any, alias?: any): this {
-    this.hasAggregates = true
-    super.countDistinct(columns, alias)
-    return this
-  }
-
-  /**
-   * Make use of `min` aggregate function
-   */
-  public min (columns: any, alias?: any): this {
-    this.hasAggregates = true
-    super.min(columns, alias)
-    return this
-  }
-
-  /**
-   * Make use of `max` aggregate function
-   */
-  public max (columns: any, alias?: any): this {
-    this.hasAggregates = true
-    super.max(columns, alias)
-    return this
-  }
-
-  /**
-   * Make use of `avg` aggregate function
-   */
-  public avg (columns: any, alias?: any): this {
-    this.hasAggregates = true
-    super.avg(columns, alias)
-    return this
-  }
-
-  /**
-   * Make use of distinct `avg` aggregate function
-   */
-  public avgDistinct (columns: any, alias?: any): this {
-    this.hasAggregates = true
-    super.avgDistinct(columns, alias)
-    return this
-  }
-
-  /**
-   * Make use of `sum` aggregate function
-   */
-  public sum (columns: any, alias?: any): this {
-    this.hasAggregates = true
-    super.sum(columns, alias)
-    return this
-  }
-
-  /**
    * Executes the query
    */
   public async exec (): Promise<any[]> {
@@ -306,6 +248,18 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
      */
     await this.preloader.sideload(this.sideloaded).$processAllForMany(modelInstances, this.client)
     return modelInstances
+  }
+
+  /**
+   * Paginate through rows inside a given table
+   */
+  public async paginate (page: number, perPage: number = 20) {
+    const countQuery = this.clone().clearOrder().clearLimit().clearOffset().clearSelect().count('* as total')
+    const aggregateQuery = await countQuery.exec()
+    const total = this.hasGroupBy ? aggregateQuery.length : aggregateQuery[0].total
+
+    const results = total > 0 ? await this.forPage(page, perPage).exec() : []
+    return new SimplePaginator(results, total, perPage, page)
   }
 
   /**

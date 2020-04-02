@@ -27,6 +27,10 @@ import { ReferenceBuilder } from '../StaticBuilder/Reference'
  * different API.
  */
 export abstract class Chainable extends Macroable implements ChainableContract {
+  public hasAggregates: boolean = false
+  public hasGroupBy: boolean = false
+  public hasUnion: boolean = false
+
   constructor (
     public knexQuery: knex.QueryBuilder,
     private queryCallback: DBQueryCallback,
@@ -42,6 +46,42 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   private validateWhereSingleArgument (value: any, method: string) {
     if (typeof (value) === 'string') {
       throw new Exception(`".${method}" expects value to be defined, but undefined is passed`)
+    }
+  }
+
+  /**
+   * Returns the value pair for the `whereBetween` clause
+   */
+  private getBetweenPair (value: any[]): any {
+    const [lhs, rhs] = value
+    if (!lhs || !rhs) {
+      throw new Error('Invalid array for whereBetween value')
+    }
+
+    return [this.transformValue(lhs), this.transformValue(rhs)]
+  }
+
+  /**
+   * Normalizes the columns aggregates functions to something
+   * knex can process.
+   */
+  private normalizeAggregateColumns (columns: any, alias?: any): any {
+    if (columns.constructor === Object) {
+      return Object.keys(columns).reduce((result, key) => {
+        const value = columns[key]
+        result[key] = typeof value === 'string'
+          ? this.resolveKey(value)
+          : this.transformValue(value)
+        return result
+      }, {})
+    }
+
+    if (!alias) {
+      return columns
+    }
+
+    return {
+      [alias]: typeof columns === 'string' ? this.resolveKey(columns) : this.transformValue(columns),
     }
   }
 
@@ -85,39 +125,13 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   }
 
   /**
-   * Returns the value pair for the `whereBetween` clause
+   * Apply existing query flags to a new query builder. This is
+   * done during clone operation
    */
-  private getBetweenPair (value: any[]): any {
-    const [lhs, rhs] = value
-    if (!lhs || !rhs) {
-      throw new Error('Invalid array for whereBetween value')
-    }
-
-    return [this.transformValue(lhs), this.transformValue(rhs)]
-  }
-
-  /**
-   * Normalizes the columns aggregates functions to something
-   * knex can process.
-   */
-  private normalizeAggregateColumns (columns: any, alias?: any): any {
-    if (columns.constructor === Object) {
-      return Object.keys(columns).reduce((result, key) => {
-        const value = columns[key]
-        result[key] = typeof value === 'string'
-          ? this.resolveKey(value)
-          : this.transformValue(value)
-        return result
-      }, {})
-    }
-
-    if (!alias) {
-      return columns
-    }
-
-    return {
-      [alias]: typeof columns === 'string' ? this.resolveKey(columns) : this.transformValue(columns),
-    }
+  protected applyQueryFlags (query: ChainableContract) {
+    query.hasAggregates = this.hasAggregates
+    query.hasGroupBy = this.hasGroupBy
+    query.hasUnion = this.hasUnion
   }
 
   /**
@@ -960,6 +974,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add group by clause
    */
   public groupBy (...columns: any[]): this {
+    this.hasGroupBy = true
     this.knexQuery.groupBy(...columns.map((column) => this.resolveKey(column)))
     return this
   }
@@ -968,6 +983,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add group by clause as a raw query
    */
   public groupByRaw (sql: any, bindings?: any): this {
+    this.hasGroupBy = true
     if (bindings) {
       this.knexQuery.groupByRaw(sql, bindings)
     } else {
@@ -1018,6 +1034,8 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Define union queries
    */
   public union (queries: any, wrap?: boolean): this {
+    this.hasUnion = true
+
     queries = Array.isArray(queries)
       ? queries.map((one) => this.transformValue(one))
       : this.transformValue(queries)
@@ -1032,6 +1050,8 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Define union all queries
    */
   public unionAll (queries: any, wrap?: boolean): this {
+    this.hasUnion = true
+
     queries = Array.isArray(queries)
       ? queries.map((one) => this.transformValue(one))
       : this.transformValue(queries)
@@ -1176,6 +1196,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Count rows for the current query
    */
   public count (columns: any, alias?: any): this {
+    this.hasAggregates = true
     this.knexQuery.count(this.normalizeAggregateColumns(columns, alias))
     return this
   }
@@ -1184,6 +1205,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Count distinct rows for the current query
    */
   public countDistinct (columns: any, alias?: any): this {
+    this.hasAggregates = true
     this.knexQuery.countDistinct(this.normalizeAggregateColumns(columns, alias))
     return this
   }
@@ -1192,6 +1214,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of `min` aggregate function
    */
   public min (columns: any, alias?: any): this {
+    this.hasAggregates = true
     this.knexQuery.min(this.normalizeAggregateColumns(columns, alias))
     return this
   }
@@ -1200,6 +1223,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of `max` aggregate function
    */
   public max (columns: any, alias?: any): this {
+    this.hasAggregates = true
     this.knexQuery.max(this.normalizeAggregateColumns(columns, alias))
     return this
   }
@@ -1208,6 +1232,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of `avg` aggregate function
    */
   public avg (columns: any, alias?: any): this {
+    this.hasAggregates = true
     this.knexQuery.avg(this.normalizeAggregateColumns(columns, alias))
     return this
   }
@@ -1216,6 +1241,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of distinct `avg` aggregate function
    */
   public avgDistinct (columns: any, alias?: any): this {
+    this.hasAggregates = true
     this.knexQuery.avgDistinct(this.normalizeAggregateColumns(columns, alias))
     return this
   }
@@ -1224,7 +1250,28 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Make use of `sum` aggregate function
    */
   public sum (columns: any, alias?: any): this {
+    this.hasAggregates = true
     this.knexQuery.sum(this.normalizeAggregateColumns(columns, alias))
+    return this
+  }
+
+  /**
+   * A shorthand for applying offset and limit based upon
+   * the current page
+   */
+  public forPage (page: number, perPage?: number): this {
+    /**
+     * Cast to number
+     */
+    page = Number(page)
+    perPage = Number(perPage)
+
+    /**
+     * Calculate offset from current page and per page values
+     */
+    const offset = page === 1 ? 0 : perPage * (page - 1)
+    this.offset(offset).limit(perPage)
+
     return this
   }
 }

@@ -17,6 +17,7 @@ import { DatabaseQueryBuilderContract, DBQueryCallback } from '@ioc:Adonis/Lucid
 
 import { Chainable } from './Chainable'
 import { executeQuery } from '../../helpers/executeQuery'
+import { SimplePaginator } from '../Paginator/SimplePaginator'
 
 /**
  * Wrapping the user function for a query callback and give them
@@ -93,7 +94,9 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Clone the current query builder
    */
   public clone (): DatabaseQueryBuilder {
-    return new DatabaseQueryBuilder(this.knexQuery.clone(), this.client)
+    const clonedQuery = new DatabaseQueryBuilder(this.knexQuery.clone(), this.client)
+    this.applyQueryFlags(clonedQuery)
+    return clonedQuery
   }
 
   /**
@@ -196,10 +199,18 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
     return executeQuery(this.knexQuery, this.client, this.getProfilerAction())
   }
 
-  // public async paginate () {
-  //   const countQuery = this.clone()
-  //   countQuery.clearOrder().clearLim
-  // }
+  /**
+   * Paginate through rows inside a given table
+   */
+  public async paginate (page: number, perPage: number = 20) {
+    const countQuery = this.clone().clearOrder().clearLimit().clearOffset().clearSelect().count('* as total')
+    const aggregates = await countQuery.exec()
+
+    const total = this.hasGroupBy ? aggregates.length : aggregates[0].total
+    const results = total > 0 ? await this.forPage(page, perPage).exec() : []
+
+    return new SimplePaginator(results, total, perPage, page)
+  }
 
   /**
    * Get sql representation of the query

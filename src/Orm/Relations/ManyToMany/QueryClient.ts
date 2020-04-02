@@ -321,7 +321,7 @@ ModelConstructorContract
        * We must scope the select query to related foreign key when ids
        * is an array and not on object. Otherwise we select *.
        */
-      const query = this.pivotQuery().useTransaction(transaction).debug(true)
+      const query = this.pivotQuery().useTransaction(transaction)
 
       /**
        * We must scope the select query to related foreign key when ids

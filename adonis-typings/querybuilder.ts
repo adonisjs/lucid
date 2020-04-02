@@ -456,6 +456,10 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    * methods to execute a query.
    */
   export interface ChainableContract {
+    knexQuery: knex.QueryBuilder
+    hasAggregates: boolean,
+    hasGroupBy: boolean,
+    hasUnion: boolean,
     keysResolver?: (columnName: string) => string,
 
     from: SelectTable<this>
@@ -621,6 +625,44 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   }
 
   /**
+   * Paginator Metadata
+   */
+  export type SimplePaginatorMeta = {
+    total: number,
+    per_page: number,
+    current_page: number,
+    last_page: number,
+    first_page: number,
+    first_page_url: string,
+    last_page_url: string,
+    next_page_url: string | null,
+    previous_page_url: string | null,
+  }
+
+  /**
+   * Shape of the simple paginator that works with offset and limit
+   */
+  export interface SimplePaginatorContract<Result extends any[]> {
+    all (): Result
+    readonly firstPage: number
+    readonly perPage: number
+    readonly currentPage: number
+    readonly lastPage: number
+    readonly hasPages: boolean
+    readonly hasMorePages: boolean
+    readonly isEmpty: boolean
+    readonly total: number
+    readonly hasTotal: boolean
+    baseUrl (url: string): this
+    queryString (values: { [key: string]: any }): this
+    getUrl (page: number): string
+    getMeta (): SimplePaginatorMeta
+    getNextPageUrl (): string | null
+    getPreviousPageUrl (): string | null
+    toJSON (): { meta: SimplePaginatorMeta, data: Result[] }
+  }
+
+  /**
    * Database query builder interface. It will use the `Executable` trait
    * and hence must be typed properly for that.
   */
@@ -628,7 +670,6 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     Result extends any = Dictionary<any, string>,
   > extends ChainableContract, ExcutableQueryBuilderContract<Result[]> {
     client: QueryClientContract,
-    knexQuery: knex.QueryBuilder,
 
     /**
      * Clone current query
@@ -644,6 +685,17 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
      * Perform delete operation
      */
     del (): this
+
+    /**
+     * A shorthand to define limit and offset based upon the
+     * current page
+     */
+    forPage (page: number, perPage?: number): this
+
+    /**
+     * Execute query with pagination
+     */
+    paginate (page: number, perPage?: number): Promise<SimplePaginatorContract<Result[]>>
 
     /**
      * Mutations (update and increment can be one query aswell)

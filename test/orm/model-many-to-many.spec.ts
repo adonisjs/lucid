@@ -3447,3 +3447,122 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[2].proficiency, 'Master')
   })
 })
+
+test.group('Model | ManyToMany | pagination', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('paginate using related model query builder instance', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('skills').insert([
+      { name: 'Programming' },
+      { name: 'Dancing' },
+      { name: 'Singing' },
+    ])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+    ])
+
+    const user = await User.find(1)
+    const skills = await user!.related('skills').query().paginate(1, 1)
+
+    skills.baseUrl('/skills')
+
+    assert.lengthOf(skills.all(), 1)
+    assert.instanceOf(skills.all()[0], Skill)
+    assert.notProperty(skills.all()[0].extras, 'total')
+    assert.equal(skills.perPage, 1)
+    assert.equal(skills.currentPage, 1)
+    assert.equal(skills.lastPage, 2)
+    assert.isTrue(skills.hasPages)
+    assert.isTrue(skills.hasMorePages)
+    assert.isFalse(skills.isEmpty)
+    assert.equal(skills.total, 2)
+    assert.isTrue(skills.hasTotal)
+    assert.deepEqual(skills.getMeta(), {
+      total: 2,
+      per_page: 1,
+      current_page: 1,
+      last_page: 2,
+      first_page: 1,
+      first_page_url: '/skills?page=1',
+      last_page_url: '/skills?page=2',
+      next_page_url: '/skills?page=2',
+      previous_page_url: null,
+    })
+  })
+
+  test('disallow paginate during preload', async (assert) => {
+    assert.plan(1)
+
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('skills').insert([
+      { name: 'Programming' },
+      { name: 'Dancing' },
+      { name: 'Singing' },
+    ])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+    ])
+
+    try {
+      await User.query().preload('skills', (query) => {
+        query.paginate(1, 5)
+      })
+    } catch ({ message }) {
+      assert.equal(message, 'Cannot paginate relationship "skills" during preload')
+    }
+  })
+})

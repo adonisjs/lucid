@@ -10,13 +10,13 @@
 import knex from 'knex'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ModelConstructorContract } from '@ioc:Adonis/Lucid/Model'
-import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { DBQueryCallback, ChainableContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { RelationBaseQueryBuilderContract, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { ModelQueryBuilder } from '../../QueryBuilder'
 
 /**
- * Base query builder for ORM relationships
+ * Base query builder for ORM Relationships
  */
 export abstract class BaseQueryBuilder extends ModelQueryBuilder implements RelationBaseQueryBuilderContract<
 ModelConstructorContract,
@@ -26,7 +26,7 @@ ModelConstructorContract
     builder: knex.QueryBuilder,
     client: QueryClientContract,
     relation: RelationshipsContract,
-    private isEager: boolean,
+    protected isEager: boolean,
     dbCallback: DBQueryCallback,
   ) {
     super(builder, relation.relatedModel(), client, dbCallback)
@@ -49,6 +49,9 @@ ModelConstructorContract
     }))
   }
 
+  /**
+   * Profiler data for the relationship
+   */
   protected abstract profilerData (): any
 
   /**
@@ -81,18 +84,29 @@ ModelConstructorContract
   /**
    * Selects the relation keys. Invoked by the preloader
    */
-  public $selectRelationKeys (): this {
-    const columns = this.knexQuery['_statements'].find((statement: any) => {
-      return statement.grouping && statement.grouping === 'columns'
-    })
+  public $selectRelationKeys (query?: ChainableContract): this {
+    const knexQuery = query ? query.knexQuery : this.knexQuery
+    const columns = knexQuery['_statements'].find(({ grouping }) => grouping === 'columns')
 
+    /**
+     * No columns have been define, we will let knex do it's job by
+     * adding `select *`
+     */
     if (!columns) {
       return this
     }
 
     /**
-     * Add the relation keys to the select statement, when user has defined
-     * one or more columns and forgot to define the relation keys.
+     * Columns is defined, but value is not an array. It means the columns is an aggregate
+     * clause, so we should relation columns
+     */
+    if (!Array.isArray(columns.value)) {
+      knexQuery.select(this.getRelationKeys())
+      return this
+    }
+
+    /**
+     * Finally push relation columns to existing selected columns
      */
     this.getRelationKeys().forEach((key) => {
       key = this.resolveKey(key)

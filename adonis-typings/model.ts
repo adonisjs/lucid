@@ -17,6 +17,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     StrictValues,
     QueryCallback,
     ChainableContract,
+    SimplePaginatorContract,
     ExcutableQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
@@ -183,7 +184,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Reference to query client used for making queries
      */
     client: QueryClientContract
-    knexQuery: knex.QueryBuilder
 
     /**
      * A custom set of sideloaded properties defined on the query
@@ -203,12 +203,21 @@ declare module '@ioc:Adonis/Lucid/Model' {
     firstOrFail (): Promise<Result>
 
     /**
+     * Perform delete operation
+     */
+    del (): ModelQueryBuilderContract<Model, number>
+
+    /**
+     * Execute query with pagination
+     */
+    paginate (page: number, perPage?: number): Promise<SimplePaginatorContract<Result[]>>
+
+    /**
      * Mutations (update and increment can be one query aswell)
      */
     update: Update<ModelQueryBuilderContract<Model, number>>
     increment: Counter<ModelQueryBuilderContract<Model, number>>
     decrement: Counter<ModelQueryBuilderContract<Model, number>>
-    del (): ModelQueryBuilderContract<Model, number>
 
     /**
      * Define relationships to be preloaded

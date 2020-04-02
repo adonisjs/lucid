@@ -1211,3 +1211,144 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.lengthOf(countries, 0)
   })
 })
+
+test.group('Model | Has Many Through | pagination', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('paginate using related model query builder instance', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<Post>
+    }
+    Country.boot()
+
+    await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
+    await db.table('users').multiInsert([
+      {
+        username: 'virk',
+        country_id: 1,
+      },
+      {
+        username: 'nikk',
+        country_id: 1,
+      },
+      {
+        username: 'romain',
+        country_id: 2,
+      },
+    ])
+
+    await db.table('posts').multiInsert([
+      {
+        title: 'Adonis 101',
+        user_id: 1,
+      },
+      {
+        title: 'Lucid 101',
+        user_id: 1,
+      },
+      {
+        title: 'Design 101',
+        user_id: 2,
+      },
+      {
+        title: 'Dev 101',
+        user_id: 3,
+      },
+    ])
+
+    const country = await Country.find(1)
+    const posts = await country!.related('posts').query().paginate(1, 2)
+    posts.baseUrl('/posts')
+
+    assert.lengthOf(posts.all(), 2)
+    assert.instanceOf(posts.all()[0], Post)
+    assert.notProperty(posts.all()[0].extras, 'total')
+    assert.equal(posts.perPage, 2)
+    assert.equal(posts.currentPage, 1)
+    assert.equal(posts.lastPage, 2)
+    assert.isTrue(posts.hasPages)
+    assert.isTrue(posts.hasMorePages)
+    assert.isFalse(posts.isEmpty)
+    assert.equal(posts.total, 3)
+    assert.isTrue(posts.hasTotal)
+    assert.deepEqual(posts.getMeta(), {
+      total: 3,
+      per_page: 2,
+      current_page: 1,
+      last_page: 2,
+      first_page: 1,
+      first_page_url: '/posts?page=1',
+      last_page_url: '/posts?page=2',
+      next_page_url: '/posts?page=2',
+      previous_page_url: null,
+    })
+  })
+
+  test('disallow paginate during preload', async (assert) => {
+    assert.plan(1)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<Post>
+    }
+    Country.boot()
+
+    await db.table('countries').insert({ name: 'India' })
+
+    try {
+      await Country.query().preload('posts', (query) => query.paginate(1))
+    } catch ({ message }) {
+      assert.equal(message, 'Cannot paginate relationship "posts" during preload')
+    }
+  })
+})

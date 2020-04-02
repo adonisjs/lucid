@@ -24,7 +24,7 @@ export class HasOneQueryBuilder extends BaseQueryBuilder implements RelationBase
 ModelConstructorContract,
 ModelConstructorContract
 > {
-  private appliedConstraints: boolean = false
+  protected appliedConstraints: boolean = false
 
   constructor (
     builder: knex.QueryBuilder,
@@ -56,6 +56,23 @@ ModelConstructorContract
    */
   protected getRelationKeys (): string[] {
     return [this.relation.foreignKey]
+  }
+
+  /**
+   * Clones the current query
+   */
+  public clone () {
+    const clonedQuery = new HasOneQueryBuilder(
+      this.knexQuery.clone(),
+      this.client,
+      this.parent,
+      this.relation,
+      this.isEager,
+    )
+
+    this.applyQueryFlags(clonedQuery)
+    clonedQuery.appliedConstraints = this.appliedConstraints
+    return clonedQuery
   }
 
   /**
@@ -92,5 +109,12 @@ ModelConstructorContract
     if (!['update', 'delete'].includes(queryAction)) {
       this.limit(1)
     }
+  }
+
+  /**
+   * Dis-allow hasOne pagination
+   */
+  public paginate (): Promise<any> {
+    throw new Error(`Cannot paginate a hasOne relationship "(${this.relation.relationName})"`)
   }
 }

@@ -15,6 +15,7 @@ import { RelationBaseQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 import { HasManyThrough } from './index'
 import { BaseQueryBuilder } from '../Base/QueryBuilder'
 import { getValue, unique, isObject } from '../../../utils'
+import { SimplePaginator } from '../../../Database/Paginator/SimplePaginator'
 
 /**
  * Extends the model query builder for executing queries in scope
@@ -24,8 +25,8 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder implements Rela
 ModelConstructorContract,
 ModelConstructorContract
 > {
-  private cherryPickingKeys: boolean = false
-  private appliedConstraints: boolean = false
+  protected cherryPickingKeys: boolean = false
+  protected appliedConstraints: boolean = false
 
   constructor (
     builder: knex.QueryBuilder,
@@ -115,6 +116,18 @@ ModelConstructorContract
   }
 
   /**
+   * Executes the pagination query for the relationship
+   */
+  private async paginateRelated (page: number, perPage: number) {
+    const countQuery = this.clone().clearOrder().clearLimit().clearOffset().clearSelect().count('* as total')
+    const aggregateQuery = await countQuery.exec()
+    const total = this.hasGroupBy ? aggregateQuery.length : aggregateQuery[0].total
+
+    const results = total > 0 ? await this.forPage(page, perPage).exec() : []
+    return new SimplePaginator(results, total, perPage, page)
+  }
+
+  /**
    * Select keys from the related table
    */
   public select (...args: any): this {
@@ -180,5 +193,33 @@ ModelConstructorContract
      * Adding where constraints
      */
     this.addWhereConstraints(this)
+  }
+
+  /**
+   * Clones the current query
+   */
+  public clone () {
+    const clonedQuery = new HasManyThroughQueryBuilder(
+      this.knexQuery.clone(),
+      this.client,
+      this.parent,
+      this.relation,
+      this.isEager,
+    )
+
+    this.applyQueryFlags(clonedQuery)
+    clonedQuery.appliedConstraints = this.appliedConstraints
+    clonedQuery.cherryPickingKeys = this.cherryPickingKeys
+    return clonedQuery
+  }
+
+  /**
+   * Paginate through rows inside a given table
+   */
+  public paginate (page: number, perPage: number = 20) {
+    if (this.isEager) {
+      throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
+    }
+    return this.paginateRelated(page, perPage)
   }
 }

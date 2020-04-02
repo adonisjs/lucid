@@ -24,7 +24,7 @@ export class HasManyQueryBuilder extends BaseQueryBuilder implements RelationBas
 ModelConstructorContract,
 ModelConstructorContract
 > {
-  private appliedConstraints: boolean = false
+  protected appliedConstraints: boolean = false
 
   constructor (
     builder: knex.QueryBuilder,
@@ -59,6 +59,23 @@ ModelConstructorContract
   }
 
   /**
+   * Clones the current query
+   */
+  public clone () {
+    const clonedQuery = new HasManyQueryBuilder(
+      this.knexQuery.clone(),
+      this.client,
+      this.parent,
+      this.relation,
+      this.isEager,
+    )
+
+    this.applyQueryFlags(clonedQuery)
+    clonedQuery.appliedConstraints = this.appliedConstraints
+    return clonedQuery
+  }
+
+  /**
    * Applies constraint to limit rows to the current relationship
    * only.
    */
@@ -85,5 +102,16 @@ ModelConstructorContract
      */
     const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
     this.where(this.relation.foreignKey, value)
+  }
+
+  /**
+   * Same as standard model query builder paginate method. But ensures that
+   * it is not invoked during eagerloading
+   */
+  public paginate (page: number, perPage: number = 20) {
+    if (this.isEager) {
+      throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
+    }
+    return super.paginate(page, perPage)
   }
 }

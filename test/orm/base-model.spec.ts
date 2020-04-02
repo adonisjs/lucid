@@ -18,6 +18,7 @@ import {
   cleanup,
   setup,
   mapToObj,
+  getUsers,
   ormAdapter,
   resetTables,
   FakeAdapter,
@@ -4159,5 +4160,61 @@ test.group('Base Model | datetime', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const user = await User.find(1)
     assert.isNull(user!.updatedAt)
+  })
+})
+
+test.group('Base Model | paginate', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('paginate through rows', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    await db.insertQuery().table('users').multiInsert(getUsers(18))
+    const users = await User.query().paginate(1, 5)
+    users.baseUrl('/users')
+
+    assert.lengthOf(users.all(), 5)
+    assert.instanceOf(users.all()[0], User)
+    assert.equal(users.perPage, 5)
+    assert.equal(users.currentPage, 1)
+    assert.equal(users.lastPage, 4)
+    assert.isTrue(users.hasPages)
+    assert.isTrue(users.hasMorePages)
+    assert.isFalse(users.isEmpty)
+    assert.equal(users.total, 18)
+    assert.isTrue(users.hasTotal)
+    assert.deepEqual(users.getMeta(), {
+      total: 18,
+      per_page: 5,
+      current_page: 1,
+      last_page: 4,
+      first_page: 1,
+      first_page_url: '/users?page=1',
+      last_page_url: '/users?page=4',
+      next_page_url: '/users?page=2',
+      previous_page_url: null,
+    })
   })
 })

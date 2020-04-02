@@ -12,6 +12,7 @@
 import knex from 'knex'
 import dotenv from 'dotenv'
 import { join } from 'path'
+import { Chance } from 'chance'
 import { IocContract, Ioc } from '@adonisjs/fold'
 import { Filesystem } from '@poppinss/dev-utils'
 import { Profiler } from '@adonisjs/profiler/build/standalone'
@@ -113,7 +114,7 @@ export function getConfig (): ConnectionConfigContract {
 /**
  * Does base setup by creating databases
  */
-export async function setup () {
+export async function setup (destroyDb: boolean = true) {
   if (process.env.DB === 'sqlite') {
     await fs.ensureRoot()
   }
@@ -213,7 +214,9 @@ export async function setup () {
     })
   }
 
-  await db.destroy()
+  if (destroyDb) {
+    await db.destroy()
+  }
 }
 
 /**
@@ -468,4 +471,30 @@ export function getMigrator (db: DatabaseContract, app: ApplicationContract, con
  */
 export function toNewlineArray (contents: string): string[] {
   return contents.split(/\r?\n/)
+}
+
+/**
+ * Returns an array of users filled with random data
+ */
+export function getUsers (count: number) {
+  const chance = new Chance()
+  return [...new Array(count)].map(() => {
+    return {
+      username: chance.string({ alpha: true }),
+      email: chance.email(),
+    }
+  })
+}
+
+/**
+ * Returns an array of posts for a given user, filled with random data
+ */
+export function getPosts (count: number, userId: number) {
+  const chance = new Chance()
+  return [...new Array(count)].map(() => {
+    return {
+      user_id: userId,
+      title: chance.sentence({ words: 5 }),
+    }
+  })
 }

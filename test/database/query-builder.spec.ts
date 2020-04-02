@@ -18,6 +18,7 @@ import {
   cleanup,
   getDb,
   getConfig,
+  getUsers,
   getLogger,
   resetTables,
   getQueryClient,
@@ -7994,6 +7995,199 @@ test.group('Query Builder | avgDistinct', (group) => {
 
     assert.equal(resolverSql, knexResolverSql)
     assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+})
+
+test.group('Query Builder | paginate', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('paginate through rows', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection))
+    await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+
+    const users = await db.from('users').paginate(1, 5)
+    users.baseUrl('/users')
+
+    assert.lengthOf(users.all(), 5)
+    assert.equal(users.perPage, 5)
+    assert.equal(users.currentPage, 1)
+    assert.equal(users.lastPage, 4)
+    assert.isTrue(users.hasPages)
+    assert.isTrue(users.hasMorePages)
+    assert.isFalse(users.isEmpty)
+    assert.equal(users.total, 18)
+    assert.isTrue(users.hasTotal)
+
+    assert.deepEqual(users.getMeta(), {
+      total: 18,
+      per_page: 5,
+      current_page: 1,
+      last_page: 4,
+      first_page: 1,
+      first_page_url: '/users?page=1',
+      last_page_url: '/users?page=4',
+      next_page_url: '/users?page=2',
+      previous_page_url: null,
+    })
+
+    await connection.disconnect()
+  })
+
+  test('paginate through rows and select columns', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection))
+    await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+
+    const users = await db.from('users').select('username').paginate(1, 5)
+    users.baseUrl('/users')
+
+    assert.lengthOf(users.all(), 5)
+    assert.notProperty(users.all()[0], 'id')
+    assert.equal(users.perPage, 5)
+    assert.equal(users.currentPage, 1)
+    assert.equal(users.lastPage, 4)
+    assert.isTrue(users.hasPages)
+    assert.isTrue(users.hasMorePages)
+    assert.isFalse(users.isEmpty)
+    assert.equal(users.total, 18)
+    assert.isTrue(users.hasTotal)
+    assert.deepEqual(users.getMeta(), {
+      total: 18,
+      per_page: 5,
+      current_page: 1,
+      last_page: 4,
+      first_page: 1,
+      first_page_url: '/users?page=1',
+      last_page_url: '/users?page=4',
+      next_page_url: '/users?page=2',
+      previous_page_url: null,
+    })
+
+    await connection.disconnect()
+  })
+
+  test('paginate through rows when there is orderBy clause', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection))
+    await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+
+    const users = await db.from('users').orderBy('username').paginate(1, 5)
+    users.baseUrl('/users')
+
+    assert.lengthOf(users.all(), 5)
+    assert.equal(users.perPage, 5)
+    assert.equal(users.currentPage, 1)
+    assert.equal(users.lastPage, 4)
+    assert.isTrue(users.hasPages)
+    assert.isTrue(users.hasMorePages)
+    assert.isFalse(users.isEmpty)
+    assert.equal(users.total, 18)
+    assert.isTrue(users.hasTotal)
+    assert.deepEqual(users.getMeta(), {
+      total: 18,
+      per_page: 5,
+      current_page: 1,
+      last_page: 4,
+      first_page: 1,
+      first_page_url: '/users?page=1',
+      last_page_url: '/users?page=4',
+      next_page_url: '/users?page=2',
+      previous_page_url: null,
+    })
+
+    await connection.disconnect()
+  })
+
+  test('paginate through rows for the last page', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection))
+    await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+
+    const users = await db.from('users').orderBy('username').paginate(4, 5)
+    users.baseUrl('/users')
+
+    assert.lengthOf(users.all(), 3)
+    assert.equal(users.perPage, 5)
+    assert.equal(users.currentPage, 4)
+    assert.equal(users.lastPage, 4)
+    assert.isTrue(users.hasPages)
+    assert.isFalse(users.hasMorePages)
+    assert.isFalse(users.isEmpty)
+    assert.equal(users.total, 18)
+    assert.isTrue(users.hasTotal)
+
+    assert.deepEqual(users.getMeta(), {
+      total: 18,
+      per_page: 5,
+      current_page: 4,
+      last_page: 4,
+      first_page: 1,
+      first_page_url: '/users?page=1',
+      last_page_url: '/users?page=4',
+      next_page_url: null,
+      previous_page_url: '/users?page=3',
+    })
+
+    await connection.disconnect()
+  })
+
+  test('paginate through rows with group by clause', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection))
+    await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+
+    const users = await db
+      .from('users')
+      .select('username')
+      .orderBy('username')
+      .groupBy('username')
+      .paginate(1, 5)
+
+    users.baseUrl('/users')
+
+    assert.lengthOf(users.all(), 5)
+    assert.equal(users.perPage, 5)
+    assert.equal(users.currentPage, 1)
+    assert.equal(users.lastPage, 4)
+    assert.isTrue(users.hasPages)
+    assert.isTrue(users.hasMorePages)
+    assert.isFalse(users.isEmpty)
+    assert.equal(users.total, 18)
+    assert.isTrue(users.hasTotal)
+    assert.deepEqual(users.getMeta(), {
+      total: 18,
+      per_page: 5,
+      current_page: 1,
+      last_page: 4,
+      first_page: 1,
+      first_page_url: '/users?page=1',
+      last_page_url: '/users?page=4',
+      next_page_url: '/users?page=2',
+      previous_page_url: null,
+    })
 
     await connection.disconnect()
   })

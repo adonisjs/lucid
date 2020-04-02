@@ -25,7 +25,7 @@ export class BelongsToQueryBuilder extends BaseQueryBuilder implements RelationB
 ModelConstructorContract,
 ModelConstructorContract
 > {
-  private appliedConstraints: boolean = false
+  protected appliedConstraints: boolean = false
 
   constructor (
     builder: knex.QueryBuilder,
@@ -76,6 +76,23 @@ ModelConstructorContract
   }
 
   /**
+   * Clones the current query
+   */
+  public clone () {
+    const clonedQuery = new BelongsToQueryBuilder(
+      this.knexQuery.clone(),
+      this.client,
+      this.parent,
+      this.relation,
+      this.isEager,
+    )
+
+    this.applyQueryFlags(clonedQuery)
+    clonedQuery.appliedConstraints = this.appliedConstraints
+    return clonedQuery
+  }
+
+  /**
    * Applies constraint to limit rows to the current relationship
    * only.
    */
@@ -118,5 +135,12 @@ ModelConstructorContract
     if (!['update', 'delete'].includes(queryAction)) {
       this.limit(1)
     }
+  }
+
+  /**
+   * Dis-allow belongsTo pagination
+   */
+  public paginate (): Promise<any> {
+    throw new Error(`Cannot paginate a belongsTo relationship "(${this.relation.relationName})"`)
   }
 }

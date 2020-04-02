@@ -1165,3 +1165,46 @@ test.group('Model | BelongsTo | dissociate', (group) => {
     assert.isNull(profiles[0].user_id)
   })
 })
+
+test.group('Model | BelongsTo | bulk operations', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('disallow pagination', async (assert) => {
+    assert.plan(1)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @belongsTo(() => User)
+      public user: BelongsTo<User>
+    }
+
+    await db.table('profiles').insert({ user_id: 4, display_name: 'Hvirk' })
+
+    const profile = await Profile.find(1)
+    try {
+      await profile!.related('user').query().paginate(1)
+    } catch ({ message }) {
+      assert.equal(message, 'Cannot paginate a belongsTo relationship "(user)"')
+    }
+  })
+})

@@ -50,6 +50,7 @@
     "luxon": "^1.22.2",
     "macroable": "^4.0.2",
     "pluralize": "^8.0.0",
+    "qs": "^6.9.3",
     "snake-case": "^3.0.3"
   },
   "peerDependencies": {
@@ -66,6 +67,7 @@
     "@types/luxon": "^1.22.0",
     "@types/node": "^13.9.8",
     "@types/pluralize": "0.0.29",
+    "chance": "^1.1.4",
     "clone": "^2.1.2",
     "commitizen": "^4.0.3",
     "copyfiles": "^2.2.0",
