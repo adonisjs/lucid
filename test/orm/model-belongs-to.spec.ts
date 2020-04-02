@@ -13,6 +13,7 @@ import test from 'japa'
 import { BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 
 import { column, belongsTo } from '../../src/Orm/Decorators'
+import { BelongsToQueryBuilder } from '../../src/Orm/Relations/BelongsTo/QueryBuilder'
 import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb, getProfiler } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
@@ -1206,5 +1207,53 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     } catch ({ message }) {
       assert.equal(message, 'Cannot paginate a belongsTo relationship "(user)"')
     }
+  })
+})
+
+test.group('Model | BelongsTo | clone', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('clone related query builder', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+    User.boot()
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: BelongsTo<User>
+    }
+    Profile.boot()
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+
+    const profile = await Profile.findOrFail(1)
+
+    const clonedQuery = profile.related('user').query().clone()
+    assert.instanceOf(clonedQuery, BelongsToQueryBuilder)
   })
 })

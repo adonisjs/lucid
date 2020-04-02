@@ -226,4 +226,53 @@ test.group('Model query builder', (group) => {
     const user = await db.from('users').where('username', 'virk').first()
     assert.isNull(user)
   })
+
+  test('clone query builder', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.boot()
+
+    const query = User.query()
+    const clonedQuery = query.clone()
+    assert.instanceOf(clonedQuery, ModelQueryBuilder)
+  })
+
+  test('clone query builder with internal flags', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.boot()
+
+    const query = User.query().groupBy('id')
+    const clonedQuery = query.clone()
+    assert.isTrue(clonedQuery.hasGroupBy)
+  })
+
+  test('pass sideloaded data to cloned query', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.boot()
+    await db.insertQuery().table('users').insert([{ username: 'virk', points: 3 }])
+
+    const query = User.query().sideload({ username: 'virk' })
+    const user = await query.clone().firstOrFail()
+    assert.deepEqual(user.sideloaded, { username: 'virk' })
+  })
 })

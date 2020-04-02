@@ -55,15 +55,15 @@ ModelConstructorContract
   protected abstract profilerData (): any
 
   /**
+   * Returns the sql query keys for the join query
+   */
+  protected abstract getRelationKeys (): string[]
+
+  /**
    * The relationship query builder must implement this method
    * to apply relationship related constraints
    */
   protected abstract applyConstraints (): void
-
-  /**
-   * Returns the sql query keys for the join query
-   */
-  protected abstract getRelationKeys (): string[]
 
   /**
    * Returns the name of the query action

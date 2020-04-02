@@ -13,6 +13,7 @@ import test from 'japa'
 import { HasOne, BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 
 import { hasOne, column, belongsTo } from '../../src/Orm/Decorators'
+import { HasOneQueryBuilder } from '../../src/Orm/Relations/HasOne/QueryBuilder'
 import { getDb, getBaseModel, ormAdapter, setup, cleanup, resetTables, getProfiler } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
@@ -1711,5 +1712,54 @@ test.group('Model | HasOne | pagination', (group) => {
     } catch ({ message }) {
       assert.equal(message, 'Cannot paginate a hasOne relationship "(profile)"')
     }
+  })
+})
+
+test.group('Model | HasOne | clone', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('clone related query builder', async (assert) => {
+    assert.plan(1)
+
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: HasOne<Profile>
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+
+    const user = await User.find(1)
+    const clonedQuery = user!.related('profile').query().clone()
+    assert.instanceOf(clonedQuery, HasOneQueryBuilder)
   })
 })

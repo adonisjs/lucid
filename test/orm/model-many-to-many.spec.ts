@@ -13,6 +13,7 @@ import test from 'japa'
 import { ManyToMany } from '@ioc:Adonis/Lucid/Orm'
 
 import { manyToMany, column } from '../../src/Orm/Decorators'
+import { ManyToManyQueryBuilder } from '../../src/Orm/Relations/ManyToMany/QueryBuilder'
 import { getDb, getBaseModel, ormAdapter, setup, resetTables, cleanup, getProfiler } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
@@ -3564,5 +3565,58 @@ test.group('Model | ManyToMany | pagination', (group) => {
     } catch ({ message }) {
       assert.equal(message, 'Cannot paginate relationship "skills" during preload')
     }
+  })
+})
+
+test.group('Model | ManyToMany | clone', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('clone related model query builder', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<Skill>
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('skills').insert([
+      { name: 'Programming' },
+      { name: 'Dancing' },
+      { name: 'Singing' },
+    ])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+    ])
+
+    const user = await User.find(1)
+    const clonedQuery = user!.related('skills').query().clone()
+    assert.instanceOf(clonedQuery, ManyToManyQueryBuilder)
   })
 })

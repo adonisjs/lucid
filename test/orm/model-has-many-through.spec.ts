@@ -13,6 +13,7 @@ import test from 'japa'
 import { HasManyThrough } from '@ioc:Adonis/Lucid/Orm'
 
 import { hasManyThrough, column } from '../../src/Orm/Decorators'
+import { HasManyThroughQueryBuilder } from '../../src/Orm/Relations/HasManyThrough/QueryBuilder'
 import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb, getProfiler } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
@@ -1350,5 +1351,87 @@ test.group('Model | Has Many Through | pagination', (group) => {
     } catch ({ message }) {
       assert.equal(message, 'Cannot paginate relationship "posts" during preload')
     }
+  })
+})
+
+test.group('Model | Has Many Through | clone', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('clone related model query builder', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<Post>
+    }
+    Country.boot()
+
+    await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
+    await db.table('users').multiInsert([
+      {
+        username: 'virk',
+        country_id: 1,
+      },
+      {
+        username: 'nikk',
+        country_id: 1,
+      },
+      {
+        username: 'romain',
+        country_id: 2,
+      },
+    ])
+
+    await db.table('posts').multiInsert([
+      {
+        title: 'Adonis 101',
+        user_id: 1,
+      },
+      {
+        title: 'Lucid 101',
+        user_id: 1,
+      },
+      {
+        title: 'Design 101',
+        user_id: 2,
+      },
+      {
+        title: 'Dev 101',
+        user_id: 3,
+      },
+    ])
+
+    const country = await Country.find(1)
+    const clonedQuery = country!.related('posts').query().clone()
+    assert.instanceOf(clonedQuery, HasManyThroughQueryBuilder)
   })
 })

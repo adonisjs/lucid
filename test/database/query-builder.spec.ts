@@ -8192,3 +8192,39 @@ test.group('Query Builder | paginate', (group) => {
     await connection.disconnect()
   })
 })
+
+test.group('Query Builder | clone', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('clone query builder', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection))
+
+    const clonedQuery = db.from('users').clone()
+    assert.deepEqual(clonedQuery, db)
+    await connection.disconnect()
+  })
+
+  test('copy internal to the cloned query builder', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection))
+
+    const clonedQuery = db.from('users').groupBy('id').clone()
+    assert.isTrue(clonedQuery.hasGroupBy)
+    await connection.disconnect()
+  })
+})

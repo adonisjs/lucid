@@ -8,14 +8,11 @@
 */
 
 declare module '@ioc:Adonis/Lucid/Model' {
-  import knex from 'knex'
   import { ProfilerContract, ProfilerRowContract } from '@ioc:Adonis/Core/Profiler'
   import {
     Update,
     Counter,
     Aggregate,
-    StrictValues,
-    QueryCallback,
     ChainableContract,
     SimplePaginatorContract,
     ExcutableQueryBuilderContract,
@@ -184,6 +181,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Reference to query client used for making queries
      */
     client: QueryClientContract
+
+    /**
+     * Clone query builder instance
+     */
+    clone<ClonedResult = Result> (): ModelQueryBuilderContract<Model, ClonedResult>
 
     /**
      * A custom set of sideloaded properties defined on the query

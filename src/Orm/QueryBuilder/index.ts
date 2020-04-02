@@ -110,6 +110,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   public clone (): ModelQueryBuilder {
     const clonedQuery = new ModelQueryBuilder(this.knexQuery.clone(), this.model, this.client)
     this.applyQueryFlags(clonedQuery)
+    clonedQuery.sideloaded = Object.assign({}, this.sideloaded)
     return clonedQuery
   }
 

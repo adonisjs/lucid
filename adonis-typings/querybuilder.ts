@@ -9,7 +9,6 @@
 
 declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   import * as knex from 'knex'
-  import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
   import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
   /**

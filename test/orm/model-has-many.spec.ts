@@ -13,6 +13,8 @@ import test from 'japa'
 import { HasMany } from '@ioc:Adonis/Lucid/Orm'
 
 import { column, hasMany } from '../../src/Orm/Decorators'
+import { HasManyQueryBuilder } from '../../src/Orm/Relations/HasMany/QueryBuilder'
+
 import {
   setup,
   getDb,
@@ -1824,5 +1826,47 @@ test.group('Model | HasMany | paginate', (group) => {
     } catch ({ message }) {
       assert.equal(message, 'Cannot paginate relationship "posts" during preload')
     }
+  })
+})
+
+test.group('Model | HasMany | clone', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('clone related model query builder', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<Post>
+    }
+
+    User.boot()
+    User.$getRelation('posts').boot()
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.table('posts').multiInsert(getPosts(18, userId))
+
+    const user = await User.find(1)
+    const clonedQuery = user!.related('posts').query().clone()
+    assert.instanceOf(clonedQuery, HasManyQueryBuilder)
   })
 })

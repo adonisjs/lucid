@@ -320,7 +320,7 @@ ModelConstructorContract
    * Applying query constraints to scope them to relationship
    * only.
    */
-  public applyConstraints () {
+  protected applyConstraints () {
     if (this.appliedConstraints) {
       return
     }
@@ -367,6 +367,7 @@ ModelConstructorContract
     )
 
     this.addWhereConstraints()
+    return
   }
 
   /**

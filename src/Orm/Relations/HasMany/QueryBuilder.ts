@@ -79,7 +79,7 @@ ModelConstructorContract
    * Applies constraint to limit rows to the current relationship
    * only.
    */
-  public applyConstraints () {
+  protected applyConstraints () {
     if (this.appliedConstraints) {
       return
     }
