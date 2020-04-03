@@ -18,10 +18,9 @@ declare module '@ioc:Adonis/Lucid/Database' {
   import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
   import {
-    Table,
-    SelectTable,
+    FromTable,
+    RawQueryBindings,
     RawBuilderContract,
-    StrictValuesWithoutRaw,
     RawQueryBuilderContract,
     ReferenceBuilderContract,
     InsertQueryBuilderContract,
@@ -32,13 +31,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
     ModelConstructorContract,
     ModelQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/Model'
-
-  /**
-   * Extracted from ts-essentials
-   */
-  type Dictionary<T, K extends string | number = string> = {
-    [key in K]: T
-  }
 
   /**
    * Dialect specfic methods
@@ -57,9 +49,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Shape of the transaction function to create a new transaction
    */
   export interface TransactionFn {
-    <T extends any> (
-      callback: (trx: TransactionClientContract) => Promise<T>,
-    ): Promise<T>,
+    <T extends any> (callback: (trx: TransactionClientContract) => Promise<T>): Promise<T>,
     (): Promise<TransactionClientContract>,
   }
 
@@ -81,7 +71,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * The database dialect in use
      */
-    dialect: DialectContract
+    readonly dialect: DialectContract
 
     /**
      * The client mode in which it is execute queries
@@ -102,16 +92,15 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns the read and write clients
      */
-    getReadClient (): knex<any, any> | knex.Transaction<any, any>
-    getWriteClient (): knex<any, any> | knex.Transaction<any, any>
+    getReadClient (): knex<any, any>
+    getWriteClient (): knex<any, any>
 
     /**
      * Returns the query builder for a given model
      */
-    modelQuery<
-      T extends ModelConstructorContract,
-      Result extends any = T,
-    > (model: T): ModelQueryBuilderContract<T>
+    modelQuery<T extends ModelConstructorContract, Result extends any = T> (
+      model: T,
+    ): ModelQueryBuilderContract<T, Result>
 
     /**
      * Returns the knex query builder instance
@@ -121,17 +110,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns the knex raw query builder instance
      */
-    knexRawQuery (
-      sql: string,
-      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[],
-    ): knex.Raw
-
-    /**
-     * Returns the query builder for a given model
-     */
-    modelQuery<T extends ModelConstructorContract, Result extends any = T> (
-      model: T,
-    ): ModelQueryBuilderContract<T>
+    knexRawQuery (sql: string, bindings?: RawQueryBindings): knex.Raw
 
     /**
      * Get new query builder instance for select, update and
@@ -149,7 +128,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      */
     rawQuery<Result extends any = any> (
       sql: string,
-      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[],
+      bindings?: RawQueryBindings,
     ): RawQueryBuilderContract<Result>
 
     /**
@@ -160,21 +139,22 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns instance of raw builder
      */
-    raw (
-      sql: string,
-      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[]
-    ): RawBuilderContract
+    raw (sql: string, bindings?: RawQueryBindings): RawBuilderContract
 
     /**
      * Truncate a given table
      */
-    truncate (table: string, cascade?: boolean): Promise<void>,
+    truncate (table: string, cascade?: boolean): Promise<void>
 
     /**
      * Returns columns info for a given table
      */
-    columnsInfo (table: string): Promise<{ [column: string]: knex.ColumnInfo }>,
-    columnsInfo (table: string, column: string): Promise<knex.ColumnInfo>,
+    columnsInfo (table: string): Promise<{ [column: string]: knex.ColumnInfo }>
+    columnsInfo (table: string, column: string): Promise<knex.ColumnInfo>
+
+    /**
+     * Get all tables of the database
+     */
     getAllTables (schemas?: string[]): Promise<string[]>
 
     /**
@@ -182,14 +162,14 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * doesn't allow defining the return type and one must use `query` to define
      * that.
      */
-    from: SelectTable<DatabaseQueryBuilderContract<any>>,
+    from: FromTable<DatabaseQueryBuilderContract<any>>,
 
     /**
      * Same as `insertQuery()`, but also selects the table for the query.
      * The `table` method doesn't allow defining the return type and
      * one must use `insertQuery` to define that.
      */
-    table: Table<InsertQueryBuilderContract<any>>,
+    table: (table: string) => InsertQueryBuilderContract<any>,
 
     /**
      * Get instance of transaction client
@@ -225,6 +205,15 @@ declare module '@ioc:Adonis/Lucid/Database' {
      */
     rollback (): Promise<void>
 
+    /**
+     * Returns the read and write transaction clients
+     */
+    getReadClient (): knex.Transaction<any, any>
+    getWriteClient (): knex.Transaction<any, any>
+
+    /**
+     * Transaction named events
+     */
     on (event: 'commit', handler: (client: this) => void): this
     on (event: 'rollback', handler: (client: this) => void): this
 
@@ -580,7 +569,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Property to find if explicit read/write is enabled
      */
-    hasReadWriteReplicas: boolean,
+    readonly hasReadWriteReplicas: boolean,
 
     /**
      * Read/write connection pools
@@ -670,10 +659,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns the knex raw query builder instance
      */
-    knexRawQuery (
-      sql: string,
-      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[],
-    ): knex.Raw
+    knexRawQuery (sql: string, bindings?: RawQueryBindings): knex.Raw
 
     /**
      * Returns the query builder for a given model
@@ -681,7 +667,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     modelQuery<T extends ModelConstructorContract, Result extends any = T> (
       model: T,
       options?: DatabaseClientOptions,
-    ): ModelQueryBuilderContract<T>
+    ): ModelQueryBuilderContract<T, Result>
 
     /**
      * Get query builder instance for a given connection.
@@ -702,9 +688,19 @@ declare module '@ioc:Adonis/Lucid/Database' {
      */
     rawQuery<Result extends any = any> (
       sql: string,
-      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[],
+      bindings?: RawQueryBindings,
       options?: DatabaseClientOptions,
     ): RawQueryBuilderContract<Result>
+
+    /**
+     * Returns instance of reference builder
+     */
+    ref (reference: string): ReferenceBuilderContract
+
+    /**
+     * Returns instance of raw builder
+     */
+    raw (sql: string, bindings?: RawQueryBindings): RawBuilderContract
 
     /**
      * Selects a table on the default connection by instantiating a new query
@@ -729,19 +725,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Returns the health check report for registered connections
      */
     report (): Promise<HealthReportEntry & { meta: ReportNode[] }>
-
-    /**
-     * Returns instance of reference builder
-     */
-    ref (reference: string): ReferenceBuilderContract
-
-    /**
-     * Returns instance of raw builder
-     */
-    raw (
-      sql: string,
-      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[]
-    ): RawBuilderContract
 
     /**
      * Begin a new global transaction. Multiple calls to this

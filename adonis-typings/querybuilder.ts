@@ -8,15 +8,13 @@
 */
 
 declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
-  import * as knex from 'knex'
+  import knex from 'knex'
   import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
   /**
    * Extracted from ts-essentials
    */
-  type Dictionary<T, K extends string | number = string> = {
-    [key in K]: T
-  }
+  type Dictionary<T, K extends string | number = string> = { [key in K]: T }
 
   /**
    * Get one or many of a generic
@@ -29,6 +27,9 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    */
   type ValueWithSubQueries<T extends any> = T | ChainableContract | RawQueryBuilderContract
 
+  /**
+   * Acceptable raw queries
+   */
   export type RawQuery = RawBuilderContract | RawQueryBuilderContract
 
   /**
@@ -48,7 +49,15 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     | RawQuery
     | ReferenceBuilderContract
 
+  /**
+   * Strict set of allowed values except the raw queries
+   */
   export type StrictValuesWithoutRaw = Exclude<StrictValues, RawQuery>
+
+  /**
+   * Shape of raw query bindings
+   */
+  export type RawQueryBindings = { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[]
 
   /**
    * A builder method to allow raw queries. However, the return type is the
@@ -56,8 +65,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    */
   interface RawQueryFn<Builder extends ChainableContract> {
     (sql: string | RawQuery): Builder
-    (sql: string, bindings: { [key: string]: StrictValuesWithoutRaw }): Builder
-    (sql: string, bindings: StrictValuesWithoutRaw[]): Builder
+    (sql: string, bindings: RawQueryBindings): Builder
   }
 
   /**
@@ -69,47 +77,43 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   )
 
   /**
-   * Function to transform the query callbacks and passing them the right
-   * instance
-   */
+   * Shape of the function accepted by the chainable query builder to
+   * pass lucid query builder to wrapped callbacks like
+   * `.where(function () {})`.
+   *
+   * - This method will accept the wrapped callback
+   * - Return a new method, that is accepted by knex.
+   * - When knex calls that method, this method will invoke the user wrapped
+   *   callback, but instead of passing the knex query builder, it will
+   *   pass the appropriate lucid query builder.
+  */
   type DBQueryCallback = (
     userFn: QueryCallback<ChainableContract>,
     keysResolver?: (columnName: string) => string,
   ) => ((builder: knex.QueryBuilder) => void)
 
   /**
-   * Possible signatures for a select method on database query builder. The select narrows the result
-   * based upon many factors.
-   *
-   * 1. select(*) uses the main result generic. Which means everything is returned.
-   * 2. select(columns) narrows the result set to explicitly defined keys.
-   * 3. Calling `select(columns)` for multiple times appends to the explicit result set.
-   * 4. Calling `select(*)` after named selects will append all columns to the named columns.
-   * 5. Aliases defined as object will return typed output.
+   * Possible signatures for a select method on database query builder.
    */
   interface DatabaseQueryBuilderSelect<Builder extends ChainableContract> {
     /**
      * Selecting columns as a dictionary with key as the alias and value is
-     * the original column. When aliases are defined, the return output
-     * will have the alias columns and not the original one's
+     * the original column.
      */
     (columns: Dictionary<string, string>): Builder
 
     /**
-     * String fallback when columns to be selected aren't derived from
-     * record. Here we allow subqueries, raw queries or an array
-     * of strings.
+     * An array of values with subqueries
      */
     (columns: ValueWithSubQueries<string>[]): Builder
 
     /**
-     * Selecting columns as spread
+     * A spread of array arguments
      */
     (...columns: ValueWithSubQueries<string>[]): Builder
 
     /**
-     * Wildcard selector. Fallback to original `Result` type, since we are
-     * selecting everything.
+     * Wildcard selector.
      */
     (column: '*'): Builder
   }
@@ -124,12 +128,12 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     (callback: QueryCallback<Builder>): Builder
 
     /**
-     * Passing an object of named key/value pair
+     * Passing an object of named key-value pair
      */
     (clause: Dictionary<any, string>): Builder
 
     /**
-     * Accepting any string as a key for supporting `dot` aliases
+     * Key-value pair. The value can also be a subquery
      */
     (key: string, value: StrictValues | ChainableContract): Builder
     (key: string, operator: string, value: StrictValues | ChainableContract): Builder
@@ -140,13 +144,24 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    */
   interface WhereIn<Builder extends ChainableContract> {
     /**
-     * Allowing any string key (mainly for prefixed columns) with all
-     * possible values
+     * Column name and array of values
      */
     (K: string, value: (StrictValues | ChainableContract)[]): Builder
+
+    /**
+     * Column names and array of values as an 2d array
+     */
     (K: string[], value: (StrictValues | ChainableContract)[][]): Builder
 
+    /**
+     * Column name with a subquery for a callback that yields an array of
+     * results
+     */
     (k: string, subquery: ChainableContract | QueryCallback<Builder>): Builder
+
+    /**
+     * Column names along with a subquery that yields an array
+     */
     (k: string[], subquery: ChainableContract): Builder
   }
 
@@ -210,19 +225,8 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    * Possible signatures for a distinct clause
    */
   interface Distinct<Builder extends ChainableContract> {
-    /**
-     * An array of untyped strings
-     */
     (columns: string[]): Builder
-
-    /**
-     * Spread of untyped strings
-     */
     (...columns: string[]): Builder
-
-    /**
-     * Wildcard selector
-     */
     (column: '*'): Builder
   }
 
@@ -239,7 +243,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    */
   interface Aggregate <Builder extends ChainableContract> {
     /**
-     * Accepting an un typed column with the alias for the count.
+     * Accepting column with the alias for the count.
      */
     (
       column: OneOrMany<ValueWithSubQueries<string>>,
@@ -259,17 +263,17 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    */
   interface OrderBy<Builder extends ChainableContract> {
     /**
-     * Order by an untyped column and optional direction
+     * Order by a column and optional direction
      */
     (column: string, direction?: 'asc' | 'desc'): Builder
 
     /**
-     * Order by multiple untyped columns with default direction
+     * Order by multiple columns in default direction
      */
     (columns: string[]): Builder
 
     /**
-     * Order by untyped multiple columns and custom direction for each of them
+     * Order by multiple columns and custom direction for each of them
      */
     (columns: { column: string, order?: 'asc' | 'desc' }[]): Builder
   }
@@ -278,25 +282,8 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    * Possible signatures for a union clause
    */
   interface Union<Builder extends ChainableContract> {
-    /**
-     * A single callback with optional wrap
-     */
-    (callback: QueryCallback<Builder>, wrap?: boolean): Builder
-
-    /**
-     * An array of multiple callbacks
-     */
-    (callbacks: QueryCallback<Builder>[], wrap?: boolean): Builder
-
-    /**
-     * A single subquery or a raw query
-     */
-    (subquery: ChainableContract | RawQuery, wrap?: boolean): Builder
-
-    /**
-     * An array of subqueries or raw queries
-     */
-    (subqueries: (ChainableContract | RawQuery)[], wrap?: boolean): Builder
+    (callback: OneOrMany<QueryCallback<Builder>>, wrap?: boolean): Builder
+    (subquery: OneOrMany<ChainableContract | RawQuery>, wrap?: boolean): Builder
   }
 
   /**
@@ -319,17 +306,9 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     (callback: QueryCallback<Builder>): Builder
 
     /**
-     * An untyped key, comparison operator along with a literal value, a raw
-     * query or a subquery.
-     *
-     * We support untyped keys, since having clause can reference an alias field
-     * as well.
+     * Key operator and value. Value can be a subquery as well
      */
-    (
-      key: string,
-      operator: string,
-      value: StrictValues | ChainableContract,
-    ): Builder
+    (key: string, operator: string, value: StrictValues | ChainableContract): Builder
   }
 
   /**
@@ -337,13 +316,13 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    */
   interface HavingIn<Builder extends ChainableContract> {
     /**
-     * An untyped key, along with an array of literal values, a raw queries or
+     * Key and an array of literal values, raw queries or
      * subqueries.
      */
     (key: string, value: (StrictValues | ChainableContract)[]): Builder
 
     /**
-     * Untyped key, along with a query callback
+     * Key, along with a query callback
      */
     (key: string, callback: QueryCallback<Builder>): Builder
   }
@@ -378,36 +357,19 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   }
 
   /**
-   * Possible signatures for defining table
+   * Possible signatures for defining table for a select query.
    */
-  interface Table<Builder> {
-    (table: string): Builder
-    (table: Dictionary<string, string>): Builder
-  }
-
-  /**
-   * Possible signatures for defining table for a select query. A query
-   * callback is allowed for select queries for computing a value
-   * from a subquery
-   */
-  interface SelectTable<Builder extends ChainableContract> extends Table<Builder> {
-    (callback: QueryCallback<Builder>): Builder
+  interface FromTable<Builder extends ChainableContract> {
+    (
+      table: string | Dictionary<string, string> | QueryCallback<Builder> | ChainableContract
+    ): Builder
   }
 
   /**
    * Possible signatures for the `returning` method.
    */
   interface Returning<Builder> {
-    /**
-     * Mark return columns as a single array of value type for the given
-     * key
-     */
-    (column: string): Builder
-
-    /**
-     * Mark return columns as an array of key/value pair with correct types.
-     */
-    (columns: string[]): Builder
+    (column: OneOrMany<string>): Builder
   }
 
   /**
@@ -421,7 +383,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     (values: Dictionary<any, string>, returning?: string | string[]): Builder
 
     /**
-     * Accepts a key/value pair to update.
+     * Accepts a key-value pair to update.
      */
     (column: string, value: any, returning?: string | string[]): Builder
   }
@@ -461,7 +423,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     hasUnion: boolean,
     keysResolver?: (columnName: string) => string,
 
-    from: SelectTable<this>
+    from: FromTable<this>
     select: DatabaseQueryBuilderSelect<this>
 
     where: Where<this>
@@ -727,7 +689,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     /**
      * Table for the insert query
      */
-    table: Table<this>
+    table (table: string): this
 
     /**
      * Define returning columns

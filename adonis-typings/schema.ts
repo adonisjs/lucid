@@ -10,7 +10,7 @@
 declare module '@ioc:Adonis/Lucid/Schema' {
   import { SchemaBuilder, Raw } from 'knex'
   import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-  import { StrictValuesWithoutRaw } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+  import { RawQueryBindings } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
   /**
    * Shape of callback to defer database calls
@@ -29,16 +29,12 @@ declare module '@ioc:Adonis/Lucid/Schema' {
    * Shape of schema class
    */
   export interface SchemaContract {
+    readonly file: string
     dryRun: boolean
     db: QueryClientContract
     schema: SchemaBuilder
-    file: string
-
     now (precision?: number): Raw
-    raw (
-      sql: string,
-      bindings?: { [key: string]: StrictValuesWithoutRaw } | StrictValuesWithoutRaw[]
-    ): Raw,
+    raw (sql: string, bindings?: RawQueryBindings): Raw
     defer: (cb: DeferCallback) => void
     up (): Promise<void> | void
     down (): Promise<void> | void
