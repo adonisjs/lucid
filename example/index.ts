@@ -12,6 +12,10 @@ class User extends BaseModel {
   public $columns: Pick<User, 'id' | 'username'>
 
   public profile: HasOne<Profile>
+
+  public foo () {
+    // this.related('profile')
+  }
 }
 
 User.create({ id: '1' })

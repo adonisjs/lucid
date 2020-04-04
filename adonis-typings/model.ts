@@ -80,7 +80,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * Options for defining a column
    */
   export type ColumnOptions = {
-    columnName: string,
+    columnName: string, // database column name
     serializeAs: string | null, // null means do not serialize column
     isPrimary: boolean,
     hasGetter: boolean,
@@ -115,8 +115,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
   export type DateColumnDecorator = (
     options?: Partial<
-    Omit<ColumnOptions, 'hasGetter' | 'hasSetter' | 'isPrimary'>
-    & { autoCreate: boolean, autoUpdate: boolean }
+      Omit<ColumnOptions, 'hasGetter' | 'hasSetter' | 'isPrimary'>
+      & { autoCreate: boolean, autoUpdate: boolean }
     >
   ) => (target: any, property: any) => void
 
@@ -132,7 +132,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
 
   /**
-   * Model options to dictate query values
+   * Model options to be used when making queries
    */
   export type ModelOptions = {
     connection?: string,
@@ -140,7 +140,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
-   * Adapter and also accept a client directly
+   * Adapter also accept a client directly
    */
   export type ModelAdapterOptions = ModelOptions & {
     client?: QueryClientContract,
@@ -317,42 +317,23 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     $hasRelated<Name extends keyof this = keyof this> (key: Name): boolean
 
-    $setRelated<
-      Name extends keyof ExtractRelations<this>,
-      RelationType extends TypedRelations = this[Name] extends TypedRelations ? this[Name] : never
-    > (
-      key: Name,
-      result: ExtractRelationModel<RelationType>
-    ): void
-
-    $pushRelated<
-      Name extends keyof ExtractRelations<this>,
-      RelationType extends TypedRelations = this[Name] extends TypedRelations ? this[Name] : never,
-      RelationModel extends ExtractRelationModel<RelationType> = ExtractRelationModel<RelationType>
-    > (
-      key: Name,
-      result: RelationModel extends any[] ? RelationModel | RelationModel[0] : RelationModel
-    ): void
-
-    $getRelated<
-      Name extends keyof ExtractRelations<this>,
-      RelationType extends TypedRelations = this[Name] extends TypedRelations ? this[Name] : never,
-      RelationModel extends ExtractRelationModel<RelationType> = ExtractRelationModel<RelationType>
-    > (
-      key: Name,
-      defaultValue?: any,
-    ): RelationModel extends any[] ? RelationModel : (RelationModel | undefined)
+    // @todo: Come back later to improve types
+    $setRelated (key: string, result: TypedRelations): void
+    $pushRelated (key: string, result: TypedRelations): void
+    $getRelated (key: string, defaultValue?: any): TypedRelations | undefined
 
     /**
      * Consume the adapter result and hydrate the model
      */
     $consumeAdapterResult (adapterResult: ModelObject, sideloadAttributes?: ModelObject): void
-
     hydrateOriginals(): void
-    fill (value: ModelObject, ignoreUndefined?: boolean): void
-    merge (value: ModelObject, ignoreUndefined?: boolean): void
+
+    fill (value: Partial<this['$columns']>, ignoreUndefined?: boolean): void
+    merge (value: Partial<this['$columns']>, ignoreUndefined?: boolean): void
     save (): Promise<void>
     delete (): Promise<void>
+    refresh (): Promise<void>
+    preload: ModelBuilderPreloadFn<this>
 
     /**
      * Serialize attributes to a plain object
@@ -395,9 +376,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     serialize (fieldsToCherryPick?: ModelObject): ModelObject
     toJSON (): ModelObject
-
-    refresh (): Promise<void>
-    preload: ModelBuilderPreloadFn<this>
 
     related<
       Name extends keyof ExtractRelations<this>,
@@ -536,12 +514,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Get relationship declaration
      */
-    $getRelation<
-      T extends ModelConstructorContract,
-      M extends InstanceType<T>,
-      Name extends keyof ExtractRelations<M>,
-      RelationType extends TypedRelations = M[Name] extends TypedRelations ? M[Name] : never
-    > (this: T, name: Name): RelationType['relation']
+    $getRelation (name: string): TypedRelations | undefined
 
     /**
      * Boot model
@@ -617,8 +590,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     firstOrNew<T extends ModelConstructorContract> (
       this: T,
-      search: Partial<Model['$columns']>,
-      savePayload?: Partial<Model['$columns']>,
+      search: Partial<InstanceType<T>['$columns']>,
+      savePayload?: Partial<InstanceType<T>['$columns']>,
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
 
