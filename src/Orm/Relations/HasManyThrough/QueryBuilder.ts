@@ -8,9 +8,8 @@
 */
 
 import knex from 'knex'
+import { LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
-import { RelationBaseQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { HasManyThrough } from './index'
 import { BaseQueryBuilder } from '../Base/QueryBuilder'
@@ -21,21 +20,17 @@ import { SimplePaginator } from '../../../Database/Paginator/SimplePaginator'
  * Extends the model query builder for executing queries in scope
  * to the current relationship
  */
-export class HasManyThroughQueryBuilder extends BaseQueryBuilder implements RelationBaseQueryBuilderContract<
-ModelConstructorContract,
-ModelConstructorContract
-> {
+export class HasManyThroughQueryBuilder extends BaseQueryBuilder {
   protected cherryPickingKeys: boolean = false
   protected appliedConstraints: boolean = false
 
   constructor (
     builder: knex.QueryBuilder,
     client: QueryClientContract,
-    private parent: ModelContract | ModelContract[],
+    private parent: LucidRow | LucidRow[],
     private relation: HasManyThrough,
-    isEager: boolean = false,
   ) {
-    super(builder, client, relation, isEager, (userFn) => {
+    super(builder, client, relation, (userFn) => {
       return (__builder) => {
         userFn(new HasManyThroughQueryBuilder(__builder, this.client, this.parent, this.relation))
       }
@@ -204,12 +199,12 @@ ModelConstructorContract
       this.client,
       this.parent,
       this.relation,
-      this.isEager,
     )
 
     this.applyQueryFlags(clonedQuery)
     clonedQuery.appliedConstraints = this.appliedConstraints
     clonedQuery.cherryPickingKeys = this.cherryPickingKeys
+    clonedQuery.isEagerQuery = this.isEagerQuery
     return clonedQuery
   }
 
@@ -217,7 +212,7 @@ ModelConstructorContract
    * Paginate through rows inside a given table
    */
   public paginate (page: number, perPage: number = 20) {
-    if (this.isEager) {
+    if (this.isEagerQuery) {
       throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
     }
     return this.paginateRelated(page, perPage)

@@ -7,28 +7,32 @@
  * file that was distributed with this source code.
 */
 
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
-import { HasManyThroughRelationContract, ThroughRelationOptions } from '@ioc:Adonis/Lucid/Relations'
+import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import {
+  ThroughRelationOptions,
+  HasManyThroughRelationContract,
+  HasManyThrough as ModelHasManyThrough,
+} from '@ioc:Adonis/Lucid/Relations'
 
-import { HasManyThroughClient } from './QueryClient'
 import { KeysExtractor } from '../KeysExtractor'
+import { HasManyThroughClient } from './QueryClient'
 import { ensureRelationIsBooted } from '../../../utils'
+import { HasManyThroughQueryBuilder } from './QueryBuilder'
 
 /**
  * Manages loading and persisting has many through relationship
  */
-export class HasManyThrough implements HasManyThroughRelationContract<
-ModelConstructorContract,
-ModelConstructorContract
-> {
+export class HasManyThrough implements HasManyThroughRelationContract<LucidModel, LucidModel> {
   public type = 'hasManyThrough' as const
+
   public booted: boolean = false
+
   public serializeAs = this.options.serializeAs === undefined
     ? this.relationName
     : this.options.serializeAs
 
-  public relatedModel = this.options.relatedModel
   public throughModel = this.options.throughModel
 
   /**
@@ -57,8 +61,9 @@ ModelConstructorContract
 
   constructor (
     public relationName: string,
-    private options: ThroughRelationOptions,
-    public model: ModelConstructorContract,
+    public relatedModel: () => LucidModel,
+    private options: ThroughRelationOptions<ModelHasManyThrough<LucidModel>> & { throughModel: () => LucidModel },
+    public model: LucidModel,
   ) {
   }
 
@@ -145,31 +150,31 @@ ModelConstructorContract
   /**
    * Set related model instances
    */
-  public $setRelated (parent: ModelContract, related: ModelContract[]): void {
+  public setRelated (parent: LucidRow, related: LucidRow[]): void {
     ensureRelationIsBooted(this)
-    parent.$setRelated(this.relationName as any, related)
+    parent.$setRelated(this.relationName, related)
   }
 
   /**
    * Push related model instance(s)
    */
-  public $pushRelated (parent: ModelContract, related: ModelContract | ModelContract[]): void {
+  public pushRelated (parent: LucidRow, related: LucidRow | LucidRow[]): void {
     ensureRelationIsBooted(this)
-    parent.$pushRelated(this.relationName as any, related as any)
+    parent.$pushRelated(this.relationName, related)
   }
 
   /**
    * Finds and set the related model instances next to the parent
    * models.
    */
-  public $setRelatedForMany (parent: ModelContract[], related: ModelContract[]): void {
+  public setRelatedForMany (parent: LucidRow[], related: LucidRow[]): void {
     ensureRelationIsBooted(this)
     const $foreignCastAsKeyAlias = this.throughAlias(this.foreignKeyColumnName)
 
     parent.forEach((parentModel) => {
-      this.$setRelated(parentModel, related.filter((relatedModel) => {
+      this.setRelated(parentModel, related.filter((relatedModel) => {
         const value = parentModel[this.localKey]
-        return value !== undefined && relatedModel.extras[$foreignCastAsKeyAlias] === value
+        return value !== undefined && relatedModel.$extras[$foreignCastAsKeyAlias] === value
       }))
     })
   }
@@ -177,8 +182,14 @@ ModelConstructorContract
   /**
    * Returns an instance of query client for invoking queries
    */
-  public client (parent: ModelContract | ModelContract[], client: QueryClientContract): any {
+  public client (parent: LucidRow, client: QueryClientContract): any {
     ensureRelationIsBooted(this)
     return new HasManyThroughClient(this, parent, client)
+  }
+
+  public eagerQuery (parent: OneOrMany<LucidRow>, client: QueryClientContract) {
+    const query = new HasManyThroughQueryBuilder(client.knexQuery(), client, parent, this)
+    query.isEagerQuery = true
+    return query
   }
 }

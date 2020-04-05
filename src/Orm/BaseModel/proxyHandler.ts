@@ -9,14 +9,14 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import { ModelConstructorContract } from '@ioc:Adonis/Lucid/Model'
+import { LucidModel } from '@ioc:Adonis/Lucid/Model'
 
 /**
  * A proxy trap to add support for custom getters and setters
  */
 export const proxyHandler = {
   get (target: any, key: any, receiver: any) {
-    const Model = target.constructor as ModelConstructorContract
+    const Model = target.constructor as LucidModel
     const column = Model.$getColumn(key)
 
     /**
@@ -38,8 +38,8 @@ export const proxyHandler = {
     return Reflect.get(target, key, receiver)
   },
 
-  set (target: any, key: any, value: any, receiver) {
-    const Model = target.constructor as ModelConstructorContract
+  set (target: any, key: any, value: any, receiver: any) {
+    const Model = target.constructor as LucidModel
     const column = Model.$getColumn(key)
 
     /**

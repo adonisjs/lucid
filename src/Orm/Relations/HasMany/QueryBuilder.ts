@@ -8,9 +8,8 @@
 */
 
 import knex from 'knex'
+import { LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
-import { RelationBaseQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { HasMany } from './index'
 import { getValue, unique } from '../../../utils'
@@ -20,22 +19,18 @@ import { BaseQueryBuilder } from '../Base/QueryBuilder'
  * Extends the model query builder for executing queries in scope
  * to the current relationship
  */
-export class HasManyQueryBuilder extends BaseQueryBuilder implements RelationBaseQueryBuilderContract<
-ModelConstructorContract,
-ModelConstructorContract
-> {
+export class HasManyQueryBuilder extends BaseQueryBuilder {
   protected appliedConstraints: boolean = false
 
   constructor (
     builder: knex.QueryBuilder,
     client: QueryClientContract,
-    private parent: ModelContract | ModelContract[],
+    private parent: LucidRow | LucidRow[],
     private relation: HasMany,
-    isEager: boolean = false,
   ) {
-    super(builder, client, relation, isEager, (userFn) => {
-      return (__builder) => {
-        userFn(new HasManyQueryBuilder(__builder, this.client, this.parent, this.relation))
+    super(builder, client, relation, (userFn) => {
+      return ($builder) => {
+        userFn(new HasManyQueryBuilder($builder, this.client, this.parent, this.relation))
       }
     })
   }
@@ -67,11 +62,11 @@ ModelConstructorContract
       this.client,
       this.parent,
       this.relation,
-      this.isEager,
     )
 
     this.applyQueryFlags(clonedQuery)
     clonedQuery.appliedConstraints = this.appliedConstraints
+    clonedQuery.isEagerQuery = this.isEagerQuery
     return clonedQuery
   }
 
@@ -109,7 +104,7 @@ ModelConstructorContract
    * it is not invoked during eagerloading
    */
   public paginate (page: number, perPage: number = 20) {
-    if (this.isEager) {
+    if (this.isEagerQuery) {
       throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
     }
     return super.paginate(page, perPage)

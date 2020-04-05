@@ -7,24 +7,28 @@
  * file that was distributed with this source code.
 */
 
+import { LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
-import { HasOneRelationContract, RelationOptions } from '@ioc:Adonis/Lucid/Relations'
+import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import {
+  RelationOptions,
+  HasOne as ModelHasOne,
+  HasOneRelationContract,
+} from '@ioc:Adonis/Lucid/Relations'
 
 import { HasOneQueryClient } from './QueryClient'
 import { KeysExtractor } from '../KeysExtractor'
+import { HasOneQueryBuilder } from './QueryBuilder'
 import { ensureRelationIsBooted } from '../../../utils'
 
 /**
  * Manages loading and persisting has one relationship
  */
-export class HasOne implements HasOneRelationContract<
-ModelConstructorContract,
-ModelConstructorContract
-> {
-  public type = 'hasOne' as const
+export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
+  public readonly type = 'hasOne'
+
   public booted: boolean = false
-  public relatedModel = this.options.relatedModel
+
   public serializeAs = this.options.serializeAs === undefined
     ? this.relationName
     : this.options.serializeAs
@@ -37,8 +41,9 @@ ModelConstructorContract
 
   constructor (
     public relationName: string,
-    private options: RelationOptions,
-    public model: ModelConstructorContract,
+    public relatedModel: () => LucidModel,
+    private options: RelationOptions<ModelHasOne<LucidModel>>,
+    public model: LucidModel,
   ) {
   }
 
@@ -94,7 +99,7 @@ ModelConstructorContract
   /**
    * Set related model instance
    */
-  public $setRelated (parent: ModelContract, related: ModelContract | null): void {
+  public setRelated (parent: LucidRow, related: LucidRow | null): void {
     ensureRelationIsBooted(this)
     if (!related) {
       return
@@ -106,7 +111,7 @@ ModelConstructorContract
   /**
    * Push related model instance
    */
-  public $pushRelated (parent: ModelContract, related: ModelContract | null): void {
+  public pushRelated (parent: LucidRow, related: LucidRow | null): void {
     ensureRelationIsBooted(this)
 
     if (!related) {
@@ -120,7 +125,7 @@ ModelConstructorContract
    * Finds and set the related model instance next to the parent
    * models.
    */
-  public $setRelatedForMany (parent: ModelContract[], related: ModelContract[]): void {
+  public setRelatedForMany (parent: LucidRow[], related: LucidRow[]): void {
     ensureRelationIsBooted(this)
 
     /**
@@ -134,7 +139,7 @@ ModelConstructorContract
         return value !== undefined && value === relatedModel[this.foreignKey]
       })
       if (match) {
-        this.$setRelated(match, relatedModel)
+        this.setRelated(match, relatedModel)
       }
     })
   }
@@ -142,8 +147,16 @@ ModelConstructorContract
   /**
    * Returns an instance of query client for invoking queries
    */
-  public client (parent: ModelContract | ModelContract[], client: QueryClientContract): any {
+  public client (parent: LucidRow, client: QueryClientContract): any {
     ensureRelationIsBooted(this)
     return new HasOneQueryClient(this, parent, client)
+  }
+
+  public eagerQuery (parent: OneOrMany<LucidRow>, client: QueryClientContract): any {
+    ensureRelationIsBooted(this)
+
+    const query = new HasOneQueryBuilder(client.knexQuery(), client, parent, this)
+    query.isEagerQuery = true
+    return query
   }
 }

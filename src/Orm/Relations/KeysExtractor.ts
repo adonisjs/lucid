@@ -8,17 +8,17 @@
 */
 
 import { Exception } from '@poppinss/utils'
-import { ModelConstructorContract } from '@ioc:Adonis/Lucid/Model'
+import { LucidModel } from '@ioc:Adonis/Lucid/Model'
 
 /**
  * Utility to consistently extract relationship keys from the model
  * and the relation model.
  */
 export class KeysExtractor<
-  Keys extends { [key: string]: { key: string, model: ModelConstructorContract } }
+  Keys extends { [key: string]: { key: string, model: LucidModel } }
 > {
   constructor (
-    private model: ModelConstructorContract,
+    private model: LucidModel,
     private relationName: string,
     private keys: Keys,
   ) {

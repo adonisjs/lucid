@@ -8,10 +8,12 @@
 */
 
 declare module '@ioc:Adonis/Lucid/Model' {
+  import { DateTime } from 'luxon'
   import { ProfilerContract, ProfilerRowContract } from '@ioc:Adonis/Core/Profiler'
   import {
     Update,
     Counter,
+    OneOrMany,
     Aggregate,
     ChainableContract,
     SimplePaginatorContract,
@@ -24,13 +26,13 @@ declare module '@ioc:Adonis/Lucid/Model' {
   } from '@ioc:Adonis/Lucid/Database'
 
   import {
-    TypedRelations,
+    ModelRelations,
     RelationOptions,
-    ExtractRelations,
     PreloaderContract,
-    ExtractRelationModel,
+    ModelRelationTypes,
     QueryBuilderPreloadFn,
     RelationshipsContract,
+    ExtractModelRelations,
     ThroughRelationOptions,
     ManyToManyRelationOptions,
   } from '@ioc:Adonis/Lucid/Relations'
@@ -40,6 +42,31 @@ declare module '@ioc:Adonis/Lucid/Model' {
    *  Helpers
    * ------------------------------------------------------
    */
+  type DecoratorFn = (target: any, property: any) => void
+
+  /**
+   * Typed decorator
+   */
+  type TypedDecorator<PropType> = <TKey extends string, TTarget extends { [K in TKey]: PropType }>(
+    target: TTarget,
+    property: TKey,
+  ) => void
+
+  /**
+   * A complex type that filters out functions and relationships from the
+   * model attributes and consider all other properties as database
+   * columns. Alternatively, the user can self define a `$columns`
+   * property.
+   */
+  type ModelAttributes<Model extends LucidRow> = Model['$columns'] extends undefined
+    ? {
+      [Filtered in {
+        [P in keyof Model]: P extends keyof LucidRow
+          ? never
+          : Model[P] extends Function | ModelRelationTypes ? never : P
+      }[keyof Model]]: Model[Filtered]
+    }
+    : Model['$columns']
 
   /**
    * Reusable interface to define an object.
@@ -64,13 +91,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
   export type HooksHandler<T> = ((model: T) => Promise<void> | void) | string
 
   /**
-   * Extract columns from a model class
-   */
-  export type AsColumns<K extends any> = {
-    [P in keyof K]: string
-  }
-
-  /**
    * ------------------------------------------------------
    * Decorators and Options
    * ------------------------------------------------------
@@ -83,12 +103,42 @@ declare module '@ioc:Adonis/Lucid/Model' {
     columnName: string, // database column name
     serializeAs: string | null, // null means do not serialize column
     isPrimary: boolean,
+    meta?: any,
+
+    /**
+     * Invoked before serializing process happens
+     */
+    serialize?: (
+      value: any,
+      attribute: string,
+      model: LucidRow,
+    ) => any,
+
+    /**
+     * Invoked before create or update happens
+     */
+    prepare?: (
+      value: any,
+      attribute: string,
+      model: LucidRow,
+    ) => any,
+
+    /**
+     * Invoked when row is fetched from the database
+     */
+    consume?: (
+      value: any,
+      attribute: string,
+      model: LucidRow,
+    ) => any,
+  }
+
+  /**
+   * Shape of column options after they have set on the model
+   */
+  export type ModelColumnOptions = ColumnOptions & {
     hasGetter: boolean,
     hasSetter: boolean,
-    meta?: any,
-    serialize?: (value: any, attribute: string, model: ModelContract) => any,
-    prepare?: (value: any, attribute: string, model: ModelContract) => any,
-    consume?: (value: any, attribute: string, model: ModelContract) => any,
   }
 
   /**
@@ -100,28 +150,26 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
-   * Signature for decorator functions
+   * Signature for column decorator function
    */
-  export type ColumnDecorator = (
-    options?: Partial<Omit<ColumnOptions, 'hasGetter' | 'hasSetter'>>,
-  ) => (target: any, property: any) => void
+  export type ColumnDecorator = (options?: Partial<ColumnOptions>) => DecoratorFn
 
-  export type ComputedDecorator = (
-    options?: Partial<ComputedOptions>,
-  ) => (target: any, property: any) => void
+  /**
+   * Signature for computed decorator function
+   */
+  export type ComputedDecorator = (options?: Partial<ComputedOptions>) => DecoratorFn
 
   /**
    * Decorator for defining date columns
    */
-  export type DateColumnDecorator = (
-    options?: Partial<
-      Omit<ColumnOptions, 'hasGetter' | 'hasSetter' | 'isPrimary'>
-      & { autoCreate: boolean, autoUpdate: boolean }
-    >
-  ) => (target: any, property: any) => void
+  export type DateColumnDecorator = (options?: Partial<ColumnOptions & {
+    autoCreate: boolean,
+    autoUpdate: boolean,
+  }>) => TypedDecorator<DateTime>
 
   /**
-   * Decorator for defining date time columns
+   * Decorator for defining date time columns. It is same as
+   * date column as of now
    */
   export type DateTimeColumnDecorator = DateColumnDecorator
 
@@ -140,7 +188,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
-   * Adapter also accept a client directly
+   * Adapter also accepts a client directly
    */
   export type ModelAdapterOptions = ModelOptions & {
     client?: QueryClientContract,
@@ -150,7 +198,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * Preload function on a model instance
    */
   interface ModelBuilderPreloadFn<
-    Model extends ModelContract,
+    Model extends LucidRow,
   > extends QueryBuilderPreloadFn<Model, Promise<void>> {
     (callback: (preloader: PreloaderContract<Model>) => void): Promise<void>
   }
@@ -162,10 +210,10 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
 
   /**
-   * Model query builder will have extras methods on top of Database query builder
+   * Model query builder will have extras methods on top of the Database query builder
    */
   export interface ModelQueryBuilderContract<
-    Model extends ModelConstructorContract,
+    Model extends LucidModel,
     Result extends any = InstanceType<Model>
   >
     extends ChainableContract, ExcutableQueryBuilderContract<Result[]>
@@ -173,7 +221,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     model: Model
 
     /**
-     * A copy of client options. They can be set on any model instance
+     * A copy of client options.
      */
     readonly clientOptions: ModelAdapterOptions
 
@@ -260,30 +308,33 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * differentiate between special properties provided by the base
    * model but with exception to `save`, `delete`, `fill`, `merge`
    * and `toJSON`.
+   *
+   * @note: Since the interface name appears next to the inherited model
+   *        methods, we have to choose a sunnict name
    */
-  export interface ModelContract {
+  export interface LucidRow {
     $attributes: ModelObject
-    extras: ModelObject
+    $extras: ModelObject
     $original: ModelObject
-    $preloaded: { [relation: string]: ModelContract | ModelContract[] }
+    $preloaded: { [relation: string]: LucidRow | LucidRow[] }
 
     /**
      * Columns is a property to get type information for model
      * attributes. This must be declared by the end user
      */
-    $columns: any
+    $columns: undefined
 
-    sideloaded: ModelObject
-    primaryKeyValue?: number | string
-    isPersisted: boolean
-    isNew: boolean
-    isLocal: boolean
-    dirty: ModelObject
-    isDirty: boolean
-    isDeleted: boolean
+    $sideloaded: ModelObject
+    $primaryKeyValue?: number | string
+    $isPersisted: boolean
+    $isNew: boolean
+    $isLocal: boolean
+    $dirty: ModelObject
+    $isDirty: boolean
+    $isDeleted: boolean
 
-    options?: ModelOptions
-    trx?: TransactionClientContract,
+    $options?: ModelOptions
+    $trx?: TransactionClientContract,
     $setOptionsAndTrx (options?: ModelAdapterOptions): void
 
     /**
@@ -300,36 +351,34 @@ declare module '@ioc:Adonis/Lucid/Model' {
       action: 'update' | 'delete',
       client: QueryClientContract,
     ): ReturnType<QueryClientContract['query']>
-    $getQueryFor (
-      action: 'insert' | 'delete' | 'update',
-      client: QueryClientContract,
-    ): ReturnType<QueryClientContract['query']> | ReturnType<QueryClientContract['insertQuery']>
 
     /**
-     * Read/write attributes
+     * Read/write attributes. Following methods are intentionally loosely typed,
+     * so that one can bypass the public facing API and type checking for
+     * advanced use cases
      */
     $setAttribute (key: string, value: any): void
     $getAttribute (key: string): any
     $getAttributeFromCache (key: string, callback: CacheNode['getter']): any
 
     /**
-     * Read/write realtionships
+     * Read/write realtionships. Following methods are intentionally loosely typed,
+     * so that one can bypass the public facing API and type checking for
+     * advanced use cases
      */
-    $hasRelated<Name extends keyof this = keyof this> (key: Name): boolean
-
-    // @todo: Come back later to improve types
-    $setRelated (key: string, result: TypedRelations): void
-    $pushRelated (key: string, result: TypedRelations): void
-    $getRelated (key: string, defaultValue?: any): TypedRelations | undefined
+    $hasRelated (key: string): boolean
+    $setRelated (key: string, result: OneOrMany<LucidRow>): void
+    $pushRelated (key: string, result: OneOrMany<LucidRow>): void
+    $getRelated (key: string, defaultValue?: any): OneOrMany<LucidRow> | undefined
 
     /**
      * Consume the adapter result and hydrate the model
      */
     $consumeAdapterResult (adapterResult: ModelObject, sideloadAttributes?: ModelObject): void
-    hydrateOriginals(): void
+    $hydrateOriginals(): void
 
-    fill (value: Partial<this['$columns']>, ignoreUndefined?: boolean): void
-    merge (value: Partial<this['$columns']>, ignoreUndefined?: boolean): void
+    fill (value: Partial<ModelAttributes<this>>, ignoreUndefined?: boolean): void
+    merge (value: Partial<ModelAttributes<this>>, ignoreUndefined?: boolean): void
     save (): Promise<void>
     delete (): Promise<void>
     refresh (): Promise<void>
@@ -352,7 +401,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     serializeRelations (
       fieldsToCherryPick: ModelObject | undefined,
       raw: true,
-    ): { [key: string]: ModelContract | ModelContract[] }
+    ): { [key: string]: LucidRow | LucidRow[] }
 
     /**
      * Serialize relationships to key-value pair of plain nested objects
@@ -362,27 +411,24 @@ declare module '@ioc:Adonis/Lucid/Model' {
       raw: false | undefined,
     ): ModelObject
 
-    /**
-     * Serialize relationships to key-value pair of plain nested objects
-     * or a key-value pair of model instances.
-     */
-    serializeRelations (
-      fieldsToCherryPick?: ModelObject,
-      raw?: boolean,
-    ): ModelObject | { [key: string]: ModelContract | ModelContract[] }
+    serializeRelations (fieldsToCherryPick?: ModelObject, raw?: boolean): ModelObject
 
     /**
      * Serialize model to a plain object
      */
     serialize (fieldsToCherryPick?: ModelObject): ModelObject
+
+    /**
+     * Serialize everything
+     */
     toJSON (): ModelObject
 
-    related<
-      Name extends keyof ExtractRelations<this>,
-      RelationType extends TypedRelations = this[Name] extends TypedRelations ? this[Name] : never
-    > (
+    /**
+     * Returns related model for a given relationship
+     */
+    related<Name extends ExtractModelRelations<this>> (
       relation: Name,
-    ): ReturnType<RelationType['relation']['client']>
+    ): this[Name] extends ModelRelations ? this[Name]['client'] : never
   }
 
   /**
@@ -393,9 +439,12 @@ declare module '@ioc:Adonis/Lucid/Model' {
 
   /**
    * Shape of the model static properties. The `$` prefix is to denote
-   * special properties from the base model
+   * special properties from the base model.
+   *
+   * @note: Since the interface name appears next to the inherited model
+   *        methods, we have to choose a sunnict name
    */
-  export interface ModelConstructorContract<Model extends ModelContract = ModelContract> {
+  export interface LucidModel {
     /**
      * Whether or not model has been booted. After this model configurations
      * are ignored
@@ -405,7 +454,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * A map of defined columns
      */
-    $columnsDefinitions: Map<string, ColumnOptions>
+    $columnsDefinitions: Map<string, ModelColumnOptions>
 
     /**
      * A map of defined relationships
@@ -427,6 +476,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Custom database connection to use
      */
     connection?: string
+
+    /**
+     * Database table to use
+     */
+    table: string
 
     /**
      * Adapter to work as a bridge between query builder and the model
@@ -452,20 +506,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
     }
 
     /**
-     * Whether primary key is auto incrementing or not. If not, then
-     * end user must provide the value for the primary key
-     */
-    increments: boolean
-
-    /**
-     * Database table to use
-     */
-    table: string
-
-    /**
      * Creating model from adapter results
      */
-    $createFromAdapterResult<T extends ModelConstructorContract> (
+    $createFromAdapterResult<T extends LucidModel> (
       this: T,
       result?: ModelObject,
       sideloadAttributes?: ModelObject,
@@ -476,7 +519,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Creating multiple model instances from an array of adapter
      * result
      */
-    $createMultipleFromAdapterResult<T extends ModelConstructorContract> (
+    $createMultipleFromAdapterResult<T extends LucidModel> (
       this: T,
       results: ModelObject[],
       sideloadAttributes?: ModelObject,
@@ -488,7 +531,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     $addColumn (name: string, options: Partial<ColumnOptions>): ColumnOptions
     $hasColumn (name: string): boolean
-    $getColumn (name: string): ColumnOptions | undefined
+    $getColumn (name: string): ModelColumnOptions | undefined
 
     /**
      * Managing computed columns
@@ -502,8 +545,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     $addRelation (
       name: string,
-      type: string,
-      options: Partial<RelationOptions | ManyToManyRelationOptions | ThroughRelationOptions>,
+      type: ModelRelations['type'],
+      relatedModel: () => LucidModel,
+      options: Partial<
+        RelationOptions<ModelRelations> | ManyToManyRelationOptions | ThroughRelationOptions<ModelRelations>
+      >,
     ): void
 
     /**
@@ -514,7 +560,15 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Get relationship declaration
      */
-    $getRelation (name: string): TypedRelations | undefined
+    $getRelation<
+      Model extends LucidModel,
+      Name extends ExtractModelRelations<InstanceType<Model>>
+    > (
+      this: Model,
+      name: Name | string,
+    ): (InstanceType<Model>[Name] extends ModelRelations
+      ? InstanceType<Model>[Name]['client']['relation']
+      : RelationshipsContract) | undefined
 
     /**
      * Boot model
@@ -524,7 +578,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Register a before hook
      */
-    before<T extends ModelConstructorContract> (
+    before<T extends LucidModel> (
       this: T,
       event: EventsList,
       handler: HooksHandler<InstanceType<T>>,
@@ -533,34 +587,34 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Register an after hook
      */
-    after<T extends ModelConstructorContract> (
+    after<T extends LucidModel> (
       this: T,
       event: EventsList,
       handler: HooksHandler<InstanceType<T>>,
     ): void
 
     /**
-     * Creating model
+     * Create model and return its instance back
      */
-    create<T extends ModelConstructorContract> (
+    create<T extends LucidModel> (
       this: T,
-      values: Partial<InstanceType<T>['$columns']>,
+      values: Partial<ModelAttributes<InstanceType<T>>>,
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
 
     /**
-     * Creating many of model instance
+     * Create many of model instances
      */
-    createMany<T extends ModelConstructorContract> (
+    createMany<T extends LucidModel> (
       this: T,
-      values: Partial<InstanceType<T>['$columns']>[],
+      values: Partial<ModelAttributes<InstanceType<T>>>,
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>[]>
 
     /**
      * Find one using the primary key
      */
-    find<T extends ModelConstructorContract> (
+    find<T extends LucidModel> (
       this: T,
       value: any,
       options?: ModelAdapterOptions,
@@ -569,7 +623,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Find one using the primary key or fail
      */
-    findOrFail<T extends ModelConstructorContract> (
+    findOrFail<T extends LucidModel> (
       this: T,
       value: any,
       options?: ModelAdapterOptions,
@@ -578,7 +632,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Find many using an array of primary keys
      */
-    findMany<T extends ModelConstructorContract> (
+    findMany<T extends LucidModel> (
       this: T,
       value: any[],
       options?: ModelAdapterOptions,
@@ -588,20 +642,20 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Returns the first row or create a new instance of model without
      * persisting it
      */
-    firstOrNew<T extends ModelConstructorContract> (
+    firstOrNew<T extends LucidModel> (
       this: T,
-      search: Partial<InstanceType<T>['$columns']>,
-      savePayload?: Partial<InstanceType<T>['$columns']>,
+      search: Partial<ModelAttributes<InstanceType<T>>>,
+      savePayload?: Partial<ModelAttributes<InstanceType<T>>>,
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
 
     /**
      * Returns the first row or save it to the database
      */
-    firstOrCreate<T extends ModelConstructorContract> (
+    firstOrCreate<T extends LucidModel> (
       this: T,
-      search: Partial<InstanceType<T>['$columns']>,
-      savePayload?: Partial<InstanceType<T>['$columns']>,
+      search: Partial<ModelAttributes<InstanceType<T>>>,
+      savePayload?: Partial<ModelAttributes<InstanceType<T>>>,
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
 
@@ -609,10 +663,10 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Find rows or create in-memory instances of the missing
      * one's.
      */
-    fetchOrNewUpMany<T extends ModelConstructorContract> (
+    fetchOrNewUpMany<T extends LucidModel> (
       this: T,
-      uniqueKey: keyof InstanceType<T>['$columns'],
-      payload: Partial<InstanceType<T>['$columns']>[],
+      uniqueKey: keyof ModelAttributes<InstanceType<T>>,
+      payload: Partial<ModelAttributes<InstanceType<T>>>[],
       options?: ModelAdapterOptions,
       mergeAttributes?: boolean,
     ): Promise<InstanceType<T>[]>
@@ -621,37 +675,37 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Find rows or create many when missing. One db call is invoked
      * for each create
      */
-    fetchOrCreateMany<T extends ModelConstructorContract> (
+    fetchOrCreateMany<T extends LucidModel> (
       this: T,
-      uniqueKey: keyof InstanceType<T>['$columns'],
-      payload: Partial<InstanceType<T>['$columns']>[],
+      uniqueKey: keyof ModelAttributes<InstanceType<T>>,
+      payload: Partial<ModelAttributes<InstanceType<T>>>[],
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>[]>
 
     /**
      * Returns the first row or save it to the database
      */
-    updateOrCreate<T extends ModelConstructorContract> (
+    updateOrCreate<T extends LucidModel> (
       this: T,
-      search: Partial<InstanceType<T>['$columns']>,
-      updatePayload: Partial<InstanceType<T>['$columns']>,
+      search: Partial<ModelAttributes<InstanceType<T>>>,
+      updatePayload: Partial<ModelAttributes<InstanceType<T>>>,
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
 
     /**
      * Update existing rows or create new one's.
      */
-    updateOrCreateMany<T extends ModelConstructorContract> (
+    updateOrCreateMany<T extends LucidModel> (
       this: T,
-      uniqueKey: keyof InstanceType<T>['$columns'],
-      payload: Partial<InstanceType<T>['$columns']>[],
+      uniqueKey: keyof ModelAttributes<InstanceType<T>>,
+      payload: Partial<ModelAttributes<InstanceType<T>>>[],
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>[]>
 
     /**
      * Fetch all rows
      */
-    all<T extends ModelConstructorContract> (
+    all<T extends LucidModel> (
       this: T,
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>[]>
@@ -660,16 +714,19 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Returns the query for fetching a model instance
      */
     query<
-      Model extends ModelConstructorContract,
+      Model extends LucidModel,
       Result extends any = InstanceType<Model>,
-    > (this: Model, options?: ModelAdapterOptions): ModelQueryBuilderContract<Model, Result>
+    > (
+      this: Model,
+      options?: ModelAdapterOptions,
+    ): ModelQueryBuilderContract<Model, Result>
 
     /**
      * Truncate model table
      */
     truncate (cascade?: boolean): Promise<void>
 
-    new (): Model
+    new (): LucidRow
   }
 
   /**
@@ -685,35 +742,38 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Returns query client for a model instance by inspecting it's options
      */
-    modelClient (instance: ModelContract): QueryClientContract
+    modelClient (instance: LucidRow): QueryClientContract
 
+    /**
+     * Returns query client for a model constructor
+     */
     modelConstructorClient (
-      modelConstructor: ModelConstructorContract,
+      modelConstructor: LucidModel,
       options?: ModelAdapterOptions,
     ): QueryClientContract
 
     /**
      * Delete model instance
      */
-    delete (instance: ModelContract): Promise<void>
+    delete (instance: LucidRow): Promise<void>
 
     /**
      * Perform insert
      */
-    insert (instance: ModelContract, attributes: any): Promise<void>
+    insert (instance: LucidRow, attributes: ModelObject): Promise<void>
 
     /**
      * Perform update
      */
-    update (instance: ModelContract, attributes: any): Promise<void>
+    update (instance: LucidRow, attributes: ModelObject): Promise<void>
 
     /**
      * Must return the query builder for the model
      */
     query (
-      modelConstructor: ModelConstructorContract,
+      modelConstructor: LucidModel,
       options?: ModelAdapterOptions,
-    ): ModelQueryBuilderContract<ModelConstructorContract, ModelContract>
+    ): ModelQueryBuilderContract<LucidModel, LucidRow>
   }
 
   /**
@@ -724,34 +784,34 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Return the default table name for a given model
      */
-    getTableName (model: ModelConstructorContract): string
+    getTableName (model: LucidModel): string
 
     /**
      * Return the `columnName` for a given model
      */
-    getColumnName (model: ModelConstructorContract, key: string): string
+    getColumnName (model: LucidModel, key: string): string
 
     /**
      * Return the `serializeAs` key for a given model property
      */
-    getSerializeAsKey (model: ModelConstructorContract, key: string): string
+    getSerializeAsKey (model: LucidModel, key: string): string
 
     /**
      * Return the local key property name for a given relationship
      */
     getLocalKey (
-      relation: TypedRelations['type'],
-      model: ModelConstructorContract,
-      relatedModel: ModelConstructorContract,
+      relation: ModelRelations['type'],
+      model: LucidModel,
+      relatedModel: LucidModel,
     ): string
 
     /**
      * Return the foreign key property name for a given relationship
      */
     getForeignKey (
-      relation: TypedRelations['type'],
-      model: ModelConstructorContract,
-      relatedModel: ModelConstructorContract,
+      relation: ModelRelations['type'],
+      model: LucidModel,
+      relatedModel: LucidModel,
     ): string
 
     /**
@@ -759,8 +819,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     getPivotTableName (
       relation: 'manyToMany',
-      model: ModelConstructorContract,
-      relatedModel: ModelConstructorContract,
+      model: LucidModel,
+      relatedModel: LucidModel,
       relationName: string,
     ): string
 
@@ -769,8 +829,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     getPivotForeignKey (
       relation: 'manyToMany',
-      model: ModelConstructorContract,
-      relatedModel: ModelConstructorContract,
+      model: LucidModel,
+      relatedModel: LucidModel,
       relationName: string,
     ): string
   }

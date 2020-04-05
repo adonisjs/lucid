@@ -15,23 +15,24 @@ import { Hooks } from '@poppinss/hooks'
 
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import {
+  LucidRow,
   CacheNode,
+  LucidModel,
   EventsList,
   ModelObject,
   HooksHandler,
   ModelOptions,
-  ModelContract,
   ColumnOptions,
   ComputedOptions,
   AdapterContract,
   OrmConfigContract,
+  ModelColumnOptions,
   ModelKeysContract,
   ModelAdapterOptions,
-  ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
 import {
-  TypedRelations,
+  ModelRelations,
   RelationOptions,
   RelationshipsContract,
   ThroughRelationOptions,
@@ -58,8 +59,8 @@ function StaticImplements<T> () {
 /**
  * Abstract class to define fully fledged data models
  */
-@StaticImplements<ModelConstructorContract>()
-export class BaseModel implements ModelContract {
+@StaticImplements<LucidModel>()
+export class BaseModel implements LucidRow {
   /**
    * The adapter to be used for persisting and fetching data.
    *
@@ -104,19 +105,12 @@ export class BaseModel implements ModelContract {
    * and distinguish them with the attributes to be sent
    * over to the adapter
    */
-  public static $columnsDefinitions: Map<string, ColumnOptions>
+  public static $columnsDefinitions: Map<string, ModelColumnOptions>
 
   /**
    * Registered relationships for the given model
    */
   public static $relationsDefinitions: Map<string, RelationshipsContract>
-
-  /**
-   * Whether or not to rely on database to return the primaryKey
-   * value. If this is set to false, then the user must provide
-   * the `$primaryKeyValue` themselves.
-   */
-  public static increments: boolean
 
   /**
    * The name of database table. It is auto generated from the model name, unless
@@ -169,11 +163,11 @@ export class BaseModel implements ModelContract {
 
     const instance = new this()
     instance.$consumeAdapterResult(adapterResult, sideloadAttributes)
-    instance.hydrateOriginals()
+    instance.$hydrateOriginals()
 
     instance.$setOptionsAndTrx(options)
-    instance.isPersisted = true
-    instance.isLocal = false
+    instance.$isPersisted = true
+    instance.$isLocal = false
 
     return instance
   }
@@ -185,7 +179,7 @@ export class BaseModel implements ModelContract {
    * 1. If top level value is not an array, then an empty array is returned.
    * 2. If row is not an object, then it will be ignored.
    */
-  public static $createMultipleFromAdapterResult<T extends ModelConstructorContract> (
+  public static $createMultipleFromAdapterResult<T extends LucidModel> (
     this: T,
     adapterResults: ModelObject[],
     sideloadAttributes?: ModelObject,
@@ -210,7 +204,7 @@ export class BaseModel implements ModelContract {
   public static $addColumn (name: string, options: Partial<ColumnOptions>) {
     const descriptor = Object.getOwnPropertyDescriptor(this.prototype, name)
 
-    const column: ColumnOptions = {
+    const column: ModelColumnOptions = {
       isPrimary: options.isPrimary || false,
       columnName: options.columnName || this.$configurator.getColumnName(this, name),
       hasGetter: !!(descriptor && descriptor.get),
@@ -255,7 +249,7 @@ export class BaseModel implements ModelContract {
   /**
    * Returns the column for a given name
    */
-  public static $getColumn (name: string): ColumnOptions | undefined {
+  public static $getColumn (name: string): ModelColumnOptions | undefined {
     return this.$columnsDefinitions.get(name)
   }
 
@@ -290,24 +284,27 @@ export class BaseModel implements ModelContract {
    */
   public static $addRelation (
     name: string,
-    type: TypedRelations['type'],
-    options: RelationOptions | ManyToManyRelationOptions | ThroughRelationOptions,
+    type: ModelRelations['type'],
+    relatedModel: () => LucidModel,
+    options: RelationOptions<ModelRelations> | ManyToManyRelationOptions | ThroughRelationOptions<ModelRelations>,
   ) {
     switch (type) {
       case 'hasOne':
-        this.$relationsDefinitions.set(name, new HasOne(name, options, this))
+        this.$relationsDefinitions.set(name, new HasOne(name, relatedModel, options, this))
         break
       case 'hasMany':
-        this.$relationsDefinitions.set(name, new HasMany(name, options, this))
+        this.$relationsDefinitions.set(name, new HasMany(name, relatedModel, options, this))
         break
       case 'belongsTo':
-        this.$relationsDefinitions.set(name, new BelongsTo(name, options, this))
+        this.$relationsDefinitions.set(name, new BelongsTo(name, relatedModel, options, this))
         break
       case 'manyToMany':
-        this.$relationsDefinitions.set(name, new ManyToMany(name, options as ManyToManyRelationOptions, this))
+        const manyToMany = new ManyToMany(name, relatedModel, options as ManyToManyRelationOptions, this)
+        this.$relationsDefinitions.set(name, manyToMany)
         break
       case 'hasManyThrough':
-        this.$relationsDefinitions.set(name, new HasManyThrough(name, options as ThroughRelationOptions, this))
+        const through = new HasManyThrough(name, relatedModel, options as any, this)
+        this.$relationsDefinitions.set(name, through)
         break
       default:
         throw new Error(`${type} is not a supported relation type`)
@@ -324,7 +321,7 @@ export class BaseModel implements ModelContract {
   /**
    * Returns relationship node for a given relation
    */
-  public static $getRelation (name: any): RelationshipsContract {
+  public static $getRelation (name: any): any {
     return this.$relationsDefinitions.get(name)!
   }
 
@@ -358,7 +355,6 @@ export class BaseModel implements ModelContract {
       value: new Hooks(this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')),
     })
 
-    this.increments = this.increments === undefined ? true : this.increments
     this.table = this.table === undefined ? this.$configurator.getTableName(this) : this.table
   }
 
@@ -382,17 +378,16 @@ export class BaseModel implements ModelContract {
    * Returns a fresh persisted instance of model by applying
    * attributes to the model instance
    */
-  public static async create<T extends ModelConstructorContract> (
-    this: T,
-    values: Partial<InstanceType<T>['$columns']>,
+  public static async create (
+    values: any,
     options?: ModelAdapterOptions,
-  ): Promise<InstanceType<T>> {
+  ): Promise<any> {
     const instance = new this()
     instance.fill(values)
     instance.$setOptionsAndTrx(options)
 
     await instance.save()
-    return instance as InstanceType<T>
+    return instance
   }
 
   /**
@@ -401,15 +396,14 @@ export class BaseModel implements ModelContract {
    * If required, you can also pass a transaction client and the method
    * will use that instead of create a new one.
    */
-  public static async createMany<T extends ModelConstructorContract> (
-    this: T,
-    values: Partial<InstanceType<T>['$columns']>[],
+  public static async createMany (
+    values: any,
     options?: ModelAdapterOptions,
-  ): Promise<InstanceType<T>[]> {
+  ): Promise<any[]> {
     const client = this.$adapter.modelConstructorClient(this, options)
 
     return managedTransaction(client, async (trx) => {
-      const modelInstances: InstanceType<T>[] = []
+      const modelInstances: LucidRow[] = []
       for (let row of values) {
         const modelInstance = await this.create(row, { client: trx })
         modelInstances.push(modelInstance)
@@ -421,8 +415,7 @@ export class BaseModel implements ModelContract {
   /**
    * Find model instance using a key/value pair
    */
-  public static async find<T extends ModelConstructorContract> (
-    this: T,
+  public static async find (
     value: any,
     options?: ModelAdapterOptions,
   ) {
@@ -436,8 +429,7 @@ export class BaseModel implements ModelContract {
   /**
    * Find model instance using a key/value pair
    */
-  public static async findOrFail<T extends ModelConstructorContract> (
-    this: T,
+  public static async findOrFail (
     value: any,
     options?: ModelAdapterOptions,
   ) {
@@ -450,8 +442,7 @@ export class BaseModel implements ModelContract {
   /**
    * Find model instance using a key/value pair
    */
-  public static async findMany<T extends ModelConstructorContract> (
-    this: T,
+  public static async findMany (
     value: any[],
     options?: ModelAdapterOptions,
   ) {
@@ -470,17 +461,16 @@ export class BaseModel implements ModelContract {
    * Find model instance using a key/value pair or create a
    * new one without persisting it.
    */
-  public static async firstOrNew<T extends ModelConstructorContract> (
-    this: T,
-    search: Partial<InstanceType<T>['$columns']>,
-    savePayload?: Partial<InstanceType<T>['$columns']>,
+  public static async firstOrNew (
+    search: any,
+    savePayload?: any,
     options?: ModelAdapterOptions,
   ) {
     const query = this.query(options)
     let row = await query.where(search).first()
 
     if (!row) {
-      row = new this() as InstanceType<T>
+      row = new this()
       row.fill(Object.assign({}, search, savePayload))
 
       /**
@@ -496,14 +486,14 @@ export class BaseModel implements ModelContract {
   /**
    * Same as `firstOrNew`, but persists the newly created model instance
    */
-  public static async firstOrCreate<T extends ModelConstructorContract> (
+  public static async firstOrCreate<T extends LucidModel> (
     this: T,
-    search: Partial<InstanceType<T>['$columns']>,
-    savePayload?: Partial<InstanceType<T>['$columns']>,
+    search: any,
+    savePayload?: any,
     options?: ModelAdapterOptions,
   ) {
     const row = await this.firstOrNew(search, savePayload, options)
-    if (!row.isPersisted) {
+    if (!row.$isPersisted) {
       await row.save()
     }
 
@@ -513,10 +503,9 @@ export class BaseModel implements ModelContract {
   /**
    * Updates or creates a new row inside the database
    */
-  public static async updateOrCreate<T extends ModelConstructorContract> (
-    this: T,
-    search: Partial<InstanceType<T>['$columns']>,
-    updatedPayload: Partial<InstanceType<T>['$columns']>,
+  public static async updateOrCreate (
+    search: any,
+    updatedPayload: any,
     options?: ModelAdapterOptions,
   ) {
     const row = await this.firstOrNew(search, updatedPayload, options)
@@ -524,7 +513,7 @@ export class BaseModel implements ModelContract {
     /**
      * Update if row was found
      */
-    if (row.isPersisted) {
+    if (row.$isPersisted) {
       row.merge(updatedPayload)
     }
 
@@ -536,17 +525,16 @@ export class BaseModel implements ModelContract {
    * Find existing rows or create an in-memory instances of the
    * missing one's.
    */
-  public static async fetchOrNewUpMany<T extends ModelConstructorContract> (
-    this: T,
-    uniqueKey: Extract<keyof InstanceType<T>['$columns'], string>,
-    payload: Partial<InstanceType<T>['$columns']>[],
+  public static async fetchOrNewUpMany (
+    uniqueKey: any,
+    payload: any,
     options?: ModelAdapterOptions,
     mergeAttributes: boolean = false,
   ) {
     /**
      * An array of values for the unique key
      */
-    const uniqueKeyValues = payload.map((row) => {
+    const uniqueKeyValues = payload.map((row: any) => {
       return ensureValue(row, uniqueKey as string, () => {
         throw new Exception(
           `Value for the "${uniqueKey}" is null or undefined inside "fetchOrNewUpMany" payload`,
@@ -561,9 +549,9 @@ export class BaseModel implements ModelContract {
      * Return existing or create missing rows in the same order as the original
      * array
      */
-    return payload.map((row) => {
+    return payload.map((row: any) => {
       /* eslint-disable-next-line eqeqeq */
-      const existingRow = existingRows.find((one) => one[uniqueKey] == row[uniqueKey])
+      const existingRow = existingRows.find((one: any) => one[uniqueKey] == row[uniqueKey])
 
       /**
        * Return the row found from the select call
@@ -578,7 +566,7 @@ export class BaseModel implements ModelContract {
       /**
        * Otherwise create a new one
        */
-      const instance = new this() as InstanceType<T>
+      const instance = new this()
       instance.fill(row)
       instance.$setOptionsAndTrx(query.clientOptions)
       return instance
@@ -590,12 +578,11 @@ export class BaseModel implements ModelContract {
    * is invoked, so that each insert goes through the lifecycle of model
    * hooks.
    */
-  public static async fetchOrCreateMany<T extends ModelConstructorContract> (
-    this: T,
-    uniqueKey: keyof InstanceType<T>['$columns'],
-    payload: Partial<InstanceType<T>['$columns']>[],
+  public static async fetchOrCreateMany (
+    uniqueKey: any,
+    payload: any,
     options?: ModelAdapterOptions,
-  ): Promise<InstanceType<T>[]> {
+  ) {
     const rows = await this.fetchOrNewUpMany(uniqueKey, payload, options)
     if (!rows.length) {
       return rows
@@ -610,7 +597,7 @@ export class BaseModel implements ModelContract {
          * same as the `trx` passed to this callback, we can safely
          * re-set it.
          */
-        row.trx = trx
+        row.$trx = trx
         if (!row.isPersisted) {
           await row.save()
         }
@@ -625,10 +612,9 @@ export class BaseModel implements ModelContract {
    * is invoked, so that each insert and update goes through the lifecycle
    * of model hooks.
    */
-  public static async updateOrCreateMany<T extends ModelConstructorContract> (
-    this: T,
-    uniqueKey: keyof InstanceType<T>['$columns'],
-    payload: Partial<InstanceType<T>['$columns']>[],
+  public static async updateOrCreateMany (
+    uniqueKey: any,
+    payload: any,
     options?: ModelAdapterOptions,
   ) {
     const rows = await this.fetchOrNewUpMany(uniqueKey, payload, options, true)
@@ -645,7 +631,7 @@ export class BaseModel implements ModelContract {
          * same as the `trx` passed to this callback, we can safely
          * re-set it.
          */
-        row.trx = trx
+        row.$trx = trx
         await row.save()
       }
     })
@@ -656,10 +642,7 @@ export class BaseModel implements ModelContract {
   /**
    * Returns all rows from the model table
    */
-  public static async all <T extends ModelConstructorContract> (
-    this: T,
-    options?: ModelAdapterOptions,
-  ) {
+  public static async all (options?: ModelAdapterOptions) {
     return this.query(options).orderBy(this.primaryKey, 'desc')
   }
 
@@ -667,7 +650,7 @@ export class BaseModel implements ModelContract {
    * Truncate model table
    */
   public static truncate (cascade: boolean = false) {
-    return (this as ModelConstructorContract).query().client.truncate(this.table, cascade)
+    return this.query().client.truncate(this.table, cascade)
   }
 
   constructor () {
@@ -710,7 +693,7 @@ export class BaseModel implements ModelContract {
    * Raises exception when mutations are performed on a delete model
    */
   private ensureIsntDeleted () {
-    if (this.isDeleted) {
+    if (this.$isDeleted) {
       throw new Exception('Cannot mutate delete model instance', 500, 'E_MODEL_DELETED')
     }
   }
@@ -785,7 +768,7 @@ export class BaseModel implements ModelContract {
   /**
    * Preloaded relationships on the model instance
    */
-  public $preloaded: { [relation: string]: ModelContract | ModelContract[] } = {}
+  public $preloaded: { [relation: string]: LucidRow | LucidRow[] } = {}
 
   /**
    * Extras are dynamic properties set on the model instance, which
@@ -794,7 +777,7 @@ export class BaseModel implements ModelContract {
    * This is helpful when adapter wants to load some extra data conditionally
    * and that data must not be persisted back the adapter.
    */
-  public extras: ModelObject = {}
+  public $extras: ModelObject = {}
 
   /**
    * Sideloaded are dynamic properties set on the model instance, which
@@ -810,31 +793,31 @@ export class BaseModel implements ModelContract {
    * - Sideloaded are shared across multiple model instances created via `$createMultipleFromAdapterResult`.
    * - Sideloaded are passed to the relationships as well.
    */
-  public sideloaded: ModelObject = {}
+  public $sideloaded: ModelObject = {}
 
   /**
    * Persisted means the model has been persisted with the adapter. This will
    * also be true, when model instance is created as a result of fetch
    * call from the adapter.
    */
-  public isPersisted: boolean = false
+  public $isPersisted: boolean = false
 
   /**
    * Once deleted the model instance cannot make calls to the adapter
    */
-  public isDeleted: boolean = false
+  public $isDeleted: boolean = false
 
   /**
    * `$isLocal` tells if the model instance was created locally vs
    * one generated as a result of fetch call from the adapter.
    */
-  public isLocal: boolean = true
+  public $isLocal: boolean = true
 
   /**
    * Returns the value of primary key. The value must be
    * set inside attributes object
    */
-  public get primaryKeyValue (): any | undefined {
+  public get $primaryKeyValue (): any | undefined {
     const model = this.constructor as typeof BaseModel
     const column = model.$getColumn(model.primaryKey)
 
@@ -848,21 +831,21 @@ export class BaseModel implements ModelContract {
   /**
    * Opposite of [[this.isPersisted]]
    */
-  public get isNew (): boolean {
-    return !this.isPersisted
+  public get $isNew (): boolean {
+    return !this.$isPersisted
   }
 
   /**
    * Returns dirty properties of a model by doing a diff
    * between original values and current attributes
    */
-  public get dirty (): any {
+  public get $dirty (): any {
     const processedKeys: string[] = []
 
     /**
      * Do not compute diff, when model has never been persisted
      */
-    if (!this.isPersisted) {
+    if (!this.$isPersisted) {
       return this.$attributes
     }
 
@@ -899,21 +882,21 @@ export class BaseModel implements ModelContract {
   /**
    * Finding if model is dirty with changes or not
    */
-  public get isDirty () {
-    return Object.keys(this.dirty).length > 0
+  public get $isDirty () {
+    return Object.keys(this.$dirty).length > 0
   }
 
   /**
    * Returns the transaction
    */
-  public get trx (): TransactionClientContract | undefined {
+  public get $trx (): TransactionClientContract | undefined {
     return this.modelTrx
   }
 
   /**
    * Set the trx to be used by the model to executing queries
    */
-  public set trx (trx: TransactionClientContract | undefined) {
+  public set $trx (trx: TransactionClientContract | undefined) {
     if (!trx) {
       this.modelTrx = undefined
       return
@@ -938,14 +921,14 @@ export class BaseModel implements ModelContract {
   /**
    * Get options
    */
-  public get options (): ModelOptions | undefined {
+  public get $options (): ModelOptions | undefined {
     return this.modelOptions
   }
 
   /**
    * Set options
    */
-  public set options (options: ModelOptions | undefined) {
+  public set $options (options: ModelOptions | undefined) {
     if (!options) {
       return
     }
@@ -969,9 +952,9 @@ export class BaseModel implements ModelContract {
     }
 
     if (options.client && options.client.isTransaction) {
-      this.trx = options.client as TransactionClientContract
+      this.$trx = options.client as TransactionClientContract
     }
-    this.options = options
+    this.$options = options
   }
 
   /**
@@ -1045,7 +1028,7 @@ export class BaseModel implements ModelContract {
    * Sets the related data on the model instance. The method internally handles
    * `one to one` or `many` relations
    */
-  public $setRelated (key: any, models: ModelContract | ModelContract[]) {
+  public $setRelated (key: any, models: LucidRow | LucidRow[]) {
     const Model = this.constructor as typeof BaseModel
     const relation = Model.$relationsDefinitions.get(key as string)
 
@@ -1074,7 +1057,7 @@ export class BaseModel implements ModelContract {
   /**
    * Push related adds to the existing related collection
    */
-  public $pushRelated (key: any, models: ModelContract | ModelContract[]) {
+  public $pushRelated (key: any, models: LucidRow | LucidRow[]) {
     const Model = this.constructor as typeof BaseModel
     const relation = Model.$relationsDefinitions.get(key as string)
 
@@ -1089,7 +1072,7 @@ export class BaseModel implements ModelContract {
      * Create multiple for `hasMany` `manyToMany` and `hasManyThrough`
      */
     if (MANY_RELATIONS.includes(relation.type)) {
-      this.$preloaded[key] = ((this.$preloaded[key] || []) as ModelContract[]).concat(models)
+      this.$preloaded[key] = ((this.$preloaded[key] || []) as LucidRow[]).concat(models)
       return
     }
 
@@ -1120,7 +1103,7 @@ export class BaseModel implements ModelContract {
      * on the model instance
      */
     if (sideloadedAttributes) {
-      this.sideloaded = Object.assign({}, this.sideloaded, sideloadedAttributes)
+      this.$sideloaded = Object.assign({}, this.$sideloaded, sideloadedAttributes)
     }
 
     /**
@@ -1162,7 +1145,7 @@ export class BaseModel implements ModelContract {
           return
         }
 
-        this.extras[key] = adapterResult[key]
+        this.$extras[key] = adapterResult[key]
       })
     }
   }
@@ -1171,7 +1154,7 @@ export class BaseModel implements ModelContract {
    * Sync originals with the attributes. After this `isDirty` will
    * return false
    */
-  public hydrateOriginals () {
+  public $hydrateOriginals () {
     this.$original = Object.assign({}, this.$attributes)
   }
 
@@ -1180,7 +1163,7 @@ export class BaseModel implements ModelContract {
    * fill isn't allowed, since we disallow setting relationships
    * locally
    */
-  public fill (values: ModelObject, ignoreUndefined: boolean = true) {
+  public fill (values: any, ignoreUndefined: boolean = true) {
     this.$attributes = {}
     this.merge(values, ignoreUndefined)
     this.fillInvoked = true
@@ -1192,7 +1175,7 @@ export class BaseModel implements ModelContract {
    * 1. If key is unknown, it will be added to the `extras` object.
    * 2. If key is defined as a relationship, it will be ignored and one must call `$setRelated`.
    */
-  public merge (values: ModelObject, ignoreUndefined: boolean = true) {
+  public merge (values: any, ignoreUndefined: boolean = true) {
     const Model = this.constructor as typeof BaseModel
 
     /**
@@ -1218,7 +1201,7 @@ export class BaseModel implements ModelContract {
           return
         }
 
-        this.extras[key] = values[key]
+        this.$extras[key] = values[key]
       })
     }
   }
@@ -1227,7 +1210,7 @@ export class BaseModel implements ModelContract {
    * Preloads one or more relationships for the current model
    */
   public async preload (relationName: any, callback?: any) {
-    const constructor = this.constructor as ModelConstructorContract
+    const constructor = this.constructor as LucidModel
     const preloader = new Preloader(constructor)
 
     if (typeof (relationName) === 'function') {
@@ -1237,8 +1220,8 @@ export class BaseModel implements ModelContract {
     }
 
     await preloader
-      .sideload(this.sideloaded)
-      .$processAllForOne(this, constructor.$adapter.modelClient(this))
+      .sideload(this.$sideloaded)
+      .processAllForOne(this, constructor.$adapter.modelClient(this))
   }
 
   /**
@@ -1251,21 +1234,21 @@ export class BaseModel implements ModelContract {
     /**
      * Persit the model when it's not persisted already
      */
-    if (!this.isPersisted) {
+    if (!this.$isPersisted) {
       await Model.hooks.exec('before', 'create', this)
       await Model.hooks.exec('before', 'save', this)
 
       await Model.$adapter.insert(this, this.prepareForAdapter(this.$attributes))
 
-      this.hydrateOriginals()
-      this.isPersisted = true
+      this.$hydrateOriginals()
+      this.$isPersisted = true
 
       await Model.hooks.exec('after', 'create', this)
       await Model.hooks.exec('after', 'save', this)
       return
     }
 
-    const dirty = this.dirty
+    const dirty = this.$dirty
 
     /**
      * Do not issue updates when model doesn't have any mutations
@@ -1281,8 +1264,8 @@ export class BaseModel implements ModelContract {
      * Perform update
      */
     await Model.$adapter.update(this, this.prepareForAdapter(dirty))
-    this.hydrateOriginals()
-    this.isPersisted = true
+    this.$hydrateOriginals()
+    this.$isPersisted = true
 
     await Model.hooks.exec('after', 'update', this)
     await Model.hooks.exec('after', 'save', this)
@@ -1298,7 +1281,7 @@ export class BaseModel implements ModelContract {
     await Model.hooks.exec('before', 'delete', this)
 
     await Model.$adapter.delete(this)
-    this.isDeleted = true
+    this.$isDeleted = true
 
     await Model.hooks.exec('after', 'delete', this)
   }
@@ -1310,7 +1293,7 @@ export class BaseModel implements ModelContract {
     fieldsToCherryPick?: ModelObject,
     raw: boolean = false,
   ): ModelObject {
-    const Model = this.constructor as ModelConstructorContract
+    const Model = this.constructor as LucidModel
 
     return Object.keys(this.$attributes).reduce<ModelObject>((result, key) => {
       const column = Model.$getColumn(key)!
@@ -1331,7 +1314,7 @@ export class BaseModel implements ModelContract {
    * Serializes model compute properties to an object.
    */
   public serializeComputed (fieldsToCherryPick?: ModelObject): ModelObject {
-    const Model = this.constructor as ModelConstructorContract
+    const Model = this.constructor as LucidModel
     const result: ModelObject = {}
 
     Model.$computedDefinitions.forEach((value, key) => {
@@ -1351,7 +1334,7 @@ export class BaseModel implements ModelContract {
   public serializeRelations (
     fieldsToCherryPick: ModelObject | undefined,
     raw: true,
-  ): { [key: string]: ModelContract | ModelContract[] }
+  ): { [key: string]: LucidRow | LucidRow[] }
 
   public serializeRelations (
     fieldsToCherryPick: ModelObject | undefined,
@@ -1361,8 +1344,8 @@ export class BaseModel implements ModelContract {
   public serializeRelations (
     fieldsToCherryPick?: ModelObject,
     raw: boolean = false,
-  ): ModelObject | { [key: string]: ModelContract | ModelContract[] } {
-    const Model = this.constructor as ModelConstructorContract
+  ): ModelObject | { [key: string]: LucidRow | LucidRow[] } {
+    const Model = this.constructor as LucidModel
 
     return Object.keys(this.$preloaded).reduce((result, key) => {
       const relation = Model.$getRelation(key as any)! as RelationshipsContract
@@ -1440,7 +1423,7 @@ export class BaseModel implements ModelContract {
     return client
       .query()
       .from(modelConstructor.table)
-      .where(primaryKeyColumn, this.primaryKeyValue)
+      .where(primaryKeyColumn, this.$primaryKeyValue)
   }
 
   /**
@@ -1470,7 +1453,7 @@ export class BaseModel implements ModelContract {
     /**
      * Noop when model instance is not persisted
      */
-    if (!this.isPersisted) {
+    if (!this.$isPersisted) {
       return
     }
 
@@ -1478,17 +1461,17 @@ export class BaseModel implements ModelContract {
      * This will occur, when some other part of the application removes
      * the row
      */
-    const freshModelInstance = await modelConstructor.find(this.primaryKeyValue)
+    const freshModelInstance = await modelConstructor.find(this.$primaryKeyValue)
     if (!freshModelInstance) {
       throw new Exception(
         [
           '"Model.refresh" failed. ',
-          `Unable to lookup "${table}" table where "${primaryKeyColumn}" = ${this.primaryKeyValue}`,
+          `Unable to lookup "${table}" table where "${primaryKeyColumn}" = ${this.$primaryKeyValue}`,
         ].join(''),
       )
     }
 
     this.fill(freshModelInstance.$attributes)
-    this.hydrateOriginals()
+    this.$hydrateOriginals()
   }
 }

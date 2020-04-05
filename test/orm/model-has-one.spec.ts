@@ -34,11 +34,11 @@ test.group('Model | HasOne | Options', (group) => {
 
       class User extends BaseModel {
         @hasOne(() => Profile)
-        public profile: HasOne<Profile>
+        public profile: HasOne<typeof Profile>
       }
 
       User.boot()
-      User.$getRelation('profile').boot()
+      User.$getRelation('profile')!.boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -60,7 +60,7 @@ test.group('Model | HasOne | Options', (group) => {
         public id: number
 
         @hasOne(() => Profile)
-        public profile: HasOne<Profile>
+        public profile: HasOne<typeof Profile>
       }
 
       User.boot()
@@ -85,13 +85,13 @@ test.group('Model | HasOne | Options', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     User.boot()
-    User.$getRelation('profile').boot()
+    User.$getRelation('profile')!.boot()
 
-    assert.equal(User.$getRelation('profile')['localKey'], 'id')
+    assert.equal(User.$getRelation('profile')!['localKey'], 'id')
   })
 
   test('use custom defined local key', (assert) => {
@@ -109,13 +109,13 @@ test.group('Model | HasOne | Options', (group) => {
       public uid: number
 
       @hasOne(() => Profile, { localKey: 'uid' })
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     User.boot()
-    User.$getRelation('profile').boot()
+    User.$getRelation('profile')!.boot()
 
-    assert.equal(User.$getRelation('profile')['localKey'], 'uid')
+    assert.equal(User.$getRelation('profile')!['localKey'], 'uid')
   })
 
   test('compute foreign key from model name and primary key', (assert) => {
@@ -130,13 +130,13 @@ test.group('Model | HasOne | Options', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     User.boot()
-    User.$getRelation('profile').boot()
+    User.$getRelation('profile')!.boot()
 
-    assert.equal(User.$getRelation('profile')['foreignKey'], 'userId')
+    assert.equal(User.$getRelation('profile')!['foreignKey'], 'userId')
   })
 
   test('use pre defined foreign key', (assert) => {
@@ -151,11 +151,11 @@ test.group('Model | HasOne | Options', (group) => {
       public id: number
 
       @hasOne(() => Profile, { foreignKey: 'userUid' })
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     User.boot()
-    User.$getRelation('profile').boot()
+    User.$getRelation('profile')!.boot()
 
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userUid')
   })
@@ -178,15 +178,15 @@ test.group('Model | HasOne | Set Relations', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     User.boot()
-    User.$getRelation('profile').boot()
+    User.$getRelation('profile')!.boot()
 
     const user = new User()
     const profile = new Profile()
-    User.$getRelation('profile').$setRelated(user, profile)
+    User.$getRelation('profile')!.setRelated(user, profile)
     assert.deepEqual(user.profile, profile)
   })
 
@@ -201,15 +201,15 @@ test.group('Model | HasOne | Set Relations', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     User.boot()
-    User.$getRelation('profile').boot()
+    User.$getRelation('profile')!.boot()
 
     const user = new User()
     const profile = new Profile()
-    User.$getRelation('profile').$pushRelated(user, profile)
+    User.$getRelation('profile')!.pushRelated(user, profile)
     assert.deepEqual(user.profile, profile)
   })
 
@@ -224,11 +224,11 @@ test.group('Model | HasOne | Set Relations', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     User.boot()
-    User.$getRelation('profile').boot()
+    User.$getRelation('profile')!.boot()
 
     const user = new User()
     user.fill({ id: 1 })
@@ -245,7 +245,7 @@ test.group('Model | HasOne | Set Relations', (group) => {
     const profile1 = new Profile()
     profile1.fill({ userId: 2 })
 
-    User.$getRelation('profile').$setRelatedForMany([user, user1, user2], [profile, profile1])
+    User.$getRelation('profile')!.setRelatedForMany([user, user1, user2], [profile, profile1])
     assert.deepEqual(user.profile, profile)
     assert.deepEqual(user1.profile, profile1)
     assert.isUndefined(user2.profile)
@@ -288,7 +288,7 @@ test.group('Model | HasOne | bulk operations', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -327,7 +327,7 @@ test.group('Model | HasOne | bulk operations', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.table('users').multiInsert([
@@ -336,10 +336,10 @@ test.group('Model | HasOne | bulk operations', (group) => {
     ])
 
     const users = await User.all()
-    User.$getRelation('profile').boot()
+    User.$getRelation('profile')!.boot()
 
-    const related = User.$getRelation('profile').client(users, db.connection())
-    const { sql, bindings } = related.query().toSQL()
+    const related = User.$getRelation('profile')!.eagerQuery(users, db.connection())
+    const { sql, bindings } = related.toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = db.connection()
       .getWriteClient()
@@ -371,7 +371,7 @@ test.group('Model | HasOne | bulk operations', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -386,52 +386,6 @@ test.group('Model | HasOne | bulk operations', (group) => {
       .from('profiles')
       .where('user_id', 1)
       .update({ username: 'nikk' })
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-  })
-
-  test('generate correct sql for updating many rows', async (assert) => {
-    class Profile extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public userId: number
-
-      @column()
-      public displayName: string
-    }
-
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public username: string
-
-      @hasOne(() => Profile)
-      public profile: HasOne<Profile>
-    }
-
-    await db.table('users').multiInsert([
-      { username: 'virk' },
-      { username: 'nikk' },
-    ])
-
-    const users = await User.all()
-    User.$getRelation('profile').boot()
-
-    const now = new Date()
-    const related = User.$getRelation('profile').client(users, db.connection())
-    const { sql, bindings } = related.query().update({ updated_at: now }).toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = db.connection()
-      .getWriteClient()
-      .from('profiles')
-      .whereIn('user_id', [2, 1])
-      .update({ updated_at: now })
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -458,7 +412,7 @@ test.group('Model | HasOne | bulk operations', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -470,51 +424,6 @@ test.group('Model | HasOne | bulk operations', (group) => {
       .getWriteClient()
       .from('profiles')
       .where('user_id', 1)
-      .del()
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-  })
-
-  test('generate correct sql for deleting many rows', async (assert) => {
-    class Profile extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public userId: number
-
-      @column()
-      public displayName: string
-    }
-
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public username: string
-
-      @hasOne(() => Profile)
-      public profile: HasOne<Profile>
-    }
-
-    await db.table('users').multiInsert([
-      { username: 'virk' },
-      { username: 'nikk' },
-    ])
-
-    const users = await User.all()
-    User.$getRelation('profile').boot()
-
-    const related = User.$getRelation('profile').client(users, db.connection())
-    const { sql, bindings } = related.query().del().toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = db.connection()
-      .getWriteClient()
-      .from('profiles')
-      .whereIn('user_id', [2, 1])
       .del()
       .toSQL()
 
@@ -556,7 +465,7 @@ test.group('Model | HasOne | preload', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
@@ -605,7 +514,7 @@ test.group('Model | HasOne | preload', (group) => {
       public displayName: string
 
       @hasOne(() => Identity)
-      public identity: HasOne<Identity>
+      public identity: HasOne<typeof Identity>
     }
 
     class User extends BaseModel {
@@ -613,7 +522,7 @@ test.group('Model | HasOne | preload', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
@@ -662,7 +571,7 @@ test.group('Model | HasOne | preload', (group) => {
       public displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<User>
+      public user: BelongsTo<typeof User>
     }
 
     class User extends BaseModel {
@@ -670,7 +579,7 @@ test.group('Model | HasOne | preload', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
@@ -713,7 +622,7 @@ test.group('Model | HasOne | preload', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
@@ -756,7 +665,7 @@ test.group('Model | HasOne | preload', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
@@ -780,8 +689,8 @@ test.group('Model | HasOne | preload', (group) => {
     })
 
     assert.lengthOf(users, 2)
-    assert.deepEqual(users[0].profile.extras, {})
-    assert.deepEqual(users[1].profile.extras, {})
+    assert.deepEqual(users[0].profile.$extras, {})
+    assert.deepEqual(users[1].profile.$extras, {})
   })
 
   test('do not repeat fk when already defined', async (assert) => {
@@ -801,7 +710,7 @@ test.group('Model | HasOne | preload', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
@@ -825,8 +734,8 @@ test.group('Model | HasOne | preload', (group) => {
     })
 
     assert.lengthOf(users, 2)
-    assert.deepEqual(users[0].profile.extras, {})
-    assert.deepEqual(users[1].profile.extras, {})
+    assert.deepEqual(users[0].profile.$extras, {})
+    assert.deepEqual(users[1].profile.$extras, {})
   })
 
   test('pass sideloaded attributes to the relationship', async (assert) => {
@@ -846,7 +755,7 @@ test.group('Model | HasOne | preload', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
@@ -868,10 +777,10 @@ test.group('Model | HasOne | preload', (group) => {
     const users = await User.query().preload('profile').sideload({ id: 1 })
     assert.lengthOf(users, 2)
 
-    assert.deepEqual(users[0].sideloaded, { id: 1 })
-    assert.deepEqual(users[1].sideloaded, { id: 1 })
-    assert.deepEqual(users[0].profile.sideloaded, { id: 1 })
-    assert.deepEqual(users[1].profile.sideloaded, { id: 1 })
+    assert.deepEqual(users[0].$sideloaded, { id: 1 })
+    assert.deepEqual(users[1].$sideloaded, { id: 1 })
+    assert.deepEqual(users[0].profile.$sideloaded, { id: 1 })
+    assert.deepEqual(users[1].profile.$sideloaded, { id: 1 })
   })
 
   test('preload using model instance', async (assert) => {
@@ -891,7 +800,7 @@ test.group('Model | HasOne | preload', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
@@ -937,7 +846,7 @@ test.group('Model | HasOne | preload', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
@@ -984,7 +893,7 @@ test.group('Model | HasOne | preload', (group) => {
       public displayName: string
 
       @hasOne(() => Identity)
-      public identity: HasOne<Identity>
+      public identity: HasOne<typeof Identity>
     }
 
     class User extends BaseModel {
@@ -992,7 +901,7 @@ test.group('Model | HasOne | preload', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
@@ -1061,7 +970,7 @@ test.group('Model | HasOne | preload', (group) => {
       public displayName: string
 
       @hasOne(() => Identity)
-      public identity: HasOne<Identity>
+      public identity: HasOne<typeof Identity>
     }
 
     class User extends BaseModel {
@@ -1069,7 +978,7 @@ test.group('Model | HasOne | preload', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
@@ -1105,9 +1014,9 @@ test.group('Model | HasOne | preload', (group) => {
     assert.instanceOf(user!.profile, Profile)
     assert.instanceOf(user!.profile.identity, Identity)
 
-    assert.equal(user!.options!.connection, 'secondary')
-    assert.equal(user!.profile.options!.connection, 'secondary')
-    assert.equal(user!.profile.identity.options!.connection, 'secondary')
+    assert.equal(user!.$options!.connection, 'secondary')
+    assert.equal(user!.profile.$options!.connection, 'secondary')
+    assert.equal(user!.profile.identity.$options!.connection, 'secondary')
   })
 
   test('pass relationship metadata to the profiler', async (assert) => {
@@ -1129,7 +1038,7 @@ test.group('Model | HasOne | preload', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
@@ -1177,7 +1086,7 @@ test.group('Model | HasOne | preload', (group) => {
       public id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -1226,7 +1135,7 @@ test.group('Model | HasOne | save', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -1238,7 +1147,7 @@ test.group('Model | HasOne | save', (group) => {
 
     await user.related('profile').save(profile)
 
-    assert.isTrue(profile.isPersisted)
+    assert.isTrue(profile.$isPersisted)
     assert.equal(user.id, profile.userId)
   })
 
@@ -1264,7 +1173,7 @@ test.group('Model | HasOne | save', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -1306,13 +1215,13 @@ test.group('Model | HasOne | save', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     const trx = await db.transaction()
     const user = new User()
     user.username = 'virk'
-    user.trx = trx
+    user.$trx = trx
 
     try {
       const profile = new Profile()
@@ -1321,7 +1230,7 @@ test.group('Model | HasOne | save', (group) => {
       assert.exists(error)
     }
 
-    assert.isFalse(user.trx.isCompleted)
+    assert.isFalse(user.$trx.isCompleted)
     await trx.rollback()
 
     const users = await db.query().from('users')
@@ -1368,7 +1277,7 @@ test.group('Model | HasOne | create', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -1379,7 +1288,7 @@ test.group('Model | HasOne | create', (group) => {
       displayName: 'Hvirk',
     })
 
-    assert.isTrue(profile.isPersisted)
+    assert.isTrue(profile.$isPersisted)
     assert.equal(user.id, profile.userId)
   })
 
@@ -1405,7 +1314,7 @@ test.group('Model | HasOne | create', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -1444,18 +1353,18 @@ test.group('Model | HasOne | create', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     const trx = await db.transaction()
 
     const user = new User()
     user.username = 'virk'
-    user.trx = trx
+    user.$trx = trx
 
     const profile = await user.related('profile').create({ displayName: 'Hvirk' })
 
-    assert.isFalse(user.trx.isCompleted)
+    assert.isFalse(user.$trx.isCompleted)
     await trx.rollback()
 
     const totalUsers = await db.query().from('users').count('*', 'total')
@@ -1463,8 +1372,8 @@ test.group('Model | HasOne | create', (group) => {
 
     assert.equal(totalUsers[0].total, 0)
     assert.equal(totalProfiles[0].total, 0)
-    assert.isUndefined(user.trx)
-    assert.isUndefined(profile.trx)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(profile.$trx)
   })
 })
 
@@ -1504,7 +1413,7 @@ test.group('Model | HasOne | firstOrCreate', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -1515,8 +1424,8 @@ test.group('Model | HasOne | firstOrCreate', (group) => {
       displayName: 'Hvirk',
     })
 
-    assert.isTrue(profile.isPersisted)
-    assert.isTrue(profile.isLocal)
+    assert.isTrue(profile.$isPersisted)
+    assert.isTrue(profile.$isLocal)
     assert.equal(user.id, profile.userId)
     assert.equal(profile.displayName, 'Hvirk')
   })
@@ -1541,7 +1450,7 @@ test.group('Model | HasOne | firstOrCreate', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -1553,8 +1462,8 @@ test.group('Model | HasOne | firstOrCreate', (group) => {
       displayName: 'Hvirk',
     })
 
-    assert.isTrue(profile.isPersisted)
-    assert.isFalse(profile.isLocal)
+    assert.isTrue(profile.$isPersisted)
+    assert.isFalse(profile.$isLocal)
     assert.equal(user.id, profile.userId)
     assert.equal(profile.displayName, 'Hvirk')
 
@@ -1599,7 +1508,7 @@ test.group('Model | HasOne | updateOrCreate', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -1610,8 +1519,8 @@ test.group('Model | HasOne | updateOrCreate', (group) => {
       displayName: 'Virk',
     })
 
-    assert.isTrue(profile.isPersisted)
-    assert.isTrue(profile.isLocal)
+    assert.isTrue(profile.$isPersisted)
+    assert.isTrue(profile.$isLocal)
     assert.equal(user.id, profile.userId)
     assert.equal(profile.displayName, 'Virk')
 
@@ -1640,7 +1549,7 @@ test.group('Model | HasOne | updateOrCreate', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -1652,8 +1561,8 @@ test.group('Model | HasOne | updateOrCreate', (group) => {
       displayName: 'Virk',
     })
 
-    assert.isTrue(profile.isPersisted)
-    assert.isFalse(profile.isLocal)
+    assert.isTrue(profile.$isPersisted)
+    assert.isFalse(profile.$isLocal)
     assert.equal(user.id, profile.userId)
     assert.equal(profile.displayName, 'Virk')
 
@@ -1701,7 +1610,7 @@ test.group('Model | HasOne | pagination', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -1753,7 +1662,7 @@ test.group('Model | HasOne | clone', (group) => {
       public username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<Profile>
+      public profile: HasOne<typeof Profile>
     }
 
     await db.table('users').insert({ username: 'virk' })

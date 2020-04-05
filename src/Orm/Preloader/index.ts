@@ -8,13 +8,12 @@
 */
 
 import { Exception } from '@poppinss/utils'
-import { ModelObject, ModelContract, ModelConstructorContract } from '@ioc:Adonis/Lucid/Model'
+import { ModelObject, LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model'
 
 import {
   PreloaderContract,
   RelationshipsContract,
-  RelationBaseQueryClientContract,
-  RelationBaseQueryBuilderContract,
+  RelationQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Relations'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
@@ -23,11 +22,11 @@ import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
  * Exposes the API to define and preload relationships in reference to
  * a model
  */
-export class Preloader implements PreloaderContract<ModelContract> {
+export class Preloader implements PreloaderContract<LucidRow> {
   private preloads: {
     [name: string]: {
       relation: RelationshipsContract,
-      callback?: (builder: RelationBaseQueryBuilderContract<ModelConstructorContract>) => void,
+      callback?: (builder: RelationQueryBuilderContract<LucidModel, any>) => void,
     }
   } = {}
 
@@ -37,18 +36,7 @@ export class Preloader implements PreloaderContract<ModelContract> {
    */
   private sideloaded: ModelObject = {}
 
-  constructor (private model: ModelConstructorContract) {
-  }
-
-  /**
-   * Returns query client for the given relationship
-   */
-  private getQueryClient (
-    relation: RelationshipsContract,
-    client: QueryClientContract,
-    parent: ModelContract | ModelContract[],
-  ) {
-    return relation.client(parent, client) as RelationBaseQueryClientContract<any, any, any>
+  constructor (private model: LucidModel) {
   }
 
   /**
@@ -56,11 +44,11 @@ export class Preloader implements PreloaderContract<ModelContract> {
    */
   private async processRelation (
     name: string,
-    parent: ModelContract,
+    parent: LucidRow,
     client: QueryClientContract,
   ) {
     const { relation, callback } = this.preloads[name]
-    const query = this.getQueryClient(relation, client, parent).eagerQuery().sideload(this.sideloaded)
+    const query = relation.eagerQuery(parent, client).sideload(this.sideloaded)
 
     /**
      * Pass query to end user for adding more constraints
@@ -69,20 +57,20 @@ export class Preloader implements PreloaderContract<ModelContract> {
       callback(query)
     }
 
-    const result = await query.$selectRelationKeys().exec()
+    const result = await query.selectRelationKeys().exec()
 
     /**
      * hasOne and belongsTo will always return an array of a single row (if done right)
      */
     if (relation.type === 'hasOne' || relation.type === 'belongsTo') {
-      relation.$setRelated(parent, result[0])
+      relation.setRelated(parent, result[0])
       return
     }
 
     /**
      * Set array of related instances
     */
-    relation.$setRelated(parent, result)
+    relation.setRelated(parent, result)
   }
 
   /**
@@ -91,11 +79,11 @@ export class Preloader implements PreloaderContract<ModelContract> {
    */
   private async processRelationForMany (
     name: string,
-    parent: ModelContract[],
+    parent: LucidRow[],
     client: QueryClientContract,
   ) {
     const { relation, callback } = this.preloads[name]
-    const query = this.getQueryClient(relation, client, parent).eagerQuery().sideload(this.sideloaded)
+    const query = relation.eagerQuery(parent, client).sideload(this.sideloaded)
 
     /**
      * Pass query to end user for adding more constraints
@@ -104,12 +92,12 @@ export class Preloader implements PreloaderContract<ModelContract> {
       callback(query)
     }
 
-    const result = await query.$selectRelationKeys().exec()
+    const result = await query.selectRelationKeys().exec()
 
     /**
      * Set array of related instances
     */
-    relation.$setRelatedForMany(parent, result)
+    relation.setRelatedForMany(parent, result)
   }
 
   /**
@@ -146,7 +134,7 @@ export class Preloader implements PreloaderContract<ModelContract> {
   /**
    * Process of all the preloaded relationships for a single parent
    */
-  public async $processAllForOne (parent: ModelContract, client: QueryClientContract) {
+  public async processAllForOne (parent: LucidRow, client: QueryClientContract) {
     await Promise.all(Object.keys(this.preloads).map((relationName) => {
       return this.processRelation(relationName, parent, client)
     }))
@@ -155,7 +143,7 @@ export class Preloader implements PreloaderContract<ModelContract> {
   /**
    * Process of all the preloaded relationships for many parents
    */
-  public async $processAllForMany (parent: ModelContract[], client: QueryClientContract) {
+  public async processAllForMany (parent: LucidRow[], client: QueryClientContract) {
     if (!parent.length) {
       return
     }

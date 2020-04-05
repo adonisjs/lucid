@@ -13,9 +13,9 @@ import knex from 'knex'
 import { Exception } from '@poppinss/utils'
 
 import {
+  LucidModel,
   ModelObject,
   ModelAdapterOptions,
-  ModelConstructorContract,
   ModelQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
@@ -31,8 +31,7 @@ import { SimplePaginator } from '../../Database/Paginator/SimplePaginator'
  * Database query builder exposes the API to construct and run queries for selecting,
  * updating and deleting records.
  */
-export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderContract<ModelConstructorContract
-> {
+export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderContract<LucidModel> {
   /**
    * Sideloaded attributes that will be passed to the model instances
    */
@@ -66,11 +65,11 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 
   constructor (
     builder: knex.QueryBuilder,
-    public model: ModelConstructorContract,
+    public model: LucidModel,
     public client: QueryClientContract,
     customFn: DBQueryCallback = (userFn) => {
-      return (__builder) => {
-        userFn(new ModelQueryBuilder(__builder, this.model, this.client))
+      return ($builder) => {
+        userFn(new ModelQueryBuilder($builder, this.model, this.client))
       }
     },
   ) {
@@ -247,7 +246,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     /**
      * Preload for model instances
      */
-    await this.preloader.sideload(this.sideloaded).$processAllForMany(modelInstances, this.client)
+    await this.preloader.sideload(this.sideloaded).processAllForMany(modelInstances, this.client)
     return modelInstances
   }
 

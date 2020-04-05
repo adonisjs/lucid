@@ -8,8 +8,8 @@
 */
 
 import knex from 'knex'
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 import { ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { ManyToMany } from './index'
@@ -22,30 +22,32 @@ import { SimplePaginator } from '../../../Database/Paginator/SimplePaginator'
  * to the current relationship
  */
 export class ManyToManyQueryBuilder extends BaseQueryBuilder implements ManyToManyQueryBuilderContract<
-ModelConstructorContract,
-ModelConstructorContract
+  LucidModel,
+  LucidModel
 > {
   protected cherryPickingKeys: boolean = false
   protected appliedConstraints: boolean = false
+  private pivotQuery = false
 
-  /**
-   * Do not wrap result to model instances when query builder
-   * is initiated with `pivotOnly` flag.
-   */
-  protected wrapResultsToModelInstances = !this.pivotOnly
+  public get isPivotOnlyQuery () {
+    return this.pivotQuery
+  }
+
+  public set isPivotOnlyQuery (pivotOnly) {
+    this.pivotQuery = pivotOnly
+    this.wrapResultsToModelInstances = !this.pivotQuery
+  }
 
   constructor (
     builder: knex.QueryBuilder,
     client: QueryClientContract,
-    private parent: ModelContract | ModelContract[],
+    private parent: LucidRow | LucidRow[],
     private relation: ManyToMany,
-    private pivotOnly: boolean,
-    isEager: boolean = false,
   ) {
-    super(builder, client, relation, isEager, (userFn) => {
+    super(builder, client, relation, (userFn) => {
       return (__builder) => {
         userFn(
-          new ManyToManyQueryBuilder(__builder, this.client, this.parent, this.relation, this.pivotOnly, isEager),
+          new ManyToManyQueryBuilder(__builder, this.client, this.parent, this.relation),
         )
       }
     })
@@ -76,7 +78,7 @@ ModelConstructorContract
    * Prefixes the pivot table name to the key
    */
   private prefixPivotTable (key: string) {
-    return this.pivotOnly ? key : `${this.relation.pivotTable}.${key}`
+    return this.isPivotOnlyQuery ? key : `${this.relation.pivotTable}.${key}`
   }
 
   /**
@@ -107,7 +109,7 @@ ModelConstructorContract
    * table name
    */
   private transformRelatedTableColumns (columns: any[]) {
-    if (this.pivotOnly) {
+    if (this.isPivotOnlyQuery) {
       return columns
     }
 
@@ -327,7 +329,7 @@ ModelConstructorContract
 
     this.appliedConstraints = true
 
-    if (this.pivotOnly || ['delete', 'update'].includes(this.queryAction())) {
+    if (this.isPivotOnlyQuery || ['delete', 'update'].includes(this.queryAction())) {
       this.from(this.relation.pivotTable)
       this.addWhereConstraints()
       return
@@ -380,13 +382,13 @@ ModelConstructorContract
       this.client,
       this.parent,
       this.relation,
-      this.pivotOnly,
-      this.isEager,
     )
 
     this.applyQueryFlags(clonedQuery)
     clonedQuery.cherryPickingKeys = this.cherryPickingKeys
     clonedQuery.appliedConstraints = this.appliedConstraints
+    clonedQuery.isPivotOnlyQuery = this.isPivotOnlyQuery
+    clonedQuery.isEagerQuery = this.isEagerQuery
     return clonedQuery
   }
 
@@ -394,7 +396,7 @@ ModelConstructorContract
    * Paginate through rows inside a given table
    */
   public paginate (page: number, perPage: number = 20) {
-    if (this.isEager) {
+    if (this.isEagerQuery) {
       throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
     }
     return this.paginateRelated(page, perPage)

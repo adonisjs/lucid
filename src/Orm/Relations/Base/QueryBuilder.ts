@@ -8,25 +8,30 @@
 */
 
 import knex from 'knex'
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ModelConstructorContract } from '@ioc:Adonis/Lucid/Model'
-import { DBQueryCallback, ChainableContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-import { RelationBaseQueryBuilderContract, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
+import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { RelationQueryBuilderContract, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { ModelQueryBuilder } from '../../QueryBuilder'
 
 /**
  * Base query builder for ORM Relationships
  */
-export abstract class BaseQueryBuilder extends ModelQueryBuilder implements RelationBaseQueryBuilderContract<
-ModelConstructorContract,
-ModelConstructorContract
+export abstract class BaseQueryBuilder extends ModelQueryBuilder implements RelationQueryBuilderContract<
+LucidModel,
+LucidRow
 > {
+  /**
+   * A flag to know, if query builder is instantiated for
+   * eager loading or not.
+   */
+  public isEagerQuery: boolean = false
+
   constructor (
     builder: knex.QueryBuilder,
     client: QueryClientContract,
     relation: RelationshipsContract,
-    protected isEager: boolean,
     dbCallback: DBQueryCallback,
   ) {
     super(builder, relation.relatedModel(), client, dbCallback)
@@ -45,6 +50,7 @@ ModelConstructorContract
       connection: this.client.connectionName,
       inTransaction: this.client.isTransaction,
       model: this.model.name,
+      eagerLoading: this.isEagerQuery,
       relation: this.profilerData(),
     }))
   }
@@ -66,7 +72,8 @@ ModelConstructorContract
   protected abstract applyConstraints (): void
 
   /**
-   * Returns the name of the query action
+   * Returns the name of the query action. Used mainly for
+   * raising descriptive errors
    */
   protected queryAction (): string {
     let action = this.knexQuery['_method']
@@ -74,7 +81,7 @@ ModelConstructorContract
       action = 'delete'
     }
 
-    if (action === 'select' && this.isEager) {
+    if (action === 'select' && this.isEagerQuery) {
       action = 'preload'
     }
 
@@ -84,24 +91,15 @@ ModelConstructorContract
   /**
    * Selects the relation keys. Invoked by the preloader
    */
-  public $selectRelationKeys (query?: ChainableContract): this {
-    const knexQuery = query ? query.knexQuery : this.knexQuery
+  public selectRelationKeys (): this {
+    const knexQuery = this.knexQuery
     const columns = knexQuery['_statements'].find(({ grouping }) => grouping === 'columns')
 
     /**
-     * No columns have been define, we will let knex do it's job by
+     * No columns have been defined, we will let knex do it's job by
      * adding `select *`
      */
     if (!columns) {
-      return this
-    }
-
-    /**
-     * Columns is defined, but value is not an array. It means the columns is an aggregate
-     * clause, so we should relation columns
-     */
-    if (!Array.isArray(columns.value)) {
-      knexQuery.select(this.getRelationKeys())
       return this
     }
 

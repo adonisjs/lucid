@@ -10,10 +10,10 @@
 import { DateTime } from 'luxon'
 import { Exception } from '@poppinss/utils'
 import {
-  ModelContract,
+  LucidRow,
+  LucidModel,
   DateColumnDecorator,
   DateTimeColumnDecorator,
-  ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
 const DATE_TIME_TYPES = {
@@ -25,7 +25,7 @@ const DATE_TIME_TYPES = {
  * The method to prepare the date column before persisting it's
  * value to the database
  */
-function prepareDateColumn (value: any, attributeName: string, modelInstance: ModelContract) {
+function prepareDateColumn (value: any, attributeName: string, modelInstance: LucidRow) {
   /**
    * Return string or missing values as it is. If `auto` is set to true on
    * the column, then the hook will always initialize the date
@@ -64,7 +64,7 @@ function prepareDateColumn (value: any, attributeName: string, modelInstance: Mo
 /**
  * Consume database return value and convert it to an instance of luxon.DateTime
  */
-function consumeDateColumn (value: any, attributeName: string, modelInstance: ModelContract) {
+function consumeDateColumn (value: any, attributeName: string, modelInstance: LucidRow) {
   /**
    * Bypass null columns
    */
@@ -101,7 +101,7 @@ function consumeDateColumn (value: any, attributeName: string, modelInstance: Mo
  * The method to prepare the datetime column before persisting it's
  * value to the database
  */
-function prepareDateTimeColumn (value: any, attributeName: string, modelInstance: ModelContract) {
+function prepareDateTimeColumn (value: any, attributeName: string, modelInstance: LucidRow) {
   /**
    * Return string or missing values as it is. If `auto` is set to true on
    * the column, then the hook will always initialize the date
@@ -110,9 +110,9 @@ function prepareDateTimeColumn (value: any, attributeName: string, modelInstance
     return value
   }
 
-  const model = modelInstance.constructor as ModelConstructorContract
+  const model = modelInstance.constructor as LucidModel
   const modelName = model.name
-  const dateTimeFormat = model.query(modelInstance.options).client.dialect.dateTimeFormat
+  const dateTimeFormat = model.query(modelInstance.$options).client.dialect.dateTimeFormat
 
   /**
    * Format luxon instances to SQL formatted date
@@ -142,7 +142,7 @@ function prepareDateTimeColumn (value: any, attributeName: string, modelInstance
 /**
  * Consume database return value and convert it to an instance of luxon.DateTime
  */
-function consumeDateTimeColumn (value: any, attributeName: string, modelInstance: ModelContract) {
+function consumeDateTimeColumn (value: any, attributeName: string, modelInstance: LucidRow) {
   /**
    * Bypass null columns
    */
@@ -182,8 +182,8 @@ function consumeDateTimeColumn (value: any, attributeName: string, modelInstance
  * The hook is meant to be used with both `date` and `datetime` columns,
  * since it's not formatting any dates.
  */
-function setDateIfMissingHook (modelInstance: ModelContract) {
-  const model = modelInstance.constructor as ModelConstructorContract
+function setDateIfMissingHook (modelInstance: LucidRow) {
+  const model = modelInstance.constructor as LucidModel
   model.$columnsDefinitions.forEach((column, attributeName) => {
     const columnType = column.meta?.type
 
@@ -216,7 +216,7 @@ function setDateIfMissingHook (modelInstance: ModelContract) {
  */
 export const dateColumn: DateColumnDecorator = (options?) => {
   return function decorateAsColumn (target, property) {
-    const Model = target.constructor as ModelConstructorContract
+    const Model = target.constructor as LucidModel
     Model.boot()
 
     const normalizedOptions = Object.assign({
@@ -252,7 +252,7 @@ export const dateColumn: DateColumnDecorator = (options?) => {
  */
 export const dateTimeColumn: DateTimeColumnDecorator = (options?) => {
   return function decorateAsColumn (target, property) {
-    const Model = target.constructor as ModelConstructorContract
+    const Model = target.constructor as LucidModel
     Model.boot()
 
     const normalizedOptions = Object.assign({

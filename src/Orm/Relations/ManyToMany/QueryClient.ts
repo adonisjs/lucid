@@ -7,10 +7,9 @@
  * file that was distributed with this source code.
 */
 
-import { Exception } from '@poppinss/utils'
 import { ManyToManyClientContract } from '@ioc:Adonis/Lucid/Relations'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ModelConstructorContract, ModelContract, ModelObject } from '@ioc:Adonis/Lucid/Model'
+import { LucidModel, LucidRow, ModelObject } from '@ioc:Adonis/Lucid/Model'
 
 import { ManyToMany } from './index'
 import { ManyToManyQueryBuilder } from './QueryBuilder'
@@ -20,38 +19,25 @@ import { getValue, managedTransaction, syncDiff } from '../../../utils'
  * Query client for executing queries in scope to the defined
  * relationship
  */
-export class ManyToManyQueryClient implements ManyToManyClientContract<
-ManyToMany,
-ModelConstructorContract,
-ModelConstructorContract
-> {
+export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMany, LucidModel> {
   constructor (
     public relation: ManyToMany,
-    private parent: ModelContract | ModelContract[],
+    private parent: LucidRow,
     private client: QueryClientContract,
   ) {
   }
 
   /**
-   * Ensures that persistance is invoked on a single parent instance
-   */
-  private ensureSingleParent (parent: ModelContract | ModelContract[]): asserts parent is ModelContract {
-    if (Array.isArray(parent)) {
-      throw new Exception('Cannot save related models with multiple parent instances')
-    }
-  }
-
-  /**
    * Returns value for the foreign key
    */
-  private getForeignKeyValue (parent: ModelContract, action: string) {
+  private getForeignKeyValue (parent: LucidRow, action: string) {
     return getValue(parent, this.relation.localKey, this.relation, action)
   }
 
   /**
    * Returns related foreign key value
    */
-  private getRelatedForeignKeyValue (related: ModelContract, action: string) {
+  private getRelatedForeignKeyValue (related: LucidRow, action: string) {
     return getValue(related, this.relation.relatedKey, this.relation, action)
   }
 
@@ -64,22 +50,6 @@ ModelConstructorContract
       this.client,
       this.parent,
       this.relation,
-      false,
-      false,
-    )
-  }
-
-  /**
-   * Returns the eager query builder instance
-   */
-  public eagerQuery () {
-    return new ManyToManyQueryBuilder(
-      this.client.knexQuery(),
-      this.client,
-      this.parent,
-      this.relation,
-      false,
-      true,
     )
   }
 
@@ -87,34 +57,32 @@ ModelConstructorContract
    * Returns a query builder instance for the pivot table only
    */
   public pivotQuery () {
-    return new ManyToManyQueryBuilder(
+    const query = new ManyToManyQueryBuilder(
       this.client.knexQuery(),
       this.client,
       this.parent,
       this.relation,
-      true,
-      false,
     )
+
+    query.isPivotOnlyQuery = true
+    return query
   }
 
   /**
    * Save related model instance.
    */
-  public async save (related: ModelContract, checkExisting: boolean = true) {
-    const parent = this.parent
-    this.ensureSingleParent(parent)
-
-    await managedTransaction(parent.trx || this.client, async (trx) => {
+  public async save (related: LucidRow, checkExisting: boolean = true) {
+    await managedTransaction(this.parent.$trx || this.client, async (trx) => {
       /**
        * Persist parent
        */
-      parent.trx = trx
-      await parent.save()
+      this.parent.$trx = trx
+      await this.parent.save()
 
       /**
        * Persist related
        */
-      related.trx = trx
+      related.$trx = trx
       await related.save()
 
       /**
@@ -133,22 +101,19 @@ ModelConstructorContract
   /**
    * Save many of related model instances
    */
-  public async saveMany (related: ModelContract[], checkExisting: boolean = true) {
-    const parent = this.parent
-    this.ensureSingleParent(parent)
-
-    await managedTransaction(parent.trx || this.client, async (trx) => {
+  public async saveMany (related: LucidRow[], checkExisting: boolean = true) {
+    await managedTransaction(this.parent.$trx || this.client, async (trx) => {
       /**
        * Persist parent
        */
-      parent.trx = trx
-      await parent.save()
+      this.parent.$trx = trx
+      await this.parent.save()
 
       /**
        * Persist all related models
        */
       for (let one of related) {
-        one.trx = trx
+        one.$trx = trx
         await one.save()
       }
 
@@ -169,13 +134,10 @@ ModelConstructorContract
    * Create and persist an instance of related model. Also makes the pivot table
    * entry to create the relationship
    */
-  public async create (values: ModelObject, checkExisting?: boolean): Promise<ModelContract> {
-    const parent = this.parent
-    this.ensureSingleParent(parent)
-
-    return managedTransaction(parent.trx || this.client, async (trx) => {
-      parent.trx = trx
-      await parent.save()
+  public async create (values: ModelObject, checkExisting?: boolean): Promise<LucidRow> {
+    return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+      this.parent.$trx = trx
+      await this.parent.save()
 
       /**
        * Create and persist related model instance
@@ -200,13 +162,10 @@ ModelConstructorContract
    * Create and persist multiple of instances of related model. Also makes
    * the pivot table entries to create the relationship.
    */
-  public async createMany (values: ModelObject[], checkExisting?: boolean): Promise<ModelContract[]> {
-    const parent = this.parent
-    this.ensureSingleParent(parent)
-
-    return managedTransaction(parent.trx || this.client, async (trx) => {
-      parent.trx = trx
-      await parent.save()
+  public async createMany (values: ModelObject[], checkExisting?: boolean): Promise<LucidRow[]> {
+    return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+      this.parent.$trx = trx
+      await this.parent.save()
 
       /**
        * Create and persist related model instance
@@ -235,13 +194,10 @@ ModelConstructorContract
     ids: (string | number)[] | { [key: string]: ModelObject },
     trx?: TransactionClientContract,
   ): Promise<void> {
-    const parent = this.parent
-    this.ensureSingleParent(parent)
-
     /**
      * Pivot foreign key value (On the parent model)
      */
-    const foreignKeyValue = this.getForeignKeyValue(parent, 'attach')
+    const foreignKeyValue = this.getForeignKeyValue(this.parent, 'attach')
 
     /**
      * Finding if `ids` parameter is an object or not

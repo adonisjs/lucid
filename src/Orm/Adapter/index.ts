@@ -11,10 +11,10 @@
 
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import {
-  ModelContract,
+  LucidRow,
+  LucidModel,
   AdapterContract,
   ModelAdapterOptions,
-  ModelConstructorContract,
 } from '@ioc:Adonis/Lucid/Model'
 
 /**
@@ -28,10 +28,7 @@ export class Adapter implements AdapterContract {
   /**
    * Returns the query client based upon the model instance
    */
-  public modelConstructorClient (
-    modelConstructor: ModelConstructorContract,
-    options?: ModelAdapterOptions,
-  ) {
+  public modelConstructorClient (modelConstructor: LucidModel, options?: ModelAdapterOptions) {
     if (options && options.client) {
       return options.client
     }
@@ -44,7 +41,7 @@ export class Adapter implements AdapterContract {
   /**
    * Returns the model query builder instance for a given model
    */
-  public query (modelConstructor: ModelConstructorContract, options?: ModelAdapterOptions): any {
+  public query (modelConstructor: LucidModel, options?: ModelAdapterOptions): any {
     const client = this.modelConstructorClient(modelConstructor, options)
     return client.modelQuery(modelConstructor)
   }
@@ -52,16 +49,16 @@ export class Adapter implements AdapterContract {
   /**
    * Returns query client for a model instance by inspecting it's options
    */
-  public modelClient (instance: ModelContract): any {
-    const modelConstructor = instance.constructor as unknown as ModelConstructorContract
-    return instance.trx ? instance.trx : this.modelConstructorClient(modelConstructor, instance.options)
+  public modelClient (instance: LucidRow): any {
+    const modelConstructor = instance.constructor as unknown as LucidModel
+    return instance.$trx ? instance.$trx : this.modelConstructorClient(modelConstructor, instance.$options)
   }
 
   /**
    * Perform insert query on a given model instance
    */
-  public async insert (instance: ModelContract, attributes: any) {
-    const modelConstructor = instance.constructor as unknown as ModelConstructorContract
+  public async insert (instance: LucidRow, attributes: any) {
+    const modelConstructor = instance.constructor as unknown as LucidModel
     const query = instance.$getQueryFor('insert', this.modelClient(instance))
 
     const primaryKeyColumnName = modelConstructor.$keys.attributesToColumns.get(
@@ -76,14 +73,14 @@ export class Adapter implements AdapterContract {
   /**
    * Perform update query on a given model instance
    */
-  public async update (instance: ModelContract, dirty: any) {
+  public async update (instance: LucidRow, dirty: any) {
     await instance.$getQueryFor('update', this.modelClient(instance)).update(dirty)
   }
 
   /**
    * Perform delete query on a given model instance
    */
-  public async delete (instance: ModelContract) {
+  public async delete (instance: LucidRow) {
     await instance.$getQueryFor('delete', this.modelClient(instance)).del()
   }
 }

@@ -7,39 +7,67 @@
  * file that was distributed with this source code.
 */
 
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
-import { BelongsToRelationContract, RelationOptions } from '@ioc:Adonis/Lucid/Relations'
+import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import {
+  RelationOptions,
+  BelongsToRelationContract,
+  BelongsTo as ModelBelongsTo,
+} from '@ioc:Adonis/Lucid/Relations'
 
 import { KeysExtractor } from '../KeysExtractor'
 import { BelongsToQueryClient } from './QueryClient'
+import { BelongsToQueryBuilder } from './QueryBuilder'
 import { ensureRelationIsBooted } from '../../../utils'
 
 /**
  * Manages loading and persisting belongs to relationship
  */
-export class BelongsTo implements BelongsToRelationContract<
-ModelConstructorContract,
-ModelConstructorContract
-> {
-  public type = 'belongsTo' as const
+export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidModel> {
+  /**
+   * Relationship name
+   */
+  public readonly type = 'belongsTo'
+
+  /**
+   * Whether or not the relationship instance has been booted
+   */
   public booted: boolean = false
-  public relatedModel = this.options.relatedModel
+
+  /**
+   * The key name for serializing the relationship
+   */
   public serializeAs = this.options.serializeAs === undefined
     ? this.relationName
     : this.options.serializeAs
 
   /**
-   * Available after boot is invoked
+   * Local key is reference to the primary key in the related table
+   * @note: Available after boot is invoked
    */
   public localKey: string
+
+  /**
+   * Foreign key is reference to the foreign key in the self table
+   * @note: Available after boot is invoked
+   */
   public foreignKey: string
 
   constructor (
     public relationName: string,
-    private options: RelationOptions,
-    public model: ModelConstructorContract,
+    public relatedModel: () => LucidModel,
+    private options: RelationOptions<ModelBelongsTo<LucidModel>>,
+    public model: LucidModel,
   ) {
+  }
+
+  /**
+   * Returns a boolean saving related row belongs to the parent
+   * row or not.
+   */
+  private isRelatedRow (parent: LucidRow, related: LucidRow) {
+    return related[this.localKey] !== undefined && parent[this.foreignKey] === related[this.localKey]
   }
 
   /**
@@ -92,56 +120,66 @@ ModelConstructorContract
   }
 
   /**
-   * Set related model instances
+   * Set related model instance
    */
-  public $setRelated (
-    parent: ModelContract,
-    related: ModelContract | null
-  ): void {
+  public setRelated (parent: LucidRow, related: LucidRow | null): void {
     ensureRelationIsBooted(this)
     if (!related) {
       return
     }
 
-    parent.$setRelated(this.relationName as any, related)
+    if (!this.isRelatedRow(parent, related)) {
+      throw new Error('malformed setRelated call')
+    }
+
+    parent.$setRelated(this.relationName, related)
   }
 
   /**
    * Push related model instance
    */
-  public $pushRelated (
-    parent: ModelContract,
-    related: ModelContract | null
-  ): void {
+  public pushRelated (parent: LucidRow, related: LucidRow | null): void {
     ensureRelationIsBooted(this)
     if (!related) {
       return
     }
 
-    parent.$setRelated(this.relationName as any, related)
+    if (!this.isRelatedRow(parent, related)) {
+      throw new Error('malformed pushRelated call')
+    }
+
+    parent.$setRelated(this.relationName, related)
   }
 
   /**
    * Finds and set the related model instance next to the parent
    * models.
    */
-  public $setRelatedForMany (parent: ModelContract[], related: ModelContract[]): void {
+  public setRelatedForMany (parent: LucidRow[], related: LucidRow[]): void {
     ensureRelationIsBooted(this)
 
-    parent.forEach((parentModel) => {
-      const match = related.find((relatedModel) => {
-        const value = relatedModel[this.localKey]
-        return value !== undefined && parentModel[this.foreignKey] === value
-      })
-      this.$setRelated(parentModel, match || null)
+    parent.forEach((parentRow) => {
+      const match = related.find((relatedRow) => this.isRelatedRow(parentRow, relatedRow))
+      this.setRelated(parentRow, match || null)
     })
   }
 
   /**
    * Returns an instance of query client for the given relationship
    */
-  public client (parent: ModelContract | ModelContract[], client: QueryClientContract): any {
+  public client (parent: LucidRow, client: QueryClientContract): any {
     ensureRelationIsBooted(this)
     return new BelongsToQueryClient(this, parent, client)
+  }
+
+  /**
+   * Returns instance of the eager query for the relationship
+   */
+  public eagerQuery (parent: OneOrMany<LucidRow>, client: QueryClientContract): any {
+    ensureRelationIsBooted(this)
+
+    const query = new BelongsToQueryBuilder(client.knexQuery(), client, parent, this)
+    query.isEagerQuery = true
+    return query
   }
 }

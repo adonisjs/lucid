@@ -7,24 +7,23 @@
  * file that was distributed with this source code.
 */
 
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
 import { ManyToManyRelationContract, ManyToManyRelationOptions } from '@ioc:Adonis/Lucid/Relations'
 
-import { ManyToManyQueryClient } from './QueryClient'
 import { KeysExtractor } from '../KeysExtractor'
+import { ManyToManyQueryClient } from './QueryClient'
+import { ManyToManyQueryBuilder } from './QueryBuilder'
 import { ensureRelationIsBooted } from '../../../utils'
 
 /**
  * Manages loading and persisting many to many relationship
  */
-export class ManyToMany implements ManyToManyRelationContract<
-ModelConstructorContract,
-ModelConstructorContract
-> {
+export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidModel> {
   public type = 'manyToMany' as const
+
   public booted: boolean = false
-  public relatedModel = this.options.relatedModel
+
   public serializeAs = this.options.serializeAs === undefined
     ? this.relationName
     : this.options.serializeAs
@@ -46,8 +45,9 @@ ModelConstructorContract
 
   constructor (
     public relationName: string,
+    public relatedModel: () => LucidModel,
     private options: ManyToManyRelationOptions,
-    public model: ModelConstructorContract,
+    public model: LucidModel,
   ) {
   }
 
@@ -133,7 +133,7 @@ ModelConstructorContract
   /**
    * Set related model instances
    */
-  public $setRelated (parent: ModelContract, related: ModelContract[]): void {
+  public setRelated (parent: LucidRow, related: LucidRow[]): void {
     ensureRelationIsBooted(this)
     parent.$setRelated(this.relationName as any, related)
   }
@@ -141,7 +141,7 @@ ModelConstructorContract
   /**
    * Push related model instance(s)
    */
-  public $pushRelated (parent: ModelContract, related: ModelContract | ModelContract[]): void {
+  public pushRelated (parent: LucidRow, related: LucidRow | LucidRow[]): void {
     ensureRelationIsBooted(this)
     parent.$pushRelated(this.relationName as any, related as any)
   }
@@ -150,16 +150,16 @@ ModelConstructorContract
    * Finds and set the related model instances next to the parent
    * models.
    */
-  public $setRelatedForMany (parent: ModelContract[], related: ModelContract[]): void {
+  public setRelatedForMany (parent: LucidRow[], related: LucidRow[]): void {
     ensureRelationIsBooted(this)
     const pivotForeignKeyAlias = this.pivotAlias(this.pivotForeignKey)
 
     parent.forEach((parentModel) => {
-      this.$setRelated(
+      this.setRelated(
         parentModel,
         related.filter((relatedModel) => {
           const value = parentModel[this.localKey]
-          return value !== undefined && relatedModel.extras[pivotForeignKeyAlias] === value
+          return value !== undefined && relatedModel.$extras[pivotForeignKeyAlias] === value
         }),
       )
     })
@@ -168,8 +168,15 @@ ModelConstructorContract
   /**
    * Returns an instance of query client for invoking queries
    */
-  public client (parent: ModelContract | ModelContract[], client: QueryClientContract): any {
+  public client (parent: LucidRow, client: QueryClientContract): any {
     ensureRelationIsBooted(this)
     return new ManyToManyQueryClient(this, parent, client)
+  }
+
+  public eagerQuery (parent: LucidRow[], client: QueryClientContract) {
+    const query = new ManyToManyQueryBuilder(client.knexQuery(), client, parent, this)
+    query.isEagerQuery = true
+
+    return query
   }
 }

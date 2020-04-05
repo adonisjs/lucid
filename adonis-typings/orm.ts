@@ -9,12 +9,11 @@
 
 declare module '@ioc:Adonis/Lucid/Orm' {
   import {
+    LucidModel,
     ColumnDecorator,
     ComputedDecorator,
-    OrmConfigContract,
     DateColumnDecorator,
     DateTimeColumnDecorator,
-    ModelConstructorContract,
   } from '@ioc:Adonis/Lucid/Model'
 
   import {
@@ -35,7 +34,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
 
   export { OrmConfigContract, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
 
-  export const BaseModel: ModelConstructorContract
+  export const BaseModel: LucidModel
 
   export const column: ColumnDecorator & {
     date: DateColumnDecorator,

@@ -15,7 +15,7 @@ import {
   ComputedDecorator,
   DateColumnDecorator,
   DateTimeColumnDecorator,
-  ModelConstructorContract,
+  LucidModel,
 } from '@ioc:Adonis/Lucid/Model'
 
 import {
@@ -37,7 +37,7 @@ export const column: ColumnDecorator & {
   dateTime: DateTimeColumnDecorator,
 } = (options?) => {
   return function decorateAsColumn (target, property) {
-    const Model = target.constructor as ModelConstructorContract
+    const Model = target.constructor as LucidModel
     Model.boot()
     Model.$addColumn(property, options || {})
   }
@@ -52,7 +52,7 @@ column.dateTime = dateTimeColumn
  */
 export const computed: ComputedDecorator = (options) => {
   return function decorateAsComputed (target, property) {
-    const Model = target.constructor as ModelConstructorContract
+    const Model = target.constructor as LucidModel
 
     Model.boot()
     Model.$addComputed(property, options || {})
@@ -64,9 +64,9 @@ export const computed: ComputedDecorator = (options) => {
  */
 export const belongsTo: BelongsToDecorator = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
-    const Model = target.constructor as ModelConstructorContract
+    const Model = target.constructor as LucidModel
     Model.boot()
-    Model.$addRelation(property, 'belongsTo', Object.assign({ relatedModel }, relation))
+    Model.$addRelation(property, 'belongsTo', relatedModel, Object.assign({ relatedModel }, relation))
   }
 }
 
@@ -75,9 +75,9 @@ export const belongsTo: BelongsToDecorator = (relatedModel, relation?) => {
  */
 export const hasOne: HasOneDecorator = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
-    const Model = target.constructor as ModelConstructorContract
+    const Model = target.constructor as LucidModel
     Model.boot()
-    Model.$addRelation(property, 'hasOne', Object.assign({ relatedModel }, relation))
+    Model.$addRelation(property, 'hasOne', relatedModel, Object.assign({ relatedModel }, relation))
   }
 }
 
@@ -86,9 +86,9 @@ export const hasOne: HasOneDecorator = (relatedModel, relation?) => {
  */
 export const hasMany: HasManyDecorator = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
-    const Model = target.constructor as ModelConstructorContract
+    const Model = target.constructor as LucidModel
     Model.boot()
-    Model.$addRelation(property, 'hasMany', Object.assign({ relatedModel }, relation))
+    Model.$addRelation(property, 'hasMany', relatedModel, Object.assign({ relatedModel }, relation))
   }
 }
 
@@ -97,9 +97,9 @@ export const hasMany: HasManyDecorator = (relatedModel, relation?) => {
  */
 export const manyToMany: ManyToManyDecorator = (relatedModel, relation?) => {
   return function decorateAsRelation (target, property: string) {
-    const Model = target.constructor as ModelConstructorContract
+    const Model = target.constructor as LucidModel
     Model.boot()
-    Model.$addRelation(property, 'manyToMany', Object.assign({ relatedModel }, relation))
+    Model.$addRelation(property, 'manyToMany', relatedModel, Object.assign({ relatedModel }, relation))
   }
 }
 
@@ -108,8 +108,12 @@ export const manyToMany: ManyToManyDecorator = (relatedModel, relation?) => {
  */
 export const hasManyThrough: HasManyThroughDecorator = ([relatedModel, throughModel], relation) => {
   return function decorateAsRelation (target, property: string) {
-    const Model = target.constructor as ModelConstructorContract
+    const Model = target.constructor as LucidModel
     Model.boot()
-    Model.$addRelation(property, 'hasManyThrough', Object.assign({ relatedModel, throughModel }, relation))
+    Model.$addRelation(
+      property,
+      'hasManyThrough',
+      relatedModel, Object.assign({ relatedModel, throughModel }, relation),
+    )
   }
 }

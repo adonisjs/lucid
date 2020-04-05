@@ -39,11 +39,11 @@ test.group('Model | Has Many Through | Options', (group) => {
 
       class Country extends BaseModel {
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<Post>
+        public posts: HasManyThrough<typeof Post>
       }
       Country.boot()
 
-      Country.$getRelation('posts').boot()
+      Country.$getRelation('posts')!.boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -69,11 +69,11 @@ test.group('Model | Has Many Through | Options', (group) => {
         public id: number
 
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<Post>
+        public posts: HasManyThrough<typeof Post>
       }
-      Country.boot()
 
-      Country.$getRelation('posts').boot()
+      Country.boot()
+      Country.$getRelation('posts')!.boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -101,11 +101,11 @@ test.group('Model | Has Many Through | Options', (group) => {
         public id: number
 
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<Post>
+        public posts: HasManyThrough<typeof Post>
       }
-      Country.boot()
 
-      Country.$getRelation('posts').boot()
+      Country.boot()
+      Country.$getRelation('posts')!.boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -136,11 +136,11 @@ test.group('Model | Has Many Through | Options', (group) => {
         public id: number
 
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<Post>
+        public posts: HasManyThrough<typeof Post>
       }
-      Country.boot()
 
-      Country.$getRelation('posts').boot()
+      Country.boot()
+      Country.$getRelation('posts')!.boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -170,12 +170,12 @@ test.group('Model | Has Many Through | Options', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
 
-    const relation = Country.$getRelation('posts')
+    const relation = Country.$getRelation('posts')!
     relation.boot()
 
     assert.equal(relation['localKey'], 'id')
@@ -217,12 +217,12 @@ test.group('Model | Has Many Through | Options', (group) => {
         foreignKey: 'countryUid',
         localKey: 'uid',
       })
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
 
-    const relation = Country.$getRelation('posts')
+    const relation = Country.$getRelation('posts')!
     relation.boot()
 
     assert.equal(relation['localKey'], 'uid')
@@ -266,16 +266,16 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
-    Country.$getRelation('posts').boot()
+    Country.$getRelation('posts')!.boot()
 
     const country = new Country()
     const post = new Post()
 
-    Country.$getRelation('posts').$setRelated(country, [post])
+    Country.$getRelation('posts')!.setRelated(country, [post])
     assert.deepEqual(country.posts, [post])
   })
 
@@ -300,18 +300,18 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
-    Country.$getRelation('posts').boot()
+    Country.$getRelation('posts')!.boot()
 
     const country = new Country()
     const post = new Post()
     const post1 = new Post()
 
-    Country.$getRelation('posts').$setRelated(country, [post])
-    Country.$getRelation('posts').$pushRelated(country, [post1])
+    Country.$getRelation('posts')!.setRelated(country, [post])
+    Country.$getRelation('posts')!.pushRelated(country, [post1])
     assert.deepEqual(country.posts, [post, post1])
   })
 
@@ -336,11 +336,11 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
-    Country.$getRelation('posts').boot()
+    Country.$getRelation('posts')!.boot()
 
     const country = new Country()
     country.fill({ id: 1 })
@@ -353,23 +353,23 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
 
     const post = new Post()
     post.fill({ userId: 1 })
-    post.extras = {
+    post.$extras = {
       through_country_id: 1,
     }
 
     const post1 = new Post()
     post1.fill({ userId: 2 })
-    post1.extras = {
+    post1.$extras = {
       through_country_id: 2,
     }
 
     const post2 = new Post()
     post2.fill({ userId: 3 })
-    post2.extras = {
+    post2.$extras = {
       through_country_id: 1,
     }
 
-    Country.$getRelation('posts').$setRelatedForMany([country, country1, country2], [post, post1, post2])
+    Country.$getRelation('posts')!.setRelatedForMany([country, country1, country2], [post, post1, post2])
     assert.deepEqual(country.posts, [post, post2])
     assert.deepEqual(country1.posts, [post1])
     assert.deepEqual(country2.posts, [] as any)
@@ -413,7 +413,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -455,7 +455,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -465,10 +465,10 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
     ])
 
     const countries = await Country.all()
-    Country.$getRelation('posts').boot()
+    Country.$getRelation('posts')!.boot()
 
-    const related = Country.$getRelation('posts').client(countries, db.connection())
-    const { sql, bindings } = related.query().toSQL()
+    const query = Country.$getRelation('posts')!.eagerQuery(countries, db.connection())
+    const { sql, bindings } = query.toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = db.connection()
       .getWriteClient()
@@ -503,7 +503,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -522,58 +522,6 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       .update({ updated_at: now })
       .whereIn('posts.user_id', (builder) => {
         builder.from('users').where('users.country_id', 1)
-      })
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-  })
-
-  test('generate correct sql for updating many related rows', async (assert) => {
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public countryId: number
-    }
-    User.boot()
-
-    class Post extends BaseModel {
-      @column()
-      public userId: number
-    }
-    Post.boot()
-
-    class Country extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
-    }
-
-    Country.boot()
-    await db.table('countries').multiInsert([
-      { name: 'India' },
-      { name: 'UK' },
-    ])
-
-    const countries = await Country.all()
-    Country.$getRelation('posts').boot()
-
-    const now = new Date()
-    const related = Country.$getRelation('posts').client(countries, db.connection())
-
-    const { sql, bindings } = related.query().update({
-      updated_at: now,
-    }).toSQL()
-    const { sql: knexSql, bindings: knexBindings } = db.connection()
-      .getWriteClient()
-      .from('posts')
-      .update({ updated_at: now })
-      .whereIn('posts.user_id', (builder) => {
-        builder.from('users').whereIn('users.country_id', [2, 1])
       })
       .toSQL()
 
@@ -602,7 +550,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -617,55 +565,6 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
       .del()
       .whereIn('posts.user_id', (builder) => {
         builder.from('users').where('users.country_id', 1)
-      })
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-  })
-
-  test('generate correct sql for deleting many related rows', async (assert) => {
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public countryId: number
-    }
-    User.boot()
-
-    class Post extends BaseModel {
-      @column()
-      public userId: number
-    }
-    Post.boot()
-
-    class Country extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
-    }
-
-    Country.boot()
-    await db.table('countries').multiInsert([
-      { name: 'India' },
-      { name: 'UK' },
-    ])
-
-    const countries = await Country.all()
-    Country.$getRelation('posts').boot()
-
-    const related = Country.$getRelation('posts').client(countries, db.connection())
-
-    const { sql, bindings } = related.query().del().toSQL()
-    const { sql: knexSql, bindings: knexBindings } = db.connection()
-      .getWriteClient()
-      .from('posts')
-      .del()
-      .whereIn('posts.user_id', (builder) => {
-        builder.from('users').whereIn('users.country_id', [2, 1])
       })
       .toSQL()
 
@@ -711,7 +610,7 @@ test.group('Model | Has Many Through | aggregates', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -762,7 +661,7 @@ test.group('Model | Has Many Through | aggregates', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -846,7 +745,7 @@ test.group('Model | Has Many Through | preload', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -867,13 +766,13 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.lengthOf(countries, 1)
     assert.lengthOf(countries[0].posts, 3)
     assert.equal(countries[0].posts[0].title, 'Adonis 101')
-    assert.equal(countries[0].posts[0].extras.through_country_id, 1)
+    assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
 
     assert.equal(countries[0].posts[1].title, 'Lucid 101')
-    assert.equal(countries[0].posts[1].extras.through_country_id, 1)
+    assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
 
     assert.equal(countries[0].posts[2].title, 'Adonis5')
-    assert.equal(countries[0].posts[2].extras.through_country_id, 1)
+    assert.equal(countries[0].posts[2].$extras.through_country_id, 1)
   })
 
   test('preload many relationships', async (assert) => {
@@ -903,7 +802,7 @@ test.group('Model | Has Many Through | preload', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -926,13 +825,13 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.lengthOf(countries[1].posts, 1)
 
     assert.equal(countries[0].posts[0].title, 'Adonis 101')
-    assert.equal(countries[0].posts[0].extras.through_country_id, 1)
+    assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
 
     assert.equal(countries[0].posts[1].title, 'Lucid 101')
-    assert.equal(countries[0].posts[1].extras.through_country_id, 1)
+    assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
 
     assert.equal(countries[1].posts[0].title, 'Adonis5')
-    assert.equal(countries[1].posts[0].extras.through_country_id, 2)
+    assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
   })
 
   test('preload many relationships using model instance', async (assert) => {
@@ -962,7 +861,7 @@ test.group('Model | Has Many Through | preload', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -989,13 +888,13 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.lengthOf(countries[1].posts, 1)
 
     assert.equal(countries[0].posts[0].title, 'Adonis 101')
-    assert.equal(countries[0].posts[0].extras.through_country_id, 1)
+    assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
 
     assert.equal(countries[0].posts[1].title, 'Lucid 101')
-    assert.equal(countries[0].posts[1].extras.through_country_id, 1)
+    assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
 
     assert.equal(countries[1].posts[0].title, 'Adonis5')
-    assert.equal(countries[1].posts[0].extras.through_country_id, 2)
+    assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
   })
 
   test('cherry pick columns during preload', async (assert) => {
@@ -1025,7 +924,7 @@ test.group('Model | Has Many Through | preload', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1051,13 +950,13 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.lengthOf(countries[1].posts, 1)
 
     assert.equal(countries[0].posts[0].title, 'Adonis 101')
-    assert.deepEqual(countries[0].posts[0].extras, { through_country_id: 1 })
+    assert.deepEqual(countries[0].posts[0].$extras, { through_country_id: 1 })
 
     assert.equal(countries[0].posts[1].title, 'Lucid 101')
-    assert.deepEqual(countries[0].posts[1].extras, { through_country_id: 1 })
+    assert.deepEqual(countries[0].posts[1].$extras, { through_country_id: 1 })
 
     assert.equal(countries[1].posts[0].title, 'Adonis5')
-    assert.deepEqual(countries[1].posts[0].extras, { through_country_id: 2 })
+    assert.deepEqual(countries[1].posts[0].$extras, { through_country_id: 2 })
   })
 
   test('raise error when local key is not selected', async (assert) => {
@@ -1087,7 +986,7 @@ test.group('Model | Has Many Through | preload', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1140,7 +1039,7 @@ test.group('Model | Has Many Through | preload', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1202,7 +1101,7 @@ test.group('Model | Has Many Through | preload', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1250,7 +1149,7 @@ test.group('Model | Has Many Through | pagination', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1295,7 +1194,7 @@ test.group('Model | Has Many Through | pagination', (group) => {
 
     assert.lengthOf(posts.all(), 2)
     assert.instanceOf(posts.all()[0], Post)
-    assert.notProperty(posts.all()[0].extras, 'total')
+    assert.notProperty(posts.all()[0].$extras, 'total')
     assert.equal(posts.perPage, 2)
     assert.equal(posts.currentPage, 1)
     assert.equal(posts.lastPage, 2)
@@ -1340,7 +1239,7 @@ test.group('Model | Has Many Through | pagination', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1391,7 +1290,7 @@ test.group('Model | Has Many Through | clone', (group) => {
       public id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<Post>
+      public posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 

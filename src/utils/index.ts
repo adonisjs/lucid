@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
-import { ModelContract, ModelObject } from '@ioc:Adonis/Lucid/Model'
+import { LucidRow, ModelObject } from '@ioc:Adonis/Lucid/Model'
 import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
@@ -59,7 +59,7 @@ export function ensureRelationIsBooted (relation: RelationshipsContract) {
  * exception when the value is missing
  */
 export function getValue (
-  model: ModelContract,
+  model: LucidRow,
   key: string,
   relation: RelationshipsContract,
   action = 'preload',

@@ -34,11 +34,11 @@ test.group('Model | ManyToMany | Options', (group) => {
 
       class User extends BaseModel {
         @manyToMany(() => Skill)
-        public skills: ManyToMany<Skill>
+        public skills: ManyToMany<typeof Skill>
       }
 
       User.boot()
-      User.$getRelation('skills').boot()
+      User.$getRelation('skills')!.boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -58,10 +58,10 @@ test.group('Model | ManyToMany | Options', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
-    User.$getRelation('skills').boot()
+    User.$getRelation('skills')!.boot()
 
     assert.equal(User.$getRelation('skills')!['localKey'], 'id')
     assert.equal(User.$getRelation('skills')!['localKeyColumnName'], 'id')
@@ -81,11 +81,11 @@ test.group('Model | ManyToMany | Options', (group) => {
       public uid: number
 
       @manyToMany(() => Skill, { localKey: 'uid' })
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
-    User.$getRelation('skills').boot()
+    User.$getRelation('skills')!.boot()
 
     assert.equal(User.$getRelation('skills')!['localKey'], 'uid')
     assert.equal(User.$getRelation('skills')!['localKeyColumnName'], 'uid')
@@ -104,11 +104,11 @@ test.group('Model | ManyToMany | Options', (group) => {
         public id: number
 
         @manyToMany(() => Skill)
-        public skills: ManyToMany<Skill>
+        public skills: ManyToMany<typeof Skill>
       }
 
       User.boot()
-      User.$getRelation('skills').boot()
+      User.$getRelation('skills')!.boot()
     } catch ({ message }) {
       assert.equal(
         message,
@@ -128,10 +128,10 @@ test.group('Model | ManyToMany | Options', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
-    User.$getRelation('skills').boot()
+    User.$getRelation('skills')!.boot()
 
     assert.equal(User.$getRelation('skills')!['relatedKey'], 'id')
     assert.equal(User.$getRelation('skills')!['relatedKeyColumnName'], 'id')
@@ -151,10 +151,10 @@ test.group('Model | ManyToMany | Options', (group) => {
       public id: number
 
       @manyToMany(() => Skill, { relatedKey: 'uid' })
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
-    User.$getRelation('skills').boot()
+    User.$getRelation('skills')!.boot()
 
     assert.equal(User.$getRelation('skills')!['relatedKey'], 'uid')
     assert.equal(User.$getRelation('skills')!['relatedKeyColumnName'], 'uid')
@@ -171,10 +171,10 @@ test.group('Model | ManyToMany | Options', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
-    User.$getRelation('skills').boot()
+    User.$getRelation('skills')!.boot()
 
     assert.equal(User.$getRelation('skills')!['pivotForeignKey'], 'user_id')
   })
@@ -190,10 +190,10 @@ test.group('Model | ManyToMany | Options', (group) => {
       public id: number
 
       @manyToMany(() => Skill, { pivotForeignKey: 'user_uid' })
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
-    User.$getRelation('skills').boot()
+    User.$getRelation('skills')!.boot()
 
     assert.equal(User.$getRelation('skills')!['pivotForeignKey'], 'user_uid')
   })
@@ -209,11 +209,11 @@ test.group('Model | ManyToMany | Options', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
-    User.$getRelation('skills').boot()
+    User.$getRelation('skills')!.boot()
 
     assert.equal(User.$getRelation('skills')!['pivotRelatedForeignKey'], 'skill_id')
   })
@@ -229,11 +229,11 @@ test.group('Model | ManyToMany | Options', (group) => {
       public id: number
 
       @manyToMany(() => Skill, { pivotRelatedForeignKey: 'skill_uid' })
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
-    User.$getRelation('skills').boot()
+    User.$getRelation('skills')!.boot()
 
     assert.equal(User.$getRelation('skills')!['pivotRelatedForeignKey'], 'skill_uid')
   })
@@ -256,14 +256,14 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
-    User.$getRelation('skills').boot()
+    User.$getRelation('skills')!.boot()
 
     const user = new User()
     const skill = new Skill()
-    User.$getRelation('skills').$setRelated(user, [skill])
+    User.$getRelation('skills')!.setRelated(user, [skill])
     assert.deepEqual(user.skills, [skill])
   })
 
@@ -278,17 +278,17 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
-    User.$getRelation('skills').boot()
+    User.$getRelation('skills')!.boot()
 
     const user = new User()
     const skill = new Skill()
     const skill1 = new Skill()
 
-    User.$getRelation('skills').$setRelated(user, [skill])
-    User.$getRelation('skills').$pushRelated(user, [skill1])
+    User.$getRelation('skills')!.setRelated(user, [skill])
+    User.$getRelation('skills')!.pushRelated(user, [skill1])
     assert.deepEqual(user.skills, [skill, skill1])
   })
 
@@ -298,7 +298,7 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
       public id: number
 
       @manyToMany(() => User)
-      public users: ManyToMany<User>
+      public users: ManyToMany<typeof User>
     }
 
     class User extends BaseModel {
@@ -306,11 +306,11 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
-    User.$getRelation('skills').boot()
-    Skill.$getRelation('users').boot()
+    User.$getRelation('skills')!.boot()
+    Skill.$getRelation('users')!.boot()
 
     const user = new User()
     user.fill({ id: 1 })
@@ -322,21 +322,21 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
     user2.fill({ id: 3 })
 
     const skill = new Skill()
-    skill.extras = {
+    skill.$extras = {
       pivot_user_id: 1,
     }
 
     const skill1 = new Skill()
-    skill1.extras = {
+    skill1.$extras = {
       pivot_user_id: 2,
     }
 
     const skill2 = new Skill()
-    skill2.extras = {
+    skill2.$extras = {
       pivot_user_id: 1,
     }
 
-    User.$getRelation('skills').$setRelatedForMany([user, user1, user2], [skill, skill1, skill2])
+    User.$getRelation('skills')!.setRelatedForMany([user, user1, user2], [skill, skill1, skill2])
     assert.deepEqual(user.skills, [skill, skill2])
     assert.deepEqual(user1.skills, [skill1])
     assert.deepEqual(user2.skills, [] as any)
@@ -370,7 +370,7 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -401,7 +401,7 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').multiInsert([
@@ -410,10 +410,10 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     ])
 
     const users = await User.all()
-    User.$getRelation('skills').boot()
+    User.$getRelation('skills')!.boot()
 
-    const related = User.$getRelation('skills').client(users, db.connection())
-    const { sql, bindings } = related.query().toSQL()
+    const related = User.$getRelation('skills')!.eagerQuery(users, db.connection())
+    const { sql, bindings } = related.toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = db.connection()
       .getWriteClient()
@@ -440,7 +440,7 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
       @manyToMany(() => Skill, {
         pivotColumns: ['score'],
       })
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -476,7 +476,7 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -512,7 +512,7 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -533,44 +533,6 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for updating many rows', async (assert) => {
-    class Skill extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-    }
-
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
-    }
-
-    await db.table('users').multiInsert([
-      { username: 'virk' },
-      { username: 'nikk' },
-    ])
-
-    const users = await User.all()
-    User.$getRelation('skills').boot()
-
-    const related = User.$getRelation('skills').client(users, db.connection())
-    const now = new Date()
-
-    const { sql, bindings } = related.query().update({ updated_at: now }).toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = db.connection()
-      .getWriteClient()
-      .from('skill_user')
-      .whereIn('skill_user.user_id', [2, 1])
-      .update({ updated_at: now })
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-  })
-
   test('generate correct sql for deleting rows', async (assert) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
@@ -582,7 +544,7 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -594,42 +556,6 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
       .getWriteClient()
       .from('skill_user')
       .where('skill_user.user_id', 1)
-      .del()
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-  })
-
-  test('generate correct sql for deleting many rows', async (assert) => {
-    class Skill extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-    }
-
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
-    }
-
-    await db.table('users').multiInsert([
-      { username: 'virk' },
-      { username: 'nikk' },
-    ])
-
-    const users = await User.all()
-    User.$getRelation('skills').boot()
-
-    const related = User.$getRelation('skills').client(users, db.connection())
-
-    const { sql, bindings } = related.query().del().toSQL()
-    const { sql: knexSql, bindings: knexBindings } = db.connection()
-      .getWriteClient()
-      .from('skill_user')
-      .whereIn('skill_user.user_id', [2, 1])
       .del()
       .toSQL()
 
@@ -665,7 +591,7 @@ test.group('Model | HasMany | aggregates', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -699,7 +625,7 @@ test.group('Model | HasMany | aggregates', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -740,7 +666,7 @@ test.group('Model | HasMany | aggregates', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -801,7 +727,7 @@ test.group('Model | ManyToMany | preload', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -818,8 +744,8 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.lengthOf(users, 1)
     assert.lengthOf(users[0].skills, 1)
     assert.equal(users[0].skills[0].name, 'Programming')
-    assert.equal(users[0].skills[0].extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[0].extras.pivot_skill_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
   })
 
   test('preload relation for many', async (assert) => {
@@ -836,7 +762,7 @@ test.group('Model | ManyToMany | preload', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -864,16 +790,16 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.lengthOf(users[1].skills, 1)
 
     assert.equal(users[0].skills[0].name, 'Programming')
-    assert.equal(users[0].skills[0].extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[0].extras.pivot_skill_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
 
     assert.equal(users[0].skills[1].name, 'Dancing')
-    assert.equal(users[0].skills[1].extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[1].extras.pivot_skill_id, 2)
+    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
 
     assert.equal(users[1].skills[0].name, 'Dancing')
-    assert.equal(users[1].skills[0].extras.pivot_user_id, 2)
-    assert.equal(users[1].skills[0].extras.pivot_skill_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
   })
 
   test('preload relation using model instance', async (assert) => {
@@ -890,7 +816,7 @@ test.group('Model | ManyToMany | preload', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -922,16 +848,16 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.lengthOf(users[1].skills, 1)
 
     assert.equal(users[0].skills[0].name, 'Programming')
-    assert.equal(users[0].skills[0].extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[0].extras.pivot_skill_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
 
     assert.equal(users[0].skills[1].name, 'Dancing')
-    assert.equal(users[0].skills[1].extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[1].extras.pivot_skill_id, 2)
+    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
 
     assert.equal(users[1].skills[0].name, 'Dancing')
-    assert.equal(users[1].skills[0].extras.pivot_user_id, 2)
-    assert.equal(users[1].skills[0].extras.pivot_skill_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
   })
 
   test('select extra pivot columns', async (assert) => {
@@ -951,7 +877,7 @@ test.group('Model | ManyToMany | preload', (group) => {
       public id: number
 
       @manyToMany(() => Skill, { pivotColumns: ['proficiency'] })
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -982,19 +908,19 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.lengthOf(users[1].skills, 1)
 
     assert.equal(users[0].skills[0].name, 'Programming')
-    assert.equal(users[0].skills[0].extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[0].extras.pivot_skill_id, 1)
-    assert.equal(users[0].skills[0].extras.pivot_proficiency, 'expert')
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_proficiency, 'expert')
 
     assert.equal(users[0].skills[1].name, 'Dancing')
-    assert.equal(users[0].skills[1].extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[1].extras.pivot_skill_id, 2)
-    assert.equal(users[0].skills[1].extras.pivot_proficiency, 'beginner')
+    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
+    assert.equal(users[0].skills[1].$extras.pivot_proficiency, 'beginner')
 
     assert.equal(users[1].skills[0].name, 'Dancing')
-    assert.equal(users[1].skills[0].extras.pivot_user_id, 2)
-    assert.equal(users[1].skills[0].extras.pivot_skill_id, 2)
-    assert.equal(users[1].skills[0].extras.pivot_proficiency, 'beginner')
+    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
   })
 
   test('select extra pivot columns at runtime', async (assert) => {
@@ -1014,7 +940,7 @@ test.group('Model | ManyToMany | preload', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1048,19 +974,19 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.lengthOf(users[1].skills, 1)
 
     assert.equal(users[0].skills[0].name, 'Programming')
-    assert.equal(users[0].skills[0].extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[0].extras.pivot_skill_id, 1)
-    assert.equal(users[0].skills[0].extras.pivot_proficiency, 'expert')
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_proficiency, 'expert')
 
     assert.equal(users[0].skills[1].name, 'Dancing')
-    assert.equal(users[0].skills[1].extras.pivot_user_id, 1)
-    assert.equal(users[0].skills[1].extras.pivot_skill_id, 2)
-    assert.equal(users[0].skills[1].extras.pivot_proficiency, 'beginner')
+    assert.equal(users[0].skills[1].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[1].$extras.pivot_skill_id, 2)
+    assert.equal(users[0].skills[1].$extras.pivot_proficiency, 'beginner')
 
     assert.equal(users[1].skills[0].name, 'Dancing')
-    assert.equal(users[1].skills[0].extras.pivot_user_id, 2)
-    assert.equal(users[1].skills[0].extras.pivot_skill_id, 2)
-    assert.equal(users[1].skills[0].extras.pivot_proficiency, 'beginner')
+    assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
+    assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
   })
 
   test('cherry pick columns during preload', async (assert) => {
@@ -1077,7 +1003,7 @@ test.group('Model | ManyToMany | preload', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1097,7 +1023,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.lengthOf(users, 1)
     assert.lengthOf(users[0].skills, 1)
     assert.equal(users[0].skills[0].name, 'Programming')
-    assert.deepEqual(users[0].skills[0].extras, { pivot_user_id: 1, pivot_skill_id: 1 })
+    assert.deepEqual(users[0].skills[0].$extras, { pivot_user_id: 1, pivot_skill_id: 1 })
   })
 
   test('raise error when local key is not selected', async (assert) => {
@@ -1116,7 +1042,7 @@ test.group('Model | ManyToMany | preload', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1159,7 +1085,7 @@ test.group('Model | ManyToMany | preload', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1194,7 +1120,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1227,7 +1153,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1260,7 +1186,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1293,7 +1219,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1330,7 +1256,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1365,7 +1291,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1409,7 +1335,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1464,7 +1390,7 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1494,7 +1420,7 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1527,7 +1453,7 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1564,7 +1490,7 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1612,7 +1538,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1645,7 +1571,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1682,7 +1608,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1717,7 +1643,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1754,7 +1680,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1793,7 +1719,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1826,7 +1752,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1861,7 +1787,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1917,7 +1843,7 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1950,7 +1876,7 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1987,7 +1913,7 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -2023,7 +1949,7 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -2056,7 +1982,7 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -2091,7 +2017,7 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -2157,7 +2083,7 @@ test.group('Model | ManyToMany | save', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -2169,8 +2095,8 @@ test.group('Model | ManyToMany | save', (group) => {
 
     await user.related('skills').save(skill)
 
-    assert.isTrue(user.isPersisted)
-    assert.isTrue(skill.isPersisted)
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalPosts = await db.query().from('skills').count('*', 'total')
@@ -2182,8 +2108,8 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.lengthOf(skillUsers, 1)
     assert.equal(skillUsers[0].user_id, user.id)
     assert.equal(skillUsers[0].skill_id, skill.id)
-    assert.isUndefined(user.trx)
-    assert.isUndefined(skill.trx)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
   })
 
   test('do not attach duplicates when save is called more than once', async (assert) => {
@@ -2203,7 +2129,7 @@ test.group('Model | ManyToMany | save', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -2216,8 +2142,8 @@ test.group('Model | ManyToMany | save', (group) => {
     await user.related('skills').save(skill)
     await user.related('skills').save(skill)
 
-    assert.isTrue(user.isPersisted)
-    assert.isTrue(skill.isPersisted)
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalPosts = await db.query().from('skills').count('*', 'total')
@@ -2230,8 +2156,8 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.equal(skillUsers[0].user_id, user.id)
     assert.equal(skillUsers[0].skill_id, skill.id)
 
-    assert.isUndefined(user.trx)
-    assert.isUndefined(skill.trx)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
   })
 
   test('attach duplicates when save is called more than once with with checkExisting = false', async (assert) => {
@@ -2251,7 +2177,7 @@ test.group('Model | ManyToMany | save', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -2264,8 +2190,8 @@ test.group('Model | ManyToMany | save', (group) => {
     await user.related('skills').save(skill)
     await user.related('skills').save(skill, false)
 
-    assert.isTrue(user.isPersisted)
-    assert.isTrue(skill.isPersisted)
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalPosts = await db.query().from('skills').count('*', 'total')
@@ -2281,8 +2207,8 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.equal(skillUsers[1].user_id, user.id)
     assert.equal(skillUsers[1].skill_id, skill.id)
 
-    assert.isUndefined(user.trx)
-    assert.isUndefined(skill.trx)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
   })
 
   test('attach when related pivot entry exists but for a different parent @sanityCheck', async (assert) => {
@@ -2302,7 +2228,7 @@ test.group('Model | ManyToMany | save', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -2319,8 +2245,8 @@ test.group('Model | ManyToMany | save', (group) => {
     await user.related('skills').save(skill)
     await user1.related('skills').save(skill)
 
-    assert.isTrue(user.isPersisted)
-    assert.isTrue(skill.isPersisted)
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalSkills = await db.query().from('skills').count('*', 'total')
@@ -2335,9 +2261,9 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.equal(skillUsers[1].user_id, user1.id)
     assert.equal(skillUsers[1].skill_id, skill.id)
 
-    assert.isUndefined(user.trx)
-    assert.isUndefined(user1.trx)
-    assert.isUndefined(skill.trx)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(user1.$trx)
+    assert.isUndefined(skill.$trx)
   })
 })
 
@@ -2374,7 +2300,7 @@ test.group('Model | ManyToMany | saveMany', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -2389,8 +2315,8 @@ test.group('Model | ManyToMany | saveMany', (group) => {
 
     await user.related('skills').saveMany([skill, skill1])
 
-    assert.isTrue(user.isPersisted)
-    assert.isTrue(skill.isPersisted)
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalPosts = await db.query().from('skills').count('*', 'total')
@@ -2405,9 +2331,9 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.equal(skillUsers[1].user_id, user.id)
     assert.equal(skillUsers[1].skill_id, skill1.id)
 
-    assert.isUndefined(user.trx)
-    assert.isUndefined(skill.trx)
-    assert.isUndefined(skill1.trx)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+    assert.isUndefined(skill1.$trx)
   })
 
   test('do not attach duplicates when saveMany is called more than once', async (assert) => {
@@ -2427,7 +2353,7 @@ test.group('Model | ManyToMany | saveMany', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -2443,8 +2369,8 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     await user.related('skills').saveMany([skill, skill1])
     await user.related('skills').saveMany([skill, skill1])
 
-    assert.isTrue(user.isPersisted)
-    assert.isTrue(skill.isPersisted)
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalPosts = await db.query().from('skills').count('*', 'total')
@@ -2459,9 +2385,9 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.equal(skillUsers[1].user_id, user.id)
     assert.equal(skillUsers[1].skill_id, skill1.id)
 
-    assert.isUndefined(user.trx)
-    assert.isUndefined(skill.trx)
-    assert.isUndefined(skill1.trx)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+    assert.isUndefined(skill1.$trx)
   })
 
   test('attach duplicates when saveMany is called more than once with checkExisting = false', async (assert) => {
@@ -2481,7 +2407,7 @@ test.group('Model | ManyToMany | saveMany', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -2497,8 +2423,8 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     await user.related('skills').saveMany([skill, skill1])
     await user.related('skills').saveMany([skill, skill1], false)
 
-    assert.isTrue(user.isPersisted)
-    assert.isTrue(skill.isPersisted)
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalPosts = await db.query().from('skills').count('*', 'total')
@@ -2518,9 +2444,9 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.equal(skillUsers[3].user_id, user.id)
     assert.equal(skillUsers[3].skill_id, skill1.id)
 
-    assert.isUndefined(user.trx)
-    assert.isUndefined(skill.trx)
-    assert.isUndefined(skill1.trx)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+    assert.isUndefined(skill1.$trx)
   })
 
   test('attach when related pivot entry exists but for a different parent @sanityCheck', async (assert) => {
@@ -2540,7 +2466,7 @@ test.group('Model | ManyToMany | saveMany', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -2559,9 +2485,9 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     await user.related('skills').saveMany([skill, skill1])
     await user1.related('skills').saveMany([skill, skill1])
 
-    assert.isTrue(user.isPersisted)
-    assert.isTrue(skill.isPersisted)
-    assert.isTrue(user1.isPersisted)
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+    assert.isTrue(user1.$isPersisted)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalPosts = await db.query().from('skills').count('*', 'total')
@@ -2581,9 +2507,9 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.equal(skillUsers[3].user_id, user1.id)
     assert.equal(skillUsers[3].skill_id, skill1.id)
 
-    assert.isUndefined(user.trx)
-    assert.isUndefined(skill.trx)
-    assert.isUndefined(skill1.trx)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+    assert.isUndefined(skill1.$trx)
   })
 
   test('wrap saveMany inside a custom transaction', async (assert) => {
@@ -2603,18 +2529,18 @@ test.group('Model | ManyToMany | saveMany', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const trx = await db.transaction()
 
     const user = new User()
     user.username = 'virk'
-    user.trx = trx
+    user.$trx = trx
     await user.save()
 
     const user1 = new User()
-    user1.trx = trx
+    user1.$trx = trx
     user1.username = 'nikk'
 
     const skill = new Skill()
@@ -2626,8 +2552,8 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     await user.related('skills').saveMany([skill, skill1])
     await user1.related('skills').saveMany([skill, skill1])
 
-    assert.isFalse(user.trx.isCompleted)
-    assert.isFalse(user1.trx.isCompleted)
+    assert.isFalse(user.$trx.isCompleted)
+    assert.isFalse(user1.$trx.isCompleted)
 
     await trx.rollback()
 
@@ -2675,7 +2601,7 @@ test.group('Model | ManyToMany | create', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -2684,8 +2610,8 @@ test.group('Model | ManyToMany | create', (group) => {
 
     const skill = await user.related('skills').create({ name: 'Programming' })
 
-    assert.isTrue(user.isPersisted)
-    assert.isTrue(skill.isPersisted)
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalPosts = await db.query().from('skills').count('*', 'total')
@@ -2697,8 +2623,8 @@ test.group('Model | ManyToMany | create', (group) => {
     assert.lengthOf(skillUsers, 1)
     assert.equal(skillUsers[0].user_id, user.id)
     assert.equal(skillUsers[0].skill_id, skill.id)
-    assert.isUndefined(user.trx)
-    assert.isUndefined(skill.trx)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
   })
 
   test('wrap create inside a custom transaction', async (assert) => {
@@ -2718,19 +2644,19 @@ test.group('Model | ManyToMany | create', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const trx = await db.transaction()
 
     const user = new User()
     user.username = 'virk'
-    user.trx = trx
+    user.$trx = trx
     await user.save()
 
     const skill = await user.related('skills').create({ name: 'Programming' })
-    assert.isFalse(user.trx.isCompleted)
-    assert.isFalse(skill.trx!.isCompleted)
+    assert.isFalse(user.$trx.isCompleted)
+    assert.isFalse(skill.$trx!.isCompleted)
 
     await trx.commit()
 
@@ -2745,8 +2671,8 @@ test.group('Model | ManyToMany | create', (group) => {
     assert.equal(skillUsers[0].user_id, user.id)
     assert.equal(skillUsers[0].skill_id, skill.id)
 
-    assert.isUndefined(user.trx)
-    assert.isUndefined(skill.trx)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
   })
 })
 
@@ -2783,7 +2709,7 @@ test.group('Model | ManyToMany | createMany', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -2795,9 +2721,9 @@ test.group('Model | ManyToMany | createMany', (group) => {
       { name: 'Cooking' },
     ])
 
-    assert.isTrue(user.isPersisted)
-    assert.isTrue(skill.isPersisted)
-    assert.isTrue(skill1.isPersisted)
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+    assert.isTrue(skill1.$isPersisted)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalSkills = await db.query().from('skills').count('*', 'total')
@@ -2813,9 +2739,9 @@ test.group('Model | ManyToMany | createMany', (group) => {
     assert.equal(skillUsers[1].user_id, user.id)
     assert.equal(skillUsers[1].skill_id, skill1.id)
 
-    assert.isUndefined(user.trx)
-    assert.isUndefined(skill.trx)
-    assert.isUndefined(skill1.trx)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+    assert.isUndefined(skill1.$trx)
   })
 
   test('wrap create many inside a custom transaction', async (assert) => {
@@ -2835,14 +2761,14 @@ test.group('Model | ManyToMany | createMany', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const trx = await db.transaction()
 
     const user = new User()
     user.username = 'virk'
-    user.trx = trx
+    user.$trx = trx
     await user.save()
 
     const [skill, skill1] = await user.related('skills').createMany([
@@ -2850,9 +2776,9 @@ test.group('Model | ManyToMany | createMany', (group) => {
       { name: 'Cooking' },
     ])
 
-    assert.isFalse(user.trx.isCompleted)
-    assert.isFalse(skill.trx!.isCompleted)
-    assert.isFalse(skill1.trx!.isCompleted)
+    assert.isFalse(user.$trx.isCompleted)
+    assert.isFalse(skill.$trx!.isCompleted)
+    assert.isFalse(skill1.$trx!.isCompleted)
 
     await trx.rollback()
 
@@ -2899,7 +2825,7 @@ test.group('Model | ManyToMany | attach', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -2908,7 +2834,7 @@ test.group('Model | ManyToMany | attach', (group) => {
 
     await user.related('skills').attach([1, 2])
 
-    assert.isTrue(user.isPersisted)
+    assert.isTrue(user.$isPersisted)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalSkills = await db.query().from('skills').count('*', 'total')
@@ -2942,7 +2868,7 @@ test.group('Model | ManyToMany | attach', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -2958,7 +2884,7 @@ test.group('Model | ManyToMany | attach', (group) => {
       },
     })
 
-    assert.isTrue(user.isPersisted)
+    assert.isTrue(user.$isPersisted)
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalSkills = await db.query().from('skills').count('*', 'total')
@@ -3011,7 +2937,7 @@ test.group('Model | ManyToMany | detach', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -3062,7 +2988,7 @@ test.group('Model | ManyToMany | detach', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -3133,7 +3059,7 @@ test.group('Model | ManyToMany | sync', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -3193,7 +3119,7 @@ test.group('Model | ManyToMany | sync', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -3258,7 +3184,7 @@ test.group('Model | ManyToMany | sync', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -3319,7 +3245,7 @@ test.group('Model | ManyToMany | sync', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -3387,7 +3313,7 @@ test.group('Model | ManyToMany | sync', (group) => {
       public username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -3476,7 +3402,7 @@ test.group('Model | ManyToMany | pagination', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -3503,7 +3429,7 @@ test.group('Model | ManyToMany | pagination', (group) => {
 
     assert.lengthOf(skills.all(), 1)
     assert.instanceOf(skills.all()[0], Skill)
-    assert.notProperty(skills.all()[0].extras, 'total')
+    assert.notProperty(skills.all()[0].$extras, 'total')
     assert.equal(skills.perPage, 1)
     assert.equal(skills.currentPage, 1)
     assert.equal(skills.lastPage, 2)
@@ -3538,7 +3464,7 @@ test.group('Model | ManyToMany | pagination', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -3595,7 +3521,7 @@ test.group('Model | ManyToMany | clone', (group) => {
       public id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<Skill>
+      public skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })

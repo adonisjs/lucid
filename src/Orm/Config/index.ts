@@ -10,8 +10,8 @@
 import camelCase from 'camelcase'
 import { plural } from 'pluralize'
 import { snakeCase } from 'snake-case'
-import { TypedRelations } from '@ioc:Adonis/Lucid/Relations'
-import { OrmConfigContract, ModelConstructorContract } from '@ioc:Adonis/Lucid/Model'
+import { ModelRelations } from '@ioc:Adonis/Lucid/Relations'
+import { OrmConfigContract, LucidModel } from '@ioc:Adonis/Lucid/Model'
 
 /**
  * The default config for constructing ORM defaults
@@ -20,21 +20,21 @@ export const OrmConfig: OrmConfigContract = {
   /**
    * Returns the table name for a given model
    */
-  getTableName (model: ModelConstructorContract) {
+  getTableName (model: LucidModel) {
     return plural(snakeCase(model.name))
   },
 
   /**
    * Returns the column name for a given model attribute
    */
-  getColumnName (_: ModelConstructorContract, key: string) {
+  getColumnName (_: LucidModel, key: string) {
     return snakeCase(key)
   },
 
   /**
    * Returns the serialized key (toJSON key) name for a given attribute.
    */
-  getSerializeAsKey (_: ModelConstructorContract, key: string) {
+  getSerializeAsKey (_: LucidModel, key: string) {
     return snakeCase(key)
   },
 
@@ -42,9 +42,9 @@ export const OrmConfig: OrmConfigContract = {
    * Returns the local key for a given relationship
    */
   getLocalKey (
-    relation: TypedRelations['type'],
-    model: ModelConstructorContract,
-    related: ModelConstructorContract
+    relation: ModelRelations['type'],
+    model: LucidModel,
+    related: LucidModel
   ): string {
     if (relation === 'belongsTo') {
       return related.primaryKey
@@ -57,9 +57,9 @@ export const OrmConfig: OrmConfigContract = {
    * Returns the foreign key for a given relationship
    */
   getForeignKey (
-    relation: TypedRelations['type'],
-    model: ModelConstructorContract,
-    related: ModelConstructorContract
+    relation: ModelRelations['type'],
+    model: LucidModel,
+    related: LucidModel
   ): string {
     if (relation === 'belongsTo') {
       return camelCase(`${related.name}_${related.primaryKey}`)
@@ -73,8 +73,8 @@ export const OrmConfig: OrmConfigContract = {
    */
   getPivotTableName (
     _: 'manyToMany',
-    model: ModelConstructorContract,
-    relatedModel: ModelConstructorContract,
+    model: LucidModel,
+    relatedModel: LucidModel,
   ): string {
     return snakeCase([relatedModel.name, model.name].sort().join('_'))
   },
@@ -84,7 +84,7 @@ export const OrmConfig: OrmConfigContract = {
    */
   getPivotForeignKey (
     _: 'manyToMany',
-    model: ModelConstructorContract,
+    model: LucidModel,
   ): string {
     return snakeCase(`${model.name}_${model.primaryKey}`)
   },

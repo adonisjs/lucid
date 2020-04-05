@@ -9,9 +9,11 @@
 
 declare module '@ioc:Adonis/Lucid/Relations' {
   import {
+    LucidRow,
+    LucidModel,
     ModelObject,
-    ModelContract,
-    ModelConstructorContract,
+    TypedDecorator,
+    ModelAttributes,
     ModelQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/Model'
 
@@ -21,27 +23,55 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   } from '@ioc:Adonis/Lucid/Database'
 
   import {
+    OneOrMany,
     StrictValues,
     QueryCallback,
     ChainableContract,
   } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
   /**
+   * ------------------------------------------------------
+   * Helpers
+   * ------------------------------------------------------
+   */
+
+  /**
+   * Extracts relationship attributes from the model
+   */
+  export type ExtractModelRelations<Model extends LucidRow> = {
+    [Key in keyof Model]: Model[Key] extends ModelRelations ? Key : never
+  }[keyof Model]
+
+  /**
+   * Returns relationship model instance or array of instances based
+   * upon the relationship type
+   */
+  export type GetRelationModelInstance<Relation extends ModelRelations> =
+    Relation['type'] extends 'hasOne' | 'belongsTo'
+      ? Relation['instance']
+      : Relation['instance'][]
+
+  /**
+   * ------------------------------------------------------
+   * Options
+   * ------------------------------------------------------
+   */
+
+  /**
    * Options accepted when defining a new relationship. Certain
    * relationships like `manyToMany` have their own options
    */
-  export type RelationOptions = {
-    relatedModel: (() => ModelConstructorContract),
+  export type RelationOptions<Related extends ModelRelations> = {
     localKey?: string,
     foreignKey?: string,
     serializeAs?: string | null,
+    onQuery? (query: Related['builder']): void,
   }
 
   /**
    * Options accepted by many to many relationship
    */
   export type ManyToManyRelationOptions = {
-    relatedModel: (() => ModelConstructorContract),
     pivotTable?: string,
     localKey?: string,
     pivotForeignKey?: string,
@@ -54,8 +84,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   /**
    * Options accepted by through relationships
    */
-  export type ThroughRelationOptions = RelationOptions & {
-    throughModel: (() => ModelConstructorContract)
+  export type ThroughRelationOptions<Related extends ModelRelations> = RelationOptions<Related> & {
     throughLocalKey?: string,
     throughForeignKey?: string,
   }
@@ -69,131 +98,152 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   /**
    * Decorator signature to define has one relationship
    */
-  export type HasOneDecorator = (
-    model: RelationOptions['relatedModel'],
-    options?: Omit<RelationOptions, 'relatedModel'>,
-  ) => (target: any, property: string | Symbol) => void
+  export type HasOneDecorator = <RelatedModel extends LucidModel>(
+    model: (() => RelatedModel),
+    options?: RelationOptions<HasOne<RelatedModel>>,
+  ) => TypedDecorator<HasOne<RelatedModel>>
 
   /**
    * Decorator signature to define has many relationship
    */
-  export type HasManyDecorator = (
-    model: RelationOptions['relatedModel'],
-    options?: Omit<RelationOptions, 'relatedModel'>,
-  ) => (target: any, property: string | Symbol) => void
+  export type HasManyDecorator = <RelatedModel extends LucidModel> (
+    model: (() => RelatedModel),
+    options?: RelationOptions<HasOne<RelatedModel>>,
+  ) => TypedDecorator<HasMany<RelatedModel>>
 
   /**
    * Decorator signature to define belongs to relationship
    */
-  export type BelongsToDecorator = (
-    model: RelationOptions['relatedModel'],
-    options?: Omit<RelationOptions, 'relatedModel'>,
-  ) => (target: any, property: string | Symbol) => void
+  export type BelongsToDecorator = <RelatedModel extends LucidModel> (
+    model: (() => RelatedModel),
+    options?: RelationOptions<HasOne<RelatedModel>>,
+  ) => TypedDecorator<BelongsTo<RelatedModel>>
 
   /**
    * Decorator signature to define many to many relationship
    */
-  export type ManyToManyDecorator = (
-    model: ManyToManyRelationOptions['relatedModel'],
-    column?: Omit<ManyToManyRelationOptions, 'relatedModel'>,
-  ) => (target: any, property: string | Symbol) => void
+  export type ManyToManyDecorator = <RelatedModel extends LucidModel> (
+    model: (() => RelatedModel),
+    column?: ManyToManyRelationOptions,
+  ) => TypedDecorator<ManyToMany<RelatedModel>>
 
   /**
    * Decorator signature to define has many through relationship
    */
-  export type HasManyThroughDecorator = (
-    model: [ThroughRelationOptions['relatedModel'], ThroughRelationOptions['throughModel']],
-    column?: Omit<ThroughRelationOptions, 'relatedModel' | 'throughModel'>,
-  ) => (target: any, property: string | Symbol) => void
+  export type HasManyThroughDecorator = <RelatedModel extends LucidModel> (
+    model: [(() => RelatedModel), (() => LucidModel)],
+    column?: ThroughRelationOptions<HasManyThrough<RelatedModel>>,
+  ) => TypedDecorator<HasManyThrough<RelatedModel>>
 
   /**
    * ------------------------------------------------------
    * Opaque typed relationships
    * ------------------------------------------------------
+   *
+   * They have no runtime relevance, just a way to distinguish
+   * between standard model properties and relationships
+   *
    */
+  export type ModelRelationTypes = {
+    readonly type: 'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany' | 'hasManyThrough'
+  }
 
   /**
    * Opaque type for has one relationship
    */
   export type HasOne<
-    Related extends ModelContract,
-    Model extends ModelConstructorContract = ModelConstructorContract
-  > = Related & {
-    type: 'hasOne',
-    model: ModelConstructorContract<Related>,
-    instance: Related,
-    relation: HasOneRelationContract<Model, ModelConstructorContract<Related>>
+    RelatedModel extends LucidModel,
+    ParentModel extends LucidModel = LucidModel
+  > = InstanceType<RelatedModel> & {
+    readonly type: 'hasOne',
+    model: RelatedModel,
+    instance: InstanceType<RelatedModel>,
+    client: HasOneClientContract<
+      HasOneRelationContract<ParentModel, RelatedModel>,
+      RelatedModel
+    >,
+    builder: RelationQueryBuilderContract<RelatedModel, never>,
   }
 
   /**
    * Opaque type for has many relationship
    */
   export type HasMany<
-    Related extends ModelContract,
-    Model extends ModelConstructorContract = ModelConstructorContract
-  > = Related[] & {
-    type: 'hasMany',
-    model: ModelConstructorContract<Related>,
-    instance: Related,
-    relation: HasManyRelationContract<Model, ModelConstructorContract<Related>>
+    RelatedModel extends LucidModel,
+    ParentModel extends LucidModel = LucidModel
+  > = InstanceType<RelatedModel>[] & {
+    readonly type: 'hasMany',
+    model: RelatedModel,
+    instance: InstanceType<RelatedModel>,
+    client: HasManyClientContract<
+      HasManyRelationContract<ParentModel, RelatedModel>,
+      RelatedModel
+    >
+    builder: RelationQueryBuilderContract<RelatedModel, never>,
   }
 
   /**
    * Opaque type for has belongs to relationship
    */
   export type BelongsTo<
-    Related extends ModelContract,
-    Model extends ModelConstructorContract = ModelConstructorContract
-  > = Related & {
-    type: 'belongsTo',
-    model: ModelConstructorContract<Related>,
-    instance: Related,
-    relation: BelongsToRelationContract<Model, ModelConstructorContract<Related>>
+    RelatedModel extends LucidModel,
+    ParentModel extends LucidModel = LucidModel
+  > = InstanceType<RelatedModel> & {
+    readonly type: 'belongsTo',
+    model: RelatedModel,
+    instance: InstanceType<RelatedModel>,
+    client: BelongsToClientContract<
+      BelongsToRelationContract<ParentModel, RelatedModel>,
+      RelatedModel
+    >
+    builder: RelationQueryBuilderContract<RelatedModel, never>,
   }
 
   /**
    * Opaque type for many to many relationship
    */
   export type ManyToMany<
-    Related extends ModelContract,
-    Model extends ModelConstructorContract = ModelConstructorContract
-  > = Related[] & {
-    type: 'manyToMany',
-    model: ModelConstructorContract<Related>,
-    instance: Related,
-    relation: ManyToManyRelationContract<Model, ModelConstructorContract<Related>>
+    RelatedModel extends LucidModel,
+    ParentModel extends LucidModel = LucidModel
+  > = InstanceType<RelatedModel>[] & {
+    readonly type: 'manyToMany',
+    model: RelatedModel,
+    instance: InstanceType<RelatedModel>,
+    client: ManyToManyClientContract<
+      ManyToManyRelationContract<ParentModel, RelatedModel>,
+      RelatedModel
+    >,
+    builder: ManyToManyQueryBuilderContract<RelatedModel, never>,
   }
 
   /**
    * Opaque type for many to many relationship
    */
   export type HasManyThrough<
-    Related extends ModelContract,
-    Model extends ModelConstructorContract = ModelConstructorContract
-  > = Related[] & {
-    type: 'hasManyThrough',
-    model: ModelConstructorContract<Related>,
-    instance: Related,
-    relation: HasManyThroughRelationContract<Model, ModelConstructorContract<Related>>
+    RelatedModel extends LucidModel,
+    ParentModel extends LucidModel = LucidModel
+  > = InstanceType<RelatedModel>[] & {
+    readonly type: 'hasManyThrough',
+    model: RelatedModel,
+    instance: InstanceType<RelatedModel>,
+    client: HasManyThroughClientContract<
+      HasManyThroughRelationContract<ParentModel, RelatedModel>,
+      RelatedModel
+    >,
+    builder: RelationQueryBuilderContract<RelatedModel, never>,
   }
 
   /**
-   * Possible typed relations
+   * These exists on the models directly as a relationship. The idea
+   * is to distinguish relationship properties from other model
+   * properties.
    */
-  type TypedRelations =
-    HasOne<ModelContract, ModelConstructorContract> |
-    HasMany<ModelContract, ModelConstructorContract> |
-    BelongsTo<ModelContract, ModelConstructorContract> |
-    ManyToMany<ModelContract, ModelConstructorContract> |
-    HasManyThrough<ModelContract, ModelConstructorContract>
-
-  /**
-   * Returns relationship model instance or array of instances based
-   * upon the relationship type
-   */
-  export type ExtractRelationModel<
-    Relation extends TypedRelations,
-  > = Relation['type'] extends 'hasOne' | 'belongsTo' ? Relation['instance'] : Relation['instance'][]
+  type ModelRelations =
+    HasOne<LucidModel, LucidModel> |
+    HasMany<LucidModel, LucidModel> |
+    BelongsTo<LucidModel, LucidModel> |
+    ManyToMany<LucidModel, LucidModel> |
+    HasManyThrough<LucidModel, LucidModel>
 
   /**
    * ------------------------------------------------------
@@ -205,218 +255,293 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    * Interface to be implemented by all relationship types
    */
   export interface BaseRelationContract<
-    Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract
+    ParentModel extends LucidModel,
+    RelatedModel extends LucidModel
   > {
-    readonly type: TypedRelations['type']
+    readonly type: ModelRelations['type']
     readonly relationName: string
     readonly serializeAs: string | null
     readonly booted: boolean
-    readonly model: Model
+    readonly model: ParentModel
     relatedModel (): RelatedModel
     boot (): void
+
+    /**
+     * Get client
+     */
+    client (parent: InstanceType<ParentModel>, client: QueryClientContract): unknown
+
+    /**
+     * Get eager query for the relationship
+     */
+    eagerQuery (
+      parent: OneOrMany<InstanceType<ParentModel>>,
+      client: QueryClientContract,
+    ): RelationQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
   }
 
   /**
    * Has one relationship interface
    */
   export interface HasOneRelationContract<
-    Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract
-  > extends BaseRelationContract<Model, RelatedModel> {
-    type: 'hasOne'
+    ParentModel extends LucidModel,
+    RelatedModel extends LucidModel,
+  > extends BaseRelationContract<ParentModel, RelatedModel> {
+    readonly type: 'hasOne'
 
-    $setRelated (
-      parent: InstanceType<Model>,
-      related: InstanceType<RelatedModel> | null
+    /**
+     * Set related model as a relationship on the parent model.
+     */
+    setRelated (
+      parent: InstanceType<ParentModel>,
+      related: InstanceType<RelatedModel> | null,
     ): void
 
-    $pushRelated (
-      parent: InstanceType<Model>,
-      related: InstanceType<RelatedModel> | null
+    /**
+     * Push related model as a relationship on the parent model
+     */
+    pushRelated (
+      parent: InstanceType<ParentModel>,
+      related: InstanceType<RelatedModel> | null,
     ): void
 
-    $setRelatedForMany (
-      parent: InstanceType<Model>[],
+    /**
+     * Set multiple related instances on the multiple parent models.
+     * This method is generally invoked during eager load.
+     *
+     * Fetch 10 users and then all profiles for all 10 users and then
+     * call this method to set related instances
+     */
+    setRelatedForMany (
+      parent: InstanceType<ParentModel>[],
       related: InstanceType<RelatedModel>[],
     ): void
 
     /**
-     * Returns the query client for one or many model instances
+     * Returns the query client for one or many model instances. The query
+     * client then be used to fetch and persist relationships.
      */
     client (
-      model: InstanceType<Model> | InstanceType<Model>[],
+      parent: InstanceType<ParentModel>,
       client: QueryClientContract,
-    ): HasOneClientContract<this, Model, RelatedModel>
+    ): HasOneClientContract<this, RelatedModel>
   }
 
   /**
    * Has many relationship interface
    */
   export interface HasManyRelationContract<
-    Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract
-  > extends BaseRelationContract<Model, RelatedModel> {
-    type: 'hasMany'
+    ParentModel extends LucidModel,
+    RelatedModel extends LucidModel
+  > extends BaseRelationContract<ParentModel, RelatedModel> {
+    readonly type: 'hasMany'
 
-    $setRelated (
-      parent: InstanceType<Model>,
-      related: InstanceType<RelatedModel>[]
-    ): void
-
-    $pushRelated (
-      parent: InstanceType<Model>,
-      related: InstanceType<RelatedModel> | InstanceType<RelatedModel>[]
-    ): void
-
-    $setRelatedForMany (
-      parent: InstanceType<Model>[],
+    /**
+     * Set related models as a relationship on the parent model
+     */
+    setRelated (
+      parent: InstanceType<ParentModel>,
       related: InstanceType<RelatedModel>[],
     ): void
 
     /**
-     * Returns the query client for one or many model instances
+     * Push related model(s) as a relationship on the parent model
+     */
+    pushRelated (
+      parent: InstanceType<ParentModel>,
+      related: OneOrMany<InstanceType<RelatedModel>>,
+    ): void
+
+    /**
+     * Set multiple related instances on the multiple parent models.
+     * This method is generally invoked during eager load.
+     *
+     * Fetch 10 users and then all posts for all 10 users and then
+     * call this method to set related instances
+     */
+    setRelatedForMany (
+      parent: InstanceType<ParentModel>[],
+      related: InstanceType<RelatedModel>[],
+    ): void
+
+    /**
+     * Returns the query client for one or many model instances. The query
+     * client then be used to fetch and persist relationships.
      */
     client (
-      model: InstanceType<Model> | InstanceType<Model>[],
+      parent: InstanceType<ParentModel>,
       client: QueryClientContract,
-    ): HasManyClientContract<this, Model, RelatedModel>
+    ): HasManyClientContract<this, RelatedModel>
   }
 
   /**
    * Belongs to relationship interface
    */
   export interface BelongsToRelationContract<
-    Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract
-  > extends BaseRelationContract<Model, RelatedModel> {
-    type: 'belongsTo'
+    ParentModel extends LucidModel,
+    RelatedModel extends LucidModel
+  > extends BaseRelationContract<ParentModel, RelatedModel> {
+    readonly type: 'belongsTo'
 
-    $setRelated (
-      parent: InstanceType<Model>,
-      related: InstanceType<RelatedModel> | null
+    /**
+     * Set related model as a relationship on the parent model
+     */
+    setRelated (
+      parent: InstanceType<ParentModel>,
+      related: InstanceType<RelatedModel> | null,
     ): void
 
-    $pushRelated (
-      parent: InstanceType<Model>,
-      related: InstanceType<RelatedModel> | null
+    /**
+     * Push related model as a relationship on the parent model
+     */
+    pushRelated (
+      parent: InstanceType<ParentModel>,
+      related: InstanceType<RelatedModel> | null,
     ): void
 
-    $setRelatedForMany (
-      parent: InstanceType<Model>[],
+    /**
+     * Set multiple related instances on the multiple parent models.
+     * This method is generally invoked during eager load.
+     *
+     * Fetch 10 profiles and then users for all 10 profiles and then
+     * call this method to set related instances
+     */
+    setRelatedForMany (
+      parent: InstanceType<ParentModel>[],
       related: InstanceType<RelatedModel>[],
     ): void
 
     /**
-     * Returns the query client for one or many model instances
+     * Returns the query client for a model instance
      */
     client (
-      model: InstanceType<Model> | InstanceType<Model>[],
+      parent: InstanceType<ParentModel>,
       client: QueryClientContract,
-    ): BelongsToClientContract<this, Model, RelatedModel>
+    ): BelongsToClientContract<this, RelatedModel>
   }
 
   /**
    * Many to many relationship interface
    */
   export interface ManyToManyRelationContract<
-    Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract
-  > extends BaseRelationContract<Model, RelatedModel> {
+    ParentModel extends LucidModel,
+    RelatedModel extends LucidModel
+  > extends BaseRelationContract<ParentModel, RelatedModel> {
     type: 'manyToMany'
 
-    $setRelated (
-      parent: InstanceType<Model>,
+    /**
+     * Set related models as a relationship on the parent model
+     */
+    setRelated (
+      parent: InstanceType<ParentModel>,
       related: InstanceType<RelatedModel>[]
     ): void
 
-    $pushRelated (
-      parent: InstanceType<Model>,
-      related: InstanceType<RelatedModel> | InstanceType<RelatedModel>[]
+    /**
+     * Push related model(s) as a relationship on the parent model
+     */
+    pushRelated (
+      parent: InstanceType<ParentModel>,
+      related: OneOrMany<InstanceType<RelatedModel>>
     ): void
 
-    $setRelatedForMany (
-      parent: InstanceType<Model>[],
+    /**
+     * Set multiple related instances on the multiple parent models.
+     * This method is generally invoked during eager load.
+     */
+    setRelatedForMany (
+      parent: InstanceType<ParentModel>[],
       related: InstanceType<RelatedModel>[],
     ): void
 
     /**
-     * Returns the query client for one or many model instances
+     * Returns the query client for one model instance
      */
     client (
-      model: InstanceType<Model> | InstanceType<Model>[],
+      parent: InstanceType<ParentModel>,
       client: QueryClientContract,
-    ): ManyToManyClientContract<this, Model, RelatedModel>
+    ): ManyToManyClientContract<this, RelatedModel>
+
+    /**
+     * Get eager query for the relationship
+     */
+    eagerQuery (
+      parent: OneOrMany<InstanceType<ParentModel>>,
+      client: QueryClientContract,
+    ): ManyToManyQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
   }
 
   /**
    * Has many through relationship interface
    */
   export interface HasManyThroughRelationContract<
-    Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract
-  > extends BaseRelationContract<Model, RelatedModel> {
+    ParentModel extends LucidModel,
+    RelatedModel extends LucidModel
+  > extends BaseRelationContract<ParentModel, RelatedModel> {
     type: 'hasManyThrough'
 
-    $setRelated (
-      parent: InstanceType<Model>,
+    /**
+     * Set related models as a relationship on the parent model
+     */
+    setRelated (
+      parent: InstanceType<ParentModel>,
       related: InstanceType<RelatedModel>[]
     ): void
 
-    $pushRelated (
-      parent: InstanceType<Model>,
+    /**
+     * Push related model(s) as a relationship on the parent model
+     */
+    pushRelated (
+      parent: InstanceType<ParentModel>,
       related: InstanceType<RelatedModel> | InstanceType<RelatedModel>[]
     ): void
 
-    $setRelatedForMany (
-      parent: InstanceType<Model>[],
+    /**
+     * Set multiple related instances on the multiple parent models.
+     * This method is generally invoked during eager load.
+     */
+    setRelatedForMany (
+      parent: InstanceType<ParentModel>[],
       related: InstanceType<RelatedModel>[],
     ): void
 
     /**
-     * Returns the query client for one or many model instances
+     * Returns the query client for a model instance
      */
     client (
-      model: InstanceType<Model> | InstanceType<Model>[],
+      model: InstanceType<ParentModel>,
       client: QueryClientContract,
-    ): RelationBaseQueryClientContract<this, Model, RelatedModel>
+    ): RelationQueryClientContract<this, RelatedModel>
   }
 
   /**
    * A union of relationships
    */
   export type RelationshipsContract =
-    HasOneRelationContract<ModelConstructorContract, ModelConstructorContract> |
-    HasManyRelationContract<ModelConstructorContract, ModelConstructorContract> |
-    BelongsToRelationContract<ModelConstructorContract, ModelConstructorContract> |
-    ManyToManyRelationContract<ModelConstructorContract, ModelConstructorContract> |
-    HasManyThroughRelationContract<ModelConstructorContract, ModelConstructorContract>
+    HasOneRelationContract<LucidModel, LucidModel> |
+    HasManyRelationContract<LucidModel, LucidModel> |
+    BelongsToRelationContract<LucidModel, LucidModel> |
+    ManyToManyRelationContract<LucidModel, LucidModel> |
+    HasManyThroughRelationContract<LucidModel, LucidModel>
 
   /**
    * ------------------------------------------------------
    * Relationships query client
    * ------------------------------------------------------
    */
-  export interface RelationBaseQueryClientContract<
+  export interface RelationQueryClientContract<
     Relation extends RelationshipsContract,
-    Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract
+    RelatedModel extends LucidModel
   > {
     relation: Relation,
+
     /**
      * Return a query builder instance of the relationship
      */
-    query<
-      Result extends any = InstanceType<RelatedModel>
-    > (): RelationBaseQueryBuilderContract<RelatedModel, Result>
-
-    /**
-     * Eager query only works when client instance is created using multiple
-     * parent model instances
-     */
-    eagerQuery<
-      Result extends any = InstanceType<RelatedModel>
-    > (): RelationBaseQueryBuilderContract<RelatedModel, Result>
+    query<Result extends any = InstanceType<RelatedModel>> (): RelationQueryBuilderContract<
+      RelatedModel,
+      Result
+    >
   }
 
   /**
@@ -424,25 +549,35 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    */
   export interface HasOneClientContract<
     Relation extends RelationshipsContract,
-    Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract,
-    Related extends InstanceType<RelatedModel> = InstanceType<RelatedModel>
-  > extends RelationBaseQueryClientContract<Relation, Model, RelatedModel> {
-    save (related: Related): Promise<void>
+    RelatedModel extends LucidModel,
+  > extends RelationQueryClientContract<Relation, RelatedModel> {
+    /**
+     * Save related instance. Sets up the FK automatically
+     */
+    save (related: InstanceType<RelatedModel>): Promise<void>
 
+    /**
+     * Create related instance. Sets up the FK automatically
+     */
     create (
-      values: Partial<Related['$columns']>,
-    ): Promise<Related>
+      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
+    ): Promise<InstanceType<RelatedModel>>
 
+    /**
+     * Return first or create related instance
+     */
     firstOrCreate (
-      search: Partial<Related['$columns']>,
-      savePayload?: Partial<Related['$columns']>,
-    ): Promise<Related>
+      search: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
+      savePayload?: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
+    ): Promise<InstanceType<RelatedModel>>
 
+    /**
+     * Update or create related instance
+     */
     updateOrCreate (
-      search: ModelObject,
-      updatePayload: ModelObject,
-    ): Promise<Related>
+      search: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
+      updatePayload: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
+    ): Promise<InstanceType<RelatedModel>>
   }
 
   /**
@@ -451,12 +586,19 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    */
   export interface HasManyClientContract<
     Relation extends RelationshipsContract,
-    Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract,
-    Related extends InstanceType<RelatedModel> = InstanceType<RelatedModel>
-  > extends HasOneClientContract<Relation, Model, RelatedModel> {
-    saveMany (related: Related[]): Promise<void>
-    createMany (values: Partial<Related['$columns']>[]): Promise<Related[]>
+    RelatedModel extends LucidModel,
+  > extends HasOneClientContract<Relation, RelatedModel> {
+    /**
+     * Save many of related instances. Sets up FK automatically
+     */
+    saveMany (related: InstanceType<RelatedModel>[]): Promise<void>
+
+    /**
+     * Create many of related instances. Sets up FK automatically
+     */
+    createMany (
+      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>[],
+    ): Promise<InstanceType<RelatedModel>[]>
   }
 
   /**
@@ -465,11 +607,16 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    */
   export interface BelongsToClientContract<
     Relation extends RelationshipsContract,
-    Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract,
-    Related extends InstanceType<RelatedModel> = InstanceType<RelatedModel>
-  > extends RelationBaseQueryClientContract<Relation, Model, RelatedModel> {
-    associate (related: Related): Promise<void>
+    RelatedModel extends LucidModel,
+  > extends RelationQueryClientContract<Relation, RelatedModel> {
+    /**
+     * Associate related instance
+     */
+    associate (related: InstanceType<RelatedModel>): Promise<void>
+
+    /**
+     * Dissociate related instance
+     */
     dissociate (): Promise<void>
   }
 
@@ -478,56 +625,46 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    */
   export interface ManyToManyClientContract<
     Relation extends RelationshipsContract,
-    Model extends ModelConstructorContract,
-    RelatedModel extends ModelConstructorContract,
-    Related extends InstanceType<RelatedModel> = InstanceType<RelatedModel>
-  > {
-    relation: Relation,
-
-    query<
-      Result extends any = Related
-    > (): ManyToManyQueryBuilderContract<RelatedModel, Result>
-
+    RelatedModel extends LucidModel,
+  > extends RelationQueryClientContract<Relation, RelatedModel> {
     /**
-     * Eager query only works when client instance is created using multiple
-     * parent model instances
+     * Returns related model query builder instance
      */
-    eagerQuery<
-      Result extends any = Related
-    > (): ManyToManyQueryBuilderContract<RelatedModel, Result>
+    query<Result extends any = InstanceType<RelatedModel>> (): ManyToManyQueryBuilderContract<
+      RelatedModel,
+      Result
+    >
 
     /**
      * Pivot query just targets the pivot table without any joins
      */
-    pivotQuery<
-      Result extends any = any
-    > (): ManyToManyQueryBuilderContract<RelatedModel, Result>
+    pivotQuery<Result extends any = any> (): ManyToManyQueryBuilderContract<RelatedModel, Result>
 
     /**
-     * Save related model instance.
+     * Save related model instance. Sets up FK automatically
      */
-    save (related: Related, checkExisting?: boolean): Promise<void>
+    save (related: InstanceType<RelatedModel>, checkExisting?: boolean): Promise<void>
 
     /**
-     * Save many of related model instance.
+     * Save many of related model instance. Sets up FK automatically
      */
-    saveMany (related: Related[], checkExisting?: boolean): Promise<void>
+    saveMany (related: InstanceType<RelatedModel>[], checkExisting?: boolean): Promise<void>
 
     /**
-     * Create related model instance
+     * Create related model instance. Sets up FK automatically
      */
     create (
-      values: Partial<Related['$columns']>,
+      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
       checkExisting?: boolean,
-    ): Promise<Related>
+    ): Promise<InstanceType<RelatedModel>>
 
     /**
-     * Create many of related model instances
+     * Create many of related model instances. Sets up FK automatically
      */
     createMany (
-      values: Partial<Related['$columns']>[],
+      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>[],
       checkExisting?: boolean,
-    ): Promise<Related[]>
+    ): Promise<InstanceType<RelatedModel>[]>
 
     /**
      * Attach new pivot rows
@@ -556,6 +693,17 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   }
 
   /**
+   * HasMany through client contract. HasMany through doesn't
+   * allow persisting relationships. Use the direct relation
+   * for that.
+   */
+  export interface HasManyThroughClientContract<
+    Relation extends RelationshipsContract,
+    RelatedModel extends LucidModel,
+  > extends RelationQueryClientContract<Relation, RelatedModel> {
+  }
+
+  /**
    * ------------------------------------------------------
    * Relationships query builders
    * ------------------------------------------------------
@@ -564,11 +712,12 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   /**
    * Base query builder for all relations
    */
-  export interface RelationBaseQueryBuilderContract<
-    Related extends ModelConstructorContract,
-    Result extends any = InstanceType<Related>
+  export interface RelationQueryBuilderContract<
+    Related extends LucidModel,
+    Result extends any
   > extends ModelQueryBuilderContract<Related, Result> {
-    $selectRelationKeys (): this
+    isEagerQuery: boolean
+    selectRelationKeys (): this
   }
 
   /**
@@ -594,9 +743,9 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    * model query builder
    */
   export interface ManyToManyQueryBuilderContract<
-    Related extends ModelConstructorContract,
-    Result extends any = InstanceType<Related>
-  > extends RelationBaseQueryBuilderContract<Related, Result> {
+    Related extends LucidModel,
+    Result extends any,
+  > extends RelationQueryBuilderContract<Related, Result> {
     pivotColumns (columns: string[]): this
 
     wherePivot: WherePivot<this>
@@ -625,44 +774,23 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   /**
    * The preload function
    */
-  export interface QueryBuilderPreloadFn<Model extends ModelContract, Builder extends any> {
-    /**
-     * If Typescript were to support high order generics. The life would
-     * have been a lot better
-     */
+  export interface QueryBuilderPreloadFn<Model extends LucidRow, Builder extends any> {
     <
-      Name extends keyof ExtractRelations<Model>,
-      RelationType extends TypedRelations = Model[Name] extends TypedRelations ? Model[Name] : never,
+      Name extends ExtractModelRelations<Model>,
+      RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['builder'] : never
     > (
       relation: Name,
-      callback?: (
-        builder: ReturnType<ReturnType<RelationType['relation']['client']>['eagerQuery']>,
-      ) => void,
+      callback?: (builder: RelatedBuilder) => void,
     ): Builder
   }
 
   /**
    * Shape of the preloader to preload relationships
    */
-  export interface PreloaderContract<Model extends ModelContract> {
-    $processAllForOne (parent: Model, client: QueryClientContract): Promise<void>
-    $processAllForMany (parent: Model[], client: QueryClientContract): Promise<void>
+  export interface PreloaderContract<Model extends LucidRow> {
+    processAllForOne (parent: Model, client: QueryClientContract): Promise<void>
+    processAllForMany (parent: Model[], client: QueryClientContract): Promise<void>
     preload: QueryBuilderPreloadFn<Model, this>
     sideload (values: ModelObject): this
-  }
-
-  /**
-   * ------------------------------------------------------
-   * Helpers
-   * ------------------------------------------------------
-   */
-
-  /**
-   * Extract defined relationships from a model class
-   */
-  export type ExtractRelations<Model extends ModelContract> = {
-    [FilteredKey in {
-      [Key in keyof Model]: Model[Key] extends TypedRelations ? Key : never
-    }[keyof Model]]: string
   }
 }

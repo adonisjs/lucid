@@ -8,9 +8,8 @@
 */
 
 import knex from 'knex'
+import { LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ModelConstructorContract, ModelContract } from '@ioc:Adonis/Lucid/Model'
-import { RelationBaseQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { HasOne } from './index'
 import { getValue, unique } from '../../../utils'
@@ -20,22 +19,18 @@ import { BaseQueryBuilder } from '../Base/QueryBuilder'
  * Extends the model query builder for executing queries in scope
  * to the current relationship
  */
-export class HasOneQueryBuilder extends BaseQueryBuilder implements RelationBaseQueryBuilderContract<
-ModelConstructorContract,
-ModelConstructorContract
-> {
+export class HasOneQueryBuilder extends BaseQueryBuilder {
   protected appliedConstraints: boolean = false
 
   constructor (
     builder: knex.QueryBuilder,
     client: QueryClientContract,
-    private parent: ModelContract | ModelContract[],
+    private parent: LucidRow | LucidRow[],
     private relation: HasOne,
-    isEager: boolean = false,
   ) {
-    super(builder, client, relation, isEager, (userFn) => {
-      return (__builder) => {
-        userFn(new HasOneQueryBuilder(__builder, this.client, this.parent, this.relation))
+    super(builder, client, relation, (userFn) => {
+      return ($builder) => {
+        userFn(new HasOneQueryBuilder($builder, this.client, this.parent, this.relation))
       }
     })
   }
@@ -67,11 +62,11 @@ ModelConstructorContract
       this.client,
       this.parent,
       this.relation,
-      this.isEager,
     )
 
     this.applyQueryFlags(clonedQuery)
     clonedQuery.appliedConstraints = this.appliedConstraints
+    clonedQuery.isEagerQuery = this.isEagerQuery
     return clonedQuery
   }
 
