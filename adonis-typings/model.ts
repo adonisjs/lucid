@@ -569,7 +569,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Used to construct defaults for the model
      */
-    $configurator: OrmConfigContract,
+    $configurator: OrmConfig,
 
     /**
      * A copy of internal keys mapping. One should be able to resolve between
@@ -867,7 +867,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * Shape of ORM config to have a standard place for computing
    * defaults
    */
-  export type OrmConfigContract = {
+  export type OrmConfig = {
     /**
      * Return the default table name for a given model
      */

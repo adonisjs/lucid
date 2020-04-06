@@ -9,11 +9,11 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { esmRequire, fsReadAll } from '@poppinss/utils'
 import { join, isAbsolute, extname } from 'path'
+import { esmRequire, fsReadAll } from '@poppinss/utils'
 import { MigrationNode } from '@ioc:Adonis/Lucid/Migrator'
+import { ConnectionConfig } from '@ioc:Adonis/Lucid/Database'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import { ConnectionConfigContract } from '@ioc:Adonis/Lucid/Database'
 
 /**
  * Migration source exposes the API to read the migration files
@@ -21,7 +21,7 @@ import { ConnectionConfigContract } from '@ioc:Adonis/Lucid/Database'
  */
 export class MigrationSource {
   constructor (
-    private config: ConnectionConfigContract,
+    private config: ConnectionConfig,
     private app: ApplicationContract,
   ) {}
 

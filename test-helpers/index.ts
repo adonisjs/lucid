@@ -19,10 +19,10 @@ import { Profiler } from '@adonisjs/profiler/build/standalone'
 import { Logger } from '@adonisjs/logger/build/standalone'
 
 import {
+  ConnectionConfig,
   DatabaseContract,
   ConnectionContract,
   QueryClientContract,
-  ConnectionConfigContract,
 } from '@ioc:Adonis/Lucid/Database'
 
 import {
@@ -57,7 +57,7 @@ dotenv.config()
 /**
  * Returns config based upon DB set in environment variables
  */
-export function getConfig (): ConnectionConfigContract {
+export function getConfig (): ConnectionConfig {
   switch (process.env.DB) {
     case 'sqlite':
       return {

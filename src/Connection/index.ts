@@ -15,7 +15,7 @@ import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
 import { patchKnex } from 'knex-dynamic-connection'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
-import { ConnectionConfigContract, ConnectionContract, ReportNode } from '@ioc:Adonis/Lucid/Database'
+import { ConnectionConfig, ConnectionContract, ReportNode } from '@ioc:Adonis/Lucid/Database'
 
 import { Logger } from './Logger'
 
@@ -60,7 +60,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
 
   constructor (
     public readonly name: string,
-    public config: ConnectionConfigContract,
+    public config: ConnectionConfig,
     private logger: LoggerContract,
   ) {
     super()
@@ -204,14 +204,14 @@ export class Connection extends EventEmitter implements ConnectionContract {
   /**
    * Resolves connection config for the writer connection
    */
-  private writeConfigResolver (originalConfig: ConnectionConfigContract) {
+  private writeConfigResolver (originalConfig: ConnectionConfig) {
     return originalConfig.connection
   }
 
   /**
    * Resolves connection config for the reader connection
    */
-  private readConfigResolver (originalConfig: ConnectionConfigContract) {
+  private readConfigResolver (originalConfig: ConnectionConfig) {
     if (!this.readReplicas.length) {
       return originalConfig.connection
     }

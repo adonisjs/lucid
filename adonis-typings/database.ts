@@ -245,7 +245,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   /**
    * Migrations config
    */
-  export type MigratorConfigContract = {
+  export type MigratorConfig = {
     disableTransactions?: boolean,
     paths?: string[],
     tableName?: string,
@@ -261,7 +261,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     asyncStackTraces?: boolean,
     revision?: number,
     healthCheck?: boolean,
-    migrations?: MigratorConfigContract,
+    migrations?: MigratorConfig,
     pool?: {
       afterCreate?: (conn: any, done: any) => void,
       min?: number,
@@ -284,7 +284,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Knex forwards all config options to the driver directly. So feel
    * free to define them (let us know, in case any options are missing)
    */
-  export type SqliteConfigContract = SharedConfigNode & {
+  export type SqliteConfig = SharedConfigNode & {
     client: 'sqlite' | 'sqlite3',
     connection: {
       filename: string,
@@ -314,18 +314,18 @@ declare module '@ioc:Adonis/Lucid/Database' {
     flags?: string,
     ssl?: any,
   }
-  export type MysqlConfigContract = SharedConfigNode & {
+  export type MysqlConfig = SharedConfigNode & {
     client: 'mysql',
     version?: string,
     connection?: SharedConnectionNode & MysqlConnectionNode,
     replicas?: {
       write: {
-        connection: MysqlConfigContract['connection'],
-        pool?: MysqlConfigContract['pool'],
+        connection: MysqlConfig['connection'],
+        pool?: MysqlConfig['pool'],
       }
       read: {
-        connection: MysqlConfigContract['connection'][],
-        pool?: MysqlConfigContract['pool'],
+        connection: MysqlConfig['connection'][],
+        pool?: MysqlConfig['pool'],
       },
     },
   }
@@ -337,7 +337,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Knex forwards all config options to the driver directly. So feel
    * free to define them (let us know, in case any options are missing)
    */
-  export type Mysql2ConfigContract = MysqlConfigContract & {
+  export type Mysql2Config = MysqlConfig & {
     client: 'mysql2',
   }
 
@@ -351,19 +351,19 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Knex forwards all config options to the driver directly. So feel
    * free to define them (let us know, in case any options are missing)
    */
-  export type PostgreConfigContract = SharedConfigNode & {
+  export type PostgreConfig = SharedConfigNode & {
     client: 'pg' | 'postgres' | 'postgresql',
     version?: string,
     returning?: string,
     connection?: string | SharedConnectionNode,
     replicas?: {
       write: {
-        connection: PostgreConfigContract['connection'],
-        pool?: PostgreConfigContract['pool'],
+        connection: PostgreConfig['connection'],
+        pool?: PostgreConfig['pool'],
       }
       read: {
-        connection: PostgreConfigContract['connection'][],
-        pool?: PostgreConfigContract['pool'],
+        connection: PostgreConfig['connection'][],
+        pool?: PostgreConfig['pool'],
       },
     },
     searchPath?: string[],
@@ -376,7 +376,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Knex forwards all config options to the driver directly. So feel
    * free to define them (let us know, in case any options are missing)
    */
-  export type RedshiftConfigContract = PostgreConfigContract & {
+  export type RedshiftConfig = PostgreConfig & {
     client: 'redshift',
   }
 
@@ -399,17 +399,17 @@ declare module '@ioc:Adonis/Lucid/Database' {
     maxRows?: number,
     oracleClientVersion?: number,
   }
-  export type OracleConfigContract = SharedConfigNode & {
+  export type OracleConfig = SharedConfigNode & {
     client: 'oracledb',
     connection?: SharedConnectionNode & OracleConnectionNode,
     replicas?: {
       write: {
-        connection: OracleConfigContract['connection'],
-        pool?: OracleConfigContract['pool'],
+        connection: OracleConfig['connection'],
+        pool?: OracleConfig['pool'],
       }
       read: {
-        connection: OracleConfigContract['connection'][],
-        pool?: OracleConfigContract['pool'],
+        connection: OracleConfig['connection'][],
+        pool?: OracleConfig['pool'],
       },
     },
     fetchAsString?: any[],
@@ -429,18 +429,18 @@ declare module '@ioc:Adonis/Lucid/Database' {
     requestTimeout?: number,
     parseJSON?: boolean,
   }
-  export type MssqlConfigContract = SharedConfigNode & {
+  export type MssqlConfig = SharedConfigNode & {
     client: 'mssql',
     version?: string,
     connection?: SharedConnectionNode & MssqlConnectionNode,
     replicas?: {
       write: {
-        connection: MssqlConfigContract['connection'],
-        pool?: MssqlConfigContract['pool'],
+        connection: MssqlConfig['connection'],
+        pool?: MssqlConfig['pool'],
       }
       read: {
-        connection: MssqlConfigContract['connection'][],
-        pool?: MssqlConfigContract['pool'],
+        connection: MssqlConfig['connection'][],
+        pool?: MssqlConfig['pool'],
       },
     },
   }
@@ -449,29 +449,29 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Connection config must be the config from one of the
    * available dialects
    */
-  export type ConnectionConfigContract =
-    SqliteConfigContract |
-    MysqlConfigContract |
-    PostgreConfigContract |
-    OracleConfigContract |
-    RedshiftConfigContract |
-    Mysql2ConfigContract |
-    MssqlConfigContract
+  export type ConnectionConfig =
+    SqliteConfig |
+    MysqlConfig |
+    PostgreConfig |
+    OracleConfig |
+    RedshiftConfig |
+    Mysql2Config |
+    MssqlConfig
 
   /**
    * Shape of config inside the database config file
    */
-  export type DatabaseConfigContract = {
+  export type DatabaseConfig = {
     connection: string,
-    connections: { [key: string]: ConnectionConfigContract },
+    connections: { [key: string]: ConnectionConfig },
   }
 
   /**
    * The shape of a connection within the connection manager
    */
-  export type ConnectionManagerConnectionNode = {
+  export type ConnectionNode = {
     name: string,
-    config: ConnectionConfigContract,
+    config: ConnectionConfig,
     connection?: ConnectionContract,
     state: 'registered' | 'migrating' | 'open' | 'closed',
   }
@@ -485,7 +485,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * List of registered connection. You must check the connection state
      * to understand, if it is connected or not
      */
-    connections: Map<string, ConnectionManagerConnectionNode>
+    connections: Map<string, ConnectionNode>
 
     /**
      * Everytime a connection is created
@@ -506,7 +506,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Add a new connection to the list of managed connection. You must call
      * connect seperately to instantiate a connection instance
      */
-    add (connectionName: string, config: ConnectionConfigContract): void
+    add (connectionName: string, config: ConnectionConfig): void
 
     /**
      * Instantiate a connection. It is a noop, when connection for the given
@@ -517,7 +517,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Get connection node
      */
-    get (connectionName: string): ConnectionManagerConnectionNode | undefined
+    get (connectionName: string): ConnectionNode | undefined
 
     /**
      * Find if a connection name is managed by the manager or not
@@ -528,7 +528,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Patch the existing connection config. This triggers the disconnect on the
      * old connection
      */
-    patch (connectionName: string, config: ConnectionConfigContract): void
+    patch (connectionName: string, config: ConnectionConfig): void
 
     /**
      * Find if a managed connection is instantiated or not
@@ -585,7 +585,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Untouched config
      */
-    config: ConnectionConfigContract,
+    config: ConnectionConfig,
 
     /**
      * List of emitted events

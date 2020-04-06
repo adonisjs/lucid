@@ -16,6 +16,7 @@ import { Hooks } from '@poppinss/hooks'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import {
   LucidRow,
+  OrmConfig,
   CacheNode,
   LucidModel,
   EventsList,
@@ -25,7 +26,6 @@ import {
   ColumnOptions,
   ComputedOptions,
   AdapterContract,
-  OrmConfigContract,
   ModelColumnOptions,
   ModelKeysContract,
   ModelAdapterOptions,
@@ -40,7 +40,7 @@ import {
   ManyToManyRelationOptions,
 } from '@ioc:Adonis/Lucid/Relations'
 
-import { OrmConfig } from '../Config'
+import { Config } from '../Config'
 import { ModelKeys } from '../ModelKeys'
 import { Preloader } from '../Preloader'
 import { HasOne } from '../Relations/HasOne'
@@ -73,7 +73,7 @@ export class BaseModel implements LucidRow {
   /**
    * Used to construct defaults for the model
    */
-  public static $configurator: OrmConfigContract = OrmConfig
+  public static $configurator: OrmConfig = Config
 
   /**
    * The container required to resolve hooks

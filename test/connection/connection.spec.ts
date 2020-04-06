@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import { MysqlConfigContract } from '@ioc:Adonis/Lucid/Database'
+import { MysqlConfig } from '@ioc:Adonis/Lucid/Database'
 
 import { Connection } from '../../src/Connection'
 import { getConfig, setup, cleanup, resetTables, getLogger } from '../../test-helpers'
@@ -146,7 +146,7 @@ test.group('Connection | setup', (group) => {
   if (process.env.DB === 'mysql') {
     test.group('Connection | setup mysql', () => {
       test('pass user config to mysql driver', async (assert) => {
-        const config = getConfig() as MysqlConfigContract
+        const config = getConfig() as MysqlConfig
         config.connection!.charset = 'utf-8'
         config.connection!.typeCast = false
 

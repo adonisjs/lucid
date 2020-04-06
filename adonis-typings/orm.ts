@@ -33,7 +33,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     HasManyThrough,
   } from '@ioc:Adonis/Lucid/Relations'
 
-  export { OrmConfigContract, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
+  export { OrmConfig, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
 
   export const scope: ScopeFn
   export const BaseModel: LucidModel

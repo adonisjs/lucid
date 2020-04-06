@@ -14,9 +14,9 @@ import { LoggerContract } from '@ioc:Adonis/Core/Logger'
 import { ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 import {
+  DatabaseConfig,
   DatabaseContract,
   DatabaseClientOptions,
-  DatabaseConfigContract,
   TransactionClientContract,
   ConnectionManagerContract,
 } from '@ioc:Adonis/Lucid/Database'
@@ -58,7 +58,7 @@ export class Database implements DatabaseContract {
   public connectionGlobalTransactions: Map<string, TransactionClientContract> = new Map()
 
   constructor (
-    private config: DatabaseConfigContract,
+    private config: DatabaseConfig,
     private logger: LoggerContract,
     private profiler: ProfilerContract,
   ) {

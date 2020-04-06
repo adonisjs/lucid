@@ -11,12 +11,12 @@ import camelCase from 'camelcase'
 import { plural } from 'pluralize'
 import { snakeCase } from 'snake-case'
 import { ModelRelations } from '@ioc:Adonis/Lucid/Relations'
-import { OrmConfigContract, LucidModel } from '@ioc:Adonis/Lucid/Model'
+import { OrmConfig, LucidModel } from '@ioc:Adonis/Lucid/Model'
 
 /**
  * The default config for constructing ORM defaults
  */
-export const OrmConfig: OrmConfigContract = {
+export const Config: OrmConfig = {
   /**
    * Returns the table name for a given model
    */

@@ -16,10 +16,10 @@ import { HealthReportEntry } from '@ioc:Adonis/Core/HealthCheck'
 
 import {
   ReportNode,
+  ConnectionNode,
+  ConnectionConfig,
   ConnectionContract,
-  ConnectionConfigContract,
   ConnectionManagerContract,
-  ConnectionManagerConnectionNode,
 } from '@ioc:Adonis/Lucid/Database'
 
 import { Connection } from './index'
@@ -105,7 +105,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
    * Add a named connection with it's configuration. Make sure to call `connect`
    * before using the connection to make database queries.
    */
-  public add (connectionName: string, config: ConnectionConfigContract): void {
+  public add (connectionName: string, config: ConnectionConfig): void {
     /**
      * Noop when connection already exists. If one wants to change the config, they
      * must release the old connection and add a new one
@@ -153,7 +153,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
   /**
    * Patching the config
    */
-  public patch (connectionName: string, config: ConnectionConfigContract): void {
+  public patch (connectionName: string, config: ConnectionConfig): void {
     const connection = this.get(connectionName)
 
     /**
@@ -190,7 +190,7 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
   /**
    * Returns the connection node for a given named connection
    */
-  public get (connectionName: string): ConnectionManagerConnectionNode | undefined {
+  public get (connectionName: string): ConnectionNode | undefined {
     return this.connections.get(connectionName)
   }
 
