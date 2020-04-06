@@ -12,7 +12,7 @@ import { IocContract } from '@adonisjs/fold'
 import { Schema } from '../src/Schema'
 import { Database } from '../src/Database'
 import { Adapter } from '../src/Orm/Adapter'
-import { OrmConfig } from '../src/Orm/Config'
+import { Config } from '../src/Orm/Config'
 import { BaseModel } from '../src/Orm/BaseModel'
 import { extendValidator } from '../src/Bindings/Validator'
 
@@ -57,7 +57,7 @@ export default class DatabaseServiceProvider {
        */
       BaseModel.$adapter = new Adapter(this.$container.use('Adonis/Lucid/Database'))
       BaseModel.$container = this.$container
-      BaseModel.$configurator = Object.assign({}, OrmConfig, config)
+      BaseModel.$configurator = Object.assign({}, Config, config)
 
       return {
         BaseModel,
