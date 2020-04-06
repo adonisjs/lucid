@@ -222,6 +222,12 @@ export const dateColumn: DateColumnDecorator = (options?) => {
     const normalizedOptions = Object.assign({
       prepare: prepareDateColumn,
       consume: consumeDateColumn,
+      serialize: (value: DateTime) => {
+        if (value instanceof DateTime) {
+          return value.toISODate()
+        }
+        return value
+      },
       meta: {},
     }, options)
 
@@ -229,13 +235,8 @@ export const dateColumn: DateColumnDecorator = (options?) => {
      * Type always has to be a date
      */
     normalizedOptions.meta.type = DATE_TIME_TYPES.date
-    normalizedOptions.meta.autoCreate = normalizedOptions.autoCreate === undefined
-      ? false
-      : normalizedOptions.autoCreate
-    normalizedOptions.meta.autoUpdate = normalizedOptions.autoUpdate === undefined
-      ? false
-      : normalizedOptions.autoUpdate
-
+    normalizedOptions.meta.autoCreate = normalizedOptions.autoCreate === true
+    normalizedOptions.meta.autoUpdate = normalizedOptions.autoUpdate === true
     Model.$addColumn(property, normalizedOptions)
 
     /**
@@ -265,13 +266,8 @@ export const dateTimeColumn: DateTimeColumnDecorator = (options?) => {
      * Type always has to be a datetime
      */
     normalizedOptions.meta.type = DATE_TIME_TYPES.datetime
-    normalizedOptions.meta.autoCreate = normalizedOptions.autoCreate === undefined
-      ? false
-      : normalizedOptions.autoCreate
-    normalizedOptions.meta.autoUpdate = normalizedOptions.autoUpdate === undefined
-      ? false
-      : normalizedOptions.autoUpdate
-
+    normalizedOptions.meta.autoCreate = normalizedOptions.autoCreate === true
+    normalizedOptions.meta.autoUpdate = normalizedOptions.autoUpdate === true
     Model.$addColumn(property, normalizedOptions)
 
     /**

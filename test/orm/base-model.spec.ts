@@ -3867,6 +3867,48 @@ test.group('Base Model | date', (group) => {
     const user = await User.find(1)
     assert.isNull(user!.updatedAt)
   })
+
+  test('convert date to toISODate during serialize', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date()
+      public createdAt: DateTime
+    }
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      created_at: DateTime.local().toISODate(),
+    })
+    const user = await User.find(1)
+    assert.match(user!.toJSON().created_at, /\d{4}-\d{2}-\d{2}/)
+  })
+
+  test('do not attempt to serialize, when already a string', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date({ consume: (value) => value.toString() })
+      public createdAt: DateTime
+    }
+
+    const date = DateTime.local()
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      created_at: date.toISODate(),
+    })
+    const user = await User.find(1)
+    assert.equal(user!.toJSON().created_at, date.toISODate())
+  })
 })
 
 test.group('Base Model | datetime', (group) => {
