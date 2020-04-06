@@ -155,14 +155,6 @@ export class BaseModel implements LucidRow {
   }
 
   /**
-   * A noop method to define a scope. We basically need it to
-   * distinguish of properties at compile time.
-   */
-  public static defineScope (callback: any) {
-    return callback
-  }
-
-  /**
    * Create a model instance from the adapter result. The result value must
    * be a valid object, otherwise `null` is returned.
    */

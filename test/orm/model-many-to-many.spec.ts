@@ -12,6 +12,7 @@
 import test from 'japa'
 import { ManyToMany } from '@ioc:Adonis/Lucid/Orm'
 
+import { scope } from '../../src/Orm/Helpers/scope'
 import { manyToMany, column } from '../../src/Orm/Decorators'
 import { ManyToManyQueryBuilder } from '../../src/Orm/Relations/ManyToMany/QueryBuilder'
 import { getDb, getBaseModel, ormAdapter, setup, resetTables, cleanup, getProfiler } from '../../test-helpers'
@@ -3571,7 +3572,7 @@ test.group('Model | ManyToMany | scopes', (group) => {
       @column()
       public name: string
 
-      public static programmingOnly = Skill.defineScope((query) => {
+      public static programmingOnly = scope((query) => {
         query.where('name', 'Programming')
       })
     }
@@ -3620,7 +3621,7 @@ test.group('Model | ManyToMany | scopes', (group) => {
       @column()
       public name: string
 
-      public static programmingOnly = Skill.defineScope((query) => {
+      public static programmingOnly = scope((query) => {
         query.where('name', 'Programming')
       })
     }

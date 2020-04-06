@@ -12,6 +12,7 @@
 import test from 'japa'
 import { HasMany } from '@ioc:Adonis/Lucid/Orm'
 
+import { scope } from '../../src/Orm/Helpers/scope'
 import { column, hasMany } from '../../src/Orm/Decorators'
 import { HasManyQueryBuilder } from '../../src/Orm/Relations/HasMany/QueryBuilder'
 
@@ -1830,7 +1831,7 @@ test.group('Model | HasMany | scopes', (group) => {
       @column()
       public title: string
 
-      public static adonisOnly = Post.defineScope((query) => {
+      public static adonisOnly = scope((query) => {
         query.where('title', 'Adonis 101')
       })
     }
@@ -1869,7 +1870,7 @@ test.group('Model | HasMany | scopes', (group) => {
       @column()
       public title: string
 
-      public static adonisOnly = Post.defineScope((query) => {
+      public static adonisOnly = scope((query) => {
         query.where('title', 'Adonis 101')
       })
     }

@@ -12,6 +12,7 @@
 import test from 'japa'
 import { HasManyThrough } from '@ioc:Adonis/Lucid/Orm'
 
+import { scope } from '../../src/Orm/Helpers/scope'
 import { hasManyThrough, column } from '../../src/Orm/Decorators'
 import { HasManyThroughQueryBuilder } from '../../src/Orm/Relations/HasManyThrough/QueryBuilder'
 import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb, getProfiler } from '../../test-helpers'
@@ -1368,7 +1369,7 @@ test.group('Model | Has Many Through | scopes', (group) => {
       @column()
       public title: string
 
-      public static adonisOnly = Post.defineScope((query) => {
+      public static adonisOnly = scope((query) => {
         query.where('title', 'Adonis 101')
       })
     }
@@ -1446,7 +1447,7 @@ test.group('Model | Has Many Through | scopes', (group) => {
       @column()
       public title: string
 
-      public static adonisOnly = Post.defineScope((query) => {
+      public static adonisOnly = scope((query) => {
         query.where('title', 'Adonis 101')
       })
     }

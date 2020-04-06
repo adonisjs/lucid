@@ -11,6 +11,7 @@
 
 import test from 'japa'
 import { column } from '../../src/Orm/Decorators'
+import { scope } from '../../src/Orm/Helpers/scope'
 import { ModelQueryBuilder } from '../../src/Orm/QueryBuilder'
 import {
   getDb,
@@ -284,7 +285,7 @@ test.group('Model query builder', (group) => {
       @column()
       public username: string
 
-      public static active = User.defineScope((query) => {
+      public static active = scope((query) => {
         query.where('is_active', true)
       })
     }
@@ -312,7 +313,7 @@ test.group('Model query builder', (group) => {
       @column()
       public username: string
 
-      public static active = User.defineScope((query) => {
+      public static active = scope((query) => {
         query.where('is_active', true)
       })
     }

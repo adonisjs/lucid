@@ -26,21 +26,28 @@ import {
   hasManyThrough,
 } from '../src/Orm/Decorators'
 
+import { scope } from '../src/Orm/Helpers/scope'
+
 export default class DatabaseServiceProvider {
   constructor (protected $container: IocContract) {
   }
 
   /**
-   * Register database binding
+   * Register the database binding
    */
-  public register (): void {
+  private registerDatabase () {
     this.$container.singleton('Adonis/Lucid/Database', () => {
       const config = this.$container.use('Adonis/Core/Config').get('database', {})
       const Logger = this.$container.use('Adonis/Core/Logger')
       const Profiler = this.$container.use('Adonis/Core/Profiler')
       return new Database(config, Logger, Profiler)
     })
+  }
 
+  /**
+   * Registers ORM
+   */
+  private registerOrm () {
     this.$container.singleton('Adonis/Lucid/Orm', () => {
       const config = this.$container.use('Adonis/Core/Config').get('database.orm', {})
 
@@ -61,21 +68,53 @@ export default class DatabaseServiceProvider {
         belongsTo,
         manyToMany,
         hasManyThrough,
+        scope,
       }
     })
+  }
 
+  /**
+   * Registers schema class
+   */
+  private registerSchema () {
     this.$container.singleton('Adonis/Lucid/Schema', () => {
       return Schema
     })
   }
 
-  public boot (): void {
-    this.$container.with(['Adonis/Core/HealthCheck', 'Adonis/Lucid/Database'], (HealthCheck) => {
-      HealthCheck.addChecker('lucid', 'Adonis/Lucid/Database')
-    })
+  /**
+   * Registers the health checker
+   */
+  private registerHealthChecker () {
+    this.$container.with(
+      ['Adonis/Core/HealthCheck', 'Adonis/Lucid/Database'],
+      (HealthCheck) => HealthCheck.addChecker('lucid', 'Adonis/Lucid/Database'),
+    )
+  }
 
+  /**
+   * Extends the validator by defining validation rules
+   */
+  private defineValidationRules () {
     this.$container.with(['Adonis/Core/Validator', 'Adonis/Lucid/Database'], (Validator, Db) => {
       extendValidator(Validator.validator, Db)
     })
+  }
+
+  /**
+   * Called when registering providers
+   */
+  public register (): void {
+    this.registerDatabase()
+    this.registerOrm()
+    this.registerSchema()
+  }
+
+  /**
+   * Called when all bindings are in place
+   */
+  public boot (): void {
+    this.registerHealthChecker()
+    this.defineValidationRules()
   }
 }

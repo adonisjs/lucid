@@ -12,6 +12,7 @@
 import test from 'japa'
 import { HasOne, BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 
+import { scope } from '../../src/Orm/Helpers/scope'
 import { hasOne, column, belongsTo } from '../../src/Orm/Decorators'
 import { HasOneQueryBuilder } from '../../src/Orm/Relations/HasOne/QueryBuilder'
 import { getDb, getBaseModel, ormAdapter, setup, cleanup, resetTables, getProfiler } from '../../test-helpers'
@@ -1700,7 +1701,7 @@ test.group('Model | HasOne | scopes', (group) => {
       @column()
       public displayName: string
 
-      public static twitter = Profile.defineScope((query) => {
+      public static twitter = scope((query) => {
         query.where('type', 'twitter')
       })
     }
@@ -1741,7 +1742,7 @@ test.group('Model | HasOne | scopes', (group) => {
       @column()
       public displayName: string
 
-      public static twitter = Profile.defineScope((query) => {
+      public static twitter = scope((query) => {
         query.where('type', 'twitter')
       })
     }

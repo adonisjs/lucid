@@ -12,6 +12,7 @@
 import test from 'japa'
 import { BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 
+import { scope } from '../../src/Orm/Helpers/scope'
 import { column, belongsTo } from '../../src/Orm/Decorators'
 import { BelongsToQueryBuilder } from '../../src/Orm/Relations/BelongsTo/QueryBuilder'
 import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb, getProfiler } from '../../test-helpers'
@@ -1219,7 +1220,7 @@ test.group('Model | BelongsTo | scopes', (group) => {
       @column()
       public username: string
 
-      public static fromCountry = User.defineScope((query, countryId) => {
+      public static fromCountry = scope((query, countryId) => {
         query.where('country_id', countryId)
       })
     }
@@ -1257,7 +1258,7 @@ test.group('Model | BelongsTo | scopes', (group) => {
       @column()
       public username: string
 
-      public static fromCountry = User.defineScope((query, countryId) => {
+      public static fromCountry = scope((query, countryId) => {
         query.where('country_id', countryId)
       })
     }

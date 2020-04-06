@@ -1,4 +1,4 @@
-import { BaseModel, HasOne, hasOne } from '@ioc:Adonis/Lucid/Orm'
+import { BaseModel, HasOne, hasOne, scope } from '@ioc:Adonis/Lucid/Orm'
 
 class Profile extends BaseModel {
   public id: string
@@ -15,10 +15,10 @@ export class User extends BaseModel {
   })
   public profile: HasOne<typeof Profile>
 
-  public static active = User.defineScope((builder) => {
+  public static active = scope<typeof User>((builder) => {
     builder.apply((scopes) => scopes.country('India'))
   })
-  public static country = User.defineScope((builder, _country: string) => {
+  public static country = scope((builder, _country: string) => {
     builder.whereIn('', [])
   })
 }
