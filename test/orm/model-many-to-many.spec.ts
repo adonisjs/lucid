@@ -3659,3 +3659,196 @@ test.group('Model | ManyToMany | scopes', (group) => {
     assert.equal(skills[0].name, 'Programming')
   })
 })
+
+test.group('Model | ManyToMany | onQuery', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('invoke onQuery method when preloading relationship', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill, {
+        onQuery: (query) => query.where('name', 'Programming'),
+      })
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('skills').insert([
+      { name: 'Programming' },
+      { name: 'Dancing' },
+      { name: 'Singing' },
+    ])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+    ])
+
+    const user = await User.query().preload('skills').firstOrFail()
+    assert.lengthOf(user.skills, 1)
+    assert.equal(user.skills[0].name, 'Programming')
+  })
+
+  test('do not invoke onQuery method during preloading subqueries', async (assert) => {
+    assert.plan(3)
+
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill, {
+        onQuery: (query) => {
+          assert.isTrue(true)
+          query.where('name', 'Programming')
+        },
+      })
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('skills').insert([
+      { name: 'Programming' },
+      { name: 'Dancing' },
+      { name: 'Singing' },
+    ])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+    ])
+
+    const user = await User.query().preload('skills', (query) => {
+      query.where(() => {})
+    }).firstOrFail()
+
+    assert.lengthOf(user.skills, 1)
+    assert.equal(user.skills[0].name, 'Programming')
+  })
+
+  test('invoke onQuery method on related query builder', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill, {
+        onQuery: (query) => query.where('name', 'Programming'),
+      })
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('skills').insert([
+      { name: 'Programming' },
+      { name: 'Dancing' },
+      { name: 'Singing' },
+    ])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+    ])
+
+    const user = await User.findOrFail(1)
+    const skills = await user.related('skills').query()
+    assert.lengthOf(skills, 1)
+    assert.equal(skills[0].name, 'Programming')
+  })
+
+  test('invoke onQuery method on pivot query builder', async (assert) => {
+    assert.plan(1)
+
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill, {
+        onQuery: (query) => {
+          assert.isTrue(query.isPivotOnlyQuery)
+        },
+      })
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('skills').insert([
+      { name: 'Programming' },
+      { name: 'Dancing' },
+      { name: 'Singing' },
+    ])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+    ])
+
+    const user = await User.findOrFail(1)
+    await user.related('skills').pivotQuery()
+  })
+})

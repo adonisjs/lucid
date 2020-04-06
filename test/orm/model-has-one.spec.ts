@@ -1771,3 +1771,175 @@ test.group('Model | HasOne | scopes', (group) => {
     assert.instanceOf(profileWithoutScopes, Profile)
   })
 })
+
+test.group('Model | HasOne | onQuery', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('invoke onQuery method when preloading relationship', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile, {
+        onQuery: (query) => query.where('type', 'twitter'),
+      })
+      public profile: HasOne<typeof Profile>
+    }
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.table('profiles').multiInsert([
+      { user_id: userId, display_name: 'virk', type: 'github' },
+    ])
+
+    const user = await User.query().preload('profile').firstOrFail()
+    assert.isUndefined(user.profile)
+  })
+
+  test('do not invoke onQuery method on preloading subqueries', async (assert) => {
+    assert.plan(2)
+
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile, {
+        onQuery: (query) => {
+          assert.isTrue(true)
+          query.where('type', 'twitter')
+        },
+      })
+      public profile: HasOne<typeof Profile>
+    }
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.table('profiles').multiInsert([
+      { user_id: userId, display_name: 'virk', type: 'github' },
+    ])
+
+    const user = await User.query().preload('profile', (query) => query.where(() => {})).firstOrFail()
+    assert.isUndefined(user.profile)
+  })
+
+  test('invoke onQuery method on related query builder', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile, {
+        onQuery: (query) => query.where('type', 'twitter'),
+      })
+      public profile: HasOne<typeof Profile>
+    }
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.table('profiles').multiInsert([
+      { user_id: userId, display_name: 'virk', type: 'github' },
+    ])
+
+    const user = await User.findOrFail(1)
+    const profile = await user.related('profile').query().first()
+    assert.isNull(profile)
+  })
+
+  test('do not invoke onQuery method on related query builder subqueries', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile, {
+        onQuery: (query) => query.where('type', 'twitter'),
+      })
+      public profile: HasOne<typeof Profile>
+    }
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.table('profiles').multiInsert([
+      { user_id: userId, display_name: 'virk', type: 'github' },
+    ])
+
+    const user = await User.findOrFail(1)
+    const { sql, bindings } = user.related('profile').query().where((query) => {
+      query.whereNotNull('created_at')
+    }).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .from('profiles')
+      .where('type', 'twitter')
+      .where((query) => query.whereNotNull('created_at'))
+      .where('user_id', 1)
+      .limit(1)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})

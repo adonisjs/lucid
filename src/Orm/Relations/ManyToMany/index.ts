@@ -9,11 +9,14 @@
 
 import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ManyToManyRelationContract, ManyToManyRelationOptions } from '@ioc:Adonis/Lucid/Relations'
+import {
+  ManyToManyRelationOptions,
+  ManyToManyRelationContract,
+  ManyToMany as ModelManyToMany,
+} from '@ioc:Adonis/Lucid/Relations'
 
 import { KeysExtractor } from '../KeysExtractor'
 import { ManyToManyQueryClient } from './QueryClient'
-import { ManyToManyQueryBuilder } from './QueryBuilder'
 import { ensureRelationIsBooted } from '../../../utils'
 
 /**
@@ -43,10 +46,15 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
   public pivotTable: string
   public extrasPivotColumns: string[] = this.options.pivotColumns || []
 
+  /**
+   * Reference to the onQuery hook defined by the user
+   */
+  public onQueryHook = this.options.onQuery
+
   constructor (
     public relationName: string,
     public relatedModel: () => LucidModel,
-    private options: ManyToManyRelationOptions,
+    private options: ManyToManyRelationOptions<ModelManyToMany<LucidModel>>,
     public model: LucidModel,
   ) {
   }
@@ -173,10 +181,10 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
     return new ManyToManyQueryClient(this, parent, client)
   }
 
+  /**
+   * Returns an instance of eager query builder
+   */
   public eagerQuery (parent: LucidRow[], client: QueryClientContract) {
-    const query = new ManyToManyQueryBuilder(client.knexQuery(), client, parent, this)
-    query.isEagerQuery = true
-
-    return query
+    return ManyToManyQueryClient.eagerQuery(client, this, parent)
   }
 }

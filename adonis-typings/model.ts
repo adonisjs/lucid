@@ -178,6 +178,13 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
+   * Options accepted by the Model.$addRelation method
+   */
+  export type ModelRelationOptions = RelationOptions<ModelRelations>
+  | ManyToManyRelationOptions<ModelRelations>
+  | ThroughRelationOptions<ModelRelations>
+
+  /**
    * Signature for column decorator function
    */
   export type ColumnDecorator = (options?: Partial<ColumnOptions>) => DecoratorFn
@@ -248,6 +255,15 @@ declare module '@ioc:Adonis/Lucid/Model' {
   {
     model: Model
 
+    /**
+     * Whether or not the query is a subquery generated for `.where`
+     * callbacks
+     */
+    isSubQuery: boolean
+
+    /**
+     * Apply user defined query scopes
+     */
     apply<Scopes extends ExtractScopes<Model>> (
       callback: (scopes: Scopes) => void
     ): this
@@ -579,9 +595,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
       name: string,
       type: ModelRelations['type'],
       relatedModel: () => LucidModel,
-      options: Partial<
-        RelationOptions<ModelRelations> | ManyToManyRelationOptions | ThroughRelationOptions<ModelRelations>
-      >,
+      options: ModelRelationOptions,
     ): void
 
     /**

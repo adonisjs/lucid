@@ -1288,3 +1288,171 @@ test.group('Model | BelongsTo | scopes', (group) => {
     assert.instanceOf(profileUserWithoutScopes, User)
   })
 })
+
+test.group('Model | BelongsTo | onQuery', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('invoke onQuery method when preloading relationship', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+    User.boot()
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User, {
+        onQuery: (builder) => {
+          builder.where('country_id', 1)
+        },
+      })
+      public user: BelongsTo<typeof User>
+    }
+    Profile.boot()
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+
+    const profile = await Profile.query().preload('user').first()
+    assert.isUndefined(profile?.user)
+  })
+
+  test('do not run onQuery hook on subqueries', async (assert) => {
+    assert.plan(2)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+    User.boot()
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User, {
+        onQuery: (builder) => {
+          assert.isTrue(true)
+          builder.where('country_id', 1)
+        },
+      })
+      public user: BelongsTo<typeof User>
+    }
+    Profile.boot()
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+
+    const profile = await Profile.query().preload('user', (query) => {
+      query.where((_) => {})
+    }).first()
+
+    assert.isUndefined(profile?.user)
+  })
+
+  test('invoke onQuery method on related query builder', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+    User.boot()
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User, {
+        onQuery: (builder) => {
+          builder.where('country_id', 1)
+        },
+      })
+      public user: BelongsTo<typeof User>
+    }
+    Profile.boot()
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+    const profile = await Profile.findOrFail(1)
+    const user = await profile.related('user').query().first()
+    assert.isNull(user)
+  })
+
+  test('do not run onQuery hook on related query builder subqueries', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+    User.boot()
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User, {
+        onQuery: (builder) => {
+          builder.where('country_id', 1)
+        },
+      })
+      public user: BelongsTo<typeof User>
+    }
+    Profile.boot()
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+    const profile = await Profile.findOrFail(1)
+
+    const { sql, bindings } = profile.related('user').query().where((builder) => {
+      builder.where('score', '>', 0)
+    }).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .from('users')
+      .where('country_id', 1)
+      .where((query) => query.where('score', '>', 0))
+      .where('id', 1)
+      .limit(1)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})

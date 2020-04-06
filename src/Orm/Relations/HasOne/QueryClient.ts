@@ -8,6 +8,7 @@
 */
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { HasOneClientContract } from '@ioc:Adonis/Lucid/Relations'
 import { ModelObject, LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 
@@ -28,6 +29,27 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
   }
 
   /**
+   * Generate a related query builder
+   */
+  public static query (client: QueryClientContract, relation: HasOne, rows: OneOrMany<LucidRow>) {
+    const query = new HasOneQueryBuilder(client.knexQuery(), client, rows, relation)
+
+    typeof (relation.onQueryHook) === 'function' && relation.onQueryHook(query)
+    return query
+  }
+
+  /**
+   * Generate a related eager query builder
+   */
+  public static eagerQuery (client: QueryClientContract, relation: HasOne, rows: OneOrMany<LucidRow>) {
+    const query = new HasOneQueryBuilder(client.knexQuery(), client, rows, relation)
+
+    query.isEagerQuery = true
+    typeof (relation.onQueryHook) === 'function' && relation.onQueryHook(query)
+    return query
+  }
+
+  /**
    * Returns value for the foreign key
    */
   private getForeignKeyValue (parent: LucidRow, action: string) {
@@ -38,7 +60,7 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
    * Returns instance of query builder
    */
   public query (): any {
-    return new HasOneQueryBuilder(this.client.knexQuery(), this.client, this.parent, this.relation)
+    return HasOneQueryClient.query(this.client, this.relation, this.parent)
   }
 
   /**

@@ -1899,3 +1899,163 @@ test.group('Model | HasMany | scopes', (group) => {
     assert.equal(posts[0].title, 'Adonis 101')
   })
 })
+
+test.group('Model | HasMany | onQuery', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('invoke onQuery method when preloading relationship', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post, {
+        onQuery: (query) => query.where('title', 'Adonis 101'),
+      })
+      public posts: HasMany<typeof Post>
+    }
+
+    User.boot()
+    User.$getRelation('posts')!.boot()
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Lucid 101' })
+    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Adonis 101' })
+
+    const user = await User.query().preload('posts').firstOrFail()
+    assert.lengthOf(user.posts, 1)
+    assert.equal(user.posts[0].title, 'Adonis 101')
+  })
+
+  test('do not invoke onQuery method on preloading subqueries', async (assert) => {
+    assert.plan(3)
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post, {
+        onQuery: (query) => {
+          assert.isTrue(true)
+          query.where('title', 'Adonis 101')
+        },
+      })
+      public posts: HasMany<typeof Post>
+    }
+
+    User.boot()
+    User.$getRelation('posts')!.boot()
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Lucid 101' })
+    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Adonis 101' })
+
+    const user = await User.query().preload('posts', (query) => query.where(() => {})).firstOrFail()
+    assert.lengthOf(user.posts, 1)
+    assert.equal(user.posts[0].title, 'Adonis 101')
+  })
+
+  test('invoke onQuery method on related query', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post, {
+        onQuery: (query) => query.where('title', 'Adonis 101'),
+      })
+      public posts: HasMany<typeof Post>
+    }
+
+    User.boot()
+    User.$getRelation('posts')!.boot()
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Lucid 101' })
+    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Adonis 101' })
+
+    const user = await User.findOrFail(1)
+
+    const posts = await user.related('posts').query()
+    assert.lengthOf(posts, 1)
+    assert.equal(posts[0].title, 'Adonis 101')
+  })
+
+  test('do not invoke onQuery method on related query subqueries', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post, {
+        onQuery: (query) => query.where('title', 'Adonis 101'),
+      })
+      public posts: HasMany<typeof Post>
+    }
+
+    User.boot()
+    User.$getRelation('posts')!.boot()
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Lucid 101' })
+    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Adonis 101' })
+
+    const user = await User.findOrFail(1)
+
+    const { sql, bindings } = user.related('posts').query().where((query) => {
+      query.whereNotNull('created_at')
+    }).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .from('posts')
+      .where('title', 'Adonis 101')
+      .where((query) => query.whereNotNull('created_at'))
+      .where('user_id', 1)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})

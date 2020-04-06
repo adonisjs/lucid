@@ -9,7 +9,6 @@
       "ignoreUrls": true,
       "ignoreTemplateLiterals": true
     }],
-    "@typescript-eslint/explicit-function-return-type": ["off"],
-    "@typescript-eslint/require-await": ["off"]
+    "no-redeclare": ["off"]
   }
 }

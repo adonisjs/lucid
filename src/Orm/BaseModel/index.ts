@@ -29,6 +29,7 @@ import {
   ModelColumnOptions,
   ModelKeysContract,
   ModelAdapterOptions,
+  ModelRelationOptions,
 } from '@ioc:Adonis/Lucid/Model'
 
 import {
@@ -293,31 +294,84 @@ export class BaseModel implements LucidRow {
   }
 
   /**
+   * Register has one relationship
+   */
+  protected static $addHasOne (
+    name: string,
+    relatedModel: () => LucidModel,
+    options: RelationOptions<ModelRelations>,
+  ) {
+    this.$relationsDefinitions.set(name, new HasOne(name, relatedModel, options, this))
+  }
+
+  /**
+   * Register has many relationship
+   */
+  protected static $addHasMany (
+    name: string,
+    relatedModel: () => LucidModel,
+    options: RelationOptions<ModelRelations>,
+  ) {
+    this.$relationsDefinitions.set(name, new HasMany(name, relatedModel, options, this))
+  }
+
+  /**
+   * Register belongs to relationship
+   */
+  protected static $addBelongsTo (
+    name: string,
+    relatedModel: () => LucidModel,
+    options: RelationOptions<ModelRelations>,
+  ) {
+    this.$relationsDefinitions.set(name, new BelongsTo(name, relatedModel, options, this))
+  }
+
+  /**
+   * Register many to many relationship
+   */
+  protected static $addManyToMany (
+    name: string,
+    relatedModel: () => LucidModel,
+    options: ManyToManyRelationOptions<ModelRelations>,
+  ) {
+    this.$relationsDefinitions.set(name, new ManyToMany(name, relatedModel, options, this))
+  }
+
+  /**
+   * Register many to many relationship
+   */
+  protected static $addHasManyThrough (
+    name: string,
+    relatedModel: () => LucidModel,
+    options: ThroughRelationOptions<ModelRelations>,
+  ) {
+    this.$relationsDefinitions.set(name, new HasManyThrough(name, relatedModel, options, this))
+  }
+
+  /**
    * Adds a relationship
    */
   public static $addRelation (
     name: string,
     type: ModelRelations['type'],
     relatedModel: () => LucidModel,
-    options: RelationOptions<ModelRelations> | ManyToManyRelationOptions | ThroughRelationOptions<ModelRelations>,
+    options: ModelRelationOptions,
   ) {
     switch (type) {
       case 'hasOne':
-        this.$relationsDefinitions.set(name, new HasOne(name, relatedModel, options, this))
+        this.$addHasOne(name, relatedModel, options)
         break
       case 'hasMany':
-        this.$relationsDefinitions.set(name, new HasMany(name, relatedModel, options, this))
+        this.$addHasMany(name, relatedModel, options)
         break
       case 'belongsTo':
-        this.$relationsDefinitions.set(name, new BelongsTo(name, relatedModel, options, this))
+        this.$addBelongsTo(name, relatedModel, options)
         break
       case 'manyToMany':
-        const manyToMany = new ManyToMany(name, relatedModel, options as ManyToManyRelationOptions, this)
-        this.$relationsDefinitions.set(name, manyToMany)
+        this.$addManyToMany(name, relatedModel, options as ManyToManyRelationOptions<ModelRelations>)
         break
       case 'hasManyThrough':
-        const through = new HasManyThrough(name, relatedModel, options as any, this)
-        this.$relationsDefinitions.set(name, through)
+        this.$addHasManyThrough(name, relatedModel, options as ThroughRelationOptions<ModelRelations>)
         break
       default:
         throw new Error(`${type} is not a supported relation type`)

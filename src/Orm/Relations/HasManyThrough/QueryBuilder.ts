@@ -31,8 +31,11 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder {
     private relation: HasManyThrough,
   ) {
     super(builder, client, relation, (userFn) => {
-      return (__builder) => {
-        userFn(new HasManyThroughQueryBuilder(__builder, this.client, this.parent, this.relation))
+      return ($builder) => {
+        const subQuery = new HasManyThroughQueryBuilder($builder, this.client, this.parent, this.relation)
+        subQuery.isSubQuery = true
+        subQuery.isEagerQuery = this.isEagerQuery
+        userFn(subQuery)
       }
     })
   }

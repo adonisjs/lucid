@@ -30,7 +30,10 @@ export class HasManyQueryBuilder extends BaseQueryBuilder {
   ) {
     super(builder, client, relation, (userFn) => {
       return ($builder) => {
-        userFn(new HasManyQueryBuilder($builder, this.client, this.parent, this.relation))
+        const subQuery = new HasManyQueryBuilder($builder, this.client, this.parent, this.relation)
+        subQuery.isSubQuery = true
+        subQuery.isEagerQuery = this.isEagerQuery
+        userFn(subQuery)
       }
     })
   }

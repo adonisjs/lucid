@@ -25,14 +25,17 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder implements ManyToMa
   LucidModel,
   LucidModel
 > {
+  private pivotQuery = false
   protected cherryPickingKeys: boolean = false
   protected appliedConstraints: boolean = false
-  private pivotQuery = false
 
+  /**
+   * A boolean to know if query build targets only the pivot
+   * table or not
+   */
   public get isPivotOnlyQuery () {
     return this.pivotQuery
   }
-
   public set isPivotOnlyQuery (pivotOnly) {
     this.pivotQuery = pivotOnly
     this.wrapResultsToModelInstances = !this.pivotQuery
@@ -45,10 +48,12 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder implements ManyToMa
     private relation: ManyToMany,
   ) {
     super(builder, client, relation, (userFn) => {
-      return (__builder) => {
-        userFn(
-          new ManyToManyQueryBuilder(__builder, this.client, this.parent, this.relation),
-        )
+      return ($builder) => {
+        const subQuery = new ManyToManyQueryBuilder($builder, this.client, this.parent, this.relation)
+        subQuery.isSubQuery = true
+        subQuery.isPivotOnlyQuery = this.isPivotOnlyQuery
+        subQuery.isEagerQuery = this.isEagerQuery
+        userFn(subQuery)
       }
     })
   }

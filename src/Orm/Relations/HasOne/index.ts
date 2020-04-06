@@ -16,9 +16,8 @@ import {
   HasOneRelationContract,
 } from '@ioc:Adonis/Lucid/Relations'
 
-import { HasOneQueryClient } from './QueryClient'
 import { KeysExtractor } from '../KeysExtractor'
-import { HasOneQueryBuilder } from './QueryBuilder'
+import { HasOneQueryClient } from './QueryClient'
 import { ensureRelationIsBooted } from '../../../utils'
 
 /**
@@ -38,6 +37,11 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
    */
   public localKey: string
   public foreignKey: string
+
+  /**
+   * Reference to the onQuery hook defined by the user
+   */
+  public onQueryHook = this.options.onQuery
 
   constructor (
     public relationName: string,
@@ -152,11 +156,11 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
     return new HasOneQueryClient(this, parent, client)
   }
 
+  /**
+   * Returns eager query instance
+   */
   public eagerQuery (parent: OneOrMany<LucidRow>, client: QueryClientContract): any {
     ensureRelationIsBooted(this)
-
-    const query = new HasOneQueryBuilder(client.knexQuery(), client, parent, this)
-    query.isEagerQuery = true
-    return query
+    return HasOneQueryClient.eagerQuery(client, this, parent)
   }
 }

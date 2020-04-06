@@ -94,13 +94,20 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     profiler: this.client.profiler,
   }
 
+  /**
+   * Whether or not query is a subquery for `.where` callback
+   */
+  public isSubQuery = false
+
   constructor (
     builder: knex.QueryBuilder,
     public model: LucidModel,
     public client: QueryClientContract,
     customFn: DBQueryCallback = (userFn) => {
       return ($builder) => {
-        userFn(new ModelQueryBuilder($builder, this.model, this.client))
+        const subQuery = new ModelQueryBuilder($builder, this.model, this.client)
+        subQuery.isSubQuery = true
+        userFn(subQuery)
       }
     },
   ) {

@@ -33,6 +33,7 @@ export class BelongsToQueryBuilder extends BaseQueryBuilder {
       return ($builder) => {
         const subQuery = new BelongsToQueryBuilder($builder, this.client, this.parent, this.relation)
         subQuery.isEagerQuery = this.isEagerQuery
+        subQuery.isSubQuery = true
         userFn(subQuery)
       }
     })

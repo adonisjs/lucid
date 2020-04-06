@@ -7,9 +7,10 @@
  * file that was distributed with this source code.
 */
 
+import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { ManyToManyClientContract } from '@ioc:Adonis/Lucid/Relations'
-import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import { LucidModel, LucidRow, ModelObject } from '@ioc:Adonis/Lucid/Model'
+import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { ManyToMany } from './index'
 import { ManyToManyQueryBuilder } from './QueryBuilder'
@@ -25,6 +26,39 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
     private parent: LucidRow,
     private client: QueryClientContract,
   ) {
+  }
+
+  /**
+   * Generate a related query builder
+   */
+  public static query (client: QueryClientContract, relation: ManyToMany, rows: OneOrMany<LucidRow>) {
+    const query = new ManyToManyQueryBuilder(client.knexQuery(), client, rows, relation)
+
+    typeof (relation.onQueryHook) === 'function' && relation.onQueryHook(query)
+    return query
+  }
+
+  /**
+   * Generate a related eager query builder
+   */
+  public static eagerQuery (client: QueryClientContract, relation: ManyToMany, rows: OneOrMany<LucidRow>) {
+    const query = new ManyToManyQueryBuilder(client.knexQuery(), client, rows, relation)
+
+    query.isEagerQuery = true
+    typeof (relation.onQueryHook) === 'function' && relation.onQueryHook(query)
+    return query
+  }
+
+  /**
+   * Generate a related pivot query builder
+   */
+  public static pivotQuery (client: QueryClientContract, relation: ManyToMany, rows: OneOrMany<LucidRow>) {
+    const query = new ManyToManyQueryBuilder(client.knexQuery(), client, rows, relation)
+
+    query.isEagerQuery = false
+    query.isPivotOnlyQuery = true
+    typeof (relation.onQueryHook) === 'function' && relation.onQueryHook(query)
+    return query
   }
 
   /**
@@ -45,27 +79,14 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
    * Returns query builder instance
    */
   public query () {
-    return new ManyToManyQueryBuilder(
-      this.client.knexQuery(),
-      this.client,
-      this.parent,
-      this.relation,
-    )
+    return ManyToManyQueryClient.query(this.client, this.relation, this.parent)
   }
 
   /**
    * Returns a query builder instance for the pivot table only
    */
   public pivotQuery () {
-    const query = new ManyToManyQueryBuilder(
-      this.client.knexQuery(),
-      this.client,
-      this.parent,
-      this.relation,
-    )
-
-    query.isPivotOnlyQuery = true
-    return query
+    return ManyToManyQueryClient.pivotQuery(this.client, this.relation, this.parent)
   }
 
   /**

@@ -71,7 +71,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   /**
    * Options accepted by many to many relationship
    */
-  export type ManyToManyRelationOptions = {
+  export type ManyToManyRelationOptions<Related extends ModelRelations> = {
     pivotTable?: string,
     localKey?: string,
     pivotForeignKey?: string,
@@ -79,6 +79,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     pivotRelatedForeignKey?: string,
     pivotColumns?: string[],
     serializeAs?: string,
+    onQuery? (query: Related['builder']): void,
   }
 
   /**
@@ -87,6 +88,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   export type ThroughRelationOptions<Related extends ModelRelations> = RelationOptions<Related> & {
     throughLocalKey?: string,
     throughForeignKey?: string,
+    throughModel: () => LucidModel,
   }
 
   /**
@@ -124,7 +126,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    */
   export type ManyToManyDecorator = <RelatedModel extends LucidModel> (
     model: (() => RelatedModel),
-    column?: ManyToManyRelationOptions,
+    column?: ManyToManyRelationOptions<ManyToMany<RelatedModel>>,
   ) => TypedDecorator<ManyToMany<RelatedModel>>
 
   /**
@@ -132,7 +134,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    */
   export type HasManyThroughDecorator = <RelatedModel extends LucidModel> (
     model: [(() => RelatedModel), (() => LucidModel)],
-    column?: ThroughRelationOptions<HasManyThrough<RelatedModel>>,
+    column?: Omit<ThroughRelationOptions<HasManyThrough<RelatedModel>>, 'throughModel'>,
   ) => TypedDecorator<HasManyThrough<RelatedModel>>
 
   /**
@@ -162,7 +164,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
       HasOneRelationContract<ParentModel, RelatedModel>,
       RelatedModel
     >,
-    builder: RelationQueryBuilderContract<RelatedModel, never>,
+    builder: RelationQueryBuilderContract<RelatedModel, any>,
   }
 
   /**
@@ -179,7 +181,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
       HasManyRelationContract<ParentModel, RelatedModel>,
       RelatedModel
     >
-    builder: RelationQueryBuilderContract<RelatedModel, never>,
+    builder: RelationQueryBuilderContract<RelatedModel, any>,
   }
 
   /**
@@ -196,7 +198,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
       BelongsToRelationContract<ParentModel, RelatedModel>,
       RelatedModel
     >
-    builder: RelationQueryBuilderContract<RelatedModel, never>,
+    builder: RelationQueryBuilderContract<RelatedModel, any>,
   }
 
   /**
@@ -213,7 +215,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
       ManyToManyRelationContract<ParentModel, RelatedModel>,
       RelatedModel
     >,
-    builder: ManyToManyQueryBuilderContract<RelatedModel, never>,
+    builder: ManyToManyQueryBuilderContract<RelatedModel, any>,
   }
 
   /**
@@ -230,7 +232,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
       HasManyThroughRelationContract<ParentModel, RelatedModel>,
       RelatedModel
     >,
-    builder: RelationQueryBuilderContract<RelatedModel, never>,
+    builder: RelationQueryBuilderContract<RelatedModel, any>,
   }
 
   /**
@@ -747,6 +749,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     Result extends any,
   > extends RelationQueryBuilderContract<Related, Result> {
     pivotColumns (columns: string[]): this
+    isPivotOnlyQuery: boolean
 
     wherePivot: WherePivot<this>
     orWherePivot: WherePivot<this>

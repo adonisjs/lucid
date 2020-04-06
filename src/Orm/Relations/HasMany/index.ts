@@ -18,7 +18,6 @@ import {
 
 import { KeysExtractor } from '../KeysExtractor'
 import { HasManyQueryClient } from './QueryClient'
-import { HasManyQueryBuilder } from './QueryBuilder'
 import { ensureRelationIsBooted } from '../../../utils'
 
 /**
@@ -54,6 +53,11 @@ export class HasMany implements HasManyRelationContract<LucidModel, LucidModel> 
    * @note: Available after boot is invoked
    */
   public foreignKey: string
+
+  /**
+   * Reference to the onQuery hook defined by the user
+   */
+  public onQueryHook = this.options.onQuery
 
   constructor (
     public relationName: string,
@@ -177,11 +181,11 @@ export class HasMany implements HasManyRelationContract<LucidModel, LucidModel> 
     return new HasManyQueryClient(this, parent, client)
   }
 
+  /**
+   * Returns an instance of the eager query
+   */
   public eagerQuery (parent: OneOrMany<LucidRow>, client: QueryClientContract) {
     ensureRelationIsBooted(this)
-
-    const query = new HasManyQueryBuilder(client.knexQuery(), client, parent, this)
-    query.isEagerQuery = true
-    return query
+    return HasManyQueryClient.eagerQuery(client, this, parent)
   }
 }

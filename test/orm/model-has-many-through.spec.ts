@@ -1505,3 +1505,327 @@ test.group('Model | Has Many Through | scopes', (group) => {
     assert.equal(posts[0].title, 'Adonis 101')
   })
 })
+
+test.group('Model | Has Many Through | onQuery', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('invoke onQuery method when preloading relationship', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User], {
+        onQuery: (query) => query.where('title', 'Adonis 101'),
+      })
+      public posts: HasManyThrough<typeof Post>
+    }
+    Country.boot()
+
+    await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
+    await db.table('users').multiInsert([
+      {
+        username: 'virk',
+        country_id: 1,
+      },
+      {
+        username: 'nikk',
+        country_id: 1,
+      },
+      {
+        username: 'romain',
+        country_id: 2,
+      },
+    ])
+
+    await db.table('posts').multiInsert([
+      {
+        title: 'Adonis 101',
+        user_id: 1,
+      },
+      {
+        title: 'Lucid 101',
+        user_id: 1,
+      },
+      {
+        title: 'Design 101',
+        user_id: 2,
+      },
+      {
+        title: 'Dev 101',
+        user_id: 3,
+      },
+    ])
+
+    const country = await Country.query().where('id', 1).preload('posts').firstOrFail()
+    assert.lengthOf(country.posts, 1)
+    assert.equal(country.posts[0].title, 'Adonis 101')
+  })
+
+  test('do not invoke onQuery method on preloading subqueries', async (assert) => {
+    assert.plan(3)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User], {
+        onQuery: (query) => {
+          assert.isTrue(true)
+          query.where('title', 'Adonis 101')
+        },
+      })
+      public posts: HasManyThrough<typeof Post>
+    }
+    Country.boot()
+
+    await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
+    await db.table('users').multiInsert([
+      {
+        username: 'virk',
+        country_id: 1,
+      },
+      {
+        username: 'nikk',
+        country_id: 1,
+      },
+      {
+        username: 'romain',
+        country_id: 2,
+      },
+    ])
+
+    await db.table('posts').multiInsert([
+      {
+        title: 'Adonis 101',
+        user_id: 1,
+      },
+      {
+        title: 'Lucid 101',
+        user_id: 1,
+      },
+      {
+        title: 'Design 101',
+        user_id: 2,
+      },
+      {
+        title: 'Dev 101',
+        user_id: 3,
+      },
+    ])
+
+    const country = await Country
+      .query()
+      .where('id', 1)
+      .preload('posts', (query) => query.where({}))
+      .firstOrFail()
+
+    assert.lengthOf(country.posts, 1)
+    assert.equal(country.posts[0].title, 'Adonis 101')
+  })
+
+  test('invoke onQuery method on related query builder', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User], {
+        onQuery: (query) => query.where('title', 'Adonis 101'),
+      })
+      public posts: HasManyThrough<typeof Post>
+    }
+    Country.boot()
+
+    await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
+    await db.table('users').multiInsert([
+      {
+        username: 'virk',
+        country_id: 1,
+      },
+      {
+        username: 'nikk',
+        country_id: 1,
+      },
+      {
+        username: 'romain',
+        country_id: 2,
+      },
+    ])
+
+    await db.table('posts').multiInsert([
+      {
+        title: 'Adonis 101',
+        user_id: 1,
+      },
+      {
+        title: 'Lucid 101',
+        user_id: 1,
+      },
+      {
+        title: 'Design 101',
+        user_id: 2,
+      },
+      {
+        title: 'Dev 101',
+        user_id: 3,
+      },
+    ])
+
+    const country = await Country.findOrFail(1)
+    const posts = await country.related('posts').query()
+
+    assert.lengthOf(posts, 1)
+    assert.equal(posts[0].title, 'Adonis 101')
+  })
+
+  test('do not invoke onQuery method on related query builder subqueries', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User], {
+        onQuery: (query) => query.where('title', 'Adonis 101'),
+      })
+      public posts: HasManyThrough<typeof Post>
+    }
+    Country.boot()
+
+    await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
+    await db.table('users').multiInsert([
+      {
+        username: 'virk',
+        country_id: 1,
+      },
+      {
+        username: 'nikk',
+        country_id: 1,
+      },
+      {
+        username: 'romain',
+        country_id: 2,
+      },
+    ])
+
+    await db.table('posts').multiInsert([
+      {
+        title: 'Adonis 101',
+        user_id: 1,
+      },
+      {
+        title: 'Lucid 101',
+        user_id: 1,
+      },
+      {
+        title: 'Design 101',
+        user_id: 2,
+      },
+      {
+        title: 'Dev 101',
+        user_id: 3,
+      },
+    ])
+
+    const country = await Country.findOrFail(1)
+    const { sql, bindings } = country
+      .related('posts')
+      .query()
+      .where((query) => query.whereNotNull('created_at'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .from('posts')
+      .select('posts.*', 'users.country_id as through_country_id')
+      .innerJoin('users', 'users.id', 'posts.user_id')
+      .where('title', 'Adonis 101')
+      .where((query) => query.whereNotNull('created_at'))
+      .where('users.country_id', 1)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})

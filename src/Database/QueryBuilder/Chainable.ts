@@ -221,7 +221,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public where (key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
       this.knexQuery.where(this.resolveKey(key), operator, this.transformValue(value))
-    } else if (operator) {
+    } else if (operator !== undefined) {
       this.knexQuery.where(this.resolveKey(key), this.transformValue(operator))
     } else {
       /**

@@ -9,6 +9,7 @@
 
 import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { BelongsToClientContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { BelongsTo } from './index'
@@ -34,15 +35,49 @@ export class BelongsToQueryClient implements BelongsToClientContract<BelongsTo, 
   }
 
   /**
+   * Generate a query builder instance
+   */
+  public static query (
+    client: QueryClientContract,
+    relation: BelongsTo,
+    rows: OneOrMany<LucidRow>
+  ) {
+    const query = new BelongsToQueryBuilder(
+      client.knexQuery(),
+      client,
+      rows,
+      relation,
+    )
+
+    typeof (relation.onQueryHook) === 'function' && relation.onQueryHook(query)
+    return query
+  }
+
+  /**
+   * Generate a eager query
+   */
+  public static eagerQuery (
+    client: QueryClientContract,
+    relation: BelongsTo,
+    rows: OneOrMany<LucidRow>
+  ) {
+    const query = new BelongsToQueryBuilder(
+      client.knexQuery(),
+      client,
+      rows,
+      relation,
+    )
+
+    query.isEagerQuery = true
+    typeof (relation.onQueryHook) === 'function' && relation.onQueryHook(query)
+    return query
+  }
+
+  /**
    * Returns instance of query builder
    */
   public query (): any {
-    return new BelongsToQueryBuilder(
-      this.client.knexQuery(),
-      this.client,
-      this.parent,
-      this.relation,
-    )
+    return BelongsToQueryClient.query(this.client, this.relation, this.parent)
   }
 
   /**

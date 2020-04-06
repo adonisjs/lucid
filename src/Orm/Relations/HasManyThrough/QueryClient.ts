@@ -7,8 +7,9 @@
  * file that was distributed with this source code.
 */
 
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
+import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { HasManyThroughClientContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { HasManyThrough } from './index'
@@ -27,14 +28,29 @@ export class HasManyThroughClient implements HasManyThroughClientContract<HasMan
   }
 
   /**
+   * Generate a related query builder
+   */
+  public static query (client: QueryClientContract, relation: HasManyThrough, rows: OneOrMany<LucidRow>) {
+    const query = new HasManyThroughQueryBuilder(client.knexQuery(), client, rows, relation)
+    typeof (relation.onQueryHook) === 'function' && relation.onQueryHook(query)
+    return query
+  }
+
+  /**
+   * Generate a related eager query builder
+   */
+  public static eagerQuery (client: QueryClientContract, relation: HasManyThrough, rows: OneOrMany<LucidRow>) {
+    const query = new HasManyThroughQueryBuilder(client.knexQuery(), client, rows, relation)
+
+    query.isEagerQuery = true
+    typeof (relation.onQueryHook) === 'function' && relation.onQueryHook(query)
+    return query
+  }
+
+  /**
    * Returns an instance of has many through query builder
    */
   public query (): any {
-    return new HasManyThroughQueryBuilder(
-      this.client.knexQuery(),
-      this.client,
-      this.parent,
-      this.relation,
-    )
+    return HasManyThroughClient.query(this.client, this.relation, this.parent)
   }
 }
