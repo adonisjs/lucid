@@ -133,7 +133,7 @@ export class BaseModel implements LucidRow {
   /**
    * Storing model hooks
    */
-  public static hooks: Hooks
+  public static $hooks: Hooks
 
   /**
    * Keys mappings to make the lookups easy
@@ -418,7 +418,7 @@ export class BaseModel implements LucidRow {
     Object.defineProperty(this, '$computedDefinitions', { value: new Map() })
     Object.defineProperty(this, '$relationsDefinitions', { value: new Map() })
 
-    Object.defineProperty(this, 'hooks', {
+    Object.defineProperty(this, '$hooks', {
       value: new Hooks(this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')),
     })
 
@@ -428,16 +428,16 @@ export class BaseModel implements LucidRow {
   /**
    * Register before hooks
    */
-  public static before (event: EventsList, handler: HooksHandler<any>) {
-    this.hooks.add('before', event, handler)
+  public static before (event: EventsList, handler: HooksHandler<any, EventsList>) {
+    this.$hooks.add('before', event, handler)
     return this
   }
 
   /**
    * Register after hooks
    */
-  public static after (event: EventsList, handler: HooksHandler<any>) {
-    this.hooks.add('after', event, handler)
+  public static after (event: EventsList, handler: HooksHandler<any, EventsList>) {
+    this.$hooks.add('after', event, handler)
     return this
   }
 
@@ -445,10 +445,7 @@ export class BaseModel implements LucidRow {
    * Returns a fresh persisted instance of model by applying
    * attributes to the model instance
    */
-  public static async create (
-    values: any,
-    options?: ModelAdapterOptions,
-  ): Promise<any> {
+  public static async create (values: any, options?: ModelAdapterOptions): Promise<any> {
     const instance = new this()
     instance.fill(values)
     instance.$setOptionsAndTrx(options)
@@ -463,10 +460,7 @@ export class BaseModel implements LucidRow {
    * If required, you can also pass a transaction client and the method
    * will use that instead of create a new one.
    */
-  public static async createMany (
-    values: any,
-    options?: ModelAdapterOptions,
-  ): Promise<any[]> {
+  public static async createMany (values: any, options?: ModelAdapterOptions): Promise<any[]> {
     const client = this.$adapter.modelConstructorClient(this, options)
 
     return managedTransaction(client, async (trx) => {
@@ -1302,16 +1296,16 @@ export class BaseModel implements LucidRow {
      * Persit the model when it's not persisted already
      */
     if (!this.$isPersisted) {
-      await Model.hooks.exec('before', 'create', this)
-      await Model.hooks.exec('before', 'save', this)
+      await Model.$hooks.exec('before', 'create', this)
+      await Model.$hooks.exec('before', 'save', this)
 
       await Model.$adapter.insert(this, this.prepareForAdapter(this.$attributes))
 
       this.$hydrateOriginals()
       this.$isPersisted = true
 
-      await Model.hooks.exec('after', 'create', this)
-      await Model.hooks.exec('after', 'save', this)
+      await Model.$hooks.exec('after', 'create', this)
+      await Model.$hooks.exec('after', 'save', this)
       return
     }
 
@@ -1324,8 +1318,8 @@ export class BaseModel implements LucidRow {
       return
     }
 
-    await Model.hooks.exec('before', 'update', this)
-    await Model.hooks.exec('before', 'save', this)
+    await Model.$hooks.exec('before', 'update', this)
+    await Model.$hooks.exec('before', 'save', this)
 
     /**
      * Perform update
@@ -1334,8 +1328,8 @@ export class BaseModel implements LucidRow {
     this.$hydrateOriginals()
     this.$isPersisted = true
 
-    await Model.hooks.exec('after', 'update', this)
-    await Model.hooks.exec('after', 'save', this)
+    await Model.$hooks.exec('after', 'update', this)
+    await Model.$hooks.exec('after', 'save', this)
   }
 
   /**
@@ -1345,12 +1339,12 @@ export class BaseModel implements LucidRow {
     this.ensureIsntDeleted()
     const Model = this.constructor as typeof BaseModel
 
-    await Model.hooks.exec('before', 'delete', this)
+    await Model.$hooks.exec('before', 'delete', this)
 
     await Model.$adapter.delete(this)
     this.$isDeleted = true
 
-    await Model.hooks.exec('after', 'delete', this)
+    await Model.$hooks.exec('after', 'delete', this)
   }
 
   /**

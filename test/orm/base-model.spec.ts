@@ -12,6 +12,7 @@
 import test from 'japa'
 import { DateTime } from 'luxon'
 import { HasOne, HasMany } from '@ioc:Adonis/Lucid/Relations'
+import { ModelQueryBuilder } from '../../src/Orm/QueryBuilder'
 import { column, computed, hasMany, hasOne } from '../../src/Orm/Decorators'
 import {
   getDb,
@@ -3360,6 +3361,75 @@ test.group('Base Model | hooks', (group) => {
     const usersCount = await db.from('users').count('*', 'total')
     assert.equal(usersCount[0].total, 1)
   })
+
+  test('invoke before and after fetch hooks', async (assert) => {
+    assert.plan(3)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      public static boot () {
+        if (this.booted) {
+          return
+        }
+
+        super.boot()
+
+        this.before('fetch', (query) => {
+          assert.instanceOf(query, ModelQueryBuilder)
+        })
+
+        this.after('fetch', (users) => {
+          assert.lengthOf(users, 1)
+          assert.equal(users[0].username, 'virk')
+        })
+      }
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await User.query()
+  })
+
+  test('invoke before and after find hooks', async (assert) => {
+    assert.plan(2)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      public static boot () {
+        if (this.booted) {
+          return
+        }
+
+        super.boot()
+
+        this.before('find', (query) => {
+          assert.instanceOf(query, ModelQueryBuilder)
+        })
+
+        this.after('find', (user) => {
+          assert.equal(user.username, 'virk')
+        })
+      }
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await User.find(1)
+  })
 })
 
 test.group('Base model | extend', (group) => {
@@ -3665,7 +3735,7 @@ test.group('Base Model | date', (group) => {
       public createdAt: DateTime
     }
 
-    assert.equal(User['hooks'].hooks.before.get('save').size, 1)
+    assert.equal(User.$hooks['hooks'].before.get('save').size, 1)
   })
 
   test('format date instance to string before sending to the adapter', async (assert) => {
@@ -4114,7 +4184,7 @@ test.group('Base Model | datetime', (group) => {
       public createdAt: DateTime
     }
 
-    assert.equal(User['hooks'].hooks.before.get('save').size, 1)
+    assert.equal(User.$hooks['hooks'].before.get('save').size, 1)
   })
 
   test('allow overriding prepare method', async (assert) => {

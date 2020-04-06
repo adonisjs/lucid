@@ -9,6 +9,7 @@
 
 declare module '@ioc:Adonis/Lucid/Model' {
   import { DateTime } from 'luxon'
+  import { Hooks } from '@poppinss/hooks'
   import { ProfilerContract, ProfilerRowContract } from '@ioc:Adonis/Core/Profiler'
   import {
     Update,
@@ -42,7 +43,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
    *  Helpers
    * ------------------------------------------------------
    */
-  type DecoratorFn = (target: any, property: any) => void
 
   /**
    * Same as [[Parameters]] but omits the first parameter
@@ -55,9 +55,14 @@ declare module '@ioc:Adonis/Lucid/Model' {
   type PickProperties<T, P> = Pick<T, { [K in keyof T]: T[K] extends P ? K : never }[keyof T]>
 
   /**
+   * Decorator function
+   */
+  export type DecoratorFn = (target: any, property: any) => void
+
+  /**
    * Typed decorator
    */
-  type TypedDecorator<PropType> = <TKey extends string, TTarget extends { [K in TKey]: PropType }>(
+  export type TypedDecorator<PropType> = <TKey extends string, TTarget extends { [K in TKey]: PropType }>(
     target: TTarget,
     property: TKey,
   ) => void
@@ -68,7 +73,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * columns. Alternatively, the user can self define a `$columns`
    * property.
    */
-  type ModelAttributes<Model extends LucidRow> = Model['$columns'] extends undefined
+  export type ModelAttributes<Model extends LucidRow> = Model['$columns'] extends undefined
     ? {
       [Filtered in {
         [P in keyof Model]: P extends keyof LucidRow
@@ -106,8 +111,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
   /**
    * List of events for which a model will trigger hooks
    */
-  export type EventsList = 'save' | 'create' | 'update' | 'delete'
-  export type HooksHandler<T> = ((model: T) => Promise<void> | void) | string
+  export type EventsList = 'save' | 'create' | 'update' | 'delete' | 'fetch' | 'find'
+  export type HooksHandler<
+    Data extends any,
+    Event extends EventsList,
+  > = ((data: Data, event: Event) => Promise<void> | void) | string
 
   /**
    * ------------------------------------------------------
@@ -536,6 +544,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $adapter: AdapterContract
 
     /**
+     * Reference to hooks
+     */
+    $hooks: Hooks
+
+    /**
      * Used to construct defaults for the model
      */
     $configurator: OrmConfigContract,
@@ -624,19 +637,29 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Register a before hook
      */
-    before<T extends LucidModel> (
-      this: T,
-      event: EventsList,
-      handler: HooksHandler<InstanceType<T>>,
+    before<Model extends LucidModel, Event extends 'find' | 'fetch'> (
+      this: Model,
+      event: Event,
+      handler: HooksHandler<ModelQueryBuilderContract<Model>, Event>,
+    ): void
+    before<Model extends LucidModel, Event extends EventsList> (
+      this: Model,
+      event: Event,
+      handler: HooksHandler<InstanceType<Model>, Event>,
     ): void
 
     /**
      * Register an after hook
      */
-    after<T extends LucidModel> (
-      this: T,
-      event: EventsList,
-      handler: HooksHandler<InstanceType<T>>,
+    after<Model extends LucidModel> (
+      this: Model,
+      event: 'fetch',
+      handler: HooksHandler<InstanceType<Model>[], 'fetch'>,
+    ): void
+    after<Model extends LucidModel, Event extends EventsList> (
+      this: Model,
+      event: Event,
+      handler: HooksHandler<InstanceType<Model>, Event>,
     ): void
 
     /**

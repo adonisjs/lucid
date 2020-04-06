@@ -242,7 +242,7 @@ export const dateColumn: DateColumnDecorator = (options?) => {
     /**
      * Set hook when not already set
      */
-    if (!Model['hooks'].has('before', 'save', setDateIfMissingHook)) {
+    if (!Model.$hooks.has('before', 'save', setDateIfMissingHook)) {
       Model.before('save', setDateIfMissingHook)
     }
   }
@@ -273,7 +273,7 @@ export const dateTimeColumn: DateTimeColumnDecorator = (options?) => {
     /**
      * Set hook when not already set
      */
-    if (!Model['hooks'].has('before', 'save', setDateIfMissingHook)) {
+    if (!Model.$hooks.has('before', 'save', setDateIfMissingHook)) {
       Model.before('save', setDateIfMissingHook)
     }
   }

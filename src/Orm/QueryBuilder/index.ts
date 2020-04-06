@@ -116,6 +116,36 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
+   * Executes the current query
+   */
+  private async execQuery () {
+    const isWriteQuery = ['update', 'del', 'insert'].includes(this.knexQuery['_method'])
+    const rows = await executeQuery(this.knexQuery, this.client, this.getProfilerAction())
+
+    /**
+     * Return the rows as it is when query is a write query
+     */
+    if (isWriteQuery || this.hasAggregates || !this.wrapResultsToModelInstances) {
+      return Array.isArray(rows) ? rows : [rows]
+    }
+
+    /**
+     * Convert fetch results to an array of model instances
+     */
+    const modelInstances = this.model.$createMultipleFromAdapterResult(
+      rows,
+      this.sideloaded,
+      this.clientOptions,
+    )
+
+    /**
+     * Preload for model instances
+     */
+    await this.preloader.sideload(this.sideloaded).processAllForMany(modelInstances, this.client)
+    return modelInstances
+  }
+
+  /**
    * Ensures that we are not executing `update` or `del` when using read only
    * client
    */
@@ -174,7 +204,13 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * will implicitly set a `limit` on the query
    */
   public async first (): Promise<any> {
-    const result = await this.limit(1)['exec']()
+    await this.model.$hooks.exec('before', 'find', this)
+
+    const result = await this.limit(1).execQuery()
+    if (result[0]) {
+      await this.model.$hooks.exec('after', 'find', result[0])
+    }
+
     return result[0] || null
   }
 
@@ -183,12 +219,12 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * will implicitly set a `limit` on the query
    */
   public async firstOrFail (): Promise<any> {
-    const result = await this.limit(1)['exec']()
-    if (!result.length) {
+    const row = await this.first()
+    if (!row) {
       throw new Exception('Row not found', 404, 'E_ROW_NOT_FOUND')
     }
 
-    return result[0]
+    return row
   }
 
   /**
@@ -272,30 +308,25 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Executes the query
    */
   public async exec (): Promise<any[]> {
-    const isWriteQuery = ['update', 'del', 'insert'].includes(this.knexQuery['_method'])
-    const rows = await executeQuery(this.knexQuery, this.client, this.getProfilerAction())
-
     /**
-     * Return the rows as it is when query is a write query
+     * Only execute when we are wrapping result to model
+     * instances
      */
-    if (isWriteQuery || this.hasAggregates || !this.wrapResultsToModelInstances) {
-      return Array.isArray(rows) ? rows : [rows]
+    if (this.wrapResultsToModelInstances) {
+      await this.model.$hooks.exec('before', 'fetch', this)
     }
 
-    /**
-     * Convert fetch results to an array of model instances
-     */
-    const modelInstances = this.model.$createMultipleFromAdapterResult(
-      rows,
-      this.sideloaded,
-      this.clientOptions,
-    )
+    const result = await this.execQuery()
 
     /**
-     * Preload for model instances
+     * Only execute when we are wrapping result to model
+     * instances
      */
-    await this.preloader.sideload(this.sideloaded).processAllForMany(modelInstances, this.client)
-    return modelInstances
+    if (this.wrapResultsToModelInstances) {
+      await this.model.$hooks.exec('after', 'fetch', result)
+    }
+
+    return result
   }
 
   /**
@@ -303,10 +334,10 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    */
   public async paginate (page: number, perPage: number = 20) {
     const countQuery = this.clone().clearOrder().clearLimit().clearOffset().clearSelect().count('* as total')
-    const aggregateQuery = await countQuery.exec()
-    const total = this.hasGroupBy ? aggregateQuery.length : aggregateQuery[0].total
+    const aggregateResult = await countQuery.execQuery()
+    const total = this.hasGroupBy ? aggregateResult.length : aggregateResult[0].total
 
-    const results = total > 0 ? await this.forPage(page, perPage).exec() : []
+    const results = total > 0 ? await this.forPage(page, perPage).execQuery() : []
     return new SimplePaginator(results, total, perPage, page)
   }
 
