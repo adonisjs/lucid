@@ -493,6 +493,20 @@ export class BaseModel implements LucidRow {
   }
 
   /**
+   * Same as `query().first()`
+   */
+  public static async first (options?: ModelAdapterOptions) {
+    return this.query(options).first()
+  }
+
+  /**
+   * Same as `query().firstOrFail()`
+   */
+  public static async firstOrFail (options?: ModelAdapterOptions) {
+    return this.query(options).firstOrFail()
+  }
+
+  /**
    * Find model instance using a key/value pair
    */
   public static async findMany (

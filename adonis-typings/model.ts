@@ -717,6 +717,22 @@ declare module '@ioc:Adonis/Lucid/Model' {
     ): Promise<InstanceType<T>>
 
     /**
+     * Same as `query().first()`
+     */
+    first<T extends LucidModel> (
+      this: T,
+      options?: ModelAdapterOptions
+    ): Promise<null | InstanceType<T>>
+
+    /**
+     * Same as `query().firstOrFail()`
+     */
+    firstOrFail<T extends LucidModel> (
+      this: T,
+      options?: ModelAdapterOptions,
+    ): Promise<null | InstanceType<T>>
+
+    /**
      * Find many using an array of primary keys
      */
     findMany<T extends LucidModel> (
