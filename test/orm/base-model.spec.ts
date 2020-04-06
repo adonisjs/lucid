@@ -3966,18 +3966,20 @@ test.group('Base Model | date', (group) => {
       @column()
       public username: string
 
-      @column.date({ consume: (value) => value.toString() })
+      @column.date({
+        consume: (value) => typeof (value) === 'string'
+          ? DateTime.fromSQL(value).minus({ day: 1 }).toISODate()
+          : DateTime.fromJSDate(value).minus({ day: 1 }).toISODate(),
+      })
       public createdAt: DateTime
     }
 
-    const date = DateTime.local()
-
     await db.insertQuery().table('users').insert({
       username: 'virk',
-      created_at: date.toISODate(),
+      created_at: DateTime.local().toISODate(),
     })
     const user = await User.find(1)
-    assert.equal(user!.toJSON().created_at, date.toISODate())
+    assert.equal(user!.toJSON().created_at, DateTime.local().minus({ day: 1 }).toISODate())
   })
 })
 
