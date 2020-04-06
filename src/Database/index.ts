@@ -27,6 +27,7 @@ import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { ConnectionManager } from '../Connection/Manager'
 import { InsertQueryBuilder } from './QueryBuilder/Insert'
 import { ReferenceBuilder } from './StaticBuilder/Reference'
+import { SimplePaginator } from './Paginator/SimplePaginator'
 import { DatabaseQueryBuilder } from './QueryBuilder/Database'
 
 /**
@@ -51,6 +52,7 @@ export class Database implements DatabaseContract {
   public DatabaseQueryBuilder = DatabaseQueryBuilder
   public InsertQueryBuilder = InsertQueryBuilder
   public ModelQueryBuilder = ModelQueryBuilder
+  public SimplePaginator = SimplePaginator
 
   /**
    * A store of global transactions

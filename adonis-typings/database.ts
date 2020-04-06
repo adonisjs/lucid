@@ -22,6 +22,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     RawQueryBindings,
     RawBuilderContract,
     RawQueryBuilderContract,
+    SimplePaginatorContract,
     ReferenceBuilderContract,
     InsertQueryBuilderContract,
     DatabaseQueryBuilderContract,
@@ -628,6 +629,14 @@ declare module '@ioc:Adonis/Lucid/Database' {
     DatabaseQueryBuilder: MacroableConstructorContract<DatabaseQueryBuilderContract>,
     InsertQueryBuilder: MacroableConstructorContract<InsertQueryBuilderContract>,
     ModelQueryBuilder: MacroableConstructorContract<ModelQueryBuilderContract<any, any>>,
+    SimplePaginator: {
+      new<Row extends any> (
+        rows: Row[],
+        total: number,
+        perPage: number,
+        currentPage: number,
+      ): SimplePaginatorContract<Row[]>
+    },
 
     /**
      * Name of the primary connection defined inside `config/database.ts`
