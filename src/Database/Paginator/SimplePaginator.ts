@@ -149,4 +149,16 @@ export class SimplePaginator implements SimplePaginatorContract<any[]> {
 
     return null
   }
+
+  /**
+   * Returns an array of urls under a given range
+   */
+  public getUrlsForRange (start: number, end: number) {
+    let urls: { url: string, page: number }[] = []
+    for (let i = start; i <= end; i++) {
+      urls.push({ url: this.getUrl(i), page: i })
+    }
+
+    return urls
+  }
 }

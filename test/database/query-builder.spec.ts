@@ -8191,6 +8191,38 @@ test.group('Query Builder | paginate', (group) => {
 
     await connection.disconnect()
   })
+
+  test('generate range of pagination urls', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection))
+    await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+
+    const users = await db.from('users').paginate(1, 5)
+    users.baseUrl('/users')
+
+    assert.deepEqual(users.getUrlsForRange(1, 4), [
+      {
+        url: '/users?page=1',
+        page: 1,
+      },
+      {
+        url: '/users?page=2',
+        page: 2,
+      },
+      {
+        url: '/users?page=3',
+        page: 3,
+      },
+      {
+        url: '/users?page=4',
+        page: 4,
+      },
+    ])
+
+    await connection.disconnect()
+  })
 })
 
 test.group('Query Builder | clone', (group) => {
