@@ -28,6 +28,31 @@ import { Chainable } from '../../Database/QueryBuilder/Chainable'
 import { SimplePaginator } from '../../Database/Paginator/SimplePaginator'
 
 /**
+ * A wrapper to invoke scope methods on the query builder
+ * underlying model
+ */
+class ModelScopes {
+  constructor (protected builder: ModelQueryBuilder) {
+    return new Proxy(this, {
+      get (target, key) {
+        if (typeof (target.builder.model[key]) === 'function') {
+          return (...args: any[]) => {
+            return target.builder.model[key](target.builder, ...args)
+          }
+        }
+
+        /**
+         * Unknown keys are not allowed
+         */
+        throw new Error(
+          `"${String(key)}" is not defined as a query scope on "${target.builder.model.name}" model`,
+        )
+      },
+    })
+  }
+}
+
+/**
  * Database query builder exposes the API to construct and run queries for selecting,
  * updating and deleting records.
  */
@@ -47,6 +72,12 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    */
   protected static macros = {}
   protected static getters = {}
+
+  /**
+   * A references to model scopes wrapper. It is lazily initialized
+   * only when the `apply` method is invoked
+   */
+  private scopesWrapper: ModelScopes | undefined = undefined
 
   /**
    * Control whether or not to wrap adapter result to model
@@ -111,6 +142,16 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     this.applyQueryFlags(clonedQuery)
     clonedQuery.sideloaded = Object.assign({}, this.sideloaded)
     return clonedQuery
+  }
+
+  /**
+   * Applies the query scopes on the current query builder
+   * instance
+   */
+  public apply (callback: (scopes: any) => void): this {
+    this.scopesWrapper = this.scopesWrapper || new ModelScopes(this)
+    callback(this.scopesWrapper)
+    return this
   }
 
   /**

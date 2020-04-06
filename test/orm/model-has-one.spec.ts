@@ -1672,3 +1672,102 @@ test.group('Model | HasOne | clone', (group) => {
     assert.instanceOf(clonedQuery, HasOneQueryBuilder)
   })
 })
+
+test.group('Model | HasOne | scopes', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('apply scopes during eagerload', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      public static twitter = Profile.defineScope((query) => {
+        query.where('type', 'twitter')
+      })
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: HasOne<typeof Profile>
+    }
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.table('profiles').multiInsert([
+      { user_id: userId, display_name: 'virk', type: 'github' },
+    ])
+
+    const user = await User.query().preload('profile', (query) => {
+      query.apply((scopes) => scopes.twitter())
+    }).firstOrFail()
+    const userWithScopes = await User.query().preload('profile').firstOrFail()
+
+    assert.isUndefined(user.profile)
+    assert.instanceOf(userWithScopes.profile, Profile)
+  })
+
+  test('apply scopes on related query', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      public static twitter = Profile.defineScope((query) => {
+        query.where('type', 'twitter')
+      })
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: HasOne<typeof Profile>
+    }
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.table('profiles').multiInsert([
+      { user_id: userId, display_name: 'virk', type: 'github' },
+    ])
+
+    const user = await User.findOrFail(1)
+
+    const profile = await user.related('profile').query().apply((scopes) => scopes.twitter()).first()
+    const profileWithoutScopes = await user.related('profile').query().first()
+
+    assert.isNull(profile)
+    assert.instanceOf(profileWithoutScopes, Profile)
+  })
+})

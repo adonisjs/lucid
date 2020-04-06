@@ -275,4 +275,60 @@ test.group('Model query builder', (group) => {
     const user = await query.clone().firstOrFail()
     assert.deepEqual(user.$sideloaded, { username: 'virk' })
   })
+
+  test('apply scopes', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      public static active = User.defineScope((query) => {
+        query.where('is_active', true)
+      })
+    }
+
+    User.boot()
+    const { sql, bindings } = User.query().apply((scopes) => {
+      scopes.active()
+    }).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .getWriteClient()
+      .from('users')
+      .where('is_active', true)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('apply scopes inside a sub query', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      public static active = User.defineScope((query) => {
+        query.where('is_active', true)
+      })
+    }
+
+    User.boot()
+    const { sql, bindings } = User.query().where((builder) => {
+      builder.apply((scopes) => scopes.active())
+    }).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db.connection()
+      .getWriteClient()
+      .from('users')
+      .where((builder) => builder.where('is_active', true))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
 })

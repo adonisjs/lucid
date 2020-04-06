@@ -1194,3 +1194,97 @@ test.group('Model | BelongsTo | clone', (group) => {
     assert.instanceOf(clonedQuery, BelongsToQueryBuilder)
   })
 })
+
+test.group('Model | BelongsTo | scopes', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('apply scopes during eagerload', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      public static fromCountry = User.defineScope((query, countryId) => {
+        query.where('country_id', countryId)
+      })
+    }
+    User.boot()
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: BelongsTo<typeof User>
+    }
+    Profile.boot()
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+
+    const profile = await Profile.query().preload('user', (builder) => {
+      builder.apply((scopes) => scopes.fromCountry(1))
+    }).first()
+
+    const profileWithoutScope = await Profile.query().preload('user').first()
+    assert.isUndefined(profile?.user)
+    assert.instanceOf(profileWithoutScope?.user, User)
+  })
+
+  test('apply scopes on related query', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      public static fromCountry = User.defineScope((query, countryId) => {
+        query.where('country_id', countryId)
+      })
+    }
+    User.boot()
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: BelongsTo<typeof User>
+    }
+    Profile.boot()
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+
+    const profile = await Profile.query().firstOrFail()
+    const profileUser = await profile.related('user').query().apply((scopes) => {
+      scopes.fromCountry(1)
+    }).first()
+    const profileUserWithoutScopes = await profile.related('user').query().first()
+
+    assert.isNull(profileUser)
+    assert.instanceOf(profileUserWithoutScopes, User)
+  })
+})

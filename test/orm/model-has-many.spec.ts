@@ -1798,11 +1798,104 @@ test.group('Model | HasMany | clone', (group) => {
     User.boot()
     User.$getRelation('posts')!.boot()
 
-    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
-    await db.table('posts').multiInsert(getPosts(18, userId))
+    await db.table('users').insert({ username: 'virk' }).returning('id')
 
     const user = await User.find(1)
     const clonedQuery = user!.related('posts').query().clone()
     assert.instanceOf(clonedQuery, HasManyQueryBuilder)
+  })
+})
+
+test.group('Model | HasMany | scopes', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('apply scopes during eagerload', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+
+      public static adonisOnly = Post.defineScope((query) => {
+        query.where('title', 'Adonis 101')
+      })
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<typeof Post>
+    }
+
+    User.boot()
+    User.$getRelation('posts')!.boot()
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Lucid 101' })
+    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Adonis 101' })
+
+    const user = await User.query().preload('posts', (query) => {
+      query.apply((scopes) => scopes.adonisOnly())
+    }).firstOrFail()
+
+    const userWithoutScope = await User.query().preload('posts').firstOrFail()
+
+    assert.lengthOf(user.posts, 1)
+    assert.lengthOf(userWithoutScope.posts, 2)
+    assert.equal(user.posts[0].title, 'Adonis 101')
+  })
+
+  test('apply scopes on related query', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+
+      public static adonisOnly = Post.defineScope((query) => {
+        query.where('title', 'Adonis 101')
+      })
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<typeof Post>
+    }
+
+    User.boot()
+    User.$getRelation('posts')!.boot()
+
+    const [ userId ] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Lucid 101' })
+    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Adonis 101' })
+
+    const user = await User.findOrFail(1)
+
+    const posts = await user.related('posts').query().apply((scopes) => scopes.adonisOnly())
+    const postsWithoutScope = await user.related('posts').query()
+
+    assert.lengthOf(posts, 1)
+    assert.lengthOf(postsWithoutScope, 2)
+    assert.equal(posts[0].title, 'Adonis 101')
   })
 })

@@ -45,6 +45,16 @@ declare module '@ioc:Adonis/Lucid/Model' {
   type DecoratorFn = (target: any, property: any) => void
 
   /**
+   * Same as [[Parameters]] but omits the first parameter
+   */
+  type OmitFirst<T extends (...args: any) => any> = T extends (x: any, ...args: infer P) => any ? P : never
+
+  /**
+   * Same as [[Pick]] but picks by value and not the key
+   */
+  type PickProperties<T, P> = Pick<T, { [K in keyof T]: T[K] extends P ? K : never }[keyof T]>
+
+  /**
    * Typed decorator
    */
   type TypedDecorator<PropType> = <TKey extends string, TTarget extends { [K in TKey]: PropType }>(
@@ -69,6 +79,15 @@ declare module '@ioc:Adonis/Lucid/Model' {
     : Model['$columns']
 
   /**
+   * Extract the query scopes of a model
+   */
+  export type ExtractScopes<Model extends any> = {
+    [Scope in keyof PickProperties<Model, QueryScope<
+      (query: ModelQueryBuilderContract<LucidModel>, ...args: any[]) => void
+    >>]: (...args: OmitFirst<Model[Scope]>) => ExtractScopes<Model>
+  }
+
+  /**
    * Reusable interface to define an object.
    */
   export interface ModelObject {
@@ -89,6 +108,15 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
   export type EventsList = 'save' | 'create' | 'update' | 'delete'
   export type HooksHandler<T> = ((model: T) => Promise<void> | void) | string
+
+  /**
+   * ------------------------------------------------------
+   * Query Scope
+   * ------------------------------------------------------
+   */
+  export type QueryScope<
+    Scope extends (query: ModelQueryBuilderContract<LucidModel>, ...args: any[]) => void
+  > = Scope & { readonly isQueryScope: true }
 
   /**
    * ------------------------------------------------------
@@ -219,6 +247,10 @@ declare module '@ioc:Adonis/Lucid/Model' {
     extends ChainableContract, ExcutableQueryBuilderContract<Result[]>
   {
     model: Model
+
+    apply<Scopes extends ExtractScopes<Model>> (
+      callback: (scopes: Scopes) => void
+    ): this
 
     /**
      * A copy of client options.
@@ -720,6 +752,14 @@ declare module '@ioc:Adonis/Lucid/Model' {
       this: Model,
       options?: ModelAdapterOptions,
     ): ModelQueryBuilderContract<Model, Result>
+
+    /**
+     * Define a new query builder scope
+     */
+    defineScope<
+      Model extends LucidModel,
+      Callback extends (builder: ModelQueryBuilderContract<Model>, ...args: any[]) => void,
+    > (this: Model, callback: Callback): QueryScope<Callback>
 
     /**
      * Truncate model table

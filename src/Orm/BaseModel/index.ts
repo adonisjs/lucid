@@ -94,6 +94,11 @@ export class BaseModel implements LucidRow {
   public static booted: boolean
 
   /**
+   * Query scopes defined on the model
+   */
+  public static $queryScopes: any = {}
+
+  /**
    * A set of properties marked as computed. Computed properties are included in
    * the `toJSON` result, else they behave the same way as any other instance
    * property.
@@ -146,6 +151,14 @@ export class BaseModel implements LucidRow {
    */
   public static query (options?: ModelAdapterOptions): any {
     return this.$adapter.query(this, options)
+  }
+
+  /**
+   * A noop method to define a scope. We basically need it to
+   * distinguish of properties at compile time.
+   */
+  public static defineScope (callback: any) {
+    return callback
   }
 
   /**

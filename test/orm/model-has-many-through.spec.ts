@@ -1334,3 +1334,174 @@ test.group('Model | Has Many Through | clone', (group) => {
     assert.instanceOf(clonedQuery, HasManyThroughQueryBuilder)
   })
 })
+
+test.group('Model | Has Many Through | scopes', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('apply scopes during eagerload', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+
+      public static adonisOnly = Post.defineScope((query) => {
+        query.where('title', 'Adonis 101')
+      })
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<typeof Post>
+    }
+    Country.boot()
+
+    await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
+    await db.table('users').multiInsert([
+      {
+        username: 'virk',
+        country_id: 1,
+      },
+      {
+        username: 'nikk',
+        country_id: 1,
+      },
+      {
+        username: 'romain',
+        country_id: 2,
+      },
+    ])
+
+    await db.table('posts').multiInsert([
+      {
+        title: 'Adonis 101',
+        user_id: 1,
+      },
+      {
+        title: 'Lucid 101',
+        user_id: 1,
+      },
+      {
+        title: 'Design 101',
+        user_id: 2,
+      },
+      {
+        title: 'Dev 101',
+        user_id: 3,
+      },
+    ])
+
+    const country = await Country.query().where('id', 1).preload('posts', (query) => {
+      query.apply((scopes) => scopes.adonisOnly())
+    }).firstOrFail()
+
+    const countryWithoutScope = await Country.query().where('id', 1).preload('posts').firstOrFail()
+
+    assert.lengthOf(country.posts, 1)
+    assert.lengthOf(countryWithoutScope.posts, 3)
+    assert.equal(country.posts[0].title, 'Adonis 101')
+  })
+
+  test('apply scopes on related query', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+
+      public static adonisOnly = Post.defineScope((query) => {
+        query.where('title', 'Adonis 101')
+      })
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<typeof Post>
+    }
+    Country.boot()
+
+    await db.table('countries').multiInsert([{ name: 'India' }, { name: 'Switzerland' }])
+    await db.table('users').multiInsert([
+      {
+        username: 'virk',
+        country_id: 1,
+      },
+      {
+        username: 'nikk',
+        country_id: 1,
+      },
+      {
+        username: 'romain',
+        country_id: 2,
+      },
+    ])
+
+    await db.table('posts').multiInsert([
+      {
+        title: 'Adonis 101',
+        user_id: 1,
+      },
+      {
+        title: 'Lucid 101',
+        user_id: 1,
+      },
+      {
+        title: 'Design 101',
+        user_id: 2,
+      },
+      {
+        title: 'Dev 101',
+        user_id: 3,
+      },
+    ])
+
+    const country = await Country.findOrFail(1)
+    const posts = await country.related('posts').query().apply((scopes) => scopes.adonisOnly())
+    const postsWithoutScope = await country.related('posts').query()
+
+    assert.lengthOf(posts, 1)
+    assert.lengthOf(postsWithoutScope, 3)
+    assert.equal(posts[0].title, 'Adonis 101')
+  })
+})

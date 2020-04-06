@@ -777,7 +777,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   export interface QueryBuilderPreloadFn<Model extends LucidRow, Builder extends any> {
     <
       Name extends ExtractModelRelations<Model>,
-      RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['builder'] : never
+      RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['builder'] : never,
     > (
       relation: Name,
       callback?: (builder: RelatedBuilder) => void,

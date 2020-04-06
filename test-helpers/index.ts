@@ -200,6 +200,7 @@ export async function setup (destroyDb: boolean = true) {
       table.increments()
       table.integer('user_id')
       table.string('display_name').notNullable()
+      table.string('type').nullable()
       table.timestamps()
     })
   }

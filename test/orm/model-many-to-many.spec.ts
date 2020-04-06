@@ -3546,3 +3546,116 @@ test.group('Model | ManyToMany | clone', (group) => {
     assert.instanceOf(clonedQuery, ManyToManyQueryBuilder)
   })
 })
+
+test.group('Model | ManyToMany | scopes', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await db.manager.closeAll()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('apply scopes during eagerload', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+
+      public static programmingOnly = Skill.defineScope((query) => {
+        query.where('name', 'Programming')
+      })
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('skills').insert([
+      { name: 'Programming' },
+      { name: 'Dancing' },
+      { name: 'Singing' },
+    ])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+    ])
+
+    const user = await User.query().preload('skills', (query) => {
+      query.apply((scopes) => scopes.programmingOnly())
+    }).firstOrFail()
+
+    const userWithoutScopes = await User.query().preload('skills').firstOrFail()
+
+    assert.lengthOf(user.skills, 1)
+    assert.lengthOf(userWithoutScopes.skills, 2)
+    assert.equal(user.skills[0].name, 'Programming')
+  })
+
+  test('apply scopes on related query', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+
+      public static programmingOnly = Skill.defineScope((query) => {
+        query.where('name', 'Programming')
+      })
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('skills').insert([
+      { name: 'Programming' },
+      { name: 'Dancing' },
+      { name: 'Singing' },
+    ])
+    await db.insertQuery().table('skill_user').insert([
+      {
+        user_id: 1,
+        skill_id: 1,
+      },
+      {
+        user_id: 1,
+        skill_id: 2,
+      },
+    ])
+
+    const user = await User.findOrFail(1)
+    const skills = await user.related('skills').query().apply((scopes) => scopes.programmingOnly())
+    const skillsWithoutScope = await user.related('skills').query()
+
+    assert.lengthOf(skills, 1)
+    assert.lengthOf(skillsWithoutScope, 2)
+    assert.equal(skills[0].name, 'Programming')
+  })
+})

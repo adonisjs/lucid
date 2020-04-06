@@ -28,7 +28,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
   import {
-    ModelConstructorContract,
+    LucidModel,
     ModelQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/Model'
 
@@ -98,7 +98,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns the query builder for a given model
      */
-    modelQuery<T extends ModelConstructorContract, Result extends any = T> (
+    modelQuery<T extends LucidModel, Result extends any = T> (
       model: T,
     ): ModelQueryBuilderContract<T, Result>
 
@@ -664,7 +664,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns the query builder for a given model
      */
-    modelQuery<T extends ModelConstructorContract, Result extends any = T> (
+    modelQuery<T extends LucidModel, Result extends any = T> (
       model: T,
       options?: DatabaseClientOptions,
     ): ModelQueryBuilderContract<T, Result>
