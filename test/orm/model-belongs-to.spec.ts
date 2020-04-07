@@ -904,7 +904,7 @@ test.group('Model | BelongsTo | preload', (group) => {
         assert.deepEqual(packet.data.relation, {
           model: 'Profile',
           relatedModel: 'User',
-          relation: 'belongsTo',
+          type: 'belongsTo',
         })
       }
       profilerPacketIndex++

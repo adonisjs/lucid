@@ -22,8 +22,18 @@ function endProfilerAction (profilerAction: null | ProfilerActionContract, error
   if (!profilerAction) {
     return
   }
-
   error ? profilerAction.end({ error }) : profilerAction.end()
+}
+
+/**
+ * Creates the profiler action
+ */
+function createProfileAction (client: QueryClientContract | TransactionClientContract, logData: any) {
+  if (!client.profiler) {
+    return null
+  }
+
+  return client.profiler.create('db:query', logData)
 }
 
 /**
@@ -36,26 +46,30 @@ function endProfilerAction (profilerAction: null | ProfilerActionContract, error
  *
  * - The query builder instance is always created using the `write` connection. It doesn't matter
  *   which connection we use, we just have to pick one.
+ *
  * - When executing the query, we ask the Queryclient of AdonisJS to give us the read or write
  *   connection based upon the type of query. The `insert`, `update` and `del` actions makes
  *   use of `write` connection.
+ *
  * - For read queries, it will again ask the QueryClient to give a new connection using round
  *   robin.
  */
 async function runQueryUsingManagedConnection (
-  knexClient: knex,
   query: knex.QueryBuilder | knex.Raw,
-  profilerAction: null | ProfilerActionContract,
+  client: QueryClientContract | TransactionClientContract,
+  knexClient: knex,
+  logData: any,
 ) {
+  let queryError: any = null
+  let queryResult: any = null
+  const profilerAction = createProfileAction(client, logData)
+
   /**
    * Acquire connection from the client and set it as the
    * connection to be used for executing the query.
    */
   const connection = await knexClient['acquireConnection']()
   query.connection(connection)
-
-  let queryError: any = null
-  let queryResult: any = null
 
   /**
    * Executing the query and catching exceptions so that we can
@@ -65,9 +79,11 @@ async function runQueryUsingManagedConnection (
   try {
     queryResult = await query
     endProfilerAction(profilerAction)
+    client.emitter.emit('db:query', logData)
   } catch (error) {
     queryError = error
     endProfilerAction(profilerAction, error)
+    client.emitter.emit('db:query', [error, logData])
   }
 
   /**
@@ -94,7 +110,7 @@ async function runQueryUsingManagedConnection (
 export async function executeQuery (
   query: knex.QueryBuilder | knex.Raw,
   client: QueryClientContract | TransactionClientContract,
-  profilerAction: null | ProfilerActionContract,
+  logData: any,
 ): Promise<any> {
   /**
    * - There is no read/write replicas concept for sqlite. So execute the query as it is.
@@ -102,12 +118,16 @@ export async function executeQuery (
    *   connection.
    */
   if (client.dialect.name === 'sqlite3' || query['client'].transacting) {
+    const profilerAction = createProfileAction(client, logData)
+
     try {
       const result = await query
       endProfilerAction(profilerAction)
+      client.emitter.emit('db:query', logData)
       return result
     } catch (error) {
       endProfilerAction(profilerAction, error)
+      client.emitter.emit('db:query:error', [error, logData])
       throw error
     }
   }
@@ -121,5 +141,5 @@ export async function executeQuery (
   }
 
   const queryClient = isWriteQuery ? client.getWriteClient() : client.getReadClient()
-  return runQueryUsingManagedConnection(queryClient['client'], query, profilerAction)
+  return runQueryUsingManagedConnection(query, client, queryClient['client'], logData)
 }

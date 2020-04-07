@@ -14,7 +14,7 @@ import test from 'japa'
 import { Connection } from '../../src/Connection'
 import { QueryClient } from '../../src/QueryClient'
 import { TransactionClient } from '../../src/TransactionClient'
-import { getConfig, setup, cleanup, resetTables, getLogger } from '../../test-helpers'
+import { getConfig, setup, cleanup, resetTables, getLogger, getEmitter } from '../../test-helpers'
 
 test.group('Transaction | query', (group) => {
   group.before(async () => {
@@ -33,7 +33,7 @@ test.group('Transaction | query', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = await new QueryClient('dual', connection).transaction()
+    const db = await new QueryClient('dual', connection, getEmitter()).transaction()
     const results = await db.query().from('users')
     await db.commit()
 
@@ -47,11 +47,11 @@ test.group('Transaction | query', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = await new QueryClient('dual', connection).transaction()
+    const db = await new QueryClient('dual', connection, getEmitter()).transaction()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.commit()
 
-    const results = await new QueryClient('dual', connection).query().from('users')
+    const results = await new QueryClient('dual', connection, getEmitter()).query().from('users')
     assert.isArray(results)
     assert.lengthOf(results, 1)
     assert.equal(results[0].username, 'virk')
@@ -63,11 +63,11 @@ test.group('Transaction | query', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = await new QueryClient('dual', connection).transaction()
+    const db = await new QueryClient('dual', connection, getEmitter()).transaction()
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await db.rollback()
 
-    const results = await new QueryClient('dual', connection).query().from('users')
+    const results = await new QueryClient('dual', connection, getEmitter()).query().from('users')
     assert.isArray(results)
     assert.lengthOf(results, 0)
 
@@ -81,7 +81,7 @@ test.group('Transaction | query', (group) => {
     /**
      * Transaction 1
      */
-    const db = await new QueryClient('dual', connection).transaction()
+    const db = await new QueryClient('dual', connection, getEmitter()).transaction()
     await db.insertQuery().table('users').insert({ username: 'virk' })
 
     /**
@@ -100,7 +100,7 @@ test.group('Transaction | query', (group) => {
      */
     await db.commit()
 
-    const results = await new QueryClient('dual', connection).query().from('users')
+    const results = await new QueryClient('dual', connection, getEmitter()).query().from('users')
     assert.isArray(results)
     assert.lengthOf(results, 1)
     assert.equal(results[0].username, 'virk')
@@ -113,7 +113,7 @@ test.group('Transaction | query', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = await new QueryClient('dual', connection).transaction()
+    const db = await new QueryClient('dual', connection, getEmitter()).transaction()
 
     db.on('commit', (trx) => {
       stack.push('commit')
@@ -135,7 +135,7 @@ test.group('Transaction | query', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const db = await new QueryClient('dual', connection).transaction()
+    const db = await new QueryClient('dual', connection, getEmitter()).transaction()
 
     db.on('rollback', (trx) => {
       stack.push('rollback')
@@ -155,11 +155,11 @@ test.group('Transaction | query', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    await new QueryClient('dual', connection).transaction(async (db) => {
+    await new QueryClient('dual', connection, getEmitter()).transaction(async (db) => {
       await db.insertQuery().table('users').insert({ username: 'virk' })
     })
 
-    const results = await new QueryClient('dual', connection).query().from('users')
+    const results = await new QueryClient('dual', connection, getEmitter()).query().from('users')
     assert.isArray(results)
     assert.lengthOf(results, 1)
     assert.equal(results[0].username, 'virk')
@@ -174,7 +174,7 @@ test.group('Transaction | query', (group) => {
     connection.connect()
 
     try {
-      await new QueryClient('dual', connection).transaction(async (db) => {
+      await new QueryClient('dual', connection, getEmitter()).transaction(async (db) => {
         await db.insertQuery().table('users').insert({ username: 'virk' })
         throw new Error('should rollback')
       })
@@ -182,7 +182,7 @@ test.group('Transaction | query', (group) => {
       assert.equal(error.message, 'should rollback')
     }
 
-    const results = await new QueryClient('dual', connection).query().from('users')
+    const results = await new QueryClient('dual', connection, getEmitter()).query().from('users')
     assert.isArray(results)
     assert.lengthOf(results, 0)
 
@@ -196,7 +196,7 @@ test.group('Transaction | query', (group) => {
     /**
      * Transaction 1
      */
-    await new QueryClient('dual', connection).transaction(async (db) => {
+    await new QueryClient('dual', connection, getEmitter()).transaction(async (db) => {
       await db.insertQuery().table('users').insert({ username: 'virk' })
 
       /**
@@ -212,7 +212,7 @@ test.group('Transaction | query', (group) => {
       })
     })
 
-    const results = await new QueryClient('dual', connection).query().from('users')
+    const results = await new QueryClient('dual', connection, getEmitter()).query().from('users')
     assert.isArray(results)
     assert.lengthOf(results, 1)
     assert.equal(results[0].username, 'virk')

@@ -10,6 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
+import { EmitterContract } from '@ioc:Adonis/Core/Event'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
 import { ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
@@ -63,8 +64,9 @@ export class Database implements DatabaseContract {
     private config: DatabaseConfig,
     private logger: LoggerContract,
     private profiler: ProfilerContract,
+    private emitter: EmitterContract,
   ) {
-    this.manager = new ConnectionManager(this.logger)
+    this.manager = new ConnectionManager(this.logger, this.emitter)
     this.registerConnections()
   }
 
@@ -120,7 +122,6 @@ export class Database implements DatabaseContract {
     if (this.connectionGlobalTransactions.has(connection)) {
       this.logger.trace({ connection }, 'using pre-existing global transaction connection')
       const globalTransactionClient = this.connectionGlobalTransactions.get(connection)!
-      globalTransactionClient.profiler = options.profiler
       return globalTransactionClient
     }
 
@@ -135,8 +136,8 @@ export class Database implements DatabaseContract {
      */
     this.logger.trace({ connection }, 'creating query client in %s mode', [options.mode || 'dual'])
     const queryClient = options.mode
-      ? new QueryClient(options.mode, rawConnection)
-      : new QueryClient('dual', rawConnection)
+      ? new QueryClient(options.mode, rawConnection, this.emitter)
+      : new QueryClient('dual', rawConnection, this.emitter)
 
     /**
      * Passing profiler to the query client for profiling queries
@@ -282,8 +283,10 @@ export class Database implements DatabaseContract {
     const trx = this.connectionGlobalTransactions.get(connectionName)
 
     if (!trx) {
-      // eslint-disable-next-line max-len
-      throw new Exception('Cannot commit a non-existing global transaction. Make sure you are not calling "commitGlobalTransaction" twice')
+      throw new Exception([
+        'Cannot commit a non-existing global transaction.',
+        ' Make sure you are not calling "commitGlobalTransaction" twice',
+      ].join(''))
     }
 
     await trx.commit()
@@ -297,8 +300,10 @@ export class Database implements DatabaseContract {
     const trx = this.connectionGlobalTransactions.get(connectionName)
 
     if (!trx) {
-      // eslint-disable-next-line max-len
-      throw new Exception('Cannot rollback a non-existing global transaction. Make sure you are not calling "commitGlobalTransaction" twice')
+      throw new Exception([
+        'Cannot rollback a non-existing global transaction.',
+        ' Make sure you are not calling "commitGlobalTransaction" twice',
+      ].join(''))
     }
 
     await trx.rollback()

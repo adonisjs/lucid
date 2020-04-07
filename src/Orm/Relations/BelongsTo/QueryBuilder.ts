@@ -60,7 +60,7 @@ export class BelongsToQueryBuilder extends BaseQueryBuilder {
    */
   protected profilerData () {
     return {
-      relation: this.relation.type,
+      type: this.relation.type,
       model: this.relation.model.name,
       relatedModel: this.relation.relatedModel().name,
     }

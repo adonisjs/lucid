@@ -41,18 +41,14 @@ LucidRow
    * Returns the profiler action. Protected, since the class is extended
    * by relationships
    */
-  protected getProfilerAction () {
-    if (!this.client.profiler) {
-      return null
-    }
-
-    return this.client.profiler.profile('sql:query', Object.assign(this['toSQL'](), {
+  protected getQueryData () {
+    return Object.assign(this.toSQL(), {
       connection: this.client.connectionName,
       inTransaction: this.client.isTransaction,
       model: this.model.name,
       eagerLoading: this.isEagerQuery,
       relation: this.profilerData(),
-    }))
+    })
   }
 
   /**

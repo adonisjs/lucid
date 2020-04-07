@@ -1358,7 +1358,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
           model: 'User',
           relatedModel: 'Skill',
           pivotTable: 'skill_user',
-          relation: 'manyToMany',
+          type: 'manyToMany',
         })
       }
       profilerPacketIndex++

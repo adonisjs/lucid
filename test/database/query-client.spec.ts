@@ -14,7 +14,7 @@ import { resolveClientNameWithAliases } from 'knex/lib/helpers'
 
 import { Connection } from '../../src/Connection'
 import { QueryClient } from '../../src/QueryClient'
-import { getConfig, setup, cleanup, getLogger, resetTables } from '../../test-helpers'
+import { getConfig, setup, cleanup, getLogger, resetTables, getEmitter } from '../../test-helpers'
 
 test.group('Query client', (group) => {
   group.before(async () => {
@@ -33,7 +33,7 @@ test.group('Query client', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const client = new QueryClient('dual', connection)
+    const client = new QueryClient('dual', connection, getEmitter())
     assert.equal(client.mode, 'dual')
     await connection.disconnect()
   })
@@ -42,7 +42,7 @@ test.group('Query client', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const client = new QueryClient('read', connection)
+    const client = new QueryClient('read', connection, getEmitter())
     assert.equal(client.mode, 'read')
     await connection.disconnect()
   })
@@ -51,7 +51,7 @@ test.group('Query client', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const client = new QueryClient('write', connection)
+    const client = new QueryClient('write', connection, getEmitter())
     assert.equal(client.mode, 'write')
     await connection.disconnect()
   })
@@ -60,7 +60,7 @@ test.group('Query client', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const client = new QueryClient('write', connection)
+    const client = new QueryClient('write', connection, getEmitter())
     const columns = await client.columnsInfo('users')
     assert.deepEqual(Object.keys(columns), [
       'id',
@@ -78,7 +78,7 @@ test.group('Query client', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const client = new QueryClient('write', connection)
+    const client = new QueryClient('write', connection, getEmitter())
     const column = await client.columnsInfo('users', 'id')
     assert.oneOf(column.type, ['integer', 'int'])
   })
@@ -109,7 +109,7 @@ test.group('Query client', (group) => {
       /**
        * Truncate
        */
-      const client = new QueryClient('write', connection)
+      const client = new QueryClient('write', connection, getEmitter())
       await client.truncate('test_users', true)
 
       /**
@@ -137,7 +137,7 @@ test.group('Query client | dual mode', (group) => {
   test('perform select queries in dual mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = new QueryClient('dual', connection)
+    const client = new QueryClient('dual', connection, getEmitter())
 
     const results = await client.query().from('users')
     assert.isArray(results)
@@ -149,7 +149,7 @@ test.group('Query client | dual mode', (group) => {
   test('perform insert queries in dual mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = new QueryClient('dual', connection)
+    const client = new QueryClient('dual', connection, getEmitter())
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     const results = await client.query().from('users')
@@ -164,7 +164,7 @@ test.group('Query client | dual mode', (group) => {
   test('perform raw queries in dual mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = new QueryClient('dual', connection)
+    const client = new QueryClient('dual', connection, getEmitter())
 
     const command = process.env.DB === 'sqlite' ? 'DELETE FROM users;' : (
       process.env.DB === 'mssql' ? 'TRUNCATE table users;' : 'TRUNCATE users;'
@@ -183,7 +183,7 @@ test.group('Query client | dual mode', (group) => {
   test('perform queries inside a transaction in dual mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = new QueryClient('dual', connection)
+    const client = new QueryClient('dual', connection, getEmitter())
 
     const trx = await client.transaction()
     await trx.insertQuery().table('users').insert({ username: 'virk' })
@@ -214,7 +214,7 @@ test.group('Query client | read mode', (group) => {
   test('perform select queries in read mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = new QueryClient('read', connection)
+    const client = new QueryClient('read', connection, getEmitter())
 
     const results = await client.query().from('users')
     assert.isArray(results)
@@ -226,7 +226,7 @@ test.group('Query client | read mode', (group) => {
   test('raise error when attempting to perform insert in read mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = new QueryClient('read', connection)
+    const client = new QueryClient('read', connection, getEmitter())
 
     const fn = () => client.insertQuery()
     assert.throw(fn, 'Write client is not available for query client instantiated in read mode')
@@ -237,7 +237,7 @@ test.group('Query client | read mode', (group) => {
   test('perform raw queries in read mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = new QueryClient('read', connection)
+    const client = new QueryClient('read', connection, getEmitter())
 
     const result = await client.rawQuery('SELECT 1 + 1').exec()
     assert.isDefined(result)
@@ -250,7 +250,7 @@ test.group('Query client | read mode', (group) => {
 
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = new QueryClient('read', connection)
+    const client = new QueryClient('read', connection, getEmitter())
 
     try {
       await client.transaction()
@@ -281,7 +281,7 @@ test.group('Query client | write mode', (group) => {
   test('perform select queries in write mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = new QueryClient('write', connection)
+    const client = new QueryClient('write', connection, getEmitter())
 
     const results = await client.query().from('users')
     assert.isArray(results)
@@ -293,7 +293,7 @@ test.group('Query client | write mode', (group) => {
   test('perform insert queries in write mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = new QueryClient('write', connection)
+    const client = new QueryClient('write', connection, getEmitter())
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     const results = await client.query().from('users')
@@ -308,7 +308,7 @@ test.group('Query client | write mode', (group) => {
   test('perform raw queries in write mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = new QueryClient('write', connection)
+    const client = new QueryClient('write', connection, getEmitter())
 
     const command = process.env.DB === 'sqlite' ? 'DELETE FROM users;' : (
       process.env.DB === 'mssql' ? 'TRUNCATE table users;' : 'TRUNCATE users;'
@@ -327,7 +327,7 @@ test.group('Query client | write mode', (group) => {
   test('perform queries inside a transaction in write mode', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
-    const client = new QueryClient('write', connection)
+    const client = new QueryClient('write', connection, getEmitter())
 
     const trx = await client.transaction()
     await trx.insertQuery().table('users').insert({ username: 'virk' })
@@ -360,7 +360,7 @@ if (!['sqlite', 'mssql'].includes(process.env.DB as string)) {
       const connection = new Connection('primary', getConfig(), getLogger())
       connection.connect()
 
-      const client = new QueryClient('dual', connection)
+      const client = new QueryClient('dual', connection, getEmitter())
       const lock = await client.dialect.getAdvisoryLock(1)
 
       assert.isTrue(lock)
@@ -374,7 +374,7 @@ if (!['sqlite', 'mssql'].includes(process.env.DB as string)) {
       const connection = new Connection('primary', getConfig(), getLogger())
       connection.connect()
 
-      const client = new QueryClient('dual', connection)
+      const client = new QueryClient('dual', connection, getEmitter())
       if (client.dialect.name === 'sqlite3') {
         await connection.disconnect()
         return
@@ -406,7 +406,7 @@ test.group('Query client | get tables', (group) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
-    const client = new QueryClient('dual', connection)
+    const client = new QueryClient('dual', connection, getEmitter())
     const tables = await client.getAllTables(['public'])
     if (process.env.DB !== 'mysql') {
       assert.deepEqual(tables, [

@@ -20,9 +20,10 @@ import { Database } from '../../src/Database'
 import MakeMigration from '../../commands/MakeMigration'
 import {
   setup,
-  cleanup,
   getDb,
+  cleanup,
   getLogger,
+  getEmitter,
   getConfig,
   getProfiler,
   resetTables,
@@ -178,7 +179,7 @@ test.group('MakeMigration', (group) => {
       }, getConfig()) },
     }
 
-    const customDb = new Database(config, getLogger(), getProfiler())
+    const customDb = new Database(config, getLogger(), getProfiler(), getEmitter())
 
     const makeMigration = new MakeMigration(app, new Kernel(app), customDb)
     makeMigration.name = 'users'
@@ -218,7 +219,7 @@ test.group('MakeMigration', (group) => {
       }, getConfig()) },
     }
 
-    const customDb = new Database(config, getLogger(), getProfiler())
+    const customDb = new Database(config, getLogger(), getProfiler(), getEmitter())
 
     const makeMigration = new MakeMigration(app, new Kernel(app), customDb)
     makeMigration.name = 'users'

@@ -25,15 +25,11 @@ export class RawQueryBuilder implements RawQueryBuilderContract {
   /**
    * Returns the profiler action
    */
-  private getProfilerAction () {
-    if (!this.client.profiler) {
-      return null
-    }
-
-    return this.client.profiler.profile('sql:query', Object.assign(this['toSQL'](), {
+  private getQueryData () {
+    return Object.assign(this.toSQL(), {
       connection: this.client.connectionName,
       inTransaction: this.client.isTransaction,
-    }))
+    })
   }
 
   /**
@@ -79,7 +75,7 @@ export class RawQueryBuilder implements RawQueryBuilderContract {
    * Executes the query
    */
   public async exec (): Promise<any> {
-    return executeQuery(this.knexQuery, this.client, this.getProfilerAction())
+    return executeQuery(this.knexQuery, this.client, this.getQueryData())
   }
 
   /**

@@ -1066,7 +1066,7 @@ test.group('Model | Has Many Through | preload', (group) => {
           model: 'Country',
           relatedModel: 'Post',
           throughModel: 'User',
-          relation: 'hasManyThrough',
+          type: 'hasManyThrough',
         })
       }
       profilerPacketIndex++

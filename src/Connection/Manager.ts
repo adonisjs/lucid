@@ -9,8 +9,8 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
+import { EmitterContract } from '@ioc:Adonis/Core/Event'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
 import { HealthReportEntry } from '@ioc:Adonis/Core/HealthCheck'
 
@@ -29,7 +29,10 @@ import { Connection } from './index'
  * or connections by registering their config only once and then make use of `connect`
  * and `close` methods to create and destroy db connections.
  */
-export class ConnectionManager extends EventEmitter implements ConnectionManagerContract {
+export class ConnectionManager implements ConnectionManagerContract {
+  /**
+   * List of managed connections
+   */
   public connections: ConnectionManagerContract['connections'] = new Map()
 
   /**
@@ -38,66 +41,62 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
    */
   private orphanConnections: Set<ConnectionContract> = new Set()
 
-  constructor (private logger: LoggerContract) {
-    super()
+  constructor (private logger: LoggerContract, private emitter: EmitterContract) {
+  }
+
+  /**
+   * Handles disconnection of a connection
+   */
+  private handleDisconnect (connection: ConnectionContract) {
+    /**
+     * We received the close event on the orphan connection and not the connection
+     * that is in use
+     */
+    if (this.orphanConnections.has(connection)) {
+      this.orphanConnections.delete(connection)
+      this.emitter.emit('db:connection:disconnect', connection)
+      this.logger.trace({ connection: connection.name }, 'disconnecting connection inside manager')
+      return
+    }
+
+    const internalConnection = this.get(connection.name)
+
+    /**
+     * This will be false, when connection was released at the
+     * time of closing
+     */
+    if (!internalConnection) {
+      return
+    }
+
+    this.emitter.emit('db:connection:disconnect', connection)
+    this.logger.trace({ connection: connection.name }, 'disconnecting connection inside manager')
+
+    delete internalConnection.connection
+    internalConnection.state = 'closed'
+  }
+
+  /**
+   * Handles event when a new connection is added
+   */
+  private handleConnect (connection: ConnectionContract) {
+    const internalConnection = this.get(connection.name)
+    if (!internalConnection) {
+      return
+    }
+
+    this.emitter.emit('db:connection:connect', connection)
+    internalConnection.state = 'open'
   }
 
   /**
    * Monitors a given connection by listening for lifecycle events
    */
   private monitorConnection (connection: ConnectionContract): void {
-    /**
-     * Listens for disconnect to set the connection state and cleanup
-     * memory
-     */
-    connection.on('disconnect', ($connection) => {
-      /**
-       * We received the close event on the orphan connection and not the connection
-       * that is in use
-       */
-      if (this.orphanConnections.has($connection)) {
-        this.orphanConnections.delete($connection)
-
-        this.emit('disconnect', $connection)
-        this.logger.trace({ connection: $connection.name }, 'disconnecting connection inside manager')
-        return
-      }
-
-      const internalConnection = this.get($connection.name)
-
-      /**
-       * This will be false, when connection was released at the
-       * time of closing
-       */
-      if (!internalConnection) {
-        return
-      }
-
-      this.emit('disconnect', $connection)
-      this.logger.trace({ connection: $connection.name }, 'disconnecting connection inside manager')
-
-      delete internalConnection.connection
-      internalConnection.state = 'closed'
-    })
-
-    /**
-     * Listens for connect to set the connection state to open
-     */
-    connection.on('connect', ($connection) => {
-      const internalConnection = this.get($connection.name)
-      if (!internalConnection) {
-        return
-      }
-
-      this.emit('connect', $connection)
-      internalConnection.state = 'open'
-    })
-
-    /**
-     * Listens for error event to proxy it to the client
-     */
+    connection.on('disconnect', ($connection) => this.handleDisconnect($connection))
+    connection.on('connect', ($connection) => this.handleConnect($connection))
     connection.on('error', (error, $connection) => {
-      this.emit('error', error, $connection)
+      this.emitter.emit('db:connection:error', [error, $connection])
     })
   }
 
@@ -222,7 +221,9 @@ export class ConnectionManager extends EventEmitter implements ConnectionManager
    */
   public async close (connectionName: string, release: boolean = false): Promise<void> {
     if (this.isConnected(connectionName)) {
-      await this.get(connectionName)!.connection!.disconnect()
+      const connection = this.get(connectionName)!
+      await connection.connection!.disconnect()
+      connection.state = 'closing'
     }
 
     if (release) {

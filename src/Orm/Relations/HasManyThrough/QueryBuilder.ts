@@ -45,7 +45,7 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder {
    */
   protected profilerData () {
     return {
-      relation: this.relation.type,
+      type: this.relation.type,
       model: this.relation.model.name,
       throughModel: this.relation.throughModel().name,
       relatedModel: this.relation.relatedModel().name,

@@ -15,17 +15,14 @@ import { LoggerContract } from '@ioc:Adonis/Core/Logger'
  */
 export class Logger {
   public warn = function (message: any) {
-    this.addConnectionName(message)
     this.adonisLogger.warn(message)
   }.bind(this)
 
   public error = function (message: any) {
-    this.addConnectionName(message)
     this.adonisLogger.error(message)
   }.bind(this)
 
   public deprecate = function (message: any) {
-    this.addConnectionName(message)
     this.adonisLogger.info(message)
   }.bind(this)
 

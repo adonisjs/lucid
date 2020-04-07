@@ -1009,7 +1009,7 @@ test.group('Model | HasMany | preload', (group) => {
     let profilerPacketIndex = 0
     profiler.process((packet) => {
       if (profilerPacketIndex === 1) {
-        assert.deepEqual(packet.data.relation, { model: 'User', relatedModel: 'Post', relation: 'hasMany' })
+        assert.deepEqual(packet.data.relation, { model: 'User', relatedModel: 'Post', type: 'hasMany' })
       }
       profilerPacketIndex++
     })

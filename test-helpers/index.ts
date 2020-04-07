@@ -13,10 +13,11 @@ import knex from 'knex'
 import dotenv from 'dotenv'
 import { join } from 'path'
 import { Chance } from 'chance'
-import { IocContract, Ioc } from '@adonisjs/fold'
 import { Filesystem } from '@poppinss/dev-utils'
-import { Profiler } from '@adonisjs/profiler/build/standalone'
+import { IocContract, Ioc } from '@adonisjs/fold'
 import { Logger } from '@adonisjs/logger/build/standalone'
+import { Emitter } from '@adonisjs/events/build/standalone'
+import { Profiler } from '@adonisjs/profiler/build/standalone'
 
 import {
   ConnectionConfig,
@@ -66,7 +67,7 @@ export function getConfig (): ConnectionConfig {
           filename: join(fs.basePath, 'db.sqlite'),
         },
         useNullAsDefault: true,
-        debug: false,
+        debug: true,
       }
     case 'mysql':
       return {
@@ -119,7 +120,7 @@ export async function setup (destroyDb: boolean = true) {
     await fs.ensureRoot()
   }
 
-  const db = knex(getConfig())
+  const db = knex(Object.assign({}, getConfig(), { debug: false }))
 
   const hasUsersTable = await db.schema.hasTable('users')
   if (!hasUsersTable) {
@@ -224,7 +225,7 @@ export async function setup (destroyDb: boolean = true) {
  * Does cleanup removes database
  */
 export async function cleanup (customTables?: string[]) {
-  const db = knex(getConfig())
+  const db = knex(Object.assign({}, getConfig(), { debug: false }))
 
   if (customTables) {
     await Promise.all(customTables.map((table) => db.schema.dropTableIfExists(table)))
@@ -250,7 +251,7 @@ export async function cleanup (customTables?: string[]) {
  * Reset database tables
  */
 export async function resetTables () {
-  const db = knex(getConfig())
+  const db = knex(Object.assign({}, getConfig(), { debug: false }))
   await db.table('users').truncate()
   await db.table('friends').truncate()
   await db.table('countries').truncate()
@@ -270,7 +271,7 @@ export function getQueryClient (
   connection: ConnectionContract,
   mode?: 'read' | 'write',
 ): QueryClientContract {
-  return new QueryClient(mode || 'dual', connection) as QueryClientContract
+  return new QueryClient(mode || 'dual', connection, getEmitter()) as QueryClientContract
 }
 
 /**
@@ -317,6 +318,13 @@ export function getLogger () {
 }
 
 /**
+ * Returns emitter instance
+ */
+export function getEmitter () {
+  return new Emitter(new Ioc())
+}
+
+/**
  * Returns profiler instance
  */
 export function getProfiler (enabled: boolean = false) {
@@ -335,7 +343,7 @@ export function getDb () {
     },
   }
 
-  return new Database(config, getLogger(), getProfiler()) as DatabaseContract
+  return new Database(config, getLogger(), getProfiler(), getEmitter()) as DatabaseContract
 }
 
 /**

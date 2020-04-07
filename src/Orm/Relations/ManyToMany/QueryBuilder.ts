@@ -63,7 +63,7 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder implements ManyToMa
    */
   protected profilerData () {
     return {
-      relation: this.relation.type,
+      type: this.relation.type,
       model: this.relation.model.name,
       pivotTable: this.relation.pivotTable,
       relatedModel: this.relation.relatedModel().name,

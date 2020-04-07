@@ -14,6 +14,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   import { Pool } from 'tarn'
   import { EventEmitter } from 'events'
   import { MacroableConstructorContract } from 'macroable'
+  import { EmitterContract } from '@ioc:Adonis/Core/Event'
   import { HealthReportEntry } from '@ioc:Adonis/Core/HealthCheck'
   import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
@@ -59,6 +60,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * of query builder
    */
   export interface QueryClientContract {
+    emitter: EmitterContract,
+
     /**
      * Custom profiler to time queries
      */
@@ -474,34 +477,19 @@ declare module '@ioc:Adonis/Lucid/Database' {
     name: string,
     config: ConnectionConfig,
     connection?: ConnectionContract,
-    state: 'registered' | 'migrating' | 'open' | 'closed',
+    state: 'registered' | 'migrating' | 'open' | 'closing' | 'closed',
   }
 
   /**
    * Connection manager to manage one or more database
    * connections.
    */
-  export interface ConnectionManagerContract extends EventEmitter {
+  export interface ConnectionManagerContract {
     /**
      * List of registered connection. You must check the connection state
      * to understand, if it is connected or not
      */
     connections: Map<string, ConnectionNode>
-
-    /**
-     * Everytime a connection is created
-     */
-    on (event: 'connect', callback: (connection: ConnectionContract) => void): this
-
-    /**
-     * Everytime a connection leaves
-     */
-    on (event: 'disconnect', callback: (connection: ConnectionContract) => void): this
-
-    /**
-     * When error is received on a given connection
-     */
-    on (event: 'error', callback: (error: Error, connection: ConnectionContract) => void): this
 
     /**
      * Add a new connection to the list of managed connection. You must call

@@ -12,7 +12,7 @@
 import test from 'japa'
 
 import { Database } from '../../src/Database'
-import { getConfig, setup, cleanup, getLogger, getProfiler, getDb } from '../../test-helpers'
+import { getConfig, setup, cleanup, getLogger, getProfiler, getDb, getEmitter } from '../../test-helpers'
 
 test.group('Database', (group) => {
   group.before(async () => {
@@ -29,14 +29,14 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
+    const db = new Database(config, getLogger(), getProfiler(), getEmitter())
 
     assert.isDefined(db.manager.connections.get('primary'))
     assert.equal(db.manager.connections.get('primary')!.state, 'registered')
     assert.isUndefined(db.manager.connections.get('primary')!.connection)
   })
 
-  test('make connection when db.connection is called', async (assert) => {
+  test('make connection when db.connection is called', async (assert, done) => {
     assert.plan(1)
 
     const config = {
@@ -44,16 +44,18 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
-    db.manager.on('connect', (connection) => {
+    const emitter = getEmitter()
+    const db = new Database(config, getLogger(), getProfiler(), emitter)
+    emitter.on('db:connection:connect', (connection) => {
       assert.equal(connection.name, 'primary')
+      done()
     })
 
     db.connection()
     await db.manager.closeAll()
   })
 
-  test('make connection to a named connection', async (assert) => {
+  test('make connection to a named connection', async (assert, done) => {
     assert.plan(1)
 
     const config = {
@@ -61,9 +63,11 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
-    db.manager.on('connect', (connection) => {
+    const emitter = getEmitter()
+    const db = new Database(config, getLogger(), getProfiler(), emitter)
+    emitter.on('db:connection:connect', (connection) => {
       assert.equal(connection.name, 'primary')
+      done()
     })
 
     db.connection('primary')
@@ -78,7 +82,7 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
+    const db = new Database(config, getLogger(), getProfiler(), getEmitter())
     const client = db.connection('primary', { mode: 'write' })
 
     assert.equal(client.mode, 'write')
@@ -93,7 +97,7 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
+    const db = new Database(config, getLogger(), getProfiler(), getEmitter())
     const client = db.connection('primary', { mode: 'read' })
 
     assert.equal(client.mode, 'read')
@@ -106,7 +110,7 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
+    const db = new Database(config, getLogger(), getProfiler(), getEmitter())
     const trx = await db.transaction()
 
     assert.equal(trx.mode, 'dual')
@@ -122,7 +126,7 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
+    const db = new Database(config, getLogger(), getProfiler(), getEmitter())
     const result = await db.rawQuery('select 1 + 1')
     assert.isDefined(result)
     await db.manager.closeAll()
@@ -134,7 +138,7 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
+    const db = new Database(config, getLogger(), getProfiler(), getEmitter())
     const result = await db.rawQuery('select 1 + 1', [], { mode: 'read' })
     assert.isDefined(result)
     await db.manager.closeAll()
@@ -146,7 +150,7 @@ test.group('Database', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
+    const db = new Database(config, getLogger(), getProfiler(), getEmitter())
     const result = await db.rawQuery('select 1 + 1', [], { mode: 'write' })
     assert.isDefined(result)
     await db.manager.closeAll()
@@ -159,7 +163,7 @@ test.group('Database', (group) => {
     }
 
     const profiler = getProfiler()
-    const db = new Database(config, getLogger(), profiler)
+    const db = new Database(config, getLogger(), profiler, getEmitter())
     const client = db.connection('primary')
     assert.deepEqual(client.profiler, profiler)
 
@@ -175,7 +179,7 @@ test.group('Database', (group) => {
     const profiler = getProfiler()
     const row = profiler.create('scoped')
 
-    const db = new Database(config, getLogger(), profiler)
+    const db = new Database(config, getLogger(), profiler, getEmitter())
     const client = db.connection('primary', { profiler: row })
     assert.deepEqual(client.profiler, row)
 
@@ -190,7 +194,7 @@ test.group('Database', (group) => {
 
     const profiler = getProfiler()
 
-    const db = new Database(config, getLogger(), profiler)
+    const db = new Database(config, getLogger(), profiler, getEmitter())
     const client = db.connection('primary')
     const trx = await client.transaction()
     assert.equal(trx.profiler, profiler)
@@ -207,7 +211,7 @@ test.group('Database', (group) => {
 
     const profiler = getProfiler()
 
-    const db = new Database(config, getLogger(), profiler)
+    const db = new Database(config, getLogger(), profiler, getEmitter())
     const client = db.connection('primary')
     const trx = await client.transaction()
     const trx1 = await trx.transaction()
@@ -296,7 +300,7 @@ test.group('Database | global transaction', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
+    const db = new Database(config, getLogger(), getProfiler(), getEmitter())
     await db.beginGlobalTransaction()
 
     await db.table('users').insert({ username: 'virk' })
@@ -315,7 +319,7 @@ test.group('Database | global transaction', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
+    const db = new Database(config, getLogger(), getProfiler(), getEmitter())
     await db.beginGlobalTransaction()
     const trx = await db.transaction()
 
@@ -337,7 +341,7 @@ test.group('Database | global transaction', (group) => {
       connections: { primary: getConfig() },
     }
 
-    const db = new Database(config, getLogger(), getProfiler())
+    const db = new Database(config, getLogger(), getProfiler(), getEmitter())
     await db.beginGlobalTransaction()
     await db.beginGlobalTransaction()
     await db.beginGlobalTransaction()

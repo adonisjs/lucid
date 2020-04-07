@@ -11,8 +11,9 @@
 
 import knex from 'knex'
 import { EventEmitter } from 'events'
-import { TransactionClientContract, DialectContract } from '@ioc:Adonis/Lucid/Database'
+import { EmitterContract } from '@ioc:Adonis/Core/Event'
 import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
+import { TransactionClientContract, DialectContract } from '@ioc:Adonis/Lucid/Database'
 
 import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { RawBuilder } from '../Database/StaticBuilder/Raw'
@@ -46,6 +47,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
     public knexClient: knex.Transaction,
     public dialect: DialectContract,
     public connectionName: string,
+    public emitter: EmitterContract,
   ) {
     super()
   }
@@ -171,7 +173,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
    */
   public async transaction (callback?: (trx: TransactionClientContract) => Promise<any>): Promise<any> {
     const trx = await this.knexClient.transaction()
-    const transaction = new TransactionClient(trx, this.dialect, this.connectionName)
+    const transaction = new TransactionClient(trx, this.dialect, this.connectionName, this.emitter)
 
     /**
      * Always make sure to pass the profiler down the chain
