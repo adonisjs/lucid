@@ -27,15 +27,11 @@ export class Logger {
   }.bind(this)
 
   public debug = function (message: any) {
-    this.addConnectionName(message)
+    this.warn(
+      '"debug" property inside config is depreciated. We recommend using "db:query" event for enrich logging',
+    )
     this.adonisLogger.debug(message)
   }.bind(this)
-
-  public addConnectionName (message: any) {
-    if (typeof (message) !== 'string') {
-      message.connection = this.name
-    }
-  }
 
   constructor (public name: string, public adonisLogger: LoggerContract) {
   }

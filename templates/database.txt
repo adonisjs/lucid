@@ -42,7 +42,6 @@ const databaseConfig: DatabaseConfigContract & { orm: Partial<OrmConfigContract>
       },
       useNullAsDefault: true,
       healthCheck: false,
-      debug: Env.get('LOG_LEVEL') === 'trace',
     },
 
     /*
@@ -66,7 +65,6 @@ const databaseConfig: DatabaseConfigContract & { orm: Partial<OrmConfigContract>
         database: Env.get('DB_NAME', 'lucid') as string,
       },
       healthCheck: false,
-      debug: Env.get('LOG_LEVEL') === 'trace',
     },
 
     /*
@@ -90,7 +88,6 @@ const databaseConfig: DatabaseConfigContract & { orm: Partial<OrmConfigContract>
         database: Env.get('DB_NAME', 'lucid') as string,
       },
       healthCheck: false,
-      debug: Env.get('LOG_LEVEL') === 'trace',
     },
   },
 
