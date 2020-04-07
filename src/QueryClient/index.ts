@@ -137,7 +137,7 @@ export class QueryClient implements QueryClientContract {
      * Always make sure to pass the profiler and emitter down to the transaction
      * client as well
      */
-    transaction.profiler = this.profiler
+    transaction.profiler = this.profiler?.create('trx:begin', { state: 'begin' })
 
     /**
      * Self managed transaction

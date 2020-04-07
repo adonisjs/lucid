@@ -185,44 +185,6 @@ test.group('Database', (group) => {
 
     await db.manager.closeAll()
   })
-
-  test('forward profiler to transaction client', async (assert) => {
-    const config = {
-      connection: 'primary',
-      connections: { primary: getConfig() },
-    }
-
-    const profiler = getProfiler()
-
-    const db = new Database(config, getLogger(), profiler, getEmitter())
-    const client = db.connection('primary')
-    const trx = await client.transaction()
-    assert.equal(trx.profiler, profiler)
-
-    await trx.rollback()
-    await db.manager.closeAll()
-  })
-
-  test('forward profiler to nested transaction client', async (assert) => {
-    const config = {
-      connection: 'primary',
-      connections: { primary: getConfig() },
-    }
-
-    const profiler = getProfiler()
-
-    const db = new Database(config, getLogger(), profiler, getEmitter())
-    const client = db.connection('primary')
-    const trx = await client.transaction()
-    const trx1 = await trx.transaction()
-
-    assert.equal(trx.profiler, profiler)
-    assert.equal(trx1.profiler, profiler)
-
-    await trx1.rollback()
-    await trx.rollback()
-    await db.manager.closeAll()
-  })
 })
 
 test.group('Database | extend', (group) => {

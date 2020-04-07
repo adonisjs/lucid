@@ -12,7 +12,7 @@
 import knex from 'knex'
 import { EventEmitter } from 'events'
 import { EmitterContract } from '@ioc:Adonis/Core/Event'
-import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
+import { ProfilerRowContract } from '@ioc:Adonis/Core/Profiler'
 import { TransactionClientContract, DialectContract } from '@ioc:Adonis/Lucid/Database'
 
 import { ModelQueryBuilder } from '../Orm/QueryBuilder'
@@ -41,7 +41,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   /**
    * The profiler to be used for profiling queries
    */
-  public profiler?: ProfilerRowContract | ProfilerContract
+  public profiler?: ProfilerRowContract
 
   constructor (
     public knexClient: knex.Transaction,
@@ -178,7 +178,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
     /**
      * Always make sure to pass the profiler down the chain
      */
-    transaction.profiler = this.profiler
+    transaction.profiler = this.profiler?.create('trx:begin', { state: 'begin' })
 
     /**
      * Self managed transaction
@@ -217,9 +217,11 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   public async commit () {
     try {
       await this.knexClient.commit()
+      this.profiler?.end({ state: 'commit' })
       this.emit('commit', this)
       this.removeAllListeners()
     } catch (error) {
+      this.profiler?.end({ state: 'commit' })
       this.removeAllListeners()
       throw error
     }
@@ -231,9 +233,11 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   public async rollback () {
     try {
       await this.knexClient.rollback()
+      this.profiler?.end({ state: 'rollback' })
       this.emit('rollback', this)
       this.removeAllListeners()
     } catch (error) {
+      this.profiler?.end({ state: 'rollback' })
       this.removeAllListeners()
       throw error
     }

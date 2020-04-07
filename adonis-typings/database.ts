@@ -195,6 +195,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
     knexClient: knex.Transaction,
 
     /**
+     * Custom profiler to time queries
+     */
+    profiler?: ProfilerRowContract
+
+    /**
      * Is transaction completed or not
      */
     isCompleted: boolean,

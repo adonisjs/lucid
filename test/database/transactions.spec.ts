@@ -14,7 +14,15 @@ import test from 'japa'
 import { Connection } from '../../src/Connection'
 import { QueryClient } from '../../src/QueryClient'
 import { TransactionClient } from '../../src/TransactionClient'
-import { getConfig, setup, cleanup, resetTables, getLogger, getEmitter } from '../../test-helpers'
+import {
+  setup,
+  cleanup,
+  getConfig,
+  getLogger,
+  getEmitter,
+  getProfiler,
+  resetTables,
+} from '../../test-helpers'
 
 test.group('Transaction | query', (group) => {
   group.before(async () => {
@@ -216,6 +224,89 @@ test.group('Transaction | query', (group) => {
     assert.isArray(results)
     assert.lengthOf(results, 1)
     assert.equal(results[0].username, 'virk')
+
+    await connection.disconnect()
+  })
+
+  test('nest transaction queries inside profiler row', async (assert) => {
+    const stack: { id: string, parentId: string | undefined, label: string, data: any }[] = []
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const profiler = getProfiler(true)
+    const client = new QueryClient('dual', connection, getEmitter())
+    client.profiler = profiler
+
+    profiler.process((log) => {
+      stack.push({ id: log['id'], parentId: log.parent_id, label: log.label, data: log.data })
+    })
+
+    const db = await client.transaction()
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.commit()
+
+    assert.lengthOf(stack, 2)
+    assert.equal(stack[0].label, 'db:query')
+    assert.equal(stack[1].label, 'trx:begin')
+    assert.equal(stack[0].parentId, stack[1].id)
+    assert.deepEqual(stack[1].data, { state: 'commit' })
+
+    await connection.disconnect()
+  })
+
+  test('nest save points queries inside profiler row', async (assert) => {
+    const stack: { id: string, parentId: string | undefined, label: string, data: any }[] = []
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const profiler = getProfiler(true)
+    const client = new QueryClient('dual', connection, getEmitter())
+    client.profiler = profiler
+
+    profiler.process((log) => {
+      stack.push({ id: log['id'], parentId: log.parent_id, label: log.label, data: log.data })
+    })
+
+    const db = await client.transaction()
+    const nested = await db.transaction()
+    await nested.insertQuery().table('users').insert({ username: 'virk' })
+    await nested.rollback()
+    await db.commit()
+
+    assert.lengthOf(stack, 3)
+    assert.equal(stack[0].label, 'db:query')
+    assert.equal(stack[1].label, 'trx:begin')
+    assert.equal(stack[2].label, 'trx:begin')
+    assert.equal(stack[0].parentId, stack[1].id)
+    assert.deepEqual(stack[1].data, { state: 'rollback' })
+    assert.deepEqual(stack[2].data, { state: 'commit' })
+    assert.equal(stack[1].parentId, stack[2].id)
+
+    await connection.disconnect()
+  })
+
+  test('nest transaction queries inside managed transaction', async (assert) => {
+    const stack: { id: string, parentId: string | undefined, label: string, data: any }[] = []
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const profiler = getProfiler(true)
+    const client = new QueryClient('dual', connection, getEmitter())
+    client.profiler = profiler
+
+    profiler.process((log) => {
+      stack.push({ id: log['id'], parentId: log.parent_id, label: log.label, data: log.data })
+    })
+
+    await client.transaction(async (db) => {
+      await db.insertQuery().table('users').insert({ username: 'virk' })
+    })
+
+    assert.lengthOf(stack, 2)
+    assert.equal(stack[0].label, 'db:query')
+    assert.equal(stack[1].label, 'trx:begin')
+    assert.equal(stack[0].parentId, stack[1].id)
+    assert.deepEqual(stack[1].data, { state: 'commit' })
 
     await connection.disconnect()
   })

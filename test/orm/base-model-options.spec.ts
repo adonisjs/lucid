@@ -1201,10 +1201,10 @@ test.group('Model options | Query Builder Preloads', (group) => {
     assert.lengthOf(users, 1)
 
     assert.equal(users[0].$options!.connection, 'primary')
-    assert.instanceOf(users[0].$options!.profiler, Profiler)
+    assert.deepEqual(users[0].$options!.profiler, trx.profiler)
 
     assert.equal(users[0].profile.$options!.connection, 'primary')
-    assert.instanceOf(users[0].profile.$options!.profiler, Profiler)
+    assert.deepEqual(users[0].profile.$options!.profiler, trx.profiler)
   })
 
   test('pass profiler to preload models', async (assert) => {
