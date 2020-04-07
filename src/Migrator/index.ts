@@ -323,6 +323,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    */
   private async shutdown () {
     await this.releaseLock()
+    this.emit('end')
   }
 
   /**
@@ -397,6 +398,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
   }
 
   public on (event: 'start', callback: () => void): this
+  public on (event: 'end', callback: () => void): this
   public on (event: 'acquire:lock', callback: () => void): this
   public on (event: 'release:lock', callback: () => void): this
   public on (event: 'create:schema:table', callback: () => void): this

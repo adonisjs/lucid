@@ -16,8 +16,8 @@ import { Kernel } from '@adonisjs/ace'
 import { Filesystem } from '@poppinss/dev-utils'
 import { Application } from '@adonisjs/application/build/standalone'
 
-import Migrate from '../../commands/Migrate'
-import Rollback from '../../commands/Rollback'
+import Migrate from '../../commands/Migration/Run'
+import Rollback from '../../commands/Migration/Rollback'
 import { setup, cleanup, getDb } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>

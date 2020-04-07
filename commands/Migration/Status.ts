@@ -13,7 +13,7 @@ import { flags, Kernel } from '@adonisjs/ace'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { MigrationListNode } from '@ioc:Adonis/Lucid/Migrator'
-import MigrationsBase from './MigrationsBase'
+import MigrationsBase from './Base'
 
 /**
  * The command is meant to migrate the database by execute migrations
@@ -24,6 +24,9 @@ export default class Status extends MigrationsBase {
   public static commandName = 'migration:status'
   public static description = 'Drop existing tables and re-run migrations from start'
 
+  /**
+   * Define custom connection
+   */
   @flags.string({ description: 'Define a custom database connection' })
   public connection: string
 
@@ -64,13 +67,11 @@ export default class Status extends MigrationsBase {
      * config file
      */
     if (!connection) {
-      this.logger.error(
-        `${this.connection} is not a valid connection name. Double check config/database file`,
-      )
+      this.printNotAValidConnection(this.connection)
       return
     }
 
-    const { Migrator } = await import('../src/Migrator')
+    const { Migrator } = await import('../../src/Migrator')
     const migrator = new Migrator(this.db, this.application, {
       direction: 'up',
       connectionName: this.connection,

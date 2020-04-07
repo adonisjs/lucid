@@ -47,7 +47,6 @@
     "kleur": "^3.0.3",
     "knex": "^0.20.13",
     "knex-dynamic-connection": "^1.0.4",
-    "log-update": "^4.0.0",
     "luxon": "^1.22.2",
     "macroable": "^4.0.2",
     "pluralize": "^8.0.0",

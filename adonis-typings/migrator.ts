@@ -68,6 +68,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
     getList (): Promise<MigrationListNode[]>
     close (): Promise<void>
     on (event: 'start', callback: () => void): this
+    on (event: 'end', callback: () => void): this
     on (event: 'acquire:lock', callback: () => void): this
     on (event: 'release:lock', callback: () => void): this
     on (event: 'create:schema:table', callback: () => void): this
