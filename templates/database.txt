@@ -7,10 +7,10 @@
 
 import Env from '@ioc:Adonis/Core/Env'
 import Application from '@ioc:Adonis/Core/Application'
-import { OrmConfigContract } from '@ioc:Adonis/Lucid/Orm'
-import { DatabaseConfigContract } from '@ioc:Adonis/Lucid/Database'
+import { OrmConfig } from '@ioc:Adonis/Lucid/Orm'
+import { DatabaseConfig } from '@ioc:Adonis/Lucid/Database'
 
-const databaseConfig: DatabaseConfigContract & { orm: Partial<OrmConfigContract> } = {
+const databaseConfig: DatabaseConfig & { orm: Partial<OrmConfig> } = {
   /*
   |--------------------------------------------------------------------------
   | Connection
