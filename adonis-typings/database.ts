@@ -627,6 +627,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
     },
 
     /**
+     * Pretty print query logs
+     */
+    prettyPrint: (queryLog: any) => void
+
+    /**
      * Name of the primary connection defined inside `config/database.ts`
      * file
      */

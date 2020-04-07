@@ -11,7 +11,7 @@
 
 import test from 'japa'
 import { column } from '../../src/Orm/Decorators'
-import { scope } from '../../src/Orm/Helpers/scope'
+import { scope } from '../../src/Helpers/scope'
 import { ModelQueryBuilder } from '../../src/Orm/QueryBuilder'
 import {
   getDb,

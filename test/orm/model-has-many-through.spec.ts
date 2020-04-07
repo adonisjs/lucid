@@ -12,7 +12,7 @@
 import test from 'japa'
 import { HasManyThrough } from '@ioc:Adonis/Lucid/Orm'
 
-import { scope } from '../../src/Orm/Helpers/scope'
+import { scope } from '../../src/Helpers/scope'
 import { hasManyThrough, column } from '../../src/Orm/Decorators'
 import { HasManyThroughQueryBuilder } from '../../src/Orm/Relations/HasManyThrough/QueryBuilder'
 import { ormAdapter, getBaseModel, setup, cleanup, resetTables, getDb, getProfiler } from '../../test-helpers'

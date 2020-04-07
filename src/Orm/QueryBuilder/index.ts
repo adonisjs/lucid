@@ -23,7 +23,7 @@ import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { Preloader } from '../Preloader'
-import { executeQuery } from '../../helpers/executeQuery'
+import { QueryRunner } from '../../QueryRunner'
 import { Chainable } from '../../Database/QueryBuilder/Chainable'
 import { SimplePaginator } from '../../Database/Paginator/SimplePaginator'
 
@@ -120,7 +120,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    */
   private async execQuery () {
     const isWriteQuery = ['update', 'del', 'insert'].includes(this.knexQuery['_method'])
-    const rows = await executeQuery(this.knexQuery, this.client, this.getQueryData())
+    const rows = await new QueryRunner(this.client, this.getQueryData()).run(this.knexQuery)
 
     /**
      * Return the rows as it is when query is a write query
@@ -160,11 +160,11 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * by relationships
    */
   protected getQueryData () {
-    return Object.assign(this.toSQL(), {
+    return {
       connection: this.client.connectionName,
       inTransaction: this.client.isTransaction,
       model: this.model.name,
-    })
+    }
   }
 
   /**

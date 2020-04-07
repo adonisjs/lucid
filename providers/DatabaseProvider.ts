@@ -26,8 +26,11 @@ import {
   hasManyThrough,
 } from '../src/Orm/Decorators'
 
-import { scope } from '../src/Orm/Helpers/scope'
+import { scope } from '../src/Helpers/scope'
 
+/**
+ * Database service provider
+ */
 export default class DatabaseServiceProvider {
   constructor (protected $container: IocContract) {
   }
@@ -40,7 +43,8 @@ export default class DatabaseServiceProvider {
       const config = this.$container.use('Adonis/Core/Config').get('database', {})
       const Logger = this.$container.use('Adonis/Core/Logger')
       const Profiler = this.$container.use('Adonis/Core/Profiler')
-      return new Database(config, Logger, Profiler)
+      const Emitter = this.$container.use('Adonis/Core/Event')
+      return new Database(config, Logger, Profiler, Emitter)
     })
   }
 

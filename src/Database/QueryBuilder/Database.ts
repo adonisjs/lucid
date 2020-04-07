@@ -16,7 +16,7 @@ import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Luci
 import { DatabaseQueryBuilderContract, DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 import { Chainable } from './Chainable'
-import { executeQuery } from '../../helpers/executeQuery'
+import { QueryRunner } from '../../QueryRunner'
 import { SimplePaginator } from '../Paginator/SimplePaginator'
 
 /**
@@ -68,13 +68,13 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   }
 
   /**
-   * Returns the profiler action
+   * Returns the log data
    */
   private getQueryData () {
-    return Object.assign(this.toSQL(), {
+    return {
       connection: this.client.connectionName,
       inTransaction: this.client.isTransaction,
-    })
+    }
   }
 
   /**
@@ -192,7 +192,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Executes the query
    */
   public async exec (): Promise<any> {
-    return executeQuery(this.knexQuery, this.client, this.getQueryData())
+    return new QueryRunner(this.client, this.getQueryData()).run(this.knexQuery)
   }
 
   /**

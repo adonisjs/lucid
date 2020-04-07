@@ -12,7 +12,7 @@
 import test from 'japa'
 import { HasMany } from '@ioc:Adonis/Lucid/Orm'
 
-import { scope } from '../../src/Orm/Helpers/scope'
+import { scope } from '../../src/Helpers/scope'
 import { column, hasMany } from '../../src/Orm/Decorators'
 import { HasManyQueryBuilder } from '../../src/Orm/Relations/HasMany/QueryBuilder'
 

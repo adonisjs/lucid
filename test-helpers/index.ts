@@ -67,7 +67,7 @@ export function getConfig (): ConnectionConfig {
           filename: join(fs.basePath, 'db.sqlite'),
         },
         useNullAsDefault: true,
-        debug: true,
+        debug: false,
       }
     case 'mysql':
       return {
@@ -343,7 +343,8 @@ export function getDb () {
     },
   }
 
-  return new Database(config, getLogger(), getProfiler(), getEmitter()) as DatabaseContract
+  const emitter = getEmitter()
+  return new Database(config, getLogger(), getProfiler(), emitter) as DatabaseContract
 }
 
 /**

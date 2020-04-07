@@ -24,6 +24,7 @@ import {
 
 import { QueryClient } from '../QueryClient'
 import { RawBuilder } from './StaticBuilder/Raw'
+import { prettyPrint } from '../Helpers/prettyPrint'
 import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { ConnectionManager } from '../Connection/Manager'
 import { InsertQueryBuilder } from './QueryBuilder/Insert'
@@ -69,6 +70,8 @@ export class Database implements DatabaseContract {
     this.manager = new ConnectionManager(this.logger, this.emitter)
     this.registerConnections()
   }
+
+  public prettyPrint = prettyPrint
 
   /**
    * Registering all connections with the manager, so that we can fetch

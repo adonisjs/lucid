@@ -12,7 +12,7 @@
 import test from 'japa'
 import { HasOne, BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 
-import { scope } from '../../src/Orm/Helpers/scope'
+import { scope } from '../../src/Helpers/scope'
 import { hasOne, column, belongsTo } from '../../src/Orm/Decorators'
 import { HasOneQueryBuilder } from '../../src/Orm/Relations/HasOne/QueryBuilder'
 import { getDb, getBaseModel, ormAdapter, setup, cleanup, resetTables, getProfiler } from '../../test-helpers'

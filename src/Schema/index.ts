@@ -11,6 +11,7 @@
 
 import { SchemaBuilder } from 'knex'
 import { Exception } from '@poppinss/utils'
+import { QueryReporter } from '../QueryReporter'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { SchemaContract, DeferCallback } from '@ioc:Adonis/Lucid/Schema'
 
@@ -67,7 +68,15 @@ export class Schema implements SchemaContract {
       if (typeof (trackedCall) === 'function') {
         await trackedCall(this.db)
       } else {
-        await trackedCall
+        const queries = trackedCall['toSQL']()
+        const reporter = new QueryReporter(this.db, { queries, connection: this.db.connectionName }).begin()
+        try {
+          await trackedCall
+          reporter.end()
+        } catch (error) {
+          reporter.end(error)
+          throw error
+        }
       }
     }
   }

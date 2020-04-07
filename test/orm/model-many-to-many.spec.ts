@@ -12,7 +12,7 @@
 import test from 'japa'
 import { ManyToMany } from '@ioc:Adonis/Lucid/Orm'
 
-import { scope } from '../../src/Orm/Helpers/scope'
+import { scope } from '../../src/Helpers/scope'
 import { manyToMany, column } from '../../src/Orm/Decorators'
 import { ManyToManyQueryBuilder } from '../../src/Orm/Relations/ManyToMany/QueryBuilder'
 import { getDb, getBaseModel, ormAdapter, setup, resetTables, cleanup, getProfiler } from '../../test-helpers'

@@ -11,7 +11,7 @@
 
 import test from 'japa'
 import { Connection } from '../../src/Connection'
-import { executeQuery } from '../../src/helpers/executeQuery'
+import { QueryRunner } from '../../src/QueryRunner'
 import { DatabaseQueryBuilder } from '../../src/Database/QueryBuilder/Database'
 import {
   setup,
@@ -54,7 +54,7 @@ if (process.env.DB !== 'sqlite') {
         return this.connection.client
       }
 
-      await executeQuery(db.select('*').from('users').knexQuery, client, null)
+      await new QueryRunner(client, null).run(db.select('*').from('users').knexQuery)
       await connection.disconnect()
     })
 
@@ -71,7 +71,7 @@ if (process.env.DB !== 'sqlite') {
         return this.connection.client
       }
 
-      await executeQuery(db.from('users').update('username', 'virk').knexQuery, client, null)
+      await new QueryRunner(client, null).run(db.from('users').update('username', 'virk').knexQuery)
       await connection.disconnect()
     })
 
@@ -88,7 +88,7 @@ if (process.env.DB !== 'sqlite') {
         return this.connection.client
       }
 
-      await executeQuery(db.from('users').del().knexQuery, client, null)
+      await new QueryRunner(client, null).run(db.from('users').del().knexQuery)
       await connection.disconnect()
     })
 
@@ -105,7 +105,7 @@ if (process.env.DB !== 'sqlite') {
         return this.connection.client
       }
 
-      await executeQuery(db.table('users').insert({ username: 'virk' }).knexQuery, client, null)
+      await new QueryRunner(client, null).run(db.table('users').insert({ username: 'virk' }).knexQuery)
       await connection.disconnect()
     })
 
@@ -121,7 +121,7 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const trx = await client.transaction()
-      await executeQuery(db.select('*').from('users').useTransaction(trx).knexQuery, client, null)
+      await new QueryRunner(client, null).run(db.select('*').from('users').useTransaction(trx).knexQuery)
       await trx.commit()
       await connection.disconnect()
     })
@@ -138,11 +138,10 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const trx = await client.transaction()
-      await executeQuery(
-        db.table('users').useTransaction(trx).insert({ username: 'virk' }).knexQuery,
-        client,
-        null,
-      )
+
+      await new QueryRunner(client, null)
+        .run(db.table('users').useTransaction(trx).insert({ username: 'virk' }).knexQuery)
+
       await trx.rollback()
       await connection.disconnect()
     })
@@ -158,11 +157,7 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const trx = await client.transaction()
-      await executeQuery(
-        trx.query().select('*').from('users').knexQuery,
-        client,
-        null,
-      )
+      await new QueryRunner(client, null).run(trx.query().select('*').from('users').knexQuery)
       await trx.commit()
       await connection.disconnect()
     })
@@ -178,11 +173,8 @@ if (process.env.DB !== 'sqlite') {
         throw new Error('Never expected to reach here')
       }
 
-      await executeQuery(
-        trx.insertQuery().table('users').insert({ username: 'virk' }).knexQuery,
-        trx,
-        null,
-      )
+      await new QueryRunner(trx, null)
+        .run(trx.insertQuery().table('users').insert({ username: 'virk' }).knexQuery)
       await trx.commit()
     })
   })
