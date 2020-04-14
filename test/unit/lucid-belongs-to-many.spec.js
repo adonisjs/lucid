@@ -746,7 +746,7 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(users.size(), 2)
     assert.deepEqual(users.first().$sideLoaded, { posts_count: helpers.formatNumber(2) })
     assert.deepEqual(users.last().$sideLoaded, { posts_count: helpers.formatNumber(1) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id") as "posts_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select "users".*, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id") as "posts_count" from "users"'))
   })
 
   test('get constraints to withCount', async (assert) => {
@@ -1859,7 +1859,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const results = await User.query().withCount('followers').fetch()
 
-    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where "users"."id" = "followers"."user_id") as "followers_count" from "users"'
+    const expectedQuery = 'select "users".*, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where "users"."id" = "followers"."user_id") as "followers_count" from "users"'
 
     assert.equal(results.first().$sideLoaded.followers_count, 1)
     assert.equal(results.last().$sideLoaded.followers_count, 0)
@@ -1914,7 +1914,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const results = await User.query().withCount('followers').fetch()
 
-    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where "users"."id" = "followers"."user_id") as "followers_count" from "users"'
+    const expectedQuery = 'select "users".*, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."follower_id" where "users"."id" = "followers"."user_id") as "followers_count" from "users"'
 
     assert.equal(results.first().$sideLoaded.followers_count, 2)
     assert.equal(results.rows[1].$sideLoaded.followers_count, 1)
@@ -1975,7 +1975,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const results = await User.query().withCount('following').withCount('followers').fetch()
 
-    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."user_id" where "users"."id" = "followers"."follower_id") as "following_count", (select count(*) from "users" as "sj_1" inner join "followers" on "sj_1"."id" = "followers"."follower_id" where "users"."id" = "followers"."user_id") as "followers_count" from "users"'
+    const expectedQuery = 'select "users".*, (select count(*) from "users" as "sj_0" inner join "followers" on "sj_0"."id" = "followers"."user_id" where "users"."id" = "followers"."follower_id") as "following_count", (select count(*) from "users" as "sj_1" inner join "followers" on "sj_1"."id" = "followers"."follower_id" where "users"."id" = "followers"."user_id") as "followers_count" from "users"'
 
     assert.equal(results.first().$sideLoaded.followers_count, 2)
     assert.equal(results.first().$sideLoaded.following_count, 0)
@@ -1989,6 +1989,92 @@ test.group('Relations | Belongs To Many', (group) => {
     assert.equal(results.last().$sideLoaded.followers_count, 0)
     assert.equal(results.last().$sideLoaded.following_count, 0)
     assert.equal(userQuery.sql, helpers.formatQuery(expectedQuery))
+  })
+
+  test('withCount does not merge pivot table columns when called from a nested relations', async (assert) => {
+    class Professional extends Model {
+      companies () {
+        return this.belongsToMany(Company, 'professional_id', 'company_id').pivotTable('company_professional')
+      }
+    }
+
+    class Company extends Model {
+      professionals () {
+        return this.belongsToMany(Professional, 'company_id', 'professional_id').pivotTable('company_professional')
+      }
+    }
+
+    Professional._bootIfNotBooted()
+    Company._bootIfNotBooted()
+
+    let companyQuery = null
+    Company.onQuery((query) => (companyQuery = query))
+
+    await ioc.use('Database').table('professionals').insert([
+      {
+        name: 'virk'
+      },
+      {
+        name: 'nikk'
+      },
+      {
+        name: 'prasan'
+      },
+      {
+        name: 'tushar'
+      },
+      {
+        name: 'niars'
+      }
+    ])
+
+    await ioc.use('Database').table('companies').insert([
+      {
+        employer: 'Mama'
+      },
+      {
+        employer: 'Popo'
+      }
+    ])
+
+    const professionals = (await Professional.all()).rows
+
+    const companies = (await Company.all()).rows
+
+    await companies[0].professionals().attach(professionals.slice(0, 2).map(p => p.id))
+
+    await companies[1].professionals().attach(professionals.slice(2, professionals.length).map(p => p.id))
+
+    const results = await Professional.query().with('companies', b => b.withCount('professionals')).fetch()
+
+    const expectedQuery = 'select "companies".*, (select count(*) from "professionals" inner join "company_professional" on "professionals"."id" = "company_professional"."professional_id" where "companies"."id" = "company_professional"."company_id") as "professionals_count", "companies".*, "company_professional"."company_id" as "pivot_company_id", "company_professional"."professional_id" as "pivot_professional_id" from "companies" inner join "company_professional" on "companies"."id" = "company_professional"."company_id" where "company_professional"."professional_id" in (?, ?, ?, ?, ?)'
+
+    assert.equal(results.first().getRelated('companies').rows[0].$attributes.hasOwnProperty('is_accepted'), false)
+    assert.equal(results.first().getRelated('companies').rows[0].$attributes.hasOwnProperty('company_id'), false)
+    assert.equal(results.first().getRelated('companies').rows[0].$attributes.hasOwnProperty('professional_id'), false)
+    assert.equal(results.first().getRelated('companies').rows[0].$sideLoaded.professionals_count, 2)
+
+    assert.equal(results.rows[1].getRelated('companies').rows[0].$attributes.hasOwnProperty('is_accepted'), false)
+    assert.equal(results.rows[1].getRelated('companies').rows[0].$attributes.hasOwnProperty('company_id'), false)
+    assert.equal(results.rows[1].getRelated('companies').rows[0].$attributes.hasOwnProperty('professional_id'), false)
+    assert.equal(results.rows[1].getRelated('companies').rows[0].$sideLoaded.professionals_count, 2)
+
+    assert.equal(results.rows[2].getRelated('companies').rows[0].$attributes.hasOwnProperty('is_accepted'), false)
+    assert.equal(results.rows[2].getRelated('companies').rows[0].$attributes.hasOwnProperty('company_id'), false)
+    assert.equal(results.rows[2].getRelated('companies').rows[0].$attributes.hasOwnProperty('professional_id'), false)
+    assert.equal(results.rows[2].getRelated('companies').rows[0].$sideLoaded.professionals_count, 3)
+
+    assert.equal(results.rows[3].getRelated('companies').rows[0].$attributes.hasOwnProperty('is_accepted'), false)
+    assert.equal(results.rows[3].getRelated('companies').rows[0].$attributes.hasOwnProperty('company_id'), false)
+    assert.equal(results.rows[3].getRelated('companies').rows[0].$attributes.hasOwnProperty('professional_id'), false)
+    assert.equal(results.rows[3].getRelated('companies').rows[0].$sideLoaded.professionals_count, 3)
+
+    assert.equal(results.last().getRelated('companies').rows[0].$attributes.hasOwnProperty('is_accepted'), false)
+    assert.equal(results.last().getRelated('companies').rows[0].$attributes.hasOwnProperty('company_id'), false)
+    assert.equal(results.last().getRelated('companies').rows[0].$attributes.hasOwnProperty('professional_id'), false)
+    assert.equal(results.last().getRelated('companies').rows[0].$sideLoaded.professionals_count, 3)
+
+    assert.equal(companyQuery.sql, helpers.formatQuery(expectedQuery))
   })
 
   test('sync pivot rows by dropping old and adding new', async (assert) => {
@@ -2147,7 +2233,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     await User.query().withCount('posts').fetch()
 
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id" and "posts"."deleted_at" is null) as "posts_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select "users".*, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id" and "posts"."deleted_at" is null) as "posts_count" from "users"'))
   })
 
   test('apply global scope on related model when called has', async (assert) => {
@@ -2714,7 +2800,7 @@ test.group('Relations | Belongs To Many', (group) => {
     User.onQuery((query) => (userQuery = query))
     await User.query().withCount('posts').fetch()
 
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id" and "post_user"."deleted_at" is null) as "posts_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select "users".*, (select count(*) from "posts" inner join "post_user" on "posts"."id" = "post_user"."post_id" where "users"."id" = "post_user"."user_id" and "post_user"."deleted_at" is null) as "posts_count" from "users"'))
   })
 
   test('apply global scope on pivot model when called has', async (assert) => {

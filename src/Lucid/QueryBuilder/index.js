@@ -87,7 +87,7 @@ class QueryBuilder {
     this.Model = Model
     this.connectionString = connection
 
-    const table = this.Model.prefix ? `${this.Model.prefix}${this.Model.table}` : this.Model.table
+    this.modelTable = this.Model.prefix ? `${this.Model.prefix}${this.Model.table}` : this.Model.table
 
     /**
      * Reference to database provider
@@ -97,7 +97,7 @@ class QueryBuilder {
     /**
      * Reference to query builder with pre selected table
      */
-    this.query = this.db.table(table)
+    this.query = this.db.table(this.modelTable)
 
     /**
      * SubQuery to be pulled off the query builder. For now this is
@@ -882,7 +882,7 @@ class QueryBuilder {
      * Add `*` to columns only when there are no existing columns selected
      */
     if (!_.find(this.query._statements, (statement) => statement.grouping === 'columns')) {
-      columns.push('*')
+      columns.push(`${this.modelTable}.*`)
     }
 
     columns.push(relationInstance.relatedWhere(true, this._withCountCounter).as(asStatement))

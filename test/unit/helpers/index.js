@@ -206,6 +206,23 @@ module.exports = {
         table.integer('team_party_id')
         table.integer('user_party_id')
         table.timestamps()
+      }),
+      db.schema.createTable('professionals', function (table) {
+        table.increments('id')
+        table.string('name')
+        table.timestamps()
+      }),
+      db.schema.createTable('companies', function (table) {
+        table.increments('id')
+        table.string('employer')
+        table.timestamps()
+      }),
+      db.schema.createTable('company_professional', function (table) {
+        table.increments('id')
+        table.integer('company_id')
+        table.integer('professional_id')
+        table.integer('is_accepted')
+        table.timestamps()
       })
     ]))
   },
@@ -228,7 +245,10 @@ module.exports = {
       db.schema.dropTable('followers'),
       db.schema.dropTable('party_users'),
       db.schema.dropTable('teams'),
-      db.schema.dropTable('team_user')
+      db.schema.dropTable('team_user'),
+      db.schema.dropTable('professionals'),
+      db.schema.dropTable('companies'),
+      db.schema.dropTable('company_professional')
     ])
   },
 

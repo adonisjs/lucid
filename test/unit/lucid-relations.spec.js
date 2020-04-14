@@ -1051,7 +1051,7 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.size(), 2)
     assert.equal(users.first().profile_count, 1)
     assert.deepEqual(users.first().$sideLoaded, { profile_count: helpers.formatNumber(1) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where "users"."id" = "profiles"."user_id") as "profile_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select "users".*, (select count(*) from "profiles" where "users"."id" = "profiles"."user_id") as "profile_count" from "users"'))
   })
 
   test('return relation count with paginate method', async (assert) => {
@@ -1077,7 +1077,7 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.size(), 2)
     assert.equal(users.first().profile_count, 1)
     assert.deepEqual(users.first().$sideLoaded, { profile_count: helpers.formatNumber(1) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where "users"."id" = "profiles"."user_id") as "profile_count" from "users" limit ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select "users".*, (select count(*) from "profiles" where "users"."id" = "profiles"."user_id") as "profile_count" from "users" limit ?'))
   })
 
   test('return relation with paginate method', async (assert) => {
@@ -1130,7 +1130,7 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.size(), 2)
     assert.equal(users.first().my_profile, 1)
     assert.deepEqual(users.first().$sideLoaded, { my_profile: helpers.formatNumber(1) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where "users"."id" = "profiles"."user_id") as "my_profile" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select "users".*, (select count(*) from "profiles" where "users"."id" = "profiles"."user_id") as "my_profile" from "users"'))
   })
 
   test('define callback with withCount', async (assert) => {
@@ -1158,7 +1158,7 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.size(), 2)
     assert.equal(users.first().profile_count, 0)
     assert.deepEqual(users.first().$sideLoaded, { profile_count: helpers.formatNumber(0) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where "likes" > ? and "users"."id" = "profiles"."user_id") as "profile_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select "users".*, (select count(*) from "profiles" where "likes" > ? and "users"."id" = "profiles"."user_id") as "profile_count" from "users"'))
   })
 
   test('throw exception when trying to call withCount with nested relations', async (assert) => {
@@ -1216,7 +1216,7 @@ test.group('Relations | HasOne', (group) => {
     assert.equal(users.first().getRelated('profile').picture_count, helpers.formatNumber(1))
     assert.deepEqual(users.first().getRelated('profile').$sideLoaded, { picture_count: helpers.formatNumber(1) })
     assert.equal(userQuery.sql, helpers.formatQuery('select * from "users"'))
-    assert.equal(profileQuery.sql, helpers.formatQuery('select *, (select count(*) from "pictures" where "profiles"."id" = "pictures"."profile_id") as "picture_count" from "profiles" where "profiles"."user_id" in (?, ?)'))
+    assert.equal(profileQuery.sql, helpers.formatQuery('select "profiles".*, (select count(*) from "pictures" where "profiles"."id" = "pictures"."profile_id") as "picture_count" from "profiles" where "profiles"."user_id" in (?, ?)'))
   })
 
   test('eagerload when calling first', async (assert) => {
@@ -1700,7 +1700,7 @@ test.group('Relations | HasOne', (group) => {
 
     await User.query().withCount('profile').fetch()
 
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "profiles" where "users"."id" = "profiles"."user_id" and "profiles"."deleted_at" is null) as "profile_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select "users".*, (select count(*) from "profiles" where "users"."id" = "profiles"."user_id" and "profiles"."deleted_at" is null) as "profile_count" from "users"'))
   })
 
   test('apply global scope on related model when called has', async (assert) => {

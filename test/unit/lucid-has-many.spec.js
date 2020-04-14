@@ -475,7 +475,7 @@ test.group('Relations | Has Many', (group) => {
 
     const user = await User.query().withCount('cars').first()
     assert.deepEqual(user.$sideLoaded, { cars_count: helpers.formatNumber(2) })
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "cars" where "users"."id" = "cars"."user_id") as "cars_count" from "users" limit ?'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select "users".*, (select count(*) from "cars" where "users"."id" = "cars"."user_id") as "cars_count" from "users" limit ?'))
   })
 
   test('filter parent based upon child', async (assert) => {
@@ -1040,7 +1040,7 @@ test.group('Relations | Has Many', (group) => {
 
     const results = await User.query().withCount('teamMembers').fetch()
 
-    const expectedQuery = 'select *, (select count(*) from "users" as "sj_0" where "users"."id" = "sj_0"."manager_id") as "teamMembers_count" from "users"'
+    const expectedQuery = 'select "users".*, (select count(*) from "users" as "sj_0" where "users"."id" = "sj_0"."manager_id") as "teamMembers_count" from "users"'
 
     assert.equal(results.first().$sideLoaded.teamMembers_count, 2)
     assert.equal(results.rows[1].$sideLoaded.teamMembers_count, 0)
@@ -1096,7 +1096,7 @@ test.group('Relations | Has Many', (group) => {
 
     await User.query().withCount('cars').fetch()
 
-    assert.equal(userQuery.sql, helpers.formatQuery('select *, (select count(*) from "cars" where "users"."id" = "cars"."user_id" and "cars"."deleted_at" is null) as "cars_count" from "users"'))
+    assert.equal(userQuery.sql, helpers.formatQuery('select "users".*, (select count(*) from "cars" where "users"."id" = "cars"."user_id" and "cars"."deleted_at" is null) as "cars_count" from "users"'))
   })
 
   test('apply global scope on related model when called has', async (assert) => {
