@@ -41,10 +41,7 @@ test.group('MakeModel', (group) => {
 
     assert.deepEqual(
       toNewlineArray(userModel),
-      toNewlineArray(
-        schemaTemplate
-          .replace(new RegExp('\\${filename}', 'g'), 'User')
-      ),
+      toNewlineArray(schemaTemplate.replace('{{ filename }}', 'User')),
     )
   })
 
@@ -68,10 +65,7 @@ test.group('MakeModel', (group) => {
 
     assert.deepEqual(
       toNewlineArray(userModel),
-      toNewlineArray(
-        schemaTemplate
-          .replace(new RegExp('\\${filename}', 'g'), 'User')
-      ),
+      toNewlineArray(schemaTemplate.replace('{{ filename }}', 'User')),
     )
   })
 })

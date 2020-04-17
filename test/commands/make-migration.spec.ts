@@ -68,8 +68,8 @@ test.group('MakeMigration', (group) => {
       toNewlineArray(userSchema),
       toNewlineArray(
         schemaTemplate
-          .replace('${toClassName(filename)}', 'Users')
-          .replace('${toTableName(filename)}', 'users'),
+          .replace('{{#toClassName}}{{ filename }}{{/toClassName}}', 'Users')
+          .replace('{{#toTableName}}{{ filename }}{{/toTableName}}', 'users'),
       ),
     )
   })
@@ -94,8 +94,8 @@ test.group('MakeMigration', (group) => {
       toNewlineArray(userSchema),
       toNewlineArray(
         schemaTemplate
-          .replace('${toClassName(filename)}', 'MyUsers')
-          .replace('${toTableName(filename)}', 'my_users'),
+          .replace('{{#toClassName}}{{ filename }}{{/toClassName}}', 'MyUsers')
+          .replace('{{#toTableName}}{{ filename }}{{/toTableName}}', 'my_users'),
       ),
     )
   })
@@ -120,8 +120,8 @@ test.group('MakeMigration', (group) => {
       toNewlineArray(userSchema),
       toNewlineArray(
         schemaTemplate
-          .replace('${toClassName(filename)}', 'MyUsers')
-          .replace('${toTableName(filename)}', 'my_users'),
+          .replace('{{#toClassName}}{{ filename }}{{/toClassName}}', 'MyUsers')
+          .replace('{{#toTableName}}{{ filename }}{{/toTableName}}', 'my_users'),
       ),
     )
   })
@@ -145,8 +145,8 @@ test.group('MakeMigration', (group) => {
       toNewlineArray(userSchema),
       toNewlineArray(
         schemaTemplate
-          .replace('${toClassName(filename)}', 'Users')
-          .replace('${toTableName(filename)}', 'users'),
+          .replace('{{#toClassName}}{{ filename }}{{/toClassName}}', 'Users')
+          .replace('{{#toTableName}}{{ filename }}{{/toTableName}}', 'users'),
       ),
     )
   })
@@ -199,8 +199,8 @@ test.group('MakeMigration', (group) => {
       toNewlineArray(userSchema),
       toNewlineArray(
         schemaTemplate
-          .replace('${toClassName(filename)}', 'Users')
-          .replace('${toTableName(filename)}', 'users'),
+          .replace('{{#toClassName}}{{ filename }}{{/toClassName}}', 'Users')
+          .replace('{{#toTableName}}{{ filename }}{{/toTableName}}', 'users'),
       ),
     )
     await customDb.manager.closeAll()
@@ -236,8 +236,8 @@ test.group('MakeMigration', (group) => {
       toNewlineArray(userSchema),
       toNewlineArray(
         schemaTemplate
-          .replace('${toClassName(filename)}', 'Users')
-          .replace('${toTableName(filename)}', 'users'),
+          .replace('{{#toClassName}}{{ filename }}{{/toClassName}}', 'Users')
+          .replace('{{#toTableName}}{{ filename }}{{/toTableName}}', 'users'),
       ),
     )
     await customDb.manager.closeAll()

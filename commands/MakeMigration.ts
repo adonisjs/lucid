@@ -138,13 +138,18 @@ export default class MakeMigration extends BaseCommand {
       .stub(stub)
       .destinationDir(folder)
       .appRoot(this.application.cliCwd || this.application.appRoot)
+      .useMustache()
       .apply({
-        toClassName (filename: string) {
-          const migrationClassName = lodash.camelCase(tableName || filename.replace(prefix, ''))
-          return `${migrationClassName.charAt(0).toUpperCase()}${migrationClassName.slice(1)}`
+        toClassName () {
+          return function (filename: string, render: (text: string) => string) {
+            const migrationClassName = lodash.camelCase(tableName || render(filename).replace(prefix, ''))
+            return `${migrationClassName.charAt(0).toUpperCase()}${migrationClassName.slice(1)}`
+          }
         },
-        toTableName (filename: string) {
-          return tableName || lodash.snakeCase(filename.replace(prefix, ''))
+        toTableName () {
+          return function (filename: string, render: (text: string) => string) {
+            return tableName || lodash.snakeCase(render(filename).replace(prefix, ''))
+          }
         },
       })
 

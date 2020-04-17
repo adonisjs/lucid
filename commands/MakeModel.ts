@@ -38,6 +38,7 @@ export default class MakeModel extends BaseCommand {
       .addFile(this.name, { pattern: 'pascalcase', form: 'singular' })
       .stub(stub)
       .destinationDir(path || 'app/Models')
+      .useMustache()
       .appRoot(this.application.cliCwd || this.application.appRoot)
 
     await this.generator.run()

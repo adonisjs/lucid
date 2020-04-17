@@ -1,16 +1,16 @@
 import BaseSchema from '@ioc:Adonis/Lucid/Schema'
 
-export default class ${toClassName(filename)} extends BaseSchema {
-  protected $tableName = '${toTableName(filename)}'
+export default class {{#toClassName}}{{ filename }}{{/toClassName}} extends BaseSchema {
+  protected tableName = '{{#toTableName}}{{ filename }}{{/toTableName}}'
 
   public async up () {
-    this.schema.createTable(this.$tableName, (table) => {
+    this.schema.createTable(this.tableName, (table) => {
       table.increments('id')
       table.timestamps(true)
     })
   }
 
   public async down () {
-    this.schema.dropTable(this.$tableName)
+    this.schema.dropTable(this.tableName)
   }
 }
