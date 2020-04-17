@@ -78,6 +78,7 @@ export default abstract class MigrationsBase extends BaseCommand {
     if (compiledAt.isValid) {
       console.log(`${this.colors.magenta('Last compiled at:')} ${compiledAt.toLocaleString(DateTime.DATETIME_MED)}`)
     }
+    console.log('')
   }
 
   /**

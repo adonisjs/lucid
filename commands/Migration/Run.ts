@@ -27,7 +27,7 @@ export default class Migrate extends MigrationsBase {
    * Custom connection for running migrations.
    */
   @flags.string({ description: 'Define a custom database connection' })
-  public connection: string = this.db.primaryConnectionName
+  public connection: string
 
   /**
    * Force run migrations in production
@@ -57,7 +57,9 @@ export default class Migrate extends MigrationsBase {
    * Handle command
    */
   public async handle (): Promise<void> {
+    this.connection = this.connection || this.db.primaryConnectionName
     const connection = this.db.getRawConnection(this.connection)
+
     const continueMigrations = !this.application.inProduction
       || this.force
       || await this.takeProductionConstent()

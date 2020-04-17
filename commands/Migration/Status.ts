@@ -60,7 +60,8 @@ export default class Status extends MigrationsBase {
    * Handle command
    */
   public async handle (): Promise<void> {
-    const connection = this.db.getRawConnection(this.connection || this.db.primaryConnectionName)
+    this.connection = this.connection || this.db.primaryConnectionName
+    const connection = this.db.getRawConnection(this.connection)
 
     /**
      * Ensure the define connection name does exists in the
