@@ -56,6 +56,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    */
   protected static macros = {}
   protected static getters = {}
+  private customReporterData: any
 
   /**
    * Ensures that we are not executing `update` or `del` when using read only
@@ -74,7 +75,17 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
     return {
       connection: this.client.connectionName,
       inTransaction: this.client.isTransaction,
+      ...this.customReporterData,
     }
+  }
+
+  /**
+   * Define custom reporter data. It will be merged with
+   * the existing data
+   */
+  public reporterData (data: any) {
+    this.customReporterData = data
+    return this
   }
 
   /**

@@ -715,6 +715,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     debug (debug: boolean): this
     timeout (time: number, options?: { cancel: boolean }): this
     useTransaction (trx: TransactionClientContract): this
+    reporterData (data: any): this
     toQuery (): string
     exec (): Promise<Result>
     toSQL (): knex.Sql

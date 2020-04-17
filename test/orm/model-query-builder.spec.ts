@@ -332,4 +332,20 @@ test.group('Model query builder', (group) => {
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
   })
+
+  test('make aggregate queries with the model query builder', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+    }
+
+    User.boot()
+    await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const users = await User.query().count('* as total')
+    assert.equal(Number(users[0].total), 2)
+  })
 })

@@ -19,6 +19,8 @@ import { QueryRunner } from '../../QueryRunner'
  * Exposes the API to execute raw queries
  */
 export class RawQueryBuilder implements RawQueryBuilderContract {
+  private customReporterData: any
+
   constructor (public knexQuery: knex.Raw, public client: QueryClientContract) {
   }
 
@@ -29,7 +31,17 @@ export class RawQueryBuilder implements RawQueryBuilderContract {
     return {
       connection: this.client.connectionName,
       inTransaction: this.client.isTransaction,
+      ...this.customReporterData,
     }
+  }
+
+  /**
+   * Define custom reporter data. It will be merged with
+   * the existing data
+   */
+  public reporterData (data: any) {
+    this.customReporterData = data
+    return this
   }
 
   /**

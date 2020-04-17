@@ -25,6 +25,8 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
     super()
   }
 
+  private customReporterData: any
+
   /**
    * Required by macroable
    */
@@ -38,7 +40,17 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
     return {
       connection: this.client.connectionName,
       inTransaction: this.client.isTransaction,
+      ...this.customReporterData,
     }
+  }
+
+  /**
+   * Define custom reporter data. It will be merged with
+   * the existing data
+   */
+  public reporterData (data: any) {
+    this.customReporterData = data
+    return this
   }
 
   /**

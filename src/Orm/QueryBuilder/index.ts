@@ -86,6 +86,11 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   protected wrapResultsToModelInstances: boolean = true
 
   /**
+   * Custom reporter data
+   */
+  private customReporterData: any
+
+  /**
    * Options that must be passed to all new model instances
    */
   public clientOptions: ModelAdapterOptions = {
@@ -120,7 +125,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    */
   private async execQuery () {
     const isWriteQuery = ['update', 'del', 'insert'].includes(this.knexQuery['_method'])
-    const rows = await new QueryRunner(this.client, this.getQueryData()).run(this.knexQuery)
+    const queryData = Object.assign(this.getQueryData(), this.customReporterData)
+    const rows = await new QueryRunner(this.client, queryData).run(this.knexQuery)
 
     /**
      * Return the rows as it is when query is a write query
@@ -165,6 +171,15 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
       inTransaction: this.client.isTransaction,
       model: this.model.name,
     }
+  }
+
+  /**
+   * Define custom reporter data. It will be merged with
+   * the existing data
+   */
+  public reporterData (data: any) {
+    this.customReporterData = data
+    return this
   }
 
   /**
