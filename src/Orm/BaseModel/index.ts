@@ -1488,8 +1488,7 @@ export class BaseModel implements LucidRow {
      * Returning generic query builder for rest of the queries
      */
     return client
-      .query()
-      .from(modelConstructor.table)
+      .modelQuery(modelConstructor)
       .where(primaryKeyColumn, this.$primaryKeyValue)
   }
 
