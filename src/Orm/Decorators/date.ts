@@ -76,7 +76,7 @@ function consumeDateColumn (value: any, attributeName: string, modelInstance: Lu
    * Convert from string
    */
   if (typeof (value) === 'string') {
-    return DateTime.fromISO(value)
+    return DateTime.fromSQL(value)
   }
 
   /**
@@ -154,7 +154,7 @@ function consumeDateTimeColumn (value: any, attributeName: string, modelInstance
    * Convert from string
    */
   if (typeof (value) === 'string') {
-    return DateTime.fromISO(value)
+    return DateTime.fromSQL(value)
   }
 
   /**
