@@ -8,8 +8,7 @@
 */
 
 import { join } from 'path'
-import camelCase from 'camelcase'
-import { snakeCase } from 'snake-case'
+import { lodash } from '@poppinss/utils'
 import { inject } from '@adonisjs/fold'
 import { BaseCommand, Kernel, args, flags } from '@adonisjs/ace'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
@@ -141,10 +140,11 @@ export default class MakeMigration extends BaseCommand {
       .appRoot(this.application.cliCwd || this.application.appRoot)
       .apply({
         toClassName (filename: string) {
-          return camelCase(tableName || filename.replace(prefix, ''), { pascalCase: true })
+          const migrationClassName = lodash.camelCase(tableName || filename.replace(prefix, ''))
+          return `${migrationClassName.charAt(0).toUpperCase()}${migrationClassName.slice(1)}`
         },
         toTableName (filename: string) {
-          return tableName || snakeCase(filename.replace(prefix, ''))
+          return tableName || lodash.snakeCase(filename.replace(prefix, ''))
         },
       })
 

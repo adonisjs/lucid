@@ -7,9 +7,8 @@
  * file that was distributed with this source code.
 */
 
-import camelCase from 'camelcase'
+import { lodash } from '@poppinss/utils'
 import { plural } from 'pluralize'
-import { snakeCase } from 'snake-case'
 import { ModelRelations } from '@ioc:Adonis/Lucid/Relations'
 import { OrmConfig, LucidModel } from '@ioc:Adonis/Lucid/Model'
 
@@ -21,21 +20,21 @@ export const Config: OrmConfig = {
    * Returns the table name for a given model
    */
   getTableName (model: LucidModel) {
-    return plural(snakeCase(model.name))
+    return plural(lodash.snakeCase(model.name))
   },
 
   /**
    * Returns the column name for a given model attribute
    */
   getColumnName (_: LucidModel, key: string) {
-    return snakeCase(key)
+    return lodash.snakeCase(key)
   },
 
   /**
    * Returns the serialized key (toJSON key) name for a given attribute.
    */
   getSerializeAsKey (_: LucidModel, key: string) {
-    return snakeCase(key)
+    return lodash.snakeCase(key)
   },
 
   /**
@@ -62,10 +61,10 @@ export const Config: OrmConfig = {
     related: LucidModel
   ): string {
     if (relation === 'belongsTo') {
-      return camelCase(`${related.name}_${related.primaryKey}`)
+      return lodash.camelCase(`${related.name}_${related.primaryKey}`)
     }
 
-    return camelCase(`${model.name}_${model.primaryKey}`)
+    return lodash.camelCase(`${model.name}_${model.primaryKey}`)
   },
 
   /**
@@ -76,7 +75,7 @@ export const Config: OrmConfig = {
     model: LucidModel,
     relatedModel: LucidModel,
   ): string {
-    return snakeCase([relatedModel.name, model.name].sort().join('_'))
+    return lodash.snakeCase([relatedModel.name, model.name].sort().join('_'))
   },
 
   /**
@@ -86,6 +85,6 @@ export const Config: OrmConfig = {
     _: 'manyToMany',
     model: LucidModel,
   ): string {
-    return snakeCase(`${model.name}_${model.primaryKey}`)
+    return lodash.snakeCase(`${model.name}_${model.primaryKey}`)
   },
 }
