@@ -1263,16 +1263,6 @@ export class BaseModel implements LucidRow {
         }
 
         /**
-         * Resolve the attribute name from the column names. Since people
-         * usaully define the column names directly as well by
-         * accepting them directly from the API.
-         */
-        const attributeName = Model.$keys.columnsToAttributes.get(key)
-        if (attributeName) {
-          this[attributeName] = value
-        }
-
-        /**
          * If key is defined as a relation, then ignore it, since one
          * must pass a qualified model to `this.$setRelated()`
          */
