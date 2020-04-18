@@ -1619,6 +1619,37 @@ test.group('BaseModel | fill/merge', (group) => {
     user.fill({ username: 'virk', age: 22 })
     assert.deepEqual(user.$attributes, { username: 'virk', age: 23 })
   })
+
+  test('fill using the column name', (assert) => {
+    class User extends BaseModel {
+      @column()
+      public firstName: string
+    }
+
+    const user = new User()
+    user.fill({ first_name: 'virk' } as any)
+    assert.deepEqual(user.$attributes, { firstName: 'virk' })
+  })
+
+  test('invoke setter during fill when using column name', (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column({ columnName: 'user_age' })
+      public get age (): number {
+        return this.$getAttribute('age')
+      }
+
+      public set age (age: number) {
+        this.$setAttribute('age', age + 1)
+      }
+    }
+
+    const user = new User()
+    user.fill({ user_age: 22 } as any)
+    assert.deepEqual(user.$attributes, { age: 23 })
+  })
 })
 
 test.group('Base | apdater', (group) => {

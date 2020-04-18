@@ -1259,6 +1259,17 @@ export class BaseModel implements LucidRow {
         const attributeName = Model.$keys.columnsToAttributes.get(key)
         if (attributeName) {
           this[attributeName] = value
+          return
+        }
+
+        /**
+         * Resolve the attribute name from the column names. Since people
+         * usaully define the column names directly as well by
+         * accepting them directly from the API.
+         */
+        const attributeName = Model.$keys.columnsToAttributes.get(key)
+        if (attributeName) {
+          this[attributeName] = value
         }
 
         /**
