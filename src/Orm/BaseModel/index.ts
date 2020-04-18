@@ -468,10 +468,7 @@ export class BaseModel implements LucidRow {
   /**
    * Find model instance using a key/value pair
    */
-  public static async find (
-    value: any,
-    options?: ModelAdapterOptions,
-  ) {
+  public static async find (value: any, options?: ModelAdapterOptions) {
     if (value === undefined) {
       throw new Exception('"find" expects a value. Received undefined')
     }
@@ -482,10 +479,7 @@ export class BaseModel implements LucidRow {
   /**
    * Find model instance using a key/value pair
    */
-  public static async findOrFail (
-    value: any,
-    options?: ModelAdapterOptions,
-  ) {
+  public static async findOrFail (value: any, options?: ModelAdapterOptions) {
     if (value === undefined) {
       throw new Exception('"findOrFail" expects a value. Received undefined')
     }
@@ -509,10 +503,7 @@ export class BaseModel implements LucidRow {
   /**
    * Find model instance using a key/value pair
    */
-  public static async findMany (
-    value: any[],
-    options?: ModelAdapterOptions,
-  ) {
+  public static async findMany (value: any[], options?: ModelAdapterOptions) {
     if (value === undefined) {
       throw new Exception('"findMany" expects a value. Received undefined')
     }
@@ -1230,9 +1221,9 @@ export class BaseModel implements LucidRow {
    * fill isn't allowed, since we disallow setting relationships
    * locally
    */
-  public fill (values: any, ignoreUndefined: boolean = true) {
+  public fill (values: any, allowNonExtraProperties: boolean = false) {
     this.$attributes = {}
-    this.merge(values, ignoreUndefined)
+    this.merge(values, allowNonExtraProperties)
     this.fillInvoked = true
   }
 
@@ -1242,7 +1233,7 @@ export class BaseModel implements LucidRow {
    * 1. If key is unknown, it will be added to the `extras` object.
    * 2. If key is defined as a relationship, it will be ignored and one must call `$setRelated`.
    */
-  public merge (values: any, ignoreUndefined: boolean = true) {
+  public merge (values: any, allowNonExtraProperties: boolean = false) {
     const Model = this.constructor as typeof BaseModel
 
     /**
@@ -1251,13 +1242,23 @@ export class BaseModel implements LucidRow {
     if (isObject(values)) {
       Object.keys(values).forEach((key) => {
         const value = values[key]
-        if (ignoreUndefined && value === undefined) {
+
+        /**
+         * Set as column
+         */
+        if (Model.$hasColumn(key)) {
+          this[key] = value
           return
         }
 
-        if (Model.$hasColumn(key)) {
-          this[key] = values[key]
-          return
+        /**
+         * Resolve the attribute name from the column names. Since people
+         * usaully define the column names directly as well by
+         * accepting them directly from the API.
+         */
+        const attributeName = Model.$keys.columnsToAttributes.get(key)
+        if (attributeName) {
+          this[attributeName] = value
         }
 
         /**
@@ -1268,7 +1269,16 @@ export class BaseModel implements LucidRow {
           return
         }
 
-        this.$extras[key] = values[key]
+        /**
+         * Raise error when not instructed to ignore non-existing properties.
+         */
+        if (!allowNonExtraProperties) {
+          throw new Error(
+            `Cannot define "${key}" on "${Model.name}" model, since it is not defined as a model property`,
+          )
+        }
+
+        this.$extras[key] = value
       })
     }
   }

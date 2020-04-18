@@ -1516,18 +1516,32 @@ test.group('BaseModel | fill/merge', (group) => {
     }
 
     const user = new User()
-    user.fill({ username: 'virk', isAdmin: true } as any)
+    user.fill({ username: 'virk' })
     assert.deepEqual(user.$attributes, { username: 'virk' })
   })
 
-  test('set extra properties via fill', (assert) => {
+  test('raise error when extra properties are defined', (assert) => {
     class User extends BaseModel {
       @column()
       public username: string
     }
 
     const user = new User()
-    user.fill({ username: 'virk', isAdmin: true } as any)
+    const fn = () => user.fill({ username: 'virk', isAdmin: true } as any)
+    assert.throw(
+      fn,
+      'Cannot define "isAdmin" on "User" model, since it is not defined as a model property',
+    )
+  })
+
+  test('set extra properties via fill when allowExtraProperties is true', (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+    }
+
+    const user = new User()
+    user.fill({ username: 'virk', isAdmin: true } as any, true)
     assert.deepEqual(user.$attributes, { username: 'virk' })
     assert.deepEqual(user.$extras, { isAdmin: true })
   })
@@ -1545,7 +1559,7 @@ test.group('BaseModel | fill/merge', (group) => {
     user.age = 22
 
     assert.deepEqual(user.$attributes, { age: 22 })
-    user.fill({ username: 'virk', isAdmin: true } as any)
+    user.fill({ username: 'virk' })
     assert.deepEqual(user.$attributes, { username: 'virk' })
   })
 
@@ -1562,11 +1576,11 @@ test.group('BaseModel | fill/merge', (group) => {
     user.age = 22
 
     assert.deepEqual(user.$attributes, { age: 22 })
-    user.merge({ username: 'virk', isAdmin: true } as any)
+    user.merge({ username: 'virk' })
     assert.deepEqual(user.$attributes, { username: 'virk', age: 22 })
   })
 
-  test('do not set properties with explicit undefined values', (assert) => {
+  test('set properties with explicit undefined values', (assert) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1580,7 +1594,7 @@ test.group('BaseModel | fill/merge', (group) => {
 
     assert.deepEqual(user.$attributes, { age: 22 })
     user.merge({ username: 'virk', age: undefined })
-    assert.deepEqual(user.$attributes, { username: 'virk', age: 22 })
+    assert.deepEqual(user.$attributes, { username: 'virk', age: undefined })
   })
 
   test('invoke setter when using fill', (assert) => {
