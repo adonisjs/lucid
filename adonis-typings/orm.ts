@@ -11,6 +11,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   import {
     ScopeFn,
     LucidModel,
+    HooksDecorator,
     ColumnDecorator,
     ComputedDecorator,
     DateColumnDecorator,
@@ -37,11 +38,35 @@ declare module '@ioc:Adonis/Lucid/Orm' {
 
   export const scope: ScopeFn
   export const BaseModel: LucidModel
-  export const computed: ComputedDecorator
+
+  /**
+   * Relationships
+   */
   export const hasOne: HasOneDecorator
   export const belongsTo: BelongsToDecorator
   export const hasMany: HasManyDecorator
   export const manyToMany: ManyToManyDecorator
   export const hasManyThrough: HasManyThroughDecorator
+
+  /**
+   * Hooks
+   */
+  export const beforeSave: HooksDecorator
+  export const afterSave: HooksDecorator
+  export const beforeCreate: HooksDecorator
+  export const afterCreate: HooksDecorator
+  export const beforeUpdate: HooksDecorator
+  export const afterUpdate: HooksDecorator
+  export const beforeDelete: HooksDecorator
+  export const afterDelete: HooksDecorator
+  export const beforeFind: HooksDecorator
+  export const afterFind: HooksDecorator
+  export const beforeFetch: HooksDecorator
+  export const afterFetch: HooksDecorator
+
+  /**
+   * Columns and computed
+   */
   export const column: ColumnDecorator & { date: DateColumnDecorator, dateTime: DateTimeColumnDecorator }
+  export const computed: ComputedDecorator
 }

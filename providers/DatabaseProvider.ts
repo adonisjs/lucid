@@ -16,17 +16,8 @@ import { Config } from '../src/Orm/Config'
 import { BaseModel } from '../src/Orm/BaseModel'
 import { extendValidator } from '../src/Bindings/Validator'
 
-import {
-  column,
-  hasOne,
-  hasMany,
-  computed,
-  belongsTo,
-  manyToMany,
-  hasManyThrough,
-} from '../src/Orm/Decorators'
-
 import { scope } from '../src/Helpers/scope'
+import * as decorators from '../src/Orm/Decorators'
 
 /**
  * Database service provider
@@ -65,14 +56,8 @@ export default class DatabaseServiceProvider {
 
       return {
         BaseModel,
-        column,
-        computed,
-        hasOne,
-        hasMany,
-        belongsTo,
-        manyToMany,
-        hasManyThrough,
         scope,
+        ...decorators,
       }
     })
   }

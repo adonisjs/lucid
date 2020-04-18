@@ -235,6 +235,15 @@ declare module '@ioc:Adonis/Lucid/Model' {
   export type DateTimeColumnDecorator = DateColumnDecorator
 
   /**
+   * Decorator for defining hooks. The generics enforces that
+   * decorator is used on static properties only
+   */
+  export type HooksDecorator = () => <Model extends LucidModel>(
+    target: Model,
+    property: string,
+  ) => void
+
+  /**
    * ------------------------------------------------------
    * Model Options
    * ------------------------------------------------------

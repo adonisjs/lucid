@@ -11,11 +11,12 @@
 
 import 'reflect-metadata'
 import {
+  LucidModel,
+  HooksDecorator,
   ColumnDecorator,
   ComputedDecorator,
   DateColumnDecorator,
   DateTimeColumnDecorator,
-  LucidModel,
 } from '@ioc:Adonis/Lucid/Model'
 
 import {
@@ -115,5 +116,101 @@ export const hasManyThrough: HasManyThroughDecorator = ([relatedModel, throughMo
       'hasManyThrough',
       relatedModel, Object.assign({ relatedModel, throughModel }, relation),
     )
+  }
+}
+
+/**
+ * Before/After save hook
+ */
+export const beforeSave: HooksDecorator = () => {
+  return function decorateAsHook (target, property) {
+    target.boot()
+    target.before('save', target[property].bind(target))
+  }
+}
+export const afterSave: HooksDecorator = () => {
+  return function decorateAsColumn (target, property) {
+    target.boot()
+    target.after('save', target[property].bind(target))
+  }
+}
+
+/**
+ * Before/After create hook
+ */
+export const beforeCreate: HooksDecorator = () => {
+  return function decorateAsColumn (target, property) {
+    target.boot()
+    target.before('create', target[property].bind(target))
+  }
+}
+export const afterCreate: HooksDecorator = () => {
+  return function decorateAsColumn (target, property) {
+    target.boot()
+    target.after('create', target[property].bind(target))
+  }
+}
+
+/**
+ * Before/After update hook
+ */
+export const beforeUpdate: HooksDecorator = () => {
+  return function decorateAsColumn (target, property) {
+    target.boot()
+    target.before('update', target[property].bind(target))
+  }
+}
+export const afterUpdate: HooksDecorator = () => {
+  return function decorateAsColumn (target, property) {
+    target.boot()
+    target.after('update', target[property].bind(target))
+  }
+}
+
+/**
+ * Before/After delete hook
+ */
+export const beforeDelete: HooksDecorator = () => {
+  return function decorateAsColumn (target, property) {
+    target.boot()
+    target.before('delete', target[property].bind(target))
+  }
+}
+export const afterDelete: HooksDecorator = () => {
+  return function decorateAsColumn (target, property) {
+    target.boot()
+    target.after('delete', target[property].bind(target))
+  }
+}
+
+/**
+ * Before/After find hook
+ */
+export const beforeFind: HooksDecorator = () => {
+  return function decorateAsColumn (target, property) {
+    target.boot()
+    target.before('find', target[property].bind(target))
+  }
+}
+export const afterFind: HooksDecorator = () => {
+  return function decorateAsColumn (target, property) {
+    target.boot()
+    target.after('find', target[property].bind(target))
+  }
+}
+
+/**
+ * Before/After fetchs hook
+ */
+export const beforeFetch: HooksDecorator = () => {
+  return function decorateAsColumn (target, property) {
+    target.boot()
+    target.before('fetch', target[property].bind(target))
+  }
+}
+export const afterFetch: HooksDecorator = () => {
+  return function decorateAsColumn (target, property) {
+    target.boot()
+    target.after('fetch', target[property].bind(target))
   }
 }

@@ -13,7 +13,25 @@ import test from 'japa'
 import { DateTime } from 'luxon'
 import { HasOne, HasMany } from '@ioc:Adonis/Lucid/Relations'
 import { ModelQueryBuilder } from '../../src/Orm/QueryBuilder'
-import { column, computed, hasMany, hasOne } from '../../src/Orm/Decorators'
+import {
+  column,
+  computed,
+  hasMany,
+  hasOne,
+  beforeSave,
+  beforeCreate,
+  afterCreate,
+  afterSave,
+  afterUpdate,
+  beforeUpdate,
+  beforeDelete,
+  afterDelete,
+  beforeFetch,
+  afterFetch,
+  beforeFind,
+  afterFind,
+} from '../../src/Orm/Decorators'
+
 import {
   getDb,
   cleanup,
@@ -3034,7 +3052,8 @@ test.group('Base Model | hooks', (group) => {
   })
 
   test('invoke before and after create hooks', async (assert) => {
-    assert.plan(8)
+    assert.plan(9)
+    const stack: string[] = []
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -3046,38 +3065,44 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static boot () {
-        if (this.booted) {
-          return
-        }
+      @beforeCreate()
+      public static beforeCreateHook (model: User) {
+        stack.push('beforeCreateHook')
+        assert.instanceOf(model, User)
+        assert.isFalse(model.$isPersisted)
+      }
 
-        super.boot()
+      @beforeSave()
+      public static beforeSaveHook (model: User) {
+        stack.push('beforeSaveHook')
+        assert.instanceOf(model, User)
+        assert.isFalse(model.$isPersisted)
+      }
 
-        this.before('create', (model) => {
-          assert.instanceOf(model, User)
-          assert.isFalse(model.$isPersisted)
-        })
+      @afterCreate()
+      public static afterCreateHook (model: User) {
+        stack.push('afterCreateHook')
+        assert.instanceOf(model, User)
+        assert.isTrue(model.$isPersisted)
+      }
 
-        this.before('save', (model) => {
-          assert.instanceOf(model, User)
-          assert.isFalse(model.$isPersisted)
-        })
-
-        this.after('create', (model) => {
-          assert.instanceOf(model, User)
-          assert.isTrue(model.$isPersisted)
-        })
-
-        this.after('save', (model) => {
-          assert.instanceOf(model, User)
-          assert.isTrue(model.$isPersisted)
-        })
+      @afterSave()
+      public static afterSaveHook (model: User) {
+        stack.push('afterSaveHook')
+        assert.instanceOf(model, User)
+        assert.isTrue(model.$isPersisted)
       }
     }
 
     const user = new User()
     user.username = 'virk'
     await user.save()
+    assert.deepEqual(stack, [
+      'beforeCreateHook',
+      'beforeSaveHook',
+      'afterCreateHook',
+      'afterSaveHook',
+    ])
   })
 
   test('abort create when before hook raises exception', async (assert) => {
@@ -3146,20 +3171,13 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static boot () {
-        if (this.booted) {
-          return
+      @afterSave()
+      public static afterSaveHook (model: User) {
+        if (model.$trx) {
+          model.$trx.on('commit', () => {
+            assert.isTrue(true)
+          })
         }
-
-        super.boot()
-
-        this.after('save', (model) => {
-          if (model.$trx) {
-            model.$trx.on('commit', () => {
-              assert.isTrue(true)
-            })
-          }
-        })
       }
     }
 
@@ -3186,20 +3204,13 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static boot () {
-        if (this.booted) {
-          return
+      @afterSave()
+      public static afterSaveHook (model: User) {
+        if (model.$trx) {
+          model.$trx.on('rollback', () => {
+            assert.isTrue(true)
+          })
         }
-
-        super.boot()
-
-        this.after('save', (model) => {
-          if (model.$trx) {
-            model.$trx.on('rollback', () => {
-              assert.isTrue(true)
-            })
-          }
-        })
       }
     }
 
@@ -3226,32 +3237,28 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static boot () {
-        if (this.booted) {
-          return
-        }
+      @beforeUpdate()
+      public static beforeUpdateHook (model: User) {
+        assert.instanceOf(model, User)
+        assert.isTrue(model.$isDirty)
+      }
 
-        super.boot()
+      @beforeSave()
+      public static beforeSaveHook (model: User) {
+        assert.instanceOf(model, User)
+        assert.isTrue(model.$isDirty)
+      }
 
-        this.before('update', (model) => {
-          assert.instanceOf(model, User)
-          assert.isTrue(model.$isDirty)
-        })
+      @afterUpdate()
+      public static afterUpdateHook (model: User) {
+        assert.instanceOf(model, User)
+        assert.isFalse(model.$isDirty)
+      }
 
-        this.before('save', (model) => {
-          assert.instanceOf(model, User)
-          assert.isTrue(model.$isDirty)
-        })
-
-        this.after('update', (model) => {
-          assert.instanceOf(model, User)
-          assert.isFalse(model.$isDirty)
-        })
-
-        this.after('save', (model) => {
-          assert.instanceOf(model, User)
-          assert.isFalse(model.$isDirty)
-        })
+      @afterSave()
+      public static afterSaveHook (model: User) {
+        assert.instanceOf(model, User)
+        assert.isFalse(model.$isDirty)
       }
     }
 
@@ -3338,20 +3345,14 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static boot () {
-        if (this.booted) {
-          return
-        }
+      @beforeDelete()
+      public static beforeDeleteHook (model: User) {
+        assert.instanceOf(model, User)
+      }
 
-        super.boot()
-
-        this.before('delete', (model) => {
-          assert.instanceOf(model, User)
-        })
-
-        this.after('delete', (model) => {
-          assert.instanceOf(model, User)
-        })
+      @afterDelete()
+      public static afterDeleteHook (model: User) {
+        assert.instanceOf(model, User)
       }
     }
 
@@ -3420,21 +3421,15 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static boot () {
-        if (this.booted) {
-          return
-        }
+      @beforeFetch()
+      public static beforeFetchHook (query: ModelQueryBuilder) {
+        assert.instanceOf(query, ModelQueryBuilder)
+      }
 
-        super.boot()
-
-        this.before('fetch', (query) => {
-          assert.instanceOf(query, ModelQueryBuilder)
-        })
-
-        this.after('fetch', (users) => {
-          assert.lengthOf(users, 1)
-          assert.equal(users[0].username, 'virk')
-        })
+      @afterFetch()
+      public static afterFetchHook (users: User[]) {
+        assert.lengthOf(users, 1)
+        assert.equal(users[0].username, 'virk')
       }
     }
 
@@ -3455,25 +3450,47 @@ test.group('Base Model | hooks', (group) => {
       @column()
       public email: string
 
-      public static boot () {
-        if (this.booted) {
-          return
-        }
+      @beforeFind()
+      public static beforeFindHook (query: ModelQueryBuilder) {
+        assert.instanceOf(query, ModelQueryBuilder)
+      }
 
-        super.boot()
-
-        this.before('find', (query) => {
-          assert.instanceOf(query, ModelQueryBuilder)
-        })
-
-        this.after('find', (user) => {
-          assert.equal(user.username, 'virk')
-        })
+      @afterFind()
+      public static afterFindHook (user: User) {
+        assert.equal(user.username, 'virk')
       }
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await User.find(1)
+  })
+
+  test('invoke before and after find hooks when .first method is used', async (assert) => {
+    assert.plan(2)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @beforeFind()
+      public static beforeFindHook (query: ModelQueryBuilder) {
+        assert.instanceOf(query, ModelQueryBuilder)
+      }
+
+      @afterFind()
+      public static afterFindHook (user: User) {
+        assert.equal(user.username, 'virk')
+      }
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await User.query().where('id', 1).first()
   })
 })
 
