@@ -68,7 +68,7 @@ export class Schema implements SchemaContract {
       if (typeof (trackedCall) === 'function') {
         await trackedCall(this.db)
       } else {
-        const queries = trackedCall['toSQL']()
+        const queries = trackedCall.toSQL()
         const reporter = new QueryReporter(this.db, { queries, connection: this.db.connectionName }).begin()
         try {
           await trackedCall
