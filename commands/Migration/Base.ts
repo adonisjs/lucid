@@ -67,7 +67,7 @@ export default abstract class MigrationsBase extends BaseCommand {
      * the root dir
      */
     if (rootDir && sourceDir !== rootDir) {
-      console.log(`${this.colors.magenta('Migrations source base dir:')} ${relative(rootDir, sourceDir)}`)
+      console.log(` > ${this.colors.yellow('Migrations source base dir:')} ${relative(rootDir, sourceDir)}`)
     }
 
     /**
@@ -76,7 +76,8 @@ export default abstract class MigrationsBase extends BaseCommand {
      */
     const compiledAt = DateTime.fromISO(this.application.rcFile.raw.lastCompiledAt)
     if (compiledAt.isValid) {
-      console.log(`${this.colors.magenta('Last compiled at:')} ${compiledAt.toLocaleString(DateTime.DATETIME_MED)}`)
+      const formattedData = compiledAt.toLocaleString(DateTime.DATETIME_MED)
+      console.log(` > ${this.colors.yellow('Last compiled at:')} ${formattedData}`)
     }
     console.log('')
   }
