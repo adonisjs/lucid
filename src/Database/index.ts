@@ -229,8 +229,8 @@ export class Database implements DatabaseContract {
    * Returns a transaction instance on the default
    * connection
    */
-  public transaction () {
-    return this.connection().transaction()
+  public transaction (callback?: (trx: TransactionClientContract) => Promise<any>) {
+    return this.connection().transaction(callback)
   }
 
   /**
