@@ -3093,6 +3093,7 @@ test.group('Model | ManyToMany | sync', (group) => {
 
     assert.equal(totalUsers[0].total, 1)
     assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 2)
 
     assert.equal(skillUsers[0].id, 1)
     assert.equal(skillUsers[0].user_id, user.id)
@@ -3100,6 +3101,67 @@ test.group('Model | ManyToMany | sync', (group) => {
 
     assert.equal(skillUsers[1].id, 3)
     assert.equal(skillUsers[1].user_id, 2)
+    assert.equal(skillUsers[1].skill_id, 1)
+  })
+
+  test('keep duplicates of the id under sync', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await db.insertQuery().table('skill_user').multiInsert([
+      {
+        user_id: user.id,
+        skill_id: 1,
+        proficiency: 'Beginner',
+      },
+      {
+        user_id: user.id,
+        skill_id: 2,
+        proficiency: 'Master',
+      },
+      {
+        user_id: user.id,
+        skill_id: 1,
+        proficiency: 'Master',
+      },
+    ])
+
+    await user.related('skills').sync([1])
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 2)
+
+    assert.equal(skillUsers[0].id, 1)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, 1)
+
+    assert.equal(skillUsers[1].id, 3)
+    assert.equal(skillUsers[1].user_id, user.id)
     assert.equal(skillUsers[1].skill_id, 1)
   })
 
@@ -3157,6 +3219,7 @@ test.group('Model | ManyToMany | sync', (group) => {
 
     assert.equal(totalUsers[0].total, 1)
     assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 2)
 
     assert.equal(skillUsers[0].id, 1)
     assert.equal(skillUsers[0].user_id, user.id)
@@ -3166,6 +3229,7 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[1].id, 3)
     assert.equal(skillUsers[1].user_id, 2)
     assert.equal(skillUsers[1].skill_id, 1)
+    assert.equal(skillUsers[1].proficiency, 'Master')
   })
 
   test('do not update pivot row when no extra properties are defined', async (assert) => {
@@ -3218,6 +3282,7 @@ test.group('Model | ManyToMany | sync', (group) => {
 
     assert.equal(totalUsers[0].total, 1)
     assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 2)
 
     assert.equal(skillUsers[0].id, 1)
     assert.equal(skillUsers[0].user_id, user.id)
@@ -3227,6 +3292,7 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[1].id, 3)
     assert.equal(skillUsers[1].user_id, 2)
     assert.equal(skillUsers[1].skill_id, 1)
+    assert.equal(skillUsers[1].proficiency, 'Master')
   })
 
   test('do not remove rows when detach = false', async (assert) => {
@@ -3272,6 +3338,74 @@ test.group('Model | ManyToMany | sync', (group) => {
     ])
 
     await user.related('skills').sync([1], false)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalSkills[0].total, 0)
+    assert.lengthOf(skillUsers, 3)
+
+    assert.equal(skillUsers[0].id, 1)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, 1)
+    assert.equal(skillUsers[0].proficiency, 'Beginner')
+
+    assert.equal(skillUsers[1].id, 2)
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, 2)
+    assert.equal(skillUsers[1].proficiency, 'Master')
+
+    assert.equal(skillUsers[2].id, 3)
+    assert.equal(skillUsers[2].user_id, 2)
+    assert.equal(skillUsers[2].skill_id, 1)
+    assert.equal(skillUsers[2].proficiency, 'Master')
+  })
+
+  test('do not remove rows when nothing has changed', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await db.insertQuery().table('skill_user').multiInsert([
+      {
+        user_id: user.id,
+        skill_id: 1,
+        proficiency: 'Beginner',
+      },
+      {
+        user_id: user.id,
+        skill_id: 2,
+        proficiency: 'Master',
+      },
+      {
+        user_id: 2,
+        skill_id: 1,
+        proficiency: 'Master',
+      },
+    ])
+
+    await user.related('skills').sync([1, 2])
 
     const totalUsers = await db.query().from('users').count('*', 'total')
     const totalSkills = await db.query().from('skills').count('*', 'total')

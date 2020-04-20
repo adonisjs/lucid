@@ -97,7 +97,7 @@ export function unique (value: any[]) {
 export function syncDiff (original: ModelObject, incoming: ModelObject) {
   const diff = Object
     .keys(incoming)
-    .reduce<{ added: ModelObject, updated: ModelObject, removed: ModelObject }>((
+    .reduce<{ added: ModelObject, updated: ModelObject }>((
       result,
       incomingRowId,
     ) => {
@@ -119,17 +119,7 @@ export function syncDiff (original: ModelObject, incoming: ModelObject) {
       }
 
       return result
-    }, { added: {}, updated: {}, removed: {} })
-
-  /**
-   * Deleted rows
-   */
-  diff.removed = Object.keys(original).reduce((result, originalRowId) => {
-    if (!incoming[originalRowId]) {
-      result[originalRowId] = {}
-    }
-    return result
-  }, {})
+    }, { added: {}, updated: {} })
 
   return diff
 }

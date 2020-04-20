@@ -155,7 +155,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
    * Create and persist an instance of related model. Also makes the pivot table
    * entry to create the relationship
    */
-  public async create (values: ModelObject, checkExisting?: boolean): Promise<LucidRow> {
+  public async create (values: ModelObject, checkExisting: boolean = true): Promise<LucidRow> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
@@ -183,7 +183,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
    * Create and persist multiple of instances of related model. Also makes
    * the pivot table entries to create the relationship.
    */
-  public async createMany (values: ModelObject[], checkExisting?: boolean): Promise<LucidRow[]> {
+  public async createMany (values: ModelObject[], checkExisting: boolean = true): Promise<LucidRow[]> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
@@ -294,40 +294,31 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
         return result
       }, {}) : ids
 
-      /**
-       * We must scope the select query to related foreign key when ids
-       * is an array and not on object. Otherwise we select *.
-       */
       const query = this.pivotQuery().useTransaction(transaction)
 
       /**
        * We must scope the select query to related foreign key when ids
-       * is an array and not on object. This will help in performance
+       * is an array and not an object. This will help in performance
        * when their are indexes defined on this key
        */
       if (!hasAttributes) {
         query.select(this.relation.pivotRelatedForeignKey)
       }
 
-      /**
-       * Scope query to passed ids, when don't want to detach the missing one's
-       * in the current payload.
-       */
       const pivotRelatedForeignKeys = Object.keys(pivotRows)
-      if (!this.detach && pivotRelatedForeignKeys.length) {
-        query.whereIn(this.relation.pivotRelatedForeignKey, pivotRelatedForeignKeys)
-      }
 
       /**
        * Fetch existing pivot rows for the relationship
        */
-      const existingPivotRows = await query.exec()
+      const existingPivotRows = await query
+        .whereIn(this.relation.pivotRelatedForeignKey, pivotRelatedForeignKeys)
+        .exec()
 
       /**
        * Find a diff of rows being removed, added or updated in comparison
        * to the existing pivot rows.
        */
-      const { added, removed, updated } = syncDiff(existingPivotRows.reduce((result, row) => {
+      const { added, updated } = syncDiff(existingPivotRows.reduce((result, row) => {
         result[row[this.relation.pivotRelatedForeignKey]] = row
         return result
       }, {}), pivotRows)
@@ -361,9 +352,13 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
       }
 
       /**
-       * Detach the removed one's
+       * Detach everything except the synced ids
        */
-      await this.detach(Object.keys(removed), transaction)
+      await this
+        .pivotQuery()
+        .useTransaction(transaction)
+        .whereNotInPivot(this.relation.pivotRelatedForeignKey, pivotRelatedForeignKeys)
+        .del()
     })
   }
 }

@@ -33,7 +33,6 @@ test.group('Utils | syncDiff', () => {
     assert.deepEqual(diff, {
       added: { 2: {}, 3: {} },
       updated: {},
-      removed: {},
     })
   })
 
@@ -61,7 +60,6 @@ test.group('Utils | syncDiff', () => {
       updated: {
         1: { score: 4 },
       },
-      removed: {},
     })
   })
 
@@ -94,43 +92,6 @@ test.group('Utils | syncDiff', () => {
         3: { score: 4 },
       },
       updated: {},
-      removed: {},
-    })
-  })
-
-  test('return rows to be removed', (assert) => {
-    const dbRows = {
-      1: {
-        id: '1',
-        user_id: '1',
-        skill_id: '1',
-        score: 1,
-      },
-      2: {
-        id: '2',
-        user_id: '1',
-        skill_id: '2',
-        score: 1,
-      },
-    }
-
-    const idsToSync = {
-      1: {
-        score: 1,
-      },
-      3: {
-        score: 4,
-      },
-    }
-
-    const diff = syncDiff(dbRows, idsToSync)
-    assert.deepEqual(diff, {
-      added: {
-        3: { score: 4 },
-      },
-      updated: {
-      },
-      removed: { 2: {} },
     })
   })
 })
