@@ -712,6 +712,38 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(user.$attributes, { username: 'virk', fullName: 'H virk' })
     assert.deepEqual(user.$original, { username: 'virk', fullName: 'H virk' })
   })
+
+  test('send values mutated by the hooks to the adapter', async (assert) => {
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column({ columnName: 'full_name' })
+      public fullName: string
+
+      @beforeUpdate()
+      public static touchValues (model: User) {
+        model.fullName = 'Foo'
+      }
+    }
+
+    User.$adapter = adapter
+    adapter.on('update', (_, attributes) => {
+      assert.deepEqual(attributes, { full_name: 'Foo' })
+    })
+
+    const user = new User()
+    user.$isPersisted = true
+    await user.save()
+
+    assert.deepEqual(user.$attributes, { fullName: 'Foo' })
+    assert.deepEqual(user.$original, { fullName: 'Foo' })
+  })
 })
 
 test.group('Base Model | create from adapter results', (group) => {
@@ -3772,32 +3804,16 @@ test.group('Base Model | date', (group) => {
 
     const user = new User()
     User.$adapter = adapter
-    adapter.on('insert', (model: User) => {
+    adapter.on('update', (model: User) => {
       assert.notStrictEqual(model.updatedAt, localTime)
     })
 
     const localTime = DateTime.local()
     user.username = 'virk'
+    await user.save()
+
     user.updatedAt = localTime
     await user.save()
-  })
-
-  test('only register one hook, regardless of date columns a model has', async (assert) => {
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public username: string
-
-      @column.date()
-      public dob: DateTime
-
-      @column.date()
-      public createdAt: DateTime
-    }
-
-    assert.equal(User.$hooks['hooks'].before.get('save').size, 1)
   })
 
   test('format date instance to string before sending to the adapter', async (assert) => {
@@ -4233,24 +4249,6 @@ test.group('Base Model | datetime', (group) => {
     }
   })
 
-  test('only register one hook, regardless of date columns a model has', async (assert) => {
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public username: string
-
-      @column.date()
-      public dob: DateTime
-
-      @column.dateTime()
-      public createdAt: DateTime
-    }
-
-    assert.equal(User.$hooks['hooks'].before.get('save').size, 1)
-  })
-
   test('allow overriding prepare method', async (assert) => {
     assert.plan(1)
     const adapter = new FakeAdapter()
@@ -4311,6 +4309,78 @@ test.group('Base Model | datetime', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const user = await User.find(1)
     assert.isNull(user!.updatedAt)
+  })
+
+  test('always set datetime value when autoUpdate is true', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({ autoCreate: true, autoUpdate: true })
+      public joinedAt: DateTime
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const originalDateTimeString = user.joinedAt.toString()
+    user.username = 'nikk'
+    await user.save()
+    assert.notEqual(originalDateTimeString, user.joinedAt.toString())
+  })
+
+  test('do not set autoUpdate field datetime when model is not dirty', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({ autoCreate: true, autoUpdate: true })
+      public joinedAt: DateTime
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const originalDateTimeString = user.joinedAt.toString()
+    await user.save()
+    assert.equal(originalDateTimeString, user.joinedAt.toString())
+  })
+
+  test('set datetime when model is dirty but after invoking a hook', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({ autoCreate: true, autoUpdate: true })
+      public joinedAt: DateTime
+
+      @beforeSave()
+      public static updateUserName (model: User) {
+        if (!model.$isPersisted) {
+          return
+        }
+        model.username = 'nikk'
+      }
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const originalDateTimeString = user.joinedAt.toString()
+    await user.save()
+    assert.notEqual(originalDateTimeString, user.joinedAt.toString())
   })
 })
 

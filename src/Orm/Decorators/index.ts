@@ -27,7 +27,8 @@ import {
   HasManyThroughDecorator,
 } from '@ioc:Adonis/Lucid/Relations'
 
-import { dateColumn, dateTimeColumn } from './date'
+import { dateColumn } from './date'
+import { dateTimeColumn } from './datetime'
 
 /**
  * Define property on a model as a column. The decorator needs a
@@ -125,6 +126,7 @@ export const hasManyThrough: HasManyThroughDecorator = ([relatedModel, throughMo
 export const beforeSave: HooksDecorator = () => {
   return function decorateAsHook (target, property) {
     target.boot()
+    console.log('adding hook')
     target.before('save', target[property].bind(target))
   }
 }

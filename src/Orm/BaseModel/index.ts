@@ -9,6 +9,7 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
+import { DateTime } from 'luxon'
 import { IocContract } from '@adonisjs/fold'
 import { Exception } from '@poppinss/utils'
 import { Hooks } from '@poppinss/hooks'
@@ -52,6 +53,10 @@ import { HasManyThrough } from '../Relations/HasManyThrough'
 import { ensureRelation, isObject, ensureValue, managedTransaction } from '../../utils'
 
 const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
+const DATE_TIME_TYPES = {
+  date: 'date',
+  datetime: 'datetime',
+}
 
 function StaticImplements<T> () {
   return (_t: T) => {}
@@ -757,6 +762,58 @@ export class BaseModel implements LucidRow {
   }
 
   /**
+   * Invoked when performing the insert call. The method initiates
+   * all `datetime` columns, if there are not initiated already
+   * and `autoCreate` or `autoUpdate` flags are turned on.
+   */
+  protected initiateAutoCreateColumns () {
+    const model = this.constructor as LucidModel
+
+    model.$columnsDefinitions.forEach((column, attributeName) => {
+      const columnType = column.meta?.type
+
+      /**
+       * Return early when not dealing with date time columns
+       */
+      if (!columnType || !DATE_TIME_TYPES[columnType]) {
+        return
+      }
+
+      /**
+       * Set the value when its missing and `autoCreate` or `autoUpdate`
+       * flags are defined.
+       */
+      const attributeValue = this[attributeName]
+      if (!attributeValue && (column.meta.autoCreate || column.meta.autoUpdate)) {
+        this[attributeName] = DateTime.local()
+        return
+      }
+    })
+  }
+
+  /**
+   * Invoked when performing the update call. The method initiates
+   * all `datetime` columns, if there have `autoUpdate` flag
+   * turned on.
+   */
+  protected initiateAutoUpdateColumns () {
+    const model = this.constructor as LucidModel
+
+    model.$columnsDefinitions.forEach((column, attributeName) => {
+      const columnType = column.meta?.type
+
+      /**
+       * Return early when not dealing with date time columns
+       */
+      if (!columnType || !DATE_TIME_TYPES[columnType] || !column.meta.autoUpdate) {
+        return
+      }
+
+      this[attributeName] = DateTime.local()
+    })
+  }
+
+  /**
    * Preparing the object to be sent to the adapter. We need
    * to create the object with the property names to be
    * used by the adapter.
@@ -1316,6 +1373,7 @@ export class BaseModel implements LucidRow {
       await Model.$hooks.exec('before', 'create', this)
       await Model.$hooks.exec('before', 'save', this)
 
+      this.initiateAutoCreateColumns()
       await Model.$adapter.insert(this, this.prepareForAdapter(this.$attributes))
 
       this.$hydrateOriginals()
@@ -1326,6 +1384,14 @@ export class BaseModel implements LucidRow {
       return
     }
 
+    /**
+     * Call hooks before hand, so that they have the chance
+     * to make mutations that produces one or more `$dirty`
+     * fields.
+     */
+    await Model.$hooks.exec('before', 'update', this)
+    await Model.$hooks.exec('before', 'save', this)
+
     const dirty = this.$dirty
 
     /**
@@ -1335,12 +1401,10 @@ export class BaseModel implements LucidRow {
       return
     }
 
-    await Model.$hooks.exec('before', 'update', this)
-    await Model.$hooks.exec('before', 'save', this)
-
     /**
      * Perform update
      */
+    this.initiateAutoUpdateColumns()
     await Model.$adapter.update(this, this.prepareForAdapter(dirty))
     this.$hydrateOriginals()
     this.$isPersisted = true
