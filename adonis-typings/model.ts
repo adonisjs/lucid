@@ -703,7 +703,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     createMany<T extends LucidModel> (
       this: T,
-      values: Partial<ModelAttributes<InstanceType<T>>>,
+      values: Partial<ModelAttributes<InstanceType<T>>>[],
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>[]>
 
