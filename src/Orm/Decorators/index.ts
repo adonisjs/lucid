@@ -126,7 +126,6 @@ export const hasManyThrough: HasManyThroughDecorator = ([relatedModel, throughMo
 export const beforeSave: HooksDecorator = () => {
   return function decorateAsHook (target, property) {
     target.boot()
-    console.log('adding hook')
     target.before('save', target[property].bind(target))
   }
 }
