@@ -20,6 +20,7 @@ import {
   getConfig,
   getUsers,
   getLogger,
+  getEmitter,
   resetTables,
   getQueryClient,
   getQueryBuilder,
@@ -54,7 +55,7 @@ if (process.env.DB !== 'sqlite') {
         return this.connection.client
       }
 
-      await new QueryRunner(client, null).run(db.select('*').from('users').knexQuery)
+      await new QueryRunner(client, false, null).run(db.select('*').from('users').knexQuery)
       await connection.disconnect()
     })
 
@@ -71,7 +72,7 @@ if (process.env.DB !== 'sqlite') {
         return this.connection.client
       }
 
-      await new QueryRunner(client, null).run(db.from('users').update('username', 'virk').knexQuery)
+      await new QueryRunner(client, false, null).run(db.from('users').update('username', 'virk').knexQuery)
       await connection.disconnect()
     })
 
@@ -88,7 +89,7 @@ if (process.env.DB !== 'sqlite') {
         return this.connection.client
       }
 
-      await new QueryRunner(client, null).run(db.from('users').del().knexQuery)
+      await new QueryRunner(client, false, null).run(db.from('users').del().knexQuery)
       await connection.disconnect()
     })
 
@@ -105,7 +106,7 @@ if (process.env.DB !== 'sqlite') {
         return this.connection.client
       }
 
-      await new QueryRunner(client, null).run(db.table('users').insert({ username: 'virk' }).knexQuery)
+      await new QueryRunner(client, false, null).run(db.table('users').insert({ username: 'virk' }).knexQuery)
       await connection.disconnect()
     })
 
@@ -121,7 +122,7 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const trx = await client.transaction()
-      await new QueryRunner(client, null).run(db.select('*').from('users').useTransaction(trx).knexQuery)
+      await new QueryRunner(client, false, null).run(db.select('*').from('users').useTransaction(trx).knexQuery)
       await trx.commit()
       await connection.disconnect()
     })
@@ -139,7 +140,7 @@ if (process.env.DB !== 'sqlite') {
 
       const trx = await client.transaction()
 
-      await new QueryRunner(client, null)
+      await new QueryRunner(client, false, null)
         .run(db.table('users').useTransaction(trx).insert({ username: 'virk' }).knexQuery)
 
       await trx.rollback()
@@ -157,7 +158,7 @@ if (process.env.DB !== 'sqlite') {
       }
 
       const trx = await client.transaction()
-      await new QueryRunner(client, null).run(trx.query().select('*').from('users').knexQuery)
+      await new QueryRunner(client, false, null).run(trx.query().select('*').from('users').knexQuery)
       await trx.commit()
       await connection.disconnect()
     })
@@ -173,7 +174,7 @@ if (process.env.DB !== 'sqlite') {
         throw new Error('Never expected to reach here')
       }
 
-      await new QueryRunner(trx, null)
+      await new QueryRunner(trx, false, null)
         .run(trx.insertQuery().table('users').insert({ username: 'virk' }).knexQuery)
       await trx.commit()
     })
@@ -8249,6 +8250,78 @@ test.group('Query Builder | clone', (group) => {
 
     const clonedQuery = db.from('users').groupBy('id').clone()
     assert.isTrue(clonedQuery.hasGroupBy)
+    await connection.disconnect()
+  })
+})
+
+test.group('Query Builder | event', (group) => {
+  group.before(async () => {
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+  })
+
+  group.afterEach(async () => {
+    await resetTables()
+  })
+
+  test('emit db:query event when debug globally enabled', async (assert, done) => {
+    assert.plan(4)
+
+    const config = Object.assign({}, getConfig(), { debug: true })
+    const emitter = getEmitter()
+
+    const connection = new Connection('primary', config, getLogger())
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, 'dual', emitter))
+    emitter.on('db:query', (query) => {
+      assert.property(query, 'sql')
+      assert.property(query, 'inTransaction')
+      assert.property(query, 'duration')
+      assert.equal(query.connection, 'primary')
+      done()
+    })
+
+    await db.select('*').from('users')
+    await connection.disconnect()
+  })
+
+  test('do not emit db:query event when debug not enabled', async () => {
+    const config = Object.assign({}, getConfig(), { debug: false })
+    const emitter = getEmitter()
+
+    const connection = new Connection('primary', config, getLogger())
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, 'dual', emitter))
+    emitter.on('db:query', () => {
+      throw new Error('Never expected to reach here')
+    })
+
+    await db.select('*').from('users')
+    await connection.disconnect()
+  })
+
+  test('emit db:query event when enabled on a single query', async (assert, done) => {
+    const config = Object.assign({}, getConfig(), { debug: false })
+    const emitter = getEmitter()
+
+    const connection = new Connection('primary', config, getLogger())
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, 'dual', emitter))
+    emitter.on('db:query', (query) => {
+      assert.property(query, 'sql')
+      assert.property(query, 'inTransaction')
+      assert.property(query, 'duration')
+      assert.equal(query.connection, 'primary')
+      done()
+    })
+
+    await db.select('*').from('users').debug(true)
     await connection.disconnect()
   })
 })

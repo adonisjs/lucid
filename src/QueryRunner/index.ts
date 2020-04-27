@@ -19,10 +19,11 @@ import { QueryReporter } from '../QueryReporter'
  * Also it will emit the query data and profile the queries as well.
  */
 export class QueryRunner {
-  private reporter = new QueryReporter(this.client, this.logData)
+  private reporter = new QueryReporter(this.client, this.debug, this.logData)
 
   constructor (
     private client: QueryClientContract | TransactionClientContract,
+    private debug: boolean,
     private logData: any,
   ) {
   }

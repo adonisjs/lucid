@@ -8,14 +8,19 @@
 */
 
 import test from 'japa'
-import { setup, cleanup, getDb, resetTables, getBaseSchema } from '../../test-helpers'
+import { setup, cleanup, getDb, resetTables, getBaseSchema, getEmitter } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
+let emitter: ReturnType<typeof getEmitter>
 
 test.group('Schema', (group) => {
   group.before(async () => {
-    db = getDb()
     await setup()
+  })
+
+  group.beforeEach(() => {
+    emitter = getEmitter()
+    db = getDb(emitter)
   })
 
   group.after(async () => {
@@ -228,5 +233,118 @@ test.group('Schema', (group) => {
     }).toQuery()
 
     assert.deepEqual(queries, [knexSchema])
+  })
+
+  test('emit db:query event when schema instructions are executed', async (assert) => {
+    assert.plan(10)
+
+    class UsersSchema extends getBaseSchema() {
+      public up () {
+        this.schema.createTable('schema_users', (table) => {
+          table.increments('id')
+          table.string('username')
+        })
+
+        this.schema.createTable('schema_accounts', (table) => {
+          table.increments('id')
+          table.integer('user_id').unsigned().references('schema_users.id')
+        })
+      }
+    }
+
+    const trx = await db.transaction()
+    trx.debug = true
+    const schema = new UsersSchema(trx, 'users.ts', false)
+
+    emitter.on('db:query', (query) => {
+      assert.property(query, 'sql')
+      assert.isTrue(query.inTransaction)
+      assert.equal(query.connection, 'primary')
+      assert.property(query, 'duration')
+      assert.equal(query.method, 'create')
+    })
+
+    try {
+      await schema.execUp()
+      await trx.commit()
+    } catch (error) {
+      await trx.rollback()
+    }
+
+    await db.connection().schema.dropTable('schema_accounts')
+    await db.connection().schema.dropTable('schema_users')
+  })
+
+  test('do not emit db:query debugging is turned off', async () => {
+    class UsersSchema extends getBaseSchema() {
+      public up () {
+        this.schema.createTable('schema_users', (table) => {
+          table.increments('id')
+          table.string('username')
+        })
+
+        this.schema.createTable('schema_accounts', (table) => {
+          table.increments('id')
+          table.integer('user_id').unsigned().references('schema_users.id')
+        })
+      }
+    }
+
+    const trx = await db.transaction()
+    const schema = new UsersSchema(trx, 'users.ts', false)
+    emitter.on('db:query', () => {
+      throw new Error('Never expected to reach here')
+    })
+
+    try {
+      await schema.execUp()
+      await trx.commit()
+    } catch (error) {
+      await trx.rollback()
+    }
+
+    await db.connection().schema.dropTable('schema_accounts')
+    await db.connection().schema.dropTable('schema_users')
+  })
+
+  test('emit db:query when enabled on the schema', async (assert) => {
+    assert.plan(10)
+
+    class UsersSchema extends getBaseSchema() {
+      public debug = true
+
+      public up () {
+        this.schema.createTable('schema_users', (table) => {
+          table.increments('id')
+          table.string('username')
+        })
+
+        this.schema.createTable('schema_accounts', (table) => {
+          table.increments('id')
+          table.integer('user_id').unsigned().references('schema_users.id')
+        })
+      }
+    }
+
+    const trx = await db.transaction()
+    const schema = new UsersSchema(trx, 'users.ts', false)
+
+    emitter.on('db:query', (query) => {
+      assert.property(query, 'sql')
+      assert.isTrue(query.inTransaction)
+      assert.equal(query.connection, 'primary')
+      assert.property(query, 'duration')
+      assert.equal(query.method, 'create')
+    })
+
+    try {
+      await schema.execUp()
+      await trx.commit()
+    } catch (error) {
+      await trx.rollback()
+    }
+
+    await db.connection().schema.dropTable('schema_accounts')
+    await db.connection().schema.dropTable('schema_users')
   })
 })

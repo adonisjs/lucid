@@ -16,13 +16,13 @@ import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Luci
  */
 export class QueryReporter {
   private eventName = 'db:query'
-  private errorEventName = 'db:query:error'
   private startTime: [number, number] | undefined
   private profilerAction: ProfilerActionContract | undefined
   private isReady = false
 
   constructor (
     private client: QueryClientContract | TransactionClientContract,
+    private debug: boolean,
     private data: any,
   ) {
   }
@@ -31,7 +31,7 @@ export class QueryReporter {
    * Initiate the hrtime when there are one or more query listeners
    */
   private initStartTime () {
-    if (!this.client.emitter.hasListeners(this.eventName)) {
+    if (!this.client.emitter.hasListeners(this.eventName) || !this.debug) {
       return
     }
     this.startTime = process.hrtime()
@@ -66,10 +66,8 @@ export class QueryReporter {
       return
     }
 
-    const eventData = { duration: process.hrtime(this.startTime), ...this.data }
-    error
-      ? this.client.emitter.emit(this.errorEventName, [error, eventData])
-      : this.client.emitter.emit(this.eventName, eventData)
+    const eventData = { duration: process.hrtime(this.startTime), ...this.data, error }
+    this.client.emitter.emit(this.eventName, eventData)
   }
 
   /**

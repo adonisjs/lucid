@@ -58,6 +58,11 @@ export class QueryClient implements QueryClientContract {
    */
   public readonly connectionName = this.connection.name
 
+  /**
+   * Is debugging enabled
+   */
+  public debug = !!this.connection.config.debug
+
   constructor (
     public readonly mode: 'dual' | 'write' | 'read',
     private connection: ConnectionContract,
@@ -131,7 +136,7 @@ export class QueryClient implements QueryClientContract {
    */
   public async transaction (callback?: (trx: TransactionClientContract) => Promise<any>): Promise<any> {
     const trx = await this.getWriteClient().transaction()
-    const transaction = new TransactionClient(trx, this.dialect, this.connectionName, this.emitter)
+    const transaction = new TransactionClient(trx, this.dialect, this.connectionName, this.debug, this.emitter)
 
     /**
      * Always make sure to pass the profiler and emitter down to the transaction

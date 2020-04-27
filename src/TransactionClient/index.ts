@@ -47,6 +47,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
     public knexClient: knex.Transaction,
     public dialect: DialectContract,
     public connectionName: string,
+    public debug: boolean,
     public emitter: EmitterContract,
   ) {
     super()
@@ -173,7 +174,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
    */
   public async transaction (callback?: (trx: TransactionClientContract) => Promise<any>): Promise<any> {
     const trx = await this.knexClient.transaction()
-    const transaction = new TransactionClient(trx, this.dialect, this.connectionName, this.emitter)
+    const transaction = new TransactionClient(trx, this.dialect, this.connectionName, this.debug, this.emitter)
 
     /**
      * Always make sure to pass the profiler down the chain

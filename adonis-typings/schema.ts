@@ -31,6 +31,7 @@ declare module '@ioc:Adonis/Lucid/Schema' {
   export interface SchemaContract {
     readonly file: string
     dryRun: boolean
+    debug: boolean
     db: QueryClientContract
     schema: SchemaBuilder
     now (precision?: number): Raw

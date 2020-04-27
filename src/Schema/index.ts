@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { SchemaBuilder } from 'knex'
+import { SchemaBuilder, Sql } from 'knex'
 import { Exception } from '@poppinss/utils'
 import { QueryReporter } from '../QueryReporter'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
@@ -45,6 +45,12 @@ export class Schema implements SchemaContract {
     return schema
   }
 
+  /**
+   * Control whether to debug the query or not. The initial
+   * value is inherited from the query client
+   */
+  public debug: boolean = this.db.debug
+
   constructor (
     public db: QueryClientContract,
     public file: string,
@@ -61,6 +67,45 @@ export class Schema implements SchemaContract {
   }
 
   /**
+   * Returns the DDL method for the SQL query
+   */
+  private getDDLMethod (sql: string) {
+    if (sql.startsWith('create')) {
+      return 'create'
+    }
+
+    if (sql.startsWith('alter')) {
+      return 'alter'
+    }
+
+    if (sql.startsWith('drop')) {
+      return 'drop'
+    }
+
+    return 'unknown'
+  }
+
+  /**
+   * Returns reporter instance
+   */
+  private getReporter () {
+    return new QueryReporter(this.db, this.debug, {})
+  }
+
+  /**
+   * Returns the log data
+   */
+  private getQueryData (sql: Sql) {
+    return {
+      connection: this.db.connectionName,
+      inTransaction: this.db.isTransaction,
+      method: this.getDDLMethod(sql.sql),
+      ddl: true,
+      ...sql,
+    }
+  }
+
+  /**
    * Executes schema queries and defer calls in sequence
    */
   private async executeQueries () {
@@ -68,9 +113,10 @@ export class Schema implements SchemaContract {
       if (typeof (trackedCall) === 'function') {
         await trackedCall(this.db)
       } else {
-        const queries = trackedCall.toSQL()
-        const reporter = new QueryReporter(this.db, { queries, connection: this.db.connectionName }).begin()
+        const reporter = this.getReporter()
+
         try {
+          trackedCall['once']('query', (sql) => reporter.begin(this.getQueryData(sql)))
           await trackedCall
           reporter.end()
         } catch (error) {

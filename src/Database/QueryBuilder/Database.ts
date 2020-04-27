@@ -43,6 +43,24 @@ const queryCallback: DBQueryCallback = (userFn, keysResolver) => {
  * updating and deleting records.
  */
 export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuilderContract {
+  /**
+   * Custom data someone want to send to the profiler and the
+   * query event
+   */
+  private customReporterData: any
+
+  /**
+   * Control whether to debug the query or not. The initial
+   * value is inherited from the query client
+   */
+  private debugQueries: boolean = this.client.debug
+
+  /**
+   * Required by macroable
+   */
+  protected static macros = {}
+  protected static getters = {}
+
   constructor (
     builder: knex.QueryBuilder,
     public client: QueryClientContract,
@@ -50,13 +68,6 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   ) {
     super(builder, queryCallback, keysResolver)
   }
-
-  /**
-   * Required by macroable
-   */
-  protected static macros = {}
-  protected static getters = {}
-  private customReporterData: any
 
   /**
    * Ensures that we are not executing `update` or `del` when using read only
@@ -172,7 +183,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Turn on/off debugging for this query
    */
   public debug (debug: boolean): this {
-    this.knexQuery.debug(debug)
+    this.debugQueries = debug
     return this
   }
 
@@ -203,7 +214,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Executes the query
    */
   public async exec (): Promise<any> {
-    return new QueryRunner(this.client, this.getQueryData()).run(this.knexQuery)
+    return new QueryRunner(this.client, this.debugQueries, this.getQueryData()).run(this.knexQuery)
   }
 
   /**

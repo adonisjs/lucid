@@ -269,9 +269,10 @@ export async function resetTables () {
  */
 export function getQueryClient (
   connection: ConnectionContract,
-  mode?: 'read' | 'write',
+  mode?: 'read' | 'write' | 'dual',
+  emitter?: Emitter,
 ): QueryClientContract {
-  return new QueryClient(mode || 'dual', connection, getEmitter()) as QueryClientContract
+  return new QueryClient(mode || 'dual', connection, emitter || getEmitter()) as QueryClientContract
 }
 
 /**
@@ -334,7 +335,7 @@ export function getProfiler (enabled: boolean = false) {
 /**
  * Returns the database instance
  */
-export function getDb () {
+export function getDb (emitter?: Emitter) {
   const config = {
     connection: 'primary',
     connections: {
@@ -343,8 +344,7 @@ export function getDb () {
     },
   }
 
-  const emitter = getEmitter()
-  return new Database(config, getLogger(), getProfiler(), emitter) as DatabaseContract
+  return new Database(config, getLogger(), getProfiler(), emitter || getEmitter()) as DatabaseContract
 }
 
 /**

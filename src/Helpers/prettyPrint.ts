@@ -32,25 +32,6 @@ function colorizeQuery (color: typeof kleur, method: string, sql: string) {
 }
 
 /**
- * Extracts the method from the DDL sql query
- */
-export function extractDDLMethod (sql: string) {
-  if (sql.startsWith('create')) {
-    return 'create'
-  }
-
-  if (sql.startsWith('alter')) {
-    return 'alter'
-  }
-
-  if (sql.startsWith('drop')) {
-    return 'drop'
-  }
-
-  return 'unknown'
-}
-
-/**
  * Pretty print queries
 */
 export function prettyPrint (queryLog: any) {
@@ -63,26 +44,17 @@ export function prettyPrint (queryLog: any) {
   let output: string = color.gray(`"${queryLog.connection}" `)
 
   /**
-   * DDL queries
-   */
-  if (Array.isArray(queryLog.queries)) {
-    queryLog.queries.forEach(({ sql, bindings }) => {
-      output += 'DDL '
-      if (queryLog.duration) {
-        output += `(${prettyHrtime(queryLog.duration)}) `
-      }
-      output += colorizeQuery(color, extractDDLMethod(sql), sql)
-      output += color.gray(` ${inspect(bindings)}`)
-    })
-    console.log(output)
-    return
-  }
-
-  /**
    * Concatenate the model
    */
   if (queryLog.model) {
     output += `${queryLog.model} `
+  }
+
+  /**
+   * Concatenate DDL prefix
+   */
+  if (queryLog.ddl) {
+    output += 'DDL '
   }
 
   /**
