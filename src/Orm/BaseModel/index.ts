@@ -825,7 +825,8 @@ export class BaseModel implements LucidRow {
       const columnType = column.meta?.type
 
       /**
-       * Return early when not dealing with date time columns
+       * Return early when not dealing with date time columns or auto update
+       * is not set to true
        */
       if (!columnType || !DATE_TIME_TYPES[columnType] || !column.meta.autoUpdate) {
         return
@@ -1367,6 +1368,7 @@ export class BaseModel implements LucidRow {
    * Preloads one or more relationships for the current model
    */
   public async preload (relationName: any, callback?: any) {
+    this.ensureIsntDeleted()
     const constructor = this.constructor as LucidModel
     const preloader = new Preloader(constructor)
 
