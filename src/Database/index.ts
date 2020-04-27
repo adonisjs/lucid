@@ -16,6 +16,7 @@ import { ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 import {
   DatabaseConfig,
+  ConnectionNode,
   DatabaseContract,
   DatabaseClientOptions,
   TransactionClientContract,
@@ -60,6 +61,8 @@ export class Database implements DatabaseContract {
    * A store of global transactions
    */
   public connectionGlobalTransactions: Map<string, TransactionClientContract> = new Map()
+  public hasHealthChecksEnabled = false
+  public prettyPrint = prettyPrint
 
   constructor (
     private config: DatabaseConfig,
@@ -69,9 +72,22 @@ export class Database implements DatabaseContract {
   ) {
     this.manager = new ConnectionManager(this.logger, this.emitter)
     this.registerConnections()
+    this.findIfHealthChecksAreEnabled()
   }
 
-  public prettyPrint = prettyPrint
+  /**
+   * Compute whether health check is enabled or not after registering the connections.
+   * There are chances that all pre-registered connections are not using health
+   * checks but a dynamic connection is using it. We don't support that use case
+   * for now, since it complicates things a lot and forces us to register the
+   * health checker on demand.
+   */
+  private findIfHealthChecksAreEnabled () {
+    this.hasHealthChecksEnabled = !!Object.keys(this.manager.connections).find((key) => {
+      const connection = this.manager.connections[key] as ConnectionNode
+      return !!connection.config.healthCheck
+    })
+  }
 
   /**
    * Registering all connections with the manager, so that we can fetch

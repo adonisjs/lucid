@@ -77,7 +77,11 @@ export default class DatabaseServiceProvider {
   private registerHealthChecker () {
     this.$container.with(
       ['Adonis/Core/HealthCheck', 'Adonis/Lucid/Database'],
-      (HealthCheck) => HealthCheck.addChecker('lucid', 'Adonis/Lucid/Database'),
+      (HealthCheck, Db: Database) => {
+        if (Db.hasHealthChecksEnabled) {
+          HealthCheck.addChecker('lucid', 'Adonis/Lucid/Database')
+        }
+      },
     )
   }
 
