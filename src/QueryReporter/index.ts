@@ -87,7 +87,7 @@ export class QueryReporter {
    */
   public end (error?: Error) {
     if (!this.isReady) {
-      throw new Error('Cannot end the query reporter, since the begin was never called')
+      return
     }
     this.commitProfilerAction(error)
     this.emitQueryEvent(error)

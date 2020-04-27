@@ -726,6 +726,26 @@ declare module '@ioc:Adonis/Lucid/Model' {
     ): Promise<InstanceType<T>>
 
     /**
+     * Find one using a key-value pair
+     */
+    findBy<T extends LucidModel> (
+      this: T,
+      key: string,
+      value: any,
+      options?: ModelAdapterOptions,
+    ): Promise<null | InstanceType<T>>
+
+    /**
+     * Find one using a key-value pair or fail
+     */
+    findByOrFail<T extends LucidModel> (
+      this: T,
+      key: string,
+      value: any,
+      options?: ModelAdapterOptions,
+    ): Promise<InstanceType<T>>
+
+    /**
      * Same as `query().first()`
      */
     first<T extends LucidModel> (

@@ -471,24 +471,46 @@ export class BaseModel implements LucidRow {
   }
 
   /**
-   * Find model instance using a key/value pair
+   * Find model instance using the primary key
    */
   public static async find (value: any, options?: ModelAdapterOptions) {
     if (value === undefined) {
       throw new Exception('"find" expects a value. Received undefined')
     }
 
-    return this.query(options).where(this.primaryKey, value).first()
+    return this.findBy(this.primaryKey, value, options)
   }
 
   /**
-   * Find model instance using a key/value pair
+   * Find model instance using the primary key
    */
   public static async findOrFail (value: any, options?: ModelAdapterOptions) {
     if (value === undefined) {
       throw new Exception('"findOrFail" expects a value. Received undefined')
     }
-    return this.query(options).where(this.primaryKey, value).firstOrFail()
+
+    return this.findByOrFail(this.primaryKey, value, options)
+  }
+
+  /**
+   * Find model instance using a key/value pair
+   */
+  public static async findBy (key: string, value: any, options?: ModelAdapterOptions) {
+    if (value === undefined) {
+      throw new Exception('"findBy" expects a value. Received undefined')
+    }
+
+    return this.query(options).where(key, value).first()
+  }
+
+  /**
+   * Find model instance using a key/value pair
+   */
+  public static async findByOrFail (key: string, value: any, options?: ModelAdapterOptions) {
+    if (value === undefined) {
+      throw new Exception('"findByOrFail" expects a value. Received undefined')
+    }
+    return this.query(options).where(key, value).firstOrFail()
   }
 
   /**
