@@ -41,7 +41,7 @@
   "homepage": "https://github.com/adonisjs/adonis-lucid#readme",
   "dependencies": {
     "@poppinss/hooks": "^1.0.5",
-    "@poppinss/utils": "^2.2.4",
+    "@poppinss/utils": "^2.2.6",
     "cli-table3": "^0.6.0",
     "kleur": "^3.0.3",
     "knex": "^0.21.0",
@@ -64,7 +64,7 @@
     "@poppinss/dev-utils": "^1.0.6",
     "@types/dotenv": "^8.2.0",
     "@types/luxon": "^1.22.0",
-    "@types/node": "^13.13.0",
+    "@types/node": "^13.13.4",
     "@types/pluralize": "0.0.29",
     "chance": "^1.1.4",
     "commitizen": "^4.0.4",
@@ -81,10 +81,10 @@
     "mssql": "^6.2.0",
     "mysql": "^2.18.1",
     "np": "^5.2.1",
-    "pg": "^8.0.2",
+    "pg": "^8.0.3",
     "reflect-metadata": "^0.1.13",
     "sqlite3": "^4.1.1",
-    "ts-node": "^8.8.2",
+    "ts-node": "^8.9.1",
     "typescript": "^3.8.3"
   },
   "publishConfig": {
