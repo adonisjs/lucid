@@ -292,6 +292,13 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
+   * Alias for [[del]]
+   */
+  public delete (): this {
+    return this.del()
+  }
+
+  /**
    * Turn on/off debugging for this query
    */
   public debug (debug: boolean): this {

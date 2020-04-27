@@ -647,6 +647,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
      * Perform delete operation
      */
     del (): this
+    delete (): this
 
     /**
      * A shorthand to define limit and offset based upon the

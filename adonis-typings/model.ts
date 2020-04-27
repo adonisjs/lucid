@@ -339,6 +339,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Perform delete operation
      */
     del (): ModelQueryBuilderContract<Model, number>
+    delete (): ModelQueryBuilderContract<Model, number>
 
     /**
      * Execute query with pagination
