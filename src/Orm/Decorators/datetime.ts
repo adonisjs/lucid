@@ -104,6 +104,12 @@ export const dateTimeColumn: DateTimeColumnDecorator = (options?) => {
     const normalizedOptions = Object.assign({
       prepare: prepareDateTimeColumn,
       consume: consumeDateTimeColumn,
+      serialize: (value: DateTime) => {
+        if (value instanceof DateTime) {
+          return value.toISO()
+        }
+        return value
+      },
       meta: {},
     }, options)
 

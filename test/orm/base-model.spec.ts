@@ -4382,6 +4382,52 @@ test.group('Base Model | datetime', (group) => {
     await user.save()
     assert.notEqual(originalDateTimeString, user.joinedAt.toString())
   })
+
+  test('convert datetime to toISO during serialize', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime()
+      public joinedAt: DateTime
+    }
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      joined_at: DateTime.local().toFormat(db.connection().dialect.dateTimeFormat),
+    })
+
+    const user = await User.find(1)
+    assert.match(user!.toJSON().joined_at, /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}(\+|\-)\d{2}:\d{2}/)
+  })
+
+  test('do not attempt to serialize, when already a string', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({
+        consume: (value) => typeof (value) === 'string'
+          ? DateTime.fromSQL(value).minus({ day: 1 }).toISODate()
+          : DateTime.fromJSDate(value).minus({ day: 1 }).toISODate(),
+      })
+      public joinedAt: DateTime
+    }
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      joined_at: DateTime.local().toFormat(db.connection().dialect.dateTimeFormat),
+    })
+
+    const user = await User.find(1)
+    assert.equal(user!.toJSON().joined_at, DateTime.local().minus({ day: 1 }).toISODate())
+  })
 })
 
 test.group('Base Model | paginate', (group) => {
