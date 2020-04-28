@@ -11,6 +11,25 @@ import kleur from 'kleur'
 import { inspect } from 'util'
 
 /**
+ * Returns method for the DDL query
+ */
+function getDDLMethod (sql: string) {
+  if (sql.startsWith('create')) {
+    return 'create'
+  }
+
+  if (sql.startsWith('alter')) {
+    return 'alter'
+  }
+
+  if (sql.startsWith('drop')) {
+    return 'drop'
+  }
+
+  return 'unknown'
+}
+
+/**
  * Colorizes the sql query based upon the method
  */
 function colorizeQuery (color: typeof kleur, method: string, sql: string) {
@@ -67,7 +86,8 @@ export function prettyPrint (queryLog: any) {
   /**
    * Colorize query and bindings
    */
-  output += colorizeQuery(color, queryLog.method, queryLog.sql)
+  const method = queryLog.method || queryLog.ddl ? getDDLMethod(queryLog.sql) : queryLog.method
+  output += colorizeQuery(color, method, queryLog.sql)
   output += color.gray(` ${inspect(queryLog.bindings)}`)
 
   /**

@@ -67,25 +67,6 @@ export class Schema implements SchemaContract {
   }
 
   /**
-   * Returns the DDL method for the SQL query
-   */
-  private getDDLMethod (sql: string) {
-    if (sql.startsWith('create')) {
-      return 'create'
-    }
-
-    if (sql.startsWith('alter')) {
-      return 'alter'
-    }
-
-    if (sql.startsWith('drop')) {
-      return 'drop'
-    }
-
-    return 'unknown'
-  }
-
-  /**
    * Returns reporter instance
    */
   private getReporter () {
@@ -99,7 +80,6 @@ export class Schema implements SchemaContract {
     return {
       connection: this.db.connectionName,
       inTransaction: this.db.isTransaction,
-      method: this.getDDLMethod(sql.sql),
       ddl: true,
       ...sql,
     }

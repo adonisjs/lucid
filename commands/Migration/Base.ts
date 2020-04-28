@@ -87,12 +87,16 @@ export default abstract class MigrationsBase extends BaseCommand {
    */
   private prettyPrintSql (file: MigratedFileNode, connectionName: string) {
     console.log(file.migration.name)
-    prettyPrint({
-      connection: connectionName,
-      queries: file.queries.map((sql) => {
-        return { sql, bindings: [] }
-      }),
+    file.queries.map((sql) => {
+      prettyPrint({
+        connection: connectionName,
+        sql: sql,
+        ddl: true,
+        bindings: [],
+      })
+      console.log()
     })
+    console.log()
   }
 
   /**
