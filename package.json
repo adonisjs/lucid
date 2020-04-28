@@ -44,7 +44,7 @@
     "@poppinss/utils": "^2.2.6",
     "cli-table3": "^0.6.0",
     "kleur": "^3.0.3",
-    "knex": "^0.21.0",
+    "knex": "^0.21.1",
     "knex-dynamic-connection": "^1.0.5",
     "luxon": "^1.23.0",
     "macroable": "^4.0.4",
@@ -83,7 +83,7 @@
     "np": "^5.2.1",
     "pg": "^8.0.3",
     "reflect-metadata": "^0.1.13",
-    "sqlite3": "^4.1.1",
+    "sqlite3": "^4.2.0",
     "ts-node": "^8.9.1",
     "typescript": "^3.8.3"
   },
