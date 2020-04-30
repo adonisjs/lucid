@@ -148,3 +148,22 @@ export async function managedTransaction<T> (
     throw error
   }
 }
+
+/**
+ * Returns the sql method for a DDL statement
+ */
+export function getDDLMethod (sql: string) {
+  if (sql.startsWith('create')) {
+    return 'create'
+  }
+
+  if (sql.startsWith('alter')) {
+    return 'alter'
+  }
+
+  if (sql.startsWith('drop')) {
+    return 'drop'
+  }
+
+  return 'unknown'
+}

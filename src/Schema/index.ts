@@ -14,6 +14,7 @@ import { Exception } from '@poppinss/utils'
 import { QueryReporter } from '../QueryReporter'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { SchemaContract, DeferCallback } from '@ioc:Adonis/Lucid/Schema'
+import { getDDLMethod } from '../utils'
 
 /**
  * Exposes the API to define table schema using deferred database
@@ -81,6 +82,7 @@ export class Schema implements SchemaContract {
       connection: this.db.connectionName,
       inTransaction: this.db.isTransaction,
       ddl: true,
+      method: getDDLMethod(sql.sql),
       ...sql,
     }
   }

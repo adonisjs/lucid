@@ -11,8 +11,10 @@ import { relative } from 'path'
 import { DateTime } from 'luxon'
 import prettyHrTime from 'pretty-hrtime'
 import { BaseCommand } from '@adonisjs/ace'
-import { prettyPrint } from '../../src/Helpers/prettyPrint'
 import { MigratedFileNode, MigratorContract } from '@ioc:Adonis/Lucid/Migrator'
+
+import { prettyPrint } from '../../src/Helpers/prettyPrint'
+import { getDDLMethod } from '../../src/utils'
 
 /**
  * Base class to execute migrations and print logs
@@ -92,6 +94,7 @@ export default abstract class MigrationsBase extends BaseCommand {
         connection: connectionName,
         sql: sql,
         ddl: true,
+        method: getDDLMethod(sql),
         bindings: [],
       })
       console.log()
