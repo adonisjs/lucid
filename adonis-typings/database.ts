@@ -330,7 +330,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     ssl?: any,
   }
   export type MysqlConfig = SharedConfigNode & {
-    client: 'mysql',
+    client: 'mysql' | 'mysql2',
     version?: string,
     connection?: SharedConnectionNode & MysqlConnectionNode,
     replicas?: {
@@ -343,17 +343,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
         pool?: MysqlConfig['pool'],
       },
     },
-  }
-
-  /**
-   * `mysql2` config is same as `mysql`. So just refer mysql docs
-   * https://www.npmjs.com/package/mysql#connection-options
-   *
-   * Knex forwards all config options to the driver directly. So feel
-   * free to define them (let us know, in case any options are missing)
-   */
-  export type Mysql2Config = MysqlConfig & {
-    client: 'mysql2',
   }
 
   /**
@@ -470,7 +459,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
     PostgreConfig |
     OracleConfig |
     RedshiftConfig |
-    Mysql2Config |
     MssqlConfig
 
   /**
