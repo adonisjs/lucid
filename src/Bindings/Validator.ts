@@ -10,7 +10,28 @@
 import { Exception } from '@poppinss/utils'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import { DatabaseQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-import { validator as validatorStatic, ValidationRuntimeOptions } from '@ioc:Adonis/Core/Validator'
+import {
+  DbRowCheckOptions,
+  ValidationRuntimeOptions,
+  validator as validatorStatic,
+} from '@ioc:Adonis/Core/Validator'
+
+/**
+ * Shape of constraint after normalization
+ */
+type NormalizedConstraint = {
+  key: string,
+  operator: 'in' | 'eq',
+  value: string | string[],
+}
+
+/**
+ * Normalized validation options
+ */
+type NormalizedOptions = Omit<DbRowCheckOptions, 'constraints' | 'where' | 'whereNot'> & {
+  where: NormalizedConstraint[],
+  whereNot: NormalizedConstraint[],
+}
 
 /**
  * Checks for database rows for `exists` and `unique` rule.
@@ -20,22 +41,64 @@ class DbRowCheck {
   }
 
   /**
-   * Applies user defined constraints on the query builder
+   * Applies user defined where constraints on the query builder
    */
-  private applyConstraints (query: DatabaseQueryBuilderContract, constraints: any[]) {
-    if (constraints.length > 1) {
-      query.where((builder) => {
-        constraints.forEach((constraint) => builder.orWhere(constraint))
-      })
-    } else {
-      constraints.forEach((constraint) => query.where(constraint))
+  private applyWhere (query: DatabaseQueryBuilderContract, constraints: NormalizedConstraint[]) {
+    if (!constraints.length) {
+      return
     }
+
+    constraints.forEach(({ key, operator, value }) => {
+      if (operator === 'in') {
+        query.whereIn(key, value as string[])
+      } else {
+        query.where(key, value)
+      }
+    })
+  }
+
+  /**
+   * Applies user defined where not constraints on the query builder
+   */
+  private applyWhereNot (query: DatabaseQueryBuilderContract, constraints: NormalizedConstraint[]) {
+    if (!constraints.length) {
+      return
+    }
+
+    constraints.forEach(({ key, operator, value }) => {
+      if (operator === 'in') {
+        query.whereNotIn(key, value as string[])
+      } else {
+        query.whereNot(key, value)
+      }
+    })
+  }
+
+  /**
+   * Normalizes constraints
+   */
+  private normalizeConstraints (constraints: DbRowCheckOptions['where']) {
+    const normalized: NormalizedConstraint[] = []
+    if (!constraints) {
+      return normalized
+    }
+
+    /**
+     * Normalize object into an array of objects
+     */
+    return Object.keys(constraints).reduce((result, key) => {
+      const value = constraints[key]
+      const operator = Array.isArray(value) ? 'in' : 'eq'
+      result.push({ key, value, operator })
+
+      return result
+    }, normalized)
   }
 
   /**
    * Compile validation options
    */
-  public compile (options) {
+  public compile (options: DbRowCheckOptions) {
     /**
      * Ensure options are defined with table and column name
      */
@@ -44,20 +107,21 @@ class DbRowCheck {
     }
 
     /**
-     * Normalize where constraints
+     * Emit warning
      */
-    let constraints: { [key: string]: any }[] = []
-    if (options.constraints && Array.isArray(options.constraints)) {
-      constraints = options.constraints
-    } else if (options.constraints && typeof (options.constraints) === 'object' && options.constraints !== null) {
-      constraints = [options.constraints]
+    if (options.constraints) {
+      process.emitWarning(
+        'DeprecationWarning',
+        '"options.constraints" have been depreciated. Use "options.where" instead.',
+      )
     }
 
     return {
       table: options.table,
       column: options.column,
       connection: options.connection,
-      constraints: constraints,
+      where: this.normalizeConstraints(options.where || options.constraints),
+      whereNot: this.normalizeConstraints(options.whereNot),
     }
   }
 
@@ -66,11 +130,12 @@ class DbRowCheck {
    */
   public async validate (
     value: any,
-    { table, column, constraints, connection }: any,
+    { table, column, where, whereNot, connection }: NormalizedOptions,
     { pointer, errorReporter, arrayExpressionPointer }: ValidationRuntimeOptions,
   ) {
     const query = this.database.connection(connection).query().from(table).where(column, value)
-    this.applyConstraints(query, constraints)
+    this.applyWhere(query, where)
+    this.applyWhereNot(query, whereNot)
 
     const row = await query.first()
     if (this.ruleName === 'exists') {

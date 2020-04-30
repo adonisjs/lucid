@@ -10,19 +10,17 @@
 declare module '@ioc:Adonis/Core/Validator' {
   import { Rule } from '@ioc:Adonis/Core/Validator'
 
-  export interface Rules {
-    exists (options: {
-      table: string,
-      column: string,
-      connection?: string,
-      constraints?: { [key: string]: any } | { [key: string]: any }[],
-    }): Rule
+  export type DbRowCheckOptions = {
+    table: string,
+    column: string,
+    connection?: string,
+    constraints?: { [key: string]: any },
+    where?: { [key: string]: any },
+    whereNot?: { [key: string]: any },
+  }
 
-    unique (options: {
-      table: string,
-      column: string,
-      connection?: string,
-      constraints?: { [key: string]: any } | { [key: string]: any }[],
-    }): Rule
+  export interface Rules {
+    exists (options: DbRowCheckOptions): Rule
+    unique (options: DbRowCheckOptions): Rule
   }
 }

@@ -92,7 +92,7 @@ test.group('Validator | exists', (group) => {
     })
   })
 
-  test('check row with custom where contraints', async (assert) => {
+  test('add where contraints', async (assert) => {
     assert.plan(3)
 
     const [userId] = await db
@@ -120,7 +120,7 @@ test.group('Validator | exists', (group) => {
           id: schema.number([validator.rules.exists({
             table: 'users',
             column: 'id',
-            constraints: {
+            where: {
               username: 'nikk',
             },
           })]),
@@ -134,7 +134,7 @@ test.group('Validator | exists', (group) => {
     }
   })
 
-  test('check row with custom or where contraints', async (assert) => {
+  test('add wherein contraints', async (assert) => {
     assert.plan(3)
 
     const [userId] = await db
@@ -148,11 +148,7 @@ test.group('Validator | exists', (group) => {
         .getReadClient()
         .from('users')
         .where('id', userId)
-        .where((builder) => {
-          builder
-            .orWhere({ username: 'nikk' })
-            .orWhere({ username: 'virk', email: 'foo@bar.com' })
-        })
+        .whereIn('username', ['nikk', 'romain'])
         .limit(1)
         .toSQL()
 
@@ -166,15 +162,93 @@ test.group('Validator | exists', (group) => {
           id: schema.number([validator.rules.exists({
             table: 'users',
             column: 'id',
-            constraints: [
-              {
-                username: 'nikk',
-              },
-              {
-                username: 'virk',
-                email: 'foo@bar.com',
-              },
-            ],
+            where: {
+              username: ['nikk', 'romain'],
+            },
+          })]),
+        })),
+        data: { id: userId },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['exists validation failure'],
+      })
+    }
+  })
+
+  test('add where not constraints', async (assert) => {
+    assert.plan(3)
+
+    const [userId] = await db
+      .table('users')
+      .returning('id')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk' })
+
+    db.connection().getReadClient().on('query', ({ sql, bindings }) => {
+      const { sql: knexSql, bindings: knexBindings } = db
+        .connection()
+        .getReadClient()
+        .from('users')
+        .where('id', userId)
+        .whereNot('username', 'virk')
+        .limit(1)
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+    })
+
+    try {
+      await validator.validate({
+        schema: validator.compile(schema.create({
+          id: schema.number([validator.rules.exists({
+            table: 'users',
+            column: 'id',
+            whereNot: {
+              username: 'virk',
+            },
+          })]),
+        })),
+        data: { id: userId },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['exists validation failure'],
+      })
+    }
+  })
+
+  test('add where not in constraints', async (assert) => {
+    assert.plan(3)
+
+    const [userId] = await db
+      .table('users')
+      .returning('id')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk' })
+
+    db.connection().getReadClient().on('query', ({ sql, bindings }) => {
+      const { sql: knexSql, bindings: knexBindings } = db
+        .connection()
+        .getReadClient()
+        .from('users')
+        .where('id', userId)
+        .whereNotIn('username', ['virk', 'nikk'])
+        .limit(1)
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+    })
+
+    try {
+      await validator.validate({
+        schema: validator.compile(schema.create({
+          id: schema.number([validator.rules.exists({
+            table: 'users',
+            column: 'id',
+            whereNot: {
+              username: ['virk', 'nikk'],
+            },
           })]),
         })),
         data: { id: userId },
@@ -241,7 +315,7 @@ test.group('Validator | unique', (group) => {
     })
   })
 
-  test('check row with custom where contraints', async (assert) => {
+  test('add where contraints', async (assert) => {
     assert.plan(3)
 
     const [userId] = await db
@@ -269,7 +343,7 @@ test.group('Validator | unique', (group) => {
           id: schema.number([validator.rules.unique({
             table: 'users',
             column: 'id',
-            constraints: {
+            where: {
               username: 'virk',
             },
           })]),
@@ -283,7 +357,7 @@ test.group('Validator | unique', (group) => {
     }
   })
 
-  test('check row with custom or where contraints', async (assert) => {
+  test('add where in contraints', async (assert) => {
     assert.plan(3)
 
     const [userId] = await db
@@ -297,11 +371,7 @@ test.group('Validator | unique', (group) => {
         .getReadClient()
         .from('users')
         .where('id', userId)
-        .where((builder) => {
-          builder
-            .orWhere({ username: 'nikk' })
-            .orWhere({ username: 'virk', email: 'virk@adonisjs.com' })
-        })
+        .whereIn('username', ['virk', 'nikk'])
         .limit(1)
         .toSQL()
 
@@ -315,15 +385,93 @@ test.group('Validator | unique', (group) => {
           id: schema.number([validator.rules.unique({
             table: 'users',
             column: 'id',
-            constraints: [
-              {
-                username: 'nikk',
-              },
-              {
-                username: 'virk',
-                email: 'virk@adonisjs.com',
-              },
-            ],
+            where: {
+              username: ['virk', 'nikk'],
+            },
+          })]),
+        })),
+        data: { id: userId },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['unique validation failure'],
+      })
+    }
+  })
+
+  test('add whereNot contraints', async (assert) => {
+    assert.plan(3)
+
+    const [userId] = await db
+      .table('users')
+      .returning('id')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk' })
+
+    db.connection().getReadClient().on('query', ({ sql, bindings }) => {
+      const { sql: knexSql, bindings: knexBindings } = db
+        .connection()
+        .getReadClient()
+        .from('users')
+        .where('id', userId)
+        .whereNot('username', 'nikk')
+        .limit(1)
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+    })
+
+    try {
+      await validator.validate({
+        schema: validator.compile(schema.create({
+          id: schema.number([validator.rules.unique({
+            table: 'users',
+            column: 'id',
+            whereNot: {
+              username: 'nikk',
+            },
+          })]),
+        })),
+        data: { id: userId },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['unique validation failure'],
+      })
+    }
+  })
+
+  test('add whereNot in contraints', async (assert) => {
+    assert.plan(3)
+
+    const [userId] = await db
+      .table('users')
+      .returning('id')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk', country_id: 4 })
+
+    db.connection().getReadClient().on('query', ({ sql, bindings }) => {
+      const { sql: knexSql, bindings: knexBindings } = db
+        .connection()
+        .getReadClient()
+        .from('users')
+        .where('id', userId)
+        .whereNotIn('country_id', [1, 2])
+        .limit(1)
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+    })
+
+    try {
+      await validator.validate({
+        schema: validator.compile(schema.create({
+          id: schema.number([validator.rules.unique({
+            table: 'users',
+            column: 'id',
+            whereNot: {
+              country_id: [1, 2],
+            },
           })]),
         })),
         data: { id: userId },
