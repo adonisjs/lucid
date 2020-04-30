@@ -16,7 +16,6 @@ import { ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 import {
   DatabaseConfig,
-  ConnectionNode,
   DatabaseContract,
   DatabaseClientOptions,
   TransactionClientContract,
@@ -83,10 +82,12 @@ export class Database implements DatabaseContract {
    * health checker on demand.
    */
   private findIfHealthChecksAreEnabled () {
-    this.hasHealthChecksEnabled = !!Object.keys(this.manager.connections).find((key) => {
-      const connection = this.manager.connections[key] as ConnectionNode
-      return !!connection.config.healthCheck
-    })
+    for (let [,conn] of this.manager.connections) {
+      if (conn.config.healthCheck) {
+        this.hasHealthChecksEnabled = true
+        break
+      }
+    }
   }
 
   /**
