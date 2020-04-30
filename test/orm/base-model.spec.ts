@@ -41,6 +41,7 @@ import {
   ormAdapter,
   resetTables,
   FakeAdapter,
+  getProfiler,
   getBaseModel,
 } from '../../test-helpers'
 
@@ -183,6 +184,46 @@ test.group('Base model | boot', (group) => {
 
     User.boot()
     assert.deepEqual(User.$keys.serializedToColumns.get('user_name'), 'user_name')
+  })
+})
+
+test.group('Base Model | options', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
+
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('set connection using useConnection method', (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    user.useConnection('foo')
+    assert.deepEqual(user.$options, { connection: 'foo' })
+  })
+
+  test('set connection do not overwrite profiler from the options', (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    const profiler = getProfiler()
+    user.$options = { profiler: profiler }
+
+    user.useConnection('foo')
+    assert.deepEqual(user.$options, { connection: 'foo', profiler: profiler })
   })
 })
 
@@ -1723,7 +1764,6 @@ test.group('Base | apdater', (group) => {
     User.$adapter = adapter
     const user = new User()
     user.username = 'virk'
-    user.$options = { connection: 'foo' }
 
     await user.save()
 
@@ -1745,7 +1785,6 @@ test.group('Base | apdater', (group) => {
     User.$adapter = adapter
     const user = new User()
     user.username = 'virk'
-    user.$options = { connection: 'foo' }
 
     await user.save()
 
@@ -1777,7 +1816,6 @@ test.group('Base | apdater', (group) => {
     User.$adapter = adapter
     const user = new User()
     user.username = 'virk'
-    user.$options = { connection: 'foo' }
 
     await user.save()
     await user.delete()

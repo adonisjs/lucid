@@ -1068,6 +1068,7 @@ export class BaseModel implements LucidRow {
    */
   public set $options (options: ModelOptions | undefined) {
     if (!options) {
+      this.modelOptions = undefined
       return
     }
 
@@ -1093,6 +1094,22 @@ export class BaseModel implements LucidRow {
       this.$trx = options.client as TransactionClientContract
     }
     this.$options = options
+  }
+
+  /**
+   * A chainable method to set transaction on the model
+   */
+  public useTransaction (trx: TransactionClientContract): this {
+    this.$trx = trx
+    return this
+  }
+
+  /**
+   * A chainable method to set transaction on the model
+   */
+  public useConnection (connection: string): this {
+    this.$options = { connection }
+    return this
   }
 
   /**

@@ -421,6 +421,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $trx?: TransactionClientContract,
     $setOptionsAndTrx (options?: ModelAdapterOptions): void
 
+    useTransaction (trx: TransactionClientContract): this
+    useConnection (connection: string): this
+
     /**
      * Gives an option to the end user to define constraints for update, insert
      * and delete queries. Since the query builder for these queries aren't
