@@ -109,6 +109,22 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
+   * Shape for cherry picking fields
+   */
+  export type CherryPickFields = string[] | {
+    pick?: string[],
+    omit?: string[],
+  }
+
+  /**
+   * Shape for cherry picking fields on nested relationships
+   */
+  export type CherryPick = {
+    fields?: CherryPickFields,
+    relations?: { [relation: string]: CherryPick }
+  }
+
+  /**
    * List of events for which a model will trigger hooks
    */
   export type EventsList = 'save' | 'create' | 'update' | 'delete' | 'fetch' | 'find'
@@ -474,19 +490,19 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Serialize attributes to a plain object
      */
-    serializeAttributes (fieldsToCherryPick?: ModelObject, raw?: boolean): ModelObject
+    serializeAttributes (fields?: CherryPickFields, raw?: boolean): ModelObject
 
     /**
      * Serialize computed properties to a plain object
      */
-    serializeComputed (fieldsToCherryPick?: string[]): ModelObject
+    serializeComputed (fields?: CherryPickFields): ModelObject
 
     /**
      * Serialize relationships to key-value pair of model instances and
      * their serializeAs keys
      */
     serializeRelations (
-      fieldsToCherryPick: ModelObject | undefined,
+      fields: undefined,
       raw: true,
     ): { [key: string]: LucidRow | LucidRow[] }
 
@@ -494,16 +510,19 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Serialize relationships to key-value pair of plain nested objects
      */
     serializeRelations (
-      fieldsToCherryPick: ModelObject | undefined,
+      cherryPick: CherryPick['relations'] | undefined,
       raw: false | undefined,
     ): ModelObject
 
-    serializeRelations (fieldsToCherryPick?: ModelObject, raw?: boolean): ModelObject
+    serializeRelations (
+      cherryPick?: CherryPick['relations'],
+      raw?: boolean,
+    ): ModelObject
 
     /**
      * Serialize model to a plain object
      */
-    serialize (fieldsToCherryPick?: ModelObject): ModelObject
+    serialize (cherryPick?: CherryPick): ModelObject
 
     /**
      * Serialize everything

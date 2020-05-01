@@ -10,8 +10,8 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { Exception } from '@poppinss/utils'
-import { LucidRow, ModelObject } from '@ioc:Adonis/Lucid/Model'
 import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
+import { LucidRow, ModelObject, CherryPickFields } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 /**
@@ -166,4 +166,22 @@ export function getDDLMethod (sql: string) {
   }
 
   return 'unknown'
+}
+
+/**
+ * Normalizes the cherry picking object to always be an object with
+ * `pick` and `omit` properties
+ */
+export function normalizeCherryPickObject (fields: CherryPickFields) {
+  if (Array.isArray(fields)) {
+    return {
+      pick: fields,
+      omit: [],
+    }
+  }
+
+  return {
+    pick: fields.pick || [],
+    omit: fields.omit || [],
+  }
 }
