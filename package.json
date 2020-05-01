@@ -27,7 +27,9 @@
     "build": "npm run compile",
     "commit": "git-cz",
     "release": "np",
-    "version": "npm run build"
+    "version": "npm run build",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -50,7 +52,8 @@
     "macroable": "^4.0.4",
     "pluralize": "^8.0.0",
     "pretty-hrtime": "^1.0.3",
-    "qs": "^6.9.3"
+    "qs": "^6.9.3",
+    "snyk": "^1.316.1"
   },
   "peerDependencies": {
     "@adonisjs/core": ">=5.0.0-preview"
@@ -138,5 +141,6 @@
     "contents": ".",
     "anyBranch": true,
     "yolo": true
-  }
+  },
+  "snyk": true
 }
