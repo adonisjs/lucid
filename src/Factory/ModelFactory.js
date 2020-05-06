@@ -118,7 +118,7 @@ class ModelFactory {
    * @method create
    * @async
    *
-   * @param  {Object} data   
+   * @param  {Object} data
    * @param  {Number} [index = 0]
    *
    * @return {Object}
