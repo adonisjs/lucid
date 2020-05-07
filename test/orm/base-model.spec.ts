@@ -2524,6 +2524,57 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(users[0].points, 20)
   })
 
+  test('lock row for update to handle concurrent requests', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column({ columnName: 'username' })
+      public userName: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+
+      public static boot () {
+        if (this.booted) {
+          return
+        }
+
+        super.boot()
+        this.before('update', (model) => {
+          model.points += 1
+        })
+      }
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk', points: 20 })
+
+    /**
+     * The update or create method will first fetch the row and then performs
+     * an update using the model instance. The model hook will use the original
+     * database value to increment the points by 1.
+     *
+     * However, both reads will be performed concurrently, each instance will
+     * receive the original `20` points and update will reflect `21` and not
+     * expected `22`.
+     *
+     * To fix the above issue, we must lock the row for update, since we can
+     * guarantee that an update will always be performed.
+     */
+    await Promise.all([
+      User.updateOrCreate({ userName: 'virk' }, { email: 'virk-1@adonisjs.com' }),
+      User.updateOrCreate({ userName: 'virk' }, { email: 'virk-2@adonisjs.com' }),
+    ])
+
+    const users = await db.query().from('users')
+
+    assert.lengthOf(users, 1)
+    assert.equal(users[0].points, 22)
+  })
+
   test('execute updateOrCreate update action inside a transaction', async (assert) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -2927,7 +2978,10 @@ test.group('Base Model | fetch', (group) => {
         ],
       )
     } catch ({ message }) {
-      assert.equal(message, 'Value for the "username" is null or undefined inside "fetchOrNewUpMany" payload')
+      assert.equal(
+        message,
+        'Value for the "username" is null or undefined inside "fetchOrCreateMany" payload',
+      )
     }
 
     const usersList = await db.query().from('users')
@@ -2970,7 +3024,7 @@ test.group('Base Model | fetch', (group) => {
     } catch ({ message }) {
       assert.equal(
         message,
-        'Value for the \"username\" is null or undefined inside \"fetchOrNewUpMany\" payload'
+        'Value for the \"username\" is null or undefined inside \"fetchOrCreateMany\" payload'
       )
     }
 
@@ -3028,7 +3082,7 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 3)
   })
 
-  test('update records and avoiding duplicates', async (assert) => {
+  test('update records and avoid duplicates', async (assert) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3137,7 +3191,7 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 1)
   })
 
-  test('wrap update calls inside a transaction using updateOrCreateMany', async (assert) => {
+  test('wrap update calls inside a custom transaction using updateOrCreateMany', async (assert) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3186,6 +3240,64 @@ test.group('Base Model | fetch', (group) => {
     const usersList = await db.query().from('users')
     assert.lengthOf(usersList, 1)
     assert.equal(usersList[0].points, 10)
+  })
+
+  test('handle concurrent update calls using updateOrCreateMany', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @column()
+      public points: number
+
+      public static boot () {
+        if (this.booted) {
+          return
+        }
+
+        super.boot()
+        this.before('update', (model) => {
+          model.points += 1
+        })
+      }
+    }
+
+    await db.insertQuery().table('users').insert({
+      username: 'virk',
+      email: 'virk@adonisjs.com',
+      points: 0,
+    })
+
+    await Promise.all([
+      User.updateOrCreateMany(
+        'username',
+        [
+          {
+            username: 'virk',
+            email: 'virk-1@adonisjs.com',
+          },
+        ],
+      ),
+      User.updateOrCreateMany(
+        'username',
+        [
+          {
+            username: 'virk',
+            email: 'virk-1@adonisjs.com',
+          },
+        ],
+      ),
+    ])
+
+    const usersList = await db.query().from('users')
+    assert.lengthOf(usersList, 1)
+    assert.equal(usersList[0].points, 2)
   })
 })
 

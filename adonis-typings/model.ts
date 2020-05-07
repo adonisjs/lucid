@@ -799,7 +799,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     firstOrNew<T extends LucidModel> (
       this: T,
-      search: Partial<ModelAttributes<InstanceType<T>>>,
+      searchPayload: Partial<ModelAttributes<InstanceType<T>>>,
       savePayload?: Partial<ModelAttributes<InstanceType<T>>>,
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
@@ -809,8 +809,18 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     firstOrCreate<T extends LucidModel> (
       this: T,
-      search: Partial<ModelAttributes<InstanceType<T>>>,
+      searchPayload: Partial<ModelAttributes<InstanceType<T>>>,
       savePayload?: Partial<ModelAttributes<InstanceType<T>>>,
+      options?: ModelAdapterOptions,
+    ): Promise<InstanceType<T>>
+
+    /**
+     * Returns the first row or save it to the database
+     */
+    updateOrCreate<T extends LucidModel> (
+      this: T,
+      searchPayload: Partial<ModelAttributes<InstanceType<T>>>,
+      updatePayload: Partial<ModelAttributes<InstanceType<T>>>,
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>>
 
@@ -823,7 +833,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
       uniqueKey: keyof ModelAttributes<InstanceType<T>>,
       payload: Partial<ModelAttributes<InstanceType<T>>>[],
       options?: ModelAdapterOptions,
-      mergeAttributes?: boolean,
     ): Promise<InstanceType<T>[]>
 
     /**
@@ -836,16 +845,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
       payload: Partial<ModelAttributes<InstanceType<T>>>[],
       options?: ModelAdapterOptions,
     ): Promise<InstanceType<T>[]>
-
-    /**
-     * Returns the first row or save it to the database
-     */
-    updateOrCreate<T extends LucidModel> (
-      this: T,
-      search: Partial<ModelAttributes<InstanceType<T>>>,
-      updatePayload: Partial<ModelAttributes<InstanceType<T>>>,
-      options?: ModelAdapterOptions,
-    ): Promise<InstanceType<T>>
 
     /**
      * Update existing rows or create new one's.

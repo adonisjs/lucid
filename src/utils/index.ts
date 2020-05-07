@@ -42,6 +42,16 @@ export function ensureValue (collection: any, key: string, missingCallback: () =
 }
 
 /**
+ * Collects values for a key inside an array. Similar to `Array.map`, but
+ * reports missing values.
+ */
+export function collectValues (payload: any[], key: string, missingCallback: () => void) {
+  return payload.map((row: any) => {
+    return ensureValue(row, key, missingCallback)
+  })
+}
+
+/**
  * Raises exception when a relationship `booted` property is false.
  */
 export function ensureRelationIsBooted (relation: RelationshipsContract) {

@@ -916,7 +916,8 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 
     assert.equal(total[0].total, 1)
     assert.equal(user.$options!.connection, 'secondary')
-    assert.instanceOf(user.$options!.profiler, Profiler)
+    assert.isDefined(user.$options!.profiler)
+    assert.isUndefined(user.$trx)
   })
 
   test('define custom connection when search fails', async (assert) => {
@@ -940,10 +941,13 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 
     assert.equal(total[0].total, 1)
     assert.equal(user.$options!.connection, 'secondary')
-    assert.instanceOf(user.$options!.profiler, Profiler)
+    assert.isDefined(user.$options!.profiler)
+    assert.isUndefined(user.$trx)
   })
 
   test('define custom profiler', async (assert) => {
+    assert.plan(4)
+
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -956,6 +960,11 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
     const profiler = getProfiler()
+    const originalCreate = profiler.create.bind(profiler)
+    profiler.create = function (label): any {
+      assert.equal(label, 'trx:begin')
+      return originalCreate(label)
+    }
 
     const [user] = await User.updateOrCreateMany(
       'username',
@@ -967,10 +976,12 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 
     assert.equal(total[0].total, 1)
     assert.equal(user.$options!.connection, 'primary')
-    assert.deepEqual(user.$options!.profiler, profiler)
+    assert.isUndefined(user.$trx)
   })
 
   test('define custom profiler when search fails', async (assert) => {
+    assert.plan(4)
+
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -982,6 +993,12 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     }
 
     const profiler = getProfiler()
+    const originalCreate = profiler.create.bind(profiler)
+    profiler.create = function (label): any {
+      assert.equal(label, 'trx:begin')
+      return originalCreate(label)
+    }
+
     const [user] = await User.updateOrCreateMany(
       'username',
       [{ username: 'virk' }],
@@ -992,7 +1009,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 
     assert.equal(total[0].total, 1)
     assert.equal(user.$options!.connection, 'primary')
-    assert.deepEqual(user.$options!.profiler, profiler)
+    assert.isUndefined(user.$trx)
   })
 
   test('define custom client', async (assert) => {
@@ -1018,7 +1035,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     const total = await db.from('users').count('*', 'total')
 
     assert.equal(total[0].total, 1)
-    assert.deepEqual(user.$options!.profiler, client.profiler)
+    assert.isDefined(user.$options!.profiler)
     assert.deepEqual(user.$options!.connection, client.connectionName)
   })
 
@@ -1044,7 +1061,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     const total = await db.from('users').count('*', 'total')
 
     assert.equal(total[0].total, 1)
-    assert.deepEqual(user.$options!.profiler, client.profiler)
+    assert.isDefined(user.$options!.profiler)
     assert.deepEqual(user.$options!.connection, client.connectionName)
   })
 
