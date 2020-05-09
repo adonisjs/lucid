@@ -963,14 +963,14 @@ export class BaseModel implements LucidRow {
     /**
      * Return false, when under omit array
      */
-    if (omit.includes(serializeAs)) {
+    if (omit && omit.includes(serializeAs)) {
       return false
     }
 
     /**
      * Otherwise ensure is inside pick array
      */
-    return pick.includes(serializeAs)
+    return !pick || pick.includes(serializeAs)
   }
 
   /**

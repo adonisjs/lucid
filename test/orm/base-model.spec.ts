@@ -1083,6 +1083,24 @@ test.group('Base Model | serializeAttributes', () => {
     user.id = '1'
 
     assert.deepEqual(user.serializeAttributes({
+      omit: ['username'],
+    }), { id: '1' })
+  })
+
+  test('use omit and pick together', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public id: string
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    user.id = '1'
+
+    assert.deepEqual(user.serializeAttributes({
       pick: ['id', 'username'],
       omit: ['username'],
     }), { id: '1' })

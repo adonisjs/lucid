@@ -410,7 +410,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * and `toJSON`.
    *
    * @note: Since the interface name appears next to the inherited model
-   *        methods, we have to choose a sunnict name
+   *        methods, we have to choose a succinct name
    */
   export interface LucidRow {
     $attributes: ModelObject
@@ -548,7 +548,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    * special properties from the base model.
    *
    * @note: Since the interface name appears next to the inherited model
-   *        methods, we have to choose a sunnict name
+   *        methods, we have to choose a succinct name
    */
   export interface LucidModel {
     /**
