@@ -82,8 +82,8 @@ export class Schema implements SchemaContract {
       connection: this.db.connectionName,
       inTransaction: this.db.isTransaction,
       ddl: true,
-      method: getDDLMethod(sql.sql),
       ...sql,
+      method: getDDLMethod(sql.sql),
     }
   }
 

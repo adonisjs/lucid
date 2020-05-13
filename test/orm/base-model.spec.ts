@@ -4564,6 +4564,8 @@ test.group('Base Model | datetime', (group) => {
   })
 
   test('always set datetime value when autoUpdate is true', async (assert) => {
+    const adapter = new FakeAdapter()
+
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4575,14 +4577,19 @@ test.group('Base Model | datetime', (group) => {
       public joinedAt: DateTime
     }
 
+    User.$adapter = adapter
+    adapter.on('update', (_, attributes) => {
+      assert.property(attributes, 'username')
+      assert.property(attributes, 'joined_at')
+    })
+
     const user = new User()
     user.username = 'virk'
     await user.save()
 
-    const originalDateTimeString = user.joinedAt.toString()
     user.username = 'nikk'
     await user.save()
-    assert.notEqual(originalDateTimeString, user.joinedAt.toString())
+    // assert.notEqual(originalDateTimeString, user.joinedAt.toString())
   })
 
   test('do not set autoUpdate field datetime when model is not dirty', async (assert) => {

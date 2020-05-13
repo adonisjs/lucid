@@ -1519,12 +1519,10 @@ export class BaseModel implements LucidRow {
     await Model.$hooks.exec('before', 'update', this)
     await Model.$hooks.exec('before', 'save', this)
 
-    const dirty = this.$dirty
-
     /**
      * Do not issue updates when model doesn't have any mutations
      */
-    if (!Object.keys(dirty).length) {
+    if (!this.$isDirty) {
       return
     }
 
@@ -1532,7 +1530,7 @@ export class BaseModel implements LucidRow {
      * Perform update
      */
     this.initiateAutoUpdateColumns()
-    await Model.$adapter.update(this, this.prepareForAdapter(dirty))
+    await Model.$adapter.update(this, this.prepareForAdapter(this.$dirty))
     this.$hydrateOriginals()
     this.$isPersisted = true
 
