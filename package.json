@@ -64,16 +64,16 @@
     "@poppinss/dev-utils": "^1.0.6",
     "@types/dotenv": "^8.2.0",
     "@types/luxon": "^1.24.0",
-    "@types/node": "^13.13.5",
+    "@types/node": "^14.0.1",
     "@types/pluralize": "0.0.29",
-    "chance": "^1.1.4",
+    "chance": "^1.1.5",
     "commitizen": "^4.1.2",
     "copyfiles": "^2.2.0",
     "cz-conventional-changelog": "^3.2.0",
     "del-cli": "^3.0.0",
     "dotenv": "^8.2.0",
     "eslint": "^7.0.0",
-    "eslint-plugin-adonis": "^1.0.9",
+    "eslint-plugin-adonis": "^1.0.10",
     "fs-extra": "^9.0.0",
     "husky": "^4.2.5",
     "japa": "^3.0.1",
@@ -85,7 +85,7 @@
     "reflect-metadata": "^0.1.13",
     "sqlite3": "^4.2.0",
     "ts-node": "^8.10.1",
-    "typescript": "^3.8.3"
+    "typescript": "^3.9.2"
   },
   "publishConfig": {
     "tag": "alpha",
