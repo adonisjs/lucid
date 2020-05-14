@@ -63,6 +63,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   export const afterFind: HooksDecorator
   export const beforeFetch: HooksDecorator
   export const afterFetch: HooksDecorator
+  export const beforePaginate: HooksDecorator
+  export const afterPaginate: HooksDecorator
 
   /**
    * Columns and computed

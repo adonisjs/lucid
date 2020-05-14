@@ -359,11 +359,24 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    */
   public async paginate (page: number, perPage: number = 20) {
     const countQuery = this.clone().clearOrder().clearLimit().clearOffset().clearSelect().count('* as total')
+
+    /**
+     * We pass both the counts query and the main query to the
+     * paginate hook
+     */
+    await this.model.$hooks.exec('before', 'paginate', [countQuery, this])
+    await this.model.$hooks.exec('before', 'fetch', this)
+
     const aggregateResult = await countQuery.execQuery()
     const total = this.hasGroupBy ? aggregateResult.length : aggregateResult[0].total
 
     const results = total > 0 ? await this.forPage(page, perPage).execQuery() : []
-    return new SimplePaginator(results, total, perPage, page)
+    const paginator = new SimplePaginator(results, total, perPage, page)
+
+    await this.model.$hooks.exec('after', 'paginate', paginator)
+    await this.model.$hooks.exec('after', 'fetch', results)
+
+    return paginator
   }
 
   /**

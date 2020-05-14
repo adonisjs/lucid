@@ -31,6 +31,8 @@ import {
   afterFetch,
   beforeFind,
   afterFind,
+  afterPaginate,
+  beforePaginate,
 } from '../../src/Orm/Decorators'
 
 import {
@@ -45,6 +47,7 @@ import {
   getProfiler,
   getBaseModel,
 } from '../../test-helpers'
+import {SimplePaginator} from '../../src/Database/Paginator/SimplePaginator'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
@@ -3776,6 +3779,65 @@ test.group('Base Model | hooks', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await User.query().where('id', 1).first()
   })
+
+  test('invoke before and after paginate hooks', async (assert) => {
+    assert.plan(5)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @beforePaginate()
+      public static beforePaginateHook ([countQuery, query]: [ModelQueryBuilder, ModelQueryBuilder]) {
+        assert.instanceOf(query, ModelQueryBuilder)
+        assert.instanceOf(countQuery, ModelQueryBuilder)
+        assert.notDeepEqual(countQuery, query)
+      }
+
+      @afterPaginate()
+      public static afterPaginateHook (paginator: SimplePaginator) {
+        assert.equal(paginator.total, 1)
+        assert.equal(paginator.all()[0].username, 'virk')
+      }
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await User.query().paginate(1)
+  })
+
+  test('invoke before and after fetch hooks on paginate', async (assert) => {
+    assert.plan(2)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @beforeFetch()
+      public static beforeFetchHook (query: ModelQueryBuilder) {
+        assert.instanceOf(query, ModelQueryBuilder)
+      }
+
+      @afterFetch()
+      public static afterFetchHook (users: User[]) {
+        assert.equal(users[0].username, 'virk')
+      }
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await User.query().paginate(1)
+  })
 })
 
 test.group('Base model | extend', (group) => {
@@ -4564,6 +4626,7 @@ test.group('Base Model | datetime', (group) => {
   })
 
   test('always set datetime value when autoUpdate is true', async (assert) => {
+    assert.plan(2)
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -4589,7 +4652,6 @@ test.group('Base Model | datetime', (group) => {
 
     user.username = 'nikk'
     await user.save()
-    // assert.notEqual(originalDateTimeString, user.joinedAt.toString())
   })
 
   test('do not set autoUpdate field datetime when model is not dirty', async (assert) => {

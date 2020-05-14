@@ -127,7 +127,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
   /**
    * List of events for which a model will trigger hooks
    */
-  export type EventsList = 'save' | 'create' | 'update' | 'delete' | 'fetch' | 'find'
+  export type EventsList = 'save' | 'create' | 'update' | 'delete' | 'fetch' | 'find' | 'paginate'
   export type HooksHandler<
     Data extends any,
     Event extends EventsList,
@@ -692,6 +692,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
       event: Event,
       handler: HooksHandler<ModelQueryBuilderContract<Model>, Event>,
     ): void
+    before<Model extends LucidModel> (
+      this: Model,
+      event: 'paginate',
+      handler: HooksHandler<[ModelQueryBuilderContract<Model>, ModelQueryBuilderContract<Model>], 'paginate'>,
+    ): void
     before<Model extends LucidModel, Event extends EventsList> (
       this: Model,
       event: Event,
@@ -705,6 +710,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
       this: Model,
       event: 'fetch',
       handler: HooksHandler<InstanceType<Model>[], 'fetch'>,
+    ): void
+    after<Model extends LucidModel> (
+      this: Model,
+      event: 'paginate',
+      handler: HooksHandler<SimplePaginatorContract<InstanceType<Model>[]>, 'paginate'>,
     ): void
     after<Model extends LucidModel, Event extends EventsList> (
       this: Model,
