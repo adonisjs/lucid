@@ -10,9 +10,10 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
+import { rules } from '@adonisjs/validator/build/src/Rules'
 import { schema } from '@adonisjs/validator/build/src/Schema'
-import { validator } from '@adonisjs/validator/build/src/Validator'
 import { extendValidator } from '../../src/Bindings/Validator'
+import { validator } from '@adonisjs/validator/build/src/Validator'
 
 import {
   getDb,
@@ -45,12 +46,12 @@ test.group('Validator | exists', (group) => {
 
     try {
       await validator.validate({
-        schema: validator.compile(schema.create({
-          id: schema.number([validator.rules.exists({
+        schema: schema.create({
+          id: schema.number([rules.exists({
             table: 'users',
             column: 'id',
           })]),
-        })),
+        }),
         data: { id: 1 },
       })
     } catch (error) {
@@ -82,12 +83,12 @@ test.group('Validator | exists', (group) => {
     })
 
     await validator.validate({
-      schema: validator.compile(schema.create({
-        id: schema.number([validator.rules.exists({
+      schema: schema.create({
+        id: schema.number([rules.exists({
           table: 'users',
           column: 'id',
         })]),
-      })),
+      }),
       data: { id: userId },
     })
   })
@@ -116,15 +117,15 @@ test.group('Validator | exists', (group) => {
 
     try {
       await validator.validate({
-        schema: validator.compile(schema.create({
-          id: schema.number([validator.rules.exists({
+        schema: schema.create({
+          id: schema.number([rules.exists({
             table: 'users',
             column: 'id',
             where: {
               username: 'nikk',
             },
           })]),
-        })),
+        }),
         data: { id: userId },
       })
     } catch (error) {
@@ -158,15 +159,15 @@ test.group('Validator | exists', (group) => {
 
     try {
       await validator.validate({
-        schema: validator.compile(schema.create({
-          id: schema.number([validator.rules.exists({
+        schema: schema.create({
+          id: schema.number([rules.exists({
             table: 'users',
             column: 'id',
             where: {
               username: ['nikk', 'romain'],
             },
           })]),
-        })),
+        }),
         data: { id: userId },
       })
     } catch (error) {
@@ -200,15 +201,15 @@ test.group('Validator | exists', (group) => {
 
     try {
       await validator.validate({
-        schema: validator.compile(schema.create({
-          id: schema.number([validator.rules.exists({
+        schema: schema.create({
+          id: schema.number([rules.exists({
             table: 'users',
             column: 'id',
             whereNot: {
               username: 'virk',
             },
           })]),
-        })),
+        }),
         data: { id: userId },
       })
     } catch (error) {
@@ -242,15 +243,15 @@ test.group('Validator | exists', (group) => {
 
     try {
       await validator.validate({
-        schema: validator.compile(schema.create({
-          id: schema.number([validator.rules.exists({
+        schema: schema.create({
+          id: schema.number([rules.exists({
             table: 'users',
             column: 'id',
             whereNot: {
               username: ['virk', 'nikk'],
             },
           })]),
-        })),
+        }),
         data: { id: userId },
       })
     } catch (error) {
@@ -288,12 +289,12 @@ test.group('Validator | unique', (group) => {
 
     try {
       await validator.validate({
-        schema: validator.compile(schema.create({
-          id: schema.number([validator.rules.unique({
+        schema: schema.create({
+          id: schema.number([rules.unique({
             table: 'users',
             column: 'id',
           })]),
-        })),
+        }),
         data: { id: userId },
       })
     } catch (error) {
@@ -305,12 +306,12 @@ test.group('Validator | unique', (group) => {
 
   test('work fine when row is missing', async () => {
     await validator.validate({
-      schema: validator.compile(schema.create({
-        id: schema.number([validator.rules.unique({
+      schema: schema.create({
+        id: schema.number([rules.unique({
           table: 'users',
           column: 'id',
         })]),
-      })),
+      }),
       data: { id: 1 },
     })
   })
@@ -339,15 +340,15 @@ test.group('Validator | unique', (group) => {
 
     try {
       await validator.validate({
-        schema: validator.compile(schema.create({
-          id: schema.number([validator.rules.unique({
+        schema: schema.create({
+          id: schema.number([rules.unique({
             table: 'users',
             column: 'id',
             where: {
               username: 'virk',
             },
           })]),
-        })),
+        }),
         data: { id: userId },
       })
     } catch (error) {
@@ -381,15 +382,15 @@ test.group('Validator | unique', (group) => {
 
     try {
       await validator.validate({
-        schema: validator.compile(schema.create({
-          id: schema.number([validator.rules.unique({
+        schema: schema.create({
+          id: schema.number([rules.unique({
             table: 'users',
             column: 'id',
             where: {
               username: ['virk', 'nikk'],
             },
           })]),
-        })),
+        }),
         data: { id: userId },
       })
     } catch (error) {
@@ -423,15 +424,15 @@ test.group('Validator | unique', (group) => {
 
     try {
       await validator.validate({
-        schema: validator.compile(schema.create({
-          id: schema.number([validator.rules.unique({
+        schema: schema.create({
+          id: schema.number([rules.unique({
             table: 'users',
             column: 'id',
             whereNot: {
               username: 'nikk',
             },
           })]),
-        })),
+        }),
         data: { id: userId },
       })
     } catch (error) {
@@ -465,15 +466,15 @@ test.group('Validator | unique', (group) => {
 
     try {
       await validator.validate({
-        schema: validator.compile(schema.create({
-          id: schema.number([validator.rules.unique({
+        schema: schema.create({
+          id: schema.number([rules.unique({
             table: 'users',
             column: 'id',
             whereNot: {
               country_id: [1, 2],
             },
           })]),
-        })),
+        }),
         data: { id: userId },
       })
     } catch (error) {
