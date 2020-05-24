@@ -1,4 +1,5 @@
 import { BaseModel, HasOne, hasOne, scope } from '@ioc:Adonis/Lucid/Orm'
+import Factory from '@ioc:Adonis/Lucid/Factory'
 
 class Profile extends BaseModel {
   public id: string
@@ -30,3 +31,24 @@ User.fetchOrCreateMany('id', [{ id: '1', username: 'virk' }])
 User.create({ id: '1', username: 'virk' })
 User.create({ id: '1', username: 'virk' })
 User.create({ id: '1' })
+
+const F = Factory.define(User, (state) => {
+  const user = new User()
+  user.username = state.faker.username
+  return user
+})
+
+const P = Factory.define(Profile, () => new Profile())
+
+const ProfileF = P
+  .state('social', () => {})
+  .build()
+
+const UserF = F
+  .state('active', (user) => {
+    user.username = 'virk'
+  })
+  .related('profile', () => ProfileF)
+  .build()
+
+UserF.with('profile', 1)

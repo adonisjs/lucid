@@ -41,6 +41,7 @@ import {
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
 import { MigratorContract, MigratorOptions } from '@ioc:Adonis/Lucid/Migrator'
+import { FactoryModelContract, NewUpModelFunction } from '@ioc:Adonis/Lucid/Factory'
 
 import { Schema } from '../src/Schema'
 import { Migrator } from '../src/Migrator'
@@ -48,6 +49,7 @@ import { Adapter } from '../src/Orm/Adapter'
 import { BaseModel } from '../src/Orm/BaseModel'
 import { QueryClient } from '../src/QueryClient'
 import { Database } from '../src/Database/index'
+import { FactoryModel } from '../src/Factory/FactoryModel'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
@@ -373,6 +375,18 @@ export function getBaseModel (adapter: AdapterContract, container?: IocContract)
   BaseModel.$adapter = adapter
   BaseModel.$container = container || new Ioc()
   return BaseModel as unknown as LucidModel
+}
+
+/**
+ * Returns the factory model
+ */
+export function getFactoryModel () {
+  return FactoryModel as unknown as {
+    new<Model extends LucidModel, Attributes extends any> (
+      model: Model,
+      callback: NewUpModelFunction<Model, Attributes>
+    ): FactoryModelContract<Model, Attributes>
+  }
 }
 
 /**
