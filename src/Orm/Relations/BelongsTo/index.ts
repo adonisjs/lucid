@@ -7,9 +7,10 @@
  * file that was distributed with this source code.
 */
 
-import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { LucidModel, LucidRow, ModelObject } from '@ioc:Adonis/Lucid/Model'
+
 import {
   RelationOptions,
   BelongsToRelationContract,
@@ -18,7 +19,7 @@ import {
 
 import { KeysExtractor } from '../KeysExtractor'
 import { BelongsToQueryClient } from './QueryClient'
-import { ensureRelationIsBooted } from '../../../utils'
+import { ensureRelationIsBooted, getValue } from '../../../utils'
 
 /**
  * Manages loading and persisting belongs to relationship
@@ -182,5 +183,12 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
   public eagerQuery (parent: OneOrMany<LucidRow>, client: QueryClientContract): any {
     ensureRelationIsBooted(this)
     return BelongsToQueryClient.eagerQuery(client, this, parent)
+  }
+
+  /**
+   * Hydrates values object for persistance.
+   */
+  public hydrateForPersistance (parent: LucidRow, related: ModelObject | LucidRow) {
+    parent[this.foreignKey] = getValue(related, this.localKey, this, 'associate')
   }
 }

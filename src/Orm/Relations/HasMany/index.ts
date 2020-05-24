@@ -7,9 +7,10 @@
  * file that was distributed with this source code.
 */
 
-import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { LucidModel, LucidRow, ModelObject } from '@ioc:Adonis/Lucid/Model'
+
 import {
   RelationOptions,
   HasManyRelationContract,
@@ -18,7 +19,7 @@ import {
 
 import { KeysExtractor } from '../KeysExtractor'
 import { HasManyQueryClient } from './QueryClient'
-import { ensureRelationIsBooted } from '../../../utils'
+import { ensureRelationIsBooted, getValue } from '../../../utils'
 
 /**
  * Manages persisting and fetching relationships
@@ -187,5 +188,12 @@ export class HasMany implements HasManyRelationContract<LucidModel, LucidModel> 
   public eagerQuery (parent: OneOrMany<LucidRow>, client: QueryClientContract) {
     ensureRelationIsBooted(this)
     return HasManyQueryClient.eagerQuery(client, this, parent)
+  }
+
+  /**
+   * Hydrates values object for persistance.
+   */
+  public hydrateForPersistance (parent: LucidRow, values: ModelObject | LucidRow) {
+    values[this.foreignKey] = getValue(parent, this.localKey, this, 'persist')
   }
 }

@@ -14,7 +14,7 @@ import { LucidRow, LucidModel, ModelObject } from '@ioc:Adonis/Lucid/Model'
 
 import { HasMany } from './index'
 import { HasManyQueryBuilder } from './QueryBuilder'
-import { getValue, managedTransaction } from '../../../utils'
+import { managedTransaction } from '../../../utils'
 
 /**
  * Query client for executing queries in scope to the defined
@@ -49,13 +49,6 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
   }
 
   /**
-   * Returns value for the foreign key
-   */
-  private getForeignKeyValue (parent: LucidRow, action: string) {
-    return getValue(parent, this.relation.localKey, this.relation, action)
-  }
-
-  /**
    * Returns instance of query builder
    */
   public query (): any {
@@ -70,7 +63,7 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
       this.parent.$trx = trx
       await this.parent.save()
 
-      related[this.relation.foreignKey] = this.getForeignKeyValue(this.parent, 'save')
+      this.relation.hydrateForPersistance(this.parent, related)
       related.$trx = trx
       await related.save()
     })
@@ -86,9 +79,8 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
       this.parent.$trx = trx
       await parent.save()
 
-      const foreignKeyValue = this.getForeignKeyValue(parent, 'saveMany')
       for (let row of related) {
-        row[this.relation.foreignKey] = foreignKeyValue
+        this.relation.hydrateForPersistance(this.parent, row)
         row.$trx = trx
         await row.save()
       }
@@ -103,9 +95,9 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
       this.parent.$trx = trx
       await this.parent.save()
 
-      return this.relation.relatedModel().create(Object.assign({
-        [this.relation.foreignKey]: this.getForeignKeyValue(this.parent, 'create'),
-      }, values), { client: trx })
+      const valuesToPersist = Object.assign({}, values)
+      this.relation.hydrateForPersistance(this.parent, valuesToPersist)
+      return this.relation.relatedModel().create(valuesToPersist, { client: trx })
     })
   }
 
@@ -119,10 +111,13 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
       this.parent.$trx = trx
       await parent.save()
 
-      const foreignKeyValue = this.getForeignKeyValue(parent, 'createMany')
-      return this.relation.relatedModel().createMany(values.map((value) => {
-        return Object.assign({ [this.relation.foreignKey]: foreignKeyValue }, value)
-      }), { client: trx })
+      const valuesToPersist = values.map((value) => {
+        const valueToPersist = Object.assign({}, value)
+        this.relation.hydrateForPersistance(this.parent, valueToPersist)
+        return valueToPersist
+      })
+
+      return this.relation.relatedModel().createMany(valuesToPersist, { client: trx })
     })
   }
 
@@ -134,9 +129,12 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
       this.parent.$trx = trx
       await this.parent.save()
 
-      return this.relation.relatedModel().firstOrCreate(Object.assign({
-        [this.relation.foreignKey]: this.getForeignKeyValue(this.parent, 'firstOrCreate'),
-      }, search), savePayload, { client: trx })
+      const valuesToPersist = Object.assign({}, search)
+      this.relation.hydrateForPersistance(this.parent, valuesToPersist)
+
+      return this.relation
+        .relatedModel()
+        .firstOrCreate(valuesToPersist, savePayload, { client: trx })
     })
   }
 
@@ -151,9 +149,12 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
       this.parent.$trx = trx
       await this.parent.save()
 
-      return this.relation.relatedModel().updateOrCreate(Object.assign({
-        [this.relation.foreignKey]: this.getForeignKeyValue(this.parent, 'updateOrCreate'),
-      }, search), updatePayload, { client: trx })
+      const valuesToPersist = Object.assign({}, search)
+      this.relation.hydrateForPersistance(this.parent, valuesToPersist)
+
+      return this.relation
+        .relatedModel()
+        .updateOrCreate(valuesToPersist, updatePayload, { client: trx })
     })
   }
 }

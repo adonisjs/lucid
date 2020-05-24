@@ -14,7 +14,7 @@ import { BelongsToClientContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { BelongsTo } from './index'
 import { BelongsToQueryBuilder } from './QueryBuilder'
-import { getValue, managedTransaction } from '../../../utils'
+import { managedTransaction } from '../../../utils'
 
 /**
  * Query client for executing queries in scope to the belongsTo relationship.
@@ -25,13 +25,6 @@ export class BelongsToQueryClient implements BelongsToClientContract<BelongsTo, 
     private parent: LucidRow,
     private client: QueryClientContract,
   ) {
-  }
-
-  /**
-   * Returns value for the foreign key from the related model
-   */
-  private getForeignKeyValue (related: LucidRow, action: string) {
-    return getValue(related, this.relation.localKey, this.relation, action)
   }
 
   /**
@@ -88,7 +81,7 @@ export class BelongsToQueryClient implements BelongsToClientContract<BelongsTo, 
       related.$trx = trx
       await related.save()
 
-      this.parent[this.relation.foreignKey] = this.getForeignKeyValue(related, 'associate')
+      this.relation.hydrateForPersistance(this.parent, related)
       this.parent.$trx = trx
       await this.parent.save()
     })

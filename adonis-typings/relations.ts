@@ -327,6 +327,11 @@ declare module '@ioc:Adonis/Lucid/Relations' {
       parent: InstanceType<ParentModel>,
       client: QueryClientContract,
     ): HasOneClientContract<this, RelatedModel>
+
+    /**
+     * Hydrates related model attributes for persistance
+     */
+    hydrateForPersistance (parent: LucidRow, values: ModelObject | LucidRow): void
   }
 
   /**
@@ -374,6 +379,11 @@ declare module '@ioc:Adonis/Lucid/Relations' {
       parent: InstanceType<ParentModel>,
       client: QueryClientContract,
     ): HasManyClientContract<this, RelatedModel>
+
+    /**
+     * Hydrates related model attributes for persistance
+     */
+    hydrateForPersistance (parent: LucidRow, values: ModelObject | LucidRow): void
   }
 
   /**
@@ -420,6 +430,11 @@ declare module '@ioc:Adonis/Lucid/Relations' {
       parent: InstanceType<ParentModel>,
       client: QueryClientContract,
     ): BelongsToClientContract<this, RelatedModel>
+
+    /**
+     * Hydrates parent model attributes for persistance
+     */
+    hydrateForPersistance (parent: LucidRow, values: ModelObject | LucidRow): void
   }
 
   /**
@@ -471,6 +486,16 @@ declare module '@ioc:Adonis/Lucid/Relations' {
       parent: OneOrMany<InstanceType<ParentModel>>,
       client: QueryClientContract,
     ): ManyToManyQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
+
+    /**
+     * Returns key-value pair for the pivot table in relation to the parent model
+     */
+    getPivotPair (parent: LucidRow): [string, number | string]
+
+    /**
+     * Returns key-value pair for the pivot table in relation to the related model
+     */
+    getPivotRelatedPair (related: LucidRow): [string, number | string]
   }
 
   /**

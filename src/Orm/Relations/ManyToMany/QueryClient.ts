@@ -14,7 +14,7 @@ import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Luci
 
 import { ManyToMany } from './index'
 import { ManyToManyQueryBuilder } from './QueryBuilder'
-import { getValue, managedTransaction, syncDiff } from '../../../utils'
+import { managedTransaction, syncDiff } from '../../../utils'
 
 /**
  * Query client for executing queries in scope to the defined
@@ -62,20 +62,6 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
   }
 
   /**
-   * Returns value for the foreign key
-   */
-  private getForeignKeyValue (parent: LucidRow, action: string) {
-    return getValue(parent, this.relation.localKey, this.relation, action)
-  }
-
-  /**
-   * Returns related foreign key value
-   */
-  private getRelatedForeignKeyValue (related: LucidRow, action: string) {
-    return getValue(related, this.relation.relatedKey, this.relation, action)
-  }
-
-  /**
    * Returns query builder instance
    */
   public query () {
@@ -110,7 +96,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
        * Sync when checkExisting = true, to avoid duplicate rows. Otherwise
        * perform insert
        */
-      const relatedForeignKeyValue = this.getRelatedForeignKeyValue(related, 'save')
+      const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(related)
       if (checkExisting) {
         await this.sync([relatedForeignKeyValue], false, trx)
       } else {
@@ -142,7 +128,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
        * Sync when checkExisting = true, to avoid duplicate rows. Otherwise
        * perform insert
        */
-      const relatedForeignKeyValues = related.map((one) => this.getRelatedForeignKeyValue(one, 'saveMany'))
+      const relatedForeignKeyValues = related.map((one) => this.relation.getPivotRelatedPair(one)[1])
       if (checkExisting) {
         await this.sync(relatedForeignKeyValues, false, trx)
       } else {
@@ -168,7 +154,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
       /**
        * Sync or attach a new one row
        */
-      const relatedForeignKeyValue = this.getRelatedForeignKeyValue(related, 'save')
+      const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(related)
       if (checkExisting) {
         await this.sync([relatedForeignKeyValue], false, trx)
       } else {
@@ -196,7 +182,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
       /**
        * Sync or attach new rows
        */
-      const relatedForeignKeyValues = related.map((one) => this.getRelatedForeignKeyValue(one, 'saveMany'))
+      const relatedForeignKeyValues = related.map((one) => this.relation.getPivotRelatedPair(one)[1])
       if (checkExisting) {
         await this.sync(relatedForeignKeyValues, false, trx)
       } else {
@@ -218,7 +204,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
     /**
      * Pivot foreign key value (On the parent model)
      */
-    const foreignKeyValue = this.getForeignKeyValue(this.parent, 'attach')
+    const [, foreignKeyValue] = this.relation.getPivotPair(this.parent)
 
     /**
      * Finding if `ids` parameter is an object or not

@@ -69,7 +69,7 @@ export function ensureRelationIsBooted (relation: RelationshipsContract) {
  * exception when the value is missing
  */
 export function getValue (
-  model: LucidRow,
+  model: LucidRow | ModelObject,
   key: string,
   relation: RelationshipsContract,
   action = 'preload',

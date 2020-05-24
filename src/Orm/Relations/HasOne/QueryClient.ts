@@ -14,7 +14,7 @@ import { ModelObject, LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 
 import { HasOne } from './index'
 import { HasOneQueryBuilder } from './QueryBuilder'
-import { getValue, managedTransaction } from '../../../utils'
+import { managedTransaction } from '../../../utils'
 
 /**
  * Query client for executing queries in scope to the defined
@@ -50,13 +50,6 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
   }
 
   /**
-   * Returns value for the foreign key
-   */
-  private getForeignKeyValue (parent: LucidRow, action: string) {
-    return getValue(parent, this.relation.localKey, this.relation, action)
-  }
-
-  /**
    * Returns instance of query builder
    */
   public query (): any {
@@ -71,7 +64,7 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
       this.parent.$trx = trx
       await this.parent.save()
 
-      related[this.relation.foreignKey] = this.getForeignKeyValue(this.parent, 'save')
+      this.relation.hydrateForPersistance(this.parent, related)
       related.$trx = trx
       await related.save()
     })
@@ -87,9 +80,9 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
       this.parent.$trx = trx
       await parent.save()
 
-      return this.relation.relatedModel().create(Object.assign({
-        [this.relation.foreignKey]: this.getForeignKeyValue(parent, 'create'),
-      }, values), { client: trx })
+      const valuesToPersist = Object.assign({}, values)
+      this.relation.hydrateForPersistance(this.parent, valuesToPersist)
+      return this.relation.relatedModel().create(valuesToPersist, { client: trx })
     })
   }
 
@@ -104,9 +97,12 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
       this.parent.$trx = trx
       await this.parent.save()
 
-      return this.relation.relatedModel().firstOrCreate(Object.assign({
-        [this.relation.foreignKey]: this.getForeignKeyValue(this.parent, 'firstOrCreate'),
-      }, search), savePayload, { client: trx })
+      const valuesToPersist = Object.assign({}, search)
+      this.relation.hydrateForPersistance(this.parent, valuesToPersist)
+
+      return this.relation
+        .relatedModel()
+        .firstOrCreate(valuesToPersist, savePayload, { client: trx })
     })
   }
 
@@ -121,9 +117,12 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
       this.parent.$trx = trx
       await this.parent.save()
 
-      return this.relation.relatedModel().updateOrCreate(Object.assign({
-        [this.relation.foreignKey]: this.getForeignKeyValue(this.parent, 'updateOrCreate'),
-      }, search), updatePayload, { client: trx })
+      const valuesToPersist = Object.assign({}, search)
+      this.relation.hydrateForPersistance(this.parent, valuesToPersist)
+
+      return this.relation
+        .relatedModel()
+        .updateOrCreate(valuesToPersist, updatePayload, { client: trx })
     })
   }
 }

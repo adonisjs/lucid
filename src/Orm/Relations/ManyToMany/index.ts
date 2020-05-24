@@ -17,7 +17,7 @@ import {
 
 import { KeysExtractor } from '../KeysExtractor'
 import { ManyToManyQueryClient } from './QueryClient'
-import { ensureRelationIsBooted } from '../../../utils'
+import { ensureRelationIsBooted, getValue } from '../../../utils'
 
 /**
  * Manages loading and persisting many to many relationship
@@ -186,5 +186,19 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
    */
   public eagerQuery (parent: LucidRow[], client: QueryClientContract) {
     return ManyToManyQueryClient.eagerQuery(client, this, parent)
+  }
+
+  /**
+   * Returns key-value pair for the pivot table in relation to the parent model
+   */
+  public getPivotPair (parent: LucidRow): [string, number | string] {
+    return [this.pivotForeignKey, getValue(parent, this.localKey, this, 'persist')]
+  }
+
+  /**
+   * Returns key-value pair for the pivot table in relation to the related model
+   */
+  public getPivotRelatedPair (related: LucidRow): [string, number | string] {
+    return [this.pivotRelatedForeignKey, getValue(related, this.relatedKey, this, 'persist')]
   }
 }
