@@ -14,8 +14,13 @@ import {
   NewUpModelFunction,
   ModelStateCallback,
   FactoryModelContract,
-  FactoryBuilderContract,
+  FactoryRelationContract,
 } from '@ioc:Adonis/Lucid/Factory'
+
+import { HasOne } from './Relations/HasOne'
+import { HasMany } from './Relations/HasMany'
+import { BelongsTo } from './Relations/BelongsTo'
+import { ManyToMany } from './Relations/ManyToMany'
 
 import { FactoryBuilder } from './FactoryBuilder'
 
@@ -32,9 +37,7 @@ export class FactoryModel implements FactoryModelContract<LucidModel, any> {
   /**
    * A collection of factory relations
    */
-  public relations: {
-    [relation: string]: () => FactoryBuilderContract<FactoryModelContract<LucidModel, any>>
-  } = {}
+  public relations: { [relation: string]: FactoryRelationContract } = {}
 
   constructor (
     public model: LucidModel,
@@ -59,22 +62,13 @@ export class FactoryModel implements FactoryModelContract<LucidModel, any> {
    * Returns the pre-registered relationship factory function, along with
    * the original model relation.
    */
-  public getRelation (relation: string): {
-    factory: FactoryBuilderContract<FactoryModelContract<LucidModel, any>>
-    relation: RelationshipsContract,
-  } {
+  public getRelation (relation: string): FactoryRelationContract {
     const relationship = this.relations[relation]
     if (!relationship) {
       throw new Error(`Cannot setup undefined relationship "${relation}". Double check the model factory`)
     }
 
-    const modelRelation = this.model.$getRelation(relation)!
-    const relationshipFactory = relationship()
-
-    return {
-      factory: relationshipFactory,
-      relation: modelRelation,
-    }
+    return relationship
   }
 
   /**
@@ -93,14 +87,30 @@ export class FactoryModel implements FactoryModelContract<LucidModel, any> {
     relation: K,
     callback: any,
   ): any {
-    if (!this.model.$getRelation(relation)) {
+    const modelRelation = this.model.$getRelation(relation) as RelationshipsContract
+
+    if (!modelRelation) {
       throw new Error([
         `Cannot define "${relation}" relationship.`,
         `The relationship must exist on the "${this.model.name}" model first`,
       ].join(' '))
     }
 
-    this.relations[relation as unknown as string] = callback
+    switch (modelRelation.type) {
+      case 'belongsTo':
+        this.relations[relation as unknown as string] = new BelongsTo(modelRelation, callback)
+        break
+      case 'hasOne':
+        this.relations[relation as unknown as string] = new HasOne(modelRelation, callback)
+        break
+      case 'hasMany':
+        this.relations[relation as unknown as string] = new HasMany(modelRelation, callback)
+        break
+      case 'manyToMany':
+        this.relations[relation as unknown as string] = new ManyToMany(modelRelation, callback)
+        break
+    }
+
     return this
   }
 

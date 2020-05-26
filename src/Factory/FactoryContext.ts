@@ -7,10 +7,10 @@
  * file that was distributed with this source code.
 */
 
-import { FactoryStateContract } from '@ioc:Adonis/Lucid/Factory'
+import { FactoryContextContract } from '@ioc:Adonis/Lucid/Factory'
 import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
-export class FactoryState implements FactoryStateContract {
+export class FactoryContext implements FactoryContextContract {
   public faker: any = {}
 
   constructor (
