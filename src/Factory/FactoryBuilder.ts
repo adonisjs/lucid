@@ -10,14 +10,11 @@
 import { LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model'
 import {
   FactoryModelContract,
+  FactoryContextContract,
   FactoryBuilderContract,
 } from '@ioc:Adonis/Lucid/Factory'
 
-import { HasOne } from './Relations/HasOne'
-import { HasMany } from './Relations/HasMany'
-import { FactoryState } from './FactoryState'
-import { BelongsTo } from './Relations/BelongsTo'
-import { ManyToMany } from './Relations/ManyToMany'
+import { FactoryContext } from './FactoryContext'
 
 /**
  * Factory builder exposes the API to create/persist factory model instances.
@@ -51,6 +48,8 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    */
   private appliedStates: Set<string> = new Set()
 
+  private ctx?: FactoryContextContract
+
   constructor (private model: FactoryModelContract<LucidModel, any>) {
   }
 
@@ -59,12 +58,12 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    */
   private async getFactoryState (isStubbed: boolean) {
     if (isStubbed === true) {
-      return new FactoryState(isStubbed, undefined)
+      return new FactoryContext(isStubbed, undefined)
     }
 
     const client = this.model.model.$adapter.modelConstructorClient(this.model.model)
     const trx = await client.transaction()
-    return new FactoryState(isStubbed, trx)
+    return new FactoryContext(isStubbed, trx)
   }
 
   /**
@@ -78,14 +77,14 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Returns the lucid model instance by invoking the `newUp` method
    * on the Factory model.
    */
-  private async getModelInstance (state: FactoryState) {
+  private async getModelInstance (state: FactoryContextContract) {
     return await this.model.newUp(state, this.getAttributesForIndex(this.currentIndex))
   }
 
   /**
    * Apply states by invoking state callback
    */
-  private async applyStates (modelInstance: LucidRow, factoryState: FactoryState) {
+  private async applyStates (modelInstance: LucidRow, factoryState: FactoryContextContract) {
     for (let state of this.appliedStates) {
       await this.model.getState(state)(modelInstance, factoryState)
     }
@@ -95,56 +94,26 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Makes relationship instances. Call [[createRelation]] to
    * also persist them.
    */
-  private async makeRelations (modelInstance: LucidRow, state: FactoryState) {
+  private async makeRelations (modelInstance: LucidRow, state: FactoryContextContract) {
     for (let { name, count, callback } of this.withRelations) {
-      const { factory, relation } = this.model.getRelation(name)
-
-      if (typeof (callback) === 'function') {
-        callback(factory)
-      }
-
-      switch (relation.type) {
-        case 'belongsTo':
-          await new BelongsTo(relation).make(modelInstance, state, factory)
-          break
-        case 'hasOne':
-          await new HasOne(relation).make(modelInstance, state, factory)
-          break
-        case 'hasMany':
-          await new HasMany(relation).make(modelInstance, state, factory, count)
-          break
-        case 'manyToMany':
-          await new ManyToMany(relation).make(modelInstance, state, factory, count)
-          break
-      }
+      const relation = this.model.getRelation(name)
+      await relation.withCtx(state).make(modelInstance, callback, count)
     }
   }
 
   /**
    * Makes and persists relationship instances
    */
-  public async createRelations (modelInstance: LucidRow, state: FactoryState) {
+  public async createRelations (modelInstance: LucidRow, state: FactoryContextContract) {
     for (let { name, count, callback } of this.withRelations) {
-      const { factory, relation } = this.model.getRelation(name)
-      if (typeof (callback) === 'function') {
-        callback(factory)
-      }
-
-      switch (relation.type) {
-        case 'belongsTo':
-          await new BelongsTo(relation).create(modelInstance, state, factory)
-          break
-        case 'hasOne':
-          await new HasOne(relation).create(modelInstance, state, factory)
-          break
-        case 'hasMany':
-          await new HasMany(relation).create(modelInstance, state, factory, count)
-          break
-        case 'manyToMany':
-          await new ManyToMany(relation).create(modelInstance, state, factory, count)
-          break
-      }
+      const relation = this.model.getRelation(name)
+      await relation.withCtx(state).create(modelInstance, callback, count)
     }
+  }
+
+  public withCtx (ctx: FactoryContextContract): this {
+    this.ctx = ctx
+    return this
   }
 
   /**
@@ -178,10 +147,9 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Relationships are still loaded and states are also applied.
    */
   public async make (
-    state?: FactoryState,
-    callback?: (model: LucidRow, state: FactoryState) => void,
+    callback?: (model: LucidRow, state: FactoryContextContract) => void,
   ) {
-    const factoryState = state || await this.getFactoryState(true)
+    const factoryState = this.ctx || await this.getFactoryState(true)
 
     const modelInstance = await this.getModelInstance(factoryState)
     this.applyStates(modelInstance, factoryState)
@@ -206,10 +174,9 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * database.
    */
   public async create (
-    state?: FactoryState,
-    callback?: (model: LucidRow, state: FactoryState) => void,
+    callback?: (model: LucidRow, state: FactoryContextContract) => void,
   ) {
-    const factoryState = state || await this.getFactoryState(false)
+    const factoryState = this.ctx || await this.getFactoryState(false)
 
     const modelInstance = await this.getModelInstance(factoryState)
     this.applyStates(modelInstance, factoryState)
@@ -233,12 +200,12 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
        * Setup relationships (they are persisted too)
        */
       await this.createRelations(modelInstance, factoryState)
-      if (!state && factoryState.$trx) {
+      if (!this.ctx && factoryState.$trx) {
         await factoryState.$trx.commit()
       }
       return modelInstance
     } catch (error) {
-      if (!state && factoryState.$trx) {
+      if (!this.ctx && factoryState.$trx) {
         await factoryState.$trx.rollback()
       }
       throw error
@@ -250,15 +217,14 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    */
   public async makeMany (
     count: number,
-    state?: FactoryState,
-    callback?: (model: LucidRow, state: FactoryState) => void,
+    callback?: (model: LucidRow, state: FactoryContextContract) => void,
   ) {
     let modelInstances: LucidRow[] = []
 
     const counter = new Array(count).fill(0).map((_, i) => i)
     for (let index of counter) {
       this.currentIndex = index
-      modelInstances.push(await this.make(state, callback))
+      modelInstances.push(await this.make(callback))
     }
 
     return modelInstances
@@ -269,15 +235,14 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    */
   public async createMany (
     count: number,
-    state?: FactoryState,
-    callback?: (model: LucidRow, state: FactoryState) => void,
+    callback?: (model: LucidRow, state: FactoryContextContract) => void,
   ) {
     let modelInstances: LucidRow[] = []
 
     const counter = new Array(count).fill(0).map((_, i) => i)
     for (let index of counter) {
       this.currentIndex = index
-      modelInstances.push(await this.create(state, callback))
+      modelInstances.push(await this.create(callback))
     }
 
     return modelInstances

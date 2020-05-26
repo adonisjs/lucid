@@ -10,20 +10,14 @@
 declare module '@ioc:Adonis/Lucid/Factory' {
   import { LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model'
   import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
-  import { ExtractModelRelations, RelationshipsContract, ModelRelations } from '@ioc:Adonis/Lucid/Relations'
-
-  export interface FactoryStateContract {
-    faker: any,
-    isStubbed: boolean,
-    $trx: TransactionClientContract | undefined
-  }
+  import { ExtractModelRelations, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 
   /**
    * Function that create a new instance of a Lucid model with
    * the given attributes.
    */
   export type NewUpModelFunction<Model extends LucidModel, Attributes extends any> = (
-    state: FactoryStateContract,
+    ctx: FactoryContextContract,
     attributes?: Attributes,
   ) => Promise<InstanceType<Model>> | InstanceType<Model>
 
@@ -52,8 +46,55 @@ declare module '@ioc:Adonis/Lucid/Factory' {
    */
   export type ModelStateCallback<Model extends LucidRow> = (
     model: Model,
-    state: FactoryStateContract,
+    ctx: FactoryContextContract,
   ) => any | Promise<any>
+
+  /**
+   * The runtime context of the factory builder. A new state is constructed
+   * for each `create/make` operation and passed down to relationships
+   * as well.
+   */
+  export interface FactoryContextContract {
+    faker: any,
+    isStubbed: boolean,
+    $trx: TransactionClientContract | undefined
+  }
+
+  /**
+   * Shape of the factory relationships. To keep relationships slim, we will have
+   * a common interface for relationships vs fine tuning API for each type of
+   * relationship
+   */
+  export interface FactoryRelationContract {
+    /**
+     * Reference to the Lucid model relationship
+     */
+    relation: RelationshipsContract,
+
+    /**
+     * Pass context to the relationship. Must be done everytime, so that
+     * relationships uses the same transaction as the parent model
+     */
+    withCtx (ctx: FactoryContextContract): this
+
+    /**
+     * Create and persist
+     */
+    create (
+      parent: LucidRow,
+      callback?: (factory: FactoryBuilderContract<FactoryModelContract<LucidModel, any>>) => void,
+      count?: number,
+    ): Promise<void>
+
+    /**
+     * Create and stub
+     */
+    make (
+      parent: LucidRow,
+      callback?: (factory: FactoryBuilderContract<FactoryModelContract<LucidModel, any>>) => void,
+      count?: number,
+    ): Promise<void>
+  }
 
   /**
   * Factory builder uses the factory model to create/make
@@ -93,13 +134,22 @@ declare module '@ioc:Adonis/Lucid/Factory' {
     ): this
 
     /**
+     * Define custom runtime context. This method is usually called by
+     * the relationships to ensure a single context is used by the
+     * parent and relationship factories.
+     *
+     * Do not define a custom context, unless you know what you are really
+     * doing.
+     */
+    withCtx (ctx: FactoryContextContract): this
+
+    /**
      * Create model instance.
      */
     make (
-      state?: FactoryStateContract,
       callback?: (
         model: ExtractFactoryModel<FactoryModel>,
-        state: FactoryStateContract,
+        ctx: FactoryContextContract,
       ) => void
     ): Promise<ExtractFactoryModel<FactoryModel>>
 
@@ -107,10 +157,9 @@ declare module '@ioc:Adonis/Lucid/Factory' {
      * Create and persist model instance
      */
     create (
-      state?: FactoryStateContract,
       callback?: (
         model: ExtractFactoryModel<FactoryModel>,
-        state: FactoryStateContract,
+        ctx: FactoryContextContract,
       ) => void
     ): Promise<ExtractFactoryModel<FactoryModel>>
 
@@ -119,10 +168,9 @@ declare module '@ioc:Adonis/Lucid/Factory' {
      */
     makeMany (
       count: number,
-      state?: FactoryStateContract,
       callback?: (
         model: ExtractFactoryModel<FactoryModel>,
-        state: FactoryStateContract,
+        ctx: FactoryContextContract,
       ) => void
     ): Promise<ExtractFactoryModel<FactoryModel>[]>
 
@@ -131,10 +179,9 @@ declare module '@ioc:Adonis/Lucid/Factory' {
      */
     createMany (
       count: number,
-      state?: FactoryStateContract,
       callback?: (
         model: ExtractFactoryModel<FactoryModel>,
-        state: FactoryStateContract,
+        ctx: FactoryContextContract,
       ) => void
     ): Promise<ExtractFactoryModel<FactoryModel>[]>
   }
@@ -166,10 +213,7 @@ declare module '@ioc:Adonis/Lucid/Factory' {
     /**
      * Returns the relationship and its factory.
      */
-    getRelation (relation: string): {
-      factory: FactoryBuilderContract<FactoryModelContract<LucidModel, any>>
-      relation: RelationshipsContract,
-    }
+    getRelation (relation: string): FactoryRelationContract
 
     /**
      * Creates an instance of lucid model by invoking callback passed
@@ -205,6 +249,9 @@ declare module '@ioc:Adonis/Lucid/Factory' {
    * Factory manager to define new factories
    */
   export interface FactoryManager {
+    /**
+     * Define a custom factory
+     */
     define<Model extends LucidModel, Attributes extends any> (
       model: Model,
       callback: NewUpModelFunction<Model, Attributes>

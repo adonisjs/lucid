@@ -10,38 +10,59 @@
 import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { ManyToManyRelationContract } from '@ioc:Adonis/Lucid/Relations'
 import {
-  FactoryStateContract,
   FactoryModelContract,
+  FactoryContextContract,
   FactoryBuilderContract,
+  FactoryRelationContract,
 } from '@ioc:Adonis/Lucid/Factory'
 
-export class ManyToMany {
-  constructor (private relation: ManyToManyRelationContract<LucidModel, LucidModel>) {
+export class ManyToMany implements FactoryRelationContract {
+  private ctx: FactoryContextContract
+
+  constructor (
+    public relation: ManyToManyRelationContract<LucidModel, LucidModel>,
+    private factory: () => FactoryBuilderContract<FactoryModelContract<LucidModel, any>>
+  ) {
     this.relation.boot()
+  }
+
+  public withCtx (ctx: FactoryContextContract): this {
+    this.ctx = ctx
+    return this
   }
 
   public async make (
     parent: LucidRow,
-    state: FactoryStateContract,
-    factory: FactoryBuilderContract<any>,
+    callback?: (factory: FactoryBuilderContract<FactoryModelContract<LucidModel, any>>) => void,
     count?: number,
   ) {
-    const instances = await factory.makeMany(count || 1, state)
+    const factory = this.factory()
+    if (typeof (callback) === 'function') {
+      callback(factory)
+    }
+
+    const instances = await factory.withCtx(this.ctx).makeMany(count || 1)
     parent.$setRelated(this.relation.relationName, instances)
   }
 
   public async create (
     parent: LucidRow,
-    state: FactoryStateContract,
-    factory: FactoryBuilderContract<FactoryModelContract<LucidModel, any>>,
+    callback?: (factory: FactoryBuilderContract<FactoryModelContract<LucidModel, any>>) => void,
     count?: number,
   ) {
+    const factory = this.factory()
+    if (typeof (callback) === 'function') {
+      callback(factory)
+    }
+
     const customAttributes = {}
     const pivotAttributes: any = {}
 
-    const instances = await factory.createMany(count || 1, state, (related) => {
-      related.merge(customAttributes)
-    })
+    const instances = await factory
+      .withCtx(this.ctx)
+      .createMany(count || 1, (related) => {
+        related.merge(customAttributes)
+      })
 
     const [pivotKey, pivotValue] = this.relation.getPivotPair(parent)
 
@@ -52,7 +73,7 @@ export class ManyToMany {
       pivotAttributes[pivotRelatedKey] = pivotRelatedValue
     })
 
-    await this.relation.client(parent, state.$trx!).attach(pivotAttributes)
+    await this.relation.client(parent, this.ctx.$trx!).attach(pivotAttributes)
     parent.$setRelated(this.relation.relationName, instances)
   }
 }
