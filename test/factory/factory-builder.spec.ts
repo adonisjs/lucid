@@ -9,7 +9,6 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { ModelAttributes } from '@ioc:Adonis/Lucid/Model'
 import test from 'japa'
 import { column } from '../../src/Orm/Decorators'
 
@@ -55,7 +54,9 @@ test.group('Factory | Factory Builder | make', (group) => {
       public points: number
     }
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .state('withPoints', (user) => user.points = 10)
       .build()
 
@@ -76,8 +77,12 @@ test.group('Factory | Factory Builder | make', (group) => {
       public points: number = 0
     }
 
-    const factory = new FactoryModel(User, () => new User())
-      .state('withPoints', (user) => user.points += 10)
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
+      .state('withPoints', (user) => {
+        user.points += 10
+      })
       .build()
 
     const user = await factory.apply('withPoints').apply('withPoints').make()
@@ -85,7 +90,7 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('define custom attributes accepted by the newUp method', async (assert) => {
+  test('merge custom attributes', async (assert) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -97,14 +102,71 @@ test.group('Factory | Factory Builder | make', (group) => {
       public points: number
     }
 
-    const factory = new FactoryModel(User, (_, attributes?: Partial<ModelAttributes<User>>) => {
-      const user = new User()
-      user.username = attributes?.username || 'virk'
-      return user
+    const factory = new FactoryModel(User, () => {
+      return {
+        username: 'virk',
+      }
     }).build()
 
-    const user = await factory.fill({ username: 'nikk' }).make()
+    const user = await factory.merge({ username: 'nikk' }).make()
     assert.equal(user.username, 'nikk')
+    assert.isFalse(user.$isPersisted)
+  })
+
+  test('define custom merge function', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(User, () => {
+      return {
+        username: 'virk',
+      }
+    })
+      .merge(() => {})
+      .build()
+
+    const user = await factory.merge({ username: 'nikk' }).make()
+    assert.equal(user.username, 'virk')
+    assert.isFalse(user.$isPersisted)
+  })
+
+  test('define custom newUp function', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(User, () => {
+      return {
+        username: 'virk',
+      }
+    })
+      .newUp((attributes) => {
+        const user = new User()
+        user.fill(attributes)
+        user.$extras = { invoked: true }
+        return user
+      })
+      .merge(() => {})
+      .build()
+
+    const user = await factory.make()
+    assert.equal(user.username, 'virk')
+    assert.deepEqual(user.$extras, { invoked: true })
     assert.isFalse(user.$isPersisted)
   })
 
@@ -120,13 +182,13 @@ test.group('Factory | Factory Builder | make', (group) => {
       public points: number
     }
 
-    const factory = new FactoryModel(User, (_, attributes?: Partial<ModelAttributes<User>>) => {
-      const user = new User()
-      user.username = attributes?.username || 'virk'
-      return user
+    const factory = new FactoryModel(User, () => {
+      return {
+        username: 'virk',
+      }
     }).build()
 
-    const user = await factory.fill([{ username: 'nikk' }, { username: 'romain' }]).make()
+    const user = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).make()
     assert.equal(user.username, 'nikk')
     assert.isFalse(user.$isPersisted)
   })
@@ -160,7 +222,9 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
       public points: number
     }
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .state('withPoints', (user) => user.points = 10)
       .build()
 
@@ -184,7 +248,9 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
       public points: number = 0
     }
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .state('withPoints', (user) => user.points += 10)
       .build()
 
@@ -208,13 +274,13 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
       public points: number
     }
 
-    const factory = new FactoryModel(User, (_, attributes?: Partial<ModelAttributes<User>>) => {
-      const user = new User()
-      user.username = attributes?.username || 'virk'
-      return user
+    const factory = new FactoryModel(User, () => {
+      return {
+        username: 'virk',
+      }
     }).build()
 
-    const users = await factory.fill({ username: 'nikk' }).makeMany(2)
+    const users = await factory.merge({ username: 'nikk' }).makeMany(2)
     assert.lengthOf(users, 2)
     assert.equal(users[0].username, 'nikk')
     assert.isFalse(users[0].$isPersisted)
@@ -234,13 +300,13 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
       public points: number
     }
 
-    const factory = new FactoryModel(User, (_, attributes?: Partial<ModelAttributes<User>>) => {
-      const user = new User()
-      user.username = attributes?.username || 'virk'
-      return user
+    const factory = new FactoryModel(User, () => {
+      return {
+        username: 'virk',
+      }
     }).build()
 
-    const users = await factory.fill([{ username: 'nikk' }, { username: 'romain' }]).makeMany(2)
+    const users = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).makeMany(2)
     assert.lengthOf(users, 2)
     assert.equal(users[0].username, 'nikk')
     assert.isFalse(users[0].$isPersisted)
@@ -277,7 +343,9 @@ test.group('Factory | Factory Builder | create', (group) => {
       public points: number
     }
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .state('withPoints', (user) => user.points = 10)
       .build()
 
@@ -298,7 +366,9 @@ test.group('Factory | Factory Builder | create', (group) => {
       public points: number = 0
     }
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .state('withPoints', (user) => user.points += 10)
       .build()
 
@@ -319,13 +389,13 @@ test.group('Factory | Factory Builder | create', (group) => {
       public points: number
     }
 
-    const factory = new FactoryModel(User, (_, attributes?: Partial<ModelAttributes<User>>) => {
-      const user = new User()
-      user.username = attributes?.username || 'virk'
-      return user
+    const factory = new FactoryModel(User, () => {
+      return {
+        username: 'virk',
+      }
     }).build()
 
-    const user = await factory.fill({ username: 'nikk' }).create()
+    const user = await factory.merge({ username: 'nikk' }).create()
     assert.equal(user.username, 'nikk')
     assert.isTrue(user.$isPersisted)
   })
@@ -342,13 +412,13 @@ test.group('Factory | Factory Builder | create', (group) => {
       public points: number
     }
 
-    const factory = new FactoryModel(User, (_, attributes?: Partial<ModelAttributes<User>>) => {
-      const user = new User()
-      user.username = attributes?.username || 'virk'
-      return user
+    const factory = new FactoryModel(User, () => {
+      return {
+        username: 'virk',
+      }
     }).build()
 
-    const user = await factory.fill([{ username: 'nikk' }, { username: 'romain' }]).create()
+    const user = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).create()
     assert.equal(user.username, 'nikk')
     assert.isTrue(user.$isPersisted)
   })
@@ -382,7 +452,9 @@ test.group('Factory | Factory Builder | createMany', (group) => {
       public points: number
     }
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .state('withPoints', (user) => user.points = 10)
       .build()
 
@@ -406,7 +478,9 @@ test.group('Factory | Factory Builder | createMany', (group) => {
       public points: number = 0
     }
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .state('withPoints', (user) => user.points += 10)
       .build()
 
@@ -430,14 +504,14 @@ test.group('Factory | Factory Builder | createMany', (group) => {
       public points: number
     }
 
-    const factory = new FactoryModel(User, (_, attributes?: Partial<ModelAttributes<User>>) => {
-      const user = new User()
-      user.username = attributes?.username || `u-${new Date().getTime()}`
-      user.points = attributes?.points || 0
-      return user
+    const factory = new FactoryModel(User, () => {
+      return {
+        username: `u-${new Date().getTime()}`,
+        points: 0,
+      }
     }).build()
 
-    const users = await factory.fill({ points: 10 }).createMany(2)
+    const users = await factory.merge({ points: 10 }).createMany(2)
     assert.lengthOf(users, 2)
     assert.equal(users[0].points, 10)
     assert.isTrue(users[0].$isPersisted)
@@ -457,13 +531,13 @@ test.group('Factory | Factory Builder | createMany', (group) => {
       public points: number
     }
 
-    const factory = new FactoryModel(User, (_, attributes?: Partial<ModelAttributes<User>>) => {
-      const user = new User()
-      user.username = attributes?.username || 'virk'
-      return user
+    const factory = new FactoryModel(User, () => {
+      return {
+        username: 'virk',
+      }
     }).build()
 
-    const users = await factory.fill([{ username: 'nikk' }, { username: 'romain' }]).createMany(2)
+    const users = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).createMany(2)
     assert.lengthOf(users, 2)
     assert.equal(users[0].username, 'nikk')
     assert.isTrue(users[0].$isPersisted)

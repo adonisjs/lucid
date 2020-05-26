@@ -68,12 +68,14 @@ test.group('Factory | HasOne | make', (group) => {
     }
 
     const profileFactory = new FactoryModel(Profile, () => {
-      const profile = new Profile()
-      profile.displayName = 'virk'
-      return profile
+      return {
+        displayName: 'virk',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('profile', () => profileFactory)
       .build()
 
@@ -109,18 +111,20 @@ test.group('Factory | HasOne | make', (group) => {
       public profile: HasOne<typeof Profile>
     }
 
-    const profileFactory = new FactoryModel(Profile, (_, attributes?: any) => {
-      const profile = new Profile()
-      profile.displayName = attributes?.displayName || 'virk'
-      return profile
+    const profileFactory = new FactoryModel(Profile, () => {
+      return {
+        displayName: 'virk',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('profile', () => profileFactory)
       .build()
 
     const user = await factory
-      .with('profile', 1, (related) => related.fill({ displayName: 'Romain' }))
+      .with('profile', 1, (related) => related.merge({ displayName: 'Romain' }))
       .make()
 
     assert.isFalse(user.$isPersisted)
@@ -172,12 +176,14 @@ test.group('Factory | HasOne | create', (group) => {
     }
 
     const profileFactory = new FactoryModel(Profile, () => {
-      const profile = new Profile()
-      profile.displayName = 'virk'
-      return profile
+      return {
+        displayName: 'virk',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('profile', () => profileFactory)
       .build()
 
@@ -213,18 +219,20 @@ test.group('Factory | HasOne | create', (group) => {
       public profile: HasOne<typeof Profile>
     }
 
-    const profileFactory = new FactoryModel(Profile, (_, attributes?: any) => {
-      const profile = new Profile()
-      profile.displayName = attributes?.displayName || 'virk'
-      return profile
+    const profileFactory = new FactoryModel(Profile, () => {
+      return {
+        displayName: 'virk',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('profile', () => profileFactory)
       .build()
 
     const user = await factory
-      .with('profile', 1, (related) => related.fill({ displayName: 'Romain' }))
+      .with('profile', 1, (related) => related.merge({ displayName: 'Romain' }))
       .create()
 
     assert.isTrue(user.$isPersisted)
@@ -259,12 +267,14 @@ test.group('Factory | HasOne | create', (group) => {
     }
 
     const profileFactory = new FactoryModel(Profile, () => {
-      const profile = new Profile()
-      profile.displayName = 'virk'
-      return profile
+      return {
+        displayName: 'virk',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('profile', () => profileFactory)
       .build()
 
@@ -303,11 +313,12 @@ test.group('Factory | HasOne | create', (group) => {
     }
 
     const profileFactory = new FactoryModel(Profile, () => {
-      const profile = new Profile()
-      return profile
+      return {}
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('profile', () => profileFactory)
       .build()
 

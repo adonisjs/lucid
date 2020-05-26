@@ -11,8 +11,10 @@ import { LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model'
 import { ExtractModelRelations, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 
 import {
-  NewUpModelFunction,
-  ModelStateCallback,
+  StateCallback,
+  MergeCallback,
+  NewUpCallback,
+  DefineCallback,
   FactoryModelContract,
   FactoryRelationContract,
 } from '@ioc:Adonis/Lucid/Factory'
@@ -28,28 +30,48 @@ import { FactoryBuilder } from './FactoryBuilder'
  * Factory model exposes the API to define a model factory with custom
  * states and relationships
  */
-export class FactoryModel implements FactoryModelContract<LucidModel, any> {
+export class FactoryModel<Model extends LucidModel> implements FactoryModelContract<Model> {
+  /**
+   * Method to instantiate a new model instance. This method can be
+   * overridden using the `newUp` public method.
+   */
+  public newUpModelInstance: NewUpCallback<FactoryModelContract<LucidModel>> = function (
+    attributes: any,
+  ) {
+    const modelInstance = new this.model()
+    modelInstance.merge(attributes)
+    return modelInstance
+  }.bind(this)
+
+  /**
+   * Method to merge runtime attributes with the model instance. This method
+   * can be overridden using the `merge` method.
+   */
+  public mergeAttributes: MergeCallback<FactoryModelContract<LucidModel>> = function (
+    model: LucidRow,
+    attributes: any,
+  ) {
+    model.merge(attributes)
+  }.bind(this)
+
   /**
    * A collection of factory states
    */
-  public states: { [key: string]: ModelStateCallback<LucidRow> } = {}
+  public states: { [key: string]: StateCallback<LucidRow> } = {}
 
   /**
    * A collection of factory relations
    */
   public relations: { [relation: string]: FactoryRelationContract } = {}
 
-  constructor (
-    public model: LucidModel,
-    public newUp: NewUpModelFunction<LucidModel, any>,
-  ) {
+  constructor (public model: Model, public define: DefineCallback<LucidModel>) {
   }
 
   /**
    * Returns state callback defined on the model factory. Raises an
    * exception, when state is not registered
    */
-  public getState (state: string): ModelStateCallback<LucidRow> {
+  public getState (state: string): StateCallback<LucidRow> {
     const stateCallback = this.states[state]
     if (!stateCallback) {
       throw new Error(`Cannot apply undefined state "${state}". Double check the model factory`)
@@ -75,7 +97,7 @@ export class FactoryModel implements FactoryModelContract<LucidModel, any> {
    * Define custom state for the factory. When executing the factory,
    * you can apply the pre-defined states
    */
-  public state (state: string, callback: ModelStateCallback<LucidRow>): any {
+  public state (state: string, callback: StateCallback<InstanceType<Model>>): any {
     this.states[state] = callback
     return this
   }
@@ -83,12 +105,15 @@ export class FactoryModel implements FactoryModelContract<LucidModel, any> {
   /**
    * Define a relationship on another factory
    */
-  public related<K extends ExtractModelRelations<LucidRow>> (
-    relation: K,
+  public related<K extends ExtractModelRelations<InstanceType<Model>>> (
+    relation: Extract<K, string>,
     callback: any,
   ): any {
     const modelRelation = this.model.$getRelation(relation) as RelationshipsContract
 
+    /**
+     * Only whitelisted relationships are allowed on the factory
+     */
     if (!modelRelation) {
       throw new Error([
         `Cannot define "${relation}" relationship.`,
@@ -98,19 +123,40 @@ export class FactoryModel implements FactoryModelContract<LucidModel, any> {
 
     switch (modelRelation.type) {
       case 'belongsTo':
-        this.relations[relation as unknown as string] = new BelongsTo(modelRelation, callback)
+        this.relations[relation] = new BelongsTo(modelRelation, callback)
         break
       case 'hasOne':
-        this.relations[relation as unknown as string] = new HasOne(modelRelation, callback)
+        this.relations[relation] = new HasOne(modelRelation, callback)
         break
       case 'hasMany':
-        this.relations[relation as unknown as string] = new HasMany(modelRelation, callback)
+        this.relations[relation] = new HasMany(modelRelation, callback)
         break
       case 'manyToMany':
-        this.relations[relation as unknown as string] = new ManyToMany(modelRelation, callback)
+        this.relations[relation] = new ManyToMany(modelRelation, callback)
         break
+      case 'hasManyThrough':
+        throw new Error([
+          `Cannot define "${relation}" relationship.`,
+          '"hasManyThrough" relationship does not have any persistance API',
+        ].join(' '))
     }
 
+    return this
+  }
+
+  /**
+   * Define a custom `newUp` method
+   */
+  public newUp (callback: NewUpCallback<FactoryModelContract<LucidModel>>): this {
+    this.newUpModelInstance = callback
+    return this
+  }
+
+  /**
+   * Define a custom `merge` method
+   */
+  public merge (callback: MergeCallback<FactoryModelContract<any>>): this {
+    this.mergeAttributes = callback
     return this
   }
 

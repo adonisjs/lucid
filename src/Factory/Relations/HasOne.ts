@@ -10,55 +10,45 @@
 import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { HasOneRelationContract } from '@ioc:Adonis/Lucid/Relations'
 import {
+  RelationCallback,
   FactoryModelContract,
-  FactoryContextContract,
   FactoryBuilderContract,
   FactoryRelationContract,
 } from '@ioc:Adonis/Lucid/Factory'
 
-export class HasOne implements FactoryRelationContract {
-  private ctx: FactoryContextContract
+import { BaseRelation } from './Base'
 
+/**
+ * Has one to factory relation
+ */
+export class HasOne extends BaseRelation implements FactoryRelationContract {
   constructor (
     public relation: HasOneRelationContract<LucidModel, LucidModel>,
-    private factory: () => FactoryBuilderContract<FactoryModelContract<LucidModel, any>>
+    factory: () => FactoryBuilderContract<FactoryModelContract<LucidModel>>
   ) {
+    super(factory)
     this.relation.boot()
   }
 
-  public withCtx (ctx: FactoryContextContract): this {
-    this.ctx = ctx
-    return this
-  }
-
-  public async make (
-    parent: LucidRow,
-    callback?: (factory: FactoryBuilderContract<FactoryModelContract<LucidModel, any>>) => void,
-  ) {
-    const factory = this.factory()
-    if (typeof (callback) === 'function') {
-      callback(factory)
-    }
-
-    const instance = await factory.withCtx(this.ctx).make()
+  /**
+   * Make relationship and set it on the parent model instance
+   */
+  public async make (parent: LucidRow, callback?: RelationCallback) {
+    const factory = this.compile(callback)
+    const instance = await factory.make()
     parent.$setRelated(this.relation.relationName, instance)
   }
 
-  public async create (
-    parent: LucidRow,
-    callback?: (factory: FactoryBuilderContract<FactoryModelContract<LucidModel, any>>) => void,
-  ) {
-    const factory = this.factory()
-    if (typeof (callback) === 'function') {
-      callback(factory)
-    }
+  /**
+   * Persist relationship and set it on the parent model instance
+   */
+  public async create (parent: LucidRow, callback?: RelationCallback) {
+    const factory = this.compile(callback)
 
     const customAttributes = {}
     this.relation.hydrateForPersistance(parent, customAttributes)
-    const instance = await factory
-      .withCtx(this.ctx)
-      .create((related) => related.merge(customAttributes))
 
+    const instance = await factory.create((related) => related.merge(customAttributes))
     parent.$setRelated(this.relation.relationName, instance)
   }
 }

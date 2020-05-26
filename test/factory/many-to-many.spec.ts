@@ -68,12 +68,14 @@ test.group('Factory | ManyToMany | make', (group) => {
     }
 
     const postFactory = new FactoryModel(Skill, () => {
-      const skill = new Skill()
-      skill.name = 'Programming'
-      return skill
+      return {
+        name: 'Programming',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('skills', () => postFactory)
       .build()
 
@@ -109,18 +111,20 @@ test.group('Factory | ManyToMany | make', (group) => {
       public skills: ManyToMany<typeof Skill>
     }
 
-    const postFactory = new FactoryModel(Skill, (_, attributes?: any) => {
-      const skill = new Skill()
-      skill.name = attributes?.name || 'Programming'
-      return skill
+    const postFactory = new FactoryModel(Skill, () => {
+      return {
+        name: 'Programming',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('skills', () => postFactory)
       .build()
 
     const user = await factory.with('skills', 1, (related) => {
-      related.fill({ name: 'Dancing' })
+      related.merge({ name: 'Dancing' })
     }).make()
 
     assert.isFalse(user.$isPersisted)
@@ -154,18 +158,20 @@ test.group('Factory | ManyToMany | make', (group) => {
       public skills: ManyToMany<typeof Skill>
     }
 
-    const postFactory = new FactoryModel(Skill, (_, attributes?: any) => {
-      const skill = new Skill()
-      skill.name = attributes?.name || 'Programming'
-      return skill
+    const postFactory = new FactoryModel(Skill, () => {
+      return {
+        name: 'Programming',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('skills', () => postFactory)
       .build()
 
     const user = await factory.with('skills', 2, (related) => {
-      related.fill({ name: 'Dancing' })
+      related.merge({ name: 'Dancing' })
     }).make()
 
     assert.isFalse(user.$isPersisted)
@@ -222,12 +228,14 @@ test.group('Factory | ManyToMany | create', (group) => {
     }
 
     const postFactory = new FactoryModel(Skill, () => {
-      const skill = new Skill()
-      skill.name = 'Programming'
-      return skill
+      return {
+        name: 'Programming',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('skills', () => postFactory)
       .build()
 
@@ -267,18 +275,20 @@ test.group('Factory | ManyToMany | create', (group) => {
       public skills: ManyToMany<typeof Skill>
     }
 
-    const postFactory = new FactoryModel(Skill, (_, attributes?: any) => {
-      const skill = new Skill()
-      skill.name = attributes?.name || 'Programming'
-      return skill
+    const postFactory = new FactoryModel(Skill, () => {
+      return {
+        name: 'Programming',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('skills', () => postFactory)
       .build()
 
     const user = await factory
-      .with('skills', 1, (related) => related.fill({ name: 'Dancing' }))
+      .with('skills', 1, (related) => related.merge({ name: 'Dancing' }))
       .create()
 
     assert.isTrue(user.$isPersisted)
@@ -316,18 +326,20 @@ test.group('Factory | ManyToMany | create', (group) => {
       public skills: ManyToMany<typeof Skill>
     }
 
-    const postFactory = new FactoryModel(Skill, (_, attributes?: any) => {
-      const skill = new Skill()
-      skill.name = attributes?.name || 'Programming'
-      return skill
+    const postFactory = new FactoryModel(Skill, () => {
+      return {
+        name: 'Programming',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('skills', () => postFactory)
       .build()
 
     const user = await factory
-      .with('skills', 2, (related) => related.fill([
+      .with('skills', 2, (related) => related.merge([
         { name: 'Dancing' },
         { name: 'Programming' },
       ]))
@@ -379,11 +391,12 @@ test.group('Factory | ManyToMany | create', (group) => {
     }
 
     const postFactory = new FactoryModel(Skill, () => {
-      const skill = new Skill()
-      return skill
+      return {}
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('skills', () => postFactory)
       .build()
 

@@ -68,12 +68,14 @@ test.group('Factory | HasMany | make', (group) => {
     }
 
     const postFactory = new FactoryModel(Post, () => {
-      const post = new Post()
-      post.title = 'Adonis 101'
-      return post
+      return {
+        title: 'Adonis 101',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('posts', () => postFactory)
       .build()
 
@@ -110,17 +112,21 @@ test.group('Factory | HasMany | make', (group) => {
       public posts: HasMany<typeof Post>
     }
 
-    const postFactory = new FactoryModel(Post, (_, attributes?: any) => {
-      const post = new Post()
-      post.title = attributes?.title || 'Adonis 101'
-      return post
+    const postFactory = new FactoryModel(Post, () => {
+      return {
+        title: 'Adonis 101',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('posts', () => postFactory)
       .build()
 
-    const user = await factory.with('posts', 1, (related) => related.fill({ title: 'Lucid 101' })).make()
+    const user = await factory
+      .with('posts', 1, (related) => related.merge({ title: 'Lucid 101' }))
+      .make()
 
     assert.isFalse(user.$isPersisted)
     assert.lengthOf(user.posts, 1)
@@ -154,17 +160,21 @@ test.group('Factory | HasMany | make', (group) => {
       public posts: HasMany<typeof Post>
     }
 
-    const postFactory = new FactoryModel(Post, (_, attributes?: any) => {
-      const post = new Post()
-      post.title = attributes?.title || 'Adonis 101'
-      return post
+    const postFactory = new FactoryModel(Post, () => {
+      return {
+        title: 'Adonis 101',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('posts', () => postFactory)
       .build()
 
-    const user = await factory.with('posts', 2, (related) => related.fill({ title: 'Lucid 101' })).make()
+    const user = await factory
+      .with('posts', 2, (related) => related.merge({ title: 'Lucid 101' }))
+      .make()
 
     assert.isFalse(user.$isPersisted)
     assert.lengthOf(user.posts, 2)
@@ -219,12 +229,14 @@ test.group('Factory | HasMany | create', (group) => {
     }
 
     const postFactory = new FactoryModel(Post, () => {
-      const post = new Post()
-      post.title = 'Adonis 101'
-      return post
+      return {
+        title: 'Adonis 101',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('posts', () => postFactory)
       .build()
 
@@ -261,18 +273,20 @@ test.group('Factory | HasMany | create', (group) => {
       public posts: HasMany<typeof Post>
     }
 
-    const postFactory = new FactoryModel(Post, (_, attributes?: any) => {
-      const post = new Post()
-      post.title = attributes?.title || 'Adonis 101'
-      return post
+    const postFactory = new FactoryModel(Post, () => {
+      return {
+        title: 'Adonis 101',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('posts', () => postFactory)
       .build()
 
     const user = await factory
-      .with('posts', 1, (related) => related.fill({ title: 'Lucid 101' }))
+      .with('posts', 1, (related) => related.merge({ title: 'Lucid 101' }))
       .create()
 
     assert.isTrue(user.$isPersisted)
@@ -307,18 +321,20 @@ test.group('Factory | HasMany | create', (group) => {
       public posts: HasMany<typeof Post>
     }
 
-    const postFactory = new FactoryModel(Post, (_, attributes?: any) => {
-      const post = new Post()
-      post.title = attributes?.title || 'Adonis 101'
-      return post
+    const postFactory = new FactoryModel(Post, () => {
+      return {
+        title: 'Adonis 101',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('posts', () => postFactory)
       .build()
 
     const user = await factory
-      .with('posts', 2, (related) => related.fill({ title: 'Lucid 101' }))
+      .with('posts', 2, (related) => related.merge({ title: 'Lucid 101' }))
       .create()
 
     assert.isTrue(user.$isPersisted)
@@ -357,18 +373,20 @@ test.group('Factory | HasMany | create', (group) => {
       public posts: HasMany<typeof Post>
     }
 
-    const postFactory = new FactoryModel(Post, (_, attributes?: any) => {
-      const post = new Post()
-      post.title = attributes?.title || 'Adonis 101'
-      return post
+    const postFactory = new FactoryModel(Post, () => {
+      return {
+        title: 'Adonis 101',
+      }
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('posts', () => postFactory)
       .build()
 
     const user = await factory
-      .with('posts', 1, (related) => related.fill({ title: 'Lucid 101' }))
+      .with('posts', 1, (related) => related.merge({ title: 'Lucid 101' }))
       .create()
 
     assert.isTrue(user.$isPersisted)
@@ -406,11 +424,12 @@ test.group('Factory | HasMany | create', (group) => {
     }
 
     const postFactory = new FactoryModel(Post, () => {
-      const post = new Post()
-      return post
+      return {}
     }).build()
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
       .related('posts', () => postFactory)
       .build()
 

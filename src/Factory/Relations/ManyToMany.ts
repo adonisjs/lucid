@@ -7,73 +7,73 @@
 * file that was distributed with this source code.
 */
 
-import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { ManyToManyRelationContract } from '@ioc:Adonis/Lucid/Relations'
+import { LucidModel, LucidRow, ModelObject } from '@ioc:Adonis/Lucid/Model'
 import {
+  RelationCallback,
   FactoryModelContract,
-  FactoryContextContract,
   FactoryBuilderContract,
   FactoryRelationContract,
 } from '@ioc:Adonis/Lucid/Factory'
 
-export class ManyToMany implements FactoryRelationContract {
-  private ctx: FactoryContextContract
+import { BaseRelation } from './Base'
 
+/**
+ * Many to many factory relation
+ */
+export class ManyToMany extends BaseRelation implements FactoryRelationContract {
   constructor (
     public relation: ManyToManyRelationContract<LucidModel, LucidModel>,
-    private factory: () => FactoryBuilderContract<FactoryModelContract<LucidModel, any>>
+    factory: () => FactoryBuilderContract<FactoryModelContract<LucidModel>>
   ) {
+    super(factory)
     this.relation.boot()
   }
 
-  public withCtx (ctx: FactoryContextContract): this {
-    this.ctx = ctx
-    return this
-  }
-
-  public async make (
-    parent: LucidRow,
-    callback?: (factory: FactoryBuilderContract<FactoryModelContract<LucidModel, any>>) => void,
-    count?: number,
-  ) {
-    const factory = this.factory()
-    if (typeof (callback) === 'function') {
-      callback(factory)
-    }
-
-    const instances = await factory.withCtx(this.ctx).makeMany(count || 1)
+  /**
+   * Make relationship and set it on the parent model instance
+   */
+  public async make (parent: LucidRow, callback?: RelationCallback, count?: number) {
+    const factory = this.compile(callback)
+    const instances = await factory.makeMany(count || 1)
     parent.$setRelated(this.relation.relationName, instances)
   }
 
-  public async create (
-    parent: LucidRow,
-    callback?: (factory: FactoryBuilderContract<FactoryModelContract<LucidModel, any>>) => void,
-    count?: number,
-  ) {
-    const factory = this.factory()
-    if (typeof (callback) === 'function') {
-      callback(factory)
-    }
+  /**
+   * Persist relationship and set it on the parent model instance
+   */
+  public async create (parent: LucidRow, callback?: RelationCallback, count?: number) {
+    const factory = this.compile(callback)
 
-    const customAttributes = {}
-    const pivotAttributes: any = {}
+    const customAttributes: ModelObject = {}
+    const instances = await factory.createMany(count || 1, (related) => related.merge(customAttributes))
 
-    const instances = await factory
-      .withCtx(this.ctx)
-      .createMany(count || 1, (related) => {
-        related.merge(customAttributes)
-      })
-
+    /**
+     * Loop over instances to build pivot attributes
+     */
+    const pivotAttributes: ModelObject = {}
     const [pivotKey, pivotValue] = this.relation.getPivotPair(parent)
-
     instances.forEach((related) => {
       const [pivotRelatedKey, pivotRelatedValue] = this.relation.getPivotRelatedPair(related)
+
+      /**
+       * Update model $extra properties
+       */
       related.$extras[pivotKey] = pivotValue
       related.$extras[pivotRelatedKey] = pivotRelatedValue
+
+      // custom pivot attributes will come here
       pivotAttributes[pivotRelatedValue] = {}
     })
 
+    /**
+     * Make pivot insert query
+     */
     await this.relation.client(parent, this.ctx.$trx!).attach(pivotAttributes)
+
+    /**
+     * Setup in-memory relationship
+     */
     parent.$setRelated(this.relation.relationName, instances)
   }
 }
