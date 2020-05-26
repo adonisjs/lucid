@@ -91,7 +91,7 @@ test.group('Factory | Factory Model', (group) => {
     User.boot()
 
     function relatedFn () {}
-    const factory = new FactoryModel(User, () => new User()).related('profile', relatedFn)
+    const factory = new FactoryModel(User, () => new User()).relation('profile', relatedFn)
     assert.property(factory.relations, 'profile')
     assert.instanceOf(factory.relations.profile, FactoryHasOne)
   })
@@ -150,7 +150,7 @@ test.group('Factory | Factory Model', (group) => {
       return profileFactory
     }
 
-    const factory = new FactoryModel(User, () => new User()).related('profile', relatedFn)
+    const factory = new FactoryModel(User, () => new User()).relation('profile', relatedFn)
     assert.instanceOf(factory.getRelation('profile'), FactoryHasOne)
     assert.deepEqual(factory.getRelation('profile').relation, User.$getRelation('profile')!)
   })
@@ -187,7 +187,7 @@ test.group('Factory | Factory Model', (group) => {
       public username: string
     }
 
-    const factory = () => new FactoryModel(User, () => new User()).related('profile' as any, () => {})
+    const factory = () => new FactoryModel(User, () => new User()).relation('profile' as any, () => {})
     assert.throw(
       factory,
       'Cannot define "profile" relationship. The relationship must exist on the "User" model first'

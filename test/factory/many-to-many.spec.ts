@@ -76,7 +76,7 @@ test.group('Factory | ManyToMany | make', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('skills', () => postFactory)
+      .relation('skills', () => postFactory)
       .build()
 
     const user = await factory.with('skills').make()
@@ -120,7 +120,7 @@ test.group('Factory | ManyToMany | make', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('skills', () => postFactory)
+      .relation('skills', () => postFactory)
       .build()
 
     const user = await factory.with('skills', 1, (related) => {
@@ -167,7 +167,7 @@ test.group('Factory | ManyToMany | make', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('skills', () => postFactory)
+      .relation('skills', () => postFactory)
       .build()
 
     const user = await factory.with('skills', 2, (related) => {
@@ -236,7 +236,7 @@ test.group('Factory | ManyToMany | create', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('skills', () => postFactory)
+      .relation('skills', () => postFactory)
       .build()
 
     const user = await factory.with('skills').create()
@@ -284,7 +284,7 @@ test.group('Factory | ManyToMany | create', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('skills', () => postFactory)
+      .relation('skills', () => postFactory)
       .build()
 
     const user = await factory
@@ -335,7 +335,7 @@ test.group('Factory | ManyToMany | create', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('skills', () => postFactory)
+      .relation('skills', () => postFactory)
       .build()
 
     const user = await factory
@@ -397,7 +397,7 @@ test.group('Factory | ManyToMany | create', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('skills', () => postFactory)
+      .relation('skills', () => postFactory)
       .build()
 
     try {

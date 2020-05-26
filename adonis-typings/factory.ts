@@ -82,6 +82,9 @@ declare module '@ioc:Adonis/Lucid/Factory' {
       lorem: {
         sentence (count?: number): string,
       },
+      internet: {
+        password (): string,
+      },
     },
     sequence: {
       username: string,
@@ -271,7 +274,7 @@ declare module '@ioc:Adonis/Lucid/Factory' {
     /**
      * Define a relationship on another factory
      */
-    related<K extends ExtractModelRelations<InstanceType<Model>>, Relation extends any> (
+    relation<K extends ExtractModelRelations<InstanceType<Model>>, Relation extends any> (
       relation: K,
       callback: Relation,
     ): this & { relations: { [P in K]: Relation } }

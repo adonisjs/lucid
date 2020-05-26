@@ -72,7 +72,7 @@ test.group('Factory | BelongTo | make', (group) => {
         displayName: 'virk',
       }
     })
-      .related('user', () => factory)
+      .relation('user', () => factory)
       .build()
 
     const factory = new FactoryModel(User, () => {
@@ -115,7 +115,7 @@ test.group('Factory | BelongTo | make', (group) => {
         displayName: 'virk',
       }
     })
-      .related('user', () => factory)
+      .relation('user', () => factory)
       .build()
 
     const factory = new FactoryModel(User, () => {
@@ -178,7 +178,7 @@ test.group('Factory | BelongTo | create', (group) => {
         displayName: 'virk',
       }
     })
-      .related('user', () => factory)
+      .relation('user', () => factory)
       .build()
 
     const factory = new FactoryModel(User, () => {
@@ -221,7 +221,7 @@ test.group('Factory | BelongTo | create', (group) => {
         displayName: 'virk',
       }
     })
-      .related('user', () => factory)
+      .relation('user', () => factory)
       .build()
 
     const factory = new FactoryModel(User, () => {
@@ -267,7 +267,7 @@ test.group('Factory | BelongTo | create', (group) => {
         displayName: 'virk',
       }
     })
-      .related('user', () => factory)
+      .relation('user', () => factory)
       .build()
 
     const factory = new FactoryModel(User, () => {
@@ -315,7 +315,7 @@ test.group('Factory | BelongTo | create', (group) => {
         displayName: 'virk',
       }
     })
-      .related('user', () => factory)
+      .relation('user', () => factory)
       .build()
 
     /**
