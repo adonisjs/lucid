@@ -5,4 +5,5 @@
 /// <reference path="./schema.ts" />
 /// <reference path="./migrator.ts" />
 /// <reference path="./relations.ts" />
+/// <reference path="./factory.ts" />
 /// <reference path="./validator.ts" />

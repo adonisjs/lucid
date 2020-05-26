@@ -13,6 +13,7 @@ import test from 'japa'
 
 import { HasOne } from '@ioc:Adonis/Lucid/Orm'
 import { column, hasOne } from '../../src/Orm/Decorators'
+import { FactoryModel } from '../../src/Factory/FactoryModel'
 import { HasOne as FactoryHasOne } from '../../src/Factory/Relations/HasOne'
 
 import {
@@ -22,12 +23,10 @@ import {
   ormAdapter,
   resetTables,
   getBaseModel,
-  getFactoryModel,
 } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
-const FactoryModel = getFactoryModel()
 
 test.group('Factory | Factory Model', (group) => {
   group.before(async () => {
@@ -211,7 +210,9 @@ test.group('Factory | Factory Model', (group) => {
       public profile: HasOne<typeof Profile>
     }
 
-    const factory = new FactoryModel(User, () => new User()).build()
+    const factory = new FactoryModel(User, () => {
+      return {}
+    }).build()
     const user = await factory.make()
     assert.instanceOf(user, User)
   })

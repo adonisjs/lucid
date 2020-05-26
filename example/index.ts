@@ -33,12 +33,14 @@ User.create({ id: '1', username: 'virk' })
 User.create({ id: '1' })
 
 const F = Factory.define(User, (state) => {
-  const user = new User()
-  user.username = state.faker.username
-  return user
+  return {
+    username: state.sequence.username,
+  }
 })
 
-const P = Factory.define(Profile, () => new Profile())
+const P = Factory.define(Profile, () => {
+  return {}
+})
 
 const ProfileF = P
   .state('social', () => {})
@@ -51,4 +53,4 @@ const UserF = F
   .related('profile', () => ProfileF)
   .build()
 
-UserF.with('profile', 1)
+UserF.with('profile', 1).merge({})

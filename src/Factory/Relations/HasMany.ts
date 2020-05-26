@@ -10,57 +10,44 @@
 import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { HasManyRelationContract } from '@ioc:Adonis/Lucid/Relations'
 import {
+  RelationCallback,
   FactoryModelContract,
-  FactoryContextContract,
   FactoryBuilderContract,
   FactoryRelationContract,
 } from '@ioc:Adonis/Lucid/Factory'
 
-export class HasMany implements FactoryRelationContract {
-  private ctx: FactoryContextContract
+import { BaseRelation } from './Base'
 
+/**
+ * Has many to factory relation
+ */
+export class HasMany extends BaseRelation implements FactoryRelationContract {
   constructor (
     public relation: HasManyRelationContract<LucidModel, LucidModel>,
-    private factory: () => FactoryBuilderContract<FactoryModelContract<LucidModel, any>>
+    factory: () => FactoryBuilderContract<FactoryModelContract<LucidModel>>
   ) {
+    super(factory)
     this.relation.boot()
   }
 
-  public withCtx (ctx: FactoryContextContract): this {
-    this.ctx = ctx
-    return this
-  }
-
-  public async make (
-    parent: LucidRow,
-    callback?: (factory: FactoryBuilderContract<FactoryModelContract<LucidModel, any>>) => void,
-    count?: number,
-  ) {
-    const factory = this.factory()
-    if (typeof (callback) === 'function') {
-      callback(factory)
-    }
-
-    const instances = await this.factory().withCtx(this.ctx).makeMany(count || 1)
+  /**
+   * Make relationship and set it on the parent model instance
+   */
+  public async make (parent: LucidRow, callback?: RelationCallback, count?: number) {
+    const factory = this.compile(callback)
+    const instances = await factory.makeMany(count || 1)
     parent.$setRelated(this.relation.relationName, instances)
   }
 
-  public async create (
-    parent: LucidRow,
-    callback?: (factory: FactoryBuilderContract<FactoryModelContract<LucidModel, any>>) => void,
-    count?: number,
-  ) {
-    const factory = this.factory()
-    if (typeof (callback) === 'function') {
-      callback(factory)
-    }
+  /**
+   * Persist relationship and set it on the parent model instance
+   */
+  public async create (parent: LucidRow, callback?: RelationCallback, count?: number) {
+    const factory = this.compile(callback)
 
     const customAttributes = {}
     this.relation.hydrateForPersistance(parent, customAttributes)
-
-    const instance = await factory
-      .withCtx(this.ctx)
-      .createMany(count || 1, (related) => related.merge(customAttributes))
+    const instance = await factory.createMany(count || 1, (related) => related.merge(customAttributes))
 
     parent.$setRelated(this.relation.relationName, instance)
   }
