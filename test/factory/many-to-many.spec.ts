@@ -181,7 +181,7 @@ test.group('Factory | ManyToMany | make', (group) => {
   })
 })
 
-test.group('Factory | HasMany | create', (group) => {
+test.group('Factory | ManyToMany | create', (group) => {
   group.before(async () => {
     db = getDb()
     BaseModel = getBaseModel(ormAdapter(db))

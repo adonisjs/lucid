@@ -73,6 +73,7 @@ export class ManyToMany implements FactoryRelationContract {
       pivotAttributes[pivotRelatedKey] = pivotRelatedValue
     })
 
+    console.log(pivotAttributes)
     await this.relation.client(parent, this.ctx.$trx!).attach(pivotAttributes)
     parent.$setRelated(this.relation.relationName, instances)
   }
