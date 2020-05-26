@@ -120,7 +120,7 @@ test.group('Factory | HasOne | make', (group) => {
       .build()
 
     const user = await factory
-      .with('profile', 1, (factory) => factory.fill({ displayName: 'Romain' }))
+      .with('profile', 1, (related) => related.fill({ displayName: 'Romain' }))
       .make()
 
     assert.isFalse(user.$isPersisted)
@@ -224,7 +224,7 @@ test.group('Factory | HasOne | create', (group) => {
       .build()
 
     const user = await factory
-      .with('profile', 1, (factory) => factory.fill({ displayName: 'Romain' }))
+      .with('profile', 1, (related) => related.fill({ displayName: 'Romain' }))
       .create()
 
     assert.isTrue(user.$isPersisted)

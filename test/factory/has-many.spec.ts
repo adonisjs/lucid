@@ -120,7 +120,7 @@ test.group('Factory | HasMany | make', (group) => {
       .related('posts', () => postFactory)
       .build()
 
-    const user = await factory.with('posts', 1, (factory) => factory.fill({ title: 'Lucid 101' })).make()
+    const user = await factory.with('posts', 1, (related) => related.fill({ title: 'Lucid 101' })).make()
 
     assert.isFalse(user.$isPersisted)
     assert.lengthOf(user.posts, 1)
@@ -164,7 +164,7 @@ test.group('Factory | HasMany | make', (group) => {
       .related('posts', () => postFactory)
       .build()
 
-    const user = await factory.with('posts', 2, (factory) => factory.fill({ title: 'Lucid 101' })).make()
+    const user = await factory.with('posts', 2, (related) => related.fill({ title: 'Lucid 101' })).make()
 
     assert.isFalse(user.$isPersisted)
     assert.lengthOf(user.posts, 2)
@@ -272,7 +272,7 @@ test.group('Factory | HasMany | create', (group) => {
       .build()
 
     const user = await factory
-      .with('posts', 1, (factory) => factory.fill({ title: 'Lucid 101' }))
+      .with('posts', 1, (related) => related.fill({ title: 'Lucid 101' }))
       .create()
 
     assert.isTrue(user.$isPersisted)
@@ -318,7 +318,7 @@ test.group('Factory | HasMany | create', (group) => {
       .build()
 
     const user = await factory
-      .with('posts', 2, (factory) => factory.fill({ title: 'Lucid 101' }))
+      .with('posts', 2, (related) => related.fill({ title: 'Lucid 101' }))
       .create()
 
     assert.isTrue(user.$isPersisted)
@@ -368,7 +368,7 @@ test.group('Factory | HasMany | create', (group) => {
       .build()
 
     const user = await factory
-      .with('posts', 1, (factory) => factory.fill({ title: 'Lucid 101' }))
+      .with('posts', 1, (related) => related.fill({ title: 'Lucid 101' }))
       .create()
 
     assert.isTrue(user.$isPersisted)

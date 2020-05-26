@@ -1,14 +1,5 @@
 {
   "extends": [
     "plugin:adonis/typescriptPackage"
-  ],
-  "rules": {
-    "max-len": ["error", {
-      "code": 120,
-      "comments": 120,
-      "ignoreUrls": true,
-      "ignoreTemplateLiterals": true
-    }],
-    "no-redeclare": ["off"]
-  }
+  ]
 }
