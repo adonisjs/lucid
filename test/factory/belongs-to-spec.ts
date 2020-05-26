@@ -72,8 +72,8 @@ test.group('Factory | BelongTo | make', (group) => {
       profile.displayName = 'virk'
       return profile
     })
-    .related('user', () => factory)
-    .build()
+      .related('user', () => factory)
+      .build()
 
     const factory = new FactoryModel(User, () => new User()).build()
 
@@ -113,8 +113,8 @@ test.group('Factory | BelongTo | make', (group) => {
       profile.displayName = 'virk'
       return profile
     })
-    .related('user', () => factory)
-    .build()
+      .related('user', () => factory)
+      .build()
 
     const factory = new FactoryModel(User, (_, attributes?: any) => {
       const user = new User()
@@ -122,7 +122,7 @@ test.group('Factory | BelongTo | make', (group) => {
       return user
     }).build()
 
-    const profile = await profileFactory.with('user', 1, (factory) => (factory.fill({ points: 10 }))).make()
+    const profile = await profileFactory.with('user', 1, (related) => related.fill({ points: 10 })).make()
     assert.isFalse(profile.$isPersisted)
     assert.instanceOf(profile.user, User)
     assert.isFalse(profile.user.$isPersisted)
@@ -176,8 +176,8 @@ test.group('Factory | BelongTo | create', (group) => {
       profile.displayName = 'virk'
       return profile
     })
-    .related('user', () => factory)
-    .build()
+      .related('user', () => factory)
+      .build()
 
     const factory = new FactoryModel(User, () => new User()).build()
 
@@ -217,8 +217,8 @@ test.group('Factory | BelongTo | create', (group) => {
       profile.displayName = 'virk'
       return profile
     })
-    .related('user', () => factory)
-    .build()
+      .related('user', () => factory)
+      .build()
 
     const factory = new FactoryModel(User, (_, attributes?: any) => {
       const user = new User()
@@ -226,7 +226,7 @@ test.group('Factory | BelongTo | create', (group) => {
       return user
     }).build()
 
-    const profile = await profileFactory.with('user', 1, (factory) => (factory.fill({ points: 10 }))).create()
+    const profile = await profileFactory.with('user', 1, (related) => related.fill({ points: 10 })).create()
     assert.isTrue(profile.$isPersisted)
     assert.instanceOf(profile.user, User)
     assert.isTrue(profile.user.$isPersisted)
@@ -263,8 +263,8 @@ test.group('Factory | BelongTo | create', (group) => {
       profile.displayName = 'virk'
       return profile
     })
-    .related('user', () => factory)
-    .build()
+      .related('user', () => factory)
+      .build()
 
     const factory = new FactoryModel(User, (_, attributes?: any) => {
       const user = new User()
@@ -272,7 +272,7 @@ test.group('Factory | BelongTo | create', (group) => {
       return user
     }).build()
 
-    const profile = await profileFactory.with('user', 1, (factory) => (factory.fill({ points: 10 }))).create()
+    const profile = await profileFactory.with('user', 1, (related) => related.fill({ points: 10 })).create()
     assert.isTrue(profile.$isPersisted)
     assert.instanceOf(profile.user, User)
     assert.isTrue(profile.user.$isPersisted)
@@ -311,8 +311,8 @@ test.group('Factory | BelongTo | create', (group) => {
       profile.displayName = 'Virk'
       return profile
     })
-    .related('user', () => factory)
-    .build()
+      .related('user', () => factory)
+      .build()
 
     /**
      * Creating user in advance, so that the `user` relationship

@@ -13,6 +13,7 @@ import test from 'japa'
 
 import { HasOne } from '@ioc:Adonis/Lucid/Orm'
 import { column, hasOne } from '../../src/Orm/Decorators'
+import { HasOne as FactoryHasOne } from '../../src/Factory/Relations/HasOne'
 
 import {
   setup,
@@ -73,6 +74,8 @@ test.group('Factory | Factory Model', (group) => {
 
   test('define factory relation', async (assert) => {
     class Profile extends BaseModel {
+      @column()
+      public userId: number
     }
     Profile.boot()
 
@@ -86,10 +89,12 @@ test.group('Factory | Factory Model', (group) => {
       @hasOne(() => Profile)
       public profile: HasOne<typeof Profile>
     }
+    User.boot()
 
     function relatedFn () {}
     const factory = new FactoryModel(User, () => new User()).related('profile', relatedFn)
-    assert.deepEqual(factory.relations, { profile: relatedFn })
+    assert.property(factory.relations, 'profile')
+    assert.instanceOf(factory.relations.profile, FactoryHasOne)
   })
 
   test('get pre-registered state', async (assert) => {
@@ -124,6 +129,8 @@ test.group('Factory | Factory Model', (group) => {
 
   test('get pre-registered relationship', async (assert) => {
     class Profile extends BaseModel {
+      @column()
+      public userId: number
     }
     Profile.boot()
 
@@ -137,6 +144,7 @@ test.group('Factory | Factory Model', (group) => {
       @hasOne(() => Profile)
       public profile: HasOne<typeof Profile>
     }
+    User.boot()
 
     const profileFactory = new FactoryModel(Profile, () => new Profile()).build()
     function relatedFn () {
@@ -144,10 +152,8 @@ test.group('Factory | Factory Model', (group) => {
     }
 
     const factory = new FactoryModel(User, () => new User()).related('profile', relatedFn)
-    assert.deepEqual(factory.getRelation('profile'), {
-      factory: profileFactory,
-      relation: User.$getRelation('profile')!,
-    })
+    assert.instanceOf(factory.getRelation('profile'), FactoryHasOne)
+    assert.deepEqual(factory.getRelation('profile').relation, User.$getRelation('profile')!)
   })
 
   test('raise exception when relation is not defined', async (assert) => {

@@ -119,8 +119,8 @@ test.group('Factory | ManyToMany | make', (group) => {
       .related('skills', () => postFactory)
       .build()
 
-    const user = await factory.with('skills', 1, (factory) => {
-      factory.fill({ name: 'Dancing' })
+    const user = await factory.with('skills', 1, (related) => {
+      related.fill({ name: 'Dancing' })
     }).make()
 
     assert.isFalse(user.$isPersisted)
@@ -164,8 +164,8 @@ test.group('Factory | ManyToMany | make', (group) => {
       .related('skills', () => postFactory)
       .build()
 
-    const user = await factory.with('skills', 2, (factory) => {
-      factory.fill({ name: 'Dancing' })
+    const user = await factory.with('skills', 2, (related) => {
+      related.fill({ name: 'Dancing' })
     }).make()
 
     assert.isFalse(user.$isPersisted)
@@ -278,7 +278,7 @@ test.group('Factory | HasMany | create', (group) => {
       .build()
 
     const user = await factory
-      .with('skills', 1, (factory) => factory.fill({ name: 'Dancing' }))
+      .with('skills', 1, (related) => related.fill({ name: 'Dancing' }))
       .create()
 
     assert.isTrue(user.$isPersisted)
@@ -327,9 +327,9 @@ test.group('Factory | HasMany | create', (group) => {
       .build()
 
     const user = await factory
-      .with('skills', 2, (factory) => factory.fill([
+      .with('skills', 2, (related) => related.fill([
         { name: 'Dancing' },
-        { name: 'Programming' }
+        { name: 'Programming' },
       ]))
       .create()
 
