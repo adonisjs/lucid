@@ -105,7 +105,7 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
   /**
    * Define a relationship on another factory
    */
-  public related<K extends ExtractModelRelations<InstanceType<Model>>> (
+  public relation<K extends ExtractModelRelations<InstanceType<Model>>> (
     relation: Extract<K, string>,
     callback: any,
   ): any {

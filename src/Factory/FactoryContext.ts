@@ -17,6 +17,11 @@ export class FactoryContext implements FactoryContextContract {
         return ''
       },
     },
+    internet: {
+      password () {
+        return ''
+      },
+    },
   }
 
   public sequence = {

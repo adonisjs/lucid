@@ -50,7 +50,7 @@ const UserF = F
   .state('active', (user) => {
     user.username = 'virk'
   })
-  .related('profile', () => ProfileF)
+  .relation('profile', () => ProfileF)
   .build()
 
 UserF.with('profile', 1).merge({})

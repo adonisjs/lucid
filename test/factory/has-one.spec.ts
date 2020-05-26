@@ -76,7 +76,7 @@ test.group('Factory | HasOne | make', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('profile', () => profileFactory)
+      .relation('profile', () => profileFactory)
       .build()
 
     const user = await factory.with('profile').make()
@@ -120,7 +120,7 @@ test.group('Factory | HasOne | make', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('profile', () => profileFactory)
+      .relation('profile', () => profileFactory)
       .build()
 
     const user = await factory
@@ -184,7 +184,7 @@ test.group('Factory | HasOne | create', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('profile', () => profileFactory)
+      .relation('profile', () => profileFactory)
       .build()
 
     const user = await factory.with('profile').create()
@@ -228,7 +228,7 @@ test.group('Factory | HasOne | create', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('profile', () => profileFactory)
+      .relation('profile', () => profileFactory)
       .build()
 
     const user = await factory
@@ -275,7 +275,7 @@ test.group('Factory | HasOne | create', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('profile', () => profileFactory)
+      .relation('profile', () => profileFactory)
       .build()
 
     const user = await factory.with('profile').create()
@@ -319,7 +319,7 @@ test.group('Factory | HasOne | create', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('profile', () => profileFactory)
+      .relation('profile', () => profileFactory)
       .build()
 
     try {

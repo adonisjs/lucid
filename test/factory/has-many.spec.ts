@@ -76,7 +76,7 @@ test.group('Factory | HasMany | make', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('posts', () => postFactory)
+      .relation('posts', () => postFactory)
       .build()
 
     const user = await factory.with('posts').make()
@@ -121,7 +121,7 @@ test.group('Factory | HasMany | make', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('posts', () => postFactory)
+      .relation('posts', () => postFactory)
       .build()
 
     const user = await factory
@@ -169,7 +169,7 @@ test.group('Factory | HasMany | make', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('posts', () => postFactory)
+      .relation('posts', () => postFactory)
       .build()
 
     const user = await factory
@@ -237,7 +237,7 @@ test.group('Factory | HasMany | create', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('posts', () => postFactory)
+      .relation('posts', () => postFactory)
       .build()
 
     const user = await factory.with('posts').create()
@@ -282,7 +282,7 @@ test.group('Factory | HasMany | create', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('posts', () => postFactory)
+      .relation('posts', () => postFactory)
       .build()
 
     const user = await factory
@@ -330,7 +330,7 @@ test.group('Factory | HasMany | create', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('posts', () => postFactory)
+      .relation('posts', () => postFactory)
       .build()
 
     const user = await factory
@@ -382,7 +382,7 @@ test.group('Factory | HasMany | create', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('posts', () => postFactory)
+      .relation('posts', () => postFactory)
       .build()
 
     const user = await factory
@@ -430,7 +430,7 @@ test.group('Factory | HasMany | create', (group) => {
     const factory = new FactoryModel(User, () => {
       return {}
     })
-      .related('posts', () => postFactory)
+      .relation('posts', () => postFactory)
       .build()
 
     try {
