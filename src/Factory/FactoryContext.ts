@@ -11,23 +11,7 @@ import { FactoryContextContract } from '@ioc:Adonis/Lucid/Factory'
 import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 export class FactoryContext implements FactoryContextContract {
-  public faker = {
-    lorem: {
-      sentence (_?: number): string {
-        return ''
-      },
-    },
-    internet: {
-      password () {
-        return ''
-      },
-    },
-  }
-
-  public sequence = {
-    username: 'string',
-    email: 'string',
-  }
+  public faker = {}
 
   constructor (
     public isStubbed: boolean,

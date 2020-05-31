@@ -8,6 +8,7 @@
 */
 
 declare module '@ioc:Adonis/Lucid/Factory' {
+  import faker from 'faker'
   import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
   import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
   import { LucidRow, LucidModel, ModelAttributes } from '@ioc:Adonis/Lucid/Model'
@@ -98,18 +99,7 @@ declare module '@ioc:Adonis/Lucid/Factory' {
    * as well.
    */
   export interface FactoryContextContract {
-    faker: {
-      lorem: {
-        sentence (count?: number): string,
-      },
-      internet: {
-        password (): string,
-      },
-    },
-    sequence: {
-      username: string,
-      email: string,
-    },
+    faker: typeof faker,
     isStubbed: boolean,
     $trx: TransactionClientContract | undefined
   }

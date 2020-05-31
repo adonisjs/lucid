@@ -43,8 +43,10 @@
   "dependencies": {
     "@poppinss/hooks": "^1.0.5",
     "@poppinss/utils": "^2.2.6",
+    "@types/faker": "^4.1.12",
     "cli-table3": "^0.6.0",
     "fast-deep-equal": "^3.1.1",
+    "faker": "^4.1.0",
     "kleur": "^3.0.3",
     "knex": "^0.21.1",
     "knex-dynamic-connection": "^1.0.5",

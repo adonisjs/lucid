@@ -32,9 +32,9 @@ User.create({ id: '1', username: 'virk' })
 User.create({ id: '1', username: 'virk' })
 User.create({ id: '1' })
 
-const F = Factory.define(User, (state) => {
+const F = Factory.define(User, ({ faker }) => {
   return {
-    username: state.sequence.username,
+    username: faker.internet.userName(),
   }
 })
 
