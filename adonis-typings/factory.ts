@@ -68,6 +68,26 @@ declare module '@ioc:Adonis/Lucid/Factory' {
 
   /**
    * ------------------------------------------------------
+   *  Hooks
+   * ------------------------------------------------------
+   */
+
+  /**
+   * List of events for which a factory will trigger hooks
+   */
+  export type EventsList = 'makeStubbed' | 'create' | 'make'
+
+  /**
+   * Shape of hooks handler
+   */
+  export type HooksHandler<Model extends FactoryModelContract<LucidModel>> = (
+    factory: FactoryBuilderContract<Model>,
+    model: InstanceType<Model['model']>,
+    ctx: FactoryContextContract,
+  ) => void | Promise<void>
+
+  /**
+   * ------------------------------------------------------
    *  Runtime context
    * ------------------------------------------------------
    */
@@ -188,9 +208,10 @@ declare module '@ioc:Adonis/Lucid/Factory' {
     useCtx (ctx: FactoryContextContract): this
 
     /**
-     * Create model instance.
+     * Create model instance and stub out the persistance
+     * mechanism
      */
-    make (
+    makeStubbed (
       callback?: (
         model: InstanceType<FactoryModel['model']>,
         ctx: FactoryContextContract,
@@ -208,9 +229,10 @@ declare module '@ioc:Adonis/Lucid/Factory' {
     ): Promise<InstanceType<FactoryModel['model']>>
 
     /**
-     * Create more than one model instance
+     * Create one or more model instances and stub
+     * out the persistance mechanism.
      */
-    makeMany (
+    makeStubbedMany (
       count: number,
       callback?: (
         model: InstanceType<FactoryModel['model']>,
@@ -278,6 +300,17 @@ declare module '@ioc:Adonis/Lucid/Factory' {
       relation: K,
       callback: Relation,
     ): this & { relations: { [P in K]: Relation } }
+
+    /**
+     * Define before hooks. Only `create` event is invoked
+     * during the before lifecycle
+     */
+    before (event: 'create', handler: HooksHandler<this>): this
+
+    /**
+     * Define after hooks.
+     */
+    after (event: EventsList, handler: HooksHandler<this>): this
 
     /**
      * Build model factory. This method returns the factory builder, which can be used to

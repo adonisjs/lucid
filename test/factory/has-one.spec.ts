@@ -46,6 +46,9 @@ test.group('Factory | HasOne | make', (group) => {
   test('make model with relationship', async (assert) => {
     class Profile extends BaseModel {
       @column()
+      public id: number
+
+      @column()
       public userId: number
 
       @column()
@@ -79,16 +82,22 @@ test.group('Factory | HasOne | make', (group) => {
       .relation('profile', () => profileFactory)
       .build()
 
-    const user = await factory.with('profile').make()
+    const user = await factory.with('profile').makeStubbed()
 
+    assert.exists(user.id)
     assert.isFalse(user.$isPersisted)
     assert.instanceOf(user.profile, Profile)
+
+    assert.exists(user.profile.id)
     assert.isFalse(user.profile.$isPersisted)
     assert.equal(user.profile.userId, user.id)
   })
 
   test('pass custom attributes to relationship', async (assert) => {
     class Profile extends BaseModel {
+      @column()
+      public id: number
+
       @column()
       public userId: number
 
@@ -125,13 +134,15 @@ test.group('Factory | HasOne | make', (group) => {
 
     const user = await factory
       .with('profile', 1, (related) => related.merge({ displayName: 'Romain' }))
-      .make()
+      .makeStubbed()
 
+    assert.exists(user.id)
     assert.isFalse(user.$isPersisted)
     assert.instanceOf(user.profile, Profile)
     assert.isFalse(user.profile.$isPersisted)
     assert.equal(user.profile.displayName, 'Romain')
     assert.equal(user.profile.userId, user.id)
+    assert.exists(user.profile.id)
   })
 })
 

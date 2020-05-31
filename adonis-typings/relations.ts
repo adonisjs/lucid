@@ -290,6 +290,8 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     RelatedModel extends LucidModel,
   > extends BaseRelationContract<ParentModel, RelatedModel> {
     readonly type: 'hasOne'
+    readonly localKey: string
+    readonly foreignKey: string
 
     /**
      * Set related model as a relationship on the parent model.
@@ -342,6 +344,8 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     RelatedModel extends LucidModel
   > extends BaseRelationContract<ParentModel, RelatedModel> {
     readonly type: 'hasMany'
+    readonly localKey: string
+    readonly foreignKey: string
 
     /**
      * Set related models as a relationship on the parent model
@@ -394,6 +398,8 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     RelatedModel extends LucidModel
   > extends BaseRelationContract<ParentModel, RelatedModel> {
     readonly type: 'belongsTo'
+    readonly localKey: string
+    readonly foreignKey: string
 
     /**
      * Set related model as a relationship on the parent model
@@ -445,6 +451,12 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     RelatedModel extends LucidModel
   > extends BaseRelationContract<ParentModel, RelatedModel> {
     type: 'manyToMany'
+
+    readonly localKey: string
+    readonly relatedKey: string
+    readonly pivotForeignKey: string
+    readonly pivotRelatedForeignKey: string
+    readonly pivotTable: string
 
     /**
      * Set related models as a relationship on the parent model
@@ -506,6 +518,10 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     RelatedModel extends LucidModel
   > extends BaseRelationContract<ParentModel, RelatedModel> {
     type: 'hasManyThrough'
+    readonly localKey: string
+    readonly foreignKey: string
+    readonly throughLocalKey: string
+    readonly throughForeignKey: string
 
     /**
      * Set related models as a relationship on the parent model

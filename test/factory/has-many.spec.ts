@@ -46,6 +46,9 @@ test.group('Factory | HasMany | make', (group) => {
   test('make model with relationship', async (assert) => {
     class Post extends BaseModel {
       @column()
+      public id: number
+
+      @column()
       public userId: number
 
       @column()
@@ -79,11 +82,14 @@ test.group('Factory | HasMany | make', (group) => {
       .relation('posts', () => postFactory)
       .build()
 
-    const user = await factory.with('posts').make()
+    const user = await factory.with('posts').makeStubbed()
 
     assert.isFalse(user.$isPersisted)
+    assert.exists(user.id)
     assert.lengthOf(user.posts, 1)
+
     assert.instanceOf(user.posts[0], Post)
+    assert.exists(user.posts[0].id)
     assert.isFalse(user.posts[0].$isPersisted)
     assert.equal(user.posts[0].userId, user.id)
   })
@@ -126,7 +132,7 @@ test.group('Factory | HasMany | make', (group) => {
 
     const user = await factory
       .with('posts', 1, (related) => related.merge({ title: 'Lucid 101' }))
-      .make()
+      .makeStubbed()
 
     assert.isFalse(user.$isPersisted)
     assert.lengthOf(user.posts, 1)
@@ -174,7 +180,7 @@ test.group('Factory | HasMany | make', (group) => {
 
     const user = await factory
       .with('posts', 2, (related) => related.merge({ title: 'Lucid 101' }))
-      .make()
+      .makeStubbed()
 
     assert.isFalse(user.$isPersisted)
     assert.lengthOf(user.posts, 2)
