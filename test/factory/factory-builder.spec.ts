@@ -11,6 +11,8 @@
 
 import test from 'japa'
 import { column } from '../../src/Orm/Decorators'
+import { FactoryContext } from '../../src/Factory/FactoryContext'
+import { FactoryBuilder } from '../../src/Factory/FactoryBuilder'
 
 import {
   setup,
@@ -60,8 +62,9 @@ test.group('Factory | Factory Builder | make', (group) => {
       .state('withPoints', (user) => user.points = 10)
       .build()
 
-    const user = await factory.apply('withPoints').make()
+    const user = await factory.apply('withPoints').makeStubbed()
     assert.equal(user.points, 10)
+    assert.exists(user.id)
     assert.isFalse(user.$isPersisted)
   })
 
@@ -85,8 +88,9 @@ test.group('Factory | Factory Builder | make', (group) => {
       })
       .build()
 
-    const user = await factory.apply('withPoints').apply('withPoints').make()
+    const user = await factory.apply('withPoints').apply('withPoints').makeStubbed()
     assert.equal(user.points, 10)
+    assert.exists(user.id)
     assert.isFalse(user.$isPersisted)
   })
 
@@ -108,8 +112,9 @@ test.group('Factory | Factory Builder | make', (group) => {
       }
     }).build()
 
-    const user = await factory.merge({ username: 'nikk' }).make()
+    const user = await factory.merge({ username: 'nikk' }).makeStubbed()
     assert.equal(user.username, 'nikk')
+    assert.exists(user.id)
     assert.isFalse(user.$isPersisted)
   })
 
@@ -133,8 +138,9 @@ test.group('Factory | Factory Builder | make', (group) => {
       .merge(() => {})
       .build()
 
-    const user = await factory.merge({ username: 'nikk' }).make()
+    const user = await factory.merge({ username: 'nikk' }).makeStubbed()
     assert.equal(user.username, 'virk')
+    assert.exists(user.id)
     assert.isFalse(user.$isPersisted)
   })
 
@@ -164,8 +170,9 @@ test.group('Factory | Factory Builder | make', (group) => {
       .merge(() => {})
       .build()
 
-    const user = await factory.make()
+    const user = await factory.makeStubbed()
     assert.equal(user.username, 'virk')
+    assert.exists(user.id)
     assert.deepEqual(user.$extras, { invoked: true })
     assert.isFalse(user.$isPersisted)
   })
@@ -188,8 +195,105 @@ test.group('Factory | Factory Builder | make', (group) => {
       }
     }).build()
 
-    const user = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).make()
+    const user = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).makeStubbed()
     assert.equal(user.username, 'nikk')
+    assert.exists(user.id)
+    assert.isFalse(user.$isPersisted)
+  })
+
+  test('invoke after make hook', async (assert) => {
+    assert.plan(6)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(User, () => {
+      return {
+        username: 'virk',
+      }
+    })
+      .after('make', (_, user, ctx) => {
+        assert.instanceOf(_, FactoryBuilder)
+        assert.instanceOf(user, User)
+        assert.instanceOf(ctx, FactoryContext)
+      })
+      .build()
+
+    const user = await factory.makeStubbed()
+    assert.equal(user.username, 'virk')
+    assert.exists(user.id)
+    assert.isFalse(user.$isPersisted)
+  })
+
+  test('invoke after makeStubbed hook', async (assert) => {
+    assert.plan(6)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(User, () => {
+      return {
+        username: 'virk',
+      }
+    })
+      .after('makeStubbed', (_, user, ctx) => {
+        assert.instanceOf(_, FactoryBuilder)
+        assert.instanceOf(user, User)
+        assert.instanceOf(ctx, FactoryContext)
+      })
+      .build()
+
+    const user = await factory.makeStubbed()
+    assert.equal(user.username, 'virk')
+    assert.exists(user.id)
+    assert.isFalse(user.$isPersisted)
+  })
+
+  test('define custom id inside make hook', async (assert) => {
+    assert.plan(3)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(User, () => {
+      return {
+        username: 'virk',
+      }
+    })
+      .after('make', (_, user, ctx) => {
+        if (ctx.isStubbed) {
+          user.id = 100
+        }
+      })
+      .build()
+
+    const user = await factory.makeStubbed()
+    assert.equal(user.username, 'virk')
+    assert.equal(user.id, 100)
     assert.isFalse(user.$isPersisted)
   })
 })
@@ -228,10 +332,13 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
       .state('withPoints', (user) => user.points = 10)
       .build()
 
-    const users = await factory.apply('withPoints').makeMany(2)
+    const users = await factory.apply('withPoints').makeStubbedMany(2)
     assert.lengthOf(users, 2)
+    assert.exists(users[0].id)
     assert.equal(users[0].points, 10)
     assert.isFalse(users[0].$isPersisted)
+
+    assert.exists(users[1].id)
     assert.equal(users[1].points, 10)
     assert.isFalse(users[1].$isPersisted)
   })
@@ -254,10 +361,14 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
       .state('withPoints', (user) => user.points += 10)
       .build()
 
-    const users = await factory.apply('withPoints').apply('withPoints').makeMany(2)
+    const users = await factory.apply('withPoints').apply('withPoints').makeStubbedMany(2)
     assert.lengthOf(users, 2)
+
+    assert.exists(users[0].id)
     assert.equal(users[0].points, 10)
     assert.isFalse(users[0].$isPersisted)
+
+    assert.exists(users[1].id)
     assert.equal(users[1].points, 10)
     assert.isFalse(users[1].$isPersisted)
   })
@@ -280,10 +391,14 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
       }
     }).build()
 
-    const users = await factory.merge({ username: 'nikk' }).makeMany(2)
+    const users = await factory.merge({ username: 'nikk' }).makeStubbedMany(2)
     assert.lengthOf(users, 2)
+
+    assert.exists(users[0].id)
     assert.equal(users[0].username, 'nikk')
     assert.isFalse(users[0].$isPersisted)
+
+    assert.exists(users[1].id)
     assert.equal(users[1].username, 'nikk')
     assert.isFalse(users[1].$isPersisted)
   })
@@ -306,11 +421,89 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
       }
     }).build()
 
-    const users = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).makeMany(2)
+    const users = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).makeStubbedMany(2)
     assert.lengthOf(users, 2)
+
+    assert.exists(users[0].id)
     assert.equal(users[0].username, 'nikk')
     assert.isFalse(users[0].$isPersisted)
+
+    assert.exists(users[1].id)
     assert.equal(users[1].username, 'romain')
+    assert.isFalse(users[1].$isPersisted)
+  })
+
+  test('run makeStubbed hook for all the model instances', async (assert) => {
+    assert.plan(15)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
+      .after('makeStubbed', (_, user, ctx) => {
+        assert.instanceOf(_, FactoryBuilder)
+        assert.instanceOf(user, User)
+        assert.instanceOf(ctx, FactoryContext)
+        assert.equal(user.points, 10)
+      })
+      .state('withPoints', (user) => user.points = 10)
+      .build()
+
+    const users = await factory.apply('withPoints').makeStubbedMany(2)
+    assert.lengthOf(users, 2)
+    assert.exists(users[0].id)
+    assert.equal(users[0].points, 10)
+    assert.isFalse(users[0].$isPersisted)
+
+    assert.exists(users[1].id)
+    assert.equal(users[1].points, 10)
+    assert.isFalse(users[1].$isPersisted)
+  })
+
+  test('run make hook for all the model instances', async (assert) => {
+    assert.plan(15)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
+      .after('make', (_, user, ctx) => {
+        assert.instanceOf(_, FactoryBuilder)
+        assert.instanceOf(user, User)
+        assert.instanceOf(ctx, FactoryContext)
+        assert.equal(user.points, 10)
+      })
+      .state('withPoints', (user) => user.points = 10)
+      .build()
+
+    const users = await factory.apply('withPoints').makeStubbedMany(2)
+    assert.lengthOf(users, 2)
+    assert.exists(users[0].id)
+    assert.equal(users[0].points, 10)
+    assert.isFalse(users[0].$isPersisted)
+
+    assert.exists(users[1].id)
+    assert.equal(users[1].points, 10)
     assert.isFalse(users[1].$isPersisted)
   })
 })
@@ -421,6 +614,76 @@ test.group('Factory | Factory Builder | create', (group) => {
     const user = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).create()
     assert.equal(user.username, 'nikk')
     assert.isTrue(user.$isPersisted)
+  })
+
+  test('invoke before and after create hook', async (assert) => {
+    assert.plan(4)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
+      .before('create', (_, user) => {
+        assert.isFalse(user.$isPersisted)
+      })
+      .after('create', (_, user) => {
+        assert.isTrue(user.$isPersisted)
+      })
+      .state('withPoints', (user) => user.points = 10)
+      .build()
+
+    const user = await factory.apply('withPoints').create()
+    assert.equal(user.points, 10)
+    assert.isTrue(user.$isPersisted)
+  })
+
+  test('invoke after make hook', async (assert) => {
+    assert.plan(6)
+    const stack: string[] = []
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(User, () => {
+      return {}
+    })
+      .before('create', (_, user) => {
+        stack.push('beforeCreate')
+        assert.isFalse(user.$isPersisted)
+      })
+      .after('make', (_, user) => {
+        stack.push('afterMake')
+        assert.isFalse(user.$isPersisted)
+      })
+      .after('create', (_, user) => {
+        stack.push('afterCreate')
+        assert.isTrue(user.$isPersisted)
+      })
+      .state('withPoints', (user) => user.points = 10)
+      .build()
+
+    const user = await factory.apply('withPoints').create()
+    assert.equal(user.points, 10)
+    assert.isTrue(user.$isPersisted)
+    assert.deepEqual(stack, ['afterMake', 'beforeCreate', 'afterCreate'])
   })
 })
 

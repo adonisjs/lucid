@@ -34,9 +34,15 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
     : this.options.serializeAs
 
   /**
-   * Available after boot is invoked
+   * Local key is reference to the primary key in the self table
+   * @note: Available after boot is invoked
    */
   public localKey: string
+
+  /**
+   * Foreign key is reference to the foreign key in the related table
+   * @note: Available after boot is invoked
+   */
   public foreignKey: string
 
   /**

@@ -7,10 +7,13 @@
  * file that was distributed with this source code.
 */
 
+import { Hooks } from '@poppinss/hooks'
 import { LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model'
 import { ExtractModelRelations, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 
 import {
+  EventsList,
+  HooksHandler,
   StateCallback,
   MergeCallback,
   NewUpCallback,
@@ -64,7 +67,34 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
    */
   public relations: { [relation: string]: FactoryRelationContract } = {}
 
+  /**
+   * A set of registered hooks
+   */
+  public hooks = new Hooks()
+
   constructor (public model: Model, public define: DefineCallback<LucidModel>) {
+  }
+
+  /**
+   * Register a before event hook
+   */
+  public before (
+    event: EventsList,
+    handler: HooksHandler<FactoryModelContract<Model>>,
+  ): this {
+    this.hooks.add('before', event, handler)
+    return this
+  }
+
+  /**
+   * Register an after event hook
+   */
+  public after (
+    event: EventsList,
+    handler: HooksHandler<FactoryModelContract<Model>>,
+  ): this {
+    this.hooks.add('after', event, handler)
+    return this
   }
 
   /**

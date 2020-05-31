@@ -79,11 +79,18 @@ test.group('Factory | ManyToMany | make', (group) => {
       .relation('skills', () => postFactory)
       .build()
 
-    const user = await factory.with('skills').make()
+    const user = await factory.with('skills').makeStubbed()
 
+    assert.exists(user.id)
     assert.isFalse(user.$isPersisted)
     assert.lengthOf(user.skills, 1)
+
+    assert.exists(user.skills[0].id)
     assert.instanceOf(user.skills[0], Skill)
+    assert.deepEqual(user.skills[0].$extras, {
+      skill_id: user.skills[0].id,
+      user_id: user.id,
+    })
     assert.isFalse(user.skills[0].$isPersisted)
   })
 
@@ -125,13 +132,17 @@ test.group('Factory | ManyToMany | make', (group) => {
 
     const user = await factory.with('skills', 1, (related) => {
       related.merge({ name: 'Dancing' })
-    }).make()
+    }).makeStubbed()
 
     assert.isFalse(user.$isPersisted)
     assert.lengthOf(user.skills, 1)
     assert.instanceOf(user.skills[0], Skill)
     assert.isFalse(user.skills[0].$isPersisted)
     assert.equal(user.skills[0].name, 'Dancing')
+    assert.deepEqual(user.skills[0].$extras, {
+      skill_id: user.skills[0].id,
+      user_id: user.id,
+    })
   })
 
   test('make many relationship', async (assert) => {
@@ -172,7 +183,7 @@ test.group('Factory | ManyToMany | make', (group) => {
 
     const user = await factory.with('skills', 2, (related) => {
       related.merge({ name: 'Dancing' })
-    }).make()
+    }).makeStubbed()
 
     assert.isFalse(user.$isPersisted)
     assert.lengthOf(user.skills, 2)
@@ -184,6 +195,16 @@ test.group('Factory | ManyToMany | make', (group) => {
     assert.instanceOf(user.skills[1], Skill)
     assert.isFalse(user.skills[1].$isPersisted)
     assert.equal(user.skills[1].name, 'Dancing')
+
+    assert.deepEqual(user.skills[0].$extras, {
+      skill_id: user.skills[0].id,
+      user_id: user.id,
+    })
+
+    assert.deepEqual(user.skills[1].$extras, {
+      skill_id: user.skills[1].id,
+      user_id: user.id,
+    })
   })
 })
 

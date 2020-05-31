@@ -35,7 +35,19 @@ export class ManyToMany extends BaseRelation implements FactoryRelationContract 
    */
   public async make (parent: LucidRow, callback?: RelationCallback, count?: number) {
     const factory = this.compile(callback)
-    const instances = await factory.makeMany(count || 1)
+    const instances = await factory.makeStubbedMany(count || 1)
+
+    const [pivotKey, pivotValue] = this.relation.getPivotPair(parent)
+    instances.forEach((related) => {
+      const [pivotRelatedKey, pivotRelatedValue] = this.relation.getPivotRelatedPair(related)
+
+      /**
+       * Update model $extra properties
+       */
+      related.$extras[pivotKey] = pivotValue
+      related.$extras[pivotRelatedKey] = pivotRelatedValue
+    })
+
     parent.$setRelated(this.relation.relationName, instances)
   }
 
@@ -44,9 +56,7 @@ export class ManyToMany extends BaseRelation implements FactoryRelationContract 
    */
   public async create (parent: LucidRow, callback?: RelationCallback, count?: number) {
     const factory = this.compile(callback)
-
-    const customAttributes: ModelObject = {}
-    const instances = await factory.createMany(count || 1, (related) => related.merge(customAttributes))
+    const instances = await factory.createMany(count || 1)
 
     /**
      * Loop over instances to build pivot attributes

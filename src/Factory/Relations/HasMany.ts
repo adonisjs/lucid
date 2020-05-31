@@ -35,7 +35,13 @@ export class HasMany extends BaseRelation implements FactoryRelationContract {
    */
   public async make (parent: LucidRow, callback?: RelationCallback, count?: number) {
     const factory = this.compile(callback)
-    const instances = await factory.makeMany(count || 1)
+
+    const customAttributes = {}
+    this.relation.hydrateForPersistance(parent, customAttributes)
+    const instances = await factory.makeStubbedMany(count || 1, (related) => {
+      related.merge(customAttributes)
+    })
+
     parent.$setRelated(this.relation.relationName, instances)
   }
 
@@ -47,7 +53,10 @@ export class HasMany extends BaseRelation implements FactoryRelationContract {
 
     const customAttributes = {}
     this.relation.hydrateForPersistance(parent, customAttributes)
-    const instance = await factory.createMany(count || 1, (related) => related.merge(customAttributes))
+
+    const instance = await factory.createMany(count || 1, (related) => {
+      related.merge(customAttributes)
+    })
 
     parent.$setRelated(this.relation.relationName, instance)
   }

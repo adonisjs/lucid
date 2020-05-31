@@ -35,7 +35,10 @@ export class HasOne extends BaseRelation implements FactoryRelationContract {
    */
   public async make (parent: LucidRow, callback?: RelationCallback) {
     const factory = this.compile(callback)
-    const instance = await factory.make()
+    const customAttributes = {}
+    this.relation.hydrateForPersistance(parent, customAttributes)
+
+    const instance = await factory.makeStubbed((related) => related.merge(customAttributes))
     parent.$setRelated(this.relation.relationName, instance)
   }
 

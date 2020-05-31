@@ -17,6 +17,8 @@ import {
 import { FactoryModel } from './FactoryModel'
 import { FactoryContext } from './FactoryContext'
 
+let Counter = 1
+
 /**
  * Factory builder exposes the API to create/persist factory model instances.
  */
@@ -197,16 +199,25 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Returns a model instance without persisting it to the database.
    * Relationships are still loaded and states are also applied.
    */
-  public async make (callback?: (
+  public async makeStubbed (callback?: (
     model: LucidRow,
     ctx: FactoryContextContract,
   ) => void) {
     const { modelInstance, ctx } = await this.compile(true, callback)
+    await this.model.hooks.exec('after', 'make', this, modelInstance, ctx)
+
+    modelInstance[this.model.model.primaryKey] = modelInstance.$primaryKeyValue || Counter++
 
     /**
      * Make relationships. The relationships will be not persisted
      */
     await this.makeRelations(modelInstance, ctx)
+
+    /**
+     * Fire the after hook
+     */
+    await this.model.hooks.exec('after', 'makeStubbed', this, modelInstance, ctx)
+
     return modelInstance
   }
 
@@ -219,6 +230,12 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
     ctx: FactoryContextContract,
   ) => void) {
     const { modelInstance, ctx } = await this.compile(false, callback)
+    await this.model.hooks.exec('after', 'make', this, modelInstance, ctx)
+
+    /**
+     * Fire the before hook
+     */
+    await this.model.hooks.exec('before', 'create', this, modelInstance, ctx)
 
     try {
       /**
@@ -231,6 +248,13 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
        * Create relationships.
        */
       await this.createRelations(modelInstance, ctx)
+
+      /**
+       * Fire after hook before the transaction is committed, so that
+       * hook can run db operations using the same transaction
+       */
+      await this.model.hooks.exec('after', 'create', this, modelInstance, ctx)
+
       if (!this.ctx && ctx.$trx) {
         await ctx.$trx.commit()
       }
@@ -247,7 +271,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   /**
    * Create many of factory model instances
    */
-  public async makeMany (
+  public async makeStubbedMany (
     count: number,
     callback?: (model: LucidRow, ctx: FactoryContextContract) => void,
   ) {
@@ -256,7 +280,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
     const counter = new Array(count).fill(0).map((_, i) => i)
     for (let index of counter) {
       this.currentIndex = index
-      modelInstances.push(await this.make(callback))
+      modelInstances.push(await this.makeStubbed(callback))
     }
 
     return modelInstances

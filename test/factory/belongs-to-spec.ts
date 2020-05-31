@@ -46,6 +46,9 @@ test.group('Factory | BelongTo | make', (group) => {
   test('make model with relationship', async (assert) => {
     class Profile extends BaseModel {
       @column()
+      public id: number
+
+      @column()
       public userId: number
 
       @column()
@@ -79,8 +82,11 @@ test.group('Factory | BelongTo | make', (group) => {
       return {}
     }).build()
 
-    const profile = await profileFactory.with('user').make()
+    const profile = await profileFactory.with('user').makeStubbed()
+    assert.exists(profile.id)
     assert.isFalse(profile.$isPersisted)
+
+    assert.exists(profile.user.id)
     assert.instanceOf(profile.user, User)
     assert.isFalse(profile.user.$isPersisted)
     assert.equal(profile.user.id, profile.userId)
@@ -88,6 +94,9 @@ test.group('Factory | BelongTo | make', (group) => {
 
   test('pass custom attributes to the relationship', async (assert) => {
     class Profile extends BaseModel {
+      @column()
+      public id: number
+
       @column()
       public userId: number
 
@@ -124,12 +133,79 @@ test.group('Factory | BelongTo | make', (group) => {
       }
     }).build()
 
-    const profile = await profileFactory.with('user', 1, (related) => related.merge({ points: 10 })).make()
+    const profile = await profileFactory
+      .with('user', 1, (related) => related.merge({ points: 10 }))
+      .makeStubbed()
+
+    assert.exists(profile.id)
     assert.isFalse(profile.$isPersisted)
     assert.instanceOf(profile.user, User)
+
+    assert.exists(profile.user.id)
     assert.isFalse(profile.user.$isPersisted)
     assert.equal(profile.user.id, profile.userId)
     assert.equal(profile.user.points, 10)
+  })
+
+  test('invoke make hook on the related factory', async (assert) => {
+    class Profile extends BaseModel {
+      @column()
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+
+      @belongsTo(() => User)
+      public user: BelongsTo<typeof User>
+    }
+    Profile.boot()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number = 0
+    }
+    User.boot()
+
+    const profileFactory = new FactoryModel(Profile, () => {
+      return {
+        displayName: 'virk',
+      }
+    })
+      .relation('user', () => factory)
+      .build()
+
+    const factory = new FactoryModel(User, () => {
+      return {
+        points: 0,
+      }
+    })
+      .after('make', (_, user) => {
+        user.id = 100
+      })
+      .build()
+
+    const profile = await profileFactory
+      .with('user', 1, (related) => related.merge({ points: 10 }))
+      .makeStubbed()
+
+    assert.exists(profile.id)
+    assert.isFalse(profile.$isPersisted)
+    assert.instanceOf(profile.user, User)
+
+    assert.exists(profile.user.id)
+    assert.equal(profile.user.points, 10)
+    assert.isFalse(profile.user.$isPersisted)
+    assert.equal(profile.userId, 100)
+    assert.equal(profile.user.id, 100)
   })
 })
 
@@ -186,6 +262,7 @@ test.group('Factory | BelongTo | create', (group) => {
     }).build()
 
     const profile = await profileFactory.with('user').create()
+
     assert.isTrue(profile.$isPersisted)
     assert.instanceOf(profile.user, User)
     assert.isTrue(profile.user.$isPersisted)
@@ -230,7 +307,10 @@ test.group('Factory | BelongTo | create', (group) => {
       }
     }).build()
 
-    const profile = await profileFactory.with('user', 1, (related) => related.merge({ points: 10 })).create()
+    const profile = await profileFactory
+      .with('user', 1, (related) => related.merge({ points: 10 }))
+      .create()
+
     assert.isTrue(profile.$isPersisted)
     assert.instanceOf(profile.user, User)
     assert.isTrue(profile.user.$isPersisted)
@@ -276,7 +356,10 @@ test.group('Factory | BelongTo | create', (group) => {
       }
     }).build()
 
-    const profile = await profileFactory.with('user', 1, (related) => related.merge({ points: 10 })).create()
+    const profile = await profileFactory
+      .with('user', 1, (related) => related.merge({ points: 10 }))
+      .create()
+
     assert.isTrue(profile.$isPersisted)
     assert.instanceOf(profile.user, User)
     assert.isTrue(profile.user.$isPersisted)
