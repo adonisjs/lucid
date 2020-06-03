@@ -1604,16 +1604,6 @@ export class BaseModel implements LucidRow {
    * Serializes relationships to a plain object. When `raw=true`, it will
    * recurisvely serialize the relationships as well.
    */
-  // public serializeRelations (
-  //   cherryPick: undefined,
-  //   raw: true,
-  // ): { [key: string]: LucidRow | LucidRow[] }
-
-  // public serializeRelations (
-  //   cherryPick: { [relation: string]: CherryPickOptions } | undefined,
-  //   raw: false | undefined,
-  // ): ModelObject
-
   public serializeRelations (
     cherryPick?: CherryPick['relations'],
     raw: boolean = false,
@@ -1661,6 +1651,42 @@ export class BaseModel implements LucidRow {
       ...this.serializeAttributes(cherryPick?.fields, false),
       ...this.serializeRelations(cherryPick?.relations, false),
       ...this.serializeComputed(cherryPick?.fields),
+    }
+  }
+
+  /**
+   * Convert model to a plain Javascript object
+   */
+  public toObject () {
+    const Model = this.constructor as LucidModel
+    const computed: ModelObject = {}
+
+    /**
+     * Relationships toObject
+     */
+    const preloaded = Object.keys(this.$preloaded).reduce((result, key) => {
+      const value = this.$preloaded[key]
+      result[key] = Array.isArray(value)
+        ? value.map((one) => one.toObject())
+        : value.toObject()
+
+      return result
+    }, {})
+
+    /**
+     * Update computed object with computed definitions
+     */
+    Model.$computedDefinitions.forEach((_, key) => {
+      const computedValue = this[key]
+      if (computedValue !== undefined) {
+        computed[key] = computedValue
+      }
+    })
+
+    return {
+      ...this.$attributes,
+      ...preloaded,
+      ...computed,
     }
   }
 

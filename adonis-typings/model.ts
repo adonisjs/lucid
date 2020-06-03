@@ -525,6 +525,12 @@ declare module '@ioc:Adonis/Lucid/Model' {
     serialize (cherryPick?: CherryPick): ModelObject
 
     /**
+     * Converts model to an object. It just returns the properties
+     * of the model, along with preloaded relationships
+     */
+    toObject (): ModelObject
+
+    /**
      * Serialize everything
      */
     toJSON (): ModelObject

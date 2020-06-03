@@ -4827,3 +4827,153 @@ test.group('Base Model | paginate', (group) => {
     })
   })
 })
+
+test.group('Base Model | toObject', (group) => {
+  group.before(async () => {
+    db = getDb()
+    BaseModel = getBaseModel(ormAdapter(db))
+  })
+
+  group.after(async () => {
+    await db.manager.closeAll()
+  })
+
+  test('convert model to its object representation', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    assert.deepEqual(user.toObject(), { username: 'virk' })
+  })
+
+  test('use model property key when converting model to object', async (assert) => {
+    class User extends BaseModel {
+      @column({ serializeAs: 'theUserName', columnName: 'user_name' })
+      public username: string
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    assert.deepEqual(user.toObject(), { username: 'virk' })
+  })
+
+  test('add computed properties to toObject result', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @computed()
+      public get fullName () {
+        return this.username.toUpperCase()
+      }
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    assert.deepEqual(user.toObject(), { username: 'virk', fullName: 'VIRK' })
+  })
+
+  test('do not add computed property when it returns undefined', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @computed()
+      public get fullName () {
+        return undefined
+      }
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    assert.deepEqual(user.toObject(), { username: 'virk' })
+  })
+
+  test('add preloaded hasOne relationship to toObject result', async (assert) => {
+    class Profile extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasOne(() => Profile)
+      public profile: HasOne<typeof Profile>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    user.$setRelated('profile', new Profile())
+
+    assert.deepEqual(user.toObject(), { username: 'virk', profile: {} })
+  })
+
+  test('add preloaded hasMany relationship to toObject result', async (assert) => {
+    class Comment extends BaseModel {
+      @column()
+      public body: string
+
+      @column()
+      public postId: number
+    }
+
+    class Post extends BaseModel {
+      @column()
+      public title: string
+
+      @column()
+      public userId: number
+
+      @hasMany(() => Comment)
+      public comments: HasMany<typeof Comment>
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Post)
+      public posts: HasMany<typeof Post>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    const post = new Post()
+    post.title = 'Adonis 101'
+
+    const comment = new Comment()
+    comment.body = 'Nice post'
+
+    post.$setRelated('comments', [comment])
+    user.$setRelated('posts', [post])
+
+    assert.deepEqual(user.toObject(), {
+      username: 'virk',
+      posts: [{
+        title: 'Adonis 101',
+        comments: [{
+          body: 'Nice post',
+        }],
+      }],
+    })
+  })
+})
