@@ -1535,7 +1535,7 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.deepEqual(bindings, knexBindings)
     })
 
-    test.only('apply standard order by when not eagerloading', async (assert) => {
+    test('apply standard order by when not eagerloading', async (assert) => {
       class User extends BaseModel {
         @column({ isPrimary: true })
         public id: number
