@@ -1259,13 +1259,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * A shorthand for applying offset and limit based upon
    * the current page
    */
-  public forPage (page: number, perPage?: number): this {
-    /**
-     * Cast to number
-     */
-    page = Number(page)
-    perPage = Number(perPage)
-
+  public forPage (page: number, perPage: number): this {
     /**
      * Calculate offset from current page and per page values
      */

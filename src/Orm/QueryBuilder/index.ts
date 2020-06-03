@@ -358,6 +358,12 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Paginate through rows inside a given table
    */
   public async paginate (page: number, perPage: number = 20) {
+    /**
+     * Cast to number
+     */
+    page = Number(page)
+    perPage = Number(perPage)
+
     const countQuery = this.clone().clearOrder().clearLimit().clearOffset().clearSelect().count('* as total')
 
     /**

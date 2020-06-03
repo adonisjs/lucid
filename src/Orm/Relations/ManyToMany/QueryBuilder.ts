@@ -15,7 +15,6 @@ import { ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 import { ManyToMany } from './index'
 import { getValue, unique } from '../../../utils'
 import { BaseQueryBuilder } from '../Base/QueryBuilder'
-import { SimplePaginator } from '../../../Database/Paginator/SimplePaginator'
 
 /**
  * Extends the model query builder for executing queries in scope
@@ -132,19 +131,6 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder implements ManyToMa
       }
       return this.transformValue(column)
     })
-  }
-
-  /**
-   * Executes the pagination query for the relationship
-   */
-  private async paginateRelated (page: number, perPage: number) {
-    const countQuery = this.clone().clearOrder().clearLimit().clearOffset().clearSelect().count('* as total')
-
-    const aggregateQuery = await countQuery.exec()
-    const total = this.hasGroupBy ? aggregateQuery.length : aggregateQuery[0].total
-
-    const results = total > 0 ? await this.forPage(page, perPage).exec() : []
-    return new SimplePaginator(results, total, perPage, page)
   }
 
   /**
@@ -404,7 +390,8 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder implements ManyToMa
     if (this.isEagerQuery) {
       throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
     }
-    return this.paginateRelated(page, perPage)
+
+    return super.paginate(page, perPage)
   }
 
   /**
