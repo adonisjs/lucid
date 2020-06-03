@@ -126,7 +126,7 @@ export class HasManyQueryBuilder extends BaseQueryBuilder implements HasManyQuer
       direction: 'desc',
     }
 
-    const rowName = 'ADONIS_GROUP_LIMIT_COUNTER'
+    const rowName = 'adonis_group_limit_counter'
     const partitionBy = `PARTITION BY ${this.relation.foreignKeyColumName}`
     const orderBy = `ORDER BY ${column} ${direction}`
 
@@ -139,7 +139,7 @@ export class HasManyQueryBuilder extends BaseQueryBuilder implements HasManyQuer
 
     this
       .select(this.client.raw(`row_number() over (${partitionBy} ${orderBy}) as ${rowName}`))
-      .as('ADONIS_TEMP')
+      .as('adonis_temp')
 
     return this.relation
       .relatedModel()

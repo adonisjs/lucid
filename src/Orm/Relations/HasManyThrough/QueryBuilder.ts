@@ -241,7 +241,7 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder implements HasM
       direction: 'desc',
     }
 
-    const rowName = 'ADONIS_GROUP_LIMIT_COUNTER'
+    const rowName = 'adonis_group_limit_counter'
     const partitionBy = `PARTITION BY ${this.prefixThroughTable(this.relation.foreignKeyColumnName)}`
     const orderBy = `ORDER BY ${column} ${direction}`
 
@@ -254,7 +254,7 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder implements HasM
 
     this
       .select(this.client.raw(`row_number() over (${partitionBy} ${orderBy}) as ${rowName}`))
-      .as('ADONIS_TEMP')
+      .as('adonis_temp')
 
     return this.relation
       .relatedModel()
