@@ -10,8 +10,6 @@ services:
       MYSQL_ROOT_PASSWORD: password
     ports:
       - '3306:3306'
-    expose:
-      - '3306'
   mysql:
     image: mysql:8.0
     restart: always
@@ -22,9 +20,7 @@ services:
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: password
     ports:
-      - '3300:3306'
-    expose:
-      - '3300'
+      - '3307:3306'
   pg:
     image: postgres:11
     restart: always
