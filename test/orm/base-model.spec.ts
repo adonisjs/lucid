@@ -953,6 +953,28 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.deepEqual(user!.$attributes, { fullName: 'VIRK' })
     assert.deepEqual(user!.$original, { fullName: 'VIRK' })
   })
+
+  test('original and attributes should not be shared', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public user: {
+        username: string,
+      }
+
+      @column({ columnName: 'full_name' })
+      public fullName: string
+    }
+
+    const user = User.$createFromAdapterResult({
+      user: {
+        username: 'virk',
+      },
+    })
+
+    user!.user.username = 'nikk'
+    assert.isTrue(user!.$isDirty)
+    assert.deepEqual(user!.$dirty, { user: { username: 'nikk' } })
+  })
 })
 
 test.group('Base Model | delete', (group) => {
@@ -4119,14 +4141,13 @@ test.group('Base Model | date', (group) => {
     const user = new User()
     User.$adapter = adapter
     adapter.on('update', (model: User) => {
-      assert.notStrictEqual(model.updatedAt, localTime)
+      assert.instanceOf(model.updatedAt, DateTime)
     })
 
-    const localTime = DateTime.local()
     user.username = 'virk'
     await user.save()
 
-    user.updatedAt = localTime
+    user.username = 'nikk'
     await user.save()
   })
 

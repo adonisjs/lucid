@@ -44,6 +44,7 @@
     "@poppinss/hooks": "^1.0.5",
     "@poppinss/utils": "^2.2.6",
     "cli-table3": "^0.6.0",
+    "fast-deep-equal": "^3.1.1",
     "kleur": "^3.0.3",
     "knex": "^0.21.1",
     "knex-dynamic-connection": "^1.0.5",

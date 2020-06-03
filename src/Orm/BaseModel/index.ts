@@ -10,9 +10,10 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import { DateTime } from 'luxon'
-import { IocContract } from '@adonisjs/fold'
-import { Exception } from '@poppinss/utils'
+import equal from 'fast-deep-equal'
 import { Hooks } from '@poppinss/hooks'
+import { IocContract } from '@adonisjs/fold'
+import { Exception, lodash } from '@poppinss/utils'
 
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import {
@@ -1076,8 +1077,15 @@ export class BaseModel implements LucidRow {
     const dirty = Object.keys(this.$attributes).reduce((result, key) => {
       const value = this.$attributes[key]
       const originalValue = this.$original[key]
+      let isEqual = true
 
-      if (originalValue !== value) {
+      if (value instanceof DateTime || originalValue instanceof DateTime) {
+        isEqual = value === originalValue
+      } else {
+        isEqual = equal(originalValue, value)
+      }
+
+      if (!isEqual) {
         result[key] = value
       }
 
@@ -1396,7 +1404,8 @@ export class BaseModel implements LucidRow {
    * return false
    */
   public $hydrateOriginals () {
-    this.$original = Object.assign({}, this.$attributes)
+    this.$original = {}
+    lodash.merge(this.$original, this.$attributes)
   }
 
   /**
