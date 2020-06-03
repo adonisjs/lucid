@@ -51,6 +51,13 @@ export class TransactionClient extends EventEmitter implements TransactionClient
     public emitter: EmitterContract,
   ) {
     super()
+
+    /**
+     * Lucid models listens for transaction events to delete the reference. During
+     * testing, it is common to generate more than 10 model instances and hence
+     * the max listeners limit needs to be removed
+     */
+    this.setMaxListeners(Infinity)
   }
 
   /**
