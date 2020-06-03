@@ -626,6 +626,14 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     createMany (
       values: Partial<ModelAttributes<InstanceType<RelatedModel>>>[],
     ): Promise<InstanceType<RelatedModel>[]>
+
+    /**
+     * Return a query builder instance of the relationship
+     */
+    query<Result extends any = InstanceType<RelatedModel>> (): HasManyQueryBuilderContract<
+      RelatedModel,
+      Result
+    >
   }
 
   /**
@@ -728,6 +736,13 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     Relation extends RelationshipsContract,
     RelatedModel extends LucidModel,
   > extends RelationQueryClientContract<Relation, RelatedModel> {
+    /**
+     * Return a query builder instance of the relationship
+     */
+    query<Result extends any = InstanceType<RelatedModel>> (): HasManyThroughQueryBuilderContract<
+      RelatedModel,
+      Result
+    >
   }
 
   /**

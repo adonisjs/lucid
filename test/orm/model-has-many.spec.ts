@@ -1461,6 +1461,143 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(users[1].posts[1].title, 'Lucid 102')
       assert.exists(users[1].posts[1].createdAt)
     })
+
+    test('apply standard limit when not eagerloading', async (assert) => {
+      class Post extends BaseModel {
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+
+        @column()
+        public createdAt: Date
+      }
+
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasMany(() => Post)
+        public posts: HasMany<typeof Post>
+      }
+
+      await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+      const [user0] = await db.query().from('users')
+
+      /**
+       * User 1
+       */
+      await db.insertQuery().table('posts').insert([
+        {
+          user_id: user0.id,
+          title: 'Adonis 101',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 102',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 103',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 104',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 105',
+          created_at: new Date(),
+        },
+      ])
+
+      User.boot()
+
+      const user = await User.firstOrFail()
+      const { sql, bindings } = user.related('posts').query().groupLimit(2).toSQL()
+      const { sql: knexSql, bindings: knexBindings } = db.query()
+        .from('posts')
+        .where('user_id', user.id)
+        .limit(2)
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+    })
+
+    test('apply standard order by when not eagerloading', async (assert) => {
+      class Post extends BaseModel {
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+
+        @column()
+        public createdAt: Date
+      }
+
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasMany(() => Post)
+        public posts: HasMany<typeof Post>
+      }
+
+      await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+      const [user0] = await db.query().from('users')
+
+      /**
+       * User 1
+       */
+      await db.insertQuery().table('posts').insert([
+        {
+          user_id: user0.id,
+          title: 'Adonis 101',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 102',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 103',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 104',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 105',
+          created_at: new Date(),
+        },
+      ])
+
+      User.boot()
+
+      const user = await User.firstOrFail()
+      const { sql, bindings } = user.related('posts').query().groupLimit(2).groupOrderBy('id', 'desc').toSQL()
+      const { sql: knexSql, bindings: knexBindings } = db.query()
+        .from('posts')
+        .where('user_id', user.id)
+        .limit(2)
+        .orderBy('id', 'desc')
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+    })
   })
 }
 

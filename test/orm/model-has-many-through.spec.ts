@@ -1469,6 +1469,143 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.isDefined(countries[1].posts[1].createdAt)
       assert.equal(countries[1].posts[1].$extras.through_country_id, 2)
     })
+
+    test('apply standard limit when not eagerloading', async (assert) => {
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public countryId: number
+      }
+      User.boot()
+
+      class Post extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+      }
+      Post.boot()
+
+      class Country extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasManyThrough([() => Post, () => User])
+        public posts: HasManyThrough<typeof Post>
+      }
+      Country.boot()
+
+      await db.insertQuery().table('countries').insert([
+        { name: 'India' },
+      ])
+
+      await db.insertQuery().table('users').insert([
+        { username: 'virk', country_id: 1 },
+        { username: 'nikk', country_id: 1 },
+      ])
+
+      /**
+       * Country 1 posts
+       */
+      await db.insertQuery().table('posts').insert([
+        { title: 'Adonis 101', user_id: 1 },
+        { title: 'Adonis 102', user_id: 1 },
+        { title: 'Adonis 103', user_id: 2 },
+        { title: 'Adonis 104', user_id: 2 },
+        { title: 'Adonis 105', user_id: 1 },
+      ])
+
+      const country = await Country.firstOrFail()
+      const { sql, bindings } = country.related('posts').query().groupLimit(2).toSQL()
+      const { sql: knexSql, bindings: knexBindings } = db.query()
+        .from('posts')
+        .select('posts.*', 'users.country_id as through_country_id')
+        .innerJoin('users', 'users.id', 'posts.user_id')
+        .where('users.country_id', 1)
+        .limit(2)
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+    })
+
+    test.only('apply standard order by when not eagerloading', async (assert) => {
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public countryId: number
+      }
+      User.boot()
+
+      class Post extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+      }
+      Post.boot()
+
+      class Country extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasManyThrough([() => Post, () => User])
+        public posts: HasManyThrough<typeof Post>
+      }
+      Country.boot()
+
+      await db.insertQuery().table('countries').insert([
+        { name: 'India' },
+      ])
+
+      await db.insertQuery().table('users').insert([
+        { username: 'virk', country_id: 1 },
+        { username: 'nikk', country_id: 1 },
+      ])
+
+      /**
+       * Country 1 posts
+       */
+      await db.insertQuery().table('posts').insert([
+        { title: 'Adonis 101', user_id: 1 },
+        { title: 'Adonis 102', user_id: 1 },
+        { title: 'Adonis 103', user_id: 2 },
+        { title: 'Adonis 104', user_id: 2 },
+        { title: 'Adonis 105', user_id: 1 },
+      ])
+
+      const country = await Country.firstOrFail()
+      const { sql, bindings } = country
+        .related('posts')
+        .query()
+        .groupLimit(2)
+        .groupOrderBy('users.country_id', 'desc')
+        .toSQL()
+
+      const { sql: knexSql, bindings: knexBindings } = db.query()
+        .from('posts')
+        .select('posts.*', 'users.country_id as through_country_id')
+        .innerJoin('users', 'users.id', 'posts.user_id')
+        .where('users.country_id', 1)
+        .limit(2)
+        .orderBy('users.country_id', 'desc')
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+    })
   })
 }
 

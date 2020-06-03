@@ -1538,6 +1538,119 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(users[1].skills[1].$extras.pivot_skill_id, 5)
       assert.equal(users[1].skills[1].$extras.pivot_proficiency, 'Master')
     })
+
+    test('apply standard limit when not eagerloading', async (assert) => {
+      class Skill extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public name: string
+      }
+
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @manyToMany(() => Skill)
+        public skills: ManyToMany<typeof Skill>
+      }
+
+      User.boot()
+      await db.insertQuery().table('users').insert([
+        { username: 'virk' },
+        { username: 'nikk' },
+      ])
+
+      await db.insertQuery().table('skills').insert([
+        { name: 'Programming' },
+        { name: 'Dancing' },
+        { name: 'Designing' },
+        { name: 'Cooking' },
+        { name: 'Singing' },
+      ])
+
+      const skillIds = [1, 2, 3, 4, 5]
+
+      /**
+       * User 1 skills
+       */
+      await db.insertQuery().table('skill_user').insert(skillIds.map((id) => {
+        return { user_id: 1, skill_id: id }
+      }))
+
+      const user = await User.query().firstOrFail()
+      const { sql, bindings } = user.related('skills').query().groupLimit(2).toSQL()
+      const { sql: knexSql, bindings: knexBindings } = db.query()
+        .from('skills')
+        .select('skills.*', 'skill_user.user_id as pivot_user_id', 'skill_user.skill_id as pivot_skill_id')
+        .innerJoin('skill_user', 'skills.id', 'skill_user.skill_id')
+        .where('skill_user.user_id', 1)
+        .limit(2)
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+    })
+
+    test('apply standard order by when not eagerloading', async (assert) => {
+      class Skill extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public name: string
+      }
+
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @manyToMany(() => Skill)
+        public skills: ManyToMany<typeof Skill>
+      }
+
+      User.boot()
+      await db.insertQuery().table('users').insert([
+        { username: 'virk' },
+        { username: 'nikk' },
+      ])
+
+      await db.insertQuery().table('skills').insert([
+        { name: 'Programming' },
+        { name: 'Dancing' },
+        { name: 'Designing' },
+        { name: 'Cooking' },
+        { name: 'Singing' },
+      ])
+
+      const skillIds = [1, 2, 3, 4, 5]
+
+      /**
+       * User 1 skills
+       */
+      await db.insertQuery().table('skill_user').insert(skillIds.map((id) => {
+        return { user_id: 1, skill_id: id }
+      }))
+
+      const user = await User.query().firstOrFail()
+      const { sql, bindings } = user.related('skills').query()
+        .groupLimit(2)
+        .groupOrderBy('skill_user.id', 'desc')
+        .toSQL()
+
+      const { sql: knexSql, bindings: knexBindings } = db.query()
+        .from('skills')
+        .select('skills.*', 'skill_user.user_id as pivot_user_id', 'skill_user.skill_id as pivot_skill_id')
+        .innerJoin('skill_user', 'skills.id', 'skill_user.skill_id')
+        .where('skill_user.user_id', 1)
+        .limit(2)
+        .orderBy('skill_user.id', 'desc')
+        .toSQL()
+
+      assert.equal(sql, knexSql)
+      assert.deepEqual(bindings, knexBindings)
+    })
   })
 }
 

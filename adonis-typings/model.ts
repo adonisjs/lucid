@@ -792,7 +792,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     firstOrFail<T extends LucidModel> (
       this: T,
       options?: ModelAdapterOptions,
-    ): Promise<null | InstanceType<T>>
+    ): Promise<InstanceType<T>>
 
     /**
      * Find many using an array of primary keys

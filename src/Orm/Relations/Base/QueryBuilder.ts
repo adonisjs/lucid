@@ -25,7 +25,13 @@ export abstract class BaseQueryBuilder extends ModelQueryBuilder implements Rela
   /**
    * Eager constraints
    */
-  protected groupConstraints: { limit?: number, orderBy?: string } = {}
+  protected groupConstraints: {
+    limit?: number,
+    orderBy?: {
+      column: string,
+      direction?: 'asc' | 'desc',
+    },
+  } = {}
 
   /**
    * A flag to know, if query builder is instantiated for
@@ -141,7 +147,7 @@ export abstract class BaseQueryBuilder extends ModelQueryBuilder implements Rela
    * Define the group limit
    */
   public groupOrderBy (column: string, direction?: 'asc' | 'desc'): this {
-    this.groupConstraints.orderBy = direction ? `${this.resolveKey(column)} ${direction}` : column
+    this.groupConstraints.orderBy = { column, direction }
     return this
   }
 
@@ -150,6 +156,21 @@ export abstract class BaseQueryBuilder extends ModelQueryBuilder implements Rela
    */
   public toSQL () {
     this.applyConstraints()
+    if (this.isEagerQuery) {
+      return this.groupConstraints.limit ? this.getGroupLimitQuery().toSQL() : super.toSQL()
+    }
+
+    /**
+     * Apply orderBy and limit on the standard query when not
+     * an eagerloading query
+     */
+    if (this.groupConstraints.limit) {
+      this.limit(this.groupConstraints.limit)
+    }
+    if (this.groupConstraints.orderBy) {
+      this.orderBy(this.groupConstraints.orderBy.column, this.groupConstraints.orderBy.direction)
+    }
+
     return super.toSQL()
   }
 
@@ -158,6 +179,21 @@ export abstract class BaseQueryBuilder extends ModelQueryBuilder implements Rela
    */
   public exec () {
     this.applyConstraints()
-    return this.groupConstraints.limit ? this.getGroupLimitQuery().exec() : super.exec()
+    if (this.isEagerQuery) {
+      return this.groupConstraints.limit ? this.getGroupLimitQuery().exec() : super.exec()
+    }
+
+    /**
+     * Apply orderBy and limit on the standard query when not
+     * an eagerloading query
+     */
+    if (this.groupConstraints.limit) {
+      this.limit(this.groupConstraints.limit)
+    }
+    if (this.groupConstraints.orderBy) {
+      this.orderBy(this.groupConstraints.orderBy.column, this.groupConstraints.orderBy.direction)
+    }
+
+    return super.exec()
   }
 }

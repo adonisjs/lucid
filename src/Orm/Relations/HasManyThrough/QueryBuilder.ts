@@ -233,10 +233,17 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder implements HasM
    * Returns the group limit query
    */
   public getGroupLimitQuery () {
+    console.log(this.relation.relatedModel().primaryKey)
+    console.log(this.relation.foreignKey)
+
+    const { direction, column } = this.groupConstraints.orderBy || {
+      column: this.prefixRelatedTable(this.resolveKey(this.relation.relatedModel().primaryKey)),
+      direction: 'desc',
+    }
+
     const rowName = 'ADONIS_GROUP_LIMIT_COUNTER'
-    const primaryColumn = this.resolveKey(this.relation.relatedModel().primaryKey)
     const partitionBy = `PARTITION BY ${this.prefixThroughTable(this.relation.foreignKeyColumnName)}`
-    const orderBy = `ORDER BY ${this.groupConstraints.orderBy || `${this.prefixRelatedTable(primaryColumn)} DESC`}`
+    const orderBy = `ORDER BY ${column} ${direction}`
 
     /**
      * Select * when no columns are selected

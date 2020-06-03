@@ -121,10 +121,14 @@ export class HasManyQueryBuilder extends BaseQueryBuilder implements HasManyQuer
    * Returns the group limit query
    */
   public getGroupLimitQuery () {
+    const { direction, column } = this.groupConstraints.orderBy || {
+      column: this.resolveKey(this.relation.relatedModel().primaryKey),
+      direction: 'desc',
+    }
+
     const rowName = 'ADONIS_GROUP_LIMIT_COUNTER'
-    const primaryColumn = this.resolveKey(this.relation.relatedModel().primaryKey)
     const partitionBy = `PARTITION BY ${this.relation.foreignKeyColumName}`
-    const orderBy = `ORDER BY ${this.groupConstraints.orderBy || `${primaryColumn} DESC`}`
+    const orderBy = `ORDER BY ${column} ${direction}`
 
     /**
      * Select * when no columns are selected
