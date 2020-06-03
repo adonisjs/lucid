@@ -8,21 +8,28 @@
 */
 
 import knex from 'knex'
-import { LucidRow } from '@ioc:Adonis/Lucid/Model'
+import { LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { HasManyThroughQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { HasManyThrough } from './index'
+import { getValue, unique } from '../../../utils'
 import { BaseQueryBuilder } from '../Base/QueryBuilder'
-import { getValue, unique, isObject } from '../../../utils'
 import { SimplePaginator } from '../../../Database/Paginator/SimplePaginator'
 
 /**
  * Extends the model query builder for executing queries in scope
  * to the current relationship
  */
-export class HasManyThroughQueryBuilder extends BaseQueryBuilder {
+export class HasManyThroughQueryBuilder extends BaseQueryBuilder implements HasManyThroughQueryBuilderContract<
+  LucidModel,
+  LucidModel
+> {
   protected cherryPickingKeys: boolean = false
   protected appliedConstraints: boolean = false
+
+  private throughTable = this.relation.throughModel().table
+  private relatedTable = this.relation.relatedModel().table
 
   constructor (
     builder: knex.QueryBuilder,
@@ -38,6 +45,71 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder {
         userFn(subQuery)
       }
     })
+  }
+
+  /**
+   * Prefixes the through table name to a column
+   */
+  private prefixThroughTable (column: string) {
+    return `${this.throughTable}.${column}`
+  }
+
+  /**
+   * Prefixes the related table name to a column
+   */
+  private prefixRelatedTable (column: string) {
+    return `${this.relatedTable}.${column}`
+  }
+
+  /**
+   * Adds where constraint to the pivot table
+   */
+  private addWhereConstraints (builder: HasManyThroughQueryBuilder) {
+    const queryAction = this.queryAction()
+
+    /**
+     * Eager query contraints
+     */
+    if (Array.isArray(this.parent)) {
+      builder.whereIn(
+        this.prefixThroughTable(this.relation.foreignKeyColumnName),
+        unique(this.parent.map((model) => {
+          return getValue(model, this.relation.localKey, this.relation, queryAction)
+        })),
+      )
+      return
+    }
+
+    /**
+     * Query constraints
+     */
+    const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
+    builder.where(this.prefixThroughTable(this.relation.foreignKeyColumnName), value)
+  }
+
+  /**
+   * Transforms the selected column names by prefixing the
+   * table name
+   */
+  private transformRelatedTableColumns (columns: any[]) {
+    return columns.map((column) => {
+      if (typeof (column) === 'string') {
+        return this.prefixRelatedTable(this.resolveKey(column))
+      }
+      return this.transformValue(column)
+    })
+  }
+
+  /**
+   * Executes the pagination query for the relationship
+   */
+  private async paginateRelated (page: number, perPage: number) {
+    const countQuery = this.clone().clearOrder().clearLimit().clearOffset().clearSelect().count('* as total')
+    const aggregateQuery = await countQuery.exec()
+    const total = this.hasGroupBy ? aggregateQuery.length : aggregateQuery[0].total
+
+    const results = total > 0 ? await this.forPage(page, perPage).exec() : []
+    return new SimplePaginator(results, total, perPage, page)
   }
 
   /**
@@ -60,77 +132,16 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder {
   }
 
   /**
-   * Adds where constraint to the pivot table
-   */
-  private addWhereConstraints (builder: HasManyThroughQueryBuilder) {
-    const queryAction = this.queryAction()
-    const throughTable = this.relation.throughModel().table
-
-    /**
-     * Eager query contraints
-     */
-    if (Array.isArray(this.parent)) {
-      builder.whereIn(
-        `${throughTable}.${this.relation.foreignKeyColumnName}`,
-        unique(this.parent.map((model) => {
-          return getValue(model, this.relation.localKey, this.relation, queryAction)
-        })),
-      )
-      return
-    }
-
-    /**
-     * Query constraints
-     */
-    const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
-    builder.where(`${throughTable}.${this.relation.foreignKeyColumnName}`, value)
-  }
-
-  /**
-   * Transforms the selected column names by prefixing the
-   * table name
-   */
-  private transformRelatedTableColumns (columns: any[]) {
-    const relatedTable = this.relation.relatedModel().table
-
-    return columns.map((column) => {
-      if (typeof (column) === 'string') {
-        return `${relatedTable}.${column}`
-      }
-
-      if (Array.isArray(column)) {
-        return this.transformRelatedTableColumns(column)
-      }
-
-      if (isObject(column)) {
-        return Object.keys(column).reduce((result, alias) => {
-          result[alias] = `${relatedTable}.${column[alias]}`
-          return result
-        }, {})
-      }
-
-      return column
-    })
-  }
-
-  /**
-   * Executes the pagination query for the relationship
-   */
-  private async paginateRelated (page: number, perPage: number) {
-    const countQuery = this.clone().clearOrder().clearLimit().clearOffset().clearSelect().count('* as total')
-    const aggregateQuery = await countQuery.exec()
-    const total = this.hasGroupBy ? aggregateQuery.length : aggregateQuery[0].total
-
-    const results = total > 0 ? await this.forPage(page, perPage).exec() : []
-    return new SimplePaginator(results, total, perPage, page)
-  }
-
-  /**
    * Select keys from the related table
    */
   public select (...args: any): this {
+    let columns = args
+    if (Array.isArray(args[0])) {
+      columns = args[0]
+    }
+
     this.cherryPickingKeys = true
-    this.knexQuery.select(this.transformRelatedTableColumns(args))
+    this.knexQuery.select(this.transformRelatedTableColumns(columns))
     return this
   }
 
@@ -145,12 +156,9 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder {
 
     this.appliedConstraints = true
 
-    const throughTable = this.relation.throughModel().table
-    const relatedTable = this.relation.relatedModel().table
-
     if (['delete', 'update'].includes(this.queryAction())) {
-      this.whereIn(`${relatedTable}.${this.relation.throughForeignKeyColumnName}`, (subQuery) => {
-        subQuery.from(throughTable)
+      this.whereIn(this.prefixRelatedTable(this.relation.throughForeignKeyColumnName), (subQuery) => {
+        subQuery.from(this.throughTable)
         this.addWhereConstraints(subQuery)
       })
       return
@@ -174,7 +182,7 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder {
        * through table.
        */
       this.knexQuery.select(
-        `${throughTable}.${this.relation.foreignKeyColumnName} as ${this.relation.throughAlias(this.relation.foreignKeyColumnName)}`,
+        `${this.prefixThroughTable(this.relation.foreignKeyColumnName)} as ${this.relation.throughAlias(this.relation.foreignKeyColumnName)}`,
       )
     }
 
@@ -182,9 +190,9 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder {
      * Inner join
      */
     this.innerJoin(
-      throughTable,
-      `${throughTable}.${this.relation.throughLocalKeyColumnName}`,
-      `${relatedTable}.${this.relation.throughForeignKeyColumnName}`,
+      this.throughTable,
+      this.prefixThroughTable(this.relation.throughLocalKeyColumnName),
+      this.prefixRelatedTable(this.relation.throughForeignKeyColumnName),
     )
 
     /**
@@ -219,5 +227,32 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder {
       throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
     }
     return this.paginateRelated(page, perPage)
+  }
+
+  /**
+   * Returns the group limit query
+   */
+  public getGroupLimitQuery () {
+    const rowName = 'ADONIS_GROUP_LIMIT_COUNTER'
+    const primaryColumn = this.resolveKey(this.relation.relatedModel().primaryKey)
+    const partitionBy = `PARTITION BY ${this.prefixThroughTable(this.relation.foreignKeyColumnName)}`
+    const orderBy = `ORDER BY ${this.groupConstraints.orderBy || `${this.prefixRelatedTable(primaryColumn)} DESC`}`
+
+    /**
+     * Select * when no columns are selected
+     */
+    if (!this.getSelectedColumns()) {
+      this.select('*')
+    }
+
+    this
+      .select(this.client.raw(`row_number() over (${partitionBy} ${orderBy}) as ${rowName}`))
+      .as('ADONIS_TEMP')
+
+    return this.relation
+      .relatedModel()
+      .query()
+      .from(this)
+      .where(rowName, '<=', this.groupConstraints.limit!)
   }
 }

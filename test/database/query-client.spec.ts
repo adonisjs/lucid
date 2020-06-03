@@ -56,22 +56,33 @@ test.group('Query client', (group) => {
     await connection.disconnect()
   })
 
+  test('get query client dialect version', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const client = new QueryClient('write', connection, getEmitter())
+    await client.rawQuery('SELECT 1 + 1 AS result')
+
+    const client1 = new QueryClient('write', connection, getEmitter())
+    assert.exists(client1.dialect.version)
+
+    await connection.disconnect()
+  })
+
   test('get columns info', async (assert) => {
     const connection = new Connection('primary', getConfig(), getLogger())
     connection.connect()
 
     const client = new QueryClient('write', connection, getEmitter())
     const columns = await client.columnsInfo('users')
-    assert.deepEqual(Object.keys(columns), [
-      'id',
-      'country_id',
-      'username',
-      'email',
-      'points',
-      'joined_at',
-      'created_at',
-      'updated_at',
-    ])
+    assert.property(columns, 'id')
+    assert.property(columns, 'country_id')
+    assert.property(columns, 'username')
+    assert.property(columns, 'email')
+    assert.property(columns, 'points')
+    assert.property(columns, 'joined_at')
+    assert.property(columns, 'created_at')
+    assert.property(columns, 'updated_at')
   })
 
   test('get single column info', async (assert) => {
@@ -408,7 +419,7 @@ test.group('Query client | get tables', (group) => {
 
     const client = new QueryClient('dual', connection, getEmitter())
     const tables = await client.getAllTables(['public'])
-    if (process.env.DB !== 'mysql') {
+    if (process.env.DB !== 'mysql_legacy') {
       assert.deepEqual(tables, [
         'comments',
         'countries',

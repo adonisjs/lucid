@@ -16,6 +16,12 @@ export class SqliteDialect implements DialectContract {
   public readonly supportsAdvisoryLocks = false
 
   /**
+   * Reference to the database version. Knex.js fetches the version after
+   * the first database query, so it will be set to undefined initially
+   */
+  public readonly version = this.client.getReadClient()['context']['client'].version
+
+  /**
    * The default format for datetime column. The date formats is
    * valid for luxon date parsing library
    */
@@ -31,12 +37,12 @@ export class SqliteDialect implements DialectContract {
     const tables = await this.client
       .query()
       .from('sqlite_master')
-      .select('name')
+      .select('name as table_name')
       .where('type', 'table')
       .whereNot('name', 'like', 'sqlite_%')
       .orderBy('name', 'asc')
 
-    return tables.map(({ name }) => name)
+    return tables.map(({ table_name }) => table_name)
   }
 
   /**

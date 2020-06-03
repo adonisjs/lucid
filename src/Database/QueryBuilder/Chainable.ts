@@ -211,7 +211,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * use the last selected table
    */
   public from (table: any): this {
-    this.knexQuery.from(this.transformCallback(table))
+    this.knexQuery.from(this.transformValue(table))
     return this
   }
 

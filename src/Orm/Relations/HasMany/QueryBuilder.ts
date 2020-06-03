@@ -8,8 +8,9 @@
 */
 
 import knex from 'knex'
-import { LucidRow } from '@ioc:Adonis/Lucid/Model'
+import { LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { HasManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { HasMany } from './index'
 import { getValue, unique } from '../../../utils'
@@ -19,7 +20,10 @@ import { BaseQueryBuilder } from '../Base/QueryBuilder'
  * Extends the model query builder for executing queries in scope
  * to the current relationship
  */
-export class HasManyQueryBuilder extends BaseQueryBuilder {
+export class HasManyQueryBuilder extends BaseQueryBuilder implements HasManyQueryBuilderContract<
+  LucidModel,
+  LucidModel
+> {
   protected appliedConstraints: boolean = false
 
   constructor (
@@ -111,5 +115,32 @@ export class HasManyQueryBuilder extends BaseQueryBuilder {
       throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
     }
     return super.paginate(page, perPage)
+  }
+
+  /**
+   * Returns the group limit query
+   */
+  public getGroupLimitQuery () {
+    const rowName = 'ADONIS_GROUP_LIMIT_COUNTER'
+    const primaryColumn = this.resolveKey(this.relation.relatedModel().primaryKey)
+    const partitionBy = `PARTITION BY ${this.relation.foreignKeyColumName}`
+    const orderBy = `ORDER BY ${this.groupConstraints.orderBy || `${primaryColumn} DESC`}`
+
+    /**
+     * Select * when no columns are selected
+     */
+    if (!this.getSelectedColumns()) {
+      this.select('*')
+    }
+
+    this
+      .select(this.client.raw(`row_number() over (${partitionBy} ${orderBy}) as ${rowName}`))
+      .as('ADONIS_TEMP')
+
+    return this.relation
+      .relatedModel()
+      .query()
+      .from(this)
+      .where(rowName, '<=', this.groupConstraints.limit!)
   }
 }

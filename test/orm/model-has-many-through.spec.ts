@@ -1113,6 +1113,365 @@ test.group('Model | Has Many Through | preload', (group) => {
   })
 })
 
+if (process.env.DB !== 'mysql_legacy') {
+  test.group('Model | Has Many Through | Group Limit', (group) => {
+    group.before(async () => {
+      db = getDb()
+      BaseModel = getBaseModel(ormAdapter(db))
+      await setup()
+    })
+
+    group.after(async () => {
+      await cleanup()
+      await db.manager.closeAll()
+    })
+
+    group.afterEach(async () => {
+      await resetTables()
+    })
+
+    test('apply group limit', async (assert) => {
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public countryId: number
+      }
+      User.boot()
+
+      class Post extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+      }
+      Post.boot()
+
+      class Country extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasManyThrough([() => Post, () => User])
+        public posts: HasManyThrough<typeof Post>
+      }
+      Country.boot()
+
+      await db.insertQuery().table('countries').insert([
+        { name: 'India' },
+        { name: 'Switzerland' },
+      ])
+
+      await db.insertQuery().table('users').insert([
+        { username: 'virk', country_id: 1 },
+        { username: 'nikk', country_id: 1 },
+        { username: 'romain', country_id: 2 },
+      ])
+
+      /**
+       * Country 1 posts
+       */
+      await db.insertQuery().table('posts').insert([
+        { title: 'Adonis 101', user_id: 1 },
+        { title: 'Adonis 102', user_id: 1 },
+        { title: 'Adonis 103', user_id: 2 },
+        { title: 'Adonis 104', user_id: 2 },
+        { title: 'Adonis 105', user_id: 1 },
+      ])
+
+      /**
+       * Country 2 posts
+       */
+      await db.insertQuery().table('posts').insert([
+        { title: 'Lucid 101', user_id: 3 },
+        { title: 'Lucid 102', user_id: 3 },
+        { title: 'Lucid 103', user_id: 3 },
+        { title: 'Lucid 104', user_id: 3 },
+        { title: 'Lucid 105', user_id: 3 },
+      ])
+
+      const countries = await Country.query().preload('posts', (query) => query.groupLimit(2))
+      assert.lengthOf(countries, 2)
+
+      assert.lengthOf(countries[0].posts, 2)
+      assert.equal(countries[0].posts[0].title, 'Adonis 105')
+      assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
+      assert.equal(countries[0].posts[1].title, 'Adonis 104')
+      assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
+
+      assert.lengthOf(countries[1].posts, 2)
+      assert.equal(countries[1].posts[0].title, 'Lucid 105')
+      assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
+      assert.equal(countries[1].posts[1].title, 'Lucid 104')
+      assert.equal(countries[1].posts[1].$extras.through_country_id, 2)
+    })
+
+    test('apply group limit with custom constraints', async (assert) => {
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public countryId: number
+      }
+      User.boot()
+
+      class Post extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+      }
+      Post.boot()
+
+      class Country extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasManyThrough([() => Post, () => User])
+        public posts: HasManyThrough<typeof Post>
+      }
+      Country.boot()
+
+      await db.insertQuery().table('countries').insert([
+        { name: 'India' },
+        { name: 'Switzerland' },
+      ])
+
+      await db.insertQuery().table('users').insert([
+        { username: 'virk', country_id: 1 },
+        { username: 'nikk', country_id: 1 },
+        { username: 'romain', country_id: 2 },
+      ])
+
+      /**
+       * Country 1 posts
+       */
+      await db.insertQuery().table('posts').insert([
+        { title: 'Adonis 101', user_id: 1, created_at: new Date() },
+        { title: 'Adonis 102', user_id: 1 },
+        { title: 'Adonis 103', user_id: 2 },
+        { title: 'Adonis 104', user_id: 2, created_at: new Date() },
+        { title: 'Adonis 105', user_id: 1 },
+      ])
+
+      /**
+       * Country 2 posts
+       */
+      await db.insertQuery().table('posts').insert([
+        { title: 'Lucid 101', user_id: 3 },
+        { title: 'Lucid 102', user_id: 3, created_at: new Date() },
+        { title: 'Lucid 103', user_id: 3, created_at: new Date() },
+        { title: 'Lucid 104', user_id: 3 },
+        { title: 'Lucid 105', user_id: 3, created_at: new Date() },
+      ])
+
+      const countries = await Country.query().preload('posts', (query) => {
+        query.groupLimit(2).whereNotNull('posts.created_at')
+      })
+      assert.lengthOf(countries, 2)
+
+      assert.lengthOf(countries[0].posts, 2)
+      assert.equal(countries[0].posts[0].title, 'Adonis 104')
+      assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
+      assert.equal(countries[0].posts[1].title, 'Adonis 101')
+      assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
+
+      assert.lengthOf(countries[1].posts, 2)
+      assert.equal(countries[1].posts[0].title, 'Lucid 105')
+      assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
+      assert.equal(countries[1].posts[1].title, 'Lucid 103')
+      assert.equal(countries[1].posts[1].$extras.through_country_id, 2)
+    })
+
+    test('apply group limit and cherry pick fields', async (assert) => {
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public countryId: number
+      }
+      User.boot()
+
+      class Post extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+
+        @column()
+        public createdAt: Date
+      }
+      Post.boot()
+
+      class Country extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasManyThrough([() => Post, () => User])
+        public posts: HasManyThrough<typeof Post>
+      }
+      Country.boot()
+
+      await db.insertQuery().table('countries').insert([
+        { name: 'India' },
+        { name: 'Switzerland' },
+      ])
+
+      await db.insertQuery().table('users').insert([
+        { username: 'virk', country_id: 1 },
+        { username: 'nikk', country_id: 1 },
+        { username: 'romain', country_id: 2 },
+      ])
+
+      /**
+       * Country 1 posts
+       */
+      await db.insertQuery().table('posts').insert([
+        { title: 'Adonis 101', user_id: 1, created_at: new Date() },
+        { title: 'Adonis 102', user_id: 1 },
+        { title: 'Adonis 103', user_id: 2 },
+        { title: 'Adonis 104', user_id: 2, created_at: new Date() },
+        { title: 'Adonis 105', user_id: 1 },
+      ])
+
+      /**
+       * Country 2 posts
+       */
+      await db.insertQuery().table('posts').insert([
+        { title: 'Lucid 101', user_id: 3 },
+        { title: 'Lucid 102', user_id: 3, created_at: new Date() },
+        { title: 'Lucid 103', user_id: 3, created_at: new Date() },
+        { title: 'Lucid 104', user_id: 3 },
+        { title: 'Lucid 105', user_id: 3, created_at: new Date() },
+      ])
+
+      const countries = await Country.query().preload('posts', (query) => {
+        query.groupLimit(2).select('title')
+      })
+      assert.lengthOf(countries, 2)
+
+      assert.lengthOf(countries[0].posts, 2)
+      assert.equal(countries[0].posts[0].title, 'Adonis 105')
+      assert.isUndefined(countries[0].posts[0].createdAt)
+      assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
+      assert.equal(countries[0].posts[1].title, 'Adonis 104')
+      assert.isUndefined(countries[0].posts[1].createdAt)
+      assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
+
+      assert.lengthOf(countries[1].posts, 2)
+      assert.equal(countries[1].posts[0].title, 'Lucid 105')
+      assert.isUndefined(countries[1].posts[0].createdAt)
+      assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
+      assert.equal(countries[1].posts[1].title, 'Lucid 104')
+      assert.isUndefined(countries[1].posts[1].createdAt)
+      assert.equal(countries[1].posts[1].$extras.through_country_id, 2)
+    })
+
+    test('apply group limit with custom order', async (assert) => {
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public countryId: number
+      }
+      User.boot()
+
+      class Post extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+
+        @column()
+        public createdAt: Date
+      }
+      Post.boot()
+
+      class Country extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasManyThrough([() => Post, () => User])
+        public posts: HasManyThrough<typeof Post>
+      }
+      Country.boot()
+
+      await db.insertQuery().table('countries').insert([
+        { name: 'India' },
+        { name: 'Switzerland' },
+      ])
+
+      await db.insertQuery().table('users').insert([
+        { username: 'virk', country_id: 1 },
+        { username: 'nikk', country_id: 1 },
+        { username: 'romain', country_id: 2 },
+      ])
+
+      /**
+       * Country 1 posts
+       */
+      await db.insertQuery().table('posts').insert([
+        { title: 'Adonis 101', user_id: 1, created_at: new Date() },
+        { title: 'Adonis 102', user_id: 1 },
+        { title: 'Adonis 103', user_id: 2 },
+        { title: 'Adonis 104', user_id: 2, created_at: new Date() },
+        { title: 'Adonis 105', user_id: 1 },
+      ])
+
+      /**
+       * Country 2 posts
+       */
+      await db.insertQuery().table('posts').insert([
+        { title: 'Lucid 101', user_id: 3 },
+        { title: 'Lucid 102', user_id: 3, created_at: new Date() },
+        { title: 'Lucid 103', user_id: 3, created_at: new Date() },
+        { title: 'Lucid 104', user_id: 3 },
+        { title: 'Lucid 105', user_id: 3, created_at: new Date() },
+      ])
+
+      const countries = await Country.query().preload('posts', (query) => {
+        query.groupLimit(2).groupOrderBy('posts.title', 'asc')
+      })
+      assert.lengthOf(countries, 2)
+
+      assert.lengthOf(countries[0].posts, 2)
+      assert.equal(countries[0].posts[0].title, 'Adonis 101')
+      assert.isDefined(countries[0].posts[0].createdAt)
+      assert.equal(countries[0].posts[0].$extras.through_country_id, 1)
+      assert.equal(countries[0].posts[1].title, 'Adonis 102')
+      assert.isDefined(countries[0].posts[1].createdAt)
+      assert.equal(countries[0].posts[1].$extras.through_country_id, 1)
+
+      assert.lengthOf(countries[1].posts, 2)
+      assert.equal(countries[1].posts[0].title, 'Lucid 101')
+      assert.isDefined(countries[1].posts[0].createdAt)
+      assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
+      assert.equal(countries[1].posts[1].title, 'Lucid 102')
+      assert.isDefined(countries[1].posts[1].createdAt)
+      assert.equal(countries[1].posts[1].$extras.through_country_id, 2)
+    })
+  })
+}
+
 test.group('Model | Has Many Through | pagination', (group) => {
   group.before(async () => {
     db = getDb()

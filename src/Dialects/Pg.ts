@@ -16,6 +16,12 @@ export class PgDialect implements DialectContract {
   public readonly supportsAdvisoryLocks = true
 
   /**
+   * Reference to the database version. Knex.js fetches the version after
+   * the first database query, so it will be set to undefined initially
+   */
+  public readonly version = this.client.getReadClient()['context']['client'].version
+
+  /**
    * The default format for datetime column. The date formats is
    * valid for luxon date parsing library
    */
@@ -31,11 +37,11 @@ export class PgDialect implements DialectContract {
     const tables = await this.client
       .query()
       .from('pg_catalog.pg_tables')
-      .select('tablename')
+      .select('tablename as table_name')
       .whereIn('schemaname', schemas)
       .orderBy('tablename', 'asc')
 
-    return tables.map(({ tablename }) => tablename)
+    return tables.map(({ table_name }) => table_name)
   }
 
   /**

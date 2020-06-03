@@ -48,12 +48,14 @@ export class HasMany implements HasManyRelationContract<LucidModel, LucidModel> 
    * @note: Available after boot is invoked
    */
   public localKey: string
+  public localKeyColumName: string
 
   /**
    * Foreign key is reference to the foreign key in the related table
    * @note: Available after boot is invoked
    */
   public foreignKey: string
+  public foreignKeyColumName: string
 
   /**
    * Reference to the onQuery hook defined by the user
@@ -113,11 +115,13 @@ export class HasMany implements HasManyRelationContract<LucidModel, LucidModel> 
      * Keys on the parent model
      */
     this.localKey = localKey.attributeName
+    this.localKeyColumName = localKey.columnName
 
     /**
      * Keys on the related model
      */
     this.foreignKey = foreignKey.attributeName
+    this.foreignKeyColumName = foreignKey.columnName
 
     /**
      * Booted successfully

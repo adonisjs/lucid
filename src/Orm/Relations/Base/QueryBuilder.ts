@@ -8,9 +8,9 @@
 */
 
 import knex from 'knex'
-import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { LucidModel, LucidRow, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
 import { RelationQueryBuilderContract, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { ModelQueryBuilder } from '../../QueryBuilder'
@@ -19,9 +19,14 @@ import { ModelQueryBuilder } from '../../QueryBuilder'
  * Base query builder for ORM Relationships
  */
 export abstract class BaseQueryBuilder extends ModelQueryBuilder implements RelationQueryBuilderContract<
-LucidModel,
-LucidRow
+  LucidModel,
+  LucidRow
 > {
+  /**
+   * Eager constraints
+   */
+  protected groupConstraints: { limit?: number, orderBy?: string } = {}
+
   /**
    * A flag to know, if query builder is instantiated for
    * eager loading or not.
@@ -35,6 +40,13 @@ LucidRow
     dbCallback: DBQueryCallback,
   ) {
     super(builder, relation.relatedModel(), client, dbCallback)
+  }
+
+  /**
+   * Returns the selected columns
+   */
+  protected getSelectedColumns (): undefined | { grouping: 'columns', value: any[] } {
+    return this.knexQuery['_statements'].find(({ grouping }) => grouping === 'columns')
   }
 
   /**
@@ -68,6 +80,12 @@ LucidRow
   protected abstract applyConstraints (): void
 
   /**
+   * Must be implemented by relationships to return query which
+   * handles the limit with eagerloading.
+   */
+  protected abstract getGroupLimitQuery (): never | ModelQueryBuilderContract<LucidModel>
+
+  /**
    * Returns the name of the query action. Used mainly for
    * raising descriptive errors
    */
@@ -88,8 +106,7 @@ LucidRow
    * Selects the relation keys. Invoked by the preloader
    */
   public selectRelationKeys (): this {
-    const knexQuery = this.knexQuery
-    const columns = knexQuery['_statements'].find(({ grouping }) => grouping === 'columns')
+    const columns = this.getSelectedColumns()
 
     /**
      * No columns have been defined, we will let knex do it's job by
@@ -113,6 +130,22 @@ LucidRow
   }
 
   /**
+   * Define the group limit
+   */
+  public groupLimit (limit: number): this {
+    this.groupConstraints.limit = limit
+    return this
+  }
+
+  /**
+   * Define the group limit
+   */
+  public groupOrderBy (column: string, direction?: 'asc' | 'desc'): this {
+    this.groupConstraints.orderBy = direction ? `${this.resolveKey(column)} ${direction}` : column
+    return this
+  }
+
+  /**
    * Get query sql
    */
   public toSQL () {
@@ -125,6 +158,6 @@ LucidRow
    */
   public exec () {
     this.applyConstraints()
-    return super.exec()
+    return this.groupConstraints.limit ? this.getGroupLimitQuery().exec() : super.exec()
   }
 }

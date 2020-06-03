@@ -144,4 +144,11 @@ export class BelongsToQueryBuilder extends BaseQueryBuilder {
   public paginate (): Promise<any> {
     throw new Error(`Cannot paginate a belongsTo relationship "(${this.relation.relationName})"`)
   }
+
+  /**
+   * Dis-allow belongsTo group query limit
+   */
+  public getGroupLimitQuery (): never {
+    throw new Error(`Cannot apply groupLimit or groupOrderBy on a belongsTo relationship "(${this.relation.relationName})"`)
+  }
 }

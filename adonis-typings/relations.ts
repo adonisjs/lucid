@@ -181,7 +181,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
       HasManyRelationContract<ParentModel, RelatedModel>,
       RelatedModel
     >
-    builder: RelationQueryBuilderContract<RelatedModel, any>,
+    builder: HasManyQueryBuilderContract<RelatedModel, any>,
   }
 
   /**
@@ -232,7 +232,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
       HasManyThroughRelationContract<ParentModel, RelatedModel>,
       RelatedModel
     >,
-    builder: RelationQueryBuilderContract<RelatedModel, any>,
+    builder: HasManyThroughQueryBuilderContract<RelatedModel, any>,
   }
 
   /**
@@ -748,6 +748,28 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   }
 
   /**
+   * Has many query builder contract
+   */
+  export interface HasManyQueryBuilderContract<
+    Related extends LucidModel,
+    Result extends any
+  > extends RelationQueryBuilderContract<Related, Result> {
+    groupLimit (limit: number): this
+    groupOrderBy (column: string, direction?: 'asc' | 'desc'): this
+  }
+
+  /**
+   * Has many query through builder contract
+   */
+  export interface HasManyThroughQueryBuilderContract<
+    Related extends LucidModel,
+    Result extends any
+  > extends RelationQueryBuilderContract<Related, Result> {
+    groupLimit (limit: number): this
+    groupOrderBy (column: string, direction?: 'asc' | 'desc'): this
+  }
+
+  /**
    * Possible signatures for adding a where clause
    */
   interface WherePivot<Builder extends ChainableContract> {
@@ -773,6 +795,9 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     Related extends LucidModel,
     Result extends any,
   > extends RelationQueryBuilderContract<Related, Result> {
+    groupLimit (limit: number): this
+    groupOrderBy (column: string, direction?: 'asc' | 'desc'): this
+
     pivotColumns (columns: string[]): this
     isPivotOnlyQuery: boolean
 

@@ -13,8 +13,8 @@ import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { ManyToMany } from './index'
+import { getValue, unique } from '../../../utils'
 import { BaseQueryBuilder } from '../Base/QueryBuilder'
-import { getValue, unique, isObject } from '../../../utils'
 import { SimplePaginator } from '../../../Database/Paginator/SimplePaginator'
 
 /**
@@ -26,6 +26,7 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder implements ManyToMa
   LucidModel
 > {
   private pivotQuery = false
+  private relatedTable = this.relation.relatedModel().table
   protected cherryPickingKeys: boolean = false
   protected appliedConstraints: boolean = false
 
@@ -80,10 +81,17 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder implements ManyToMa
   }
 
   /**
-   * Prefixes the pivot table name to the key
+   * Prefixes the pivot table name to a column
    */
-  private prefixPivotTable (key: string) {
-    return this.isPivotOnlyQuery ? key : `${this.relation.pivotTable}.${key}`
+  private prefixPivotTable (column: string) {
+    return this.isPivotOnlyQuery ? column : `${this.relation.pivotTable}.${column}`
+  }
+
+  /**
+   * Prefixes the related table name to a column
+   */
+  private prefixRelatedTable (column: string) {
+    return `${this.relatedTable}.${column}`
   }
 
   /**
@@ -118,24 +126,11 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder implements ManyToMa
       return columns
     }
 
-    const relatedTable = this.relation.relatedModel().table
     return columns.map((column) => {
       if (typeof (column) === 'string') {
-        return `${relatedTable}.${column}`
+        return this.prefixRelatedTable(this.resolveKey(column))
       }
-
-      if (Array.isArray(column)) {
-        return this.transformRelatedTableColumns(column)
-      }
-
-      if (isObject(column)) {
-        return Object.keys(column).reduce((result, alias) => {
-          result[alias] = `${relatedTable}.${column[alias]}`
-          return result
-        }, {})
-      }
-
-      return column
+      return this.transformValue(column)
     })
   }
 
@@ -155,9 +150,14 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder implements ManyToMa
   /**
    * Select keys from the related table
    */
-  public select (...args: any): this {
+  public select (...args: any[]): this {
+    let columns = args
+    if (Array.isArray(args[0])) {
+      columns = args[0]
+    }
+
     this.cherryPickingKeys = true
-    this.knexQuery.select(this.transformRelatedTableColumns(args))
+    this.knexQuery.select(this.transformRelatedTableColumns(columns))
     return this
   }
 
@@ -405,5 +405,32 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder implements ManyToMa
       throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
     }
     return this.paginateRelated(page, perPage)
+  }
+
+  /**
+   * Returns the group limit query
+   */
+  public getGroupLimitQuery () {
+    const rowName = 'ADONIS_GROUP_LIMIT_COUNTER'
+    const primaryColumn = this.resolveKey(this.relation.relatedModel().primaryKey)
+    const partitionBy = `PARTITION BY ${this.prefixPivotTable(this.relation.pivotForeignKey)}`
+    const orderBy = `ORDER BY ${this.groupConstraints.orderBy || `${this.prefixRelatedTable(primaryColumn)} DESC`}`
+
+    /**
+     * Select * when no columns are selected
+     */
+    if (!this.getSelectedColumns()) {
+      this.select('*')
+    }
+
+    this
+      .select(this.client.raw(`row_number() over (${partitionBy} ${orderBy}) as ${rowName}`))
+      .as('ADONIS_TEMP')
+
+    return this.relation
+      .relatedModel()
+      .query()
+      .from(this)
+      .where(rowName, '<=', this.groupConstraints.limit!)
   }
 }

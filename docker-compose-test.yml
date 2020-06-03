@@ -5,6 +5,7 @@ services:
       context: .
       target: build-deps
     links:
+      - mysql_legacy
       - mysql
       - pg
       - mssql

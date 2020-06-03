@@ -81,6 +81,18 @@ export function getConfig (): ConnectionConfig {
         },
         useNullAsDefault: true,
       }
+    case 'mysql_legacy':
+      return {
+        client: 'mysql',
+        connection: {
+          host: process.env.MYSQL_LEGACY_HOST as string,
+          port: Number(process.env.MYSQL_LEGACY_PORT),
+          database: process.env.DB_NAME as string,
+          user: process.env.MYSQL_LEGACY_USER as string,
+          password: process.env.MYSQL_LEGACY_PASSWORD as string,
+        },
+        useNullAsDefault: true,
+      }
     case 'pg':
       return {
         client: 'pg',

@@ -115,4 +115,11 @@ export class HasOneQueryBuilder extends BaseQueryBuilder {
   public paginate (): Promise<any> {
     throw new Error(`Cannot paginate a hasOne relationship "(${this.relation.relationName})"`)
   }
+
+  /**
+   * Dis-allow hasOne group query limit
+   */
+  public getGroupLimitQuery (): never {
+    throw new Error(`Cannot apply groupLimit or groupOrderBy on hasOne relationship "(${this.relation.relationName})"`)
+  }
 }

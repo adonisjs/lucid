@@ -1042,6 +1042,428 @@ test.group('Model | HasMany | preload', (group) => {
   })
 })
 
+if (process.env.DB !== 'mysql_legacy') {
+  test.group('Model | HasMany | Group Limit', (group) => {
+    group.before(async () => {
+      db = getDb()
+      BaseModel = getBaseModel(ormAdapter(db))
+      await setup()
+    })
+
+    group.after(async () => {
+      await cleanup()
+      await db.manager.closeAll()
+    })
+
+    group.afterEach(async () => {
+      await resetTables()
+    })
+
+    test('apply group limit', async (assert) => {
+      class Post extends BaseModel {
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+
+        @column()
+        public createdAt: Date
+      }
+
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasMany(() => Post)
+        public posts: HasMany<typeof Post>
+      }
+
+      await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+      const [user0, user1] = await db.query().from('users')
+
+      /**
+       * User 1
+       */
+      await db.insertQuery().table('posts').insert([
+        {
+          user_id: user0.id,
+          title: 'Adonis 101',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 102',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 103',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 104',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 105',
+          created_at: new Date(),
+        },
+      ])
+
+      /**
+       * User 2
+       */
+      await db.insertQuery().table('posts').insert([
+        {
+          user_id: user1.id,
+          title: 'Lucid 101',
+          created_at: new Date(),
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 102',
+          created_at: new Date(),
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 103',
+          created_at: new Date(),
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 104',
+          created_at: new Date(),
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 105',
+          created_at: new Date(),
+        },
+      ])
+
+      User.boot()
+
+      const users = await User.query().preload('posts', (query) => query.groupLimit(2))
+      assert.lengthOf(users, 2)
+
+      assert.lengthOf(users[0].posts, 2)
+      assert.equal(users[0].posts[0].title, 'Adonis 105')
+      assert.exists(users[0].posts[0].createdAt)
+      assert.equal(users[0].posts[1].title, 'Adonis 104')
+      assert.exists(users[0].posts[1].createdAt)
+
+      assert.lengthOf(users[1].posts, 2)
+      assert.equal(users[1].posts[0].title, 'Lucid 105')
+      assert.exists(users[1].posts[0].createdAt)
+      assert.equal(users[1].posts[1].title, 'Lucid 104')
+      assert.exists(users[1].posts[1].createdAt)
+    })
+
+    test('apply group limit with additional constraints', async (assert) => {
+      class Post extends BaseModel {
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+
+        @column()
+        public createdAt: Date
+      }
+
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasMany(() => Post)
+        public posts: HasMany<typeof Post>
+      }
+
+      await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+      const [user0, user1] = await db.query().from('users')
+
+      /**
+       * User 1
+       */
+      await db.insertQuery().table('posts').insert([
+        {
+          user_id: user0.id,
+          title: 'Adonis 101',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 102',
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 103',
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 104',
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 105',
+          created_at: new Date(),
+        },
+      ])
+
+      /**
+       * User 2
+       */
+      await db.insertQuery().table('posts').insert([
+        {
+          user_id: user1.id,
+          title: 'Lucid 101',
+          created_at: new Date(),
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 102',
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 103',
+          created_at: new Date(),
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 104',
+          created_at: new Date(),
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 105',
+        },
+      ])
+
+      User.boot()
+
+      const users = await User.query().preload('posts', (query) => {
+        query.whereNotNull('created_at').groupLimit(2)
+      })
+
+      assert.lengthOf(users, 2)
+      assert.lengthOf(users[0].posts, 2)
+      assert.equal(users[0].posts[0].title, 'Adonis 105')
+      assert.exists(users[0].posts[0].createdAt)
+      assert.equal(users[0].posts[1].title, 'Adonis 101')
+      assert.exists(users[0].posts[1].createdAt)
+
+      assert.lengthOf(users[1].posts, 2)
+      assert.equal(users[1].posts[0].title, 'Lucid 104')
+      assert.exists(users[1].posts[0].createdAt)
+      assert.equal(users[1].posts[1].title, 'Lucid 103')
+      assert.exists(users[0].posts[1].createdAt)
+    })
+
+    test('apply group limit and select custom columns', async (assert) => {
+      class Post extends BaseModel {
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+
+        @column()
+        public createdAt: Date
+      }
+
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasMany(() => Post)
+        public posts: HasMany<typeof Post>
+      }
+
+      await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+      const [user0, user1] = await db.query().from('users')
+
+      /**
+       * User 1
+       */
+      await db.insertQuery().table('posts').insert([
+        {
+          user_id: user0.id,
+          title: 'Adonis 101',
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 102',
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 103',
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 104',
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 105',
+        },
+      ])
+
+      /**
+       * User 2
+       */
+      await db.insertQuery().table('posts').insert([
+        {
+          user_id: user1.id,
+          title: 'Lucid 101',
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 102',
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 103',
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 104',
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 105',
+        },
+      ])
+
+      User.boot()
+
+      const users = await User.query().preload('posts', (query) => {
+        query.select('title').groupLimit(2)
+      })
+
+      assert.lengthOf(users, 2)
+      assert.lengthOf(users[0].posts, 2)
+      assert.isUndefined(users[0].posts[0].createdAt)
+      assert.isUndefined(users[0].posts[1].createdAt)
+
+      assert.lengthOf(users[1].posts, 2)
+      assert.isUndefined(users[1].posts[0].createdAt)
+      assert.isUndefined(users[1].posts[1].createdAt)
+    })
+
+    test('define custom order by clause', async (assert) => {
+      class Post extends BaseModel {
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+
+        @column()
+        public createdAt: Date
+      }
+
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasMany(() => Post)
+        public posts: HasMany<typeof Post>
+      }
+
+      await db.insertQuery().table('users').insert([{ username: 'virk' }, { username: 'nikk' }])
+
+      const [user0, user1] = await db.query().from('users')
+
+      /**
+       * User 1
+       */
+      await db.insertQuery().table('posts').insert([
+        {
+          user_id: user0.id,
+          title: 'Adonis 101',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 102',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 103',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 104',
+          created_at: new Date(),
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 105',
+          created_at: new Date(),
+        },
+      ])
+
+      /**
+       * User 2
+       */
+      await db.insertQuery().table('posts').insert([
+        {
+          user_id: user1.id,
+          title: 'Lucid 101',
+          created_at: new Date(),
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 102',
+          created_at: new Date(),
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 103',
+          created_at: new Date(),
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 104',
+          created_at: new Date(),
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 105',
+          created_at: new Date(),
+        },
+      ])
+
+      User.boot()
+
+      const users = await User.query().preload('posts', (query) => {
+        query.groupLimit(2).groupOrderBy('createdAt', 'desc')
+      })
+      assert.lengthOf(users, 2)
+
+      assert.lengthOf(users[0].posts, 2)
+      assert.equal(users[0].posts[0].title, 'Adonis 101')
+      assert.exists(users[0].posts[0].createdAt)
+      assert.equal(users[0].posts[1].title, 'Adonis 102')
+      assert.exists(users[0].posts[1].createdAt)
+
+      assert.lengthOf(users[1].posts, 2)
+      assert.equal(users[1].posts[0].title, 'Lucid 101')
+      assert.exists(users[1].posts[0].createdAt)
+      assert.equal(users[1].posts[1].title, 'Lucid 102')
+      assert.exists(users[1].posts[1].createdAt)
+    })
+  })
+}
+
 test.group('Model | HasMany | save', (group) => {
   group.before(async () => {
     db = getDb()
