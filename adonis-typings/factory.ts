@@ -42,6 +42,11 @@ declare module '@ioc:Adonis/Lucid/Factory' {
   ) => Promise<Partial<ModelAttributes<InstanceType<Model>>>> | Partial<ModelAttributes<InstanceType<Model>>>
 
   /**
+   * Function to generate custom stub ids
+   */
+  export type StubIdCallback = (counter: number, model: LucidRow) => any
+
+  /**
    * Function to initiate a model instance. It will receive the
    * attributes returned by the `define` method
    */
@@ -198,6 +203,17 @@ declare module '@ioc:Adonis/Lucid/Factory' {
     useCtx (ctx: FactoryContextContract): this
 
     /**
+     * Make model instance without persitance. The make method
+     * doesn't process relationships
+     */
+    make (
+      callback?: (
+        model: InstanceType<FactoryModel['model']>,
+        ctx: FactoryContextContract,
+      ) => void
+    ): Promise<InstanceType<FactoryModel['model']>>
+
+    /**
      * Create model instance and stub out the persistance
      * mechanism
      */
@@ -217,6 +233,18 @@ declare module '@ioc:Adonis/Lucid/Factory' {
         ctx: FactoryContextContract,
       ) => void
     ): Promise<InstanceType<FactoryModel['model']>>
+
+    /**
+     * Make model instance without persitance. The makeMany method
+     * doesn't process relationships
+     */
+    makeMany (
+      count: number,
+      callback?: (
+        model: InstanceType<FactoryModel['model']>,
+        ctx: FactoryContextContract,
+      ) => void
+    ): Promise<InstanceType<FactoryModel['model']>[]>
 
     /**
      * Create one or more model instances and stub
@@ -240,6 +268,16 @@ declare module '@ioc:Adonis/Lucid/Factory' {
         ctx: FactoryContextContract,
       ) => void
     ): Promise<InstanceType<FactoryModel['model']>[]>
+  }
+
+  /**
+   * Query contract that initiates the factory builder. Since the factory builder
+   * API surface is small, we also proxy all of it's methods for a nicer DX
+   */
+  export interface FactoryBuilderQueryContract<
+    FactoryModel extends FactoryModelContract<LucidModel>
+  > extends FactoryBuilderContract<FactoryModel> {
+    query (): FactoryBuilderContract<FactoryModel>
   }
 
   /**
@@ -295,7 +333,7 @@ declare module '@ioc:Adonis/Lucid/Factory' {
      * Define before hooks. Only `create` event is invoked
      * during the before lifecycle
      */
-    before (event: 'create', handler: HooksHandler<this>): this
+    before (event: Exclude<EventsList, 'make'>, handler: HooksHandler<this>): this
 
     /**
      * Define after hooks.
@@ -306,7 +344,7 @@ declare module '@ioc:Adonis/Lucid/Factory' {
      * Build model factory. This method returns the factory builder, which can be used to
      * execute model queries
      */
-    build (): FactoryBuilderContract<this>
+    build (): FactoryBuilderQueryContract<this>
   }
 
   /**
@@ -318,7 +356,7 @@ declare module '@ioc:Adonis/Lucid/Factory' {
   /**
    * Factory manager to define new factories
    */
-  export interface FactoryManager {
+  export interface FactoryManagerContract {
     /**
      * Define a custom factory
      */
@@ -326,8 +364,13 @@ declare module '@ioc:Adonis/Lucid/Factory' {
       model: Model,
       callback: DefineCallback<Model>
     ): FactoryModelContract<Model>
+
+    /**
+     * Define a custom callback to generate stub ids
+     */
+    stubId (callback: StubIdCallback): void
   }
 
-  const Factory: FactoryManager
+  const Factory: FactoryManagerContract
   export default Factory
 }

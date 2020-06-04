@@ -12,7 +12,7 @@ import {
   RelationCallback,
   FactoryModelContract,
   FactoryContextContract,
-  FactoryBuilderContract,
+  FactoryBuilderQueryContract,
 } from '@ioc:Adonis/Lucid/Factory'
 
 /**
@@ -22,7 +22,7 @@ export abstract class BaseRelation {
   protected ctx: FactoryContextContract
 
   constructor (
-    private factory: () => FactoryBuilderContract<FactoryModelContract<LucidModel>>
+    private factory: () => FactoryBuilderQueryContract<FactoryModelContract<LucidModel>>
   ) {
   }
 
@@ -30,7 +30,7 @@ export abstract class BaseRelation {
    * Instantiates the relationship factory
    */
   protected compile (callback?: RelationCallback) {
-    const factory = this.factory()
+    const factory = this.factory().query()
     if (typeof (callback) === 'function') {
       callback(factory)
     }

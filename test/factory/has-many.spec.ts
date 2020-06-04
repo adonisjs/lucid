@@ -11,6 +11,7 @@
 
 import test from 'japa'
 import { HasMany } from '@ioc:Adonis/Lucid/Relations'
+import { FactoryManager } from '../../src/Factory/index'
 import { column, hasMany } from '../../src/Orm/Decorators'
 
 import {
@@ -26,6 +27,7 @@ import {
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
 const FactoryModel = getFactoryModel()
+const factoryManager = new FactoryManager()
 
 test.group('Factory | HasMany | make', (group) => {
   group.before(async () => {
@@ -74,11 +76,11 @@ test.group('Factory | HasMany | make', (group) => {
       return {
         title: 'Adonis 101',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('posts', () => postFactory)
       .build()
 
@@ -122,11 +124,11 @@ test.group('Factory | HasMany | make', (group) => {
       return {
         title: 'Adonis 101',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('posts', () => postFactory)
       .build()
 
@@ -170,11 +172,11 @@ test.group('Factory | HasMany | make', (group) => {
       return {
         title: 'Adonis 101',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('posts', () => postFactory)
       .build()
 
@@ -238,11 +240,11 @@ test.group('Factory | HasMany | create', (group) => {
       return {
         title: 'Adonis 101',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('posts', () => postFactory)
       .build()
 
@@ -283,11 +285,11 @@ test.group('Factory | HasMany | create', (group) => {
       return {
         title: 'Adonis 101',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('posts', () => postFactory)
       .build()
 
@@ -331,11 +333,11 @@ test.group('Factory | HasMany | create', (group) => {
       return {
         title: 'Adonis 101',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('posts', () => postFactory)
       .build()
 
@@ -383,11 +385,11 @@ test.group('Factory | HasMany | create', (group) => {
       return {
         title: 'Adonis 101',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('posts', () => postFactory)
       .build()
 
@@ -431,11 +433,11 @@ test.group('Factory | HasMany | create', (group) => {
 
     const postFactory = new FactoryModel(Post, () => {
       return {}
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('posts', () => postFactory)
       .build()
 

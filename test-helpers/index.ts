@@ -41,7 +41,7 @@ import {
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
 import { MigratorContract, MigratorOptions } from '@ioc:Adonis/Lucid/Migrator'
-import { FactoryModelContract, DefineCallback } from '@ioc:Adonis/Lucid/Factory'
+import { FactoryModelContract, DefineCallback, FactoryManagerContract } from '@ioc:Adonis/Lucid/Factory'
 
 import { Schema } from '../src/Schema'
 import { Migrator } from '../src/Migrator'
@@ -384,7 +384,8 @@ export function getFactoryModel () {
   return FactoryModel as unknown as {
     new<Model extends LucidModel> (
       model: Model,
-      callback: DefineCallback<Model>
+      callback: DefineCallback<Model>,
+      manager: FactoryManagerContract,
     ): FactoryModelContract<Model>
   }
 }
