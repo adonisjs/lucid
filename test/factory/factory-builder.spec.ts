@@ -11,6 +11,7 @@
 
 import test from 'japa'
 import { column } from '../../src/Orm/Decorators'
+import { FactoryManager } from '../../src/Factory/index'
 import { FactoryContext } from '../../src/Factory/FactoryContext'
 import { FactoryBuilder } from '../../src/Factory/FactoryBuilder'
 
@@ -27,6 +28,7 @@ import {
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
 const FactoryModel = getFactoryModel()
+const factoryManager = new FactoryManager()
 
 test.group('Factory | Factory Builder | make', (group) => {
   group.before(async () => {
@@ -58,7 +60,7 @@ test.group('Factory | Factory Builder | make', (group) => {
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .state('withPoints', (user) => user.points = 10)
       .build()
 
@@ -82,7 +84,7 @@ test.group('Factory | Factory Builder | make', (group) => {
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .state('withPoints', (user) => {
         user.points += 10
       })
@@ -110,7 +112,7 @@ test.group('Factory | Factory Builder | make', (group) => {
       return {
         username: 'virk',
       }
-    }).build()
+    }, factoryManager).build()
 
     const user = await factory.merge({ username: 'nikk' }).makeStubbed()
     assert.equal(user.username, 'nikk')
@@ -134,7 +136,7 @@ test.group('Factory | Factory Builder | make', (group) => {
       return {
         username: 'virk',
       }
-    })
+    }, factoryManager)
       .merge(() => {})
       .build()
 
@@ -160,7 +162,7 @@ test.group('Factory | Factory Builder | make', (group) => {
       return {
         username: 'virk',
       }
-    })
+    }, factoryManager)
       .newUp((attributes) => {
         const user = new User()
         user.fill(attributes)
@@ -193,7 +195,7 @@ test.group('Factory | Factory Builder | make', (group) => {
       return {
         username: 'virk',
       }
-    }).build()
+    }, factoryManager).build()
 
     const user = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).makeStubbed()
     assert.equal(user.username, 'nikk')
@@ -219,7 +221,7 @@ test.group('Factory | Factory Builder | make', (group) => {
       return {
         username: 'virk',
       }
-    })
+    }, factoryManager)
       .after('make', (_, user, ctx) => {
         assert.instanceOf(_, FactoryBuilder)
         assert.instanceOf(user, User)
@@ -251,7 +253,7 @@ test.group('Factory | Factory Builder | make', (group) => {
       return {
         username: 'virk',
       }
-    })
+    }, factoryManager)
       .after('makeStubbed', (_, user, ctx) => {
         assert.instanceOf(_, FactoryBuilder)
         assert.instanceOf(user, User)
@@ -283,7 +285,7 @@ test.group('Factory | Factory Builder | make', (group) => {
       return {
         username: 'virk',
       }
-    })
+    }, factoryManager)
       .after('make', (_, user, ctx) => {
         if (ctx.isStubbed) {
           user.id = 100
@@ -328,7 +330,7 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .state('withPoints', (user) => user.points = 10)
       .build()
 
@@ -357,7 +359,7 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .state('withPoints', (user) => user.points += 10)
       .build()
 
@@ -389,7 +391,7 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
       return {
         username: 'virk',
       }
-    }).build()
+    }, factoryManager).build()
 
     const users = await factory.merge({ username: 'nikk' }).makeStubbedMany(2)
     assert.lengthOf(users, 2)
@@ -419,7 +421,7 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
       return {
         username: 'virk',
       }
-    }).build()
+    }, factoryManager).build()
 
     const users = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).makeStubbedMany(2)
     assert.lengthOf(users, 2)
@@ -449,7 +451,7 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .after('makeStubbed', (_, user, ctx) => {
         assert.instanceOf(_, FactoryBuilder)
         assert.instanceOf(user, User)
@@ -486,7 +488,7 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .after('make', (_, user, ctx) => {
         assert.instanceOf(_, FactoryBuilder)
         assert.instanceOf(user, User)
@@ -538,7 +540,7 @@ test.group('Factory | Factory Builder | create', (group) => {
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .state('withPoints', (user) => user.points = 10)
       .build()
 
@@ -561,7 +563,7 @@ test.group('Factory | Factory Builder | create', (group) => {
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .state('withPoints', (user) => user.points += 10)
       .build()
 
@@ -586,7 +588,7 @@ test.group('Factory | Factory Builder | create', (group) => {
       return {
         username: 'virk',
       }
-    }).build()
+    }, factoryManager).build()
 
     const user = await factory.merge({ username: 'nikk' }).create()
     assert.equal(user.username, 'nikk')
@@ -609,7 +611,7 @@ test.group('Factory | Factory Builder | create', (group) => {
       return {
         username: 'virk',
       }
-    }).build()
+    }, factoryManager).build()
 
     const user = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).create()
     assert.equal(user.username, 'nikk')
@@ -632,7 +634,7 @@ test.group('Factory | Factory Builder | create', (group) => {
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .before('create', (_, user) => {
         assert.isFalse(user.$isPersisted)
       })
@@ -664,7 +666,7 @@ test.group('Factory | Factory Builder | create', (group) => {
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .before('create', (_, user) => {
         stack.push('beforeCreate')
         assert.isFalse(user.$isPersisted)
@@ -717,7 +719,7 @@ test.group('Factory | Factory Builder | createMany', (group) => {
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .state('withPoints', (user) => user.points = 10)
       .build()
 
@@ -743,7 +745,7 @@ test.group('Factory | Factory Builder | createMany', (group) => {
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .state('withPoints', (user) => user.points += 10)
       .build()
 
@@ -772,7 +774,7 @@ test.group('Factory | Factory Builder | createMany', (group) => {
         username: `u-${new Date().getTime()}`,
         points: 0,
       }
-    }).build()
+    }, factoryManager).build()
 
     const users = await factory.merge({ points: 10 }).createMany(2)
     assert.lengthOf(users, 2)
@@ -798,7 +800,7 @@ test.group('Factory | Factory Builder | createMany', (group) => {
       return {
         username: 'virk',
       }
-    }).build()
+    }, factoryManager).build()
 
     const users = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).createMany(2)
     assert.lengthOf(users, 2)

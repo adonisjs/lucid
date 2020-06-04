@@ -20,14 +20,15 @@ import {
   DefineCallback,
   FactoryModelContract,
   FactoryRelationContract,
+  FactoryBuilderQueryContract,
 } from '@ioc:Adonis/Lucid/Factory'
 
+import { FactoryManager } from './index'
 import { HasOne } from './Relations/HasOne'
 import { HasMany } from './Relations/HasMany'
+import { FactoryBuilder } from './FactoryBuilder'
 import { BelongsTo } from './Relations/BelongsTo'
 import { ManyToMany } from './Relations/ManyToMany'
-
-import { FactoryBuilder } from './FactoryBuilder'
 
 /**
  * Factory model exposes the API to define a model factory with custom
@@ -72,7 +73,11 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
    */
   public hooks = new Hooks()
 
-  constructor (public model: Model, public define: DefineCallback<LucidModel>) {
+  constructor (
+    public model: Model,
+    public define: DefineCallback<LucidModel>,
+    public manager: FactoryManager,
+  ) {
   }
 
   /**
@@ -195,6 +200,47 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
    * used to make/create model instances
    */
   public build () {
-    return new FactoryBuilder(this)
+    /**
+     * Return a build object, which proxies all of the factory builder
+     * method and invokes them with a fresh instance.
+     */
+    const builder = {
+      model: this,
+      query () {
+        return new FactoryBuilder(this.model)
+      },
+      apply (...args: any[]) {
+        return this.query().apply(...args)
+      },
+      with (relation, ...args: any[]) {
+        return this.query().with(relation, ...args)
+      },
+      merge (attributes) {
+        return this.query().merge(attributes)
+      },
+      useCtx (ctx) {
+        return this.query().useCtx(ctx)
+      },
+      make (callback) {
+        return this.query().make(callback)
+      },
+      makeStubbed (callback) {
+        return this.query().makeStubbed(callback)
+      },
+      create (callback) {
+        return this.query().create(callback)
+      },
+      makeMany (count, callback) {
+        return this.query().makeMany(count, callback)
+      },
+      makeStubbedMany (count, callback) {
+        return this.query().makeStubbedMany(count, callback)
+      },
+      createMany (count, callback) {
+        return this.query().createMany(count, callback)
+      },
+    }
+
+    return builder as unknown as FactoryBuilderQueryContract<FactoryModelContract<Model>>
   }
 }

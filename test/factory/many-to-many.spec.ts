@@ -11,6 +11,7 @@
 
 import test from 'japa'
 import { ManyToMany } from '@ioc:Adonis/Lucid/Relations'
+import { FactoryManager } from '../../src/Factory/index'
 import { column, manyToMany } from '../../src/Orm/Decorators'
 
 import {
@@ -26,6 +27,7 @@ import {
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
 const FactoryModel = getFactoryModel()
+const factoryManager = new FactoryManager()
 
 test.group('Factory | ManyToMany | make', (group) => {
   group.before(async () => {
@@ -71,11 +73,11 @@ test.group('Factory | ManyToMany | make', (group) => {
       return {
         name: 'Programming',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('skills', () => postFactory)
       .build()
 
@@ -122,11 +124,11 @@ test.group('Factory | ManyToMany | make', (group) => {
       return {
         name: 'Programming',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('skills', () => postFactory)
       .build()
 
@@ -173,11 +175,11 @@ test.group('Factory | ManyToMany | make', (group) => {
       return {
         name: 'Programming',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('skills', () => postFactory)
       .build()
 
@@ -252,11 +254,11 @@ test.group('Factory | ManyToMany | create', (group) => {
       return {
         name: 'Programming',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('skills', () => postFactory)
       .build()
 
@@ -300,11 +302,11 @@ test.group('Factory | ManyToMany | create', (group) => {
       return {
         name: 'Programming',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('skills', () => postFactory)
       .build()
 
@@ -351,11 +353,11 @@ test.group('Factory | ManyToMany | create', (group) => {
       return {
         name: 'Programming',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('skills', () => postFactory)
       .build()
 
@@ -413,11 +415,11 @@ test.group('Factory | ManyToMany | create', (group) => {
 
     const postFactory = new FactoryModel(Skill, () => {
       return {}
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('skills', () => postFactory)
       .build()
 

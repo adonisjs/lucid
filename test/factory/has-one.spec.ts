@@ -11,6 +11,7 @@
 
 import test from 'japa'
 import { HasOne } from '@ioc:Adonis/Lucid/Relations'
+import { FactoryManager } from '../../src/Factory/index'
 import { column, hasOne } from '../../src/Orm/Decorators'
 
 import {
@@ -26,6 +27,7 @@ import {
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
 const FactoryModel = getFactoryModel()
+const factoryManager = new FactoryManager()
 
 test.group('Factory | HasOne | make', (group) => {
   group.before(async () => {
@@ -74,11 +76,11 @@ test.group('Factory | HasOne | make', (group) => {
       return {
         displayName: 'virk',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('profile', () => profileFactory)
       .build()
 
@@ -124,11 +126,11 @@ test.group('Factory | HasOne | make', (group) => {
       return {
         displayName: 'virk',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('profile', () => profileFactory)
       .build()
 
@@ -190,11 +192,11 @@ test.group('Factory | HasOne | create', (group) => {
       return {
         displayName: 'virk',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('profile', () => profileFactory)
       .build()
 
@@ -234,11 +236,11 @@ test.group('Factory | HasOne | create', (group) => {
       return {
         displayName: 'virk',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('profile', () => profileFactory)
       .build()
 
@@ -281,11 +283,11 @@ test.group('Factory | HasOne | create', (group) => {
       return {
         displayName: 'virk',
       }
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('profile', () => profileFactory)
       .build()
 
@@ -325,11 +327,11 @@ test.group('Factory | HasOne | create', (group) => {
 
     const profileFactory = new FactoryModel(Profile, () => {
       return {}
-    }).build()
+    }, factoryManager).build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    })
+    }, factoryManager)
       .relation('profile', () => profileFactory)
       .build()
 

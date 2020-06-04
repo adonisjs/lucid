@@ -13,6 +13,7 @@ import test from 'japa'
 
 import { HasOne } from '@ioc:Adonis/Lucid/Orm'
 import { column, hasOne } from '../../src/Orm/Decorators'
+import { FactoryManager } from '../../src/Factory/index'
 import { FactoryModel } from '../../src/Factory/FactoryModel'
 import { HasOne as FactoryHasOne } from '../../src/Factory/Relations/HasOne'
 
@@ -27,6 +28,7 @@ import {
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
+const factoryManager = new FactoryManager()
 
 test.group('Factory | Factory Model', (group) => {
   group.before(async () => {
@@ -53,7 +55,7 @@ test.group('Factory | Factory Model', (group) => {
       public username: string
     }
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => new User(), factoryManager)
     assert.instanceOf(factory, FactoryModel)
   })
 
@@ -67,7 +69,7 @@ test.group('Factory | Factory Model', (group) => {
     }
 
     function stateFn () {}
-    const factory = new FactoryModel(User, () => new User()).state('active', stateFn)
+    const factory = new FactoryModel(User, () => new User(), factoryManager).state('active', stateFn)
     assert.deepEqual(factory.states, { active: stateFn })
   })
 
@@ -91,7 +93,7 @@ test.group('Factory | Factory Model', (group) => {
     User.boot()
 
     function relatedFn () {}
-    const factory = new FactoryModel(User, () => new User()).relation('profile', relatedFn)
+    const factory = new FactoryModel(User, () => new User(), factoryManager).relation('profile', relatedFn)
     assert.property(factory.relations, 'profile')
     assert.instanceOf(factory.relations.profile, FactoryHasOne)
   })
@@ -106,7 +108,7 @@ test.group('Factory | Factory Model', (group) => {
     }
 
     function stateFn () {}
-    const factory = new FactoryModel(User, () => new User()).state('active', stateFn)
+    const factory = new FactoryModel(User, () => new User(), factoryManager).state('active', stateFn)
     assert.deepEqual(factory.getState('active'), stateFn)
   })
 
@@ -119,7 +121,7 @@ test.group('Factory | Factory Model', (group) => {
       public username: string
     }
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => new User(), factoryManager)
     assert.throw(
       () => factory.getState('active'),
       'Cannot apply undefined state \"active\". Double check the model factory',
@@ -145,12 +147,12 @@ test.group('Factory | Factory Model', (group) => {
     }
     User.boot()
 
-    const profileFactory = new FactoryModel(Profile, () => new Profile()).build()
+    const profileFactory = new FactoryModel(Profile, () => new Profile(), factoryManager).build()
     function relatedFn () {
       return profileFactory
     }
 
-    const factory = new FactoryModel(User, () => new User()).relation('profile', relatedFn)
+    const factory = new FactoryModel(User, () => new User(), factoryManager).relation('profile', relatedFn)
     assert.instanceOf(factory.getRelation('profile'), FactoryHasOne)
     assert.deepEqual(factory.getRelation('profile').relation, User.$getRelation('profile')!)
   })
@@ -171,7 +173,7 @@ test.group('Factory | Factory Model', (group) => {
       public profile: HasOne<typeof Profile>
     }
 
-    const factory = new FactoryModel(User, () => new User())
+    const factory = new FactoryModel(User, () => new User(), factoryManager)
     assert.throw(
       () => factory.getRelation('profile'),
       'Cannot setup undefined relationship \"profile\". Double check the model factory'
@@ -187,7 +189,7 @@ test.group('Factory | Factory Model', (group) => {
       public username: string
     }
 
-    const factory = () => new FactoryModel(User, () => new User()).relation('profile' as any, () => {})
+    const factory = () => new FactoryModel(User, () => new User(), factoryManager).relation('profile' as any, () => {})
     assert.throw(
       factory,
       'Cannot define "profile" relationship. The relationship must exist on the "User" model first'
@@ -212,7 +214,8 @@ test.group('Factory | Factory Model', (group) => {
 
     const factory = new FactoryModel(User, () => {
       return {}
-    }).build()
+    }, factoryManager).build()
+
     const user = await factory.make()
     assert.instanceOf(user, User)
   })

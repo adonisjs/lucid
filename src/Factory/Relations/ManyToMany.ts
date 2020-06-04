@@ -12,8 +12,8 @@ import { LucidModel, LucidRow, ModelObject } from '@ioc:Adonis/Lucid/Model'
 import {
   RelationCallback,
   FactoryModelContract,
-  FactoryBuilderContract,
   FactoryRelationContract,
+  FactoryBuilderQueryContract,
 } from '@ioc:Adonis/Lucid/Factory'
 
 import { BaseRelation } from './Base'
@@ -24,7 +24,7 @@ import { BaseRelation } from './Base'
 export class ManyToMany extends BaseRelation implements FactoryRelationContract {
   constructor (
     public relation: ManyToManyRelationContract<LucidModel, LucidModel>,
-    factory: () => FactoryBuilderContract<FactoryModelContract<LucidModel>>
+    factory: () => FactoryBuilderQueryContract<FactoryModelContract<LucidModel>>
   ) {
     super(factory)
     this.relation.boot()

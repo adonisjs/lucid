@@ -12,8 +12,8 @@ import { BelongsToRelationContract } from '@ioc:Adonis/Lucid/Relations'
 import {
   RelationCallback,
   FactoryModelContract,
-  FactoryBuilderContract,
   FactoryRelationContract,
+  FactoryBuilderQueryContract,
 } from '@ioc:Adonis/Lucid/Factory'
 
 import { BaseRelation } from './Base'
@@ -24,7 +24,7 @@ import { BaseRelation } from './Base'
 export class BelongsTo extends BaseRelation implements FactoryRelationContract {
   constructor (
     public relation: BelongsToRelationContract<LucidModel, LucidModel>,
-    factory: () => FactoryBuilderContract<FactoryModelContract<LucidModel>>
+    factory: () => FactoryBuilderQueryContract<FactoryModelContract<LucidModel>>
   ) {
     super(factory)
     this.relation.boot()

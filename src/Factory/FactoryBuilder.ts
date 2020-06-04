@@ -17,8 +17,6 @@ import {
 import { FactoryModel } from './FactoryModel'
 import { FactoryContext } from './FactoryContext'
 
-let Counter = 1
-
 /**
  * Factory builder exposes the API to create/persist factory model instances.
  */
@@ -196,6 +194,18 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   }
 
   /**
+   * Make model instance. Relationships are not processed with the make function.
+   */
+  public async make (callback?: (
+    model: LucidRow,
+    ctx: FactoryContextContract,
+  ) => void) {
+    const { modelInstance, ctx } = await this.compile(true, callback)
+    await this.model.hooks.exec('after', 'make', this, modelInstance, ctx)
+    return modelInstance
+  }
+
+  /**
    * Returns a model instance without persisting it to the database.
    * Relationships are still loaded and states are also applied.
    */
@@ -205,8 +215,10 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   ) => void) {
     const { modelInstance, ctx } = await this.compile(true, callback)
     await this.model.hooks.exec('after', 'make', this, modelInstance, ctx)
+    await this.model.hooks.exec('before', 'makeStubbed', this, modelInstance, ctx)
 
-    modelInstance[this.model.model.primaryKey] = modelInstance.$primaryKeyValue || Counter++
+    const id = modelInstance.$primaryKeyValue || this.model.manager.getNextId(modelInstance)
+    modelInstance[this.model.model.primaryKey] = id
 
     /**
      * Make relationships. The relationships will be not persisted
@@ -299,6 +311,24 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
     for (let index of counter) {
       this.currentIndex = index
       modelInstances.push(await this.create(callback))
+    }
+
+    return modelInstances
+  }
+
+  /**
+   * Create many of the factory model instances
+   */
+  public async makeMany (
+    count: number,
+    callback?: (model: LucidRow, state: FactoryContextContract) => void,
+  ) {
+    let modelInstances: LucidRow[] = []
+
+    const counter = new Array(count).fill(0).map((_, i) => i)
+    for (let index of counter) {
+      this.currentIndex = index
+      modelInstances.push(await this.make(callback))
     }
 
     return modelInstances

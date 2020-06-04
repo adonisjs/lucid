@@ -11,6 +11,7 @@
 
 import test from 'japa'
 import { BelongsTo } from '@ioc:Adonis/Lucid/Relations'
+import { FactoryManager } from '../../src/Factory/index'
 import { column, belongsTo } from '../../src/Orm/Decorators'
 
 import {
@@ -26,6 +27,7 @@ import {
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
 const FactoryModel = getFactoryModel()
+const factoryManager = new FactoryManager()
 
 test.group('Factory | BelongTo | make', (group) => {
   group.before(async () => {
@@ -74,13 +76,13 @@ test.group('Factory | BelongTo | make', (group) => {
       return {
         displayName: 'virk',
       }
-    })
+    }, factoryManager)
       .relation('user', () => factory)
       .build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    }).build()
+    }, factoryManager).build()
 
     const profile = await profileFactory.with('user').makeStubbed()
     assert.exists(profile.id)
@@ -123,7 +125,7 @@ test.group('Factory | BelongTo | make', (group) => {
       return {
         displayName: 'virk',
       }
-    })
+    }, factoryManager)
       .relation('user', () => factory)
       .build()
 
@@ -131,7 +133,7 @@ test.group('Factory | BelongTo | make', (group) => {
       return {
         points: 0,
       }
-    }).build()
+    }, factoryManager).build()
 
     const profile = await profileFactory
       .with('user', 1, (related) => related.merge({ points: 10 }))
@@ -179,7 +181,7 @@ test.group('Factory | BelongTo | make', (group) => {
       return {
         displayName: 'virk',
       }
-    })
+    }, factoryManager)
       .relation('user', () => factory)
       .build()
 
@@ -187,7 +189,7 @@ test.group('Factory | BelongTo | make', (group) => {
       return {
         points: 0,
       }
-    })
+    }, factoryManager)
       .after('make', (_, user) => {
         user.id = 100
       })
@@ -253,13 +255,13 @@ test.group('Factory | BelongTo | create', (group) => {
       return {
         displayName: 'virk',
       }
-    })
+    }, factoryManager)
       .relation('user', () => factory)
       .build()
 
     const factory = new FactoryModel(User, () => {
       return {}
-    }).build()
+    }, factoryManager).build()
 
     const profile = await profileFactory.with('user').create()
 
@@ -297,7 +299,7 @@ test.group('Factory | BelongTo | create', (group) => {
       return {
         displayName: 'virk',
       }
-    })
+    }, factoryManager)
       .relation('user', () => factory)
       .build()
 
@@ -305,7 +307,7 @@ test.group('Factory | BelongTo | create', (group) => {
       return {
         points: 0,
       }
-    }).build()
+    }, factoryManager).build()
 
     const profile = await profileFactory
       .with('user', 1, (related) => related.merge({ points: 10 }))
@@ -346,7 +348,7 @@ test.group('Factory | BelongTo | create', (group) => {
       return {
         displayName: 'virk',
       }
-    })
+    }, factoryManager)
       .relation('user', () => factory)
       .build()
 
@@ -354,7 +356,7 @@ test.group('Factory | BelongTo | create', (group) => {
       return {
         points: 0,
       }
-    }).build()
+    }, factoryManager).build()
 
     const profile = await profileFactory
       .with('user', 1, (related) => related.merge({ points: 10 }))
@@ -397,7 +399,7 @@ test.group('Factory | BelongTo | create', (group) => {
       return {
         displayName: 'virk',
       }
-    })
+    }, factoryManager)
       .relation('user', () => factory)
       .build()
 
@@ -414,7 +416,7 @@ test.group('Factory | BelongTo | create', (group) => {
       return {
         username: 'virk',
       }
-    }).build()
+    }, factoryManager).build()
 
     try {
       await profileFactory.with('user').create()
