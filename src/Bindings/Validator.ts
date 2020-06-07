@@ -102,8 +102,8 @@ class DbRowCheck {
     /**
      * Ensure options are defined with table and column name
      */
-    if (!options || !options.table || !options.column) {
-      throw new Exception(`"${this.ruleName}" rule expects a "table" and a "column" name`)
+    if (!options || !options.table) {
+      throw new Exception(`"${this.ruleName}" rule expects a "table" name`)
     }
 
     /**
@@ -118,7 +118,7 @@ class DbRowCheck {
 
     return {
       table: options.table,
-      column: options.column,
+      column: options.column || 'id',
       connection: options.connection,
       where: this.normalizeConstraints(options.where || options.constraints),
       whereNot: this.normalizeConstraints(options.whereNot),
