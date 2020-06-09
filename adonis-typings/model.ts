@@ -480,9 +480,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
     $consumeAdapterResult (adapterResult: ModelObject, sideloadAttributes?: ModelObject): void
     $hydrateOriginals(): void
 
-    fill (value: Partial<ModelAttributes<this>>, allowNonExtraProperties?: boolean): void
-    merge (value: Partial<ModelAttributes<this>>, allowNonExtraProperties?: boolean): void
-    save (): Promise<void>
+    fill (value: Partial<ModelAttributes<this>>, allowNonExtraProperties?: boolean): this
+    merge (value: Partial<ModelAttributes<this>>, allowNonExtraProperties?: boolean): this
+    save (): Promise<this>
     delete (): Promise<void>
     refresh (): Promise<void>
     preload: ModelBuilderPreloadFn<this>

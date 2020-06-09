@@ -1413,10 +1413,11 @@ export class BaseModel implements LucidRow {
    * fill isn't allowed, since we disallow setting relationships
    * locally
    */
-  public fill (values: any, allowNonExtraProperties: boolean = false) {
+  public fill (values: any, allowNonExtraProperties: boolean = false): this {
     this.$attributes = {}
     this.merge(values, allowNonExtraProperties)
     this.fillInvoked = true
+    return this
   }
 
   /**
@@ -1425,7 +1426,7 @@ export class BaseModel implements LucidRow {
    * 1. If key is unknown, it will be added to the `extras` object.
    * 2. If key is defined as a relationship, it will be ignored and one must call `$setRelated`.
    */
-  public merge (values: any, allowNonExtraProperties: boolean = false) {
+  public merge (values: any, allowNonExtraProperties: boolean = false): this {
     const Model = this.constructor as typeof BaseModel
 
     /**
@@ -1474,6 +1475,8 @@ export class BaseModel implements LucidRow {
         this.$extras[key] = value
       })
     }
+
+    return this
   }
 
   /**
@@ -1498,7 +1501,7 @@ export class BaseModel implements LucidRow {
   /**
    * Perform save on the model instance to commit mutations.
    */
-  public async save () {
+  public async save (): Promise<this> {
     this.ensureIsntDeleted()
     const Model = this.constructor as typeof BaseModel
 
@@ -1517,7 +1520,7 @@ export class BaseModel implements LucidRow {
 
       await Model.$hooks.exec('after', 'create', this)
       await Model.$hooks.exec('after', 'save', this)
-      return
+      return this
     }
 
     /**
@@ -1532,7 +1535,7 @@ export class BaseModel implements LucidRow {
      * Do not issue updates when model doesn't have any mutations
      */
     if (!this.$isDirty) {
-      return
+      return this
     }
 
     /**
@@ -1545,6 +1548,7 @@ export class BaseModel implements LucidRow {
 
     await Model.$hooks.exec('after', 'update', this)
     await Model.$hooks.exec('after', 'save', this)
+    return this
   }
 
   /**

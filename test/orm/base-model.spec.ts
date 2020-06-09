@@ -62,6 +62,61 @@ test.group('Base model | boot', (group) => {
     await db.manager.closeAll()
   })
 
+  test('ensure save method is chainable', async (assert) => {
+    const adapter = new FakeAdapter()
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public age: number
+    }
+    User.$adapter = adapter
+
+    const user = new User()
+    user.username = 'virk'
+    user.age = 22
+    const chained = await user.save()
+
+    assert.instanceOf(chained, User)
+  })
+
+  test('ensure fill method is chainable', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public age: number
+    }
+
+    const user = new User()
+    const chained = user.fill({
+      username: 'virk',
+      age: 22,
+    })
+
+    assert.instanceOf(chained, User)
+  })
+
+  test('ensure merge method is chainable', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public age: number
+    }
+
+    const user = new User()
+    const chained = user.merge({
+      username: 'virk',
+      age: 22,
+    })
+
+    assert.instanceOf(chained, User)
+  })
+
   test('compute table name from model name', async (assert) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
