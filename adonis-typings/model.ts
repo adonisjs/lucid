@@ -484,7 +484,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     merge (value: Partial<ModelAttributes<this>>, allowNonExtraProperties?: boolean): this
     save (): Promise<this>
     delete (): Promise<void>
-    refresh (): Promise<void>
+    refresh (): Promise<this>
     preload: ModelBuilderPreloadFn<this>
 
     /**

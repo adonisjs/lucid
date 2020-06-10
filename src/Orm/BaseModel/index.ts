@@ -1762,7 +1762,7 @@ export class BaseModel implements LucidRow {
      * Noop when model instance is not persisted
      */
     if (!this.$isPersisted) {
-      return
+      return this
     }
 
     /**
@@ -1781,5 +1781,6 @@ export class BaseModel implements LucidRow {
 
     this.fill(freshModelInstance.$attributes)
     this.$hydrateOriginals()
+    return this
   }
 }

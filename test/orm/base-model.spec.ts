@@ -117,6 +117,23 @@ test.group('Base model | boot', (group) => {
     assert.instanceOf(chained, User)
   })
 
+  test('ensure refresh method is chainable', async (assert) => {
+    const adapter = new FakeAdapter()
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public age: number
+    }
+    User.$adapter = adapter
+
+    const user = new User()
+    const chained = user.refresh()
+
+    assert.instanceOf(chained, User)
+  })
+
   test('compute table name from model name', async (assert) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
