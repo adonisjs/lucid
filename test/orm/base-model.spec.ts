@@ -129,7 +129,7 @@ test.group('Base model | boot', (group) => {
     User.$adapter = adapter
 
     const user = new User()
-    const chained = user.refresh()
+    const chained = await user.refresh()
 
     assert.instanceOf(chained, User)
   })
