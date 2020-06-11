@@ -34,8 +34,6 @@ test.group('Adapter', (group) => {
 
   test('make insert call using a model', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
-
       @column({ isPrimary: true })
       public id: number
 
@@ -57,8 +55,6 @@ test.group('Adapter', (group) => {
 
   test('make update call using a model', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
-
       @column({ isPrimary: true })
       public id: number
 
@@ -85,8 +81,6 @@ test.group('Adapter', (group) => {
 
   test('make delete call using a model', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
-
       @column({ isPrimary: true })
       public id: number
 
@@ -113,8 +107,6 @@ test.group('Adapter', (group) => {
 
   test('get array of model instances using the all call', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
-
       @column({ isPrimary: true })
       public id: number
 
@@ -142,8 +134,6 @@ test.group('Adapter', (group) => {
 
   test('use transaction client set on the model for the insert', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
-
       @column({ isPrimary: true })
       public id: number
 
@@ -172,8 +162,6 @@ test.group('Adapter', (group) => {
 
   test('do not insert when transaction rollbacks', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
-
       @column({ isPrimary: true })
       public id: number
 
@@ -202,8 +190,6 @@ test.group('Adapter', (group) => {
 
   test('cleanup old trx event listeners when transaction is updated', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
-
       @column({ isPrimary: true })
       public id: number
 
@@ -227,8 +213,6 @@ test.group('Adapter', (group) => {
 
   test('use transaction client set on the model for the update', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
-
       @column({ isPrimary: true })
       public id: number
 
@@ -259,8 +243,6 @@ test.group('Adapter', (group) => {
 
   test('use transaction client set on the model for the delete', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
-
       @column({ isPrimary: true })
       public id: number
 
@@ -290,8 +272,6 @@ test.group('Adapter', (group) => {
 
   test('set primary key value when colun name is different from attribute name', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
-
       @column({ isPrimary: true, columnName: 'id' })
       public userId: number
 

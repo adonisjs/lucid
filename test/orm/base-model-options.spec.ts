@@ -45,7 +45,6 @@ test.group('Model options | QueryBuilder', (group) => {
 
   test('query builder set model options from the query client', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -65,7 +64,6 @@ test.group('Model options | QueryBuilder', (group) => {
 
   test('query builder set model options when only one row is fetched', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -84,7 +82,6 @@ test.group('Model options | QueryBuilder', (group) => {
 
   test('query builder use transaction when updating rows', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -110,7 +107,6 @@ test.group('Model options | QueryBuilder', (group) => {
 
   test('cleanup transaction reference after commit or rollback', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -153,7 +149,6 @@ test.group('Model options | Adapter', (group) => {
 
   test('use correct client when custom connection is defined', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -171,7 +166,6 @@ test.group('Model options | Adapter', (group) => {
 
   test('pass profiler to the client when defined explicitly', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -190,7 +184,6 @@ test.group('Model options | Adapter', (group) => {
 
   test('pass custom client to query builder', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -209,7 +202,6 @@ test.group('Model options | Adapter', (group) => {
 
   test('pass transaction client to query builder', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -246,7 +238,6 @@ test.group('Model options | Model.find', (group) => {
 
   test('define custom connection', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -264,7 +255,6 @@ test.group('Model options | Model.find', (group) => {
 
   test('define custom profiler', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -282,7 +272,6 @@ test.group('Model options | Model.find', (group) => {
 
   test('define custom query client', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -318,7 +307,6 @@ test.group('Model options | Model.findOrFail', (group) => {
 
   test('define custom connection', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -336,7 +324,6 @@ test.group('Model options | Model.findOrFail', (group) => {
 
   test('define custom profiler', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -355,7 +342,6 @@ test.group('Model options | Model.findOrFail', (group) => {
 
   test('define custom query client', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -391,7 +377,6 @@ test.group('Model options | Model.findMany', (group) => {
 
   test('define custom connection', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -409,7 +394,6 @@ test.group('Model options | Model.findMany', (group) => {
 
   test('define custom profiler', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -427,7 +411,6 @@ test.group('Model options | Model.findMany', (group) => {
 
   test('define custom query client', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -463,7 +446,6 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 
   test('define custom connection', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -484,7 +466,6 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 
   test('define custom connection when search fails', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -505,7 +486,6 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 
   test('define custom profiler', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -527,7 +507,6 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 
   test('define custom profiler when search fails', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -548,7 +527,6 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 
   test('define custom client', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -570,7 +548,6 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 
   test('define custom client when search fails', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -592,7 +569,6 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 
   test('use transaction', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -616,7 +592,6 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 
   test('use transaction to save when search fails', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -656,7 +631,6 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
   test('define custom connection', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -682,7 +656,6 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
   test('define custom connection when search fails', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -706,7 +679,6 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
   test('define custom profiler', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -733,7 +705,6 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
   test('define custom profiler when search fails', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -758,7 +729,6 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
   test('define custom client', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -785,7 +755,6 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
   test('define custom client when search fails', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -813,7 +782,6 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     assert.plan(2)
 
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -844,7 +812,6 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
   test('use existing transaction when passed', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -895,7 +862,6 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 
   test('define custom connection', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -922,7 +888,6 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 
   test('define custom connection when search fails', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -949,7 +914,6 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     assert.plan(4)
 
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -983,7 +947,6 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     assert.plan(4)
 
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -1014,7 +977,6 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 
   test('define custom client', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -1041,7 +1003,6 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 
   test('define custom client when search fails', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -1069,7 +1030,6 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     assert.plan(2)
 
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
@@ -1100,7 +1060,6 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 
   test('use existing transaction when passed', async (assert) => {
     class User extends BaseModel {
-      public static $table = 'users'
 
       @column({ isPrimary: true })
       public id: number
