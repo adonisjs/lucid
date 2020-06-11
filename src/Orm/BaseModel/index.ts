@@ -447,27 +447,63 @@ export class BaseModel implements LucidRow {
       this.primaryKey = 'id'
     }
 
-    Object.defineProperty(this, '$keys', {
-      value: {
-        attributesToColumns: new ModelKeys(),
-        attributesToSerialized: new ModelKeys(),
-        columnsToAttributes: new ModelKeys(),
-        columnsToSerialized: new ModelKeys(),
-        serializedToColumns: new ModelKeys(),
-        serializedToAttributes: new ModelKeys(),
-      },
-    })
-
-    Object.defineProperty(this, '$columnsDefinitions', { value: new Map() })
-    Object.defineProperty(this, '$computedDefinitions', { value: new Map() })
-    Object.defineProperty(this, '$relationsDefinitions', { value: new Map() })
-
-    Object.defineProperty(this, '$hooks', {
-      value: new Hooks(this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')),
-    })
-
     if (!this.hasOwnProperty('table')) {
       this.table = this.$configurator.getTableName(this)
+    }
+
+    const ParentModel = Object.getPrototypeOf(this)
+    if (ParentModel && ParentModel !== BaseModel) {
+      ParentModel.boot()
+
+      const $keys: Record<string, ModelKeys> = {}
+      for (const keysName of [
+        'attributesToColumns',
+        'attributesToSerialized',
+        'columnsToAttributes',
+        'columnsToSerialized',
+        'serializedToColumns',
+        'serializedToAttributes',
+      ]) {
+        // TODO: clone method on ModelKeys?
+        const parentKeys = ParentModel.$keys[keysName]
+        const newKeys = new ModelKeys()
+        for (const [key, value] of Object.entries(parentKeys)) {
+          newKeys.add(key, value as string)
+        }
+        $keys[keysName] = newKeys
+      }
+      Object.defineProperty(this, '$keys', { value: $keys })
+
+      Object.defineProperty(this, '$columnsDefinitions', { value: new Map(ParentModel.$columnsDefinitions.entries()) })
+      Object.defineProperty(this, '$computedDefinitions', { value: new Map(ParentModel.$computedDefinitions.entries()) })
+      Object.defineProperty(this, '$relationsDefinitions', { value: new Map(ParentModel.$relationsDefinitions.entries()) })
+
+      const parentHooks = ParentModel.$hooks
+      const newHooks = new Hooks(this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks'))
+      // @ts-ignore
+      newHooks.hooks.before = new Map(parentHooks.hooks.before.entries())
+      // @ts-ignore
+      newHooks.hooks.after = new Map(parentHooks.hooks.after.entries())
+      Object.defineProperty(this, '$hooks', { value: newHooks })
+    } else {
+      Object.defineProperty(this, '$keys', {
+        value: {
+          attributesToColumns: new ModelKeys(),
+          attributesToSerialized: new ModelKeys(),
+          columnsToAttributes: new ModelKeys(),
+          columnsToSerialized: new ModelKeys(),
+          serializedToColumns: new ModelKeys(),
+          serializedToAttributes: new ModelKeys(),
+        },
+      })
+
+      Object.defineProperty(this, '$columnsDefinitions', { value: new Map() })
+      Object.defineProperty(this, '$computedDefinitions', { value: new Map() })
+      Object.defineProperty(this, '$relationsDefinitions', { value: new Map() })
+
+      Object.defineProperty(this, '$hooks', {
+        value: new Hooks(this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')),
+      })
     }
   }
 
