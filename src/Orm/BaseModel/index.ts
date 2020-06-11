@@ -438,12 +438,14 @@ export class BaseModel implements LucidRow {
    * Boot the model
    */
   public static boot () {
-    if (this.booted) {
+    if (this.hasOwnProperty('booted')) {
       return
     }
-
     this.booted = true
-    this.primaryKey = this.primaryKey || 'id'
+
+    if (!this.hasOwnProperty('primaryKey')) {
+      this.primaryKey = 'id'
+    }
 
     Object.defineProperty(this, '$keys', {
       value: {
@@ -464,7 +466,9 @@ export class BaseModel implements LucidRow {
       value: new Hooks(this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')),
     })
 
-    this.table = this.table === undefined ? this.$configurator.getTableName(this) : this.table
+    if (!this.hasOwnProperty('table')) {
+      this.table = this.$configurator.getTableName(this)
+    }
   }
 
   /**
