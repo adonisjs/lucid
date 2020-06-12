@@ -2051,12 +2051,12 @@ test.group('Query Builder | whereBetween', (group) => {
     let db = getQueryBuilder(getQueryClient(connection))
     const { sql, bindings } = db
       .from('users')
-      .whereBetween('age', [18, 20])
+      .whereBetween('age', [0, 20])
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection.client!
       .from('users')
-      .whereBetween('age', [18, 20])
+      .whereBetween('age', [0, 20])
       .toSQL()
 
     assert.equal(sql, knexSql)
