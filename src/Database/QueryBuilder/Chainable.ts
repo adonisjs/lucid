@@ -54,7 +54,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   private getBetweenPair (value: any[]): any {
     const [lhs, rhs] = value
-    if (!lhs || !rhs) {
+    if (lhs === undefined || rhs === undefined) {
       throw new Error('Invalid array for whereBetween value')
     }
 
