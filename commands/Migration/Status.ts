@@ -22,7 +22,7 @@ import MigrationsBase from './Base'
 @inject([null, null, 'Adonis/Lucid/Database'])
 export default class Status extends MigrationsBase {
   public static commandName = 'migration:status'
-  public static description = 'Drop existing tables and re-run migrations from start'
+  public static description = 'Check migrations current status.'
 
   /**
    * Define custom connection
