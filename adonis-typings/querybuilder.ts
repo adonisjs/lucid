@@ -625,9 +625,9 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   }
 
   /**
-   * Database query builder interface. It will use the `Executable` trait
-   * and hence must be typed properly for that.
-  */
+   * Database query builder exposes the API to construct SQL query using fluent
+   * chainable API
+   */
   export interface DatabaseQueryBuilderContract <
     Result extends any = Dictionary<any, string>,
   > extends ChainableContract, ExcutableQueryBuilderContract<Result[]> {
