@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
 */
 
+// import { join } from 'path'
 import { inject } from '@adonisjs/fold'
 import { SeederFileNode } from '@ioc:Adonis/Lucid/Seeder'
 import { BaseCommand, Kernel, flags } from '@adonisjs/ace'
@@ -105,7 +106,8 @@ export default class DbSeed extends BaseCommand {
     }
 
     const { SeedsRunner } = await import('../src/SeedsRunner')
-    const runner = new SeedsRunner(this.application.seedsPath(), process.env.NODE_ENV === 'development')
+    const seedsPath = this.application.seedsPath()
+    const runner = new SeedsRunner(seedsPath, process.env.NODE_ENV === 'development')
 
     /**
      * List of available files
@@ -151,5 +153,7 @@ export default class DbSeed extends BaseCommand {
         this.printLogMessage(sourceFile)
       }
     }
+
+    await this.db.manager.closeAll(true)
   }
 }
