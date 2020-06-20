@@ -14,7 +14,7 @@ import { Exception } from '@poppinss/utils'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import {
-  MigrationNode,
+  FileNode,
   MigratorOptions,
   MigratedFileNode,
   MigratorContract,
@@ -26,6 +26,7 @@ import {
   QueryClientContract,
   TransactionClientContract,
 } from '@ioc:Adonis/Lucid/Database'
+import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
 
 import { MigrationSource } from './MigrationSource'
 
@@ -182,7 +183,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Executes a given migration node and cleans up any created transactions
    * in case of failure
    */
-  private async executeMigration (migration: MigrationNode) {
+  private async executeMigration (migration: FileNode<SchemaConstructorContract>) {
     const client = await this.getClient(migration.source.disableTransactions)
 
     try {

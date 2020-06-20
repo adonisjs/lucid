@@ -10,9 +10,10 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { join, isAbsolute, extname } from 'path'
+import { FileNode } from '@ioc:Adonis/Lucid/Migrator'
 import { esmRequire, fsReadAll } from '@poppinss/utils'
-import { MigrationNode } from '@ioc:Adonis/Lucid/Migrator'
 import { ConnectionConfig } from '@ioc:Adonis/Lucid/Database'
+import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 /**
@@ -29,7 +30,7 @@ export class MigrationSource {
    * Returns an array of files inside a given directory. Relative
    * paths are resolved from the project root
    */
-  private getDirectoryFiles (directoryPath: string): Promise<MigrationNode[]> {
+  private getDirectoryFiles (directoryPath: string): Promise<FileNode<SchemaConstructorContract>[]> {
     const basePath = this.app.appRoot
 
     return new Promise((resolve, reject) => {

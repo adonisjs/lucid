@@ -15,10 +15,10 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
    * Migration node returned by the migration source
    * implementation
    */
-  export type MigrationNode = {
+  export type FileNode<T extends any> = {
     absPath: string,
     name: string,
-    source: SchemaConstructorContract,
+    source: T,
   }
 
   /**
@@ -41,7 +41,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
   export type MigratedFileNode = {
     status: 'completed' | 'error' | 'pending',
     queries: string[],
-    migration: MigrationNode,
+    migration: FileNode<SchemaConstructorContract>,
     batch: number,
   }
 

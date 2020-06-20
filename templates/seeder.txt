@@ -1,0 +1,10 @@
+import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+
+export default class {{ filename }} {
+  constructor (protected client: QueryClientContract) {
+  }
+
+  public run () {
+    // Write your database queries inside the run method
+  }
+}

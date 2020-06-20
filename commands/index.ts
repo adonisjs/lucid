@@ -8,8 +8,10 @@
 */
 
 export default [
+  '@adonisjs/lucid/build/commands/DbSeed',
   '@adonisjs/lucid/build/commands/MakeModel',
   '@adonisjs/lucid/build/commands/MakeMigration',
+  '@adonisjs/lucid/build/commands/MakeSeeder',
   '@adonisjs/lucid/build/commands/Migration/Run',
   '@adonisjs/lucid/build/commands/Migration/Rollback',
   '@adonisjs/lucid/build/commands/Migration/Status',
