@@ -340,6 +340,32 @@ test.group('Query Builder | select', (group) => {
     assert.deepEqual(bindings, knexBindings)
     await connection.disconnect()
   })
+
+  test('chain select calls', async (assert) => {
+    const connection = new Connection('primary', getConfig(), getLogger())
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection))
+    const db1 = getQueryBuilder(getQueryClient(connection))
+
+    const { sql, bindings } = db
+      .from('users')
+      .select('*')
+      .select(db1.from('addresses').count('* as total').as('addresses_total'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection.client!
+      .from('users')
+      .select(
+        '*',
+        connection.client!.from('addresses').count('* as total').as('addresses_total')
+      )
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
 })
 
 test.group('Query Builder | where', (group) => {
