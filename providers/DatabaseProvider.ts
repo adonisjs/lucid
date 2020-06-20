@@ -11,8 +11,9 @@ import { IocContract } from '@adonisjs/fold'
 
 import { Schema } from '../src/Schema'
 import { Database } from '../src/Database'
-import { Adapter } from '../src/Orm/Adapter'
 import { Config } from '../src/Orm/Config'
+import { Adapter } from '../src/Orm/Adapter'
+import { FactoryManager } from '../src/Factory'
 import { BaseModel } from '../src/Orm/BaseModel'
 import { extendValidator } from '../src/Bindings/Validator'
 
@@ -72,6 +73,15 @@ export default class DatabaseServiceProvider {
   }
 
   /**
+   * Registers schema class
+   */
+  private registerFactory () {
+    this.$container.singleton('Adonis/Lucid/Factory', () => {
+      return new FactoryManager()
+    })
+  }
+
+  /**
    * Registers the health checker
    */
   private registerHealthChecker () {
@@ -101,6 +111,7 @@ export default class DatabaseServiceProvider {
     this.registerDatabase()
     this.registerOrm()
     this.registerSchema()
+    this.registerFactory()
   }
 
   /**
