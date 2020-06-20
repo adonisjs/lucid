@@ -34,6 +34,16 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   }[] = []
 
   /**
+   * Belongs to relationships are treated different, since they are
+   * persisted before the parent model
+   */
+  private withBelongsToRelations: {
+    name: string,
+    count?: number,
+    callback?: (factory: any) => void,
+  }[] = []
+
+  /**
    * The current index. Updated by `makeMany` and `createMany`
    */
   private currentIndex = 0
@@ -151,8 +161,14 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   /**
    * Makes and persists relationship instances
    */
-  public async createRelations (modelInstance: LucidRow, ctx: FactoryContextContract) {
-    for (let { name, count, callback } of this.withRelations) {
+  private async createRelations (
+    modelInstance: LucidRow,
+    ctx: FactoryContextContract,
+    cycle: 'before' | 'after',
+  ) {
+    const relationships = cycle === 'before' ? this.withBelongsToRelations : this.withRelations
+
+    for (let { name, count, callback } of relationships) {
       const relation = this.model.getRelation(name)
       await relation.useCtx(ctx).create(modelInstance, callback, count)
     }
@@ -170,8 +186,15 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   /**
    * Load relationship
    */
-  public with (relation: string, count?: number, callback?: (factory: never) => void): this {
-    this.withRelations.push({ name: relation, count, callback })
+  public with (name: string, count?: number, callback?: (factory: never) => void): this {
+    const relation = this.model.getRelation(name)
+
+    if (relation.relation.type === 'belongsTo') {
+      this.withBelongsToRelations.push({ name, count, callback })
+      return this
+    }
+
+    this.withRelations.push({ name, count, callback })
     return this
   }
 
@@ -250,16 +273,24 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
     await this.model.hooks.exec('before', 'create', this, modelInstance, ctx)
 
     try {
+      modelInstance.$trx = ctx.$trx
+
+      /**
+       * Create belongs to relationships before calling the save method. Even though
+       * we can update the foriegn key after the initial insert call, we avoid it
+       * for cases, where FK is a not nullable.
+       */
+      await this.createRelations(modelInstance, ctx, 'before')
+
       /**
        * Persist model instance
        */
-      modelInstance.$trx = ctx.$trx
       await modelInstance.save()
 
       /**
        * Create relationships.
        */
-      await this.createRelations(modelInstance, ctx)
+      await this.createRelations(modelInstance, ctx, 'after')
 
       /**
        * Fire after hook before the transaction is committed, so that

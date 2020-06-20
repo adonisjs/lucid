@@ -272,6 +272,15 @@ test.group('Factory | ManyToMany | create', (group) => {
       user_id: user.id,
       skill_id: user.skills[0].id,
     })
+
+    const users = await db.from('users').select('*')
+    const skills = await db.from('skills').select('*')
+    const skillUsers = await db.from('skill_user').select('*')
+
+    assert.lengthOf(skills, 1)
+    assert.lengthOf(users, 1)
+    assert.equal(skillUsers[0].user_id, users[0].id)
+    assert.equal(skillUsers[0].skill_id, skills[0].id)
   })
 
   test('pass custom attributes', async (assert) => {

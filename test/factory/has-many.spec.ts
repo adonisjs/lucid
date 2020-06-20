@@ -255,6 +255,13 @@ test.group('Factory | HasMany | create', (group) => {
     assert.instanceOf(user.posts[0], Post)
     assert.isTrue(user.posts[0].$isPersisted)
     assert.equal(user.posts[0].userId, user.id)
+
+    const users = await db.from('users').select('*')
+    const posts = await db.from('posts').select('*')
+
+    assert.lengthOf(posts, 1)
+    assert.lengthOf(users, 1)
+    assert.equal(posts[0].user_id, users[0].id)
   })
 
   test('pass custom attributes to relationship', async (assert) => {
