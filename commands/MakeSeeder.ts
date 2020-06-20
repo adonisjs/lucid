@@ -31,7 +31,7 @@ export default class MakeSeeder extends BaseCommand {
       'seeder.txt',
     )
 
-    const path = this.application.seedsPath()
+    const path = this.application.rcFile.directories.seeds
 
     this
       .generator
