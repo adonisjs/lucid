@@ -165,45 +165,38 @@ export function extendValidator (
    * Exists rule to ensure the value exists in the database
    */
   const existsChecker = new DbRowCheck('exists', database)
-  validator.addRule('exists', {
-    compile (_, __, args) {
-      const compiledOptions = existsChecker.compile(args[0])
-      return {
-        async: true,
-        allowUndefineds: false,
-        name: 'exists',
-        compiledOptions: compiledOptions,
-      }
-    },
-    async validate (value, compiledOptions, options) {
-      try {
-        await existsChecker.validate(value, compiledOptions, options)
-      } catch (error) {
-        options.errorReporter.report(options.pointer, 'exists', error.message, options.arrayExpressionPointer)
-      }
-    },
+
+  validator.rule<
+    ReturnType<typeof existsChecker['compile']>
+  >('exists', async (value, compiledOptions, options) => {
+    try {
+      await existsChecker.validate(value, compiledOptions, options)
+    } catch (error) {
+      options.errorReporter.report(options.pointer, 'exists', error.message, options.arrayExpressionPointer)
+    }
+  }, (options) => {
+    return {
+      compiledOptions: existsChecker.compile(options[0]),
+      async: true,
+    }
   })
 
   /**
    * Unique rule to check if value is unique or not
    */
   const uniqueChecker = new DbRowCheck('unique', database)
-  validator.addRule('unique', {
-    compile (_, __, args) {
-      const compiledOptions = uniqueChecker.compile(args[0])
-      return {
-        async: true,
-        allowUndefineds: false,
-        name: 'unique',
-        compiledOptions: compiledOptions,
-      }
-    },
-    async validate (value, compiledOptions, options) {
-      try {
-        await uniqueChecker.validate(value, compiledOptions, options)
-      } catch (error) {
-        options.errorReporter.report(options.pointer, 'unique', error.message, options.arrayExpressionPointer)
-      }
-    },
+  validator.rule<
+    ReturnType<typeof existsChecker['compile']>
+  >('unique', async (value, compiledOptions, options) => {
+    try {
+      await uniqueChecker.validate(value, compiledOptions, options)
+    } catch (error) {
+      options.errorReporter.report(options.pointer, 'unique', error.message, options.arrayExpressionPointer)
+    }
+  }, (options) => {
+    return {
+      compiledOptions: uniqueChecker.compile(options[0]),
+      async: true,
+    }
   })
 }

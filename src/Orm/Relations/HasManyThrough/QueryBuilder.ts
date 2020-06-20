@@ -221,9 +221,6 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder implements HasM
    * Returns the group limit query
    */
   public getGroupLimitQuery () {
-    console.log(this.relation.relatedModel().primaryKey)
-    console.log(this.relation.foreignKey)
-
     const { direction, column } = this.groupConstraints.orderBy || {
       column: this.prefixRelatedTable(this.resolveKey(this.relation.relatedModel().primaryKey)),
       direction: 'desc',
