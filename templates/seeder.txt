@@ -1,6 +1,6 @@
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
-export default class {{ filename }} {
+export default class {{ filename }}Seeder {
   constructor (protected client: QueryClientContract) {
   }
 
