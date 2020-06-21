@@ -1,10 +1,7 @@
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import BaseSeeder from '@ioc:Adonis/Lucid/Seeder'
 
-export default class {{ filename }}Seeder {
-  constructor (protected client: QueryClientContract) {
-  }
-
-  public run () {
+export default class {{ filename }}Seeder extends BaseSeeder {
+  public async run () {
     // Write your database queries inside the run method
   }
 }
