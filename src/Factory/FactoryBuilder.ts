@@ -67,17 +67,12 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   private ctx?: FactoryContextContract
 
   /**
-   * A custom set of model adapter options
-   */
-  private options?: ModelAdapterOptions
-
-  /**
    * Instead of relying on the `FactoryModelContract`, we rely on the
    * `FactoryModel`, since it exposes certain API's required for
    * the runtime operations and those API's are not exposed
    * on the interface to keep the API clean
    */
-  constructor (public model: FactoryModel<LucidModel>) {
+  constructor (public model: FactoryModel<LucidModel>, private options?: ModelAdapterOptions) {
   }
 
   /**

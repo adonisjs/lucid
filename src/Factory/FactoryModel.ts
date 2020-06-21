@@ -8,7 +8,7 @@
 */
 
 import { Hooks } from '@poppinss/hooks'
-import { LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model'
+import { LucidRow, LucidModel, ModelAdapterOptions } from '@ioc:Adonis/Lucid/Model'
 import { ExtractModelRelations, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 
 import {
@@ -206,8 +206,8 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
      */
     const builder = {
       model: this,
-      query () {
-        return new FactoryBuilder(this.model)
+      query (options?: ModelAdapterOptions) {
+        return new FactoryBuilder(this.model, options)
       },
       client (...args: any[]) {
         return this.query().client(...args)
