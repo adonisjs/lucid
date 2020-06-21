@@ -10,8 +10,8 @@
 declare module '@ioc:Adonis/Lucid/Factory' {
   import faker from 'faker'
   import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-  import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
   import { LucidRow, LucidModel, ModelAttributes } from '@ioc:Adonis/Lucid/Model'
+  import { TransactionClientContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
   import { ExtractModelRelations, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 
   /**
@@ -162,6 +162,16 @@ declare module '@ioc:Adonis/Lucid/Factory' {
   * instances of lucid models
   */
   export interface FactoryBuilderContract<FactoryModel extends FactoryModelContract<LucidModel>> {
+    /**
+     * Define custom database connection
+     */
+    connection (connection: string): this
+
+    /**
+     * Define custom query client
+     */
+    client (client: QueryClientContract): this
+
     /**
      * Apply pre-defined state
      */

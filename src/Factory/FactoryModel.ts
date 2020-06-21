@@ -209,6 +209,12 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
       query () {
         return new FactoryBuilder(this.model)
       },
+      client (...args: any[]) {
+        return this.query().client(...args)
+      },
+      connection (...args: any[]) {
+        return this.query().connection(...args)
+      },
       apply (...args: any[]) {
         return this.query().apply(...args)
       },

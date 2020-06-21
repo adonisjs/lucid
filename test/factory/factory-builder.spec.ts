@@ -687,6 +687,70 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.isTrue(user.$isPersisted)
     assert.deepEqual(stack, ['afterMake', 'beforeCreate', 'afterCreate'])
   })
+
+  test('define custom connection', async (assert) => {
+    assert.plan(3)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(User, () => {
+      return {}
+    }, factoryManager)
+      .state('withPoints', (user) => user.points = 10)
+      .build()
+
+    const user = await factory
+      .connection('secondary')
+      .apply('withPoints')
+      .create((_, { $trx }) => {
+        assert.equal($trx?.connectionName, 'secondary')
+      })
+
+    assert.equal(user.points, 10)
+    assert.isTrue(user.$isPersisted)
+  })
+
+  test('define custom query client', async (assert) => {
+    assert.plan(3)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(User, () => {
+      return {}
+    }, factoryManager)
+      .state('withPoints', (user) => user.points = 10)
+      .build()
+
+    const client = db.connection('secondary')
+
+    const user = await factory
+      .client(client)
+      .apply('withPoints')
+      .create((_, { $trx }) => {
+        assert.equal($trx?.connectionName, 'secondary')
+      })
+
+    assert.equal(user.points, 10)
+    assert.isTrue(user.$isPersisted)
+  })
 })
 
 test.group('Factory | Factory Builder | createMany', (group) => {

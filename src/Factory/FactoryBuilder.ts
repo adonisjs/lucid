@@ -7,7 +7,8 @@
 * file that was distributed with this source code.
 */
 
-import { LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model'
+import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { LucidRow, LucidModel, ModelAdapterOptions } from '@ioc:Adonis/Lucid/Model'
 import {
   FactoryModelContract,
   FactoryContextContract,
@@ -66,6 +67,11 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   private ctx?: FactoryContextContract
 
   /**
+   * A custom set of model adapter options
+   */
+  private options?: ModelAdapterOptions
+
+  /**
    * Instead of relying on the `FactoryModelContract`, we rely on the
    * `FactoryModel`, since it exposes certain API's required for
    * the runtime operations and those API's are not exposed
@@ -82,7 +88,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
       return new FactoryContext(isStubbed, undefined)
     }
 
-    const client = this.model.model.$adapter.modelConstructorClient(this.model.model)
+    const client = this.model.model.$adapter.modelConstructorClient(this.model.model, this.options)
     const trx = await client.transaction()
     return new FactoryContext(isStubbed, trx)
   }
@@ -172,6 +178,24 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
       const relation = this.model.getRelation(name)
       await relation.useCtx(ctx).create(modelInstance, callback, count)
     }
+  }
+
+  /**
+   * Define custom database connection
+   */
+  public connection (connection: string): this {
+    this.options = this.options || {}
+    this.options.connection = connection
+    return this
+  }
+
+  /**
+   * Define custom query client
+   */
+  public client (client: QueryClientContract): this {
+    this.options = this.options || {}
+    this.options.client = client
+    return this
   }
 
   /**
