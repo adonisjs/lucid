@@ -15,8 +15,8 @@ declare module '@ioc:Adonis/Lucid/Seeder' {
    */
   export type SeederConstructorContract = {
     developmentOnly: boolean,
-    client: QueryClientContract,
     new (client: QueryClientContract): {
+      client: QueryClientContract,
       run (): Promise<void>
     }
   }
@@ -31,4 +31,7 @@ declare module '@ioc:Adonis/Lucid/Seeder' {
     status: 'pending' | 'completed' | 'failed' | 'ignored',
     error?: any,
   }
+
+  const BaseSeeder: SeederConstructorContract
+  export default BaseSeeder
 }

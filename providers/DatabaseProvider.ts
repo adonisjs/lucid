@@ -14,6 +14,7 @@ import { Database } from '../src/Database'
 import { Config } from '../src/Orm/Config'
 import { Adapter } from '../src/Orm/Adapter'
 import { FactoryManager } from '../src/Factory'
+import { BaseSeeder } from '../src/BaseSeeder'
 import { BaseModel } from '../src/Orm/BaseModel'
 import { extendValidator } from '../src/Bindings/Validator'
 
@@ -82,6 +83,15 @@ export default class DatabaseServiceProvider {
   }
 
   /**
+   * Registers schema class
+   */
+  private registerBaseSeeder () {
+    this.$container.singleton('Adonis/Lucid/Seeder', () => {
+      return BaseSeeder
+    })
+  }
+
+  /**
    * Registers the health checker
    */
   private registerHealthChecker () {
@@ -112,6 +122,7 @@ export default class DatabaseServiceProvider {
     this.registerOrm()
     this.registerSchema()
     this.registerFactory()
+    this.registerBaseSeeder()
   }
 
   /**
