@@ -62,7 +62,21 @@ declare module '@ioc:Adonis/Lucid/Model' {
   /**
    * Typed decorator
    */
-  export type TypedDecorator<PropType> = <TKey extends string, TTarget extends { [K in TKey]: PropType }>(
+  export type TypedDecorator<PropType> = <
+    TKey extends string,
+    TTarget extends { [K in TKey]: PropType },
+  >(
+    target: TTarget,
+    property: TKey,
+  ) => void
+
+  /**
+   * Typed decorator that also represents an optional property
+   */
+  export type OptionalTypedDecorator<PropType> = <
+    TKey extends string,
+    TTarget extends { [K in TKey]?: PropType },
+  >(
     target: TTarget,
     property: TKey,
   ) => void
@@ -242,7 +256,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
   export type DateColumnDecorator = (options?: Partial<ColumnOptions & {
     autoCreate: boolean,
     autoUpdate: boolean,
-  }>) => TypedDecorator<DateTime>
+  }>) => OptionalTypedDecorator<DateTime>
 
   /**
    * Decorator for defining date time columns. It is same as

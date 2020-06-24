@@ -1,10 +1,14 @@
-import { BaseModel, HasOne, hasOne, scope } from '@ioc:Adonis/Lucid/Orm'
+import { DateTime } from 'luxon'
+import { BaseModel, HasOne, hasOne, scope, column } from '@ioc:Adonis/Lucid/Orm'
 import Factory from '@ioc:Adonis/Lucid/Factory'
 
 class Profile extends BaseModel {
   public id: string
   public userId: string
   public user: HasOne<typeof User>
+
+  @column.dateTime()
+  public createdAt?: DateTime
 }
 
 export class User extends BaseModel {
