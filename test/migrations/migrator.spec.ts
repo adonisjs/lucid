@@ -913,6 +913,57 @@ test.group('Migrator', (group) => {
 		assert.equal(files[1].batch, 1)
 	})
 
+	test.only('use a natural sort to order files', async (assert) => {
+		const app = new Application(fs.basePath, {} as any, {} as any, {})
+
+		await fs.add(
+			'database/migrations/12_users.ts',
+			`
+      import { Schema } from '../../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_users')
+        }
+      }
+    `
+		)
+
+		await fs.add(
+			'database/migrations/1_accounts.ts',
+			`
+      import { Schema } from '../../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_accounts', (table) => {
+            table.increments()
+          })
+        }
+
+        public async down () {
+          this.schema.dropTable('schema_accounts')
+        }
+      }
+    `
+		)
+
+		const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+		await migrator.run()
+		const files = await migrator.getList()
+
+		assert.lengthOf(files, 2)
+		assert.equal(files[0].name, 'database/migrations/1_accounts')
+		assert.equal(files[0].batch, 1)
+
+		assert.equal(files[1].name, 'database/migrations/12_users')
+		assert.equal(files[1].batch, 1)
+	})
+
 	test('skip upcoming migrations after failure', async (assert) => {
 		const app = new Application(fs.basePath, {} as any, {} as any, {})
 
