@@ -913,7 +913,7 @@ test.group('Migrator', (group) => {
 		assert.equal(files[1].batch, 1)
 	})
 
-	test.only('use a natural sort to order files', async (assert) => {
+	test('use a natural sort to order files', async (assert) => {
 		const app = new Application(fs.basePath, {} as any, {} as any, {})
 
 		await fs.add(
