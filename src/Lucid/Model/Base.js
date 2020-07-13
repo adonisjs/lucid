@@ -312,7 +312,7 @@ class BaseModel {
    * @return {void}
    */
   merge (attributes) {
-    _.each(attributes, (value, key) => this.set(key, value))
+    _.forIn(attributes, (value, key) => this.set(key, value))
   }
 
   /**
