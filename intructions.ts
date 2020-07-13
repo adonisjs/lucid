@@ -51,6 +51,8 @@ export default async function instructions (
   const pkg = new sink.files.PackageJsonFile(projectRoot)
   const dbms = await getDBMS(sink)
 
+  pkg.install('luxon')
+
   if (dbms.includes('sqlite')) {
     pkg.install('sqlite3')
   }
