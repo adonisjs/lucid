@@ -1,3 +1,18 @@
+## [6.1.4](https://github.com/adonisjs/adonis-lucid/compare/v6.1.3...v6.1.4) (2020-07-13)
+
+
+### Bug Fixes
+
+* **Model:** merge method use forIn instead of each ([#545](https://github.com/adonisjs/adonis-lucid/issues/545)) ([a5ad24f](https://github.com/adonisjs/adonis-lucid/commit/a5ad24fc63e07b19e2f32b2b94f19332a264a5be))
+* **relations:** apply pivotModel scopes on belongsToMany sub queries ([6cc7012](https://github.com/adonisjs/adonis-lucid/commit/6cc7012e96b41e05556e720815a67c02f64cf79a)), closes [#429](https://github.com/adonisjs/adonis-lucid/issues/429)
+
+
+### Features
+
+* **model:** add support for pre-defining timestamp values ([5c2b180](https://github.com/adonisjs/adonis-lucid/commit/5c2b1803d2b72ac1afb3d11e70cf603653213ddc))
+
+
+
 <a name="6.1.3"></a>
 ## [6.1.3](https://github.com/adonisjs/adonis-lucid/compare/v6.1.2...v6.1.3) (2018-10-01)
 
