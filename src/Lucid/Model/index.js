@@ -529,7 +529,7 @@ class Model extends BaseModel {
    */
   _setCreatedAt (values) {
     const createdAtColumn = this.constructor.createdAtColumn
-    if (createdAtColumn) {
+    if (createdAtColumn && !values[createdAtColumn]) {
       values[createdAtColumn] = this._getSetterValue(createdAtColumn, new Date())
     }
   }
@@ -548,7 +548,7 @@ class Model extends BaseModel {
    */
   _setUpdatedAt (values) {
     const updatedAtColumn = this.constructor.updatedAtColumn
-    if (updatedAtColumn) {
+    if (updatedAtColumn && !this.dirty[updatedAtColumn]) {
       values[updatedAtColumn] = this._getSetterValue(updatedAtColumn, new Date())
     }
   }
