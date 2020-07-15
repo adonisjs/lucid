@@ -15,7 +15,7 @@ const DBMS_PROMPT_CHOICES = [
     message: 'MySQL / MariaDB',
   },
   {
-    name: 'psql' as const,
+    name: 'pg' as const,
     message: 'PostgreSQL',
   },
   {
@@ -28,7 +28,7 @@ const DBMS_PROMPT_CHOICES = [
   },
 ]
 
-function getDBMS(sink: typeof sinkStatic) {
+function getDBMS (sink: typeof sinkStatic) {
   return sink.getPrompt().multiple('Which DBMS are you going to use? (use "space" to select item)', DBMS_PROMPT_CHOICES)
 }
 
@@ -61,7 +61,7 @@ export default async function instructions (
     pkg.install('mysql')
   }
 
-  if (dbms.includes('psql')) {
+  if (dbms.includes('pg')) {
     pkg.install('pg')
   }
 
@@ -79,7 +79,7 @@ export default async function instructions (
   databaseConfig.apply({
     sqlite: dbms.includes('sqlite'),
     mysql: dbms.includes('mysql'),
-    psql: dbms.includes('psql'),
+    psql: dbms.includes('pg'),
     oracle: dbms.includes('oracle'),
     mssql: dbms.includes('mssql'),
   }).commit()
