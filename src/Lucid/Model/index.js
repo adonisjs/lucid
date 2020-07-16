@@ -587,7 +587,7 @@ class Model extends BaseModel {
     /**
      * Executing before hooks
      */
-    await this.constructor.$hooks.before.exec('create', this)
+    await this.constructor.$hooks.before.exec('create', this, trx)
 
     /**
      * Set timestamps
@@ -632,7 +632,7 @@ class Model extends BaseModel {
     /**
      * Executing after hooks
      */
-    await this.constructor.$hooks.after.exec('create', this)
+    await this.constructor.$hooks.after.exec('create', this, trx)
     return true
   }
 
@@ -650,7 +650,7 @@ class Model extends BaseModel {
     /**
      * Executing before hooks
      */
-    await this.constructor.$hooks.before.exec('update', this)
+    await this.constructor.$hooks.before.exec('update', this, trx)
     let affected = 0
 
     const query = this.constructor.query()
@@ -679,7 +679,7 @@ class Model extends BaseModel {
     /**
      * Executing after hooks
      */
-    await this.constructor.$hooks.after.exec('update', this)
+    await this.constructor.$hooks.after.exec('update', this, trx)
 
     if (this.isDirty) {
       /**
@@ -805,14 +805,18 @@ class Model extends BaseModel {
    *
    * @return {Boolean}
    */
-  async delete () {
+  async delete (trx) {
     /**
      * Executing before hooks
      */
-    await this.constructor.$hooks.before.exec('delete', this)
+    await this.constructor.$hooks.before.exec('delete', this, trx)
 
-    const affected = await this.constructor
-      .query()
+    const query = this.constructor.query()
+
+    if (trx) {
+      query.transacting(trx)
+    }
+    const affected = await query
       .where(this.constructor.primaryKey, this.primaryKeyValue)
       .ignoreScopes()
       .delete()
@@ -827,7 +831,7 @@ class Model extends BaseModel {
     /**
      * Executing after hooks
      */
-    await this.constructor.$hooks.after.exec('delete', this)
+    await this.constructor.$hooks.after.exec('delete', this, trx)
     return !!affected
   }
 
