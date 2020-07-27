@@ -128,6 +128,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
   export type CherryPickFields = string[] | {
     pick?: string[],
     omit?: string[],
+    include?: string[],
   }
 
   /**
@@ -186,6 +187,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
   export type ColumnOptions = {
     columnName: string, // database column name
     serializeAs: string | null, // null means do not serialize column
+    omitSerialization: boolean,
     isPrimary: boolean,
     meta?: any,
 
@@ -230,6 +232,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
    */
   export type ComputedOptions = {
     serializeAs: string | null,
+    omitSerialization: boolean,
     meta?: any,
   }
 

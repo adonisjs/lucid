@@ -187,11 +187,13 @@ export function normalizeCherryPickObject (fields: CherryPickFields) {
     return {
       pick: fields,
       omit: [],
+      include: [],
     }
   }
 
   return {
     pick: fields.pick,
     omit: fields.omit,
+    include: fields.include,
   }
 }

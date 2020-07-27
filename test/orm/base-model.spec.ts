@@ -1658,6 +1658,30 @@ test.group('Base Model | toJSON', (group) => {
       fields: ['username'],
     }), { username: 'virk' })
   })
+
+  test('omitting serialization fields by default', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column({ omitSerialization: true })
+      public email: string
+
+      @computed()
+      public get fullName () {
+        return this.username.toUpperCase()
+      }
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    user.email = 'virk@adonisjs.com'
+
+    assert.deepEqual(user.serialize(), { username: 'virk', fullName: 'VIRK' })
+    assert.deepEqual(user.serialize({
+      fields: {include: ['email']},
+    }), { username: 'virk', email: 'virk@adonisjs.com', fullName: 'VIRK' })
+  })
 })
 
 test.group('BaseModel | cache', (group) => {

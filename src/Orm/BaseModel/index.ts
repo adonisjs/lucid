@@ -268,6 +268,7 @@ export class BaseModel implements LucidRow {
       serializeAs: options.serializeAs !== undefined
         ? options.serializeAs
         : this.$configurator.getSerializeAsKey(this, name),
+      omitSerialization: options.omitSerialization || false,
       serialize: options.serialize,
       prepare: options.prepare,
       consume: options.consume,
@@ -315,6 +316,7 @@ export class BaseModel implements LucidRow {
   public static $addComputed (name: string, options: Partial<ComputedOptions>) {
     const computed: ComputedOptions = {
       serializeAs: options.serializeAs || name,
+      omitSerialization: options.omitSerialization || false,
       meta: options.meta,
     }
     this.$computedDefinitions.set(name, computed)
@@ -942,6 +944,7 @@ export class BaseModel implements LucidRow {
    */
   private shouldSerializeField (
     serializeAs: string | null,
+    omitSerialization: boolean,
     fields?: CherryPickFields,
   ): serializeAs is string {
     /**
@@ -953,18 +956,25 @@ export class BaseModel implements LucidRow {
     }
 
     /**
-     * If not explicit fields are defined, then always include the field
+     * If not explicit fields are defined, then include the field if not omitted
      */
     if (!fields) {
-      return true
+      return !omitSerialization
     }
 
-    const { pick, omit } = normalizeCherryPickObject(fields)
+    const { pick, omit, include } = normalizeCherryPickObject(fields)
 
     /**
      * Return false, when under omit array
      */
     if (omit && omit.includes(serializeAs)) {
+      return false
+    }
+
+    /**
+     * Return false, when omitted by default and not under include array
+     */
+    if (omitSerialization && (!include || !include.includes(serializeAs))) {
       return false
     }
 
@@ -1574,7 +1584,7 @@ export class BaseModel implements LucidRow {
 
     return Object.keys(this.$attributes).reduce<ModelObject>((result, key) => {
       const column = Model.$getColumn(key)!
-      if (!this.shouldSerializeField(column.serializeAs, fields)) {
+      if (!this.shouldSerializeField(column.serializeAs, column.omitSerialization, fields)) {
         return result
       }
 
@@ -1596,7 +1606,8 @@ export class BaseModel implements LucidRow {
 
     Model.$computedDefinitions.forEach((value, key) => {
       const computedValue = this[key]
-      if (computedValue !== undefined && this.shouldSerializeField(value.serializeAs, fields)) {
+      if (computedValue !== undefined &&
+          this.shouldSerializeField(value.serializeAs, value.omitSerialization, fields)) {
         result[value.serializeAs] = computedValue
       }
     })
