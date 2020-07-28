@@ -8421,3 +8421,117 @@ test.group('Query Builder | event', (group) => {
 		await connection.disconnect()
 	})
 })
+
+test.group('Query Builder | update', (group) => {
+	group.before(async () => {
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+	})
+
+	test('update columns by defining object', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		let db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db.from('users').update({ account_status: 'active' }).toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.update({ account_status: 'active' })
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		db = getQueryBuilder(getQueryClient(connection))
+		db.keysResolver = (key) => `my_${key}`
+
+		const { sql: resolverSql, bindings: resolverBindings } = db
+			.from('users')
+			.update({ account_status: 'active' })
+			.toSQL()
+
+		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+			.client!.from('users')
+			.update({ my_account_status: 'active' })
+			.toSQL()
+
+		assert.equal(resolverSql, knexResolverSql)
+		assert.deepEqual(resolverBindings, knexResolverBindings)
+
+		await connection.disconnect()
+	})
+
+	test('update columns by defining key-value pair', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		let db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db.from('users').update('account_status', 'active').toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.update('account_status', 'active')
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		db = getQueryBuilder(getQueryClient(connection))
+		db.keysResolver = (key) => `my_${key}`
+
+		const { sql: resolverSql, bindings: resolverBindings } = db
+			.from('users')
+			.update('account_status', 'active')
+			.toSQL()
+
+		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+			.client!.from('users')
+			.update('my_account_status', 'active')
+			.toSQL()
+
+		console.log(resolverSql, resolverBindings)
+		assert.equal(resolverSql, knexResolverSql)
+		assert.deepEqual(resolverBindings, knexResolverBindings)
+
+		await connection.disconnect()
+	})
+
+	test('handle use case where update value is false or 0', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		let db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db.from('users').update('account_status', 0).toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.update('account_status', 0)
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		db = getQueryBuilder(getQueryClient(connection))
+		db.keysResolver = (key) => `my_${key}`
+
+		const { sql: resolverSql, bindings: resolverBindings } = db
+			.from('users')
+			.update('is_active', false)
+			.toSQL()
+
+		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+			.client!.from('users')
+			.update('my_is_active', false)
+			.toSQL()
+
+		console.log(resolverSql, resolverBindings)
+		assert.equal(resolverSql, knexResolverSql)
+		assert.deepEqual(resolverBindings, knexResolverBindings)
+
+		await connection.disconnect()
+	})
+})

@@ -169,10 +169,10 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
 	 */
 	public update(column: any, value?: any, returning?: string[]): this {
 		this.ensureCanPerformWrites()
-		if (!value && !returning) {
+		if (value === undefined && returning === undefined) {
 			this.knexQuery.update(this.resolveKey(column, true))
-		} else if (!returning) {
-			this.knexQuery.update(this.resolveKey(column, true), value)
+		} else if (returning === undefined) {
+			this.knexQuery.update(this.resolveKey(column), value)
 		} else {
 			this.knexQuery.update(this.resolveKey(column), value, returning)
 		}
