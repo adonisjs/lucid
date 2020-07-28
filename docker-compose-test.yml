@@ -9,4 +9,4 @@ services:
       - mysql
       - pg
       - mssql
-    command: ["npm", "run", "test:docker"]
+    command: ['npm', 'run', 'test:docker']

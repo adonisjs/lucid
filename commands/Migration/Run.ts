@@ -5,7 +5,7 @@
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
-*/
+ */
 
 import { inject } from '@adonisjs/fold'
 import { flags, Kernel } from '@adonisjs/ace'
@@ -20,77 +20,76 @@ import MigrationsBase from './Base'
  */
 @inject([null, null, 'Adonis/Lucid/Database'])
 export default class Migrate extends MigrationsBase {
-  public static commandName = 'migration:run'
-  public static description = 'Run pending migrations'
+	public static commandName = 'migration:run'
+	public static description = 'Run pending migrations'
 
-  /**
-   * Custom connection for running migrations.
-   */
-  @flags.string({ description: 'Define a custom database connection' })
-  public connection: string
+	/**
+	 * Custom connection for running migrations.
+	 */
+	@flags.string({ description: 'Define a custom database connection' })
+	public connection: string
 
-  /**
-   * Force run migrations in production
-   */
-  @flags.boolean({ description: 'Explictly force to run migrations in production' })
-  public force: boolean
+	/**
+	 * Force run migrations in production
+	 */
+	@flags.boolean({ description: 'Explictly force to run migrations in production' })
+	public force: boolean
 
-  /**
-   * Perform dry run
-   */
-  @flags.boolean({ description: 'Print SQL queries, instead of running the migrations' })
-  public dryRun: boolean
+	/**
+	 * Perform dry run
+	 */
+	@flags.boolean({ description: 'Print SQL queries, instead of running the migrations' })
+	public dryRun: boolean
 
-  /**
-   * This command loads the application, since we need the runtime
-   * to find the migration directories for a given connection
-   */
-  public static settings = {
-    loadApp: true,
-  }
+	/**
+	 * This command loads the application, since we need the runtime
+	 * to find the migration directories for a given connection
+	 */
+	public static settings = {
+		loadApp: true,
+	}
 
-  constructor (app: ApplicationContract, kernel: Kernel, private db: DatabaseContract) {
-    super(app, kernel)
-  }
+	constructor(app: ApplicationContract, kernel: Kernel, private db: DatabaseContract) {
+		super(app, kernel)
+	}
 
-  /**
-   * Handle command
-   */
-  public async handle (): Promise<void> {
-    this.connection = this.connection || this.db.primaryConnectionName
-    const connection = this.db.getRawConnection(this.connection)
+	/**
+	 * Handle command
+	 */
+	public async handle(): Promise<void> {
+		this.connection = this.connection || this.db.primaryConnectionName
+		const connection = this.db.getRawConnection(this.connection)
 
-    const continueMigrations = !this.application.inProduction
-      || this.force
-      || await this.takeProductionConstent()
+		const continueMigrations =
+			!this.application.inProduction || this.force || (await this.takeProductionConstent())
 
-    /**
-     * Prompt cancelled or rejected and hence do not continue
-     */
-    if (!continueMigrations) {
-      return
-    }
+		/**
+		 * Prompt cancelled or rejected and hence do not continue
+		 */
+		if (!continueMigrations) {
+			return
+		}
 
-    /**
-     * Ensure the define connection name does exists in the
-     * config file
-     */
-    if (!connection) {
-      this.printNotAValidConnection(this.connection)
-      return
-    }
+		/**
+		 * Ensure the define connection name does exists in the
+		 * config file
+		 */
+		if (!connection) {
+			this.printNotAValidConnection(this.connection)
+			return
+		}
 
-    /**
-     * New up migrator
-     */
-    const { Migrator } = await import('../../src/Migrator')
-    const migrator = new Migrator(this.db, this.application, {
-      direction: 'up',
-      connectionName: this.connection,
-      dryRun: this.dryRun,
-    })
+		/**
+		 * New up migrator
+		 */
+		const { Migrator } = await import('../../src/Migrator')
+		const migrator = new Migrator(this.db, this.application, {
+			direction: 'up',
+			connectionName: this.connection,
+			dryRun: this.dryRun,
+		})
 
-    this.printPreviewMessage()
-    await this.runMigrations(migrator, this.connection)
-  }
+		this.printPreviewMessage()
+		await this.runMigrations(migrator, this.connection)
+	}
 }

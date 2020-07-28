@@ -28,7 +28,9 @@
     "build": "npm run compile",
     "commit": "git-cz",
     "release": "np",
-    "version": "npm run build"
+    "version": "npm run build",
+    "sync-labels": "github-label-sync --labels ./node_modules/@adonisjs/mrm-preset/gh-labels.json adonisjs/lucid",
+    "format": "prettier --write ."
   },
   "repository": {
     "type": "git",
@@ -62,7 +64,7 @@
   "devDependencies": {
     "@adonisjs/ace": "^6.9.3",
     "@adonisjs/application": "^2.0.0",
-    "@adonisjs/core": "^5.0.0-preview-rc-1.7",
+    "@adonisjs/core": "^5.0.0-preview-rc-1.11",
     "@adonisjs/fold": "^6.3.5",
     "@adonisjs/mrm-preset": "^2.4.0",
     "@poppinss/dev-utils": "^1.0.8",
@@ -77,15 +79,20 @@
     "del-cli": "^3.0.1",
     "dotenv": "^8.2.0",
     "eslint": "^7.5.0",
+    "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-adonis": "^1.0.14",
+    "eslint-plugin-prettier": "^3.1.4",
     "fs-extra": "^9.0.1",
+    "github-label-sync": "^2.0.0",
     "husky": "^4.2.5",
     "japa": "^3.1.1",
     "mrm": "^2.3.3",
     "mssql": "^6.2.1",
     "mysql": "^2.18.1",
     "np": "^6.3.2",
+    "npm-audit-html": "^1.4.1",
     "pg": "^8.3.0",
+    "prettier": "^2.0.5",
     "reflect-metadata": "^0.1.13",
     "sqlite3": "^5.0.0",
     "ts-node": "^8.10.2",
@@ -105,7 +112,8 @@
   },
   "husky": {
     "hooks": {
-      "commit-msg": "node ./node_modules/@adonisjs/mrm-preset/validateCommit/conventional/validate.js"
+      "commit-msg": "node ./node_modules/@adonisjs/mrm-preset/validateCommit/conventional/validate.js",
+      "pre-commit": "npm audit --production --json | ./node_modules/.bin/npm-audit-html && git add npm-audit.html"
     }
   },
   "config": {
