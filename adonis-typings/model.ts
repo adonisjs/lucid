@@ -32,6 +32,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		RelationshipsContract,
 		ExtractModelRelations,
 		ThroughRelationOptions,
+		QueryBuilderWithCountFn,
 		ManyToManyRelationOptions,
 	} from '@ioc:Adonis/Lucid/Relations'
 
@@ -374,6 +375,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		update: Update<ModelQueryBuilderContract<Model, number>>
 		increment: Counter<ModelQueryBuilderContract<Model, number>>
 		decrement: Counter<ModelQueryBuilderContract<Model, number>>
+
+		/**
+		 * Fetch relationship count
+		 */
+		withCount: QueryBuilderWithCountFn<InstanceType<Model>, this>
 
 		/**
 		 * Define relationships to be preloaded

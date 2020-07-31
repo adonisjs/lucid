@@ -30,8 +30,8 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
 	/**
 	 * Generate a related query builder
 	 */
-	public static query(client: QueryClientContract, relation: HasMany, rows: OneOrMany<LucidRow>) {
-		const query = new HasManyQueryBuilder(client.knexQuery(), client, rows, relation)
+	public static query(client: QueryClientContract, relation: HasMany, row: LucidRow) {
+		const query = new HasManyQueryBuilder(client.knexQuery(), client, row, relation)
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
 		return query
 	}

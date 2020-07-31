@@ -582,6 +582,224 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
 	})
 })
 
+test.group('Model | ManyToMany | sub queries', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('generate correct sub query for selecting rows', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		User.$getRelation('skills')!.boot()
+
+		const { sql, bindings } = User.$getRelation('skills')!.subQuery(db.connection()).toSQL()
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('skills')
+			.innerJoin('skill_user', 'skills.id', 'skill_user.skill_id')
+			.where('users.id', '=', db.connection().getReadClient().ref('skill_user.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('create aggregate query', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		User.$getRelation('skills')!.boot()
+
+		const { sql, bindings } = User.$getRelation('skills')!
+			.subQuery(db.connection())
+			.count('* as total')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.count('* as total')
+			.from('skills')
+			.innerJoin('skill_user', 'skills.id', 'skill_user.skill_id')
+			.where('users.id', '=', db.connection().getReadClient().ref('skill_user.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('allow selecting custom columns', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		User.$getRelation('skills')!.boot()
+
+		const { sql, bindings } = User.$getRelation('skills')!
+			.subQuery(db.connection())
+			.select('name')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('skills')
+			.select('skills.name')
+			.innerJoin('skill_user', 'skills.id', 'skill_user.skill_id')
+			.where('users.id', '=', db.connection().getReadClient().ref('skill_user.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('generate correct self relationship subquery', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@manyToMany(() => User, {
+				pivotTable: 'follows',
+				pivotForeignKey: 'user_id',
+				pivotRelatedForeignKey: 'following_user_id',
+			})
+			public follows: ManyToMany<typeof User>
+		}
+
+		User.boot()
+		User.$getRelation('follows')!.boot()
+
+		const { sql, bindings } = User.$getRelation('follows')!.subQuery(db.connection()).toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('users as adonis_temp_0')
+			.innerJoin('follows', 'adonis_temp_0.id', 'follows.following_user_id')
+			.where('users.id', '=', db.connection().getReadClient().ref('follows.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('add where pivot clause when self relationship subQuery', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@manyToMany(() => User, {
+				pivotTable: 'follows',
+				pivotForeignKey: 'user_id',
+				pivotRelatedForeignKey: 'following_user_id',
+			})
+			public follows: ManyToMany<typeof User>
+		}
+
+		User.boot()
+		User.$getRelation('follows')!.boot()
+
+		const { sql, bindings } = User.$getRelation('follows')!
+			.subQuery(db.connection())
+			.select('name')
+			.wherePivot('following_user_id', 10)
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('users as adonis_temp_0')
+			.select('adonis_temp_0.name')
+			.innerJoin('follows', 'adonis_temp_0.id', 'follows.following_user_id')
+			.where('follows.following_user_id', 10)
+			.where('users.id', '=', db.connection().getReadClient().ref('follows.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('allow selecting custom pivot columns', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		User.$getRelation('skills')!.boot()
+
+		const { sql, bindings } = User.$getRelation('skills')!
+			.subQuery(db.connection())
+			.pivotColumns(['proficiency'])
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('skills')
+			.select('skill_user.proficiency')
+			.innerJoin('skill_user', 'skills.id', 'skill_user.skill_id')
+			.where('users.id', '=', db.connection().getReadClient().ref('skill_user.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+})
+
 test.group('Model | Many To Many | aggregates', (group) => {
 	group.before(async () => {
 		db = getDb()
@@ -1172,6 +1390,298 @@ test.group('Model | ManyToMany | preload', (group) => {
 			throw new Error('not expected to be here')
 		})
 		assert.lengthOf(users, 0)
+	})
+})
+
+test.group('Model | ManyToMany | withCount', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('get count of a relationship rows', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		await db
+			.insertQuery()
+			.table('skills')
+			.insert([{ name: 'Programming' }, { name: 'Dancing' }])
+
+		await db
+			.insertQuery()
+			.table('skill_user')
+			.insert([
+				{
+					user_id: 1,
+					skill_id: 1,
+				},
+				{
+					user_id: 1,
+					skill_id: 2,
+				},
+				{
+					user_id: 2,
+					skill_id: 2,
+				},
+			])
+
+		const users = await User.query().withCount('skills').orderBy('id', 'asc')
+		assert.lengthOf(users, 2)
+
+		assert.deepEqual(users[0].$extras.skills_count, 2)
+		assert.deepEqual(users[1].$extras.skills_count, 1)
+	})
+
+	test('apply constraints to the withCount subquery', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		await db
+			.insertQuery()
+			.table('skills')
+			.insert([{ name: 'Programming' }, { name: 'Dancing' }])
+
+		await db
+			.insertQuery()
+			.table('skill_user')
+			.insert([
+				{
+					user_id: 1,
+					skill_id: 1,
+				},
+				{
+					user_id: 1,
+					skill_id: 2,
+				},
+				{
+					user_id: 2,
+					skill_id: 2,
+				},
+			])
+
+		const users = await User.query()
+			.withCount('skills', (query) => {
+				query.where('name', 'Programming')
+			})
+			.orderBy('id', 'asc')
+
+		assert.lengthOf(users, 2)
+		assert.deepEqual(users[0].$extras.skills_count, 1)
+		assert.deepEqual(users[1].$extras.skills_count, 0)
+	})
+
+	test('allow subquery to have custom aggregates', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		await db
+			.insertQuery()
+			.table('skills')
+			.insert([{ name: 'Programming' }, { name: 'Dancing' }])
+
+		await db
+			.insertQuery()
+			.table('skill_user')
+			.insert([
+				{
+					user_id: 1,
+					skill_id: 1,
+				},
+				{
+					user_id: 1,
+					skill_id: 2,
+				},
+				{
+					user_id: 2,
+					skill_id: 2,
+				},
+			])
+
+		const users = await User.query()
+			.withCount('skills', (query) => {
+				query.countDistinct('skill_user.user_id')
+			})
+			.orderBy('id', 'asc')
+
+		assert.lengthOf(users, 2)
+		assert.deepEqual(users[0].$extras.skills_count, 1)
+		assert.deepEqual(users[1].$extras.skills_count, 1)
+	})
+
+	test('allow cherry picking columns', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		await db
+			.insertQuery()
+			.table('skills')
+			.insert([{ name: 'Programming' }, { name: 'Dancing' }])
+
+		await db
+			.insertQuery()
+			.table('skill_user')
+			.insert([
+				{
+					user_id: 1,
+					skill_id: 1,
+				},
+				{
+					user_id: 1,
+					skill_id: 2,
+				},
+				{
+					user_id: 2,
+					skill_id: 2,
+				},
+			])
+
+		const users = await User.query().select('username').withCount('skills').orderBy('id', 'asc')
+
+		assert.lengthOf(users, 2)
+		assert.deepEqual(users[0].$attributes, { username: 'virk' })
+		assert.deepEqual(users[1].$attributes, { username: 'nikk' })
+	})
+
+	test('get count of self relationship', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@manyToMany(() => User, {
+				pivotTable: 'follows',
+				pivotForeignKey: 'user_id',
+				pivotRelatedForeignKey: 'following_user_id',
+			})
+			public follows: ManyToMany<typeof User>
+		}
+
+		User.boot()
+
+		await db
+			.insertQuery()
+			.table('users')
+			.multiInsert([
+				{ username: 'virk' },
+				{ username: 'nikk' },
+				{ username: 'romain' },
+				{ username: 'joe' },
+			])
+
+		await db
+			.insertQuery()
+			.table('follows')
+			.insert([
+				{
+					user_id: 1,
+					following_user_id: 2,
+				},
+				{
+					user_id: 1,
+					following_user_id: 3,
+				},
+				{
+					user_id: 3,
+					following_user_id: 1,
+				},
+			])
+
+		const users = await User.query().withCount('follows').orderBy('id', 'asc')
+
+		assert.lengthOf(users, 4)
+		assert.deepEqual(users[0].$extras.follows_count, 2)
+		assert.deepEqual(users[1].$extras.follows_count, 0)
+		assert.deepEqual(users[2].$extras.follows_count, 1)
+		assert.deepEqual(users[3].$extras.follows_count, 0)
 	})
 })
 

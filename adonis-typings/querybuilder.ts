@@ -74,7 +74,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 	 * Query callback is used to write wrapped queries. We get rid of `this` from
 	 * knex, since it makes everything confusing.
 	 */
-	type QueryCallback<Builder extends ChainableContract> = (builder: Builder) => void
+	type QueryCallback<Builder extends any> = (builder: Builder) => void
 
 	/**
 	 * Shape of the function accepted by the chainable query builder to
@@ -410,6 +410,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 	 */
 	export interface ChainableContract {
 		knexQuery: knex.QueryBuilder
+		columns: (string | knex.QueryBuilder | knex.RawQueryBuilder)[]
 		hasAggregates: boolean
 		hasGroupBy: boolean
 		hasUnion: boolean

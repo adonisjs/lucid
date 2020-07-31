@@ -429,6 +429,199 @@ test.group('Model | HasMany | bulk operations', (group) => {
 	})
 })
 
+test.group('Model | HasMany | sub queries', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('generate correct sub query for selecting rows', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		User.boot()
+		User.$getRelation('posts')!.boot()
+
+		const { sql, bindings } = User.$getRelation('posts')!.subQuery(db.connection()).toSQL()
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('posts')
+			.where('users.id', '=', db.connection().getReadClient().ref('posts.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('create aggregate query', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		User.boot()
+		User.$getRelation('posts')!.boot()
+
+		const { sql, bindings } = User.$getRelation('posts')!
+			.subQuery(db.connection())
+			.count('* as total')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('posts')
+			.count('* as total')
+			.where('users.id', '=', db.connection().getReadClient().ref('posts.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('allow selecting custom columns', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		User.boot()
+		User.$getRelation('posts')!.boot()
+
+		const { sql, bindings } = User.$getRelation('posts')!
+			.subQuery(db.connection())
+			.select('title', 'is_published')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('posts')
+			.select('title', 'is_published')
+			.where('users.id', '=', db.connection().getReadClient().ref('posts.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('generate correct self relationship subquery', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => User)
+			public parents: HasMany<typeof User>
+		}
+
+		User.boot()
+		User.$getRelation('parents')!.boot()
+
+		const { sql, bindings } = User.$getRelation('parents')!
+			.subQuery(db.connection())
+			.select('email')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('users as adonis_temp_0')
+			.select('email')
+			.where('users.id', '=', db.connection().getReadClient().ref('adonis_temp_0.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('raise exception when trying to execute the query', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		User.boot()
+		User.$getRelation('posts')!.boot()
+
+		const exec = () => User.$getRelation('posts')!.subQuery(db.connection())['exec']()
+		const paginate = () => User.$getRelation('posts')!.subQuery(db.connection())['paginate'](1)
+		const update = () => User.$getRelation('posts')!.subQuery(db.connection())['update']({})
+		const del = () => User.$getRelation('posts')!.subQuery(db.connection())['del']()
+		const first = () => User.$getRelation('posts')!.subQuery(db.connection())['first']()
+		const firstOrFail = () => User.$getRelation('posts')!.subQuery(db.connection())['firstOrFail']()
+
+		assert.throw(exec, 'Cannot execute relationship subqueries')
+		assert.throw(paginate, 'Cannot execute relationship subqueries')
+		assert.throw(update, 'Cannot execute relationship subqueries')
+		assert.throw(del, 'Cannot execute relationship subqueries')
+		assert.throw(first, 'Cannot execute relationship subqueries')
+		assert.throw(firstOrFail, 'Cannot execute relationship subqueries')
+	})
+})
+
 test.group('Model | HasMany | aggregates', (group) => {
 	group.before(async () => {
 		db = getDb()
@@ -1117,6 +1310,274 @@ test.group('Model | HasMany | preload', (group) => {
 		})
 
 		assert.lengthOf(users, 0)
+	})
+})
+
+test.group('Model | HasMany | withCount', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('get count of a relationship rows', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 102',
+				},
+				{
+					user_id: user1.id,
+					title: 'Lucid 101',
+				},
+			])
+
+		User.boot()
+
+		const users = await User.query().withCount('posts')
+		assert.lengthOf(users, 2)
+
+		assert.deepEqual(users[0].$extras.posts_count, 2)
+		assert.deepEqual(users[1].$extras.posts_count, 1)
+	})
+
+	test('apply constraints to the withCount subquery', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 102',
+				},
+				{
+					user_id: user1.id,
+					title: 'Lucid 101',
+				},
+			])
+
+		User.boot()
+
+		const users = await User.query().withCount('posts', (query) => {
+			query.whereIn('title', ['Adonis 101', 'Lucid 101'])
+		})
+
+		assert.lengthOf(users, 2)
+		assert.deepEqual(users[0].$extras.posts_count, 1)
+		assert.deepEqual(users[1].$extras.posts_count, 1)
+	})
+
+	test('allow subquery to have custom aggregates', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user1.id,
+					title: 'Lucid 101',
+				},
+			])
+
+		User.boot()
+
+		const users = await User.query().withCount('posts', (query) => {
+			query.countDistinct('title')
+		})
+
+		assert.lengthOf(users, 2)
+		assert.deepEqual(users[0].$extras.posts_count, 1)
+		assert.deepEqual(users[1].$extras.posts_count, 1)
+	})
+
+	test('allow cherry picking columns', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users').orderBy('id', 'asc')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user1.id,
+					title: 'Lucid 101',
+				},
+			])
+
+		User.boot()
+
+		const users = await User.query().select('username').withCount('posts').orderBy('id', 'asc')
+
+		assert.lengthOf(users, 2)
+		assert.deepEqual(users[0].$attributes, { username: 'virk' })
+		assert.deepEqual(users[0].$extras.posts_count, 2)
+
+		assert.deepEqual(users[1].$attributes, { username: 'nikk' })
+		assert.deepEqual(users[1].$extras.posts_count, 1)
+	})
+
+	test('get count of self relationship', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public parentId: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => User, { foreignKey: 'parentId' })
+			public parents: HasMany<typeof User>
+		}
+
+		User.boot()
+		User.$getRelation('parents')!.boot()
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([
+				{
+					parent_id: user0.id,
+					username: 'romain',
+				},
+				{
+					parent_id: user0.id,
+					username: 'joe',
+				},
+				{
+					parent_id: user1.id,
+					username: 'tick',
+				},
+			])
+
+		User.boot()
+
+		const users = await User.query().withCount('parents', (query) => {
+			query.countDistinct('parent_id')
+		})
+
+		assert.lengthOf(users, 5)
+		assert.deepEqual(users[0].$extras.parents_count, 1)
+		assert.deepEqual(users[1].$extras.parents_count, 1)
 	})
 })
 

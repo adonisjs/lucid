@@ -13,6 +13,7 @@ import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { ManyToMany } from './index'
+import { PivotHelpers } from './PivotHelpers'
 import { getValue, unique } from '../../../utils'
 import { BaseQueryBuilder } from '../Base/QueryBuilder'
 
@@ -24,6 +25,8 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder
 	implements ManyToManyQueryBuilderContract<LucidModel, LucidModel> {
 	private pivotQuery = false
 	private relatedTable = this.relation.relatedModel().table
+	private pivotHelpers = new PivotHelpers(this, true)
+
 	protected cherryPickingKeys: boolean = false
 	protected appliedConstraints: boolean = false
 
@@ -43,7 +46,7 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder
 		builder: knex.QueryBuilder,
 		client: QueryClientContract,
 		private parent: LucidRow | LucidRow[],
-		private relation: ManyToMany
+		public relation: ManyToMany
 	) {
 		super(builder, client, relation, (userFn) => {
 			return ($builder) => {
@@ -78,13 +81,6 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder
 	 */
 	protected getRelationKeys(): string[] {
 		return [`${this.relation.relatedModel().table}.${this.relation.relatedKeyColumnName}`]
-	}
-
-	/**
-	 * Prefixes the pivot table name to a column
-	 */
-	private prefixPivotTable(column: string) {
-		return this.isPivotOnlyQuery ? column : `${this.relation.pivotTable}.${column}`
 	}
 
 	/**
@@ -140,184 +136,6 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder
 	}
 
 	/**
-	 * Select keys from the related table
-	 */
-	public select(...args: any[]): this {
-		let columns = args
-		if (Array.isArray(args[0])) {
-			columns = args[0]
-		}
-
-		this.cherryPickingKeys = true
-		this.knexQuery.select(this.transformRelatedTableColumns(columns))
-		return this
-	}
-
-	/**
-	 * Add where clause with pivot table prefix
-	 */
-	public wherePivot(key: any, operator?: any, value?: any): this {
-		if (value !== undefined) {
-			this.knexQuery.where(this.prefixPivotTable(key), operator, this.transformValue(value))
-		} else if (operator !== undefined) {
-			this.knexQuery.where(this.prefixPivotTable(key), this.transformValue(operator))
-		} else {
-			this.knexQuery.where(this.transformCallback(key))
-		}
-
-		return this
-	}
-
-	/**
-	 * Add or where clause with pivot table prefix
-	 */
-	public orWherePivot(key: any, operator?: any, value?: any): this {
-		if (value !== undefined) {
-			this.knexQuery.orWhere(this.prefixPivotTable(key), operator, this.transformValue(value))
-		} else if (operator !== undefined) {
-			this.knexQuery.orWhere(this.prefixPivotTable(key), this.transformValue(operator))
-		} else {
-			this.knexQuery.orWhere(this.transformCallback(key))
-		}
-
-		return this
-	}
-
-	/**
-	 * Alias for wherePivot
-	 */
-	public andWherePivot(key: any, operator?: any, value?: any): this {
-		return this.wherePivot(key, operator, value)
-	}
-
-	/**
-	 * Add where not pivot
-	 */
-	public whereNotPivot(key: any, operator?: any, value?: any): this {
-		if (value !== undefined) {
-			this.knexQuery.whereNot(this.prefixPivotTable(key), operator, this.transformValue(value))
-		} else if (operator !== undefined) {
-			this.knexQuery.whereNot(this.prefixPivotTable(key), this.transformValue(operator))
-		} else {
-			this.knexQuery.whereNot(this.transformCallback(key))
-		}
-
-		return this
-	}
-
-	/**
-	 * Add or where not pivot
-	 */
-	public orWhereNotPivot(key: any, operator?: any, value?: any): this {
-		if (value !== undefined) {
-			this.knexQuery.orWhereNot(this.prefixPivotTable(key), operator, this.transformValue(value))
-		} else if (operator !== undefined) {
-			this.knexQuery.orWhereNot(this.prefixPivotTable(key), this.transformValue(operator))
-		} else {
-			this.knexQuery.orWhereNot(this.transformCallback(key))
-		}
-
-		return this
-	}
-
-	/**
-	 * Alias for `whereNotPivot`
-	 */
-	public andWhereNotPivot(key: any, operator?: any, value?: any): this {
-		return this.whereNotPivot(key, operator, value)
-	}
-
-	/**
-	 * Adds where in clause
-	 */
-	public whereInPivot(key: any, value: any) {
-		value = Array.isArray(value)
-			? value.map((one) => this.transformValue(one))
-			: this.transformValue(value)
-
-		key = Array.isArray(key)
-			? key.map((one) => this.prefixPivotTable(one))
-			: this.prefixPivotTable(key)
-
-		this.knexQuery.whereIn(key, value)
-		return this
-	}
-
-	/**
-	 * Adds or where in clause
-	 */
-	public orWhereInPivot(key: any, value: any) {
-		value = Array.isArray(value)
-			? value.map((one) => this.transformValue(one))
-			: this.transformValue(value)
-
-		key = Array.isArray(key)
-			? key.map((one) => this.prefixPivotTable(one))
-			: this.prefixPivotTable(key)
-
-		this.knexQuery.orWhereIn(key, value)
-		return this
-	}
-
-	/**
-	 * Alias from `whereInPivot`
-	 */
-	public andWhereInPivot(key: any, value: any): this {
-		return this.whereInPivot(key, value)
-	}
-
-	/**
-	 * Adds where not in clause
-	 */
-	public whereNotInPivot(key: any, value: any) {
-		value = Array.isArray(value)
-			? value.map((one) => this.transformValue(one))
-			: this.transformValue(value)
-
-		key = Array.isArray(key)
-			? key.map((one) => this.prefixPivotTable(one))
-			: this.prefixPivotTable(key)
-
-		this.knexQuery.whereNotIn(key, value)
-		return this
-	}
-
-	/**
-	 * Adds or where not in clause
-	 */
-	public orWhereNotInPivot(key: any, value: any) {
-		value = Array.isArray(value)
-			? value.map((one) => this.transformValue(one))
-			: this.transformValue(value)
-
-		key = Array.isArray(key)
-			? key.map((one) => this.prefixPivotTable(one))
-			: this.prefixPivotTable(key)
-
-		this.knexQuery.orWhereNotIn(key, value)
-		return this
-	}
-
-	/**
-	 * Alias from `whereNotInPivot`
-	 */
-	public andWhereNotInPivot(key: any, value: any): this {
-		return this.whereNotInPivot(key, value)
-	}
-
-	/**
-	 * Select pivot columns
-	 */
-	public pivotColumns(columns: string[]): this {
-		this.knexQuery.select(
-			columns.map((column) => {
-				return `${this.prefixPivotTable(column)} as ${this.relation.pivotAlias(column)}`
-			})
-		)
-		return this
-	}
-
-	/**
 	 * Applying query constraints to scope them to relationship
 	 * only.
 	 */
@@ -362,12 +180,126 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder
 		 */
 		this.innerJoin(
 			this.relation.pivotTable,
-			`${this.relation.relatedModel().table}.${this.relation.relatedKeyColumnName}`,
+			`${this.relatedTable}.${this.relation.relatedKeyColumnName}`,
 			`${this.relation.pivotTable}.${this.relation.pivotRelatedForeignKey}`
 		)
 
 		this.addWhereConstraints()
 		return
+	}
+
+	/**
+	 * Select keys from the related table
+	 */
+	public select(...args: any[]): this {
+		let columns = args
+		if (Array.isArray(args[0])) {
+			columns = args[0]
+		}
+
+		this.cherryPickingKeys = true
+		this.knexQuery.select(this.transformRelatedTableColumns(columns))
+		return this
+	}
+
+	/**
+	 * Add where clause with pivot table prefix
+	 */
+	public wherePivot(key: any, operator?: any, value?: any): this {
+		this.pivotHelpers.wherePivot('and', key, operator, value)
+		return this
+	}
+
+	/**
+	 * Add or where clause with pivot table prefix
+	 */
+	public orWherePivot(key: any, operator?: any, value?: any): this {
+		this.pivotHelpers.wherePivot('or', key, operator, value)
+		return this
+	}
+
+	/**
+	 * Alias for wherePivot
+	 */
+	public andWherePivot(key: any, operator?: any, value?: any): this {
+		return this.wherePivot(key, operator, value)
+	}
+
+	/**
+	 * Add where not pivot
+	 */
+	public whereNotPivot(key: any, operator?: any, value?: any): this {
+		this.pivotHelpers.wherePivot('not', key, operator, value)
+		return this
+	}
+
+	/**
+	 * Add or where not pivot
+	 */
+	public orWhereNotPivot(key: any, operator?: any, value?: any): this {
+		this.pivotHelpers.wherePivot('orNot', key, operator, value)
+		return this
+	}
+
+	/**
+	 * Alias for `whereNotPivot`
+	 */
+	public andWhereNotPivot(key: any, operator?: any, value?: any): this {
+		return this.whereNotPivot(key, operator, value)
+	}
+
+	/**
+	 * Adds where in clause
+	 */
+	public whereInPivot(key: any, value: any) {
+		this.pivotHelpers.whereInPivot('and', key, value)
+		return this
+	}
+
+	/**
+	 * Adds or where in clause
+	 */
+	public orWhereInPivot(key: any, value: any) {
+		this.pivotHelpers.whereInPivot('or', key, value)
+		return this
+	}
+
+	/**
+	 * Alias from `whereInPivot`
+	 */
+	public andWhereInPivot(key: any, value: any): this {
+		return this.whereInPivot(key, value)
+	}
+
+	/**
+	 * Adds where not in clause
+	 */
+	public whereNotInPivot(key: any, value: any) {
+		this.pivotHelpers.whereInPivot('not', key, value)
+		return this
+	}
+
+	/**
+	 * Adds or where not in clause
+	 */
+	public orWhereNotInPivot(key: any, value: any) {
+		this.pivotHelpers.whereInPivot('orNot', key, value)
+		return this
+	}
+
+	/**
+	 * Alias from `whereNotInPivot`
+	 */
+	public andWhereNotInPivot(key: any, value: any): this {
+		return this.whereNotInPivot(key, value)
+	}
+
+	/**
+	 * Select pivot columns
+	 */
+	public pivotColumns(columns: string[]): this {
+		this.pivotHelpers.pivotColumns(columns)
+		return this
 	}
 
 	/**
@@ -411,7 +343,9 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder
 		}
 
 		const rowName = 'adonis_group_limit_counter'
-		const partitionBy = `PARTITION BY ${this.prefixPivotTable(this.relation.pivotForeignKey)}`
+		const partitionBy = `PARTITION BY ${this.pivotHelpers.prefixPivotTable(
+			this.relation.pivotForeignKey
+		)}`
 		const orderBy = `ORDER BY ${column} ${direction}`
 
 		/**

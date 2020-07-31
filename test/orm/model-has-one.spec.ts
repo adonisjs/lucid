@@ -444,6 +444,224 @@ test.group('Model | HasOne | bulk operations', (group) => {
 	})
 })
 
+test.group('Model | HasOne | sub queries', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('generate correct subquery for selecting rows', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasOne(() => Profile)
+			public profile: HasOne<typeof Profile>
+		}
+
+		User.boot()
+		User.$getRelation('profile')!.boot()
+
+		const { sql, bindings } = User.$getRelation('profile')!.subQuery(db.connection()).toSQL()
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('profiles')
+			.where('users.id', '=', db.connection().getReadClient().ref('profiles.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('create aggregate query', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasOne(() => Profile)
+			public profile: HasOne<typeof Profile>
+		}
+
+		User.boot()
+		User.$getRelation('profile')!.boot()
+
+		const { sql, bindings } = User.$getRelation('profile')!
+			.subQuery(db.connection())
+			.count('* as total')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('profiles')
+			.count('* as total')
+			.where('users.id', '=', db.connection().getReadClient().ref('profiles.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('allow selecting custom columns', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasOne(() => Profile)
+			public profile: HasOne<typeof Profile>
+		}
+
+		User.boot()
+		User.$getRelation('profile')!.boot()
+
+		const { sql, bindings } = User.$getRelation('profile')!
+			.subQuery(db.connection())
+			.select('title', 'is_published')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('profiles')
+			.select('title', 'is_published')
+			.where('users.id', '=', db.connection().getReadClient().ref('profiles.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('generate correct self relationship subquery', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public username: string
+
+			@hasOne(() => User)
+			public parent: HasOne<typeof User>
+		}
+
+		User.boot()
+		User.$getRelation('parent')!.boot()
+
+		const { sql, bindings } = User.$getRelation('parent')!
+			.subQuery(db.connection())
+			.select('email')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('users as adonis_temp_0')
+			.select('email')
+			.where('users.id', '=', db.connection().getReadClient().ref('adonis_temp_0.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('raise exception when trying to execute the query', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasOne(() => Profile)
+			public profile: HasOne<typeof Profile>
+		}
+
+		User.boot()
+		User.$getRelation('profile')!.boot()
+
+		const exec = () => User.$getRelation('profile')!.subQuery(db.connection())['exec']()
+		const paginate = () => User.$getRelation('profile')!.subQuery(db.connection())['paginate'](1)
+		const update = () => User.$getRelation('profile')!.subQuery(db.connection())['update']({})
+		const del = () => User.$getRelation('profile')!.subQuery(db.connection())['del']()
+		const first = () => User.$getRelation('profile')!.subQuery(db.connection())['first']()
+		const firstOrFail = () =>
+			User.$getRelation('profile')!.subQuery(db.connection())['firstOrFail']()
+
+		assert.throw(exec, 'Cannot execute relationship subqueries')
+		assert.throw(paginate, 'Cannot execute relationship subqueries')
+		assert.throw(update, 'Cannot execute relationship subqueries')
+		assert.throw(del, 'Cannot execute relationship subqueries')
+		assert.throw(first, 'Cannot execute relationship subqueries')
+		assert.throw(firstOrFail, 'Cannot execute relationship subqueries')
+	})
+})
+
 test.group('Model | HasOne | preload', (group) => {
 	group.before(async () => {
 		db = getDb()
@@ -1195,6 +1413,124 @@ test.group('Model | HasOne | preload', (group) => {
 		})
 
 		assert.lengthOf(users, 0)
+	})
+})
+
+test.group('Model | HasOne | withCount', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('get count of a relationship rows', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasOne(() => Profile)
+			public profile: HasOne<typeof Profile>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('profiles')
+			.insert([
+				{
+					user_id: user0.id,
+					display_name: 'virk',
+				},
+				{
+					user_id: user1.id,
+					display_name: 'nikk',
+				},
+			])
+
+		User.boot()
+
+		const users = await User.query().withCount('profile')
+		assert.lengthOf(users, 2)
+
+		assert.equal(users[0].$extras.profile_count, 1)
+		assert.equal(users[1].$extras.profile_count, 1)
+	})
+
+	test('allow cherry picking columns', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: number
+
+			@hasOne(() => Profile)
+			public profile: HasOne<typeof Profile>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('profiles')
+			.insert([
+				{
+					user_id: user0.id,
+					display_name: 'virk',
+				},
+				{
+					user_id: user1.id,
+					display_name: 'nikk',
+				},
+			])
+
+		User.boot()
+
+		const users = await User.query().select('username').withCount('profile').orderBy('id', 'asc')
+
+		assert.lengthOf(users, 2)
+		assert.deepEqual(users[0].$attributes, { username: 'virk' })
+		assert.deepEqual(users[1].$attributes, { username: 'nikk' })
 	})
 })
 

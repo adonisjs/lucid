@@ -17,6 +17,7 @@ import {
 
 import { KeysExtractor } from '../KeysExtractor'
 import { ManyToManyQueryClient } from './QueryClient'
+import { ManyToManySubQueryBuilder } from './SubQueryBuilder'
 import { ensureRelationIsBooted, getValue } from '../../../utils'
 
 /**
@@ -194,6 +195,14 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
 	 */
 	public eagerQuery(parent: LucidRow[], client: QueryClientContract) {
 		return ManyToManyQueryClient.eagerQuery(client, this, parent)
+	}
+
+	/**
+	 * Returns instance of query builder
+	 */
+	public subQuery(client: QueryClientContract) {
+		const query = new ManyToManySubQueryBuilder(client.knexQuery(), client, this as any)
+		return query
 	}
 
 	/**

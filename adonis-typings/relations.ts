@@ -160,6 +160,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		instance: InstanceType<RelatedModel>
 		client: HasOneClientContract<HasOneRelationContract<ParentModel, RelatedModel>, RelatedModel>
 		builder: RelationQueryBuilderContract<RelatedModel, any>
+		subQuery: RelationSubQueryBuilderContract<RelatedModel>
 	}
 
 	/**
@@ -174,6 +175,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		instance: InstanceType<RelatedModel>
 		client: HasManyClientContract<HasManyRelationContract<ParentModel, RelatedModel>, RelatedModel>
 		builder: HasManyQueryBuilderContract<RelatedModel, any>
+		subQuery: RelationSubQueryBuilderContract<RelatedModel>
 	}
 
 	/**
@@ -191,6 +193,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 			RelatedModel
 		>
 		builder: RelationQueryBuilderContract<RelatedModel, any>
+		subQuery: RelationSubQueryBuilderContract<RelatedModel>
 	}
 
 	/**
@@ -208,6 +211,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 			RelatedModel
 		>
 		builder: ManyToManyQueryBuilderContract<RelatedModel, any>
+		subQuery: ManyToManySubQueryBuilderContract<RelatedModel>
 	}
 
 	/**
@@ -225,6 +229,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 			RelatedModel
 		>
 		builder: HasManyThroughQueryBuilderContract<RelatedModel, any>
+		subQuery: RelationSubQueryBuilderContract<RelatedModel>
 	}
 
 	/**
@@ -272,6 +277,8 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 			parent: OneOrMany<InstanceType<ParentModel>>,
 			client: QueryClientContract
 		): RelationQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
+
+		subQuery(client: QueryClientContract): RelationSubQueryBuilderContract<RelatedModel>
 	}
 
 	/**
@@ -472,6 +479,11 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 			parent: OneOrMany<InstanceType<ParentModel>>,
 			client: QueryClientContract
 		): ManyToManyQueryBuilderContract<RelatedModel, InstanceType<RelatedModel>>
+
+		/**
+		 * Get subquery for the relationships
+		 */
+		subQuery(client: QueryClientContract): ManyToManySubQueryBuilderContract<RelatedModel>
 
 		/**
 		 * Returns key-value pair for the pivot table in relation to the parent model
@@ -736,6 +748,30 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	 */
 
 	/**
+	 * Interface with query builder options for the many to many pivot
+	 * table
+	 */
+	export interface PivotQueryBuilderContract {
+		pivotColumns(columns: string[]): this
+
+		wherePivot: WherePivot<this>
+		orWherePivot: WherePivot<this>
+		andWherePivot: WherePivot<this>
+
+		whereNotPivot: WherePivot<this>
+		orWhereNotPivot: WherePivot<this>
+		andWhereNotPivot: WherePivot<this>
+
+		whereInPivot: WhereInPivot<this>
+		orWhereInPivot: WhereInPivot<this>
+		andWhereInPivot: WhereInPivot<this>
+
+		whereNotInPivot: WhereInPivot<this>
+		orWhereNotInPivot: WhereInPivot<this>
+		andWhereNotInPivot: WhereInPivot<this>
+	}
+
+	/**
 	 * Base query builder for all relations
 	 */
 	export interface RelationQueryBuilderContract<Related extends LucidModel, Result extends any>
@@ -767,7 +803,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	/**
 	 * Possible signatures for adding a where clause
 	 */
-	interface WherePivot<Builder extends ChainableContract> {
+	interface WherePivot<Builder extends any> {
 		(key: string, value: StrictValues | ChainableContract): Builder
 		(key: string, operator: string, value: StrictValues | ChainableContract): Builder
 	}
@@ -775,7 +811,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	/**
 	 * Possible signatures for adding where in clause.
 	 */
-	interface WhereInPivot<Builder extends ChainableContract> {
+	interface WhereInPivot<Builder extends any> {
 		(K: string, value: (StrictValues | ChainableContract)[]): Builder
 		(K: string[], value: (StrictValues | ChainableContract)[][]): Builder
 		(k: string, subquery: ChainableContract | QueryCallback<Builder>): Builder
@@ -787,28 +823,66 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	 * model query builder
 	 */
 	export interface ManyToManyQueryBuilderContract<Related extends LucidModel, Result extends any>
-		extends RelationQueryBuilderContract<Related, Result> {
+		extends RelationQueryBuilderContract<Related, Result>,
+			PivotQueryBuilderContract {
+		isPivotOnlyQuery: boolean
 		groupLimit(limit: number): this
 		groupOrderBy(column: string, direction?: 'asc' | 'desc'): this
+	}
 
-		pivotColumns(columns: string[]): this
-		isPivotOnlyQuery: boolean
+	/**
+	 * ------------------------------------------------------
+	 * Sub Queries
+	 * ------------------------------------------------------
+	 */
 
-		wherePivot: WherePivot<this>
-		orWherePivot: WherePivot<this>
-		andWherePivot: WherePivot<this>
+	/**
+	 * Not in use right now. Since after omitting these types from the
+	 * model query builder losses "this" scope. Need to re-think
+	 */
+	export type UnSupportedSubQueryMethods =
+		| 'preload'
+		| 'decrement'
+		| 'increment'
+		| 'update'
+		| 'paginate'
+		| 'delete'
+		| 'del'
+		| 'firstOrFail'
+		| 'first'
+		| 'exec'
 
-		whereNotPivot: WherePivot<this>
-		orWhereNotPivot: WherePivot<this>
-		andWhereNotPivot: WherePivot<this>
+	/**
+	 * Sub query builder allows creating sub queries targeting a relationship. Sub queries
+	 * cannot be executed directly, but can be used as a reference in the parent query
+	 * builder. Use cases are:
+	 *
+	 * - withCount
+	 * - whereHas
+	 */
+	export interface RelationSubQueryBuilderContract<Related extends LucidModel>
+		extends ModelQueryBuilderContract<Related, any> {
+		selfJoinCounter: number
+		readonly selfJoinAlias: string
+		selectRelationKeys(): this
+		prepare(): this
+	}
 
-		whereInPivot: WhereInPivot<this>
-		orWhereInPivot: WhereInPivot<this>
-		andWhereInPivot: WhereInPivot<this>
+	export interface ManyToManySubQueryBuilderContract<Related extends LucidModel>
+		extends RelationSubQueryBuilderContract<Related>,
+			PivotQueryBuilderContract {}
 
-		whereNotInPivot: WhereInPivot<this>
-		orWhereNotInPivot: WhereInPivot<this>
-		andWhereNotInPivot: WhereInPivot<this>
+	/**
+	 * The withCount function
+	 */
+	export interface QueryBuilderWithCountFn<Model extends LucidRow, Builder extends any> {
+		<
+			Name extends ExtractModelRelations<Model>,
+			RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['subQuery'] : never
+		>(
+			relation: Name,
+			callback?: (builder: RelatedBuilder) => void
+		): Builder
 	}
 
 	/**

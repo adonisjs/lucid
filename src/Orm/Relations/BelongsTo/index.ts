@@ -19,6 +19,7 @@ import {
 
 import { KeysExtractor } from '../KeysExtractor'
 import { BelongsToQueryClient } from './QueryClient'
+import { BelongsToSubQueryBuilder } from './SubQueryBuilder'
 import { ensureRelationIsBooted, getValue } from '../../../utils'
 
 /**
@@ -46,12 +47,14 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
 	 * @note: Available after boot is invoked
 	 */
 	public localKey: string
+	public localKeyColumName: string
 
 	/**
 	 * Foreign key is reference to the foreign key in the self table
 	 * @note: Available after boot is invoked
 	 */
 	public foreignKey: string
+	public foreignKeyColumName: string
 
 	/**
 	 * Reference to the onQuery hook defined by the user
@@ -110,11 +113,13 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
 		 * Keys on the related model
 		 */
 		this.localKey = localKey.attributeName
+		this.localKeyColumName = localKey.columnName
 
 		/**
 		 * Keys on the parent model
 		 */
 		this.foreignKey = foreignKey.attributeName
+		this.foreignKeyColumName = foreignKey.columnName
 
 		/**
 		 * Booted successfully
@@ -181,6 +186,14 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
 	public eagerQuery(parent: OneOrMany<LucidRow>, client: QueryClientContract): any {
 		ensureRelationIsBooted(this)
 		return BelongsToQueryClient.eagerQuery(client, this, parent)
+	}
+
+	/**
+	 * Returns instance of query builder
+	 */
+	public subQuery(client: QueryClientContract) {
+		const query = new BelongsToSubQueryBuilder(client.knexQuery(), client, this as any)
+		return query
 	}
 
 	/**

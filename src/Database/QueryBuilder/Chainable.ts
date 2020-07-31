@@ -31,6 +31,18 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 	public hasGroupBy: boolean = false
 	public hasUnion: boolean = false
 
+	/**
+	 * An array of selected columns
+	 */
+	public get columns(): ChainableContract['columns'] {
+		return this.knexQuery['_statements']
+			.filter(({ grouping }) => grouping === 'columns')
+			.reduce((result: ChainableContract['columns'], { value }) => {
+				result = result.concat(value)
+				return result
+			}, [])
+	}
+
 	constructor(
 		public knexQuery: knex.QueryBuilder,
 		private queryCallback: DBQueryCallback,

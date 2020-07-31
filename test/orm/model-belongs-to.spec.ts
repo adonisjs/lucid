@@ -417,6 +417,224 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
 	})
 })
 
+test.group('Model | BelongsTo | sub queries', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('generate correct sub query for selecting rows', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+
+			@belongsTo(() => User)
+			public user: BelongsTo<typeof User>
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+		}
+
+		Profile.boot()
+		Profile.$getRelation('user')!.boot()
+
+		const { sql, bindings } = Profile.$getRelation('user')!.subQuery(db.connection()).toSQL()
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('users')
+			.where('users.id', '=', db.connection().getReadClient().ref('profiles.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('create aggregate query', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+
+			@belongsTo(() => User)
+			public user: BelongsTo<typeof User>
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+		}
+
+		Profile.boot()
+		Profile.$getRelation('user')!.boot()
+
+		const { sql, bindings } = Profile.$getRelation('user')!
+			.subQuery(db.connection())
+			.count('* as total')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('users')
+			.count('* as total')
+			.where('users.id', '=', db.connection().getReadClient().ref('profiles.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('allow selecting custom columns', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+
+			@belongsTo(() => User)
+			public user: BelongsTo<typeof User>
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+		}
+
+		Profile.boot()
+		Profile.$getRelation('user')!.boot()
+
+		const { sql, bindings } = Profile.$getRelation('user')!
+			.subQuery(db.connection())
+			.select('title', 'is_published')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('users')
+			.select('title', 'is_published')
+			.where('users.id', '=', db.connection().getReadClient().ref('profiles.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('generate correct self relationship subquery', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public username: string
+
+			@belongsTo(() => User)
+			public child: BelongsTo<typeof User>
+		}
+
+		User.boot()
+		User.$getRelation('child')!.boot()
+
+		const { sql, bindings } = User.$getRelation('child')!
+			.subQuery(db.connection())
+			.select('email')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('users as adonis_temp_0')
+			.select('email')
+			.where('adonis_temp_0.id', '=', db.connection().getReadClient().ref('users.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('raise exception when trying to execute the query', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+
+			@belongsTo(() => User)
+			public user: BelongsTo<typeof User>
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+		}
+
+		Profile.boot()
+		Profile.$getRelation('user')!.boot()
+
+		const exec = () => Profile.$getRelation('user')!.subQuery(db.connection())['exec']()
+		const paginate = () => Profile.$getRelation('user')!.subQuery(db.connection())['paginate'](1)
+		const update = () => Profile.$getRelation('user')!.subQuery(db.connection())['update']({})
+		const del = () => Profile.$getRelation('user')!.subQuery(db.connection())['del']()
+		const first = () => Profile.$getRelation('user')!.subQuery(db.connection())['first']()
+		const firstOrFail = () =>
+			Profile.$getRelation('user')!.subQuery(db.connection())['firstOrFail']()
+
+		assert.throw(exec, 'Cannot execute relationship subqueries')
+		assert.throw(paginate, 'Cannot execute relationship subqueries')
+		assert.throw(update, 'Cannot execute relationship subqueries')
+		assert.throw(del, 'Cannot execute relationship subqueries')
+		assert.throw(first, 'Cannot execute relationship subqueries')
+		assert.throw(firstOrFail, 'Cannot execute relationship subqueries')
+	})
+})
+
 test.group('Model | BelongsTo | preload', (group) => {
 	group.before(async () => {
 		db = getDb()
@@ -1024,6 +1242,76 @@ test.group('Model | BelongsTo | preload', (group) => {
 			throw new Error('not expected to be here')
 		})
 		assert.lengthOf(profiles, 0)
+	})
+})
+
+test.group('Model | BelongsTo | withCount', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('get count of a relationship rows', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+		}
+
+		class Profile extends BaseModel {
+			@column()
+			public userId: number
+
+			@belongsTo(() => User)
+			public user: BelongsTo<typeof User>
+		}
+
+		await db.insertQuery().table('users').insert({ username: 'virk' })
+		await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+
+		Profile.boot()
+
+		const profiles = await Profile.query().withCount('user')
+
+		assert.lengthOf(profiles, 1)
+		assert.equal(profiles[0].$extras.user_count, 1)
+	})
+
+	test('allow cherry picking columns', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+		}
+
+		class Profile extends BaseModel {
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+
+			@belongsTo(() => User)
+			public user: BelongsTo<typeof User>
+		}
+
+		await db.insertQuery().table('users').insert({ username: 'virk' })
+		await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+
+		Profile.boot()
+
+		const profiles = await Profile.query().select('displayName').withCount('user')
+
+		assert.lengthOf(profiles, 1)
+		assert.deepEqual(profiles[0].$attributes, { displayName: 'Hvirk' })
 	})
 })
 

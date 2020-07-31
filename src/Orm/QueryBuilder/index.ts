@@ -19,6 +19,8 @@ import {
 	ModelQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
+import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
+
 import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
@@ -96,6 +98,12 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	 * value is inherited from the query client
 	 */
 	private debugQueries: boolean = this.client.debug
+
+	/**
+	 * Self join counter, increments with every "withCount"
+	 * "has" and "whereHas" queries.
+	 */
+	private joinCounter: number = 0
 
 	/**
 	 * Options that must be passed to all new model instances
@@ -249,6 +257,63 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 		}
 
 		return row
+	}
+
+	/**
+	 * Get count of a relationship along side the main query results
+	 */
+	public withCount(relationName: any, userCallback?: any): this {
+		const relation = this.model.$getRelation(relationName) as RelationshipsContract
+
+		/**
+		 * Ensure relationship exists
+		 */
+		if (!relation) {
+			throw new Exception(
+				`"${relationName}" is not defined as a relationship on "${this.model.name}" model`,
+				500,
+				'E_UNDEFINED_RELATIONSHIP'
+			)
+		}
+
+		/**
+		 * Boot relation if not booted
+		 */
+		relation.boot()
+
+		const subQuery = relation.subQuery(this.client)
+		subQuery.selfJoinCounter = this.joinCounter
+
+		if (typeof userCallback === 'function') {
+			userCallback(subQuery)
+		}
+
+		/**
+		 * If user callback has not defined any aggregates, then we should
+		 * add a count
+		 */
+		if (!subQuery.hasAggregates) {
+			subQuery.count('*')
+		}
+
+		/**
+		 * Select "*" when no custom selects are defined
+		 */
+		if (!this.columns.length) {
+			this.select(`${this.model.table}.*`)
+		}
+
+		/**
+		 * Count subquery selection
+		 */
+		this.select(subQuery.as(`${relationName}_count`).prepare())
+
+		/**
+		 * Bump the counter
+		 */
+		this.joinCounter++
+
+		return this
 	}
 
 	/**

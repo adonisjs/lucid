@@ -124,20 +124,6 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder
 	}
 
 	/**
-	 * Select keys from the related table
-	 */
-	public select(...args: any): this {
-		let columns = args
-		if (Array.isArray(args[0])) {
-			columns = args[0]
-		}
-
-		this.cherryPickingKeys = true
-		this.knexQuery.select(this.transformRelatedTableColumns(columns))
-		return this
-	}
-
-	/**
 	 * Applies constraint to limit rows to the current relationship
 	 * only.
 	 */
@@ -151,7 +137,7 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder
 		if (['delete', 'update'].includes(this.queryAction())) {
 			this.whereIn(
 				this.prefixRelatedTable(this.relation.throughForeignKeyColumnName),
-				(subQuery) => {
+				(subQuery: this) => {
 					subQuery.from(this.throughTable)
 					this.addWhereConstraints(subQuery)
 				}
@@ -196,6 +182,20 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder
 		 * Adding where constraints
 		 */
 		this.addWhereConstraints(this)
+	}
+
+	/**
+	 * Select keys from the related table
+	 */
+	public select(...args: any): this {
+		let columns = args
+		if (Array.isArray(args[0])) {
+			columns = args[0]
+		}
+
+		this.cherryPickingKeys = true
+		this.knexQuery.select(this.transformRelatedTableColumns(columns))
+		return this
 	}
 
 	/**

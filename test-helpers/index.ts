@@ -145,6 +145,18 @@ export async function setup(destroyDb: boolean = true) {
 			table.string('email').unique()
 			table.integer('points').defaultTo(0)
 			table.timestamp('joined_at', { useTz: process.env.DB === 'mssql' })
+			table.integer('parent_id').nullable()
+			table.timestamp('created_at').defaultTo(db.fn.now())
+			table.timestamp('updated_at').nullable()
+		})
+	}
+
+	const hasFollowTable = await db.schema.hasTable('follows')
+	if (!hasFollowTable) {
+		await db.schema.createTable('follows', (table) => {
+			table.increments()
+			table.integer('user_id')
+			table.integer('following_user_id')
 			table.timestamp('created_at').defaultTo(db.fn.now())
 			table.timestamp('updated_at').nullable()
 		})
@@ -248,6 +260,7 @@ export async function cleanup(customTables?: string[]) {
 	}
 
 	await db.schema.dropTableIfExists('users')
+	await db.schema.dropTableIfExists('follows')
 	await db.schema.dropTableIfExists('friends')
 	await db.schema.dropTableIfExists('countries')
 	await db.schema.dropTableIfExists('skills')
@@ -267,6 +280,7 @@ export async function cleanup(customTables?: string[]) {
 export async function resetTables() {
 	const db = knex(Object.assign({}, getConfig(), { debug: false }))
 	await db.table('users').truncate()
+	await db.table('follows').truncate()
 	await db.table('friends').truncate()
 	await db.table('countries').truncate()
 	await db.table('skills').truncate()

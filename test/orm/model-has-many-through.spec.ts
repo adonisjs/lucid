@@ -584,6 +584,241 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
 	})
 })
 
+test.group('Model | HasMany | sub queries', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('generate correct sub query for selecting rows', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasManyThrough([() => Post, () => User])
+			public posts: HasManyThrough<typeof Post>
+		}
+
+		Country.boot()
+		Country.$getRelation('posts')!.boot()
+
+		const { sql, bindings } = Country.$getRelation('posts')!.subQuery(db.connection()).toSQL()
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('posts')
+			.innerJoin('users', 'users.id', 'posts.user_id')
+			.where('countries.id', '=', db.connection().getReadClient().ref('users.country_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('create aggregate query', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasManyThrough([() => Post, () => User])
+			public posts: HasManyThrough<typeof Post>
+		}
+
+		Country.boot()
+		Country.$getRelation('posts')!.boot()
+
+		const { sql, bindings } = Country.$getRelation('posts')!
+			.subQuery(db.connection())
+			.count('* as total')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('posts')
+			.count('* as total')
+			.innerJoin('users', 'users.id', 'posts.user_id')
+			.where('countries.id', '=', db.connection().getReadClient().ref('users.country_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('allow selecting custom columns', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasManyThrough([() => Post, () => User])
+			public posts: HasManyThrough<typeof Post>
+		}
+
+		Country.boot()
+		Country.$getRelation('posts')!.boot()
+
+		const { sql, bindings } = Country.$getRelation('posts')!
+			.subQuery(db.connection())
+			.select('title', 'is_published')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('posts')
+			.select('posts.title', 'posts.is_published')
+			.innerJoin('users', 'users.id', 'posts.user_id')
+			.where('countries.id', '=', db.connection().getReadClient().ref('users.country_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('generate correct self relationship subquery', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			/**
+			 * Funny relationship, but just ignore it
+			 */
+			@hasManyThrough([() => Country, () => User])
+			public countries: HasManyThrough<typeof Country>
+		}
+
+		Country.boot()
+		Country.$getRelation('countries')!.boot()
+
+		const { sql, bindings } = Country.$getRelation('countries')!
+			.subQuery(db.connection())
+			.select('name')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('countries as adonis_temp_0')
+			.select('adonis_temp_0.name')
+			.innerJoin('users', 'users.id', 'adonis_temp_0.user_id')
+			.where('countries.id', '=', db.connection().getReadClient().ref('users.country_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
+
+	test('raise exception when trying to execute the query', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasManyThrough([() => Post, () => User])
+			public posts: HasManyThrough<typeof Post>
+		}
+
+		Country.boot()
+		Country.$getRelation('posts')!.boot()
+
+		const exec = () => Country.$getRelation('posts')!.subQuery(db.connection())['exec']()
+		const paginate = () => Country.$getRelation('posts')!.subQuery(db.connection())['paginate'](1)
+		const update = () => Country.$getRelation('posts')!.subQuery(db.connection())['update']({})
+		const del = () => Country.$getRelation('posts')!.subQuery(db.connection())['del']()
+		const first = () => Country.$getRelation('posts')!.subQuery(db.connection())['first']()
+		const firstOrFail = () =>
+			Country.$getRelation('posts')!.subQuery(db.connection())['firstOrFail']()
+
+		assert.throw(exec, 'Cannot execute relationship subqueries')
+		assert.throw(paginate, 'Cannot execute relationship subqueries')
+		assert.throw(update, 'Cannot execute relationship subqueries')
+		assert.throw(del, 'Cannot execute relationship subqueries')
+		assert.throw(first, 'Cannot execute relationship subqueries')
+		assert.throw(firstOrFail, 'Cannot execute relationship subqueries')
+	})
+})
+
 test.group('Model | Has Many Through | aggregates', (group) => {
 	group.before(async () => {
 		db = getDb()
@@ -1174,6 +1409,290 @@ test.group('Model | Has Many Through | preload', (group) => {
 			throw new Error('not expected to be here')
 		})
 		assert.lengthOf(countries, 0)
+	})
+})
+
+test.group('Model | Has Many Through | withCount', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('get count of a relationship rows', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasManyThrough([() => Post, () => User])
+			public posts: HasManyThrough<typeof Post>
+		}
+		Country.boot()
+
+		await db
+			.insertQuery()
+			.table('countries')
+			.insert([{ name: 'India' }, { name: 'Switzerland' }])
+
+		await db
+			.insertQuery()
+			.table('users')
+			.multiInsert([
+				{ username: 'virk', country_id: 1 },
+				{ username: 'nikk', country_id: 1 },
+				{ username: 'romain', country_id: 2 },
+				{ username: 'joe', country_id: 2 },
+			])
+
+		await db
+			.insertQuery()
+			.table('posts')
+			.multiInsert([
+				{ title: 'Adonis 101', user_id: 1 },
+				{ title: 'Lucid 101', user_id: 1 },
+				{ title: 'Adonis5', user_id: 2 },
+				{ title: 'Validations 101', user_id: 3 },
+				{ title: 'Assets 101', user_id: 4 },
+			])
+
+		const countries = await Country.query().withCount('posts').orderBy('id', 'asc')
+
+		assert.lengthOf(countries, 2)
+		assert.equal(countries[0].$extras.posts_count, 3)
+		assert.equal(countries[1].$extras.posts_count, 2)
+	})
+
+	test('apply constraints to the withCount subquery', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasManyThrough([() => Post, () => User])
+			public posts: HasManyThrough<typeof Post>
+		}
+		Country.boot()
+
+		await db
+			.insertQuery()
+			.table('countries')
+			.insert([{ name: 'India' }, { name: 'Switzerland' }])
+
+		await db
+			.insertQuery()
+			.table('users')
+			.multiInsert([
+				{ username: 'virk', country_id: 1 },
+				{ username: 'nikk', country_id: 1 },
+				{ username: 'romain', country_id: 2 },
+				{ username: 'joe', country_id: 2 },
+			])
+
+		await db
+			.insertQuery()
+			.table('posts')
+			.multiInsert([
+				{ title: 'Adonis 101', user_id: 1 },
+				{ title: 'Lucid 101', user_id: 1 },
+				{ title: 'Adonis5', user_id: 2 },
+				{ title: 'Validations 101', user_id: 3 },
+				{ title: 'Assets 101', user_id: 4 },
+			])
+
+		const countries = await Country.query()
+			.withCount('posts', (query) => {
+				query.whereIn('title', ['Adonis 101', 'Assets 101'])
+			})
+			.orderBy('id', 'asc')
+
+		assert.lengthOf(countries, 2)
+		assert.equal(countries[0].$extras.posts_count, 1)
+		assert.equal(countries[1].$extras.posts_count, 1)
+	})
+
+	test('allow subquery to have custom aggregates', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasManyThrough([() => Post, () => User])
+			public posts: HasManyThrough<typeof Post>
+		}
+		Country.boot()
+
+		await db
+			.insertQuery()
+			.table('countries')
+			.insert([{ name: 'India' }, { name: 'Switzerland' }])
+
+		await db
+			.insertQuery()
+			.table('users')
+			.multiInsert([
+				{ username: 'virk', country_id: 1 },
+				{ username: 'nikk', country_id: 1 },
+				{ username: 'romain', country_id: 2 },
+				{ username: 'joe', country_id: 2 },
+			])
+
+		await db
+			.insertQuery()
+			.table('posts')
+			.multiInsert([
+				{ title: 'Adonis 101', user_id: 1 },
+				{ title: 'Lucid 101', user_id: 1 },
+				{ title: 'Adonis5', user_id: 2 },
+				{ title: 'Validations 101', user_id: 3 },
+				{ title: 'Assets 101', user_id: 4 },
+			])
+
+		const countries = await Country.query()
+			.withCount('posts', (query) => {
+				query.countDistinct('posts.user_id')
+			})
+			.orderBy('id', 'asc')
+
+		assert.lengthOf(countries, 2)
+		assert.equal(countries[0].$extras.posts_count, 2)
+		assert.equal(countries[1].$extras.posts_count, 2)
+	})
+
+	test('allow cherry picking columns', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+
+			@hasManyThrough([() => Post, () => User])
+			public posts: HasManyThrough<typeof Post>
+		}
+		Country.boot()
+
+		await db
+			.insertQuery()
+			.table('countries')
+			.insert([{ name: 'India' }, { name: 'Switzerland' }])
+
+		await db
+			.insertQuery()
+			.table('users')
+			.multiInsert([
+				{ username: 'virk', country_id: 1 },
+				{ username: 'nikk', country_id: 1 },
+				{ username: 'romain', country_id: 2 },
+				{ username: 'joe', country_id: 2 },
+			])
+
+		await db
+			.insertQuery()
+			.table('posts')
+			.multiInsert([
+				{ title: 'Adonis 101', user_id: 1 },
+				{ title: 'Lucid 101', user_id: 1 },
+				{ title: 'Adonis5', user_id: 2 },
+				{ title: 'Validations 101', user_id: 3 },
+				{ title: 'Assets 101', user_id: 4 },
+			])
+
+		const countries = await Country.query().select('name').withCount('posts').orderBy('id', 'asc')
+
+		assert.lengthOf(countries, 2)
+		assert.deepEqual(countries[0].$attributes, { name: 'India' })
+		assert.deepEqual(countries[1].$attributes, { name: 'Switzerland' })
 	})
 })
 
