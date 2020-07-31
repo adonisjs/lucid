@@ -1694,6 +1694,78 @@ test.group('Model | Has Many Through | withCount', (group) => {
 		assert.deepEqual(countries[0].$attributes, { name: 'India' })
 		assert.deepEqual(countries[1].$attributes, { name: 'Switzerland' })
 	})
+
+	test('define custom alias for the count', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+
+			@hasManyThrough([() => Post, () => User])
+			public posts: HasManyThrough<typeof Post>
+		}
+		Country.boot()
+
+		await db
+			.insertQuery()
+			.table('countries')
+			.insert([{ name: 'India' }, { name: 'Switzerland' }])
+
+		await db
+			.insertQuery()
+			.table('users')
+			.multiInsert([
+				{ username: 'virk', country_id: 1 },
+				{ username: 'nikk', country_id: 1 },
+				{ username: 'romain', country_id: 2 },
+				{ username: 'joe', country_id: 2 },
+			])
+
+		await db
+			.insertQuery()
+			.table('posts')
+			.multiInsert([
+				{ title: 'Adonis 101', user_id: 1 },
+				{ title: 'Lucid 101', user_id: 1 },
+				{ title: 'Adonis5', user_id: 2 },
+				{ title: 'Validations 101', user_id: 3 },
+				{ title: 'Assets 101', user_id: 4 },
+			])
+
+		const countries = await Country.query()
+			.select('name')
+			.withCount('posts', (query) => {
+				query.as('countryPosts')
+			})
+			.orderBy('id', 'asc')
+
+		assert.lengthOf(countries, 2)
+		assert.deepEqual(countries[0].$extras.countryPosts, 3)
+		assert.deepEqual(countries[1].$extras.countryPosts, 2)
+	})
 })
 
 if (process.env.DB !== 'mysql_legacy') {

@@ -1683,6 +1683,67 @@ test.group('Model | ManyToMany | withCount', (group) => {
 		assert.deepEqual(users[2].$extras.follows_count, 1)
 		assert.deepEqual(users[3].$extras.follows_count, 0)
 	})
+
+	test('define custom alias for the count', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		await db
+			.insertQuery()
+			.table('skills')
+			.insert([{ name: 'Programming' }, { name: 'Dancing' }])
+
+		await db
+			.insertQuery()
+			.table('skill_user')
+			.insert([
+				{
+					user_id: 1,
+					skill_id: 1,
+				},
+				{
+					user_id: 1,
+					skill_id: 2,
+				},
+				{
+					user_id: 2,
+					skill_id: 2,
+				},
+			])
+
+		const users = await User.query()
+			.select('username')
+			.withCount('skills', (query) => {
+				query.as('mySkills')
+			})
+			.orderBy('id', 'asc')
+
+		assert.lengthOf(users, 2)
+		assert.deepEqual(users[0].$extras.mySkills, 2)
+		assert.deepEqual(users[1].$extras.mySkills, 1)
+	})
 })
 
 if (process.env.DB !== 'mysql_legacy') {

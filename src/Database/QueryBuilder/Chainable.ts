@@ -43,6 +43,12 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 			}, [])
 	}
 
+	/**
+	 * Custom alias for the query results. Ignored if it not a
+	 * subquery
+	 */
+	public subQueryAlias?: string
+
 	constructor(
 		public knexQuery: knex.QueryBuilder,
 		private queryCallback: DBQueryCallback,
@@ -1192,6 +1198,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 	 * Define table alias
 	 */
 	public as(alias: any): this {
+		this.subQueryAlias = alias
 		this.knexQuery.as(alias)
 		return this
 	}

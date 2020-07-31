@@ -284,6 +284,9 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 		const subQuery = relation.subQuery(this.client)
 		subQuery.selfJoinCounter = this.joinCounter
 
+		/**
+		 * Invoke user callback
+		 */
 		if (typeof userCallback === 'function') {
 			userCallback(subQuery)
 		}
@@ -304,9 +307,16 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 		}
 
 		/**
+		 * Define alias, when a custom alias is not defined
+		 */
+		if (!subQuery.subQueryAlias) {
+			subQuery.as(`${relationName}_count`)
+		}
+
+		/**
 		 * Count subquery selection
 		 */
-		this.select(subQuery.as(`${relationName}_count`).prepare())
+		this.select(subQuery.prepare())
 
 		/**
 		 * Bump the counter

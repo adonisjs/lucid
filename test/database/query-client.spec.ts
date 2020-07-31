@@ -432,6 +432,7 @@ test.group('Query client | get tables', (group) => {
 			assert.deepEqual(tables, [
 				'comments',
 				'countries',
+				'follows',
 				'friends',
 				'identities',
 				'posts',
@@ -444,6 +445,7 @@ test.group('Query client | get tables', (group) => {
 			assert.deepEqual(tables, [
 				'comments',
 				'countries',
+				'follows',
 				'friends',
 				'identities',
 				'posts',

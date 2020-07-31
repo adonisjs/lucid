@@ -1579,6 +1579,55 @@ test.group('Model | HasMany | withCount', (group) => {
 		assert.deepEqual(users[0].$extras.parents_count, 1)
 		assert.deepEqual(users[1].$extras.parents_count, 1)
 	})
+
+	test('define custom alias for the count', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user1.id,
+					title: 'Lucid 101',
+				},
+			])
+
+		User.boot()
+
+		const users = await User.query().withCount('posts', (query) => {
+			query.as('totalPosts')
+		}).orderBy('id', 'asc')
+
+		assert.lengthOf(users, 2)
+		assert.deepEqual(users[0].$extras.totalPosts, 2)
+		assert.deepEqual(users[1].$extras.totalPosts, 1)
+	})
 })
 
 if (process.env.DB !== 'mysql_legacy') {

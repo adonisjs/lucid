@@ -411,6 +411,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 	export interface ChainableContract {
 		knexQuery: knex.QueryBuilder
 		columns: (string | knex.QueryBuilder | knex.RawQueryBuilder)[]
+		subQueryAlias?: string
 		hasAggregates: boolean
 		hasGroupBy: boolean
 		hasUnion: boolean
