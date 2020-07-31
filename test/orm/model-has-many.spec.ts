@@ -1620,9 +1620,11 @@ test.group('Model | HasMany | withCount', (group) => {
 
 		User.boot()
 
-		const users = await User.query().withCount('posts', (query) => {
-			query.as('totalPosts')
-		}).orderBy('id', 'asc')
+		const users = await User.query()
+			.withCount('posts', (query) => {
+				query.as('totalPosts')
+			})
+			.orderBy('id', 'asc')
 
 		assert.lengthOf(users, 2)
 		assert.deepEqual(users[0].$extras.totalPosts, 2)
