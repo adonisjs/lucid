@@ -1746,6 +1746,272 @@ test.group('Model | ManyToMany | withCount', (group) => {
 	})
 })
 
+test.group('Model | ManyToMany | has', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('limit rows to the existance of relationship', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		await db
+			.insertQuery()
+			.table('skills')
+			.insert([{ name: 'Programming' }, { name: 'Dancing' }])
+
+		await db
+			.insertQuery()
+			.table('skill_user')
+			.insert([
+				{
+					user_id: 1,
+					skill_id: 1,
+				},
+				{
+					user_id: 1,
+					skill_id: 2,
+				},
+			])
+
+		const users = await User.query().has('skills').orderBy('id', 'asc')
+		assert.lengthOf(users, 1)
+		assert.deepEqual(users[0].username, 'virk')
+	})
+
+	test('define expected number of rows', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		await db
+			.insertQuery()
+			.table('skills')
+			.insert([{ name: 'Programming' }, { name: 'Dancing' }])
+
+		await db
+			.insertQuery()
+			.table('skill_user')
+			.insert([
+				{
+					user_id: 1,
+					skill_id: 1,
+				},
+				{
+					user_id: 1,
+					skill_id: 2,
+				},
+				{
+					user_id: 2,
+					skill_id: 2,
+				},
+			])
+
+		const users = await User.query().has('skills', '>', 1).orderBy('id', 'asc')
+		assert.lengthOf(users, 1)
+		assert.deepEqual(users[0].username, 'virk')
+	})
+})
+
+test.group('Model | ManyToMany | whereHas', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('limit rows to the existance of relationship', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		await db
+			.insertQuery()
+			.table('skills')
+			.insert([{ name: 'Programming' }, { name: 'Dancing' }])
+
+		await db
+			.insertQuery()
+			.table('skill_user')
+			.insert([
+				{
+					user_id: 1,
+					skill_id: 1,
+					proficiency: 'Beginner',
+				},
+				{
+					user_id: 1,
+					skill_id: 2,
+					proficiency: 'Master',
+				},
+				{
+					user_id: 2,
+					skill_id: 2,
+					proficiency: 'Beginner',
+				},
+			])
+
+		const users = await User.query()
+			.whereHas('skills', (query) => {
+				query.where('skill_user.proficiency', 'Master')
+			})
+			.orderBy('id', 'asc')
+
+		assert.lengthOf(users, 1)
+		assert.deepEqual(users[0].username, 'virk')
+	})
+
+	test('define expected number of rows', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		await db
+			.insertQuery()
+			.table('skills')
+			.insert([{ name: 'Programming' }, { name: 'Dancing' }])
+
+		await db
+			.insertQuery()
+			.table('skill_user')
+			.insert([
+				{
+					user_id: 1,
+					skill_id: 1,
+					proficiency: 'Beginner',
+				},
+				{
+					user_id: 1,
+					skill_id: 2,
+					proficiency: 'Master',
+				},
+				{
+					user_id: 2,
+					skill_id: 2,
+					proficiency: 'Beginner',
+				},
+			])
+
+		const users = await User.query()
+			.whereHas(
+				'skills',
+				(query) => {
+					query.where('skill_user.proficiency', 'Master')
+				},
+				'>',
+				1
+			)
+			.orderBy('id', 'asc')
+
+		assert.lengthOf(users, 0)
+	})
+})
+
 if (process.env.DB !== 'mysql_legacy') {
 	test.group('Model | ManyToMany | Group Limit', (group) => {
 		group.before(async () => {

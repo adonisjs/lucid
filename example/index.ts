@@ -55,4 +55,6 @@ const UserF = F.state('active', (user) => {
 	.build()
 
 UserF.with('profile', 1).merge({})
-User.query().withCount('profile', (query) => query.where('isActive', true))
+User.query().withCount('profile', (query) => {
+	query.where('isActive', true).has('user', '>', 1)
+})

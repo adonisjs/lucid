@@ -1315,6 +1315,118 @@ test.group('Model | BelongsTo | withCount', (group) => {
 	})
 })
 
+test.group('Model | BelongsTo | has', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('limit rows to the existance of relationship', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+		}
+
+		class Profile extends BaseModel {
+			@column()
+			public userId: number
+
+			@belongsTo(() => User)
+			public user: BelongsTo<typeof User>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.multiInsert([{ username: 'virk' }, { username: 'nikk' }])
+
+		await db
+			.insertQuery()
+			.table('profiles')
+			.multiInsert([{ display_name: 'Virk', user_id: 1 }])
+
+		Profile.boot()
+
+		const profiles = await Profile.query().has('user')
+		assert.lengthOf(profiles, 1)
+	})
+})
+
+test.group('Model | BelongsTo | whereHas', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('limit rows to the existance of relationship', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+		}
+
+		class Profile extends BaseModel {
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+
+			@belongsTo(() => User)
+			public user: BelongsTo<typeof User>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.multiInsert([
+				{ username: 'virk', points: 10 },
+				{ username: 'nikk', points: 20 },
+			])
+
+		await db
+			.insertQuery()
+			.table('profiles')
+			.multiInsert([
+				{ display_name: 'Virk', user_id: 1 },
+				{ display_name: 'Nikk', user_id: 2 },
+			])
+
+		Profile.boot()
+
+		const profiles = await Profile.query().whereHas(
+			'user',
+			(query) => {
+				query.sum('points')
+			},
+			'>',
+			15
+		)
+
+		assert.lengthOf(profiles, 1)
+		assert.equal(profiles[0].displayName, 'Nikk')
+	})
+})
+
 test.group('Model | BelongsTo | associate', (group) => {
 	group.before(async () => {
 		db = getDb()

@@ -24,15 +24,17 @@ declare module '@ioc:Adonis/Lucid/Model' {
 	import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 	import {
+		Has,
+		Preload,
+		WhereHas,
+		WithCount,
 		ModelRelations,
 		RelationOptions,
 		PreloaderContract,
 		ModelRelationTypes,
-		QueryBuilderPreloadFn,
 		RelationshipsContract,
 		ExtractModelRelations,
 		ThroughRelationOptions,
-		QueryBuilderWithCountFn,
 		ManyToManyRelationOptions,
 	} from '@ioc:Adonis/Lucid/Relations'
 
@@ -295,8 +297,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 	/**
 	 * Preload function on a model instance
 	 */
-	interface ModelBuilderPreloadFn<Model extends LucidRow>
-		extends QueryBuilderPreloadFn<Model, Promise<void>> {
+	interface LucidRowPreload<Model extends LucidRow> extends Preload<Model, Promise<void>> {
 		(callback: (preloader: PreloaderContract<Model>) => void): Promise<void>
 	}
 
@@ -379,12 +380,32 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		/**
 		 * Fetch relationship count
 		 */
-		withCount: QueryBuilderWithCountFn<InstanceType<Model>, this>
+		withCount: WithCount<InstanceType<Model>, this>
+
+		/**
+		 * Add where constraint using the relationship
+		 */
+		has: Has<InstanceType<Model>, this>
+		orHas: Has<InstanceType<Model>, this>
+		andHas: Has<InstanceType<Model>, this>
+		doesntHave: Has<InstanceType<Model>, this>
+		orDoesntHave: Has<InstanceType<Model>, this>
+		andDoesntHave: Has<InstanceType<Model>, this>
+
+		/**
+		 * Add where constraint using the relationship with a custom callback
+		 */
+		whereHas: WhereHas<InstanceType<Model>, this>
+		orWhereHas: WhereHas<InstanceType<Model>, this>
+		andWhereHas: WhereHas<InstanceType<Model>, this>
+		whereDoesntHave: WhereHas<InstanceType<Model>, this>
+		orWhereDoesntHave: WhereHas<InstanceType<Model>, this>
+		andWhereDoesntHave: WhereHas<InstanceType<Model>, this>
 
 		/**
 		 * Define relationships to be preloaded
 		 */
-		preload: QueryBuilderPreloadFn<InstanceType<Model>, this>
+		preload: Preload<InstanceType<Model>, this>
 
 		/**
 		 * Aggregates
@@ -497,7 +518,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		save(): Promise<this>
 		delete(): Promise<void>
 		refresh(): Promise<this>
-		preload: ModelBuilderPreloadFn<this>
+		preload: LucidRowPreload<this>
 
 		/**
 		 * Serialize attributes to a plain object

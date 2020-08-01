@@ -851,9 +851,10 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		| 'firstOrFail'
 		| 'first'
 		| 'exec'
+		| 'withCount'
 
 	/**
-	 * Sub query builder allows creating sub queries targeting a relationship. Sub queries
+	 * SubQuery builder allows creating sub queries targeting a relationship. Sub queries
 	 * cannot be executed directly, but can be used as a reference in the parent query
 	 * builder. Use cases are:
 	 *
@@ -868,6 +869,9 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		prepare(): this
 	}
 
+	/**
+	 * SubQuery builder for many to many relationship
+	 */
 	export interface ManyToManySubQueryBuilderContract<Related extends LucidModel>
 		extends RelationSubQueryBuilderContract<Related>,
 			PivotQueryBuilderContract {}
@@ -875,13 +879,39 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	/**
 	 * The withCount function
 	 */
-	export interface QueryBuilderWithCountFn<Model extends LucidRow, Builder extends any> {
+	export interface WithCount<Model extends LucidRow, Builder extends any> {
 		<
 			Name extends ExtractModelRelations<Model>,
 			RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['subQuery'] : never
 		>(
 			relation: Name,
 			callback?: (builder: RelatedBuilder) => void
+		): Builder
+	}
+
+	/**
+	 * The has function
+	 */
+	export interface Has<Model extends LucidRow, Builder extends any> {
+		<Name extends ExtractModelRelations<Model>>(
+			relation: Name,
+			operator?: string,
+			value?: StrictValues | ChainableContract
+		): Builder
+	}
+
+	/**
+	 * The whereHas function
+	 */
+	export interface WhereHas<Model extends LucidRow, Builder extends any> {
+		<
+			Name extends ExtractModelRelations<Model>,
+			RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['subQuery'] : never
+		>(
+			relation: Name,
+			callback: (builder: RelatedBuilder) => void,
+			operator?: string,
+			value?: StrictValues | ChainableContract
 		): Builder
 	}
 
@@ -894,7 +924,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	/**
 	 * The preload function
 	 */
-	export interface QueryBuilderPreloadFn<Model extends LucidRow, Builder extends any> {
+	export interface Preload<Model extends LucidRow, Builder extends any> {
 		<
 			Name extends ExtractModelRelations<Model>,
 			RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['builder'] : never
@@ -910,7 +940,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	export interface PreloaderContract<Model extends LucidRow> {
 		processAllForOne(parent: Model, client: QueryClientContract): Promise<void>
 		processAllForMany(parent: Model[], client: QueryClientContract): Promise<void>
-		preload: QueryBuilderPreloadFn<Model, this>
+		preload: Preload<Model, this>
 		sideload(values: ModelObject): this
 	}
 }

@@ -207,6 +207,7 @@ export async function setup(destroyDb: boolean = true) {
 			table.increments()
 			table.integer('user_id')
 			table.string('title').notNullable()
+			table.boolean('is_published').defaultTo(false)
 			table.timestamps()
 		})
 	}

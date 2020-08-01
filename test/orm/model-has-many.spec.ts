@@ -1632,6 +1632,945 @@ test.group('Model | HasMany | withCount', (group) => {
 	})
 })
 
+test.group('Model | HasMany | has', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('limit rows to the existance of relationship', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 102',
+				},
+			])
+
+		User.boot()
+
+		const query = User.query().has('posts')
+		const connection = db.connection()
+
+		const { sql, bindings } = query.toSQL()
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.knexQuery()
+			.from('users')
+			.whereExists(
+				connection
+					.knexQuery()
+					.from('posts')
+					.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+			)
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		const users = await query.exec()
+		assert.lengthOf(users, 1)
+	})
+
+	test('define expected number of rows', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 102',
+				},
+				{
+					user_id: user1.id,
+					title: 'Adonis 102',
+				},
+			])
+
+		User.boot()
+
+		const query = User.query().has('posts', '>', 1)
+		const connection = db.connection()
+
+		const { sql, bindings } = query.toSQL()
+
+		const knexSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.count('*')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.knexQuery()
+			.from('users')
+			.whereRaw(`(${knexSubQuery.sql}) > (?)`, knexSubQuery.bindings.concat([1]))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		const users = await query.exec()
+		assert.lengthOf(users, 1)
+	})
+
+	test('merge query existing bindings with the count query', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 102',
+				},
+				{
+					user_id: user1.id,
+					title: 'Adonis 102',
+				},
+			])
+
+		User.boot()
+
+		const query = User.query().has('posts', '>', 1).whereIn('username', ['virk', 'nikk'])
+		const connection = db.connection()
+
+		const { sql, bindings } = query.toSQL()
+
+		const knexSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.count('*')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.knexQuery()
+			.from('users')
+			.whereRaw(`(${knexSubQuery.sql}) > (?)`, knexSubQuery.bindings.concat([1]))
+			.whereIn('username', ['virk', 'nikk'])
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		const users = await query.exec()
+		assert.lengthOf(users, 1)
+	})
+
+	test('define or clause in existance query', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 102',
+				},
+				{
+					user_id: user1.id,
+					title: 'Adonis 102',
+				},
+			])
+
+		User.boot()
+
+		const query = User.query().has('posts', '>', 1).orHas('posts', '=', 1)
+		const connection = db.connection()
+
+		const { sql, bindings } = query.toSQL()
+
+		const knexSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.count('*')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.knexQuery()
+			.from('users')
+			.whereRaw(`(${knexSubQuery.sql}) > (?)`, knexSubQuery.bindings.concat([1]))
+			.orWhereRaw(`(${knexSubQuery.sql}) = (?)`, knexSubQuery.bindings.concat([1]))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		const users = await query.exec()
+		assert.lengthOf(users, 2)
+	})
+
+	test('define not existance query', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0] = await db.query().from('users').orderBy('id', 'asc')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 102',
+				},
+			])
+
+		User.boot()
+
+		const query = User.query().doesntHave('posts')
+		const connection = db.connection()
+
+		const { sql, bindings } = query.toSQL()
+
+		const knexSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.knexQuery()
+			.from('users')
+			.whereNotExists(knexSubQuery)
+			.toSQL()
+
+		const users = await query.exec()
+
+		assert.lengthOf(users, 1)
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		assert.equal(users[0].username, 'nikk')
+	})
+
+	test('define or not existance query', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0] = await db.query().from('users').orderBy('id', 'asc')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 102',
+				},
+			])
+
+		User.boot()
+
+		const query = User.query().doesntHave('posts').orDoesntHave('posts', '>', 1)
+		const connection = db.connection()
+
+		const { sql, bindings } = query.toSQL()
+
+		const knexSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+
+		const knexCountSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.count('*')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.knexQuery()
+			.from('users')
+			.whereNotExists(knexSubQuery)
+			.orWhereRaw(`not (${knexCountSubQuery.sql}) > (?)`, knexCountSubQuery.bindings.concat([1]))
+			.toSQL()
+
+		const users = await query.exec()
+
+		assert.lengthOf(users, 1)
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		assert.equal(users[0].username, 'nikk')
+	})
+})
+
+test.group('Model | HasMany | whereHas', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('limit rows to the existance of relationship', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 102',
+				},
+				{
+					user_id: user1.id,
+					title: 'Lucid 101',
+				},
+			])
+
+		User.boot()
+
+		const query = User.query().whereHas('posts', (query) => {
+			query.where('title', 'Adonis 101')
+		})
+
+		const connection = db.connection()
+
+		const { sql, bindings } = query.toSQL()
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.knexQuery()
+			.from('users')
+			.whereExists(
+				connection
+					.knexQuery()
+					.from('posts')
+					.where('title', 'Adonis 101')
+					.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+			)
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		const users = await query.exec()
+		assert.lengthOf(users, 1)
+	})
+
+	test('define expected number of rows', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 102',
+				},
+				{
+					user_id: user1.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user1.id,
+					title: 'Lucid 101',
+				},
+			])
+
+		User.boot()
+
+		const query = User.query().whereHas(
+			'posts',
+			(query) => {
+				query.where('title', 'Adonis 101')
+			},
+			'>',
+			1
+		)
+
+		const connection = db.connection()
+
+		const { sql, bindings } = query.toSQL()
+		const knexSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.where('title', 'Adonis 101')
+			.count('*')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.knexQuery()
+			.from('users')
+			.whereRaw(`(${knexSubQuery.sql}) > (?)`, knexSubQuery.bindings.concat([1]))
+			.toSQL()
+
+		const users = await query.exec()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		assert.lengthOf(users, 1)
+	})
+
+	test('define custom aggregates', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users').orderBy('id', 'asc')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user1.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user1.id,
+					title: 'Lucid 101',
+				},
+			])
+
+		User.boot()
+
+		const query = User.query().whereHas(
+			'posts',
+			(query) => {
+				query.countDistinct('title')
+			},
+			'>',
+			1
+		)
+
+		const connection = db.connection()
+
+		const { sql, bindings } = query.toSQL()
+		const knexSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.countDistinct('title')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.knexQuery()
+			.from('users')
+			.whereRaw(`(${knexSubQuery.sql}) > (?)`, knexSubQuery.bindings.concat([1]))
+			.toSQL()
+
+		const users = await query.exec()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		assert.lengthOf(users, 1)
+		assert.equal(users[0].username, 'nikk')
+	})
+
+	test('define or clause', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users')
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 102',
+				},
+				{
+					user_id: user1.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user1.id,
+					title: 'Lucid 101',
+				},
+			])
+
+		User.boot()
+
+		const query = User.query()
+			.whereHas(
+				'posts',
+				(query) => {
+					query.where('title', 'Adonis 101')
+				},
+				'>',
+				1
+			)
+			.orWhereHas('posts', (query) => {
+				query.where('title', 'Lucid 101')
+			})
+
+		const connection = db.connection()
+
+		const { sql, bindings } = query.toSQL()
+
+		const knexSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.where('title', 'Lucid 101')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+
+		const knexCountSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.where('title', 'Adonis 101')
+			.count('*')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.knexQuery()
+			.from('users')
+			.whereRaw(`(${knexCountSubQuery.sql}) > (?)`, knexCountSubQuery.bindings.concat([1]))
+			.orWhereExists(knexSubQuery)
+			.toSQL()
+
+		const users = await query.exec()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		assert.lengthOf(users, 2)
+	})
+
+	test('define not clause', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users').orderBy('id', 'asc')
+
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 102',
+				},
+				{
+					user_id: user1.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user1.id,
+					title: 'Lucid 101',
+				},
+			])
+
+		User.boot()
+
+		const query = User.query()
+			.whereDoesntHave(
+				'posts',
+				(query) => {
+					query.where('title', 'Adonis 101')
+				},
+				'>',
+				1
+			)
+			.orWhereHas('posts', (query) => {
+				query.where('title', 'Lucid 101')
+			})
+
+		const connection = db.connection()
+
+		const { sql, bindings } = query.toSQL()
+
+		const knexSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.where('title', 'Lucid 101')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+
+		const knexCountSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.where('title', 'Adonis 101')
+			.count('*')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.knexQuery()
+			.from('users')
+			.whereRaw(`not (${knexCountSubQuery.sql}) > (?)`, knexCountSubQuery.bindings.concat([1]))
+			.orWhereExists(knexSubQuery)
+			.toSQL()
+
+		const users = await query.exec()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		assert.lengthOf(users, 1)
+		assert.equal(users[0].username, 'nikk')
+	})
+
+	test('define or not clause', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users').orderBy('id', 'asc')
+
+		await db
+			.insertQuery()
+			.table('posts')
+			.insert([
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user0.id,
+					title: 'Adonis 102',
+				},
+				{
+					user_id: user1.id,
+					title: 'Adonis 101',
+				},
+				{
+					user_id: user1.id,
+					title: 'Lucid 101',
+				},
+			])
+
+		User.boot()
+
+		const query = User.query()
+			.whereHas(
+				'posts',
+				(query) => {
+					query.where('title', 'Adonis 101')
+				},
+				'>',
+				1
+			)
+			.orWhereDoesntHave('posts', (query) => {
+				query.where('title', 'Lucid 101')
+			})
+
+		const connection = db.connection()
+
+		const { sql, bindings } = query.toSQL()
+
+		const knexSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.where('title', 'Lucid 101')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+
+		const knexCountSubQuery = connection
+			.knexQuery()
+			.from('posts')
+			.where('title', 'Adonis 101')
+			.count('*')
+			.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.knexQuery()
+			.from('users')
+			.whereRaw(`(${knexCountSubQuery.sql}) > (?)`, knexCountSubQuery.bindings.concat([1]))
+			.orWhereNotExists(knexSubQuery)
+			.toSQL()
+
+		const users = await query.exec()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		assert.lengthOf(users, 1)
+		assert.equal(users[0].username, 'virk')
+	})
+})
+
 if (process.env.DB !== 'mysql_legacy') {
 	test.group('Model | HasMany | Group Limit', (group) => {
 		group.before(async () => {

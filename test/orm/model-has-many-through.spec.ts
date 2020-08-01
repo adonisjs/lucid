@@ -1768,6 +1768,315 @@ test.group('Model | Has Many Through | withCount', (group) => {
 	})
 })
 
+test.group('Model | Has Many Through | has', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('limit rows to the existance of relationship', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+
+			@hasManyThrough([() => Post, () => User])
+			public posts: HasManyThrough<typeof Post>
+		}
+		Country.boot()
+
+		await db
+			.insertQuery()
+			.table('countries')
+			.insert([{ name: 'India' }, { name: 'Switzerland' }])
+
+		await db
+			.insertQuery()
+			.table('users')
+			.multiInsert([
+				{ username: 'virk', country_id: 1 },
+				{ username: 'nikk', country_id: 1 },
+				{ username: 'romain', country_id: 2 },
+				{ username: 'joe', country_id: 2 },
+			])
+
+		await db
+			.insertQuery()
+			.table('posts')
+			.multiInsert([
+				{ title: 'Adonis 101', user_id: 1 },
+				{ title: 'Lucid 101', user_id: 1 },
+				{ title: 'Adonis5', user_id: 2 },
+			])
+
+		const countries = await Country.query().has('posts').orderBy('id', 'asc')
+
+		assert.lengthOf(countries, 1)
+		assert.equal(countries[0].name, 'India')
+	})
+
+	test('define expected number of rows', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+
+			@hasManyThrough([() => Post, () => User])
+			public posts: HasManyThrough<typeof Post>
+		}
+		Country.boot()
+
+		await db
+			.insertQuery()
+			.table('countries')
+			.insert([{ name: 'India' }, { name: 'Switzerland' }])
+
+		await db
+			.insertQuery()
+			.table('users')
+			.multiInsert([
+				{ username: 'virk', country_id: 1 },
+				{ username: 'nikk', country_id: 1 },
+				{ username: 'romain', country_id: 2 },
+				{ username: 'joe', country_id: 2 },
+			])
+
+		await db
+			.insertQuery()
+			.table('posts')
+			.multiInsert([
+				{ title: 'Adonis 101', user_id: 1 },
+				{ title: 'Lucid 101', user_id: 1 },
+				{ title: 'Adonis5', user_id: 2 },
+				{ title: 'Validations 101', user_id: 3 },
+				{ title: 'Assets 101', user_id: 4 },
+			])
+
+		const countries = await Country.query().has('posts', '>', 2).orderBy('id', 'asc')
+
+		assert.lengthOf(countries, 1)
+		assert.equal(countries[0].name, 'India')
+	})
+})
+
+test.group('Model | Has Many Through | whereHas', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('limit rows to the existance of relationship', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+
+			@hasManyThrough([() => Post, () => User])
+			public posts: HasManyThrough<typeof Post>
+		}
+		Country.boot()
+
+		await db
+			.insertQuery()
+			.table('countries')
+			.insert([{ name: 'India' }, { name: 'Switzerland' }])
+
+		await db
+			.insertQuery()
+			.table('users')
+			.multiInsert([
+				{ username: 'virk', country_id: 1 },
+				{ username: 'nikk', country_id: 1 },
+				{ username: 'romain', country_id: 2 },
+				{ username: 'joe', country_id: 2 },
+			])
+
+		await db
+			.insertQuery()
+			.table('posts')
+			.multiInsert([
+				{ title: 'Adonis 101', user_id: 1, is_published: false },
+				{ title: 'Lucid 101', user_id: 1, is_published: true },
+				{ title: 'Adonis5', user_id: 2, is_published: true },
+				{ title: 'Validations 101', user_id: 3, is_published: false },
+				{ title: 'Assets 101', user_id: 4, is_published: false },
+			])
+
+		const countries = await Country.query()
+			.whereHas('posts', (query) => {
+				query.where('is_published', true)
+			})
+			.orderBy('id', 'asc')
+
+		assert.lengthOf(countries, 1)
+		assert.equal(countries[0].name, 'India')
+	})
+
+	test('define expected number of rows', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+
+			@hasManyThrough([() => Post, () => User])
+			public posts: HasManyThrough<typeof Post>
+		}
+		Country.boot()
+
+		await db
+			.insertQuery()
+			.table('countries')
+			.insert([{ name: 'India' }, { name: 'Switzerland' }])
+
+		await db
+			.insertQuery()
+			.table('users')
+			.multiInsert([
+				{ username: 'virk', country_id: 1 },
+				{ username: 'nikk', country_id: 1 },
+				{ username: 'romain', country_id: 2 },
+				{ username: 'joe', country_id: 2 },
+			])
+
+		await db
+			.insertQuery()
+			.table('posts')
+			.multiInsert([
+				{ title: 'Adonis 101', user_id: 1, is_published: false },
+				{ title: 'Lucid 101', user_id: 1, is_published: true },
+				{ title: 'Adonis5', user_id: 2, is_published: true },
+				{ title: 'Validations 101', user_id: 3, is_published: true },
+				{ title: 'Assets 101', user_id: 4, is_published: false },
+			])
+
+		const countries = await Country.query()
+			.whereHas(
+				'posts',
+				(query) => {
+					query.where('is_published', true)
+				},
+				'>',
+				1
+			)
+			.orderBy('id', 'asc')
+
+		assert.lengthOf(countries, 1)
+		assert.equal(countries[0].name, 'India')
+	})
+})
+
 if (process.env.DB !== 'mysql_legacy') {
 	test.group('Model | Has Many Through | Group Limit', (group) => {
 		group.before(async () => {

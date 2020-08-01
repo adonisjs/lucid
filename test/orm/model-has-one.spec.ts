@@ -1534,6 +1534,147 @@ test.group('Model | HasOne | withCount', (group) => {
 	})
 })
 
+test.group('Model | HasOne | has', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('limit rows to the existance of relationship', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasOne(() => Profile)
+			public profile: HasOne<typeof Profile>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0] = await db.query().from('users').orderBy('id', 'asc')
+		await db
+			.insertQuery()
+			.table('profiles')
+			.insert([
+				{
+					user_id: user0.id,
+					display_name: 'virk',
+				},
+			])
+
+		User.boot()
+
+		const users = await User.query().has('profile')
+
+		assert.lengthOf(users, 1)
+		assert.equal(users[0].username, 'virk')
+	})
+})
+
+test.group('Model | HasOne | whereHas', (group) => {
+	group.before(async () => {
+		db = getDb()
+		BaseModel = getBaseModel(ormAdapter(db))
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await db.manager.closeAll()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('limit rows to the existance of relationship', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasOne(() => Profile)
+			public profile: HasOne<typeof Profile>
+		}
+
+		await db
+			.insertQuery()
+			.table('users')
+			.insert([{ username: 'virk' }, { username: 'nikk' }])
+
+		const [user0, user1] = await db.query().from('users').orderBy('id', 'asc')
+		await db
+			.insertQuery()
+			.table('profiles')
+			.insert([
+				{
+					user_id: user0.id,
+					display_name: 'Virk',
+					type: 'personal',
+				},
+				{
+					user_id: user1.id,
+					display_name: '@nikk',
+					type: 'social',
+				},
+				{
+					user_id: user1.id,
+					display_name: 'Nikk',
+					type: 'personal',
+				},
+			])
+
+		User.boot()
+
+		const users = await User.query().whereHas('profile', (query) => {
+			query.where('type', 'social')
+		})
+
+		assert.lengthOf(users, 1)
+		assert.equal(users[0].username, 'nikk')
+	})
+})
+
 test.group('Model | HasOne | save', (group) => {
 	group.before(async () => {
 		db = getDb()

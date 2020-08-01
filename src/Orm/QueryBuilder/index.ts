@@ -183,6 +183,79 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	}
 
 	/**
+	 * Defines sub query for checking the existance of a relationship
+	 */
+	private addWhereHas(
+		relationName: any,
+		boolean: 'or' | 'and' | 'not' | 'orNot',
+		operator?: string,
+		value?: any,
+		callback?: any
+	) {
+		let rawMethod: string = 'whereRaw'
+		let existsMethod: string = 'whereExists'
+
+		switch (boolean) {
+			case 'or':
+				rawMethod = 'orWhereRaw'
+				existsMethod = 'orWhereExists'
+				break
+			case 'not':
+				existsMethod = 'whereNotExists'
+				break
+			case 'orNot':
+				rawMethod = 'orWhereRaw'
+				existsMethod = 'orWhereNotExists'
+				break
+		}
+
+		const subQuery = this.getRelationship(relationName).subQuery(this.client)
+		subQuery.selfJoinCounter = this.joinCounter
+
+		/**
+		 * Invoke callback when defined
+		 */
+		if (typeof callback === 'function') {
+			callback(subQuery)
+		}
+
+		/**
+		 * Count all when value and operator are defined.
+		 */
+		if (value !== undefined && operator !== undefined) {
+			/**
+			 * If user callback has not defined any aggregates, then we should
+			 * add a count
+			 */
+			if (!subQuery.hasAggregates) {
+				subQuery.count('*')
+			}
+
+			/**
+			 * Pull sql and bindings from the query
+			 */
+			const { sql, bindings } = subQuery.prepare().toSQL()
+
+			/**
+			 * Define where raw clause. Query builder doesn't have any "whereNotRaw" method
+			 * and hence we need to prepend the `NOT` keyword manually
+			 */
+			boolean === 'orNot' || boolean === 'not'
+				? this[rawMethod](`not (${sql}) ${operator} (?)`, bindings.concat([value]))
+				: this[rawMethod](`(${sql}) ${operator} (?)`, bindings.concat([value]))
+
+			return this
+		}
+
+		/**
+		 * Use where exists when no operator and value is defined
+		 */
+		this[existsMethod](subQuery.prepare())
+
+		return this
+	}
+
+	/**
 	 * Returns the profiler action. Protected, since the class is extended
 	 * by relationships
 	 */
@@ -192,6 +265,28 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 			inTransaction: this.client.isTransaction,
 			model: this.model.name,
 		}
+	}
+
+	/**
+	 * Returns the relationship instance from the model. An exception is
+	 * raised when relationship is missing
+	 */
+	protected getRelationship(name: string): RelationshipsContract {
+		const relation = this.model.$getRelation(name) as RelationshipsContract
+
+		/**
+		 * Ensure relationship exists
+		 */
+		if (!relation) {
+			throw new Exception(
+				`"${name}" is not defined as a relationship on "${this.model.name}" model`,
+				500,
+				'E_UNDEFINED_RELATIONSHIP'
+			)
+		}
+
+		relation.boot()
+		return relation
 	}
 
 	/**
@@ -263,25 +358,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	 * Get count of a relationship along side the main query results
 	 */
 	public withCount(relationName: any, userCallback?: any): this {
-		const relation = this.model.$getRelation(relationName) as RelationshipsContract
-
-		/**
-		 * Ensure relationship exists
-		 */
-		if (!relation) {
-			throw new Exception(
-				`"${relationName}" is not defined as a relationship on "${this.model.name}" model`,
-				500,
-				'E_UNDEFINED_RELATIONSHIP'
-			)
-		}
-
-		/**
-		 * Boot relation if not booted
-		 */
-		relation.boot()
-
-		const subQuery = relation.subQuery(this.client)
+		const subQuery = this.getRelationship(relationName).subQuery(this.client)
 		subQuery.selfJoinCounter = this.joinCounter
 
 		/**
@@ -324,6 +401,95 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 		this.joinCounter++
 
 		return this
+	}
+
+	/**
+	 * Add where constraint using the relationship
+	 */
+	public whereHas(relationName: any, callback: any, operator?: string, value?: any): this {
+		return this.addWhereHas(relationName, 'and', operator, value, callback)
+	}
+
+	/**
+	 * Add or where constraint using the relationship
+	 */
+	public orWhereHas(relationName: any, callback: any, operator?: string, value?: any): this {
+		return this.addWhereHas(relationName, 'or', operator, value, callback)
+	}
+
+	/**
+	 * Alias of [[whereHas]]
+	 */
+	public andWhereHas(relationName: any, callback: any, operator?: string, value?: any): this {
+		return this.addWhereHas(relationName, 'and', operator, value, callback)
+	}
+
+	/**
+	 * Add where not constraint using the relationship
+	 */
+	public whereDoesntHave(relationName: any, callback: any, operator?: string, value?: any): this {
+		return this.addWhereHas(relationName, 'not', operator, value, callback)
+	}
+
+	/**
+	 * Add or where not constraint using the relationship
+	 */
+	public orWhereDoesntHave(relationName: any, callback: any, operator?: string, value?: any): this {
+		return this.addWhereHas(relationName, 'orNot', operator, value, callback)
+	}
+
+	/**
+	 * Alias of [[whereDoesntHave]]
+	 */
+	public andWhereDoesntHave(
+		relationName: any,
+		callback: any,
+		operator?: string,
+		value?: any
+	): this {
+		return this.addWhereHas(relationName, 'not', operator, value, callback)
+	}
+
+	/**
+	 * Add where constraint using the relationship
+	 */
+	public has(relationName: any, operator?: string, value?: any): this {
+		return this.addWhereHas(relationName, 'and', operator, value)
+	}
+
+	/**
+	 * Add or where constraint using the relationship
+	 */
+	public orHas(relationName: any, operator?: string, value?: any): this {
+		return this.addWhereHas(relationName, 'or', operator, value)
+	}
+
+	/**
+	 * Alias of [[has]]
+	 */
+	public andHas(relationName: any, operator?: string, value?: any): this {
+		return this.addWhereHas(relationName, 'and', operator, value)
+	}
+
+	/**
+	 * Add where not constraint using the relationship
+	 */
+	public doesntHave(relationName: any, operator?: string, value?: any): this {
+		return this.addWhereHas(relationName, 'not', operator, value)
+	}
+
+	/**
+	 * Add or where not constraint using the relationship
+	 */
+	public orDoesntHave(relationName: any, operator?: string, value?: any): this {
+		return this.addWhereHas(relationName, 'orNot', operator, value)
+	}
+
+	/**
+	 * Alias of [[doesntHave]]
+	 */
+	public andDoesntHave(relationName: any, operator?: string, value?: any): this {
+		return this.addWhereHas(relationName, 'not', operator, value)
 	}
 
 	/**
