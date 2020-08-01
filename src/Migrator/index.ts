@@ -414,6 +414,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
 	 */
 	public async getList(): Promise<MigrationListNode[]> {
 		const existingCollected: Set<string> = new Set()
+		await this.makeMigrationsTable()
 		const existing = await this.getMigratedFilesTillBatch(0)
 		const collected = await this.migrationSource.getMigrations()
 
