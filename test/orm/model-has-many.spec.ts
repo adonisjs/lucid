@@ -2094,8 +2094,8 @@ test.group('Model | HasMany | whereHas', (group) => {
 
 		User.boot()
 
-		const query = User.query().whereHas('posts', (query) => {
-			query.where('title', 'Adonis 101')
+		const query = User.query().whereHas('posts', ($query) => {
+			$query.where('title', 'Adonis 101')
 		})
 
 		const connection = db.connection()
@@ -2170,8 +2170,8 @@ test.group('Model | HasMany | whereHas', (group) => {
 
 		const query = User.query().whereHas(
 			'posts',
-			(query) => {
-				query.where('title', 'Adonis 101')
+			($query) => {
+				$query.where('title', 'Adonis 101')
 			},
 			'>',
 			1
@@ -2250,8 +2250,8 @@ test.group('Model | HasMany | whereHas', (group) => {
 
 		const query = User.query().whereHas(
 			'posts',
-			(query) => {
-				query.countDistinct('title')
+			($query) => {
+				$query.countDistinct('title')
 			},
 			'>',
 			1
@@ -2332,14 +2332,14 @@ test.group('Model | HasMany | whereHas', (group) => {
 		const query = User.query()
 			.whereHas(
 				'posts',
-				(query) => {
-					query.where('title', 'Adonis 101')
+				($query) => {
+					$query.where('title', 'Adonis 101')
 				},
 				'>',
 				1
 			)
-			.orWhereHas('posts', (query) => {
-				query.where('title', 'Lucid 101')
+			.orWhereHas('posts', ($query) => {
+				$query.where('title', 'Lucid 101')
 			})
 
 		const connection = db.connection()
@@ -2429,14 +2429,14 @@ test.group('Model | HasMany | whereHas', (group) => {
 		const query = User.query()
 			.whereDoesntHave(
 				'posts',
-				(query) => {
-					query.where('title', 'Adonis 101')
+				($query) => {
+					$query.where('title', 'Adonis 101')
 				},
 				'>',
 				1
 			)
-			.orWhereHas('posts', (query) => {
-				query.where('title', 'Lucid 101')
+			.orWhereHas('posts', ($query) => {
+				$query.where('title', 'Lucid 101')
 			})
 
 		const connection = db.connection()
@@ -2527,14 +2527,14 @@ test.group('Model | HasMany | whereHas', (group) => {
 		const query = User.query()
 			.whereHas(
 				'posts',
-				(query) => {
-					query.where('title', 'Adonis 101')
+				($query) => {
+					$query.where('title', 'Adonis 101')
 				},
 				'>',
 				1
 			)
-			.orWhereDoesntHave('posts', (query) => {
-				query.where('title', 'Lucid 101')
+			.orWhereDoesntHave('posts', ($query) => {
+				$query.where('title', 'Lucid 101')
 			})
 
 		const connection = db.connection()
