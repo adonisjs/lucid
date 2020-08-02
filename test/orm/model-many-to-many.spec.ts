@@ -1458,8 +1458,8 @@ test.group('Model | ManyToMany | withCount', (group) => {
 		const users = await User.query().withCount('skills').orderBy('id', 'asc')
 		assert.lengthOf(users, 2)
 
-		assert.deepEqual(users[0].$extras.skills_count, 2)
-		assert.deepEqual(users[1].$extras.skills_count, 1)
+		assert.deepEqual(Number(users[0].$extras.skills_count), 2)
+		assert.deepEqual(Number(users[1].$extras.skills_count), 1)
 	})
 
 	test('apply constraints to the withCount subquery', async (assert) => {
@@ -1515,8 +1515,8 @@ test.group('Model | ManyToMany | withCount', (group) => {
 			.orderBy('id', 'asc')
 
 		assert.lengthOf(users, 2)
-		assert.deepEqual(users[0].$extras.skills_count, 1)
-		assert.deepEqual(users[1].$extras.skills_count, 0)
+		assert.deepEqual(Number(users[0].$extras.skills_count), 1)
+		assert.deepEqual(Number(users[1].$extras.skills_count), 0)
 	})
 
 	test('allow subquery to have custom aggregates', async (assert) => {
@@ -1572,8 +1572,8 @@ test.group('Model | ManyToMany | withCount', (group) => {
 			.orderBy('id', 'asc')
 
 		assert.lengthOf(users, 2)
-		assert.deepEqual(users[0].$extras.skills_count, 1)
-		assert.deepEqual(users[1].$extras.skills_count, 1)
+		assert.deepEqual(Number(users[0].$extras.skills_count), 1)
+		assert.deepEqual(Number(users[1].$extras.skills_count), 1)
 	})
 
 	test('allow cherry picking columns', async (assert) => {
@@ -1678,10 +1678,10 @@ test.group('Model | ManyToMany | withCount', (group) => {
 		const users = await User.query().withCount('follows').orderBy('id', 'asc')
 
 		assert.lengthOf(users, 4)
-		assert.deepEqual(users[0].$extras.follows_count, 2)
-		assert.deepEqual(users[1].$extras.follows_count, 0)
-		assert.deepEqual(users[2].$extras.follows_count, 1)
-		assert.deepEqual(users[3].$extras.follows_count, 0)
+		assert.deepEqual(Number(users[0].$extras.follows_count), 2)
+		assert.deepEqual(Number(users[1].$extras.follows_count), 0)
+		assert.deepEqual(Number(users[2].$extras.follows_count), 1)
+		assert.deepEqual(Number(users[3].$extras.follows_count), 0)
 	})
 
 	test('define custom alias for the count', async (assert) => {
@@ -1741,8 +1741,8 @@ test.group('Model | ManyToMany | withCount', (group) => {
 			.orderBy('id', 'asc')
 
 		assert.lengthOf(users, 2)
-		assert.deepEqual(users[0].$extras.mySkills, 2)
-		assert.deepEqual(users[1].$extras.mySkills, 1)
+		assert.deepEqual(Number(users[0].$extras.mySkills), 2)
+		assert.deepEqual(Number(users[1].$extras.mySkills), 1)
 	})
 })
 
