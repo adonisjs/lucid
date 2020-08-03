@@ -1763,8 +1763,8 @@ test.group('Model | Has Many Through | withCount', (group) => {
 			.orderBy('id', 'asc')
 
 		assert.lengthOf(countries, 2)
-		assert.deepEqual(countries[0].$extras.countryPosts, 3)
-		assert.deepEqual(countries[1].$extras.countryPosts, 2)
+		assert.deepEqual(Number(countries[0].$extras.countryPosts), 3)
+		assert.deepEqual(Number(countries[1].$extras.countryPosts), 2)
 	})
 })
 

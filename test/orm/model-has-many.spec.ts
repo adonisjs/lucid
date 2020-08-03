@@ -1372,8 +1372,8 @@ test.group('Model | HasMany | withCount', (group) => {
 		const users = await User.query().withCount('posts')
 		assert.lengthOf(users, 2)
 
-		assert.deepEqual(users[0].$extras.posts_count, 2)
-		assert.deepEqual(users[1].$extras.posts_count, 1)
+		assert.deepEqual(Number(users[0].$extras.posts_count), 2)
+		assert.deepEqual(Number(users[1].$extras.posts_count), 1)
 	})
 
 	test('apply constraints to the withCount subquery', async (assert) => {
@@ -1421,8 +1421,8 @@ test.group('Model | HasMany | withCount', (group) => {
 		})
 
 		assert.lengthOf(users, 2)
-		assert.deepEqual(users[0].$extras.posts_count, 1)
-		assert.deepEqual(users[1].$extras.posts_count, 1)
+		assert.deepEqual(Number(users[0].$extras.posts_count), 1)
+		assert.deepEqual(Number(users[1].$extras.posts_count), 1)
 	})
 
 	test('allow subquery to have custom aggregates', async (assert) => {
@@ -1470,8 +1470,8 @@ test.group('Model | HasMany | withCount', (group) => {
 		})
 
 		assert.lengthOf(users, 2)
-		assert.deepEqual(users[0].$extras.posts_count, 1)
-		assert.deepEqual(users[1].$extras.posts_count, 1)
+		assert.deepEqual(Number(users[0].$extras.posts_count), 1)
+		assert.deepEqual(Number(users[1].$extras.posts_count), 1)
 	})
 
 	test('allow cherry picking columns', async (assert) => {
@@ -1521,10 +1521,10 @@ test.group('Model | HasMany | withCount', (group) => {
 
 		assert.lengthOf(users, 2)
 		assert.deepEqual(users[0].$attributes, { username: 'virk' })
-		assert.deepEqual(users[0].$extras.posts_count, 2)
+		assert.deepEqual(Number(users[0].$extras.posts_count), 2)
 
 		assert.deepEqual(users[1].$attributes, { username: 'nikk' })
-		assert.deepEqual(users[1].$extras.posts_count, 1)
+		assert.deepEqual(Number(users[1].$extras.posts_count), 1)
 	})
 
 	test('get count of self relationship', async (assert) => {
@@ -1576,8 +1576,8 @@ test.group('Model | HasMany | withCount', (group) => {
 		})
 
 		assert.lengthOf(users, 5)
-		assert.deepEqual(users[0].$extras.parents_count, 1)
-		assert.deepEqual(users[1].$extras.parents_count, 1)
+		assert.deepEqual(Number(users[0].$extras.parents_count), 1)
+		assert.deepEqual(Number(users[1].$extras.parents_count), 1)
 	})
 
 	test('define custom alias for the count', async (assert) => {
@@ -1627,8 +1627,8 @@ test.group('Model | HasMany | withCount', (group) => {
 			.orderBy('id', 'asc')
 
 		assert.lengthOf(users, 2)
-		assert.deepEqual(users[0].$extras.totalPosts, 2)
-		assert.deepEqual(users[1].$extras.totalPosts, 1)
+		assert.deepEqual(Number(users[0].$extras.totalPosts), 2)
+		assert.deepEqual(Number(users[1].$extras.totalPosts), 1)
 	})
 })
 
