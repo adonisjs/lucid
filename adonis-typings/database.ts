@@ -31,6 +31,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
 
 	import { LucidModel, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
 
+	import { ConnectionOptions } from 'tls'
+
 	/**
 	 * Dialect specfic methods
 	 */
@@ -353,11 +355,14 @@ declare module '@ioc:Adonis/Lucid/Database' {
 	 * Knex forwards all config options to the driver directly. So feel
 	 * free to define them (let us know, in case any options are missing)
 	 */
+	type PostgresConnectionNode = {
+		ssl?: boolean | ConnectionOptions
+	}
 	export type PostgreConfig = SharedConfigNode & {
 		client: 'pg' | 'postgres' | 'postgresql'
 		version?: string
 		returning?: string
-		connection?: string | SharedConnectionNode
+		connection?: string | (SharedConnectionNode & PostgresConnectionNode)
 		replicas?: {
 			write: {
 				connection: PostgreConfig['connection']
