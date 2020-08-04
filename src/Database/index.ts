@@ -9,10 +9,10 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { Exception } from '@poppinss/utils'
 import { EmitterContract } from '@ioc:Adonis/Core/Event'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
 import { ProfilerContract } from '@ioc:Adonis/Core/Profiler'
+import { Exception, ManagerConfigValidator } from '@poppinss/utils'
 
 import {
 	DatabaseConfig,
@@ -69,9 +69,19 @@ export class Database implements DatabaseContract {
 		private profiler: ProfilerContract,
 		private emitter: EmitterContract
 	) {
+		this.validateConfig()
 		this.manager = new ConnectionManager(this.logger, this.emitter)
 		this.registerConnections()
 		this.findIfHealthChecksAreEnabled()
+	}
+
+	/**
+	 * Validate config at runtime
+	 */
+	private validateConfig() {
+		const validator = new ManagerConfigValidator(this.config, 'database', 'config/database')
+		validator.validateDefault('connection')
+		validator.validateList('connections', 'connection')
 	}
 
 	/**

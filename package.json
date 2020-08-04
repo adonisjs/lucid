@@ -67,6 +67,7 @@
     "@adonisjs/core": "^5.0.0-preview-rc-1.11",
     "@adonisjs/fold": "^6.3.5",
     "@adonisjs/mrm-preset": "^2.4.0",
+    "@adonisjs/validator": "^7.4.0",
     "@poppinss/dev-utils": "^1.0.8",
     "@types/dotenv": "^8.2.0",
     "@types/luxon": "^1.24.3",
