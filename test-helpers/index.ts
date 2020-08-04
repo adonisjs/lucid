@@ -47,6 +47,7 @@ import { Schema } from '../src/Schema'
 import { Migrator } from '../src/Migrator'
 import { Adapter } from '../src/Orm/Adapter'
 import { BaseModel } from '../src/Orm/BaseModel'
+import { Config as OrmConfig } from '../src/Orm/Config'
 import { QueryClient } from '../src/QueryClient'
 import { Database } from '../src/Database/index'
 import { FactoryModel } from '../src/Factory/FactoryModel'
@@ -394,6 +395,7 @@ export function ormAdapter(db: DatabaseContract) {
 export function getBaseModel(adapter: AdapterContract, container?: IocContract) {
 	BaseModel.$adapter = adapter
 	BaseModel.$container = container || new Ioc()
+	BaseModel.$configurator = Object.assign({}, OrmConfig)
 	return (BaseModel as unknown) as LucidModel
 }
 

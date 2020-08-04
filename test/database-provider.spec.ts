@@ -12,7 +12,6 @@ import { join } from 'path'
 import { Registrar, Ioc } from '@adonisjs/fold'
 import { Application } from '@adonisjs/application/build/standalone'
 
-import { Schema } from '../src/Schema'
 import { Database } from '../src/Database'
 import { scope } from '../src/Helpers/scope'
 import { BaseSeeder } from '../src/BaseSeeder'
@@ -33,7 +32,7 @@ test.group('Database Provider', () => {
 
 		assert.instanceOf(ioc.use('Adonis/Lucid/Database'), Database)
 		assert.deepEqual(ioc.use('Adonis/Lucid/Orm'), { BaseModel, scope, ...decorators })
-		assert.deepEqual(ioc.use('Adonis/Lucid/Schema'), Schema)
+		assert.isTrue(ioc.hasBinding('Adonis/Lucid/Schema'))
 		assert.instanceOf(ioc.use('Adonis/Lucid/Factory'), FactoryManager)
 		assert.deepEqual(ioc.use('Adonis/Lucid/Seeder'), BaseSeeder)
 	})

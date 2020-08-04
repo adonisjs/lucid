@@ -42,6 +42,7 @@ export default class DatabaseServiceProvider {
 			const { scope } = require('../src/Helpers/scope')
 			const decorators = require('../src/Orm/Decorators')
 			const { BaseModel } = require('../src/Orm/BaseModel')
+			const ormConfig = require('../src/Orm/Config').Config
 
 			/**
 			 * Attaching adapter to the base model. Each model is allowed to define
@@ -49,7 +50,7 @@ export default class DatabaseServiceProvider {
 			 */
 			BaseModel.$adapter = new Adapter(this.container.use('Adonis/Lucid/Database'))
 			BaseModel.$container = this.container
-			BaseModel.$configurator = Object.assign({}, Config, Config.get('database.orm', {}))
+			BaseModel.$configurator = Object.assign({}, ormConfig, Config.get('database.orm', {}))
 
 			return {
 				BaseModel,
