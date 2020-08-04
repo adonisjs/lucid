@@ -290,7 +290,7 @@ test.group('Validator | exists', (group) => {
 					.connection()
 					.getReadClient()
 					.from('users')
-					.whereRaw(`lower(username) = ?`, [db.connection().knexRawQuery('lower("VIRK")')])
+					.whereRaw(`lower(username) = ?`, [db.connection().knexRawQuery(`lower(?)`, ['VIRK'])])
 					.limit(1)
 					.toSQL()
 
@@ -566,7 +566,7 @@ test.group('Validator | unique', (group) => {
 					.connection()
 					.getReadClient()
 					.from('users')
-					.whereRaw(`lower(username) = ?`, [db.connection().knexRawQuery('lower("VIRK")')])
+					.whereRaw(`lower(username) = ?`, [db.connection().knexRawQuery(`lower(?)`, ['VIRK'])])
 					.limit(1)
 					.toSQL()
 

@@ -144,7 +144,7 @@ class DbRowCheck {
 		 * https://coderwall.com/p/6yhsuq/improve-case-insensitive-queries-in-postgres-using-smarter-indexes
 		 */
 		if (caseInsensitive) {
-			query.whereRaw(`lower(${column}) = ?`, [this.database.raw(`lower("${value}")`)])
+			query.whereRaw(`lower(${column}) = ?`, [this.database.raw(`lower(?)`, [value])])
 		} else {
 			query.where(column, value)
 		}
