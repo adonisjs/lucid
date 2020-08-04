@@ -13,17 +13,17 @@
 
 <div align="center">
 
-[![circleci-image]][circleci-url] [![typescript-image]][typescript-url] [![npm-image]][npm-url] [![license-image]][license-url]
+[![circleci-image]][circleci-url] [![typescript-image]][typescript-url] [![npm-image]][npm-url] [![license-image]][license-url] [![audit-report-image]][audit-report-url]
 
 </div>
 
 <div align="center">
   <h3>
-    <a href="https://adonisjs.com">
+    <a href="https://preview.adonisjs.com">
       Website
     </a>
     <span> | </span>
-    <a href="https://adonisjs.com/docs">
+    <a href="https://preview.adonisjs.com/guides/database/introduction">
       Guides
     </a>
     <span> | </span>
@@ -34,7 +34,7 @@
 </div>
 
 <div align="center">
-  <sub>Built with ❤︎ by <a href="https://github.com/thetutlage">Harminder Virk</a>
+  <sub>Built with ❤︎ by <a href="https://twitter.com/AmanVirk1">Harminder Virk</a>
 </div>
 
 [circleci-image]: https://img.shields.io/circleci/build/github/adonisjs/lucid/master.svg?style=for-the-badge&logo=circleci
@@ -48,3 +48,6 @@
 
 [license-image]: https://img.shields.io/npm/l/@adonisjs/lucid?color=blueviolet&style=for-the-badge
 [license-url]: LICENSE.md "license"
+
+[audit-report-image]: https://img.shields.io/badge/-Audit%20Report-blueviolet?style=for-the-badge
+[audit-report-url]: https://htmlpreview.github.io/?https://github.com/adonisjs/lucid/blob/develop/npm-audit.html "audit-report"
