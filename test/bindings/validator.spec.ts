@@ -277,6 +277,40 @@ test.group('Validator | exists', (group) => {
 			})
 		}
 	})
+
+	test('perform case-insensitive query', async (assert) => {
+		assert.plan(2)
+
+		await db.table('users').returning('id').insert({ email: 'virk@adonisjs.com', username: 'virk' })
+
+		db.connection()
+			.getReadClient()
+			.on('query', ({ sql, bindings }) => {
+				const { sql: knexSql, bindings: knexBindings } = db
+					.connection()
+					.getReadClient()
+					.from('users')
+					.whereRaw(`lower(username) = ?`, [db.connection().knexRawQuery('lower("VIRK")')])
+					.limit(1)
+					.toSQL()
+
+				assert.equal(sql, knexSql)
+				assert.deepEqual(bindings, knexBindings)
+			})
+
+		await validator.validate({
+			schema: schema.create({
+				username: schema.string({}, [
+					rules.exists({
+						table: 'users',
+						caseInsensitive: true,
+						column: 'username',
+					}),
+				]),
+			}),
+			data: { username: 'VIRK' },
+		})
+	})
 })
 
 test.group('Validator | unique', (group) => {
@@ -517,6 +551,45 @@ test.group('Validator | unique', (group) => {
 		} catch (error) {
 			assert.deepEqual(error.messages, {
 				id: ['unique validation failure'],
+			})
+		}
+	})
+
+	test('perform case-insensitive check', async (assert) => {
+		assert.plan(3)
+
+		await db.table('users').returning('id').insert({ email: 'virk@adonisjs.com', username: 'virk' })
+		db.connection()
+			.getReadClient()
+			.on('query', ({ sql, bindings }) => {
+				const { sql: knexSql, bindings: knexBindings } = db
+					.connection()
+					.getReadClient()
+					.from('users')
+					.whereRaw(`lower(username) = ?`, [db.connection().knexRawQuery('lower("VIRK")')])
+					.limit(1)
+					.toSQL()
+
+				assert.equal(sql, knexSql)
+				assert.deepEqual(bindings, knexBindings)
+			})
+
+		try {
+			await validator.validate({
+				schema: schema.create({
+					username: schema.string({}, [
+						rules.unique({
+							table: 'users',
+							column: 'username',
+							caseInsensitive: true,
+						}),
+					]),
+				}),
+				data: { username: 'VIRK' },
+			})
+		} catch (error) {
+			assert.deepEqual(error.messages, {
+				username: ['unique validation failure'],
 			})
 		}
 	})

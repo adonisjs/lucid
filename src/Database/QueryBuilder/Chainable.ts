@@ -534,7 +534,12 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 	 */
 	public whereRaw(sql: any, bindings?: any): this {
 		if (bindings) {
-			this.knexQuery.whereRaw(sql, bindings)
+			this.knexQuery.whereRaw(
+				sql,
+				(Array.isArray(bindings) ? bindings : [bindings]).map((binding) => {
+					return this.transformValue(binding)
+				})
+			)
 		} else {
 			this.knexQuery.whereRaw(this.transformRaw(sql))
 		}

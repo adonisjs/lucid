@@ -14,6 +14,7 @@ declare module '@ioc:Adonis/Core/Validator' {
 		table: string
 		column: string
 		connection?: string
+		caseInsensitive?: boolean
 		constraints?: { [key: string]: any }
 		where?: { [key: string]: any }
 		whereNot?: { [key: string]: any }

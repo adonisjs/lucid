@@ -118,6 +118,7 @@ class DbRowCheck {
 		return {
 			table: options.table,
 			column: options.column,
+			caseInsensitive: !!options.caseInsensitive,
 			connection: options.connection,
 			where: this.normalizeConstraints(options.where || options.constraints),
 			whereNot: this.normalizeConstraints(options.whereNot),
@@ -129,10 +130,25 @@ class DbRowCheck {
 	 */
 	public async validate(
 		value: any,
-		{ table, column, where, whereNot, connection }: NormalizedOptions,
+		{ table, column, where, whereNot, connection, caseInsensitive }: NormalizedOptions,
 		{ pointer, errorReporter, arrayExpressionPointer }: ValidationRuntimeOptions
 	) {
-		const query = this.database.connection(connection).query().from(table).where(column, value)
+		const query = this.database.connection(connection).query().from(table)
+
+		/**
+		 * https://www.sqlite.org/lang_corefunc.html#lower
+		 * https://docs.aws.amazon.com/redshift/latest/dg/r_LOWER.html
+		 * https://dev.mysql.com/doc/refman/8.0/en/string-functions.html#function_lower
+		 * https://www.postgresql.org/docs/9.1/functions-string.html
+		 * https://docs.microsoft.com/en-us/sql/t-sql/functions/lower-transact-sql?view=sql-server-ver15
+		 * https://coderwall.com/p/6yhsuq/improve-case-insensitive-queries-in-postgres-using-smarter-indexes
+		 */
+		if (caseInsensitive) {
+			query.whereRaw(`lower(${column}) = ?`, [this.database.raw(`lower("${value}")`)])
+		} else {
+			query.where(column, value)
+		}
+
 		this.applyWhere(query, where)
 		this.applyWhereNot(query, whereNot)
 

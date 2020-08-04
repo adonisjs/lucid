@@ -57,9 +57,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 	/**
 	 * Shape of raw query bindings
 	 */
-	export type RawQueryBindings =
-		| { [key: string]: StrictValuesWithoutRaw }
-		| StrictValuesWithoutRaw[]
+	export type RawQueryBindings = { [key: string]: StrictValues } | StrictValues[]
 
 	/**
 	 * A builder method to allow raw queries. However, the return type is the
