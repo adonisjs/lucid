@@ -8,6 +8,7 @@
     "build/commands",
     "build/providers",
     "build/src",
+    "build/instructions.js",
     "build/templates"
   ],
   "typings": "./build/adonis-typings/index.d.ts",
@@ -67,9 +68,9 @@
     "@adonisjs/core": "^5.0.0-preview-rc-1.11",
     "@adonisjs/fold": "^6.3.5",
     "@adonisjs/mrm-preset": "^2.4.0",
+    "@adonisjs/sink": "^3.0.2",
     "@adonisjs/validator": "^7.4.0",
     "@poppinss/dev-utils": "^1.0.8",
-    "@adonisjs/sink": "^3.0.2",
     "@types/dotenv": "^8.2.0",
     "@types/luxon": "^1.24.3",
     "@types/node": "^14.0.26",
@@ -128,14 +129,7 @@
   },
   "keywords": [],
   "adonisjs": {
-  	"instructions": "./build/instructions.js",
-    "env": {
-      "DB_CONNECTION": "sqlite",
-      "DB_HOST": "127.0.0.1",
-      "DB_USER": "lucid",
-      "DB_PASSWORD": "lucid",
-      "DB_NAME": "lucid"
-    },
+    "instructions": "./build/instructions.js",
     "types": "@adonisjs/lucid",
     "providers": [
       "@adonisjs/lucid"

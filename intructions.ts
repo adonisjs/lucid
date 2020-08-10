@@ -1,11 +1,12 @@
 import { join } from 'path'
+import { mkdirSync } from 'fs'
 import * as sinkStatic from '@adonisjs/sink'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 /**
- * Prompt choices for the DBMS selection
+ * Prompt choices for the database server selection
  */
-const DBMS_PROMPT_CHOICES = [
+const DB_SERVER_PROMPT_CHOICES = [
 	{
 		name: 'sqlite' as const,
 		message: 'SQLite',
@@ -28,10 +29,14 @@ const DBMS_PROMPT_CHOICES = [
 	},
 ]
 
-function getDBMS(sink: typeof sinkStatic) {
+function getDbServer(sink: typeof sinkStatic) {
 	return sink
 		.getPrompt()
-		.multiple('Which DBMS are you going to use? (use "space" to select item)', DBMS_PROMPT_CHOICES)
+		.multiple('Select the database driver you want to use', DB_SERVER_PROMPT_CHOICES, {
+			validate(choices) {
+				return choices && choices.length ? true : 'Select atleast one database driver to continue'
+			},
+		})
 }
 
 /**
@@ -50,31 +55,11 @@ export default async function instructions(
 	app: ApplicationContract,
 	sink: typeof sinkStatic
 ) {
-	const pkg = new sink.files.PackageJsonFile(projectRoot)
-	const dbms = await getDBMS(sink)
+	const dbServer = await getDbServer(sink)
 
-	pkg.install('luxon')
-
-	if (dbms.includes('sqlite')) {
-		pkg.install('sqlite3')
-	}
-
-	if (dbms.includes('mysql')) {
-		pkg.install('mysql')
-	}
-
-	if (dbms.includes('pg')) {
-		pkg.install('pg')
-	}
-
-	if (dbms.includes('oracle')) {
-		pkg.install('oracledb')
-	}
-
-	if (dbms.includes('mssql')) {
-		pkg.install('mssql')
-	}
-
+	/**
+	 * Create Config file
+	 */
 	const configPath = app.configPath('database.ts')
 	const databaseConfig = new sink.files.MustacheFile(
 		projectRoot,
@@ -84,20 +69,74 @@ export default async function instructions(
 
 	databaseConfig
 		.apply({
-			sqlite: dbms.includes('sqlite'),
-			mysql: dbms.includes('mysql'),
-			psql: dbms.includes('pg'),
-			oracle: dbms.includes('oracle'),
-			mssql: dbms.includes('mssql'),
+			primary: dbServer[0],
+			sqlite: dbServer.includes('sqlite'),
+			mysql: dbServer.includes('mysql'),
+			psql: dbServer.includes('pg'),
+			oracle: dbServer.includes('oracle'),
+			mssql: dbServer.includes('mssql'),
 		})
 		.commit()
 
-	sink.logger.create(configPath)
+	const configDir = app.directoriesMap.get('config') || 'config'
+	sink.logger.create(`${configDir}/database.ts`)
+
+	/**
+	 * Setup .env file
+	 */
+	const env = new sink.files.EnvFile(projectRoot)
+	env.set('DB_CONNECTION', dbServer[0])
+
+	/**
+	 * Define connection setting, when one or more database other than
+	 * sqlite are selected
+	 */
+	if (dbServer.find((name) => name !== 'sqlite')) {
+		env.set('DB_HOST', '127.0.0.1')
+		env.set('DB_USER', 'lucid')
+		env.set('DB_PASSWORD', '')
+		env.set('DB_NAME', 'lucid')
+	}
+
+	env.commit()
+	sink.logger.success('.env')
+
+	/**
+	 * Create tmp dir when sqlite is selected
+	 */
+	if (dbServer.includes('sqlite')) {
+		mkdirSync(app.tmpPath())
+		const tmpDir = app.directoriesMap.get('tmp') || 'tmp'
+		sink.logger.success(`mkdir ./${tmpDir}`)
+	}
 
 	/**
 	 * Install required dependencies
 	 */
-	sink.logger.info(`Installing packages: ${pkg.getInstalls().list.join(', ')}...`)
+	const pkg = new sink.files.PackageJsonFile(projectRoot)
+	pkg.install('luxon', undefined, false)
+
+	if (dbServer.includes('sqlite')) {
+		pkg.install('sqlite3', undefined, false)
+	}
+
+	if (dbServer.includes('mysql')) {
+		pkg.install('mysql', undefined, false)
+	}
+
+	if (dbServer.includes('pg')) {
+		pkg.install('pg', undefined, false)
+	}
+
+	if (dbServer.includes('oracle')) {
+		pkg.install('oracledb', undefined, false)
+	}
+
+	if (dbServer.includes('mssql')) {
+		pkg.install('mssql', undefined, false)
+	}
+
+	sink.logger.info(`Installing packages: ${pkg.getInstalls(false).list.join(', ')}...`)
 	await pkg.commitAsync()
 	sink.logger.success('Packages installed!')
 }

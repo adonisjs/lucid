@@ -7,7 +7,9 @@
 
 import Env from '@ioc:Adonis/Core/Env'
 import { OrmConfig } from '@ioc:Adonis/Lucid/Orm'
+{{#sqlite}}
 import Application from '@ioc:Adonis/Core/Application'
+{{/sqlite}}
 import { DatabaseConfig } from '@ioc:Adonis/Lucid/Database'
 
 const databaseConfig: DatabaseConfig & { orm: Partial<OrmConfig> } = {
@@ -21,7 +23,7 @@ const databaseConfig: DatabaseConfig & { orm: Partial<OrmConfig> } = {
   | file.
   |
   */
-  connection: Env.get('DB_CONNECTION', 'sqlite') as string,
+  connection: Env.get('DB_CONNECTION', '{{primary}}') as string,
 
   connections: {
     {{#sqlite}}
@@ -45,7 +47,6 @@ const databaseConfig: DatabaseConfig & { orm: Partial<OrmConfig> } = {
       healthCheck: false,
     },
     {{/sqlite}}
-
     {{#mysql}}
     /*
     |--------------------------------------------------------------------------
@@ -70,7 +71,6 @@ const databaseConfig: DatabaseConfig & { orm: Partial<OrmConfig> } = {
       healthCheck: false,
     },
     {{/mysql}}
-
     {{#psql}}
     /*
     |--------------------------------------------------------------------------
