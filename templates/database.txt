@@ -24,12 +24,13 @@ const databaseConfig: DatabaseConfig & { orm: Partial<OrmConfig> } = {
   connection: Env.get('DB_CONNECTION', 'sqlite') as string,
 
   connections: {
+    {{#sqlite}}
     /*
     |--------------------------------------------------------------------------
-    | Sqlite
+    | SQLite
     |--------------------------------------------------------------------------
     |
-    | Configuration for the Sqlite database.  Make sure to install the driver
+    | Configuration for the SQLite database.  Make sure to install the driver
     | from npm when using this connection
     |
     | npm i sqlite3
@@ -43,13 +44,15 @@ const databaseConfig: DatabaseConfig & { orm: Partial<OrmConfig> } = {
       useNullAsDefault: true,
       healthCheck: false,
     },
+    {{/sqlite}}
 
+    {{#mysql}}
     /*
     |--------------------------------------------------------------------------
-    | Mysql config
+    | MySQL config
     |--------------------------------------------------------------------------
     |
-    | Configuration for Mysql database. Make sure to install the driver
+    | Configuration for MySQL database. Make sure to install the driver
     | from npm when using this connection
     |
     | npm i mysql
@@ -66,7 +69,9 @@ const databaseConfig: DatabaseConfig & { orm: Partial<OrmConfig> } = {
       },
       healthCheck: false,
     },
+    {{/mysql}}
 
+    {{#psql}}
     /*
     |--------------------------------------------------------------------------
     | PostgreSQL config
@@ -89,11 +94,12 @@ const databaseConfig: DatabaseConfig & { orm: Partial<OrmConfig> } = {
       },
       healthCheck: false,
     },
+    {{/psql}}
   },
 
   /*
   |--------------------------------------------------------------------------
-  | Orm Configuration
+  | ORM Configuration
   |--------------------------------------------------------------------------
   |
   | Following are some of the configuration options to tweak the conventional
