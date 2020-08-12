@@ -22,7 +22,8 @@ import {
 type NormalizedConstraint = {
 	key: string
 	operator: 'in' | 'eq'
-	value: string | string[]
+	value?: string | string[]
+	ref?: string
 }
 
 /**
@@ -37,21 +38,31 @@ type NormalizedOptions = Omit<DbRowCheckOptions, 'constraints' | 'where' | 'wher
  * Checks for database rows for `exists` and `unique` rule.
  */
 class DbRowCheck {
-	constructor(private ruleName: 'exists' | 'unique', private database: DatabaseContract) {}
+	constructor(
+		private ruleName: 'exists' | 'unique',
+		private database: DatabaseContract,
+		private helpers: typeof validatorStatic['helpers']
+	) {}
 
 	/**
 	 * Applies user defined where constraints on the query builder
 	 */
-	private applyWhere(query: DatabaseQueryBuilderContract, constraints: NormalizedConstraint[]) {
+	private applyWhere(
+		query: DatabaseQueryBuilderContract,
+		constraints: NormalizedConstraint[],
+		refs: ValidationRuntimeOptions['refs']
+	) {
 		if (!constraints.length) {
 			return
 		}
 
-		constraints.forEach(({ key, operator, value }) => {
+		constraints.forEach(({ key, operator, value, ref }) => {
+			const val = ref ? refs[ref].value : value
+
 			if (operator === 'in') {
-				query.whereIn(key, value as string[])
+				query.whereIn(key, val as string[])
 			} else {
-				query.where(key, value)
+				query.where(key, val as string)
 			}
 		})
 	}
@@ -59,16 +70,22 @@ class DbRowCheck {
 	/**
 	 * Applies user defined where not constraints on the query builder
 	 */
-	private applyWhereNot(query: DatabaseQueryBuilderContract, constraints: NormalizedConstraint[]) {
+	private applyWhereNot(
+		query: DatabaseQueryBuilderContract,
+		constraints: NormalizedConstraint[],
+		refs: ValidationRuntimeOptions['refs']
+	) {
 		if (!constraints.length) {
 			return
 		}
 
-		constraints.forEach(({ key, operator, value }) => {
+		constraints.forEach(({ key, operator, value, ref }) => {
+			const val = ref ? refs[ref].value : value
+
 			if (operator === 'in') {
-				query.whereNotIn(key, value as string[])
+				query.whereNotIn(key, val as string[])
 			} else {
-				query.whereNot(key, value)
+				query.whereNot(key, val as string)
 			}
 		})
 	}
@@ -87,8 +104,12 @@ class DbRowCheck {
 		 */
 		return Object.keys(constraints).reduce((result, key) => {
 			const value = constraints[key]
-			const operator = Array.isArray(value) ? 'in' : 'eq'
-			result.push({ key, value, operator })
+
+			if (this.helpers.isRef(value)) {
+				result.push({ key, ref: value.key, operator: Array.isArray(value.value) ? 'in' : 'eq' })
+			} else {
+				result.push({ key, value, operator: Array.isArray(value) ? 'in' : 'eq' })
+			}
 
 			return result
 		}, normalized)
@@ -131,7 +152,7 @@ class DbRowCheck {
 	public async validate(
 		value: any,
 		{ table, column, where, whereNot, connection, caseInsensitive }: NormalizedOptions,
-		{ pointer, errorReporter, arrayExpressionPointer }: ValidationRuntimeOptions
+		{ pointer, errorReporter, arrayExpressionPointer, refs }: ValidationRuntimeOptions
 	) {
 		const query = this.database.connection(connection).query().from(table)
 
@@ -149,8 +170,8 @@ class DbRowCheck {
 			query.where(column, value)
 		}
 
-		this.applyWhere(query, where)
-		this.applyWhereNot(query, whereNot)
+		this.applyWhere(query, where, refs)
+		this.applyWhereNot(query, whereNot, refs)
 
 		const row = await query.first()
 		if (this.ruleName === 'exists') {
@@ -186,7 +207,7 @@ export function extendValidator(validator: typeof validatorStatic, database: Dat
 	/**
 	 * Exists rule to ensure the value exists in the database
 	 */
-	const existsChecker = new DbRowCheck('exists', database)
+	const existsChecker = new DbRowCheck('exists', database, validator.helpers)
 
 	validator.rule<ReturnType<typeof existsChecker['compile']>>(
 		'exists',
@@ -213,7 +234,8 @@ export function extendValidator(validator: typeof validatorStatic, database: Dat
 	/**
 	 * Unique rule to check if value is unique or not
 	 */
-	const uniqueChecker = new DbRowCheck('unique', database)
+	const uniqueChecker = new DbRowCheck('unique', database, validator.helpers)
+
 	validator.rule<ReturnType<typeof existsChecker['compile']>>(
 		'unique',
 		async (value, compiledOptions, options) => {
