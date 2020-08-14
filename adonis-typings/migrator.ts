@@ -33,7 +33,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
 	export type MigratedFileNode = {
 		status: 'completed' | 'error' | 'pending'
 		queries: string[]
-		migration: FileNode<unknown>
+		file: FileNode<unknown>
 		batch: number
 	}
 

@@ -27,7 +27,7 @@ export default class Status extends MigrationsBase {
 	/**
 	 * Define custom connection
 	 */
-	@flags.string({ description: 'Define a custom database connection' })
+	@flags.string({ description: 'Define a custom database connection', alias: 'c' })
 	public connection: string
 
 	/**

@@ -7,7 +7,6 @@
  * file that was distributed with this source code.
  */
 
-// import { join } from 'path'
 import { inject } from '@adonisjs/fold'
 import { SeederFileNode } from '@ioc:Adonis/Lucid/Seeder'
 import { BaseCommand, Kernel, flags } from '@adonisjs/ace'
@@ -92,27 +91,27 @@ export default class DbSeed extends BaseCommand {
 	 * Execute command
 	 */
 	public async handle(): Promise<void> {
-		const client = this.db.connection(this.connection || this.db.primaryConnectionName)
+		this.connection = this.connection || this.db.primaryConnectionName
+		const connection = this.db.getRawConnection(this.connection)
 
 		/**
 		 * Ensure the define connection name does exists in the
 		 * config file
 		 */
-		if (!client) {
+		if (!connection) {
 			this.logger.error(
-				`${this.connection} is not a valid connection name. Double check config/database file`
+				`"${connection}" is not a valid connection name. Double check config/database file`
 			)
 			return
 		}
 
 		const { SeedsRunner } = await import('../src/SeedsRunner')
-		const seedsPath = this.application.seedsPath()
-		const runner = new SeedsRunner(seedsPath, process.env.NODE_ENV === 'development')
+		const runner = new SeedsRunner(this.db, this.application, this.connection)
 
 		/**
 		 * List of available files
 		 */
-		const files = await runner.listSeeders()
+		const files = await runner.getList()
 
 		/**
 		 * List of selected files. Initially, all files are selected and one can
@@ -131,11 +130,7 @@ export default class DbSeed extends BaseCommand {
 			selectedFileNames = await this.prompt.multiple(
 				'Select files to run',
 				files.map((file) => {
-					return {
-						disabled: file.status === 'ignored',
-						name: file.name,
-						hint: file.status === 'ignored' ? '(Enabled only in development environment)' : '',
-					}
+					return { name: file.name }
 				})
 			)
 		}
@@ -147,17 +142,17 @@ export default class DbSeed extends BaseCommand {
 			const sourceFile = files.find(({ name }) => fileName === name)
 			if (!sourceFile) {
 				this.printLogMessage({
-					name: fileName,
+					file: {
+						name: fileName,
+						absPath: fileName,
+						getSource: () => {},
+					},
 					status: 'failed',
-					error: new Error(
-						'Invalid file path. Pass relative path from the "database/seeds" directory'
-					),
-					source: {} as any,
-					absPath: fileName,
+					error: new Error('Invalid file path. Pass relative path from the application root'),
 				})
 			} else {
-				await runner.run(sourceFile, client)
-				this.printLogMessage(sourceFile)
+				const response = await runner.run(sourceFile)
+				this.printLogMessage(response)
 			}
 		}
 

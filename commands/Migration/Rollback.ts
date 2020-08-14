@@ -26,7 +26,7 @@ export default class Migrate extends MigrationsBase {
 	/**
 	 * Custom connection for running migrations.
 	 */
-	@flags.string({ description: 'Define a custom database connection' })
+	@flags.string({ description: 'Define a custom database connection', alias: 'c' })
 	public connection: string
 
 	/**
@@ -66,7 +66,6 @@ export default class Migrate extends MigrationsBase {
 	 */
 	public async handle(): Promise<void> {
 		this.connection = this.connection || this.db.primaryConnectionName
-		const connection = this.db.getRawConnection(this.connection)
 
 		const continueMigrations =
 			!this.application.inProduction || this.force || (await this.takeProductionConstent())
@@ -77,6 +76,8 @@ export default class Migrate extends MigrationsBase {
 		if (!continueMigrations) {
 			return
 		}
+
+		const connection = this.db.getRawConnection(this.connection)
 
 		/**
 		 * Ensure the define connection name does exists in the

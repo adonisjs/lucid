@@ -28,7 +28,6 @@ import {
 } from '@ioc:Adonis/Lucid/Database'
 
 import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
-
 import { MigrationSource } from './MigrationSource'
 
 /**
@@ -355,7 +354,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
 				this.migratedFiles[migration.name] = {
 					status: 'pending',
 					queries: [],
-					migration: migration,
+					file: migration,
 					batch: batch + 1,
 				}
 			}
@@ -363,7 +362,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
 
 		const filesToMigrate = Object.keys(this.migratedFiles)
 		for (let name of filesToMigrate) {
-			await this.executeMigration(this.migratedFiles[name].migration)
+			await this.executeMigration(this.migratedFiles[name].file)
 		}
 	}
 
@@ -401,14 +400,14 @@ export class Migrator extends EventEmitter implements MigratorContract {
 			this.migratedFiles[migration.name] = {
 				status: 'pending',
 				queries: [],
-				migration: migration,
+				file: migration,
 				batch: file.batch,
 			}
 		})
 
 		const filesToMigrate = Object.keys(this.migratedFiles)
 		for (let name of filesToMigrate) {
-			await this.executeMigration(this.migratedFiles[name].migration)
+			await this.executeMigration(this.migratedFiles[name].file)
 		}
 	}
 

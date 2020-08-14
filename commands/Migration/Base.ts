@@ -59,7 +59,7 @@ export default abstract class MigrationsBase extends BaseCommand {
 					: 'reverted'
 				: 'error'
 
-		console.log(`${arrow} ${this.colors[color](message)} ${file.migration.name}`)
+		console.log(`${arrow} ${this.colors[color](message)} ${file.file.name}`)
 	}
 
 	/**
@@ -97,7 +97,7 @@ export default abstract class MigrationsBase extends BaseCommand {
 	 * Pretty print sql queries of a file
 	 */
 	private prettyPrintSql(file: MigratedFileNode, connectionName: string) {
-		console.log(file.migration.name)
+		console.log(file.file.name)
 		file.queries.map((sql) => {
 			prettyPrint({
 				connection: connectionName,
@@ -140,7 +140,7 @@ export default abstract class MigrationsBase extends BaseCommand {
 		 * Starting to process a new migration file
 		 */
 		migrator.on('migration:start', (file) => {
-			processedFiles.add(file.migration.name)
+			processedFiles.add(file.file.name)
 			this.printLogMessage(file, migrator.direction)
 		})
 

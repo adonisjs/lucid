@@ -7,62 +7,69 @@
  * file that was distributed with this source code.
  */
 
-import { join, extname } from 'path'
-import { esmRequire, fsReadAll } from '@poppinss/utils'
-import { SeederFileNode } from '@ioc:Adonis/Lucid/Seeder'
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { FileNode, DatabaseContract } from '@ioc:Adonis/Lucid/Database'
+import { SeederFileNode, SeederConstructorContract } from '@ioc:Adonis/Lucid/Seeder'
+
+import { SeedersSource } from './SeedersSource'
 
 /**
- * Seeds runner exposes the API to list files from the seeds and
- * also run a collection of seeders
+ * Seeds Runner exposes the API to traverse seeders and execute them
+ * in bulk
  */
 export class SeedsRunner {
-	constructor(private seedsDir: string, private isInDevelopment: boolean) {}
+	private client = this.db.connection(this.connectionName || this.db.primaryConnectionName)
+	private config = this.db.getRawConnection(this.client.connectionName)!.config
+
+	constructor(
+		private db: DatabaseContract,
+		private app: ApplicationContract,
+		private connectionName?: string
+	) {}
 
 	/**
-	 * Returns an array of files inside a given directory. Relative
-	 * paths are resolved from the project root
+	 * Returns the seeder source by ensuring value is a class constructor
 	 */
-	public listSeeders(): Promise<SeederFileNode[]> {
-		return new Promise((resolve, reject) => {
-			const files = fsReadAll(this.seedsDir)
-			try {
-				resolve(
-					files.sort().map((file) => {
-						const source = esmRequire(join(this.seedsDir, file))
-						const ignored = source.developmentOnly && !this.isInDevelopment
+	private getSeederSource(file: FileNode<unknown>): SeederConstructorContract {
+		const source = file.getSource()
+		if (typeof source === 'function') {
+			return source as SeederConstructorContract
+		}
 
-						return {
-							absPath: join(this.seedsDir, file),
-							name: file.replace(RegExp(`${extname(file)}$`), ''),
-							source: esmRequire(join(this.seedsDir, file)),
-							status: ignored ? 'ignored' : 'pending',
-						}
-					})
-				)
-			} catch (error) {
-				reject(error)
-			}
-		})
+		throw new Error(`Invalid schema class exported by "${file.name}"`)
 	}
 
 	/**
-	 * Returns an array of files inside a given directory. Relative
-	 * paths are resolved from the project root
+	 * Returns an array of seeders
 	 */
-	public async run(seeder: SeederFileNode, client: QueryClientContract): Promise<SeederFileNode> {
+	public async getList() {
+		return new SeedersSource(this.config, this.app).getSeeders()
+	}
+
+	/**
+	 * Executes the seeder
+	 */
+	public async run(file: FileNode<unknown>): Promise<SeederFileNode> {
+		const Source = this.getSeederSource(file)
+
+		const seeder: SeederFileNode = {
+			status: 'pending',
+			file: file,
+		}
+
 		/**
 		 * Ignore when running in non-development environment and seeder is development
 		 * only
 		 */
-		if (seeder.source.developmentOnly && !this.isInDevelopment) {
+		if (Source.developmentOnly && !this.app.inDev) {
+			seeder.status = 'ignored'
 			return seeder
 		}
 
 		try {
-			const seederInstance = new seeder.source(client)
+			const seederInstance = new Source(this.client)
 			if (typeof seederInstance.run !== 'function') {
-				throw new Error(`Missing method "run" on "${seeder.name}" seeder`)
+				throw new Error(`Missing method "run" on "${seeder.file.name}" seeder`)
 			}
 
 			await seederInstance.run()

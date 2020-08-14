@@ -8,7 +8,7 @@
  */
 
 declare module '@ioc:Adonis/Lucid/Seeder' {
-	import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+	import { QueryClientContract, FileNode } from '@ioc:Adonis/Lucid/Database'
 
 	/**
 	 * Shape of seeder class
@@ -25,11 +25,9 @@ declare module '@ioc:Adonis/Lucid/Seeder' {
 	 * Shape of file node returned by the run method
 	 */
 	export type SeederFileNode = {
-		absPath: string
-		name: string
-		source: SeederConstructorContract
 		status: 'pending' | 'completed' | 'failed' | 'ignored'
 		error?: any
+		file: FileNode<unknown>
 	}
 
 	const BaseSeeder: SeederConstructorContract
