@@ -34,7 +34,8 @@ export class SeedersSource {
 	 */
 	private getSeedersPaths(): string[] {
 		const directories = (this.config.seeders || {}).paths
-		return directories && directories.length ? directories : ['./database/seeders']
+		const defaultDirectory = this.app.directoriesMap.get('seeds') || 'database/seeders'
+		return directories && directories.length ? directories : [`./${defaultDirectory}`]
 	}
 
 	/**

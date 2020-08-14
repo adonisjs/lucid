@@ -35,7 +35,8 @@ export class MigrationSource {
 	 */
 	private getMigrationsPath(): string[] {
 		const directories = (this.config.migrations || {}).paths
-		return directories && directories.length ? directories : ['./database/migrations']
+		const defaultDirectory = this.app.directoriesMap.get('migrations') || 'database/migrations'
+		return directories && directories.length ? directories : [`./${defaultDirectory}`]
 	}
 
 	/**
