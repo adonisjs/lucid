@@ -14,7 +14,6 @@ import { Exception } from '@poppinss/utils'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import {
-	FileNode,
 	MigratorOptions,
 	MigratedFileNode,
 	MigratorContract,
@@ -22,10 +21,12 @@ import {
 } from '@ioc:Adonis/Lucid/Migrator'
 
 import {
+	FileNode,
 	DatabaseContract,
 	QueryClientContract,
 	TransactionClientContract,
 } from '@ioc:Adonis/Lucid/Database'
+
 import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
 
 import { MigrationSource } from './MigrationSource'
@@ -179,14 +180,28 @@ export class Migrator extends EventEmitter implements MigratorContract {
 	}
 
 	/**
+	 * Returns the migration source by ensuring value is a class constructor and
+	 * has disableTransactions property.
+	 */
+	private getMigrationSource(migration: FileNode<unknown>): SchemaConstructorContract {
+		const source = migration.getSource()
+		if (typeof source === 'function' && 'disableTransactions' in source) {
+			return source
+		}
+
+		throw new Error(`Invalid schema class exported by "${migration.name}"`)
+	}
+
+	/**
 	 * Executes a given migration node and cleans up any created transactions
 	 * in case of failure
 	 */
-	private async executeMigration(migration: FileNode<SchemaConstructorContract>) {
-		const client = await this.getClient(migration.source.disableTransactions)
+	private async executeMigration(migration: FileNode<unknown>) {
+		const Source = this.getMigrationSource(migration)
+		const client = await this.getClient(Source.disableTransactions)
 
 		try {
-			const schema = new migration.source(client, migration.name, this.dryRun)
+			const schema = new Source(client, migration.name, this.dryRun)
 			this.emit('migration:start', this.migratedFiles[migration.name])
 
 			if (this.direction === 'up') {

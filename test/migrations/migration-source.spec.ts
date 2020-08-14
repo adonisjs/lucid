@@ -88,7 +88,7 @@ test.group('MigrationSource', (group) => {
 		const app = new Application(fs.basePath, {} as any, {} as any, {})
 		const config = Object.assign({}, db.getRawConnection('primary')!.config, {
 			migrations: {
-				paths: ['database/secondary', 'database/primary'],
+				paths: ['./database/secondary', './database/primary'],
 			},
 		})
 
@@ -108,20 +108,20 @@ test.group('MigrationSource', (group) => {
 			}),
 			[
 				{
-					absPath: join(fs.basePath, 'database/primary/b.js'),
-					name: 'database/primary/b',
-				},
-				{
-					absPath: join(fs.basePath, 'database/primary/d.js'),
-					name: 'database/primary/d',
-				},
-				{
 					absPath: join(fs.basePath, 'database/secondary/a.js'),
 					name: 'database/secondary/a',
 				},
 				{
 					absPath: join(fs.basePath, 'database/secondary/c.js'),
 					name: 'database/secondary/c',
+				},
+				{
+					absPath: join(fs.basePath, 'database/primary/b.js'),
+					name: 'database/primary/b',
+				},
+				{
+					absPath: join(fs.basePath, 'database/primary/d.js'),
+					name: 'database/primary/d',
 				},
 			]
 		)
@@ -132,7 +132,12 @@ test.group('MigrationSource', (group) => {
 		const migrationSource = new MigrationSource(db.getRawConnection('primary')!.config, app)
 
 		await fs.add('database/migrations/foo.ts', 'export default class Foo {}')
+		await fs.add('database/migrations/bar.ts', 'export default class Bar {}')
+		await fs.add('database/migrations/baz.ts', 'export default class Baz {}')
+
 		const directories = await migrationSource.getMigrations()
-		assert.equal(directories[0].source.name, 'Foo')
+		assert.equal((directories[0].getSource() as any).name, 'Bar')
+		assert.equal((directories[1].getSource() as any).name, 'Baz')
+		assert.equal((directories[2].getSource() as any).name, 'Foo')
 	})
 })

@@ -13,9 +13,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
 	import knex from 'knex'
 	import { Pool } from 'tarn'
 	import { EventEmitter } from 'events'
-	import { MacroableConstructorContract } from 'macroable'
+	import { ConnectionOptions } from 'tls'
 	import { EmitterContract } from '@ioc:Adonis/Core/Event'
+	import { MacroableConstructorContract } from 'macroable'
 	import { HealthReportEntry } from '@ioc:Adonis/Core/HealthCheck'
+	import { LucidModel, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
 	import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 	import {
@@ -29,9 +31,15 @@ declare module '@ioc:Adonis/Lucid/Database' {
 		DatabaseQueryBuilderContract,
 	} from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
-	import { LucidModel, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
-
-	import { ConnectionOptions } from 'tls'
+	/**
+	 * Migration node returned by the migration source
+	 * implementation
+	 */
+	export type FileNode<T extends any> = {
+		absPath: string
+		name: string
+		getSource: () => T
+	}
 
 	/**
 	 * Dialect specfic methods
@@ -268,6 +276,13 @@ declare module '@ioc:Adonis/Lucid/Database' {
 	}
 
 	/**
+	 * Seeders config
+	 */
+	export type SeedersConfig = {
+		paths: string[]
+	}
+
+	/**
 	 * Shared config options for all clients
 	 */
 	type SharedConfigNode = {
@@ -277,6 +292,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
 		revision?: number
 		healthCheck?: boolean
 		migrations?: MigratorConfig
+		seeders?: SeedersConfig
 		pool?: {
 			afterCreate?: (conn: any, done: any) => void
 			min?: number

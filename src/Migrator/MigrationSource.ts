@@ -9,12 +9,9 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { join, isAbsolute, extname } from 'path'
-import { FileNode } from '@ioc:Adonis/Lucid/Migrator'
-import { esmRequire, fsReadAll } from '@poppinss/utils'
-import { ConnectionConfig } from '@ioc:Adonis/Lucid/Database'
-import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { ConnectionConfig, FileNode } from '@ioc:Adonis/Lucid/Database'
+import { sourceFiles } from '../utils'
 
 /**
  * Migration source exposes the API to read the migration files
@@ -27,26 +24,9 @@ export class MigrationSource {
 	 * Returns an array of files inside a given directory. Relative
 	 * paths are resolved from the project root
 	 */
-	private getDirectoryFiles(directoryPath: string): Promise<FileNode<SchemaConstructorContract>[]> {
-		const basePath = this.app.appRoot
-
-		return new Promise((resolve, reject) => {
-			const path = isAbsolute(directoryPath) ? directoryPath : join(basePath, directoryPath)
-			const files = fsReadAll(path)
-			try {
-				resolve(
-					files.sort().map((file) => {
-						return {
-							absPath: join(path, file),
-							name: join(directoryPath, file.replace(RegExp(`${extname(file)}$`), '')),
-							source: esmRequire(join(path, file)),
-						}
-					})
-				)
-			} catch (error) {
-				reject(error)
-			}
-		})
+	private async getDirectoryFiles(directoryPath: string): Promise<FileNode<unknown>[]> {
+		const { files } = await sourceFiles(this.app.appRoot, directoryPath)
+		return files
 	}
 
 	/**
@@ -55,14 +35,14 @@ export class MigrationSource {
 	 */
 	private getMigrationsPath(): string[] {
 		const directories = (this.config.migrations || {}).paths
-		return directories && directories.length ? directories : ['database/migrations']
+		return directories && directories.length ? directories : ['./database/migrations']
 	}
 
 	/**
 	 * Returns an array of files for all defined directories
 	 */
 	public async getMigrations() {
-		const migrationPaths = this.getMigrationsPath().sort()
+		const migrationPaths = this.getMigrationsPath()
 		const directories = await Promise.all(
 			migrationPaths.map((directoryPath) => {
 				return this.getDirectoryFiles(directoryPath)

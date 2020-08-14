@@ -9,10 +9,16 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
+import { join, extname } from 'path'
 import { Exception } from '@poppinss/utils'
+import { esmRequire, fsReadAll, resolveDir } from '@poppinss/utils'
 import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 import { LucidRow, ModelObject, CherryPickFields } from '@ioc:Adonis/Lucid/Model'
-import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+import {
+	QueryClientContract,
+	TransactionClientContract,
+	FileNode,
+} from '@ioc:Adonis/Lucid/Database'
 
 /**
  * Ensure that relation is defined
@@ -194,4 +200,33 @@ export function normalizeCherryPickObject(fields: CherryPickFields) {
 		pick: fields.pick,
 		omit: fields.omit,
 	}
+}
+
+/**
+ * Sources files from a given directory
+ */
+export function sourceFiles(
+	fromLocation: string,
+	directory: string
+): Promise<{ directory: string; files: FileNode<unknown>[] }> {
+	return new Promise((resolve, reject) => {
+		const path = resolveDir(fromLocation, directory)
+		const files = fsReadAll(path)
+		try {
+			resolve({
+				directory,
+				files: files.sort().map((file) => {
+					return {
+						absPath: join(path, file),
+						name: join(directory, file.replace(RegExp(`${extname(file)}$`), '')),
+						getSource() {
+							return esmRequire(this.absPath)
+						},
+					}
+				}),
+			})
+		} catch (error) {
+			reject(error)
+		}
+	})
 }

@@ -9,17 +9,7 @@
 
 declare module '@ioc:Adonis/Lucid/Migrator' {
 	import { EventEmitter } from 'events'
-	import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
-
-	/**
-	 * Migration node returned by the migration source
-	 * implementation
-	 */
-	export type FileNode<T extends any> = {
-		absPath: string
-		name: string
-		source: T
-	}
+	import { FileNode } from '@ioc:Adonis/Lucid/Database'
 
 	/**
 	 * Options accepted by migrator constructor
@@ -43,7 +33,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
 	export type MigratedFileNode = {
 		status: 'completed' | 'error' | 'pending'
 		queries: string[]
-		migration: FileNode<SchemaConstructorContract>
+		migration: FileNode<unknown>
 		batch: number
 	}
 

@@ -45,7 +45,7 @@
   "homepage": "https://github.com/adonisjs/adonis-lucid#readme",
   "dependencies": {
     "@poppinss/hooks": "^1.1.1",
-    "@poppinss/utils": "^2.5.2",
+    "@poppinss/utils": "^2.5.3",
     "@types/faker": "^4.1.12",
     "cli-table3": "^0.6.0",
     "faker": "^4.1.0",
@@ -57,7 +57,8 @@
     "macroable": "^5.0.1",
     "pluralize": "^8.0.0",
     "pretty-hrtime": "^1.0.3",
-    "qs": "^6.9.4"
+    "qs": "^6.9.4",
+    "resolve-pkg": "^2.0.0"
   },
   "peerDependencies": {
     "@adonisjs/core": ">=5.0.0-preview"
