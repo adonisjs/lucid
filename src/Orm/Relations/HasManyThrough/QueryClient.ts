@@ -14,6 +14,7 @@ import { HasManyThroughClientContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { HasManyThrough } from './index'
 import { HasManyThroughQueryBuilder } from './QueryBuilder'
+import { HasManyThroughSubQueryBuilder } from './SubQueryBuilder'
 
 /**
  * Query client for executing queries in scope to the defined
@@ -51,6 +52,19 @@ export class HasManyThroughClient
 		const query = new HasManyThroughQueryBuilder(client.knexQuery(), client, rows, relation)
 
 		query.isEagerQuery = true
+		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
+		return query
+	}
+
+	/**
+	 * Returns an instance of the sub query
+	 */
+	public static subQuery(
+		client: QueryClientContract,
+		relation: HasManyThrough,
+	) {
+		const query = new HasManyThroughSubQueryBuilder(client.knexQuery(), client, relation)
+
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
 		return query
 	}

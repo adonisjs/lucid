@@ -14,6 +14,7 @@ import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Luci
 
 import { ManyToMany } from './index'
 import { ManyToManyQueryBuilder } from './QueryBuilder'
+import { ManyToManySubQueryBuilder } from './SubQueryBuilder'
 import { managedTransaction, syncDiff } from '../../../utils'
 
 /**
@@ -52,6 +53,19 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
 		const query = new ManyToManyQueryBuilder(client.knexQuery(), client, rows, relation)
 
 		query.isEagerQuery = true
+		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
+		return query
+	}
+
+	/**
+	 * Returns an instance of the related sub query builder
+	 */
+	public static subQuery(
+		client: QueryClientContract,
+		relation: ManyToMany,
+	) {
+		const query = new ManyToManySubQueryBuilder(client.knexQuery(), client, relation)
+
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
 		return query
 	}

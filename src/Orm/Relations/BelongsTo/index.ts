@@ -19,7 +19,6 @@ import {
 
 import { KeysExtractor } from '../KeysExtractor'
 import { BelongsToQueryClient } from './QueryClient'
-import { BelongsToSubQueryBuilder } from './SubQueryBuilder'
 import { ensureRelationIsBooted, getValue } from '../../../utils'
 
 /**
@@ -192,8 +191,8 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
 	 * Returns instance of query builder
 	 */
 	public subQuery(client: QueryClientContract) {
-		const query = new BelongsToSubQueryBuilder(client.knexQuery(), client, this as any)
-		return query
+		ensureRelationIsBooted(this)
+		return BelongsToQueryClient.subQuery(client, this)
 	}
 
 	/**

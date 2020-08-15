@@ -817,6 +817,52 @@ test.group('Model | HasMany | sub queries', (group) => {
 		assert.throw(first, 'Cannot execute relationship subqueries')
 		assert.throw(firstOrFail, 'Cannot execute relationship subqueries')
 	})
+
+	test('run onQuery method when defined', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public countryId: number
+		}
+		User.boot()
+
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+
+			@column()
+			public isPublished: boolean
+		}
+		Post.boot()
+
+		class Country extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@hasManyThrough([() => Post, () => User], {
+				onQuery: (query) => query.where('isPublished', true)
+			})
+			public posts: HasManyThrough<typeof Post>
+		}
+
+		Country.boot()
+		Country.$getRelation('posts')!.boot()
+
+		const { sql, bindings } = Country.$getRelation('posts')!.subQuery(db.connection()).toSQL()
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('posts')
+			.innerJoin('users', 'users.id', 'posts.user_id')
+			.where('is_published', true)
+			.where('countries.id', '=', db.connection().getReadClient().ref('users.country_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
 })
 
 test.group('Model | Has Many Through | aggregates', (group) => {

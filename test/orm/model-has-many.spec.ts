@@ -620,6 +620,44 @@ test.group('Model | HasMany | sub queries', (group) => {
 		assert.throw(first, 'Cannot execute relationship subqueries')
 		assert.throw(firstOrFail, 'Cannot execute relationship subqueries')
 	})
+
+	test('run onQuery method when defined', async (assert) => {
+		class Post extends BaseModel {
+			@column()
+			public userId: number
+
+			@column()
+			public isPublished: boolean
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post, {
+				onQuery: (query) => query.where('isPublished', true)
+			})
+			public posts: HasMany<typeof Post>
+		}
+
+		User.boot()
+		User.$getRelation('posts')!.boot()
+
+		const { sql, bindings } = User.$getRelation('posts')!.subQuery(db.connection()).toSQL()
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('posts')
+			.where('is_published', true)
+			.where('users.id', '=', db.connection().getReadClient().ref('posts.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
 })
 
 test.group('Model | HasMany | aggregates', (group) => {

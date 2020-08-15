@@ -633,6 +633,50 @@ test.group('Model | BelongsTo | sub queries', (group) => {
 		assert.throw(first, 'Cannot execute relationship subqueries')
 		assert.throw(firstOrFail, 'Cannot execute relationship subqueries')
 	})
+
+	test('run onQuery method when defined', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public displayName: string
+
+			@belongsTo(() => User, {
+				onQuery: (query) => query.where('isActive', false)
+			})
+			public user: BelongsTo<typeof User>
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public isActive: boolean
+
+			@column()
+			public username: string
+		}
+
+		Profile.boot()
+		Profile.$getRelation('user')!.boot()
+
+		const { sql, bindings } = Profile.$getRelation('user')!.subQuery(db.connection()).toSQL()
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('users')
+			.where('is_active', false)
+			.where('users.id', '=', db.connection().getReadClient().ref('profiles.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
 })
 
 test.group('Model | BelongsTo | preload', (group) => {

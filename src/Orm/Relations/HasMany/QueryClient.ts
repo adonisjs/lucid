@@ -13,8 +13,9 @@ import { HasManyClientContract } from '@ioc:Adonis/Lucid/Relations'
 import { LucidRow, LucidModel, ModelObject } from '@ioc:Adonis/Lucid/Model'
 
 import { HasMany } from './index'
-import { HasManyQueryBuilder } from './QueryBuilder'
 import { managedTransaction } from '../../../utils'
+import { HasManyQueryBuilder } from './QueryBuilder'
+import { HasManySubQueryBuilder } from './SubQueryBuilder'
 
 /**
  * Query client for executing queries in scope to the defined
@@ -47,6 +48,19 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
 		const query = new HasManyQueryBuilder(client.knexQuery(), client, rows, relation)
 
 		query.isEagerQuery = true
+		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
+		return query
+	}
+
+	/**
+	 * Returns an instance of the sub query
+	 */
+	public static subQuery(
+		client: QueryClientContract,
+		relation: HasMany,
+	) {
+		const query = new HasManySubQueryBuilder(client.knexQuery(), client, relation)
+
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
 		return query
 	}

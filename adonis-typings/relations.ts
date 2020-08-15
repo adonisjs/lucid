@@ -63,7 +63,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		localKey?: string
 		foreignKey?: string
 		serializeAs?: string | null
-		onQuery?(query: Related['builder']): void
+		onQuery?(query: Related['builder'] | Related['subQuery']): void
 	}
 
 	/**
@@ -77,7 +77,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		pivotRelatedForeignKey?: string
 		pivotColumns?: string[]
 		serializeAs?: string
-		onQuery?(query: Related['builder']): void
+		onQuery?(query: Related['builder'] | Related['subQuery']): void
 	}
 
 	/**

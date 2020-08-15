@@ -13,8 +13,9 @@ import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { BelongsToClientContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { BelongsTo } from './index'
-import { BelongsToQueryBuilder } from './QueryBuilder'
 import { managedTransaction } from '../../../utils'
+import { BelongsToQueryBuilder } from './QueryBuilder'
+import { BelongsToSubQueryBuilder } from './SubQueryBuilder'
 
 /**
  * Query client for executing queries in scope to the belongsTo relationship.
@@ -47,6 +48,16 @@ export class BelongsToQueryClient implements BelongsToClientContract<BelongsTo, 
 		const query = new BelongsToQueryBuilder(client.knexQuery(), client, rows, relation)
 
 		query.isEagerQuery = true
+		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
+		return query
+	}
+
+	/**
+	 * Returns an instance of the subquery
+	 */
+	public static subQuery(client: QueryClientContract, relation: BelongsTo) {
+		const query = new BelongsToSubQueryBuilder(client.knexQuery(), client, relation)
+
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
 		return query
 	}

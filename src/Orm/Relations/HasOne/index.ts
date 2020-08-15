@@ -19,7 +19,6 @@ import {
 
 import { KeysExtractor } from '../KeysExtractor'
 import { HasOneQueryClient } from './QueryClient'
-import { HasOneSubQueryBuilder } from './SubQueryBuilder'
 import { ensureRelationIsBooted, getValue } from '../../../utils'
 
 /**
@@ -177,8 +176,7 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
 	 */
 	public subQuery(client: QueryClientContract) {
 		ensureRelationIsBooted(this)
-		const query = new HasOneSubQueryBuilder(client.knexQuery(), client, this as any)
-		return query
+		return HasOneQueryClient.subQuery(client, this)
 	}
 
 	/**

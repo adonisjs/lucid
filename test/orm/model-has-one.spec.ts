@@ -660,6 +660,50 @@ test.group('Model | HasOne | sub queries', (group) => {
 		assert.throw(first, 'Cannot execute relationship subqueries')
 		assert.throw(firstOrFail, 'Cannot execute relationship subqueries')
 	})
+
+	test('run onQuery method when defined', async (assert) => {
+		class Profile extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public accountType: string
+
+			@column()
+			public displayName: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasOne(() => Profile, {
+				onQuery: (query) => query.where('accountType', 'twitter')
+			})
+			public profile: HasOne<typeof Profile>
+		}
+
+		User.boot()
+		User.$getRelation('profile')!.boot()
+
+		const { sql, bindings } = User.$getRelation('profile')!.subQuery(db.connection()).toSQL()
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('profiles')
+			.where('account_type', 'twitter')
+			.where('users.id', '=', db.connection().getReadClient().ref('profiles.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
 })
 
 test.group('Model | HasOne | preload', (group) => {

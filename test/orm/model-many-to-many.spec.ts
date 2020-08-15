@@ -798,6 +798,42 @@ test.group('Model | ManyToMany | sub queries', (group) => {
 		assert.deepEqual(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 	})
+
+	test('run onQuery method when defined', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@manyToMany(() => Skill, {
+				onQuery: (query) => query.where('name', 'Programming')
+			})
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		User.boot()
+		User.$getRelation('skills')!.boot()
+
+		const { sql, bindings } = User.$getRelation('skills')!.subQuery(db.connection()).toSQL()
+		const { sql: knexSql, bindings: knexBindings } = db
+			.connection()
+			.knexQuery()
+			.from('skills')
+			.innerJoin('skill_user', 'skills.id', 'skill_user.skill_id')
+			.where('name', 'Programming')
+			.where('users.id', '=', db.connection().getReadClient().ref('skill_user.user_id'))
+			.toSQL()
+
+		assert.deepEqual(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+	})
 })
 
 test.group('Model | Many To Many | aggregates', (group) => {
@@ -5589,7 +5625,7 @@ test.group('Model | ManyToMany | onQuery', (group) => {
 
 			@manyToMany(() => Skill, {
 				onQuery: (query) => {
-					assert.isTrue(query.isPivotOnlyQuery)
+					assert.isTrue('isPivotOnlyQuery' in query)
 				},
 			})
 			public skills: ManyToMany<typeof Skill>

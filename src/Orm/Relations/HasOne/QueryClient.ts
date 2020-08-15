@@ -13,8 +13,9 @@ import { HasOneClientContract } from '@ioc:Adonis/Lucid/Relations'
 import { ModelObject, LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 
 import { HasOne } from './index'
-import { HasOneQueryBuilder } from './QueryBuilder'
 import { managedTransaction } from '../../../utils'
+import { HasOneQueryBuilder } from './QueryBuilder'
+import { HasOneSubQueryBuilder } from './SubQueryBuilder'
 
 /**
  * Query client for executing queries in scope to the defined
@@ -48,6 +49,19 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
 		const query = new HasOneQueryBuilder(client.knexQuery(), client, rows, relation)
 
 		query.isEagerQuery = true
+		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
+		return query
+	}
+
+	/**
+	 * Returns an instance of the sub query builder
+	 */
+	public static subQuery(
+		client: QueryClientContract,
+		relation: HasOne,
+	) {
+		const query = new HasOneSubQueryBuilder(client.knexQuery(), client, relation)
+
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
 		return query
 	}

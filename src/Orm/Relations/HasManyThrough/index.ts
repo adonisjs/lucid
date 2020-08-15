@@ -19,7 +19,6 @@ import {
 import { KeysExtractor } from '../KeysExtractor'
 import { HasManyThroughClient } from './QueryClient'
 import { ensureRelationIsBooted } from '../../../utils'
-import { HasManyThroughSubQueryBuilder } from './SubQueryBuilder'
 
 /**
  * Manages loading and persisting has many through relationship
@@ -203,6 +202,7 @@ export class HasManyThrough implements HasManyThroughRelationContract<LucidModel
 	 * Returns instance of the eager query
 	 */
 	public eagerQuery(parent: OneOrMany<LucidRow>, client: QueryClientContract) {
+		ensureRelationIsBooted(this)
 		return HasManyThroughClient.eagerQuery(client, this, parent)
 	}
 
@@ -210,7 +210,7 @@ export class HasManyThrough implements HasManyThroughRelationContract<LucidModel
 	 * Returns instance of query builder
 	 */
 	public subQuery(client: QueryClientContract) {
-		const query = new HasManyThroughSubQueryBuilder(client.knexQuery(), client, this as any)
-		return query
+		ensureRelationIsBooted(this)
+		return HasManyThroughClient.subQuery(client, this)
 	}
 }
