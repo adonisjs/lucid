@@ -59,10 +59,7 @@ export class HasManyThroughClient
 	/**
 	 * Returns an instance of the sub query
 	 */
-	public static subQuery(
-		client: QueryClientContract,
-		relation: HasManyThrough,
-	) {
+	public static subQuery(client: QueryClientContract, relation: HasManyThrough) {
 		const query = new HasManyThroughSubQueryBuilder(client.knexQuery(), client, relation)
 
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)

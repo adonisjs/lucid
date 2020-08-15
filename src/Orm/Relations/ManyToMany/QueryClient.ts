@@ -60,10 +60,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
 	/**
 	 * Returns an instance of the related sub query builder
 	 */
-	public static subQuery(
-		client: QueryClientContract,
-		relation: ManyToMany,
-	) {
+	public static subQuery(client: QueryClientContract, relation: ManyToMany) {
 		const query = new ManyToManySubQueryBuilder(client.knexQuery(), client, relation)
 
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)

@@ -3,7 +3,7 @@ import { BaseModel, HasOne, hasOne, scope, column } from '@ioc:Adonis/Lucid/Orm'
 import Factory from '@ioc:Adonis/Lucid/Factory'
 
 enum ProfileTypes {
-	TWITTER = 'TWITTER'
+	TWITTER = 'TWITTER',
 }
 
 class Profile extends BaseModel {

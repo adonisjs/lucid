@@ -813,7 +813,7 @@ test.group('Model | ManyToMany | sub queries', (group) => {
 			public id: number
 
 			@manyToMany(() => Skill, {
-				onQuery: (query) => query.where('name', 'Programming')
+				onQuery: (query) => query.where('name', 'Programming'),
 			})
 			public skills: ManyToMany<typeof Skill>
 		}

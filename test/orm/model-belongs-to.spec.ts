@@ -646,7 +646,7 @@ test.group('Model | BelongsTo | sub queries', (group) => {
 			public displayName: string
 
 			@belongsTo(() => User, {
-				onQuery: (query) => query.where('isActive', false)
+				onQuery: (query) => query.where('isActive', false),
 			})
 			public user: BelongsTo<typeof User>
 		}

@@ -684,7 +684,7 @@ test.group('Model | HasOne | sub queries', (group) => {
 			public username: string
 
 			@hasOne(() => Profile, {
-				onQuery: (query) => query.where('accountType', 'twitter')
+				onQuery: (query) => query.where('accountType', 'twitter'),
 			})
 			public profile: HasOne<typeof Profile>
 		}

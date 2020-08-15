@@ -842,7 +842,7 @@ test.group('Model | HasMany | sub queries', (group) => {
 			public id: number
 
 			@hasManyThrough([() => Post, () => User], {
-				onQuery: (query) => query.where('isPublished', true)
+				onQuery: (query) => query.where('isPublished', true),
 			})
 			public posts: HasManyThrough<typeof Post>
 		}

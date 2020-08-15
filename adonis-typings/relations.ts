@@ -43,9 +43,9 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	 * Returns relationship model instance or array of instances based
 	 * upon the relationship type
 	 */
-	export type GetRelationModelInstance<Relation extends ModelRelations> = Relation['__opaque_type'] extends
-		| 'hasOne'
-		| 'belongsTo'
+	export type GetRelationModelInstance<
+		Relation extends ModelRelations
+	> = Relation['__opaque_type'] extends 'hasOne' | 'belongsTo'
 		? Relation['instance']
 		: Relation['instance'][]
 

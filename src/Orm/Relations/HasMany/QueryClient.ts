@@ -55,10 +55,7 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
 	/**
 	 * Returns an instance of the sub query
 	 */
-	public static subQuery(
-		client: QueryClientContract,
-		relation: HasMany,
-	) {
+	public static subQuery(client: QueryClientContract, relation: HasMany) {
 		const query = new HasManySubQueryBuilder(client.knexQuery(), client, relation)
 
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)

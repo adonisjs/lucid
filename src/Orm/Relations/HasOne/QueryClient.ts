@@ -56,10 +56,7 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
 	/**
 	 * Returns an instance of the sub query builder
 	 */
-	public static subQuery(
-		client: QueryClientContract,
-		relation: HasOne,
-	) {
+	public static subQuery(client: QueryClientContract, relation: HasOne) {
 		const query = new HasOneSubQueryBuilder(client.knexQuery(), client, relation)
 
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)

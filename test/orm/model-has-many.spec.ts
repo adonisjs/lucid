@@ -638,7 +638,7 @@ test.group('Model | HasMany | sub queries', (group) => {
 			public username: string
 
 			@hasMany(() => Post, {
-				onQuery: (query) => query.where('isPublished', true)
+				onQuery: (query) => query.where('isPublished', true),
 			})
 			public posts: HasMany<typeof Post>
 		}
