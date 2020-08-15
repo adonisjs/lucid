@@ -155,7 +155,7 @@ export class SimplePaginator extends Array implements SimplePaginatorContract<an
 	 * Returns an array of urls under a given range
 	 */
 	public getUrlsForRange(start: number, end: number) {
-		let urls: { url: string; page: number, isActive: boolean }[] = []
+		let urls: { url: string; page: number; isActive: boolean }[] = []
 		for (let i = start; i <= end; i++) {
 			urls.push({ url: this.getUrl(i), page: i, isActive: i === this.currentPage })
 		}
