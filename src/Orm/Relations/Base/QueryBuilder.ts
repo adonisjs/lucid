@@ -34,14 +34,14 @@ export abstract class BaseQueryBuilder extends ModelQueryBuilder
 	/**
 	 * Is query a relationship query obtained using `related('relation').query()`
 	 */
-	public get isRelatedQuery (): true {
+	public get isRelatedQuery(): true {
 		return true
 	}
 
 	/**
 	 * Is query a relationship query obtained using `related('relation').subQuery()`
 	 */
-	public get isRelatedSubQuery (): false {
+	public get isRelatedSubQuery(): false {
 		return false
 	}
 

@@ -36,21 +36,21 @@ export abstract class BaseSubQueryBuilder extends ModelQueryBuilder
 	/**
 	 * Is query a relationship query obtained using `related('relation').query()`
 	 */
-	public get isRelatedQuery (): false {
+	public get isRelatedQuery(): false {
 		return false
 	}
 
 	/**
 	 * Is query a relationship query obtained using `related('relation').subQuery()`
 	 */
-	public get isRelatedSubQuery (): true {
+	public get isRelatedSubQuery(): true {
 		return true
 	}
 
 	/**
 	 * Is query a relationship query obtained using one of the preload methods.
 	 */
-	public get isRelatedPreloadQuery (): false {
+	public get isRelatedPreloadQuery(): false {
 		return false
 	}
 
