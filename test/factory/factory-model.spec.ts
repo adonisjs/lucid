@@ -227,4 +227,31 @@ test.group('Factory | Factory Model', (group) => {
 		const user = await factory.make()
 		assert.instanceOf(user, User)
 	})
+
+	test('return model instance from the factory callback', async (assert) => {
+		class Profile extends BaseModel {}
+		Profile.boot()
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasOne(() => Profile)
+			public profile: HasOne<typeof Profile>
+		}
+
+		const factory = new FactoryModel(
+			User,
+			() => {
+				return new User()
+			},
+			factoryManager
+		).build()
+
+		const user = await factory.make()
+		assert.instanceOf(user, User)
+	})
 })

@@ -42,7 +42,16 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
 	public newUpModelInstance: NewUpCallback<FactoryModelContract<LucidModel>> = function (
 		attributes: any
 	) {
-		const modelInstance = new this.model()
+		const Model = this.model
+
+		/**
+		 * Handling case, where someone returns model instance directly
+		 */
+		if (attributes instanceof Model) {
+			return attributes
+		}
+
+		const modelInstance = new Model()
 		modelInstance.merge(attributes)
 		return modelInstance
 	}.bind(this)
