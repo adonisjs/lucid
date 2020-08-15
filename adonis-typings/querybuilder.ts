@@ -611,7 +611,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 		getMeta(): SimplePaginatorMeta
 		getNextPageUrl(): string | null
 		getPreviousPageUrl(): string | null
-		getUrlsForRange(start: number, end: number): { url: string; page: number }[]
+		getUrlsForRange(start: number, end: number): { url: string; page: number; isActive: boolean }[]
 		toJSON(): { meta: SimplePaginatorMeta; data: Result[] }
 	}
 
