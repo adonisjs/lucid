@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import { extname } from 'path'
 import { inject } from '@adonisjs/fold'
 import { SeederFileNode } from '@ioc:Adonis/Lucid/Seeder'
 import { BaseCommand, Kernel, flags } from '@adonisjs/ace'
@@ -36,7 +37,7 @@ export default class DbSeed extends BaseCommand {
 	 * the interactive mode.
 	 */
 	@flags.array({ description: 'Define a custom set of seeders files names to run', alias: 'f' })
-	public files: string[]
+	public files: string[] = []
 
 	/**
 	 * This command loads the application, since we need the runtime
@@ -120,7 +121,11 @@ export default class DbSeed extends BaseCommand {
 		let selectedFileNames: string[] = files.map(({ name }) => name)
 
 		if (this.files.length) {
-			selectedFileNames = this.files
+			selectedFileNames = this.files.map((file) => {
+				const fileExt = extname(file)
+				return (fileExt ? file.replace(fileExt, '') : file).replace(/^\.\/|^\.\\\\/, '')
+			})
+
 			if (this.interactive) {
 				this.logger.warn(
 					'Cannot use "--interactive" and "--files" together. Ignoring "--interactive"'
