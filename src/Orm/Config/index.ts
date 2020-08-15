@@ -40,7 +40,7 @@ export const Config: OrmConfig = {
 	/**
 	 * Returns the local key for a given relationship
 	 */
-	getLocalKey(relation: ModelRelations['type'], model: LucidModel, related: LucidModel): string {
+	getLocalKey(relation: ModelRelations['__opaque_type'], model: LucidModel, related: LucidModel): string {
 		if (relation === 'belongsTo') {
 			return related.primaryKey
 		}
@@ -51,7 +51,7 @@ export const Config: OrmConfig = {
 	/**
 	 * Returns the foreign key for a given relationship
 	 */
-	getForeignKey(relation: ModelRelations['type'], model: LucidModel, related: LucidModel): string {
+	getForeignKey(relation: ModelRelations['__opaque_type'], model: LucidModel, related: LucidModel): string {
 		if (relation === 'belongsTo') {
 			return lodash.camelCase(`${related.name}_${related.primaryKey}`)
 		}

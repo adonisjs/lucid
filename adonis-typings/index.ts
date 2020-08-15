@@ -7,4 +7,4 @@
 /// <reference path="./relations.ts" />
 /// <reference path="./factory.ts" />
 /// <reference path="./validator.ts" />
-/// <reference path="./seeds.ts" />
+/// <reference path="./seeder.ts" />

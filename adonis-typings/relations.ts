@@ -43,7 +43,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	 * Returns relationship model instance or array of instances based
 	 * upon the relationship type
 	 */
-	export type GetRelationModelInstance<Relation extends ModelRelations> = Relation['type'] extends
+	export type GetRelationModelInstance<Relation extends ModelRelations> = Relation['__opaque_type'] extends
 		| 'hasOne'
 		| 'belongsTo'
 		? Relation['instance']
@@ -145,7 +145,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	 *
 	 */
 	export type ModelRelationTypes = {
-		readonly type: 'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany' | 'hasManyThrough'
+		readonly __opaque_type: 'hasOne' | 'hasMany' | 'belongsTo' | 'manyToMany' | 'hasManyThrough'
 	}
 
 	/**
@@ -155,7 +155,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		RelatedModel extends LucidModel,
 		ParentModel extends LucidModel = LucidModel
 	> = InstanceType<RelatedModel> & {
-		readonly type: 'hasOne'
+		readonly __opaque_type: 'hasOne'
 		model: RelatedModel
 		instance: InstanceType<RelatedModel>
 		client: HasOneClientContract<HasOneRelationContract<ParentModel, RelatedModel>, RelatedModel>
@@ -170,7 +170,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		RelatedModel extends LucidModel,
 		ParentModel extends LucidModel = LucidModel
 	> = InstanceType<RelatedModel>[] & {
-		readonly type: 'hasMany'
+		readonly __opaque_type: 'hasMany'
 		model: RelatedModel
 		instance: InstanceType<RelatedModel>
 		client: HasManyClientContract<HasManyRelationContract<ParentModel, RelatedModel>, RelatedModel>
@@ -185,7 +185,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		RelatedModel extends LucidModel,
 		ParentModel extends LucidModel = LucidModel
 	> = InstanceType<RelatedModel> & {
-		readonly type: 'belongsTo'
+		readonly __opaque_type: 'belongsTo'
 		model: RelatedModel
 		instance: InstanceType<RelatedModel>
 		client: BelongsToClientContract<
@@ -203,7 +203,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		RelatedModel extends LucidModel,
 		ParentModel extends LucidModel = LucidModel
 	> = InstanceType<RelatedModel>[] & {
-		readonly type: 'manyToMany'
+		readonly __opaque_type: 'manyToMany'
 		model: RelatedModel
 		instance: InstanceType<RelatedModel>
 		client: ManyToManyClientContract<
@@ -221,7 +221,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		RelatedModel extends LucidModel,
 		ParentModel extends LucidModel = LucidModel
 	> = InstanceType<RelatedModel>[] & {
-		readonly type: 'hasManyThrough'
+		readonly __opaque_type: 'hasManyThrough'
 		model: RelatedModel
 		instance: InstanceType<RelatedModel>
 		client: HasManyThroughClientContract<
@@ -257,7 +257,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		ParentModel extends LucidModel,
 		RelatedModel extends LucidModel
 	> {
-		readonly type: ModelRelations['type']
+		readonly type: ModelRelationTypes['__opaque_type']
 		readonly relationName: string
 		readonly serializeAs: string | null
 		readonly booted: boolean

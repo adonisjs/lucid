@@ -993,7 +993,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		 * Return the local key property name for a given relationship
 		 */
 		getLocalKey(
-			relation: ModelRelations['type'],
+			relation: ModelRelations['__opaque_type'],
 			model: LucidModel,
 			relatedModel: LucidModel
 		): string
@@ -1002,7 +1002,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		 * Return the foreign key property name for a given relationship
 		 */
 		getForeignKey(
-			relation: ModelRelations['type'],
+			relation: ModelRelations['__opaque_type'],
 			model: LucidModel,
 			relatedModel: LucidModel
 		): string

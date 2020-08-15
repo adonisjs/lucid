@@ -396,7 +396,7 @@ export class BaseModel implements LucidRow {
 	 */
 	public static $addRelation(
 		name: string,
-		type: ModelRelations['type'],
+		type: ModelRelations['__opaque_type'],
 		relatedModel: () => LucidModel,
 		options: ModelRelationOptions
 	) {
