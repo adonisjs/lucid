@@ -317,10 +317,10 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		model: Model
 
 		/**
-		 * Whether or not the query is a subquery generated for `.where`
+		 * Whether or not the query is a child query generated for `.where`
 		 * callbacks
 		 */
-		isSubQuery: boolean
+		isChildQuery: boolean
 
 		/**
 		 * Apply user defined query scopes
@@ -689,7 +689,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		 */
 		$addRelation(
 			name: string,
-			type: ModelRelations['type'],
+			type: ModelRelationTypes['__opaque_type'],
 			relatedModel: () => LucidModel,
 			options: ModelRelationOptions
 		): void

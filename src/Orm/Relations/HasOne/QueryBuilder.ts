@@ -31,8 +31,8 @@ export class HasOneQueryBuilder extends BaseQueryBuilder {
 		super(builder, client, relation, (userFn) => {
 			return ($builder) => {
 				const subQuery = new HasOneQueryBuilder($builder, this.client, this.parent, this.relation)
-				subQuery.isSubQuery = true
-				subQuery.isEagerQuery = this.isEagerQuery
+				subQuery.isChildQuery = true
+				subQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
 				userFn(subQuery)
 			}
 		})
@@ -69,7 +69,7 @@ export class HasOneQueryBuilder extends BaseQueryBuilder {
 
 		this.applyQueryFlags(clonedQuery)
 		clonedQuery.appliedConstraints = this.appliedConstraints
-		clonedQuery.isEagerQuery = this.isEagerQuery
+		clonedQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
 		return clonedQuery
 	}
 

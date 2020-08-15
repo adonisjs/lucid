@@ -32,10 +32,23 @@ export abstract class BaseQueryBuilder extends ModelQueryBuilder
 	} = {}
 
 	/**
-	 * A flag to know, if query builder is instantiated for
-	 * eager loading or not.
+	 * Is query a relationship query obtained using `related('relation').query()`
 	 */
-	public isEagerQuery: boolean = false
+	public get isRelatedQuery (): true {
+		return true
+	}
+
+	/**
+	 * Is query a relationship query obtained using `related('relation').subQuery()`
+	 */
+	public get isRelatedSubQuery (): false {
+		return false
+	}
+
+	/**
+	 * Is query a relationship query obtained using one of the preload methods.
+	 */
+	public isRelatedPreloadQuery: boolean = false
 
 	constructor(
 		builder: knex.QueryBuilder,
@@ -62,7 +75,7 @@ export abstract class BaseQueryBuilder extends ModelQueryBuilder
 			connection: this.client.connectionName,
 			inTransaction: this.client.isTransaction,
 			model: this.model.name,
-			eagerLoading: this.isEagerQuery,
+			eagerLoading: this.isRelatedPreloadQuery,
 			relation: this.profilerData(),
 		})
 	}
@@ -99,7 +112,7 @@ export abstract class BaseQueryBuilder extends ModelQueryBuilder
 			action = 'delete'
 		}
 
-		if (action === 'select' && this.isEagerQuery) {
+		if (action === 'select' && this.isRelatedPreloadQuery) {
 			action = 'preload'
 		}
 
@@ -154,7 +167,7 @@ export abstract class BaseQueryBuilder extends ModelQueryBuilder
 	 */
 	public toSQL() {
 		this.applyConstraints()
-		if (this.isEagerQuery) {
+		if (this.isRelatedPreloadQuery) {
 			return this.groupConstraints.limit ? this.getGroupLimitQuery().toSQL() : super.toSQL()
 		}
 
@@ -177,7 +190,7 @@ export abstract class BaseQueryBuilder extends ModelQueryBuilder
 	 */
 	public exec() {
 		this.applyConstraints()
-		if (this.isEagerQuery) {
+		if (this.isRelatedPreloadQuery) {
 			return this.groupConstraints.limit ? this.getGroupLimitQuery().exec() : super.exec()
 		}
 

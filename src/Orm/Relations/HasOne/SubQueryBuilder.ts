@@ -23,7 +23,7 @@ export class HasOneSubQueryBuilder extends BaseSubQueryBuilder
 		super(builder, client, relation, (userFn) => {
 			return ($builder) => {
 				const subQuery = new HasOneSubQueryBuilder($builder, this.client, this.relation)
-				subQuery.isSubQuery = true
+				subQuery.isChildQuery = true
 				userFn(subQuery)
 			}
 		})

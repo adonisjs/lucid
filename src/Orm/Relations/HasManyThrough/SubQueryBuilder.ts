@@ -47,7 +47,7 @@ export class HasManyThroughSubQueryBuilder extends BaseSubQueryBuilder
 		super(builder, client, relation, (userFn) => {
 			return ($builder) => {
 				const subQuery = new HasManyThroughSubQueryBuilder($builder, this.client, this.relation)
-				subQuery.isSubQuery = true
+				subQuery.isChildQuery = true
 				userFn(subQuery)
 			}
 		})

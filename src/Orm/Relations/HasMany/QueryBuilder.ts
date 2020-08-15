@@ -33,8 +33,8 @@ export class HasManyQueryBuilder extends BaseQueryBuilder
 		super(builder, client, relation, (userFn) => {
 			return ($builder) => {
 				const subQuery = new HasManyQueryBuilder($builder, this.client, this.parent, this.relation)
-				subQuery.isSubQuery = true
-				subQuery.isEagerQuery = this.isEagerQuery
+				subQuery.isChildQuery = true
+				subQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
 				userFn(subQuery)
 			}
 		})
@@ -71,7 +71,7 @@ export class HasManyQueryBuilder extends BaseQueryBuilder
 
 		this.applyQueryFlags(clonedQuery)
 		clonedQuery.appliedConstraints = this.appliedConstraints
-		clonedQuery.isEagerQuery = this.isEagerQuery
+		clonedQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
 		return clonedQuery
 	}
 
@@ -114,7 +114,7 @@ export class HasManyQueryBuilder extends BaseQueryBuilder
 	 * it is not invoked during eagerloading
 	 */
 	public paginate(page: number, perPage: number = 20) {
-		if (this.isEagerQuery) {
+		if (this.isRelatedPreloadQuery) {
 			throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
 		}
 		return super.paginate(page, perPage)

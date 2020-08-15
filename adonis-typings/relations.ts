@@ -776,7 +776,20 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	 */
 	export interface RelationQueryBuilderContract<Related extends LucidModel, Result extends any>
 		extends ModelQueryBuilderContract<Related, Result> {
-		isEagerQuery: boolean
+		/**
+		 * Is query a relationship query obtained using `related('relation').query()`
+		 */
+		isRelatedQuery: true
+
+		/**
+		 * Is query a relationship query obtained using `related('relation').subQuery()`
+		 */
+		isRelatedSubQuery: false
+
+		/**
+		 * Is query a relationship query obtained using one of the preload methods.
+		 */
+		isRelatedPreloadQuery: boolean
 		selectRelationKeys(): this
 	}
 
@@ -863,6 +876,21 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	 */
 	export interface RelationSubQueryBuilderContract<Related extends LucidModel>
 		extends ModelQueryBuilderContract<Related, any> {
+		/**
+		 * Is query a relationship query obtained using `related('relation').query()`
+		 */
+		isRelatedQuery: false
+
+		/**
+		 * Is query a relationship query obtained using `related('relation').subQuery()`
+		 */
+		isRelatedSubQuery: true
+
+		/**
+		 * Is query a relationship query obtained using one of the preload methods.
+		 */
+		isRelatedPreloadQuery: false
+
 		selfJoinCounter: number
 		readonly selfJoinAlias: string
 		selectRelationKeys(): this

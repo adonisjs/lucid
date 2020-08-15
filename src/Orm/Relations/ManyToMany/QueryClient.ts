@@ -52,7 +52,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
 	) {
 		const query = new ManyToManyQueryBuilder(client.knexQuery(), client, rows, relation)
 
-		query.isEagerQuery = true
+		query.isRelatedPreloadQuery = true
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
 		return query
 	}
@@ -76,9 +76,9 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
 		rows: OneOrMany<LucidRow>
 	) {
 		const query = new ManyToManyQueryBuilder(client.knexQuery(), client, rows, relation)
-
-		query.isEagerQuery = false
+		query.isRelatedPreloadQuery = false
 		query.isPivotOnlyQuery = true
+
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
 		return query
 	}

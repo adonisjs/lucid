@@ -51,7 +51,7 @@ export class HasManyThroughClient
 	) {
 		const query = new HasManyThroughQueryBuilder(client.knexQuery(), client, rows, relation)
 
-		query.isEagerQuery = true
+		query.isRelatedPreloadQuery = true
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
 		return query
 	}

@@ -42,8 +42,8 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder
 					this.parent,
 					this.relation
 				)
-				subQuery.isSubQuery = true
-				subQuery.isEagerQuery = this.isEagerQuery
+				subQuery.isChildQuery = true
+				subQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
 				userFn(subQuery)
 			}
 		})
@@ -212,7 +212,7 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder
 		this.applyQueryFlags(clonedQuery)
 		clonedQuery.appliedConstraints = this.appliedConstraints
 		clonedQuery.cherryPickingKeys = this.cherryPickingKeys
-		clonedQuery.isEagerQuery = this.isEagerQuery
+		clonedQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
 		return clonedQuery
 	}
 
@@ -220,7 +220,7 @@ export class HasManyThroughQueryBuilder extends BaseQueryBuilder
 	 * Paginate through rows inside a given table
 	 */
 	public paginate(page: number, perPage: number = 20) {
-		if (this.isEagerQuery) {
+		if (this.isRelatedPreloadQuery) {
 			throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
 		}
 

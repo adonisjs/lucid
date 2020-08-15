@@ -37,8 +37,8 @@ export class BelongsToQueryBuilder extends BaseQueryBuilder {
 					this.parent,
 					this.relation
 				)
-				subQuery.isEagerQuery = this.isEagerQuery
-				subQuery.isSubQuery = true
+				subQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
+				subQuery.isChildQuery = true
 				userFn(subQuery)
 			}
 		})
@@ -139,7 +139,7 @@ export class BelongsToQueryBuilder extends BaseQueryBuilder {
 
 		this.applyQueryFlags(clonedQuery)
 		clonedQuery.appliedConstraints = this.appliedConstraints
-		clonedQuery.isEagerQuery = this.isEagerQuery
+		clonedQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
 		return clonedQuery
 	}
 

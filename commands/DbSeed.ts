@@ -81,7 +81,7 @@ export default class DbSeed extends BaseCommand {
 				break
 		}
 
-		console.log(`${colors[color]('❯')} ${colors[color](message)} ${file.name}`)
+		console.log(`${colors[color]('❯')} ${colors[color](message)} ${file.file.name}`)
 		if (prefix) {
 			console.log(`  ${colors[color](prefix)}`)
 		}

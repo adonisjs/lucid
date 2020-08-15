@@ -56,9 +56,9 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder
 					this.parent,
 					this.relation
 				)
-				subQuery.isSubQuery = true
+				subQuery.isChildQuery = true
 				subQuery.isPivotOnlyQuery = this.isPivotOnlyQuery
-				subQuery.isEagerQuery = this.isEagerQuery
+				subQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
 				userFn(subQuery)
 			}
 		})
@@ -315,10 +315,10 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder
 		)
 
 		this.applyQueryFlags(clonedQuery)
+		clonedQuery.isPivotOnlyQuery = this.isPivotOnlyQuery
 		clonedQuery.cherryPickingKeys = this.cherryPickingKeys
 		clonedQuery.appliedConstraints = this.appliedConstraints
-		clonedQuery.isPivotOnlyQuery = this.isPivotOnlyQuery
-		clonedQuery.isEagerQuery = this.isEagerQuery
+		clonedQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
 		return clonedQuery
 	}
 
@@ -326,7 +326,7 @@ export class ManyToManyQueryBuilder extends BaseQueryBuilder
 	 * Paginate through rows inside a given table
 	 */
 	public paginate(page: number, perPage: number = 20) {
-		if (this.isEagerQuery) {
+		if (this.isRelatedPreloadQuery) {
 			throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
 		}
 

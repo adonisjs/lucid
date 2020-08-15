@@ -22,7 +22,11 @@ export class User extends BaseModel {
 	public username: string
 
 	@hasOne(() => Profile, {
-		onQuery: (builder) => builder.preload('user'),
+		onQuery: (builder) => {
+			if (builder.isRelatedQuery) {
+				builder.preload('user')
+			}
+		},
 	})
 	public profile: HasOne<typeof Profile>
 

@@ -27,7 +27,7 @@ export class BelongsToSubQueryBuilder extends BaseSubQueryBuilder
 		super(builder, client, relation, (userFn) => {
 			return ($builder) => {
 				const subQuery = new BelongsToSubQueryBuilder($builder, this.client, this.relation)
-				subQuery.isSubQuery = true
+				subQuery.isChildQuery = true
 				userFn(subQuery)
 			}
 		})

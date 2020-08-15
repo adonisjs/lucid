@@ -117,7 +117,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	/**
 	 * Whether or not query is a subquery for `.where` callback
 	 */
-	public isSubQuery = false
+	public isChildQuery = false
 
 	constructor(
 		builder: knex.QueryBuilder,
@@ -126,7 +126,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 		customFn: DBQueryCallback = (userFn) => {
 			return ($builder) => {
 				const subQuery = new ModelQueryBuilder($builder, this.model, this.client)
-				subQuery.isSubQuery = true
+				subQuery.isChildQuery = true
 				userFn(subQuery)
 			}
 		}

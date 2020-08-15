@@ -47,7 +47,7 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
 	) {
 		const query = new HasManyQueryBuilder(client.knexQuery(), client, rows, relation)
 
-		query.isEagerQuery = true
+		query.isRelatedPreloadQuery = true
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
 		return query
 	}
