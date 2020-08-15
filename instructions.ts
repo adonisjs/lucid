@@ -9,32 +9,32 @@ import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 const DB_SERVER_PROMPT_CHOICES = [
 	{
 		name: 'sqlite' as const,
-		message: 'SQLite',
+		message: '[0] SQLite',
 	},
 	{
 		name: 'mysql' as const,
-		message: 'MySQL / MariaDB',
+		message: '[1] MySQL / MariaDB',
 	},
 	{
 		name: 'pg' as const,
-		message: 'PostgreSQL',
+		message: '[2] PostgreSQL',
 	},
 	{
 		name: 'oracle' as const,
-		message: 'OracleDB',
+		message: '[3] OracleDB',
 	},
 	{
 		name: 'mssql' as const,
-		message: 'Microsoft SQL Server',
+		message: '[4] Microsoft SQL Server',
 	},
 ]
 
 function getDbServer(sink: typeof sinkStatic) {
 	return sink
 		.getPrompt()
-		.multiple('Select the database driver you want to use', DB_SERVER_PROMPT_CHOICES, {
+		.multiple('Select the database driver you want to use (0-4)', DB_SERVER_PROMPT_CHOICES, {
 			validate(choices) {
-				return choices && choices.length ? true : 'Select atleast one database driver to continue'
+				return choices && choices.length ? true : 'Select at least one database driver to continue'
 			},
 		})
 }
