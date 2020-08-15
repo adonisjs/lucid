@@ -368,7 +368,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		/**
 		 * Execute query with pagination
 		 */
-		paginate(page: number, perPage?: number): Promise<SimplePaginatorContract<Result[]>>
+		paginate(page: number, perPage?: number): Promise<SimplePaginatorContract<Result>>
 
 		/**
 		 * Mutations (update and increment can be one query aswell)
@@ -749,7 +749,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		after<Model extends LucidModel>(
 			this: Model,
 			event: 'paginate',
-			handler: HooksHandler<SimplePaginatorContract<InstanceType<Model>[]>, 'paginate'>
+			handler: HooksHandler<SimplePaginatorContract<InstanceType<Model>>, 'paginate'>
 		): void
 		after<Model extends LucidModel, Event extends EventsList>(
 			this: Model,

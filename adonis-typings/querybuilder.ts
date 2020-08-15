@@ -594,8 +594,8 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 	/**
 	 * Shape of the simple paginator that works with offset and limit
 	 */
-	export interface SimplePaginatorContract<Result extends any[]> {
-		all(): Result
+	export interface SimplePaginatorContract<Result extends any> extends Array<Result> {
+		all(): Result[]
 		readonly firstPage: number
 		readonly perPage: number
 		readonly currentPage: number
@@ -612,7 +612,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 		getNextPageUrl(): string | null
 		getPreviousPageUrl(): string | null
 		getUrlsForRange(start: number, end: number): { url: string; page: number }[]
-		toJSON(): { meta: SimplePaginatorMeta; data: Result }
+		toJSON(): { meta: SimplePaginatorMeta; data: Result[] }
 	}
 
 	/**
@@ -649,7 +649,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 		/**
 		 * Execute query with pagination
 		 */
-		paginate(page: number, perPage?: number): Promise<SimplePaginatorContract<Result[]>>
+		paginate(page: number, perPage?: number): Promise<SimplePaginatorContract<Result>>
 
 		/**
 		 * Mutations (update and increment can be one query aswell)

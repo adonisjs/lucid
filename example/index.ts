@@ -68,3 +68,9 @@ UserF.with('profile', 1).merge({})
 User.query().withCount('profile', (query) => {
 	query.where('isActive', true).has('user', '>', 1)
 })
+
+User.query()
+	.paginate(1, 1)
+	.then((users) => {
+		users.forEach((user) => user.username)
+	})

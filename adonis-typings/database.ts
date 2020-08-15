@@ -644,7 +644,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
 				total: number,
 				perPage: number,
 				currentPage: number
-			): SimplePaginatorContract<Row[]>
+			): SimplePaginatorContract<Row>
 		}
 
 		hasHealthChecksEnabled: boolean

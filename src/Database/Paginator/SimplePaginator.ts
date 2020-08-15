@@ -17,7 +17,7 @@ import {
  * Simple paginator works with the data set provided by the standard
  * `offset` and `limit` based pagination.
  */
-export class SimplePaginator implements SimplePaginatorContract<any[]> {
+export class SimplePaginator extends Array implements SimplePaginatorContract<any> {
 	private qs: { [key: string]: any } = {}
 	private url: string = '/'
 
@@ -66,7 +66,9 @@ export class SimplePaginator implements SimplePaginatorContract<any[]> {
 		private totalNumber: number,
 		public readonly perPage: number,
 		public readonly currentPage: number
-	) {}
+	) {
+		super(...rows)
+	}
 
 	/**
 	 * A reference to the result rows

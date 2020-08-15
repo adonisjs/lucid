@@ -8312,6 +8312,21 @@ test.group('Query Builder | paginate', (group) => {
 
 		await connection.disconnect()
 	})
+
+	test('loop over pagination rows', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		let db = getQueryBuilder(getQueryClient(connection))
+		await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+
+		const users = await db.from('users').paginate(1, 5)
+		users.forEach((user) => {
+			assert.property(user, 'id')
+		})
+
+		await connection.disconnect()
+	})
 })
 
 test.group('Query Builder | clone', (group) => {
