@@ -25,7 +25,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 	 * Allowing a generic value along with raw query instance or a subquery
 	 * instance
 	 */
-	type ValueWithSubQueries<T extends any> = T | ChainableContract | RawQueryBuilderContract
+	export type ValueWithSubQueries<T extends any> = T | ChainableContract | RawQuery
 
 	/**
 	 * Acceptable raw queries
