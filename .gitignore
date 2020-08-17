@@ -15,4 +15,5 @@ test/functional/database
 build
 dist
 yarn.lock
+package-lock.json
 shrinkwrap.yaml
