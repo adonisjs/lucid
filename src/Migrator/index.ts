@@ -307,6 +307,18 @@ export class Migrator extends EventEmitter implements MigratorContract {
 	}
 
 	/**
+	 * Returns an array of the latest X files migrated.
+	 */
+	private async getLatestMigratedFiles(limit: number) {
+		return this.client
+			.query<{ name: string; batch: number; migration_time: Date }>()
+			.from(this.migrationsConfig.tableName)
+			.select('name', 'batch', 'migration_time')
+			.orderBy('id', 'desc')
+			.limit(limit)
+	}
+
+	/**
 	 * Returns an array of files migrated till now. The latest
 	 * migrations are on top
 	 */
@@ -369,25 +381,40 @@ export class Migrator extends EventEmitter implements MigratorContract {
 	/**
 	 * Migrate down (aka rollback)
 	 */
-	private async runDown(batch?: number) {
+	private async runDown(batch?: number, step?: number) {
 		if (this.app.inProduction && this.migrationsConfig.disableRollbacksInProduction) {
 			throw new Error(
 				'Rollback in production environment is disabled. Check "config/database" file for options.'
 			)
 		}
 
-		if (batch === undefined) {
+		if (batch && step) {
+			throw new Error('You cannot define --step and --batch at the same time.')
+		}
+
+		let existing: {
+			name: string
+			batch: number
+			migration_time: Date
+		}[]
+
+		if (batch === undefined && step === undefined) {
 			batch = (await this.getLatestBatch()) - 1
 		}
 
-		const existing = await this.getMigratedFilesTillBatch(batch)
+		if (batch !== undefined) {
+			existing = await this.getMigratedFilesTillBatch(batch)
+		} else if (step !== undefined) {
+			existing = await this.getLatestMigratedFiles(step)
+		}
+
 		const collected = await this.migrationSource.getMigrations()
 
 		/**
 		 * Finding schema files for migrations to rollback. We do not perform
 		 * rollback when any of the files are missing
 		 */
-		existing.forEach((file) => {
+		existing!.forEach((file) => {
 			const migration = collected.find(({ name }) => name === file.name)
 			if (!migration) {
 				throw new Exception(
@@ -478,7 +505,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
 			if (this.direction === 'up') {
 				await this.runUp()
 			} else if (this.options.direction === 'down') {
-				await this.runDown(this.options.batch)
+				await this.runDown(this.options.batch, this.options.step)
 			}
 		} catch (error) {
 			this.error = error

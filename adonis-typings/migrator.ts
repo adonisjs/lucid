@@ -23,6 +23,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
 		| {
 				direction: 'down'
 				batch?: number
+				step?: number
 				connectionName?: string
 				dryRun?: boolean
 		  }
