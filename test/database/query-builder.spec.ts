@@ -3631,6 +3631,40 @@ test.group('Query Builder | orderBy', (group) => {
 		await connection.disconnect()
 	})
 
+	test('define order by columns as an array', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		let db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db.from('users').orderBy('name', 'desc').toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.orderBy('name', 'desc')
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		db = getQueryBuilder(getQueryClient(connection))
+		db.keysResolver = (key) => `my_${key}`
+
+		const { sql: resolverSql, bindings: resolverBindings } = db
+			.from('users')
+			.orderBy(['name'])
+			.toSQL()
+
+		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+			.client!.from('users')
+			.orderBy('my_name')
+			.toSQL()
+
+		assert.equal(resolverSql, knexResolverSql)
+		assert.deepEqual(resolverBindings, knexResolverBindings)
+
+		await connection.disconnect()
+	})
+
 	test('define order by columns as an array of objects', async (assert) => {
 		const connection = new Connection('primary', getConfig(), getLogger())
 		connection.connect()
@@ -3669,8 +3703,8 @@ test.group('Query Builder | orderBy', (group) => {
 		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
 			.client!.from('users')
 			.orderBy([
-				{ column: 'name', order: 'desc' },
-				{ column: 'age', order: 'desc' },
+				{ column: 'my_name', order: 'desc' },
+				{ column: 'my_age', order: 'desc' },
 			])
 			.toSQL()
 
@@ -8539,7 +8573,6 @@ test.group('Query Builder | update', (group) => {
 			.update('my_account_status', 'active')
 			.toSQL()
 
-		console.log(resolverSql, resolverBindings)
 		assert.equal(resolverSql, knexResolverSql)
 		assert.deepEqual(resolverBindings, knexResolverBindings)
 
@@ -8574,7 +8607,6 @@ test.group('Query Builder | update', (group) => {
 			.update('my_is_active', false)
 			.toSQL()
 
-		console.log(resolverSql, resolverBindings)
 		assert.equal(resolverSql, knexResolverSql)
 		assert.deepEqual(resolverBindings, knexResolverBindings)
 

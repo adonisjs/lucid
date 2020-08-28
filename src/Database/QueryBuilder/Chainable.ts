@@ -1021,7 +1021,22 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 	 * Add order by clause
 	 */
 	public orderBy(column: any, direction?: any): this {
-		this.knexQuery.orderBy(this.resolveKey(column), direction)
+		if (typeof column === 'string') {
+			this.knexQuery.orderBy(this.resolveKey(column), direction)
+			return this
+		}
+
+		if (Array.isArray(column)) {
+			this.knexQuery.orderBy(column.map((col) => {
+				if (col.column) {
+					col.column = this.resolveKey(col.column)
+					return col
+				}
+				return this.resolveKey(col)
+			}))
+			return this
+		}
+
 		return this
 	}
 
