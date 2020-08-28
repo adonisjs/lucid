@@ -20,7 +20,8 @@ import { BaseQueryBuilder } from '../Base/QueryBuilder'
  * Extends the model query builder for executing queries in scope
  * to the current relationship
  */
-export class HasManyThroughQueryBuilder extends BaseQueryBuilder
+export class HasManyThroughQueryBuilder
+	extends BaseQueryBuilder
 	implements HasManyThroughQueryBuilderContract<LucidModel, LucidModel> {
 	protected cherryPickingKeys: boolean = false
 	protected appliedConstraints: boolean = false

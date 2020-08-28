@@ -15,7 +15,8 @@ import { RelationSubQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
 import { HasMany } from './index'
 import { BaseSubQueryBuilder } from '../Base/SubQueryBuilder'
 
-export class HasManySubQueryBuilder extends BaseSubQueryBuilder
+export class HasManySubQueryBuilder
+	extends BaseSubQueryBuilder
 	implements RelationSubQueryBuilderContract<LucidModel> {
 	protected appliedConstraints: boolean = false
 

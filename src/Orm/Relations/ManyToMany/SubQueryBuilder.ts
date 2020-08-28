@@ -19,7 +19,8 @@ import { BaseSubQueryBuilder } from '../Base/SubQueryBuilder'
 /**
  * Exposes the API to construct sub queries for a many to many relationships
  */
-export class ManyToManySubQueryBuilder extends BaseSubQueryBuilder
+export class ManyToManySubQueryBuilder
+	extends BaseSubQueryBuilder
 	implements ManyToManySubQueryBuilderContract<LucidModel> {
 	/**
 	 * Pivot helpers provides the implementation for pivot table constraints

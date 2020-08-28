@@ -19,7 +19,8 @@ import { BaseSubQueryBuilder } from '../Base/SubQueryBuilder'
  * Extends the model query builder for executing queries in scope
  * to the current relationship
  */
-export class HasManyThroughSubQueryBuilder extends BaseSubQueryBuilder
+export class HasManyThroughSubQueryBuilder
+	extends BaseSubQueryBuilder
 	implements RelationSubQueryBuilderContract<LucidModel> {
 	/**
 	 * A boolean to track if query constraints for the relationship

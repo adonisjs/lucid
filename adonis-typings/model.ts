@@ -313,7 +313,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
 	export interface ModelQueryBuilderContract<
 		Model extends LucidModel,
 		Result extends any = InstanceType<Model>
-	> extends ChainableContract, ExcutableQueryBuilderContract<Result[]> {
+	> extends ChainableContract,
+			ExcutableQueryBuilderContract<Result[]> {
 		model: Model
 
 		/**

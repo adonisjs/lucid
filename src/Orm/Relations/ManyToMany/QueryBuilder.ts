@@ -21,7 +21,8 @@ import { BaseQueryBuilder } from '../Base/QueryBuilder'
  * Extends the model query builder for executing queries in scope
  * to the current relationship
  */
-export class ManyToManyQueryBuilder extends BaseQueryBuilder
+export class ManyToManyQueryBuilder
+	extends BaseQueryBuilder
 	implements ManyToManyQueryBuilderContract<LucidModel, LucidModel> {
 	private pivotQuery = false
 	private relatedTable = this.relation.relatedModel().table

@@ -18,7 +18,8 @@ import { ModelQueryBuilder } from '../../QueryBuilder'
 /**
  * Base query builder for ORM Relationships
  */
-export abstract class BaseSubQueryBuilder extends ModelQueryBuilder
+export abstract class BaseSubQueryBuilder
+	extends ModelQueryBuilder
 	implements RelationSubQueryBuilderContract<LucidModel> {
 	/**
 	 * The counter for the self join alias. Usually will be set by

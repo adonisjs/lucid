@@ -1027,13 +1027,15 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 		}
 
 		if (Array.isArray(column)) {
-			this.knexQuery.orderBy(column.map((col) => {
-				if (col.column) {
-					col.column = this.resolveKey(col.column)
-					return col
-				}
-				return this.resolveKey(col)
-			}))
+			this.knexQuery.orderBy(
+				column.map((col) => {
+					if (col.column) {
+						col.column = this.resolveKey(col.column)
+						return col
+					}
+					return this.resolveKey(col)
+				})
+			)
 			return this
 		}
 
