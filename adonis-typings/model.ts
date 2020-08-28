@@ -256,7 +256,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 				autoUpdate: boolean
 			}
 		>
-	) => OptionalTypedDecorator<DateTime>
+	) => OptionalTypedDecorator<DateTime | null>
 
 	/**
 	 * Decorator for defining date time columns. It is same as

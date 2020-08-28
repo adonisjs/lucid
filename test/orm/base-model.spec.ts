@@ -872,6 +872,36 @@ test.group('Base Model | persist', (group) => {
 		assert.deepEqual(user.$attributes, { fullName: 'Foo' })
 		assert.deepEqual(user.$original, { fullName: 'Foo' })
 	})
+
+	test('allow datetime column value to be null', async (assert) => {
+		assert.plan(3)
+		const adapter = new FakeAdapter()
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@column()
+			public createdAt: DateTime | null
+		}
+
+		User.$adapter = adapter
+		adapter.on('update', (_, attributes) => {
+			assert.deepEqual(attributes, { created_at: null })
+		})
+
+		const user = new User()
+		await user.save()
+
+		user.createdAt = null
+		await user.save()
+
+		assert.deepEqual(user.$attributes, { createdAt: null })
+		assert.deepEqual(user.$original, { createdAt: null })
+	})
 })
 
 test.group('Base Model | create from adapter results', (group) => {
