@@ -14,6 +14,12 @@ const moment = require('moment')
 const GE = require('@adonisjs/generic-exceptions')
 const { resolver, ioc } = require('../../../lib/iocResolver')
 
+/**
+ * Get DB connection to fix .returning() warning on mysql inserts
+ */
+const Env = ioc.use('Env')
+const dbConnection = Env.get('DB_CONNECTION')
+
 const BaseModel = require('./Base')
 const QueryBuilder = require('../QueryBuilder')
 const EagerLoad = require('../EagerLoad')
@@ -608,10 +614,17 @@ class Model extends BaseModel {
 
     /**
      * Execute query
+     * Fix for MySQL database
      */
-    const result = await query
-      .returning(this.constructor.primaryKey)
-      .insert(this.$attributes)
+    let result
+    if(dbConnection == 'mysql') {
+      result = await query
+        .insert(this.$attributes)
+    } else {
+      result = await query
+        .returning(this.constructor.primaryKey)
+        .insert(this.$attributes)
+    }
 
     /**
      * Only set the primary key value when incrementing is
