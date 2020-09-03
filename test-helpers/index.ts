@@ -244,6 +244,15 @@ export async function setup(destroyDb: boolean = true) {
 		})
 	}
 
+	const hasScoresTable = await db.schema.hasTable('scores')
+	if (!hasScoresTable) {
+		await db.schema.createTable('scores', (table) => {
+			table.bigIncrements()
+			table.string('username')
+			table.bigInteger('score')
+		})
+	}
+
 	if (destroyDb) {
 		await db.destroy()
 	}
@@ -271,6 +280,7 @@ export async function cleanup(customTables?: string[]) {
 	await db.schema.dropTableIfExists('posts')
 	await db.schema.dropTableIfExists('comments')
 	await db.schema.dropTableIfExists('identities')
+	await db.schema.dropTableIfExists('scores')
 	await db.schema.dropTableIfExists('knex_migrations')
 
 	await db.destroy()
@@ -291,6 +301,7 @@ export async function resetTables() {
 	await db.table('posts').truncate()
 	await db.table('comments').truncate()
 	await db.table('identities').truncate()
+	await db.table('scores').truncate()
 	await db.destroy()
 }
 

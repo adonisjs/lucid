@@ -283,6 +283,13 @@ declare module '@ioc:Adonis/Lucid/Database' {
 	}
 
 	/**
+	 * Datatypes config
+	 */
+	export type DatatypesConfig = {
+		bigint: boolean
+	}
+
+	/**
 	 * Shared config options for all clients
 	 */
 	type SharedConfigNode = {
@@ -293,6 +300,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
 		healthCheck?: boolean
 		migrations?: MigratorConfig
 		seeders?: SeedersConfig
+		datatypes?: DatatypesConfig
 		pool?: {
 			afterCreate?: (conn: any, done: any) => void
 			min?: number
@@ -331,6 +339,21 @@ declare module '@ioc:Adonis/Lucid/Database' {
 	 * Knex forwards all config options to the driver directly. So feel
 	 * free to define them (let us know, in case any options are missing)
 	 */
+	type MysqlTypeCastFn = (
+		field: {
+			db: string
+			table: string
+			name: string
+			type: string
+			length: number
+			packet: any
+			string(): string
+			buffer(): Buffer
+			geometry(): any
+		},
+		next: () => any
+	) => any
+
 	type MysqlConnectionNode = {
 		socketPath?: string
 		localAddress?: string
@@ -338,7 +361,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
 		timezone?: string
 		stringifyObjects?: boolean
 		insecureAuth?: boolean
-		typeCast?: boolean
+		typeCast?: boolean | MysqlTypeCastFn
 		supportBigNumbers?: boolean
 		bigNumberStrings?: boolean
 		dateStrings?: boolean | string[]
@@ -563,6 +586,17 @@ declare module '@ioc:Adonis/Lucid/Database' {
 		 * Returns the health check report for registered connections
 		 */
 		report(): Promise<HealthReportEntry & { meta: ReportNode[] }>
+	}
+
+	/**
+	 * Client creator is an abstract factory class that takes care of creating
+	 * a instance of knex client that is patched to handle configured datatypes
+	 */
+	export interface ClientCreatorContract {
+		createClient(
+			config: knex.Config,
+			configResolver?: (config: knex.Config) => knex.ConnectionConfig
+		): knex
 	}
 
 	/**

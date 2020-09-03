@@ -1233,7 +1233,16 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 	 */
 	public count(columns: any, alias?: any): this {
 		this.hasAggregates = true
-		this.knexQuery.count(this.normalizeAggregateColumns(columns, alias))
+
+		const normalized = this.normalizeAggregateColumns(columns, alias)
+		const { client, datatypes = {} } = this.knexQuery.client.config as any
+
+		if (client === 'mssql' && datatypes.bigint) {
+			this.knexQuery['_aggregate']('count_big', normalized)
+		} else {
+			this.knexQuery.count(normalized)
+		}
+
 		return this
 	}
 
@@ -1242,7 +1251,16 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 	 */
 	public countDistinct(columns: any, alias?: any): this {
 		this.hasAggregates = true
-		this.knexQuery.countDistinct(this.normalizeAggregateColumns(columns, alias))
+
+		const normalized = this.normalizeAggregateColumns(columns, alias)
+		const { client, datatypes = {} } = this.knexQuery.client.config as any
+
+		if (client === 'mssql' && datatypes.bigint) {
+			this.knexQuery['_aggregate']('count_big', normalized, { distinct: true })
+		} else {
+			this.knexQuery.countDistinct(normalized)
+		}
+
 		return this
 	}
 

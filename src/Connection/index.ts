@@ -13,9 +13,14 @@ import knex from 'knex'
 import { Pool } from 'tarn'
 import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
-import { patchKnex } from 'knex-dynamic-connection'
+import { getClientCreator } from '../Creators'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
-import { ConnectionConfig, ConnectionContract, ReportNode } from '@ioc:Adonis/Lucid/Database'
+import {
+	ConnectionConfig,
+	ConnectionContract,
+	ReportNode,
+	ClientCreatorContract,
+} from '@ioc:Adonis/Lucid/Database'
 
 import { Logger } from './Logger'
 
@@ -57,6 +62,13 @@ export class Connection extends EventEmitter implements ConnectionContract {
 	 * The round robin counter for reading config
 	 */
 	private roundRobinCounter = 0
+
+	/**
+	 * The client creator responsible for creating patched knex client instance
+	 */
+	private creator: ClientCreatorContract = getClientCreator(this.config.client, {
+		log: new Logger(this.name, this.logger),
+	})
 
 	constructor(
 		public readonly name: string,
@@ -225,12 +237,10 @@ export class Connection extends EventEmitter implements ConnectionContract {
 	 * Creates the write connection.
 	 */
 	private setupWriteConnection() {
-		this.client = knex(
-			Object.assign({ log: new Logger(this.name, this.logger) }, this.getWriteConfig(), {
-				debug: false,
-			})
+		this.client = this.creator.createClient(
+			this.getWriteConfig(),
+			this.writeConfigResolver.bind(this)
 		)
-		patchKnex(this.client, this.writeConfigResolver.bind(this))
 	}
 
 	/**
@@ -244,12 +254,10 @@ export class Connection extends EventEmitter implements ConnectionContract {
 		}
 
 		this.logger.trace({ connection: this.name }, 'setting up read/write replicas')
-		this.readClient = knex(
-			Object.assign({ log: new Logger(this.name, this.logger) }, this.getReadConfig(), {
-				debug: false,
-			})
+		this.readClient = this.creator.createClient(
+			this.getReadConfig(),
+			this.readConfigResolver.bind(this)
 		)
-		patchKnex(this.readClient, this.readConfigResolver.bind(this))
 	}
 
 	/**
@@ -257,16 +265,14 @@ export class Connection extends EventEmitter implements ConnectionContract {
 	 * after first error.
 	 */
 	private async checkReadHosts() {
-		const configCopy = Object.assign({ log: new Logger(this.name, this.logger) }, this.config, {
-			debug: false,
-		})
+		const configCopy = Object.assign({}, this.config)
 		let error: any = null
 
 		// eslint-disable-next-line @typescript-eslint/naming-convention
 		for (let _ of this.readReplicas) {
 			configCopy.connection = this.readConfigResolver(this.config)
 			this.logger.trace({ connection: this.name }, 'spawing health check read connection')
-			const client = knex(configCopy)
+			const client = this.creator.createClient(configCopy)
 
 			try {
 				await client.raw('SELECT 1 + 1 AS result')
