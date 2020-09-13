@@ -32,7 +32,7 @@ export default class Migrate extends MigrationsBase {
 	/**
 	 * Force run migrations in production
 	 */
-	@flags.boolean({ description: 'Explictly force to run migrations in production' })
+	@flags.boolean({ description: 'Explicitly force to run migrations in production' })
 	public force: boolean
 
 	/**
