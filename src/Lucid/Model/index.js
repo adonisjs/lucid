@@ -607,11 +607,30 @@ class Model extends BaseModel {
     }
 
     /**
+     * Get our config from the IOC container, then get the database config
+     */
+    const config = ioc.use('Config');
+    const dbConfig = config.get('database');
+
+    /**
+     * Connection is set in the model, if it's undefined then it's using the default connection
+     */
+    const client = this.constructor.connection ? dbConfig[this.constructor.connection].client : dbConfig[dbConfig['connection']].client;
+
+    /**
      * Execute query
      */
-    const result = await query
-      .returning(this.constructor.primaryKey)
-      .insert(this.$attributes)
+    const returningClients = ['pg', 'mssql', 'oracledb'];
+
+    let result;
+    if (returningClients.includes(client)) {
+      result = await query
+        .returning(this.constructor.primaryKey)
+        .insert(this.$attributes)
+    } else {
+      result = await query
+        .insert(this.$attributes)
+    }
 
     /**
      * Only set the primary key value when incrementing is
