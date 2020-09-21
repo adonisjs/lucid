@@ -8,7 +8,11 @@
  */
 
 import { join } from 'path'
+import { promisify } from 'util'
 import { BaseCommand, args, flags } from '@adonisjs/ace'
+import { execFile as childProcessExec } from 'child_process'
+
+const exec = promisify(childProcessExec)
 
 export default class MakeModel extends BaseCommand {
 	public static commandName = 'make:model'
@@ -41,6 +45,26 @@ export default class MakeModel extends BaseCommand {
 	public controller: boolean
 
 	/**
+	 * Executes a given command
+	 */
+	private async execCommand(command: string, commandArgs: string[]) {
+		const { stdout, stderr } = await exec(command, commandArgs, {
+			env: {
+    		...process.env,
+        FORCE_COLOR: 'true',
+			},
+		})
+
+		if (stdout) {
+			console.log(stdout.trim())
+		}
+
+		if (stderr) {
+			console.log(stderr.trim())
+		}
+	}
+
+	/**
 	 * Execute command
 	 */
 	public async handle(): Promise<void> {
@@ -56,11 +80,11 @@ export default class MakeModel extends BaseCommand {
 			.appRoot(this.application.cliCwd || this.application.appRoot)
 
 		if (this.migration) {
-			this.kernel.exec('make:migration', [this.name])
+			await this.execCommand('node', ['ace', 'make:migration', this.name])
 		}
 
 		if (this.controller) {
-			this.kernel.exec('make:controller', [this.name, '--resource'])
+			await this.execCommand('node', ['ace', 'make:controller', this.name, '--resource'])
 		}
 
 		await this.generator.run()
