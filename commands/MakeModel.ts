@@ -50,8 +50,8 @@ export default class MakeModel extends BaseCommand {
 	private async execCommand(command: string, commandArgs: string[]) {
 		const { stdout, stderr } = await exec(command, commandArgs, {
 			env: {
-    		...process.env,
-        FORCE_COLOR: 'true',
+				...process.env,
+				FORCE_COLOR: 'true',
 			},
 		})
 
