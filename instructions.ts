@@ -1,5 +1,5 @@
 import { join } from 'path'
-import { mkdirSync } from 'fs'
+import { mkdirSync, existsSync } from 'fs'
 import * as sinkStatic from '@adonisjs/sink'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
@@ -104,7 +104,7 @@ export default async function instructions(
 	/**
 	 * Create tmp dir when sqlite is selected
 	 */
-	if (dbServer.includes('sqlite')) {
+	if (dbServer.includes('sqlite') && !existsSync(app.tmpPath())) {
 		mkdirSync(app.tmpPath())
 		const tmpDir = app.directoriesMap.get('tmp') || 'tmp'
 		sink.logger.success(`mkdir ./${tmpDir}`)
