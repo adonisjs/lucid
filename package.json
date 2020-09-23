@@ -137,7 +137,12 @@
     ],
     "commands": [
       "@adonisjs/lucid/build/commands"
-    ]
+    ],
+    "templates": {
+      "database": [
+        "factories/index.txt"
+      ]
+    }
   },
   "np": {
     "contents": ".",
