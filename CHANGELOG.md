@@ -1,3 +1,9 @@
+# [6.2.1](https://github.com/adonisjs/adonis-lucid/compare/v6.2.0...v6.2.1) (2020-09-23)
+
+### Bug Fixes
+
+* **lucid:** Add mysql to the list of non-returning db clients ([85603cd](https://github.com/adonisjs/lucid/commit/85603cdba02aa3246dff839b33d0b109dd022ad2)), closes [#571](https://github.com/adonisjs/lucid/issues/571)
+
 # [6.2.0](https://github.com/adonisjs/adonis-lucid/compare/v6.1.3...v6.2.0) (2020-07-17)
 
 ### Features
