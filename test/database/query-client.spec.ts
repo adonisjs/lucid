@@ -440,6 +440,7 @@ test.group('Query client | get tables', (group) => {
 				'skill_user',
 				'skills',
 				'users',
+				'uuid_users',
 			])
 		} else {
 			assert.deepEqual(tables, [
@@ -453,6 +454,7 @@ test.group('Query client | get tables', (group) => {
 				'skills',
 				'skill_user',
 				'users',
+				'uuid_users',
 			])
 		}
 	})
