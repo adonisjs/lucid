@@ -15,7 +15,7 @@
         href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.16.2/build/styles/atom-one-dark.min.css">
 
     <title>NPM Audit Report</title>
-    <meta name="description" content="90 known vulnerabilities found.">
+    <meta name="description" content="0 known vulnerabilities found.">
 
     <style>
         pre {
@@ -39,7 +39,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
-                            90
+                            0
                         </h5>
                         <p class="card-text">Known vulnerabilities</p>
                     </div>
@@ -47,7 +47,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
-                            193
+                            189
                         </h5>
                         <p class="card-text">Dependencies</p>
                     </div>
@@ -55,7 +55,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
-                            September 23rd 2020, 10:13:51 am
+                            October 5th 2020, 1:37:25 pm
                         </h5>
                         <p class="card-text">Last updated</p>
                     </div>
@@ -95,7 +95,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
-                            90
+                            0
                         </h5>
                         <p class="card-text">
                             <span class="badge badge-primary">low</span>
@@ -128,20 +128,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <th scope="row">
-                                <a href="https://npmjs.com/advisories/1490" data-toggle="modal" data-target="#advisory-modal-1490">Validation Bypass</a>
-                            </th>
-                            <td>
-                                <a href="https://npmjs.com/package/kind-of" target="_blank"
-                                    rel="noopener">kind-of</a>
-                            </td>
-                            <td data-order="4"><span
-                                    class="badge badge-primary">low</span></td>
-                            <td>
-                                CWE-20
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -149,156 +135,6 @@
     </div>
 
 
-    <div class="modal" tabindex="-1" role="dialog" id="advisory-modal-1490">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <span class="badge badge-primary">low</span>
-                        Validation Bypass
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <ul>
-                                <li>Module:
-                                    <a href="https://npmjs.com/package/kind-of" target="_blank"
-                                        rel="noopener">kind-of</a>
-                                </li>
-                                <li>Published: March 6th 2020 </li>
-                                <li>Reported by: Feng Xiao</li>
-                                <li>CWE-20</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <ul>
-                                <li>Vulnerable: &gt;&#x3D;6.0.0 &lt;6.0.3</li>
-                                <li>Patched: &gt;&#x3D;6.0.3</li>
-                                <li>Exploitability: 3</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <h3>Overview</h3>
-                    <p class="card-text"><p>Versions of <code>kind-of</code> 6.x prior to 6.0.3 are vulnerable to a Validation Bypass. A maliciously crafted object can alter the result of the type check, allowing attackers to bypass the type checking validation. </p>
-</p>
-
-                    <h3>Findings</h3>
-                    <ul>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;expand-brackets&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;expand-brackets&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;expand-brackets&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;expand-brackets&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;expand-brackets&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;expand-brackets&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;snapdragon&gt;base&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;snapdragon-node&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;snapdragon-node&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;snapdragon-node&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;snapdragon-node&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;snapdragon-node&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;snapdragon-node&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;expand-brackets&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;expand-brackets&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;expand-brackets&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;expand-brackets&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;to-regex&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;to-regex&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;braces&gt;to-regex&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;expand-brackets&gt;to-regex&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;expand-brackets&gt;to-regex&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;to-regex&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;to-regex&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;to-regex&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;to-regex&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;to-regex&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;to-regex&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;define-property&gt;is-descriptor&gt;is-accessor-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;define-property&gt;is-descriptor&gt;is-data-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;extglob&gt;define-property&gt;is-descriptor&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;micromatch&gt;nanomatch&gt;kind-of </li>
-                        <li>knex&gt;liftoff&gt;object.map&gt;make-iterator&gt;kind-of </li>
-                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;object.map&gt;make-iterator&gt;kind-of </li>
-                    </ul>
-
-                    <h3>Remediation</h3>
-                    <p class="card-text"><p>Upgrade to versions 6.0.3 or later.</p>
-</p>
-                     
-                    <h3>References</h3>
-                    <p class="card-text"><ul>
-<li><a href="https://github.com/jonschlinkert/kind-of/issues/30">GitHub issue</a></li>
-</ul>
-</p>
-                     
-                </div>
-                <div class="modal-footer">
-                    <a class="btn btn-raised mr-2 btn-primary" href="https://npmjs.com/advisories/1490" target="_blank" rel="noopener">More about
-                        this vulnerability</a>
-                    <button type="button" class="btn btn-raised btn-secondary" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
         integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
