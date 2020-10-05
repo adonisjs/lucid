@@ -11,7 +11,7 @@
 
 import test from 'japa'
 import { DateTime } from 'luxon'
-import { HasOne, HasMany, BelongsTo } from '@ioc:Adonis/Lucid/Relations'
+import type { HasOne, HasMany, BelongsTo } from '@ioc:Adonis/Lucid/Relations'
 import { ModelQueryBuilder } from '../../src/Orm/QueryBuilder'
 import {
 	column,
@@ -901,6 +901,42 @@ test.group('Base Model | persist', (group) => {
 
 		assert.deepEqual(user.$attributes, { createdAt: null })
 		assert.deepEqual(user.$original, { createdAt: null })
+	})
+
+	test('assign local id to the model', async (assert) => {
+		class User extends BaseModel {
+			public static table = 'uuid_users'
+
+			@column({ isPrimary: true })
+			public id: string
+
+			@column()
+			public username: string
+
+			@column()
+			public createdAt: string
+
+			@column({ columnName: 'updated_at' })
+			public updatedAt: string
+		}
+
+		const randomNumber = new Date().getTime()
+
+		const user = new User()
+		user.id = String(randomNumber)
+		user.username = 'virk'
+		await user.save()
+
+		assert.isTrue(user.$isPersisted)
+		assert.isFalse(user.$isDirty)
+		assert.isUndefined(user.updatedAt)
+		assert.equal(user.id, String(randomNumber))
+
+		await user.refresh()
+		assert.isTrue(user.$isPersisted)
+		assert.isFalse(user.$isDirty)
+		assert.isDefined(user.updatedAt)
+		assert.equal(user.id, String(randomNumber))
 	})
 })
 

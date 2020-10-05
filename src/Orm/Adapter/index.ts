@@ -63,7 +63,9 @@ export class Adapter implements AdapterContract {
 		)
 
 		const result = await query.insert(attributes).reporterData({ model: modelConstructor.name })
-		instance.$consumeAdapterResult({ [primaryKeyColumnName]: result[0] })
+		if (instance.$primaryKeyValue === undefined) {
+			instance.$consumeAdapterResult({ [primaryKeyColumnName]: result[0] })
+		}
 	}
 
 	/**
