@@ -152,6 +152,16 @@ export async function setup(destroyDb: boolean = true) {
 		})
 	}
 
+	const hasUuidUsers = await db.schema.hasTable('uuid_users')
+	if (!hasUuidUsers) {
+		await db.schema.createTable('uuid_users', (table) => {
+			table.uuid('id').primary()
+			table.string('username').unique()
+			table.timestamp('created_at').defaultTo(db.fn.now())
+			table.timestamp('updated_at').nullable()
+		})
+	}
+
 	const hasFollowTable = await db.schema.hasTable('follows')
 	if (!hasFollowTable) {
 		await db.schema.createTable('follows', (table) => {
@@ -262,6 +272,7 @@ export async function cleanup(customTables?: string[]) {
 	}
 
 	await db.schema.dropTableIfExists('users')
+	await db.schema.dropTableIfExists('uuid_users')
 	await db.schema.dropTableIfExists('follows')
 	await db.schema.dropTableIfExists('friends')
 	await db.schema.dropTableIfExists('countries')
@@ -282,6 +293,7 @@ export async function cleanup(customTables?: string[]) {
 export async function resetTables() {
 	const db = knex(Object.assign({}, getConfig(), { debug: false }))
 	await db.table('users').truncate()
+	await db.table('uuid_users').truncate()
 	await db.table('follows').truncate()
 	await db.table('friends').truncate()
 	await db.table('countries').truncate()
