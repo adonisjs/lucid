@@ -67,7 +67,7 @@
     "@adonisjs/ace": "^6.9.4",
     "@adonisjs/application": "^2.0.0",
     "@adonisjs/core": "^5.0.0-preview-rc-1.12",
-    "@adonisjs/fold": "^6.4.1",
+    "@adonisjs/fold": "6.4.1",
     "@adonisjs/mrm-preset": "^2.4.0",
     "@adonisjs/require-ts": "^1.0.4",
     "@adonisjs/sink": "^3.0.3",
