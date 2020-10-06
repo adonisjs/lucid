@@ -590,6 +590,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
 		readonly name: string
 
 		/**
+		 * Find if connection is ready or not
+		 */
+		readonly ready: boolean
+
+		/**
 		 * Untouched config
 		 */
 		config: ConnectionConfig
