@@ -144,23 +144,26 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 		/**
 		 * Column name and array of values
 		 */
-		(K: string, value: (StrictValues | ChainableContract)[]): Builder
+		(K: string, value: StrictValues[]): Builder
 
 		/**
 		 * Column names and array of values as an 2d array
 		 */
-		(K: string[], value: (StrictValues | ChainableContract)[][]): Builder
+		(K: string[], value: StrictValues[][]): Builder
 
 		/**
 		 * Column name with a subquery for a callback that yields an array of
 		 * results
 		 */
-		(k: string, subquery: ChainableContract | QueryCallback<Builder>): Builder
+		(
+			k: string,
+			subquery: ChainableContract | QueryCallback<Builder> | RawBuilderContract | RawQuery
+		): Builder
 
 		/**
 		 * Column names along with a subquery that yields an array
 		 */
-		(k: string[], subquery: ChainableContract): Builder
+		(k: string[], subquery: ChainableContract | RawBuilderContract | RawQuery): Builder
 	}
 
 	/**

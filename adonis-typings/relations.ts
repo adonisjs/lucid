@@ -20,10 +20,12 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 	import {
+		RawQuery,
 		OneOrMany,
 		StrictValues,
 		QueryCallback,
 		ChainableContract,
+		RawBuilderContract,
 	} from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 	/**
@@ -825,10 +827,13 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 	 * Possible signatures for adding where in clause.
 	 */
 	interface WhereInPivot<Builder extends any> {
-		(K: string, value: (StrictValues | ChainableContract)[]): Builder
-		(K: string[], value: (StrictValues | ChainableContract)[][]): Builder
-		(k: string, subquery: ChainableContract | QueryCallback<Builder>): Builder
-		(k: string[], subquery: ChainableContract): Builder
+		(K: string, value: StrictValues[]): Builder
+		(K: string[], value: StrictValues[][]): Builder
+		(
+			k: string,
+			subquery: ChainableContract | QueryCallback<Builder> | RawBuilderContract | RawQuery
+		): Builder
+		(k: string[], subquery: ChainableContract | RawBuilderContract | RawQuery): Builder
 	}
 
 	/**

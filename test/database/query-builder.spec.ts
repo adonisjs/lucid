@@ -1158,7 +1158,7 @@ test.group('Query Builder | whereIn', (group) => {
 		await connection.disconnect()
 	})
 
-	test('add whereIn as a rawquery', async (assert) => {
+	test('add whereIn as a rawquery inside array', async (assert) => {
 		const connection = new Connection('primary', getConfig(), getLogger())
 		connection.connect()
 
@@ -1194,6 +1194,59 @@ test.group('Query Builder | whereIn', (group) => {
 					`select ${ref('id')} from ${ref('accounts')}`
 				),
 			])
+			.toSQL()
+
+		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+			.client!.from('users')
+			.whereIn('my_username', [
+				connection.client!.raw(`select ${ref('id')} from ${ref('accounts')}`),
+			])
+			.toSQL()
+
+		assert.equal(resolverSql, knexResolverSql)
+		assert.deepEqual(resolverBindings, knexResolverBindings)
+
+		await connection.disconnect()
+	})
+
+	test('add whereIn as a rawquery', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		const ref = connection.client!.ref.bind(connection.client!)
+
+		let db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.whereIn(
+				'username',
+				getRawQueryBuilder(
+					getQueryClient(connection),
+					`select ${ref('id')} from ${ref('accounts')}`
+				)
+			)
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.whereIn('username', [connection.client!.raw(`select ${ref('id')} from ${ref('accounts')}`)])
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		db = getQueryBuilder(getQueryClient(connection))
+		db.keysResolver = (key) => `my_${key}`
+
+		const { sql: resolverSql, bindings: resolverBindings } = db
+			.from('users')
+			.whereIn(
+				'username',
+				getRawQueryBuilder(
+					getQueryClient(connection),
+					`select ${ref('id')} from ${ref('accounts')}`
+				)
+			)
 			.toSQL()
 
 		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
