@@ -920,23 +920,23 @@ test.group('Base Model | persist', (group) => {
 			public updatedAt: string
 		}
 
-		const randomNumber = new Date().getTime()
+		const uuid = '2da96a33-57a0-4752-9d56-0e2485d4d2a4'
 
 		const user = new User()
-		user.id = String(randomNumber)
+		user.id = uuid
 		user.username = 'virk'
 		await user.save()
 
 		assert.isTrue(user.$isPersisted)
 		assert.isFalse(user.$isDirty)
 		assert.isUndefined(user.updatedAt)
-		assert.equal(user.id, String(randomNumber))
+		assert.equal(user.id, uuid)
 
 		await user.refresh()
 		assert.isTrue(user.$isPersisted)
 		assert.isFalse(user.$isDirty)
 		assert.isDefined(user.updatedAt)
-		assert.equal(user.id, String(randomNumber))
+		assert.equal(user.id, uuid)
 	})
 })
 
