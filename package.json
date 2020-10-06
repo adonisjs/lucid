@@ -71,7 +71,7 @@
     "@adonisjs/mrm-preset": "^2.4.0",
     "@adonisjs/require-ts": "^1.0.4",
     "@adonisjs/sink": "^3.0.3",
-    "@adonisjs/validator": "^8.0.1",
+    "@adonisjs/validator": "^7.4.2",
     "@poppinss/dev-utils": "^1.0.8",
     "@types/dotenv": "^8.2.0",
     "@types/luxon": "^1.24.4",
