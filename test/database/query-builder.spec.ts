@@ -3787,6 +3787,75 @@ test.group('Query Builder | orderBy', (group) => {
 
 		await connection.disconnect()
 	})
+
+	test('define order by columns as subquery', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		const client = getQueryClient(connection)
+		let db = getQueryBuilder(client)
+
+		const { sql, bindings } = db
+			.from('users')
+			.orderBy(
+				getQueryBuilder(getQueryClient(connection))
+					.from('user_logins')
+					.where('user_id', '=', getRawQueryBuilder(getQueryClient(connection), 'users.id'))
+			)
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.orderBy(
+				connection
+					.client!.from('user_logins')
+					.where('user_id', '=', connection.client!.raw('users.id'))
+			)
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		await connection.disconnect()
+	})
+
+	test('define order by columns as an array of subqueries', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		const client = getQueryClient(connection)
+		let db = getQueryBuilder(client)
+
+		const { sql, bindings } = db
+			.from('users')
+			.orderBy([
+				{
+					column: getQueryBuilder(getQueryClient(connection))
+						.from('user_logins')
+						.where('user_id', '=', getRawQueryBuilder(getQueryClient(connection), 'users.id')),
+					order: 'desc' as const,
+				},
+			])
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.orderBy([
+				{
+					column: connection
+						.client!.from('user_logins')
+						.where('user_id', '=', connection.client!.raw('users.id')),
+					order: 'desc',
+				},
+			])
+			.toSQL()
+
+		console.log(sql)
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		await connection.disconnect()
+	})
 })
 
 test.group('Query Builder | orderByRaw', (group) => {

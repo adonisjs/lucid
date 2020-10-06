@@ -260,7 +260,10 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 		/**
 		 * Order by a column and optional direction
 		 */
-		(column: string, direction?: 'asc' | 'desc'): Builder
+		(
+			column: string | ChainableContract | RawBuilderContract | RawQuery,
+			direction?: 'asc' | 'desc'
+		): Builder
 
 		/**
 		 * Order by multiple columns in default direction
@@ -270,7 +273,12 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 		/**
 		 * Order by multiple columns and custom direction for each of them
 		 */
-		(columns: { column: string; order?: 'asc' | 'desc' }[]): Builder
+		(
+			columns: {
+				column: string | ChainableContract | RawBuilderContract | RawQuery
+				order?: 'asc' | 'desc'
+			}[]
+		): Builder
 	}
 
 	/**

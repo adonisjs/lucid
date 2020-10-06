@@ -1026,19 +1026,35 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 			return this
 		}
 
+		/**
+		 * Here value can be one of the following
+		 * ['age', 'name']
+		 * [{ column: 'age', direction: 'desc' }]
+		 *
+		 * [{ column: Database.query().from('user_logins'), direction: 'desc' }]
+		 */
 		if (Array.isArray(column)) {
-			this.knexQuery.orderBy(
-				column.map((col) => {
-					if (col.column) {
-						col.column = this.resolveKey(col.column)
-						return col
-					}
-					return this.resolveKey(col)
-				})
-			)
+			const transformedColumns = column.map((col) => {
+				if (typeof col === 'string') {
+					return { column: this.resolveKey(col) }
+				}
+
+				if (col.column) {
+					col.column =
+						typeof col.column === 'string'
+							? this.resolveKey(col.column)
+							: this.transformValue(col.column)
+					return col
+				}
+
+				return col
+			})
+
+			this.knexQuery.orderBy(transformedColumns)
 			return this
 		}
 
+		this.knexQuery.orderBy(this.transformValue(column), direction)
 		return this
 	}
 
