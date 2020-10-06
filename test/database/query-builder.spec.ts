@@ -1976,6 +1976,27 @@ test.group('Query Builder | whereExists', (group) => {
 		await connection.disconnect()
 	})
 
+	test('add where exists clause as a raw query', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		const db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.whereExists(getRawQueryBuilder(getQueryClient(connection), 'select * from accounts'))
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.whereExists(connection.client!.raw('select * from accounts') as any)
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		await connection.disconnect()
+	})
+
 	test('add or where exists clause', async (assert) => {
 		const connection = new Connection('primary', getConfig(), getLogger())
 		connection.connect()
@@ -4725,6 +4746,28 @@ test.group('Query Builder | having', (group) => {
 
 		assert.equal(resolverSql, knexResolverSql)
 		assert.deepEqual(resolverBindings, knexResolverBindings)
+
+		await connection.disconnect()
+	})
+
+	test('add having clause as a raw query', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		let db = getQueryBuilder(getQueryClient(connection))
+
+		const { sql, bindings } = db
+			.from('users')
+			.having(getRawQueryBuilder(getQueryClient(connection), 'id > ?', [4]))
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.having(connection.client!.raw('id > ?', [4]))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
 
 		await connection.disconnect()
 	})

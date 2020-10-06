@@ -720,7 +720,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 			)
 		}
 
-		this.knexQuery.having(this.transformCallback(key))
+		this.knexQuery.having(this.transformValue(key))
 		return this
 	}
 
@@ -742,7 +742,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 			)
 		}
 
-		this.knexQuery.orHaving(this.transformCallback(key))
+		this.knexQuery.orHaving(this.transformValue(key))
 		return this
 	}
 

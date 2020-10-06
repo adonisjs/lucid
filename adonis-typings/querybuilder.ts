@@ -177,7 +177,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 	 * Possibles signatures for adding a where exists clause
 	 */
 	interface WhereExists<Builder extends ChainableContract> {
-		(callback: QueryCallback<Builder> | ChainableContract): Builder
+		(callback: QueryCallback<Builder> | ChainableContract | RawBuilderContract | RawQuery): Builder
 	}
 
 	/**
@@ -298,12 +298,16 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 		/**
 		 * A subquery callback
 		 */
-		(callback: QueryCallback<Builder>): Builder
+		(callback: QueryCallback<Builder> | RawBuilderContract | RawQuery): Builder
 
 		/**
 		 * Key operator and value. Value can be a subquery as well
 		 */
-		(key: string, operator: string, value: StrictValues | ChainableContract): Builder
+		(
+			key: string,
+			operator: string,
+			value: StrictValues | ChainableContract | RawBuilderContract | RawQuery
+		): Builder
 	}
 
 	/**
@@ -314,7 +318,10 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 		 * Key and an array of literal values, raw queries or
 		 * subqueries.
 		 */
-		(key: string, value: (StrictValues | ChainableContract)[]): Builder
+		(
+			key: string,
+			value: (StrictValues | ChainableContract | RawBuilderContract | RawQuery)[]
+		): Builder
 
 		/**
 		 * Key, along with a query callback
