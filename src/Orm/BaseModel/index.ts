@@ -139,6 +139,12 @@ export class BaseModel implements LucidRow {
 	public static table: string
 
 	/**
+	 * Self assign the primary instead of relying on the database to
+	 * return it back
+	 */
+	public static selfAssignPrimaryKey: boolean
+
+	/**
 	 * A custom connection to use for queries. The connection defined on
 	 * query builder is preferred over the model connection
 	 */
@@ -453,6 +459,9 @@ export class BaseModel implements LucidRow {
 
 		this.booted = true
 		this.primaryKey = this.primaryKey || 'id'
+		if ('selfAssignPrimaryKey' in this === false) {
+			this.selfAssignPrimaryKey = false
+		}
 
 		Object.defineProperty(this, '$keys', {
 			value: {

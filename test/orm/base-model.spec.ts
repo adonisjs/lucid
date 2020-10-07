@@ -906,6 +906,9 @@ test.group('Base Model | persist', (group) => {
 	test('assign local id to the model', async (assert) => {
 		class User extends BaseModel {
 			public static table = 'uuid_users'
+			public static get selfAssignPrimaryKey() {
+				return db.connection().dialect.name !== 'mssql'
+			}
 
 			@column({ isPrimary: true })
 			public id: string
@@ -919,6 +922,8 @@ test.group('Base Model | persist', (group) => {
 			@column({ columnName: 'updated_at' })
 			public updatedAt: string
 		}
+
+		User.boot()
 
 		const uuid = '2da96a33-57a0-4752-9d56-0e2485d4d2a4'
 

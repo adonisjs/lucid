@@ -623,6 +623,12 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		table: string
 
 		/**
+		 * Self assign the primary instead of relying on the database to
+		 * return it back
+		 */
+		selfAssignPrimaryKey: boolean
+
+		/**
 		 * Adapter to work as a bridge between query builder and the model
 		 */
 		$adapter: AdapterContract
