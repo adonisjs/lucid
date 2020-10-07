@@ -906,9 +906,7 @@ test.group('Base Model | persist', (group) => {
 	test('assign local id to the model', async (assert) => {
 		class User extends BaseModel {
 			public static table = 'uuid_users'
-			public static get selfAssignPrimaryKey() {
-				return db.connection().dialect.name !== 'mssql'
-			}
+			public static selfAssignPrimaryKey = true
 
 			@column({ isPrimary: true })
 			public id: string
@@ -941,7 +939,7 @@ test.group('Base Model | persist', (group) => {
 		assert.isTrue(user.$isPersisted)
 		assert.isFalse(user.$isDirty)
 		assert.isDefined(user.updatedAt)
-		assert.equal(user.id, uuid)
+		assert.equal(user.id.toLocaleLowerCase(), uuid)
 	})
 })
 
