@@ -138,6 +138,17 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 	}
 
 	/**
+	 * Possible signatures for adding a where column clause
+	 */
+	interface WhereColumn<Builder extends ChainableContract> {
+		/**
+		 * Key-value pair.
+		 */
+		(column: string, comparisonColumn: string): Builder
+		(column: string, operator: string, comparisonColumn: string): Builder
+	}
+
+	/**
 	 * Possible signatures for adding where in clause.
 	 */
 	interface WhereIn<Builder extends ChainableContract> {
@@ -443,6 +454,14 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 		whereNot: Where<this>
 		orWhereNot: Where<this>
 		andWhereNot: Where<this>
+
+		whereColumn: WhereColumn<this>
+		orWhereColumn: WhereColumn<this>
+		andWhereColumn: WhereColumn<this>
+
+		whereNotColumn: WhereColumn<this>
+		orWhereNotColumn: WhereColumn<this>
+		andWhereNotColumn: WhereColumn<this>
 
 		whereIn: WhereIn<this>
 		orWhereIn: WhereIn<this>

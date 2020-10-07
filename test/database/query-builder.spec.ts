@@ -3850,7 +3850,6 @@ test.group('Query Builder | orderBy', (group) => {
 			])
 			.toSQL()
 
-		console.log(sql)
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
@@ -8775,6 +8774,176 @@ test.group('Query Builder | update', (group) => {
 		assert.equal(resolverSql, knexResolverSql)
 		assert.deepEqual(resolverBindings, knexResolverBindings)
 
+		await connection.disconnect()
+	})
+})
+
+test.group('Query Builder | whereColumn', (group) => {
+	group.before(async () => {
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+	})
+
+	test('add where clause on another column', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		let db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.whereColumn('account_id', 'user_accounts.user_id')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.where('account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		/**
+		 * Using keys resolver
+		 */
+		db = getQueryBuilder(getQueryClient(connection))
+		db.keysResolver = (key) => `my_${key}`
+		const { sql: resolverSql, bindings: resolverBindings } = db
+			.from('users')
+			.whereColumn('account_id', 'user_accounts.user_id')
+			.toSQL()
+
+		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+			.client!.from('users')
+			.where('my_account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(resolverSql, knexResolverSql)
+		assert.deepEqual(resolverBindings, knexResolverBindings)
+		await connection.disconnect()
+	})
+
+	test('add or where clause on another column', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		let db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.whereColumn('account_id', 'user_accounts.user_id')
+			.orWhereColumn('parent_account_id', 'user_accounts.user_id')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.where('account_id', connection.client!.ref('user_accounts.user_id'))
+			.orWhere('parent_account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		/**
+		 * Using keys resolver
+		 */
+		db = getQueryBuilder(getQueryClient(connection))
+		db.keysResolver = (key) => `my_${key}`
+		const { sql: resolverSql, bindings: resolverBindings } = db
+			.from('users')
+			.whereColumn('account_id', 'user_accounts.user_id')
+			.orWhereColumn('parent_account_id', 'user_accounts.user_id')
+			.toSQL()
+
+		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+			.client!.from('users')
+			.where('my_account_id', connection.client!.ref('user_accounts.user_id'))
+			.orWhere('my_parent_account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(resolverSql, knexResolverSql)
+		assert.deepEqual(resolverBindings, knexResolverBindings)
+		await connection.disconnect()
+	})
+
+	test('add where not clause on another column', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		let db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.whereNotColumn('account_id', 'user_accounts.user_id')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.whereNot('account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		/**
+		 * Using keys resolver
+		 */
+		db = getQueryBuilder(getQueryClient(connection))
+		db.keysResolver = (key) => `my_${key}`
+		const { sql: resolverSql, bindings: resolverBindings } = db
+			.from('users')
+			.whereNotColumn('account_id', 'user_accounts.user_id')
+			.toSQL()
+
+		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+			.client!.from('users')
+			.whereNot('my_account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(resolverSql, knexResolverSql)
+		assert.deepEqual(resolverBindings, knexResolverBindings)
+		await connection.disconnect()
+	})
+
+	test.only('add or where not clause on another column', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		let db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.whereNotColumn('account_id', 'user_accounts.user_id')
+			.orWhereNotColumn('account_id', 'user_accounts.user_id')
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.whereNot('account_id', connection.client!.ref('user_accounts.user_id'))
+			.orWhereNot('account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+
+		/**
+		 * Using keys resolver
+		 */
+		db = getQueryBuilder(getQueryClient(connection))
+		db.keysResolver = (key) => `my_${key}`
+		const { sql: resolverSql, bindings: resolverBindings } = db
+			.from('users')
+			.whereNotColumn('account_id', 'user_accounts.user_id')
+			.orWhereNotColumn('account_id', 'user_accounts.user_id')
+			.toSQL()
+
+		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+			.client!.from('users')
+			.whereNot('my_account_id', connection.client!.ref('user_accounts.user_id'))
+			.orWhereNot('my_account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(resolverSql, knexResolverSql)
+		assert.deepEqual(resolverBindings, knexResolverBindings)
 		await connection.disconnect()
 	})
 })

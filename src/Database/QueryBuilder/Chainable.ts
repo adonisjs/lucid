@@ -314,6 +314,68 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 	}
 
 	/**
+	 * Add a where clause on a given column
+	 */
+	public whereColumn(column: any, operator: any, comparisonColumn?: any): this {
+		if (comparisonColumn !== undefined) {
+			this.where(column, operator, new ReferenceBuilder(comparisonColumn))
+		} else {
+			this.where(column, new ReferenceBuilder(operator))
+		}
+		return this
+	}
+
+	/**
+	 * Add a orWhere clause on a given column
+	 */
+	public orWhereColumn(column: any, operator: any, comparisonColumn?: any): this {
+		if (comparisonColumn !== undefined) {
+			this.orWhere(column, operator, new ReferenceBuilder(comparisonColumn))
+		} else {
+			this.orWhere(column, new ReferenceBuilder(operator))
+		}
+		return this
+	}
+
+	/**
+	 * Alias for whereColumn
+	 */
+	public andWhereColumn(column: any, operator: any, comparisonColumn?: any): this {
+		return this.whereColumn(column, operator, comparisonColumn)
+	}
+
+	/**
+	 * Add a whereNot clause on a given column
+	 */
+	public whereNotColumn(column: any, operator: any, comparisonColumn?: any): this {
+		if (comparisonColumn !== undefined) {
+			this.whereNot(column, operator, new ReferenceBuilder(comparisonColumn))
+		} else {
+			this.whereNot(column, new ReferenceBuilder(operator))
+		}
+		return this
+	}
+
+	/**
+	 * Add a orWhereNotColumn clause on a given column
+	 */
+	public orWhereNotColumn(column: any, operator: any, comparisonColumn?: any): this {
+		if (comparisonColumn !== undefined) {
+			this.orWhereNot(column, operator, new ReferenceBuilder(comparisonColumn))
+		} else {
+			this.orWhereNot(column, new ReferenceBuilder(operator))
+		}
+		return this
+	}
+
+	/**
+	 * Alias for whereNotColumn
+	 */
+	public andWhereNotColumn(column: any, operator: any, comparisonColumn?: any): this {
+		return this.whereNotColumn(column, operator, comparisonColumn)
+	}
+
+	/**
 	 * Adding a `where in` clause
 	 */
 	public whereIn(columns: any, value: any): this {
