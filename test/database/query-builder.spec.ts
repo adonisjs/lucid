@@ -8905,7 +8905,7 @@ test.group('Query Builder | whereColumn', (group) => {
 		await connection.disconnect()
 	})
 
-	test.only('add or where not clause on another column', async (assert) => {
+	test('add or where not clause on another column', async (assert) => {
 		const connection = new Connection('primary', getConfig(), getLogger())
 		connection.connect()
 
@@ -8944,6 +8944,246 @@ test.group('Query Builder | whereColumn', (group) => {
 
 		assert.equal(resolverSql, knexResolverSql)
 		assert.deepEqual(resolverBindings, knexResolverBindings)
+		await connection.disconnect()
+	})
+})
+
+test.group('Query Builder | conditionals', (group) => {
+	group.before(async () => {
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+	})
+
+	test('add constraints to query using if condition', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		const db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.if(true, (query) => {
+				query.whereColumn('account_id', 'user_accounts.user_id')
+			})
+			.if(false, (query) => {
+				query.whereNotColumn('account_id', 'user_accounts.user_id')
+			})
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.where('account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		await connection.disconnect()
+	})
+
+	test('define else block for the if condition', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		const db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.if(
+				false,
+				(query) => {
+					query.whereColumn('account_id', 'user_accounts.user_id')
+				},
+				(query) => {
+					query.whereNotColumn('account_id', 'user_accounts.user_id')
+				}
+			)
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.whereNot('account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		await connection.disconnect()
+	})
+
+	test('add constraints to query using unless condition', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		const db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.unless(true, (query) => {
+				query.whereColumn('account_id', 'user_accounts.user_id')
+			})
+			.unless(false, (query) => {
+				query.whereNotColumn('account_id', 'user_accounts.user_id')
+			})
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.whereNot('account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		await connection.disconnect()
+	})
+
+	test('define else block for the unless condition', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		const db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.unless(
+				true,
+				(query) => {
+					query.whereColumn('account_id', 'user_accounts.user_id')
+				},
+				(query) => {
+					query.whereNotColumn('account_id', 'user_accounts.user_id')
+				}
+			)
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.whereNot('account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		await connection.disconnect()
+	})
+
+	test('invoke conditional function to find the conditional value', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		const db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.unless(
+				() => true,
+				(query) => {
+					query.whereColumn('account_id', 'user_accounts.user_id')
+				}
+			)
+			.unless(
+				() => false,
+				(query) => {
+					query.whereNotColumn('account_id', 'user_accounts.user_id')
+				}
+			)
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.whereNot('account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		await connection.disconnect()
+	})
+
+	test('define a match block with no else statement', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		const db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.match(
+				[true, (query) => query.whereColumn('account_id', 'user_accounts.user_id')],
+				[false, (query) => query.whereNotColumn('account_id', 'user_accounts.user_id')]
+			)
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.where('account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		await connection.disconnect()
+	})
+
+	test('define match conditionals as functions', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		const db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.match(
+				[() => true, (query) => query.whereColumn('account_id', 'user_accounts.user_id')],
+				[() => false, (query) => query.whereNotColumn('account_id', 'user_accounts.user_id')]
+			)
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.where('account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		await connection.disconnect()
+	})
+
+	test('use the first matching block', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		const db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.match(
+				[true, (query) => query.whereColumn('account_id', 'user_accounts.user_id')],
+				[true, (query) => query.whereNotColumn('account_id', 'user_accounts.user_id')]
+			)
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.where('account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
+		await connection.disconnect()
+	})
+
+	test('use the else block when nothing matches', async (assert) => {
+		const connection = new Connection('primary', getConfig(), getLogger())
+		connection.connect()
+
+		const db = getQueryBuilder(getQueryClient(connection))
+		const { sql, bindings } = db
+			.from('users')
+			.match(
+				[false, (query) => query.whereColumn('account_id', 'user_accounts.user_id')],
+				[false, (query) => query.whereNotColumn('account_id', 'user_accounts.user_id')],
+				(query) => query.whereNotColumn('account_id', 'user_accounts.user_id')
+			)
+			.toSQL()
+
+		const { sql: knexSql, bindings: knexBindings } = connection
+			.client!.from('users')
+			.whereNot('account_id', connection.client!.ref('user_accounts.user_id'))
+			.toSQL()
+
+		assert.equal(sql, knexSql)
+		assert.deepEqual(bindings, knexBindings)
 		await connection.disconnect()
 	})
 })

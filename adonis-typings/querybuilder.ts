@@ -583,6 +583,31 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 
 		skipLocked(): this
 		noWait(): this
+
+		/**
+		 * Executes the callback when condition is truthy
+		 */
+		if(
+			condition: any,
+			matchCallback: (query: this) => any,
+			noMatchCallback?: (query: this) => any
+		): this
+
+		/**
+		 * Executes the callback when condition is falsy
+		 */
+		unless(
+			condition: any,
+			matchCallback: (query: this) => any,
+			noMatchCallback?: (query: this) => any
+		): this
+
+		/**
+		 * Write blocks to match from
+		 */
+		match(
+			...blocks: ([condition: any, callback: (query: this) => any] | ((query: this) => any))[]
+		): this
 	}
 
 	/**

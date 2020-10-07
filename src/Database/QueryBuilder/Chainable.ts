@@ -1382,4 +1382,81 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 
 		return this
 	}
+
+	/**
+	 * Define a query to constraint to be defined when condition is truthy
+	 */
+	public if(
+		condition: any,
+		matchCallback: (query: this) => any,
+		noMatchCallback?: (query: this) => any
+	): this {
+		let matched: any = condition
+		if (typeof condition === 'function') {
+			matched = condition()
+		}
+
+		if (matched) {
+			matchCallback(this)
+		} else if (noMatchCallback) {
+			noMatchCallback(this)
+		}
+
+		return this
+	}
+
+	/**
+	 * Define a query to constraint to be defined when condition is falsy
+	 */
+	public unless(
+		condition: any,
+		matchCallback: (query: this) => any,
+		noMatchCallback?: (query: this) => any
+	): this {
+		let matched: any = condition
+		if (typeof condition === 'function') {
+			matched = condition()
+		}
+
+		if (!matched) {
+			matchCallback(this)
+		} else if (noMatchCallback) {
+			noMatchCallback(this)
+		}
+
+		return this
+	}
+
+	/**
+	 * Define matching blocks just like `if/else if and else`.
+	 */
+	public match(
+		...blocks: ([condition: any, callback: (query: this) => any] | ((query: this) => any))[]
+	): this {
+		const matchingBlock = blocks.find((block) => {
+			if (Array.isArray(block) && block.length === 2) {
+				if (typeof block[0] === 'function' && block[0]()) {
+					return true
+				} else if (block[0]) {
+					return true
+				}
+			}
+
+			if (typeof block === 'function') {
+				return true
+			}
+		})
+
+		if (!matchingBlock) {
+			return this
+		}
+
+		if (Array.isArray(matchingBlock)) {
+			matchingBlock[1](this)
+		} else {
+			matchingBlock(this)
+		}
+
+		return this
+	}
 }
