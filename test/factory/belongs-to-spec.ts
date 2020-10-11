@@ -11,34 +11,41 @@
 
 import test from 'japa'
 import { BelongsTo } from '@ioc:Adonis/Lucid/Relations'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+
 import { FactoryManager } from '../../src/Factory/index'
 import { column, belongsTo } from '../../src/Orm/Decorators'
 
 import {
+	fs,
 	setup,
 	getDb,
 	cleanup,
 	ormAdapter,
 	resetTables,
 	getBaseModel,
+	setupApplication,
 	getFactoryModel,
 } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
+let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
 const FactoryModel = getFactoryModel()
 const factoryManager = new FactoryManager()
 
 test.group('Factory | BelongTo | make', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -237,14 +244,16 @@ test.group('Factory | BelongTo | make', (group) => {
 
 test.group('Factory | BelongTo | create', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {

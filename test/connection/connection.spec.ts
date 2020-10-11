@@ -13,16 +13,21 @@ import test from 'japa'
 import { MysqlConfig } from '@ioc:Adonis/Lucid/Database'
 
 import { Connection } from '../../src/Connection'
-import { getConfig, setup, cleanup, resetTables, getLogger } from '../../test-helpers'
+import { fs, getConfig, setup, cleanup, resetTables, setupApplication } from '../../test-helpers'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+
+let app: ApplicationContract
 
 if (process.env.DB !== 'sqlite') {
 	test.group('Connection | config', (group) => {
 		group.before(async () => {
+			app = await setupApplication()
 			await setup()
 		})
 
 		group.after(async () => {
 			await cleanup()
+			await fs.cleanup()
 		})
 
 		test('get write config by merging values from connection', (assert) => {
@@ -42,7 +47,7 @@ if (process.env.DB !== 'sqlite') {
 				},
 			}
 
-			const connection = new Connection('primary', config, getLogger())
+			const connection = new Connection('primary', config, app.logger)
 			const writeConfig = connection['getWriteConfig']()
 
 			assert.equal(writeConfig.client, config.client)
@@ -66,7 +71,7 @@ if (process.env.DB !== 'sqlite') {
 				},
 			}
 
-			const connection = new Connection('primary', config, getLogger())
+			const connection = new Connection('primary', config, app.logger)
 			const readConfig = connection['getReadConfig']()
 
 			assert.equal(readConfig.client, config.client)
@@ -76,11 +81,13 @@ if (process.env.DB !== 'sqlite') {
 
 test.group('Connection | setup', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -88,12 +95,12 @@ test.group('Connection | setup', (group) => {
 	})
 
 	test('do not instantiate knex unless connect is called', (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		assert.isUndefined(connection.client)
 	})
 
 	test('instantiate knex when connect is invoked', async (assert, done) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.on('connect', async () => {
 			assert.isDefined(connection.client!)
 			assert.equal(connection.pool!.numUsed(), 0)
@@ -105,7 +112,7 @@ test.group('Connection | setup', (group) => {
 	})
 
 	test('on disconnect destroy knex', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 		await connection.disconnect()
 
@@ -114,7 +121,7 @@ test.group('Connection | setup', (group) => {
 	})
 
 	test('on disconnect emit disconnect event', async (assert, done) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
 		connection.on('disconnect', () => {
@@ -131,7 +138,7 @@ test.group('Connection | setup', (group) => {
 		const connection = new Connection(
 			'primary',
 			Object.assign({}, getConfig(), { client: null }),
-			getLogger()
+			app.logger
 		)
 
 		connection.on('error', ({ message }) => {
@@ -154,7 +161,7 @@ test.group('Connection | setup', (group) => {
 				config.connection!.charset = 'utf-8'
 				config.connection!.typeCast = false
 
-				const connection = new Connection('primary', config, getLogger())
+				const connection = new Connection('primary', config, app.logger)
 				connection.connect()
 
 				assert.equal(connection.client!['context'].client.constructor.name, 'Client_MySQL')
@@ -168,15 +175,17 @@ test.group('Connection | setup', (group) => {
 
 test.group('Health Checks', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('get healthcheck report for healthy connection', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
 		const report = await connection.getReport()
@@ -198,7 +207,7 @@ test.group('Health Checks', (group) => {
 						host: 'bad-host',
 					},
 				}),
-				getLogger()
+				app.logger
 			)
 			connection.connect()
 
@@ -225,7 +234,7 @@ test.group('Health Checks', (group) => {
 						},
 					},
 				}),
-				getLogger()
+				app.logger
 			)
 			connection.connect()
 

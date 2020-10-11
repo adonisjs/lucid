@@ -9,12 +9,8 @@
 
 import { join } from 'path'
 import { lodash } from '@poppinss/utils'
-import { inject } from '@adonisjs/fold'
-import { BaseCommand, Kernel, args, flags } from '@adonisjs/ace'
-import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { BaseCommand, args, flags } from '@adonisjs/core/build/standalone'
 
-@inject([null, null, 'Adonis/Lucid/Database'])
 export default class MakeMigration extends BaseCommand {
 	public static commandName = 'make:migration'
 	public static description = 'Make a new migration file'
@@ -60,10 +56,6 @@ export default class MakeMigration extends BaseCommand {
 		loadApp: true,
 	}
 
-	constructor(app: ApplicationContract, kernel: Kernel, private db: DatabaseContract) {
-		super(app, kernel)
-	}
-
 	/**
 	 * Returns the directory for creating the migration file
 	 */
@@ -84,8 +76,9 @@ export default class MakeMigration extends BaseCommand {
 	/**
 	 * Execute command
 	 */
-	public async handle(): Promise<void> {
-		const connection = this.db.getRawConnection(this.connection || this.db.primaryConnectionName)
+	public async run(): Promise<void> {
+		const db = this.application.container.use('Adonis/Lucid/Database')
+		const connection = db.getRawConnection(this.connection || db.primaryConnectionName)
 
 		/**
 		 * Ensure the define connection name does exists in the
@@ -102,7 +95,7 @@ export default class MakeMigration extends BaseCommand {
 		 * Not allowed together, hence we must notify the user about the same
 		 */
 		if (this.table && this.create) {
-			this.logger.warn('--table and --create cannot be used together. Ignoring --create')
+			this.logger.warning('--table and --create cannot be used together. Ignoring --create')
 		}
 
 		/**

@@ -8,13 +8,9 @@
  */
 
 import { extname } from 'path'
-import { inject } from '@adonisjs/fold'
 import { SeederFileNode } from '@ioc:Adonis/Lucid/Seeder'
-import { BaseCommand, Kernel, flags } from '@adonisjs/ace'
-import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { BaseCommand, flags } from '@adonisjs/core/build/standalone'
 
-@inject([null, null, 'Adonis/Lucid/Database'])
 export default class DbSeed extends BaseCommand {
 	public static commandName = 'db:seed'
 	public static description = 'Execute database seeder files'
@@ -45,10 +41,6 @@ export default class DbSeed extends BaseCommand {
 	 */
 	public static settings = {
 		loadApp: true,
-	}
-
-	constructor(app: ApplicationContract, kernel: Kernel, private db: DatabaseContract) {
-		super(app, kernel)
 	}
 
 	/**
@@ -91,9 +83,11 @@ export default class DbSeed extends BaseCommand {
 	/**
 	 * Execute command
 	 */
-	public async handle(): Promise<void> {
-		this.connection = this.connection || this.db.primaryConnectionName
-		const connection = this.db.getRawConnection(this.connection)
+	public async run(): Promise<void> {
+		const db = this.application.container.use('Adonis/Lucid/Database')
+
+		this.connection = this.connection || db.primaryConnectionName
+		const connection = db.getRawConnection(this.connection)
 
 		/**
 		 * Ensure the define connection name does exists in the
@@ -107,7 +101,7 @@ export default class DbSeed extends BaseCommand {
 		}
 
 		const { SeedsRunner } = await import('../src/SeedsRunner')
-		const runner = new SeedsRunner(this.db, this.application, this.connection)
+		const runner = new SeedsRunner(db, this.application, this.connection)
 
 		/**
 		 * List of available files
@@ -127,7 +121,7 @@ export default class DbSeed extends BaseCommand {
 			})
 
 			if (this.interactive) {
-				this.logger.warn(
+				this.logger.warning(
 					'Cannot use "--interactive" and "--files" together. Ignoring "--interactive"'
 				)
 			}
@@ -161,6 +155,6 @@ export default class DbSeed extends BaseCommand {
 			}
 		}
 
-		await this.db.manager.closeAll(true)
+		await db.manager.closeAll(true)
 	}
 }

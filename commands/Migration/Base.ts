@@ -10,7 +10,7 @@
 import { relative } from 'path'
 import { DateTime } from 'luxon'
 import prettyHrTime from 'pretty-hrtime'
-import { BaseCommand } from '@adonisjs/ace'
+import { BaseCommand } from '@adonisjs/core/build/standalone'
 import { MigratedFileNode, MigratorContract } from '@ioc:Adonis/Lucid/Migrator'
 
 import { prettyPrint } from '../../src/Helpers/prettyPrint'

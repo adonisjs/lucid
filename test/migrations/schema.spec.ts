@@ -8,28 +8,23 @@
  */
 
 import test from 'japa'
-import { setup, cleanup, getDb, resetTables, getBaseSchema, getEmitter } from '../../test-helpers'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { setup, cleanup, getDb, getBaseSchema, setupApplication, fs } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
-let emitter: ReturnType<typeof getEmitter>
+let app: ApplicationContract
 
 test.group('Schema', (group) => {
-	group.before(async () => {
+	group.beforeEach(async () => {
+		app = await setupApplication()
+		db = getDb(app)
 		await setup()
 	})
 
-	group.beforeEach(() => {
-		emitter = getEmitter()
-		db = getDb(emitter)
-	})
-
-	group.after(async () => {
-		await cleanup()
-		await db.manager.closeAll()
-	})
-
 	group.afterEach(async () => {
-		await resetTables()
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('get schema queries defined inside the up method in dry run', async (assert) => {
@@ -262,7 +257,7 @@ test.group('Schema', (group) => {
 		trx.debug = true
 		const schema = new UsersSchema(trx, 'users.ts', false)
 
-		emitter.on('db:query', (query) => {
+		app.container.use('Adonis/Core/Event').on('db:query', (query) => {
 			assert.property(query, 'sql')
 			assert.isTrue(query.inTransaction)
 			assert.equal(query.connection, 'primary')
@@ -298,7 +293,7 @@ test.group('Schema', (group) => {
 
 		const trx = await db.transaction()
 		const schema = new UsersSchema(trx, 'users.ts', false)
-		emitter.on('db:query', () => {
+		app.container.use('Adonis/Core/Event').on('db:query', () => {
 			throw new Error('Never expected to reach here')
 		})
 
@@ -335,7 +330,7 @@ test.group('Schema', (group) => {
 		const trx = await db.transaction()
 		const schema = new UsersSchema(trx, 'users.ts', false)
 
-		emitter.on('db:query', (query) => {
+		app.container.use('Adonis/Core/Event').on('db:query', (query) => {
 			assert.property(query, 'sql')
 			assert.isTrue(query.inTransaction)
 			assert.equal(query.connection, 'primary')

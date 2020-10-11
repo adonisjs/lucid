@@ -9,32 +9,38 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import test from 'japa'
 
 import { Connection } from '../../src/Connection'
 import {
-	getConfig,
+	fs,
 	setup,
 	cleanup,
-	getInsertBuilder,
-	getLogger,
+	getConfig,
 	getQueryClient,
+	getInsertBuilder,
+	setupApplication,
 } from '../../test-helpers'
+
+let app: ApplicationContract
 
 test.group('Query Builder | insert', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('perform insert', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getInsertBuilder(getQueryClient(connection))
+		const db = getInsertBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.table('users').insert({ username: 'virk' }).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -49,10 +55,10 @@ test.group('Query Builder | insert', (group) => {
 	})
 
 	test('perform multi insert', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getInsertBuilder(getQueryClient(connection))
+		const db = getInsertBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.table('users')
 			.multiInsert([{ username: 'virk' }, { username: 'nikk' }])
@@ -70,10 +76,10 @@ test.group('Query Builder | insert', (group) => {
 	})
 
 	test('define returning columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getInsertBuilder(getQueryClient(connection))
+		const db = getInsertBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.table('users')
 			.returning(['id', 'username'])

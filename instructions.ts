@@ -79,7 +79,7 @@ export default async function instructions(
 		.commit()
 
 	const configDir = app.directoriesMap.get('config') || 'config'
-	sink.logger.create(`${configDir}/database.ts`)
+	sink.logger.action('create').succeeded(`${configDir}/database.ts`)
 
 	/**
 	 * Setup .env file
@@ -136,7 +136,17 @@ export default async function instructions(
 		pkg.install('mssql', undefined, false)
 	}
 
-	sink.logger.info(`Installing packages: ${pkg.getInstalls(false).list.join(', ')}...`)
-	await pkg.commitAsync()
-	sink.logger.success('Packages installed!')
+	const spinner = sink.logger.await(
+		`Installing packages: ${pkg.getInstalls(false).list.join(', ')}...`
+	)
+
+	try {
+		await pkg.commitAsync()
+		spinner.update('Packages installed')
+	} catch (error) {
+		spinner.update('Unable to install packages')
+		sink.logger.fatal(error)
+	}
+
+	spinner.stop()
 }

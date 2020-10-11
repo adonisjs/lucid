@@ -9,37 +9,31 @@
 
 import test from 'japa'
 import { join } from 'path'
-import { Filesystem } from '@poppinss/dev-utils'
-import { Application } from '@adonisjs/application/build/standalone'
 
 import { SeedersSource } from '../../src/SeedsRunner/SeedersSource'
-import { getDb, setup, cleanup } from '../../test-helpers'
-
-const fs = new Filesystem(join(__dirname, 'app'))
-let db: ReturnType<typeof getDb>
+import { getDb, setup, setupApplication, fs, cleanup } from '../../test-helpers'
 
 test.group('Seeds Source', (group) => {
-	group.before(async () => {
-		db = getDb()
+	group.beforeEach(async () => {
 		await setup()
 	})
 
-	group.after(async () => {
-		await cleanup()
-		await db.manager.closeAll()
-	})
-
 	group.afterEach(async () => {
+		await cleanup()
 		await fs.cleanup()
 	})
 
 	test('get list of seed files recursively', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
+		const app = await setupApplication()
+		const db = getDb(app)
+
 		const seedsSource = new SeedersSource(db.getRawConnection('primary')!.config, app)
 
 		await fs.add('database/seeders/User.ts', '')
 		await fs.add('database/seeders/Tenant/User.ts', '')
 		await fs.add('database/seeders/Country/Post.ts', '')
+
+		await db.manager.closeAll()
 
 		const files = await seedsSource.getSeeders()
 		assert.deepEqual(
@@ -64,7 +58,8 @@ test.group('Seeds Source', (group) => {
 	})
 
 	test('only pick .ts/.js files', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
+		const app = await setupApplication()
+		const db = getDb(app)
 		const seedsSource = new SeedersSource(db.getRawConnection('primary')!.config, app)
 
 		await fs.add('database/seeders/User.ts', '')
@@ -72,6 +67,8 @@ test.group('Seeds Source', (group) => {
 		await fs.add('database/seeders/Country/Post.ts', '')
 		await fs.add('database/seeders/foo.bar', '')
 		await fs.add('database/seeders/foo.js', '')
+
+		await db.manager.closeAll()
 
 		const files = await seedsSource.getSeeders()
 		assert.deepEqual(
@@ -100,7 +97,9 @@ test.group('Seeds Source', (group) => {
 	})
 
 	test('sort multiple seeders directories seperately', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
+		const app = await setupApplication()
+		const db = getDb(app)
+
 		const config = Object.assign({}, db.getRawConnection('primary')!.config, {
 			seeders: {
 				paths: ['./database/secondary', './database/primary'],
@@ -113,6 +112,7 @@ test.group('Seeds Source', (group) => {
 
 		await fs.add('database/primary/Account.ts', '')
 		await fs.add('database/primary/Team.ts', '')
+		await db.manager.closeAll()
 
 		const files = await seedsSource.getSeeders()
 

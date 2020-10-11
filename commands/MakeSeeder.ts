@@ -8,7 +8,7 @@
  */
 
 import { join } from 'path'
-import { BaseCommand, args } from '@adonisjs/ace'
+import { BaseCommand, args } from '@adonisjs/core/build/standalone'
 
 export default class MakeSeeder extends BaseCommand {
 	public static commandName = 'make:seeder'
@@ -23,7 +23,7 @@ export default class MakeSeeder extends BaseCommand {
 	/**
 	 * Execute command
 	 */
-	public async handle(): Promise<void> {
+	public async run(): Promise<void> {
 		const stub = join(__dirname, '..', 'templates', 'seeder.txt')
 
 		const path = this.application.rcFile.directories.seeds

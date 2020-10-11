@@ -7,24 +7,25 @@
  * file that was distributed with this source code.
  */
 
-import { IocContract } from '@adonisjs/fold'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 /**
  * Database service provider
  */
 export default class DatabaseServiceProvider {
-	constructor(protected container: IocContract) {}
+	constructor(protected app: ApplicationContract) {}
+	public static needsApplication = true
 
 	/**
 	 * Register the database binding
 	 */
 	private registerDatabase() {
-		this.container.singleton('Adonis/Lucid/Database', () => {
-			const config = this.container.use('Adonis/Core/Config').get('database', {})
-			const Logger = this.container.use('Adonis/Core/Logger')
-			const Profiler = this.container.use('Adonis/Core/Profiler')
-			const Emitter = this.container.use('Adonis/Core/Event')
+		this.app.container.singleton('Adonis/Lucid/Database', () => {
+			const config = this.app.container.use('Adonis/Core/Config').get('database', {})
+			const Logger = this.app.container.use('Adonis/Core/Logger')
+			const Profiler = this.app.container.use('Adonis/Core/Profiler')
+			const Emitter = this.app.container.use('Adonis/Core/Event')
 
 			const { Database } = require('../src/Database')
 			return new Database(config, Logger, Profiler, Emitter)
@@ -35,8 +36,8 @@ export default class DatabaseServiceProvider {
 	 * Registers ORM
 	 */
 	private registerOrm() {
-		this.container.singleton('Adonis/Lucid/Orm', () => {
-			const Config = this.container.use('Adonis/Core/Config')
+		this.app.container.singleton('Adonis/Lucid/Orm', () => {
+			const Config = this.app.container.use('Adonis/Core/Config')
 
 			const { Adapter } = require('../src/Orm/Adapter')
 			const { scope } = require('../src/Helpers/scope')
@@ -48,8 +49,8 @@ export default class DatabaseServiceProvider {
 			 * Attaching adapter to the base model. Each model is allowed to define
 			 * a different adapter.
 			 */
-			BaseModel.$adapter = new Adapter(this.container.use('Adonis/Lucid/Database'))
-			BaseModel.$container = this.container
+			BaseModel.$adapter = new Adapter(this.app.container.use('Adonis/Lucid/Database'))
+			BaseModel.$container = this.app.container
 			BaseModel.$configurator = Object.assign({}, ormConfig, Config.get('database.orm', {}))
 
 			return {
@@ -64,7 +65,7 @@ export default class DatabaseServiceProvider {
 	 * Registers schema class
 	 */
 	private registerSchema() {
-		this.container.singleton('Adonis/Lucid/Schema', () => {
+		this.app.container.singleton('Adonis/Lucid/Schema', () => {
 			const { Schema } = require('../src/Schema')
 			return Schema
 		})
@@ -74,7 +75,7 @@ export default class DatabaseServiceProvider {
 	 * Registers schema class
 	 */
 	private registerFactory() {
-		this.container.singleton('Adonis/Lucid/Factory', () => {
+		this.app.container.singleton('Adonis/Lucid/Factory', () => {
 			const { FactoryManager } = require('../src/Factory')
 			return new FactoryManager()
 		})
@@ -84,7 +85,7 @@ export default class DatabaseServiceProvider {
 	 * Registers schema class
 	 */
 	private registerBaseSeeder() {
-		this.container.singleton('Adonis/Lucid/Seeder', () => {
+		this.app.container.singleton('Adonis/Lucid/Seeder', () => {
 			const { BaseSeeder } = require('../src/BaseSeeder')
 			return BaseSeeder
 		})
@@ -94,7 +95,7 @@ export default class DatabaseServiceProvider {
 	 * Registers the health checker
 	 */
 	private registerHealthChecker() {
-		this.container.with(
+		this.app.container.with(
 			['Adonis/Core/HealthCheck', 'Adonis/Lucid/Database'],
 			(HealthCheck, Db: DatabaseContract) => {
 				if (Db.hasHealthChecksEnabled) {
@@ -108,7 +109,7 @@ export default class DatabaseServiceProvider {
 	 * Extends the validator by defining validation rules
 	 */
 	private defineValidationRules() {
-		this.container.with(['Adonis/Core/Validator', 'Adonis/Lucid/Database'], (Validator, Db) => {
+		this.app.container.with(['Adonis/Core/Validator', 'Adonis/Lucid/Database'], (Validator, Db) => {
 			const { extendValidator } = require('../src/Bindings/Validator')
 			extendValidator(Validator.validator, Db)
 		})

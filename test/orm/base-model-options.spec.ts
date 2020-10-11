@@ -10,8 +10,8 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import { Profiler } from '@adonisjs/profiler/build/standalone'
-import { HasOne } from '@ioc:Adonis/Lucid/Relations'
+import type { HasOne } from '@ioc:Adonis/Lucid/Relations'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { column, hasOne } from '../../src/Orm/Decorators'
 import {
@@ -19,23 +19,27 @@ import {
 	getDb,
 	cleanup,
 	ormAdapter,
-	getProfiler,
 	resetTables,
 	getBaseModel,
+	setupApplication,
+	fs,
 } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
+let app: ApplicationContract
 
 test.group('Model options | QueryBuilder', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 		await db.manager.closeAll()
 	})
 
@@ -60,7 +64,7 @@ test.group('Model options | QueryBuilder', (group) => {
 		assert.lengthOf(users, 1)
 
 		assert.equal(users[0].$options!.connection, 'primary')
-		assert.instanceOf(users[0].$options!.profiler, Profiler)
+		assert.deepEqual(users[0].$options!.profiler, app.profiler)
 	})
 
 	test('query builder set model options when only one row is fetched', async (assert) => {
@@ -79,7 +83,7 @@ test.group('Model options | QueryBuilder', (group) => {
 		const user = await User.query().first()
 
 		assert.equal(user!.$options!.connection, 'primary')
-		assert.instanceOf(user!.$options!.profiler, Profiler)
+		assert.deepEqual(user!.$options!.profiler, app.profiler)
 	})
 
 	test('query builder use transaction when updating rows', async (assert) => {
@@ -137,13 +141,15 @@ test.group('Model options | QueryBuilder', (group) => {
 
 test.group('Model options | Adapter', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 		await db.manager.closeAll()
 	})
 
@@ -166,7 +172,7 @@ test.group('Model options | Adapter', (group) => {
 
 		const user = await User.query({ connection: 'secondary' }).first()
 		assert.equal(user!.$options!.connection, 'secondary')
-		assert.instanceOf(user!.$options!.profiler, Profiler)
+		assert.deepEqual(user!.$options!.profiler, app.profiler)
 	})
 
 	test('pass profiler to the client when defined explicitly', async (assert) => {
@@ -181,7 +187,7 @@ test.group('Model options | Adapter', (group) => {
 		}
 
 		await db.insertQuery().table('users').insert({ username: 'virk' })
-		const profiler = getProfiler()
+		const profiler = app.profiler
 
 		const user = await User.query({ profiler }).first()
 		assert.equal(user!.$options!.connection, 'primary')
@@ -230,13 +236,15 @@ test.group('Model options | Adapter', (group) => {
 
 test.group('Model options | Model.find', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 		await db.manager.closeAll()
 	})
 
@@ -259,7 +267,7 @@ test.group('Model options | Model.find', (group) => {
 
 		const user = await User.find(1, { connection: 'secondary' })
 		assert.equal(user!.$options!.connection, 'secondary')
-		assert.instanceOf(user!.$options!.profiler, Profiler)
+		assert.deepEqual(user!.$options!.profiler, app.profiler)
 	})
 
 	test('define custom profiler', async (assert) => {
@@ -274,7 +282,7 @@ test.group('Model options | Model.find', (group) => {
 		}
 
 		await db.insertQuery().table('users').insert({ username: 'virk' })
-		const profiler = getProfiler()
+		const profiler = app.profiler
 
 		const user = await User.find(1, { profiler })
 		assert.deepEqual(user!.$options!.profiler, profiler)
@@ -302,13 +310,15 @@ test.group('Model options | Model.find', (group) => {
 
 test.group('Model options | Model.findOrFail', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 		await db.manager.closeAll()
 	})
 
@@ -331,7 +341,7 @@ test.group('Model options | Model.findOrFail', (group) => {
 
 		const user = await User.findOrFail(1, { connection: 'secondary' })
 		assert.equal(user.$options!.connection, 'secondary')
-		assert.instanceOf(user.$options!.profiler, Profiler)
+		assert.deepEqual(user.$options!.profiler, app.profiler)
 	})
 
 	test('define custom profiler', async (assert) => {
@@ -345,9 +355,9 @@ test.group('Model options | Model.findOrFail', (group) => {
 			public username: string
 		}
 
-		const customDb = getDb()
+		const customDb = getDb(app)
 		await customDb.insertQuery().table('users').insert({ username: 'virk' })
-		const profiler = getProfiler()
+		const profiler = app.profiler
 
 		const user = await User.findOrFail(1, { profiler })
 		assert.deepEqual(user.$options!.profiler, profiler)
@@ -375,13 +385,15 @@ test.group('Model options | Model.findOrFail', (group) => {
 
 test.group('Model options | Model.findMany', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 		await db.manager.closeAll()
 	})
 
@@ -404,7 +416,7 @@ test.group('Model options | Model.findMany', (group) => {
 
 		const users = await User.findMany([1], { connection: 'secondary' })
 		assert.equal(users[0].$options!.connection, 'secondary')
-		assert.instanceOf(users[0].$options!.profiler, Profiler)
+		assert.deepEqual(users[0].$options!.profiler, app.profiler)
 	})
 
 	test('define custom profiler', async (assert) => {
@@ -419,7 +431,7 @@ test.group('Model options | Model.findMany', (group) => {
 		}
 
 		await db.insertQuery().table('users').insert({ username: 'virk' })
-		const profiler = getProfiler()
+		const profiler = app.profiler
 
 		const users = await User.findMany([1], { profiler })
 		assert.deepEqual(users[0].$options!.profiler, profiler)
@@ -447,13 +459,15 @@ test.group('Model options | Model.findMany', (group) => {
 
 test.group('Model options | Model.firstOrCreate', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 		await db.manager.closeAll()
 	})
 
@@ -481,7 +495,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 
 		assert.equal(total[0].total, 1)
 		assert.equal(user.$options!.connection, 'secondary')
-		assert.instanceOf(user.$options!.profiler, Profiler)
+		assert.deepEqual(user.$options!.profiler, app.profiler)
 	})
 
 	test('define custom connection when search fails', async (assert) => {
@@ -504,7 +518,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 
 		assert.equal(total[0].total, 2)
 		assert.equal(user.$options!.connection, 'secondary')
-		assert.instanceOf(user.$options!.profiler, Profiler)
+		assert.deepEqual(user.$options!.profiler, app.profiler)
 	})
 
 	test('define custom profiler', async (assert) => {
@@ -519,7 +533,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 		}
 
 		await db.insertQuery().table('users').insert({ username: 'virk' })
-		const profiler = getProfiler()
+		const profiler = app.profiler
 
 		const user = await User.firstOrCreate({ username: 'virk' }, undefined, { profiler })
 		const total = await db.from('users').count('*', 'total')
@@ -541,7 +555,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 		}
 
 		await db.insertQuery().table('users').insert({ username: 'virk' })
-		const profiler = getProfiler()
+		const profiler = app.profiler
 
 		const user = await User.firstOrCreate({ username: 'nikk' }, undefined, { profiler })
 		const total = await db.from('users').count('*', 'total')
@@ -644,13 +658,15 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 
 test.group('Model options | Model.fetchOrCreateMany', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 		await db.manager.closeAll()
 	})
 
@@ -679,7 +695,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 		assert.equal(total[0].total, 1)
 		assert.equal(user.$options!.connection, 'secondary')
-		assert.instanceOf(user.$options!.profiler, Profiler)
+		assert.deepEqual(user.$options!.profiler, app.profiler)
 	})
 
 	test('define custom connection when search fails', async (assert) => {
@@ -701,7 +717,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 		assert.equal(total[0].total, 1)
 		assert.equal(user.$options!.connection, 'secondary')
-		assert.instanceOf(user.$options!.profiler, Profiler)
+		assert.deepEqual(user.$options!.profiler, app.profiler)
 	})
 
 	test('define custom profiler', async (assert) => {
@@ -716,7 +732,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 		}
 
 		await db.insertQuery().table('users').insert({ username: 'virk' })
-		const profiler = getProfiler()
+		const profiler = app.profiler
 
 		const [user] = await User.fetchOrCreateMany('username', [{ username: 'virk' }], { profiler })
 
@@ -738,7 +754,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 			public username: string
 		}
 
-		const profiler = getProfiler()
+		const profiler = app.profiler
 		const [user] = await User.fetchOrCreateMany('username', [{ username: 'virk' }], { profiler })
 
 		const total = await db.from('users').count('*', 'total')
@@ -856,13 +872,15 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 
 test.group('Model options | Model.updateOrCreateMany', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 		await db.manager.closeAll()
 	})
 
@@ -932,7 +950,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 		}
 
 		await db.insertQuery().table('users').insert({ username: 'virk' })
-		const profiler = getProfiler()
+		const profiler = app.profiler
 		const originalCreate = profiler.create.bind(profiler)
 		profiler.create = function (label): any {
 			assert.equal(label, 'trx:begin')
@@ -961,7 +979,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 			public username: string
 		}
 
-		const profiler = getProfiler()
+		const profiler = app.profiler
 		const originalCreate = profiler.create.bind(profiler)
 		profiler.create = function (label): any {
 			assert.equal(label, 'trx:begin')
@@ -1085,13 +1103,15 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 
 test.group('Model options | Query Builder Preloads', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 		await db.manager.closeAll()
 	})
 
@@ -1129,10 +1149,10 @@ test.group('Model options | Query Builder Preloads', (group) => {
 		assert.lengthOf(users, 1)
 
 		assert.equal(users[0].$options!.connection, 'secondary')
-		assert.instanceOf(users[0].$options!.profiler, Profiler)
+		assert.deepEqual(users[0].$options!.profiler, app.profiler)
 
 		assert.equal(users[0].profile.$options!.connection, 'secondary')
-		assert.instanceOf(users[0].profile.$options!.profiler, Profiler)
+		assert.deepEqual(users[0].profile.$options!.profiler, app.profiler)
 	})
 
 	test('use transaction client to execute preload queries', async (assert) => {
@@ -1200,7 +1220,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
 		await db.insertQuery().table('users').insert({ username: 'virk' })
 		await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-		const profiler = getProfiler()
+		const profiler = app.profiler
 		const users = await User.query({ profiler }).preload('profile').exec()
 
 		assert.lengthOf(users, 1)
@@ -1374,13 +1394,15 @@ test.group('Model options | Query Builder Preloads', (group) => {
 
 test.group('Model options | Model Preloads', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 		await db.manager.closeAll()
 	})
 
@@ -1420,7 +1442,7 @@ test.group('Model options | Model Preloads', (group) => {
 		await user.preload('profile')
 
 		assert.equal(user.profile.$options!.connection, 'secondary')
-		assert.instanceOf(user.profile.$options!.profiler, Profiler)
+		assert.deepEqual(user.profile.$options!.profiler, app.profiler)
 	})
 
 	test('pass profiler to preload models', async (assert) => {
@@ -1449,7 +1471,7 @@ test.group('Model options | Model Preloads', (group) => {
 		await db.insertQuery().table('users').insert({ username: 'virk' })
 		await db.insertQuery().table('profiles').insert({ user_id: 1, display_name: 'Virk' })
 
-		const profiler = getProfiler()
+		const profiler = app.profiler
 		const user = await User.query({ profiler }).firstOrFail()
 
 		assert.equal(user.$options!.connection, 'primary')

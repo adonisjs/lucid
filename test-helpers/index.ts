@@ -14,10 +14,7 @@ import dotenv from 'dotenv'
 import { join } from 'path'
 import { Chance } from 'chance'
 import { Filesystem } from '@poppinss/dev-utils'
-import { IocContract, Ioc } from '@adonisjs/fold'
-import { Logger } from '@adonisjs/logger/build/standalone'
-import { Emitter } from '@adonisjs/events/build/standalone'
-import { Profiler } from '@adonisjs/profiler/build/standalone'
+import { Application } from '@adonisjs/core/build/standalone'
 
 import {
 	ConnectionConfig,
@@ -32,24 +29,24 @@ import {
 	DatabaseQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
-import { LucidRow, LucidModel, AdapterContract } from '@ioc:Adonis/Lucid/Model'
-
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
 import { MigratorContract, MigratorOptions } from '@ioc:Adonis/Lucid/Migrator'
+import { LucidRow, LucidModel, AdapterContract } from '@ioc:Adonis/Lucid/Model'
+
 import {
-	FactoryModelContract,
 	DefineCallback,
+	FactoryModelContract,
 	FactoryManagerContract,
 } from '@ioc:Adonis/Lucid/Factory'
 
 import { Schema } from '../src/Schema'
 import { Migrator } from '../src/Migrator'
 import { Adapter } from '../src/Orm/Adapter'
+import { Database } from '../src/Database/index'
+import { QueryClient } from '../src/QueryClient'
 import { BaseModel } from '../src/Orm/BaseModel'
 import { Config as OrmConfig } from '../src/Orm/Config'
-import { QueryClient } from '../src/QueryClient'
-import { Database } from '../src/Database/index'
 import { FactoryModel } from '../src/Factory/FactoryModel'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
@@ -311,10 +308,14 @@ export async function resetTables() {
  */
 export function getQueryClient(
 	connection: ConnectionContract,
-	mode?: 'read' | 'write' | 'dual',
-	emitter?: Emitter
+	application: ApplicationContract,
+	mode?: 'read' | 'write' | 'dual'
 ): QueryClientContract {
-	return new QueryClient(mode || 'dual', connection, emitter || getEmitter()) as QueryClientContract
+	return new QueryClient(
+		mode || 'dual',
+		connection,
+		application.container.use('Adonis/Core/Event')
+	) as QueryClientContract
 }
 
 /**
@@ -349,35 +350,9 @@ export function getInsertBuilder(client: QueryClientContract) {
 }
 
 /**
- * Returns fake logger instance
- */
-export function getLogger() {
-	return new Logger({
-		enabled: true,
-		name: 'lucid',
-		level: 'debug',
-		prettyPrint: false,
-	})
-}
-
-/**
- * Returns emitter instance
- */
-export function getEmitter() {
-	return new Emitter(new Ioc())
-}
-
-/**
- * Returns profiler instance
- */
-export function getProfiler(enabled: boolean = false) {
-	return new Profiler(__dirname, getLogger(), { enabled })
-}
-
-/**
  * Returns the database instance
  */
-export function getDb(emitter?: Emitter) {
+export function getDb(application: ApplicationContract) {
 	const config = {
 		connection: 'primary',
 		connections: {
@@ -388,9 +363,9 @@ export function getDb(emitter?: Emitter) {
 
 	return new Database(
 		config,
-		getLogger(),
-		getProfiler(),
-		emitter || getEmitter()
+		application.container.use('Adonis/Core/Logger'),
+		application.container.use('Adonis/Core/Profiler'),
+		application.container.use('Adonis/Core/Event')
 	) as DatabaseContract
 }
 
@@ -404,9 +379,9 @@ export function ormAdapter(db: DatabaseContract) {
 /**
  * Returns the base model with the adapter attached to it
  */
-export function getBaseModel(adapter: AdapterContract, container?: IocContract) {
+export function getBaseModel(adapter: AdapterContract, application: ApplicationContract) {
 	BaseModel.$adapter = adapter
-	BaseModel.$container = container || new Ioc()
+	BaseModel.$container = application.container
 	BaseModel.$configurator = Object.assign({}, OrmConfig)
 	return (BaseModel as unknown) as LucidModel
 }
@@ -570,4 +545,42 @@ export function getPosts(count: number, userId: number) {
 			title: chance.sentence({ words: 5 }),
 		}
 	})
+}
+
+/**
+ * Setup application
+ */
+export async function setupApplication(dbConfig?: any, additionalProviders?: string[]) {
+	await fs.add('.env', '')
+	await fs.add(
+		'config/app.ts',
+		`
+		export const appKey = 'averylong32charsrandomsecretkey',
+		export const http = {
+			cookie: {},
+			trustProxy: () => true,
+		}
+	`
+	)
+
+	await fs.add(
+		'config/database.ts',
+		`
+		const dbConfig = ${JSON.stringify(dbConfig, null, 2)}
+		export default dbConfig
+	`
+	)
+
+	const app = new Application(fs.basePath, 'test', {
+		aliases: {
+			App: './app',
+		},
+		providers: ['@adonisjs/core'].concat(additionalProviders || []),
+	})
+
+	app.setup()
+	app.registerProviders()
+	await app.bootProviders()
+
+	return app
 }

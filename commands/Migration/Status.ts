@@ -7,11 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import CliTable from 'cli-table3'
-import { inject } from '@adonisjs/fold'
-import { flags, Kernel } from '@adonisjs/ace'
-import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { flags } from '@adonisjs/core/build/standalone'
 import { MigrationListNode } from '@ioc:Adonis/Lucid/Migrator'
 import MigrationsBase from './Base'
 
@@ -19,7 +15,6 @@ import MigrationsBase from './Base'
  * The command is meant to migrate the database by execute migrations
  * in `up` direction.
  */
-@inject([null, null, 'Adonis/Lucid/Database'])
 export default class Status extends MigrationsBase {
 	public static commandName = 'migration:status'
 	public static description = 'Check migrations current status.'
@@ -36,10 +31,6 @@ export default class Status extends MigrationsBase {
 	 */
 	public static settings = {
 		loadApp: true,
-	}
-
-	constructor(app: ApplicationContract, kernel: Kernel, private db: DatabaseContract) {
-		super(app, kernel)
 	}
 
 	/**
@@ -59,9 +50,11 @@ export default class Status extends MigrationsBase {
 	/**
 	 * Handle command
 	 */
-	public async handle(): Promise<void> {
-		this.connection = this.connection || this.db.primaryConnectionName
-		const connection = this.db.getRawConnection(this.connection)
+	public async run(): Promise<void> {
+		const db = this.application.container.use('Adonis/Lucid/Database')
+
+		this.connection = this.connection || db.primaryConnectionName
+		const connection = db.getRawConnection(this.connection)
 
 		/**
 		 * Ensure the define connection name does exists in the
@@ -73,7 +66,7 @@ export default class Status extends MigrationsBase {
 		}
 
 		const { Migrator } = await import('../../src/Migrator')
-		const migrator = new Migrator(this.db, this.application, {
+		const migrator = new Migrator(db, this.application, {
 			direction: 'up',
 			connectionName: this.connection,
 		})
@@ -82,15 +75,14 @@ export default class Status extends MigrationsBase {
 		await migrator.close()
 
 		this.printPreviewMessage()
-		const table = new CliTable({
-			head: ['Name', 'Status', 'Batch', 'Message'],
-		})
+		const table = this.ui.table()
+		table.head(['Name', 'Status', 'Batch', 'Message'])
 
 		/**
 		 * Push a new row to the table
 		 */
 		list.forEach((node) => {
-			table.push([
+			table.row([
 				node.name,
 				this.colorizeStatus(node.status),
 				node.batch || 'NA',
@@ -98,6 +90,6 @@ export default class Status extends MigrationsBase {
 			] as any)
 		})
 
-		console.log(table.toString())
+		table.render()
 	}
 }

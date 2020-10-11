@@ -10,7 +10,8 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import { BelongsTo } from '@ioc:Adonis/Lucid/Orm'
+import type { BelongsTo } from '@ioc:Adonis/Lucid/Orm'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { scope } from '../../src/Helpers/scope'
 import { column, belongsTo } from '../../src/Orm/Decorators'
@@ -22,16 +23,26 @@ import {
 	cleanup,
 	resetTables,
 	getDb,
-	getProfiler,
+	setupApplication,
+	fs,
 } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
+let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
 
 test.group('Model | BelongsTo | Options', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
+	})
+
+	group.after(async () => {
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('raise error when localKey is missing', (assert) => {
@@ -164,8 +175,16 @@ test.group('Model | BelongsTo | Options', (group) => {
 
 test.group('Model | BelongsTo | Set Relations', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
+	})
+
+	group.after(async () => {
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('set related model instance', (assert) => {
@@ -267,14 +286,16 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
 
 test.group('Model | BelongsTo | bulk operations', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -419,14 +440,16 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
 
 test.group('Model | BelongsTo | sub queries', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -681,14 +704,16 @@ test.group('Model | BelongsTo | sub queries', (group) => {
 
 test.group('Model | BelongsTo | preload', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1223,18 +1248,19 @@ test.group('Model | BelongsTo | preload', (group) => {
 			public user: BelongsTo<typeof User>
 		}
 
-		const profiler = getProfiler(true)
+		const profiler = app.profiler
 
 		let profilerPacketIndex = 0
+
 		profiler.process((packet) => {
-			if (profilerPacketIndex === 1) {
+			profilerPacketIndex++
+			if (profilerPacketIndex === 4) {
 				assert.deepEqual(packet.data.relation, {
 					model: 'Profile',
 					relatedModel: 'User',
 					type: 'belongsTo',
 				})
 			}
-			profilerPacketIndex++
 		})
 
 		await db.insertQuery().table('users').insert({ username: 'virk' })
@@ -1291,14 +1317,16 @@ test.group('Model | BelongsTo | preload', (group) => {
 
 test.group('Model | BelongsTo | withCount', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1361,14 +1389,16 @@ test.group('Model | BelongsTo | withCount', (group) => {
 
 test.group('Model | BelongsTo | has', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1408,14 +1438,16 @@ test.group('Model | BelongsTo | has', (group) => {
 
 test.group('Model | BelongsTo | whereHas', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1473,14 +1505,16 @@ test.group('Model | BelongsTo | whereHas', (group) => {
 
 test.group('Model | BelongsTo | associate', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1565,14 +1599,16 @@ test.group('Model | BelongsTo | associate', (group) => {
 
 test.group('Model | BelongsTo | dissociate', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1620,14 +1656,16 @@ test.group('Model | BelongsTo | dissociate', (group) => {
 
 test.group('Model | BelongsTo | bulk operations', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1663,14 +1701,16 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
 
 test.group('Model | BelongsTo | clone', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1711,14 +1751,16 @@ test.group('Model | BelongsTo | clone', (group) => {
 
 test.group('Model | BelongsTo | scopes', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1811,14 +1853,16 @@ test.group('Model | BelongsTo | scopes', (group) => {
 
 test.group('Model | BelongsTo | onQuery', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {

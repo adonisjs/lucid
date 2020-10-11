@@ -8,33 +8,23 @@
  */
 
 import test from 'japa'
-import { join } from 'path'
-import { Filesystem } from '@poppinss/dev-utils'
-import { Application } from '@adonisjs/application/build/standalone'
 
 import { SeedsRunner } from '../../src/SeedsRunner'
-import { getDb, setup, cleanup } from '../../test-helpers'
-
-const fs = new Filesystem(join(__dirname, 'app'))
-let db: ReturnType<typeof getDb>
+import { getDb, setup, cleanup, setupApplication, fs } from '../../test-helpers'
 
 test.group('Seeds Runner', (group) => {
-	group.before(async () => {
-		db = getDb()
+	group.beforeEach(async () => {
 		await setup()
 	})
 
-	group.after(async () => {
-		await cleanup()
-		await db.manager.closeAll()
-	})
-
 	group.afterEach(async () => {
+		await cleanup()
 		await fs.cleanup()
 	})
 
 	test('run a seeder file', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
+		const app = await setupApplication()
+		const db = getDb(app)
 		const runner = new SeedsRunner(db, app)
 
 		await fs.add(
@@ -52,10 +42,13 @@ test.group('Seeds Runner', (group) => {
 		const report = await runner.run(files[0])
 		assert.equal((report.file.getSource() as any)['invoked'], true)
 		assert.equal(report.status, 'completed')
+
+		await db.manager.closeAll()
 	})
 
 	test('catch and return seeder errors', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
+		const app = await setupApplication()
+		const db = getDb(app)
 		const runner = new SeedsRunner(db, app)
 
 		await fs.add(
@@ -71,12 +64,15 @@ test.group('Seeds Runner', (group) => {
 		const report = await runner.run(files[0])
 		assert.equal(report.status, 'failed')
 		assert.exists(report.error)
+
+		await db.manager.closeAll()
 	})
 
 	test('mark file as ignored when "developmentOnly = true" and not running in development mode', async (assert) => {
 		process.env.NODE_ENV = 'production'
 
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
+		const app = await setupApplication()
+		const db = getDb(app)
 		const runner = new SeedsRunner(db, app)
 
 		await fs.add(
@@ -96,5 +92,6 @@ test.group('Seeds Runner', (group) => {
 		assert.equal(report.status, 'ignored')
 
 		delete process.env.NODE_ENV
+		await db.manager.closeAll()
 	})
 })

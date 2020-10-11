@@ -10,22 +10,30 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { Connection } from '../../src/Connection'
 import { ConnectionManager } from '../../src/Connection/Manager'
-import { getConfig, setup, cleanup, getLogger, mapToObj, getEmitter } from '../../test-helpers'
+import { fs, getConfig, setup, cleanup, mapToObj, setupApplication } from '../../test-helpers'
+
+let app: ApplicationContract
 
 test.group('ConnectionManager', (group) => {
 	group.before(async () => {
 		await setup()
 	})
 
+	group.beforeEach(async () => {
+		app = await setupApplication()
+	})
+
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('do not connect until connect is called', async (assert) => {
-		const manager = new ConnectionManager(getLogger(), getEmitter())
+		const manager = new ConnectionManager(app.logger, app.container.use('Adonis/Core/Event'))
 		manager.add('primary', getConfig())
 
 		assert.isTrue(manager.has('primary'))
@@ -34,7 +42,7 @@ test.group('ConnectionManager', (group) => {
 	})
 
 	test('connect and set its state to open', async (assert) => {
-		const manager = new ConnectionManager(getLogger(), getEmitter())
+		const manager = new ConnectionManager(app.logger, app.container.use('Adonis/Core/Event'))
 		manager.add('primary', getConfig())
 		manager.connect('primary')
 
@@ -44,7 +52,7 @@ test.group('ConnectionManager', (group) => {
 	})
 
 	test('on disconnect set state to closed', async (assert) => {
-		const manager = new ConnectionManager(getLogger(), getEmitter())
+		const manager = new ConnectionManager(app.logger, app.container.use('Adonis/Core/Event'))
 		manager.add('primary', getConfig())
 		manager.connect('primary')
 
@@ -55,7 +63,7 @@ test.group('ConnectionManager', (group) => {
 	})
 
 	test('add duplicate connection must be a noop', async (assert) => {
-		const manager = new ConnectionManager(getLogger(), getEmitter())
+		const manager = new ConnectionManager(app.logger, app.container.use('Adonis/Core/Event'))
 		manager.add('primary', getConfig())
 		manager.connect('primary')
 
@@ -65,7 +73,7 @@ test.group('ConnectionManager', (group) => {
 	})
 
 	test('patch config when connection is not in open state', async (assert) => {
-		const manager = new ConnectionManager(getLogger(), getEmitter())
+		const manager = new ConnectionManager(app.logger, app.container.use('Adonis/Core/Event'))
 		manager.add('primary', getConfig())
 		manager.connect('primary')
 
@@ -77,10 +85,10 @@ test.group('ConnectionManager', (group) => {
 	})
 
 	test('ignore multiple calls to `connect` on a single connection', async (_, done) => {
-		const emitter = getEmitter()
+		const emitter = app.container.use('Adonis/Core/Event')
 		let counter = 0
 
-		const manager = new ConnectionManager(getLogger(), emitter)
+		const manager = new ConnectionManager(app.logger, emitter)
 		manager.add('primary', getConfig())
 
 		emitter.on('db:connection:connect', () => {
@@ -99,9 +107,9 @@ test.group('ConnectionManager', (group) => {
 	test('releasing a connection must close it first', async (assert) => {
 		assert.plan(2)
 
-		const emitter = getEmitter()
+		const emitter = app.container.use('Adonis/Core/Event')
 
-		const manager = new ConnectionManager(getLogger(), emitter)
+		const manager = new ConnectionManager(app.logger, emitter)
 		manager.add('primary', getConfig())
 		manager.connect('primary')
 
@@ -116,8 +124,8 @@ test.group('ConnectionManager', (group) => {
 	test('proxy error event', async (assert, done) => {
 		assert.plan(3)
 
-		const emitter = getEmitter()
-		const manager = new ConnectionManager(getLogger(), emitter)
+		const emitter = app.container.use('Adonis/Core/Event')
+		const manager = new ConnectionManager(app.logger, emitter)
 		manager.add('primary', Object.assign({}, getConfig(), { client: null }))
 
 		emitter.on('db:connection:error', async ([{ message }, connection]) => {
@@ -141,8 +149,8 @@ test.group('ConnectionManager', (group) => {
 
 		let connections: any[] = []
 
-		const emitter = getEmitter()
-		const manager = new ConnectionManager(getLogger(), emitter)
+		const emitter = app.container.use('Adonis/Core/Event')
+		const manager = new ConnectionManager(app.logger, emitter)
 		manager.add('primary', getConfig())
 
 		emitter.on('db:connection:disconnect', async (connection) => {
@@ -182,7 +190,7 @@ test.group('ConnectionManager', (group) => {
 	})
 
 	test('get health check report for connections that has enabled health checks', async (assert) => {
-		const manager = new ConnectionManager(getLogger(), getEmitter())
+		const manager = new ConnectionManager(app.logger, app.container.use('Adonis/Core/Event'))
 		manager.add('primary', Object.assign({}, getConfig(), { healthCheck: true }))
 		manager.add('secondary', Object.assign({}, getConfig(), { healthCheck: true }))
 		manager.add('secondary-copy', Object.assign({}, getConfig(), { healthCheck: false }))
@@ -198,7 +206,7 @@ test.group('ConnectionManager', (group) => {
 	})
 
 	test('get health check report when one of the connection is unhealthy', async (assert) => {
-		const manager = new ConnectionManager(getLogger(), getEmitter())
+		const manager = new ConnectionManager(app.logger, app.container.use('Adonis/Core/Event'))
 		manager.add('primary', Object.assign({}, getConfig(), { healthCheck: true }))
 		manager.add(
 			'secondary',

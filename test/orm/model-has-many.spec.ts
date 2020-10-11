@@ -10,30 +10,41 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import { HasMany } from '@ioc:Adonis/Lucid/Orm'
+import type { HasMany } from '@ioc:Adonis/Lucid/Orm'
 
 import { scope } from '../../src/Helpers/scope'
 import { column, hasMany } from '../../src/Orm/Decorators'
 import { HasManyQueryBuilder } from '../../src/Orm/Relations/HasMany/QueryBuilder'
 
 import {
+	fs,
 	setup,
 	getDb,
 	cleanup,
 	getPosts,
 	ormAdapter,
-	getProfiler,
 	resetTables,
 	getBaseModel,
+	setupApplication,
 } from '../../test-helpers'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 let db: ReturnType<typeof getDb>
+let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
 
 test.group('Model | HasMany | Options', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
+	})
+
+	group.after(async () => {
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('raise error when localKey is missing', (assert) => {
@@ -168,8 +179,16 @@ test.group('Model | HasMany | Options', (group) => {
 
 test.group('Model | HasMany | Set Relations', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
+	})
+
+	group.after(async () => {
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('set related model instance', (assert) => {
@@ -275,14 +294,16 @@ test.group('Model | HasMany | Set Relations', (group) => {
 
 test.group('Model | HasMany | bulk operations', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -431,14 +452,16 @@ test.group('Model | HasMany | bulk operations', (group) => {
 
 test.group('Model | HasMany | sub queries', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -662,14 +685,16 @@ test.group('Model | HasMany | sub queries', (group) => {
 
 test.group('Model | HasMany | aggregates', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -708,14 +733,16 @@ test.group('Model | HasMany | aggregates', (group) => {
 
 test.group('Model | HasMany | preload', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1309,7 +1336,7 @@ test.group('Model | HasMany | preload', (group) => {
 				},
 			])
 
-		const profiler = getProfiler(true)
+		const profiler = app.profiler
 
 		let profilerPacketIndex = 0
 		profiler.process((packet) => {
@@ -1353,14 +1380,16 @@ test.group('Model | HasMany | preload', (group) => {
 
 test.group('Model | HasMany | withCount', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1672,14 +1701,16 @@ test.group('Model | HasMany | withCount', (group) => {
 
 test.group('Model | HasMany | has', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -2078,14 +2109,16 @@ test.group('Model | HasMany | has', (group) => {
 
 test.group('Model | HasMany | whereHas', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -2612,14 +2645,16 @@ test.group('Model | HasMany | whereHas', (group) => {
 if (process.env.DB !== 'mysql_legacy') {
 	test.group('Model | HasMany | Group Limit', (group) => {
 		group.before(async () => {
-			db = getDb()
-			BaseModel = getBaseModel(ormAdapter(db))
+			app = await setupApplication()
+			db = getDb(app)
+			BaseModel = getBaseModel(ormAdapter(db), app)
 			await setup()
 		})
 
 		group.after(async () => {
-			await cleanup()
 			await db.manager.closeAll()
+			await cleanup()
+			await fs.cleanup()
 		})
 
 		group.afterEach(async () => {
@@ -3225,14 +3260,16 @@ if (process.env.DB !== 'mysql_legacy') {
 
 test.group('Model | HasMany | save', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -3284,14 +3321,16 @@ test.group('Model | HasMany | save', (group) => {
 
 test.group('Model | HasMany | saveMany', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -3447,14 +3486,16 @@ test.group('Model | HasMany | saveMany', (group) => {
 
 test.group('Model | HasMany | create', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -3503,14 +3544,16 @@ test.group('Model | HasMany | create', (group) => {
 
 test.group('Model | HasMany | createMany', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -3652,14 +3695,16 @@ test.group('Model | HasMany | createMany', (group) => {
 
 test.group('Model | HasMany | firstOrCreate', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -3759,14 +3804,16 @@ test.group('Model | HasMany | firstOrCreate', (group) => {
 
 test.group('Model | HasMany | updateOrCreate', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -3867,14 +3914,16 @@ test.group('Model | HasMany | updateOrCreate', (group) => {
 
 test.group('Model | HasMany | paginate', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -3961,14 +4010,16 @@ test.group('Model | HasMany | paginate', (group) => {
 
 test.group('Model | HasMany | clone', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -4002,14 +4053,16 @@ test.group('Model | HasMany | clone', (group) => {
 
 test.group('Model | HasMany | scopes', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -4101,14 +4154,16 @@ test.group('Model | HasMany | scopes', (group) => {
 
 test.group('Model | HasMany | onQuery', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {

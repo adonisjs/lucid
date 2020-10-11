@@ -11,20 +11,20 @@
 
 import test from 'japa'
 import 'reflect-metadata'
-import { join } from 'path'
 import { Kernel } from '@adonisjs/ace'
-import { Filesystem } from '@poppinss/dev-utils'
-import { Application } from '@adonisjs/application/build/standalone'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import DbSeed from '../../commands/DbSeed'
-import { setup, cleanup, getDb } from '../../test-helpers'
+import { fs, setup, cleanup, getDb, setupApplication } from '../../test-helpers'
 
+let app: ApplicationContract
 let db: ReturnType<typeof getDb>
-const fs = new Filesystem(join(__dirname, 'app'))
 
 test.group('DbSeed', (group) => {
 	group.beforeEach(async () => {
-		db = getDb()
+		app = await setupApplication()
+		db = getDb(app)
+		app.container.bind('Adonis/Lucid/Database', () => db)
 		await setup()
 	})
 
@@ -44,9 +44,8 @@ test.group('DbSeed', (group) => {
 			}`
 		)
 
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-		const seed = new DbSeed(app, new Kernel(app), db)
-		await seed.handle()
+		const seed = new DbSeed(app, new Kernel(app))
+		await seed.run()
 
 		assert.equal(process.env.EXEC_USER_SEEDER, 'true')
 		delete process.env.EXEC_USER_SEEDER
@@ -71,10 +70,9 @@ test.group('DbSeed', (group) => {
 			}`
 		)
 
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-		const seed = new DbSeed(app, new Kernel(app), db)
+		const seed = new DbSeed(app, new Kernel(app))
 		seed.files = ['./database/seeders/post.ts']
-		await seed.handle()
+		await seed.run()
 
 		assert.isUndefined(process.env.EXEC_USER_SEEDER)
 		assert.equal(process.env.EXEC_POST_SEEDER, 'true')

@@ -11,28 +11,41 @@
 
 import test from 'japa'
 
-import { HasOne } from '@ioc:Adonis/Lucid/Orm'
+import type { HasOne } from '@ioc:Adonis/Lucid/Orm'
 import { column, hasOne } from '../../src/Orm/Decorators'
 import { FactoryManager } from '../../src/Factory/index'
 import { FactoryModel } from '../../src/Factory/FactoryModel'
 import { HasOne as FactoryHasOne } from '../../src/Factory/Relations/HasOne'
 
-import { setup, getDb, cleanup, ormAdapter, resetTables, getBaseModel } from '../../test-helpers'
+import {
+	fs,
+	setup,
+	getDb,
+	cleanup,
+	ormAdapter,
+	resetTables,
+	getBaseModel,
+	setupApplication,
+} from '../../test-helpers'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 let db: ReturnType<typeof getDb>
+let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
 const factoryManager = new FactoryManager()
 
 test.group('Factory | Factory Model', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {

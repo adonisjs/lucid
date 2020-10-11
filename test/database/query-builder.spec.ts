@@ -14,40 +14,46 @@ import { Connection } from '../../src/Connection'
 import { QueryRunner } from '../../src/QueryRunner'
 import { DatabaseQueryBuilder } from '../../src/Database/QueryBuilder/Database'
 import {
+	fs,
 	setup,
 	cleanup,
 	getDb,
 	getConfig,
 	getUsers,
-	getLogger,
-	getEmitter,
 	resetTables,
 	getQueryClient,
 	getQueryBuilder,
 	getInsertBuilder,
 	getRawQueryBuilder,
+	setupApplication,
 } from '../../test-helpers'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+
+let app: ApplicationContract
 
 if (process.env.DB !== 'sqlite') {
 	test.group('Query Builder | client', (group) => {
 		group.before(async () => {
+			app = await setupApplication()
 			await setup()
 		})
 
 		group.after(async () => {
 			await cleanup()
+			await fs.cleanup()
 		})
 
 		group.afterEach(async () => {
+			app.container.use('Adonis/Core/Event').clearListeners('db:query')
 			await resetTables()
 		})
 
 		test('use read client when making select query', async (assert) => {
 			assert.plan(1)
-			const connection = new Connection('primary', getConfig(), getLogger())
+			const connection = new Connection('primary', getConfig(), app.logger)
 			connection.connect()
 
-			const client = getQueryClient(connection)
+			const client = getQueryClient(connection, app)
 			const db = getQueryBuilder(client)
 
 			client.getReadClient = function getReadClient() {
@@ -61,10 +67,10 @@ if (process.env.DB !== 'sqlite') {
 
 		test('use write client for update', async (assert) => {
 			assert.plan(1)
-			const connection = new Connection('primary', getConfig(), getLogger())
+			const connection = new Connection('primary', getConfig(), app.logger)
 			connection.connect()
 
-			const client = getQueryClient(connection)
+			const client = getQueryClient(connection, app)
 			const db = getQueryBuilder(client)
 
 			client.getWriteClient = function getWriteClient() {
@@ -80,10 +86,10 @@ if (process.env.DB !== 'sqlite') {
 
 		test('use write client for delete', async (assert) => {
 			assert.plan(1)
-			const connection = new Connection('primary', getConfig(), getLogger())
+			const connection = new Connection('primary', getConfig(), app.logger)
 			connection.connect()
 
-			const client = getQueryClient(connection)
+			const client = getQueryClient(connection, app)
 			const db = getQueryBuilder(client)
 
 			client.getWriteClient = function getWriteClient() {
@@ -97,10 +103,10 @@ if (process.env.DB !== 'sqlite') {
 
 		test('use write client for inserts', async (assert) => {
 			assert.plan(1)
-			const connection = new Connection('primary', getConfig(), getLogger())
+			const connection = new Connection('primary', getConfig(), app.logger)
 			connection.connect()
 
-			const client = getQueryClient(connection)
+			const client = getQueryClient(connection, app)
 			const db = getInsertBuilder(client)
 
 			client.getWriteClient = function getWriteClient() {
@@ -115,10 +121,10 @@ if (process.env.DB !== 'sqlite') {
 		})
 
 		test('use transaction client when query is used inside a transaction', async () => {
-			const connection = new Connection('primary', getConfig(), getLogger())
+			const connection = new Connection('primary', getConfig(), app.logger)
 			connection.connect()
 
-			const client = getQueryClient(connection)
+			const client = getQueryClient(connection, app)
 			const db = getQueryBuilder(client)
 
 			client.getReadClient = function getReadClient() {
@@ -134,10 +140,10 @@ if (process.env.DB !== 'sqlite') {
 		})
 
 		test('use transaction client when insert query is used inside a transaction', async () => {
-			const connection = new Connection('primary', getConfig(), getLogger())
+			const connection = new Connection('primary', getConfig(), app.logger)
 			connection.connect()
 
-			const client = getQueryClient(connection)
+			const client = getQueryClient(connection, app)
 			const db = getInsertBuilder(client)
 
 			client.getReadClient = function getReadClient() {
@@ -155,10 +161,10 @@ if (process.env.DB !== 'sqlite') {
 		})
 
 		test('use transaction client when query is issued from transaction client', async () => {
-			const connection = new Connection('primary', getConfig(), getLogger())
+			const connection = new Connection('primary', getConfig(), app.logger)
 			connection.connect()
 
-			const client = getQueryClient(connection)
+			const client = getQueryClient(connection, app)
 
 			client.getReadClient = function getReadClient() {
 				throw new Error('Never expected to reach here')
@@ -173,10 +179,10 @@ if (process.env.DB !== 'sqlite') {
 		})
 
 		test('use transaction client when insert query is issued from transaction client', async () => {
-			const connection = new Connection('primary', getConfig(), getLogger())
+			const connection = new Connection('primary', getConfig(), app.logger)
 			connection.connect()
 
-			const client = getQueryClient(connection)
+			const client = getQueryClient(connection, app)
 
 			const trx = await client.transaction()
 			trx.getReadClient = function getReadClient() {
@@ -193,18 +199,25 @@ if (process.env.DB !== 'sqlite') {
 
 test.group('Query Builder | from', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('define query table', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').toSQL()
 		const { sql: knexSql, bindings: knexBindings } = connection.client!.from('users').toSQL()
 
@@ -214,10 +227,10 @@ test.group('Query Builder | from', (group) => {
 	})
 
 	test('define table alias', (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from({ u: 'users' }).toSQL()
 		const { sql: knexSql, bindings: knexBindings } = connection.client!.from({ u: 'users' }).toSQL()
 
@@ -228,18 +241,25 @@ test.group('Query Builder | from', (group) => {
 
 test.group('Query Builder | select', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('define columns as array', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').select(['username']).toSQL()
 		const { sql: knexSql, bindings: knexBindings } = connection
 			.client!.from('users')
@@ -252,10 +272,10 @@ test.group('Query Builder | select', (group) => {
 	})
 
 	test('define columns with aliases', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').select(['username as u']).toSQL()
 		const { sql: knexSql, bindings: knexBindings } = connection
 			.client!.from('users')
@@ -268,10 +288,10 @@ test.group('Query Builder | select', (group) => {
 	})
 
 	test('define columns as multiple arguments', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').select('username', 'email').toSQL()
 		const { sql: knexSql, bindings: knexBindings } = connection
 			.client!.from('users')
@@ -284,10 +304,10 @@ test.group('Query Builder | select', (group) => {
 	})
 
 	test('define columns as multiple arguments with aliases', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').select('username as u', 'email as e').toSQL()
 		const { sql: knexSql, bindings: knexBindings } = connection
 			.client!.from('users')
@@ -300,11 +320,11 @@ test.group('Query Builder | select', (group) => {
 	})
 
 	test('define columns as subqueries', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
-		const db1 = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
+		const db1 = getQueryBuilder(getQueryClient(connection, app))
 
 		const { sql, bindings } = db
 			.from('users')
@@ -322,11 +342,11 @@ test.group('Query Builder | select', (group) => {
 	})
 
 	test('define columns as subqueries inside an array', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
-		const db1 = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
+		const db1 = getQueryBuilder(getQueryClient(connection, app))
 
 		const { sql, bindings } = db
 			.from('users')
@@ -344,11 +364,11 @@ test.group('Query Builder | select', (group) => {
 	})
 
 	test('chain select calls', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
-		const db1 = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
+		const db1 = getQueryBuilder(getQueryClient(connection, app))
 
 		const { sql, bindings } = db
 			.from('users')
@@ -367,15 +387,15 @@ test.group('Query Builder | select', (group) => {
 	})
 
 	test('define columns as raw queries', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 
 		const { sql, bindings } = db
 			.from('users')
 			.select(
-				getQueryClient(connection).raw(
+				getQueryClient(connection, app).raw(
 					'(select count(*) as total from addresses) as addresses_total'
 				)
 			)
@@ -396,18 +416,25 @@ test.group('Query Builder | select', (group) => {
 
 test.group('Query Builder | where', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add where clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').where('username', 'virk').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -421,7 +448,7 @@ test.group('Query Builder | where', (group) => {
 		/**
 		 * Using keys resolver
 		 */
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
@@ -439,10 +466,10 @@ test.group('Query Builder | where', (group) => {
 	})
 
 	test('add where clause as an object', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').where({ username: 'virk', age: 22 }).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -453,7 +480,7 @@ test.group('Query Builder | where', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -472,10 +499,10 @@ test.group('Query Builder | where', (group) => {
 	})
 
 	test('add where wrapped clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.where((builder) => builder.where('username', 'virk'))
@@ -489,7 +516,7 @@ test.group('Query Builder | where', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -508,10 +535,10 @@ test.group('Query Builder | where', (group) => {
 	})
 
 	test('add where clause with operator', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').where('age', '>', 22).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -522,7 +549,7 @@ test.group('Query Builder | where', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -541,16 +568,16 @@ test.group('Query Builder | where', (group) => {
 	})
 
 	test('add where clause as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.where(
 				'age',
 				'>',
-				getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages limit 1;')
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages limit 1;')
 			)
 			.toSQL()
 
@@ -565,13 +592,13 @@ test.group('Query Builder | where', (group) => {
 	})
 
 	test('add where clause as a raw builder query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.where('age', '>', getDb().raw('select min_age from ages limit 1;'))
+			.where('age', '>', getDb(app).raw('select min_age from ages limit 1;'))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -585,10 +612,10 @@ test.group('Query Builder | where', (group) => {
 	})
 
 	test('add orWhere clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').where('age', '>', 22).orWhere('age', 18).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -600,7 +627,7 @@ test.group('Query Builder | where', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -622,10 +649,10 @@ test.group('Query Builder | where', (group) => {
 	})
 
 	test('add orWhere wrapped clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.where('age', '>', 22)
@@ -646,7 +673,7 @@ test.group('Query Builder | where', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -673,10 +700,10 @@ test.group('Query Builder | where', (group) => {
 	})
 
 	test('add where clause using ref', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').where('username', 'virk').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -690,11 +717,11 @@ test.group('Query Builder | where', (group) => {
 		/**
 		 * Using keys resolver
 		 */
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
-			.where('username', getDb().ref('foo.username'))
+			.where('username', getDb(app).ref('foo.username'))
 			.toSQL()
 
 		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
@@ -710,18 +737,25 @@ test.group('Query Builder | where', (group) => {
 
 test.group('Query Builder | whereNot', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add where not clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').whereNot('username', 'virk').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -732,7 +766,7 @@ test.group('Query Builder | whereNot', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -752,10 +786,10 @@ test.group('Query Builder | whereNot', (group) => {
 	})
 
 	test('add where not clause as an object', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').whereNot({ username: 'virk', age: 22 }).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -766,7 +800,7 @@ test.group('Query Builder | whereNot', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -785,10 +819,10 @@ test.group('Query Builder | whereNot', (group) => {
 	})
 
 	test('add where not wrapped clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNot((builder) => builder.where('username', 'virk'))
@@ -802,7 +836,7 @@ test.group('Query Builder | whereNot', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -822,10 +856,10 @@ test.group('Query Builder | whereNot', (group) => {
 	})
 
 	test('add where not clause with operator', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').whereNot('age', '>', 22).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -836,7 +870,7 @@ test.group('Query Builder | whereNot', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -856,16 +890,16 @@ test.group('Query Builder | whereNot', (group) => {
 	})
 
 	test('add where not clause as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNot(
 				'age',
 				'>',
-				getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages limit 1;')
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages limit 1;')
 			)
 			.toSQL()
 
@@ -877,7 +911,7 @@ test.group('Query Builder | whereNot', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -885,7 +919,7 @@ test.group('Query Builder | whereNot', (group) => {
 			.whereNot(
 				'age',
 				'>',
-				getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages limit 1;')
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages limit 1;')
 			)
 			.toSQL()
 
@@ -901,13 +935,13 @@ test.group('Query Builder | whereNot', (group) => {
 	})
 
 	test('add where not clause as a raw builder query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.whereNot('age', '>', getDb().raw('select min_age from ages limit 1;'))
+			.whereNot('age', '>', getDb(app).raw('select min_age from ages limit 1;'))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -918,12 +952,12 @@ test.group('Query Builder | whereNot', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
-			.whereNot('age', '>', getDb().raw('select min_age from ages limit 1;'))
+			.whereNot('age', '>', getDb(app).raw('select min_age from ages limit 1;'))
 			.toSQL()
 
 		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
@@ -938,10 +972,10 @@ test.group('Query Builder | whereNot', (group) => {
 	})
 
 	test('add orWhereNot clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNot('age', '>', 22)
@@ -957,7 +991,7 @@ test.group('Query Builder | whereNot', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -979,10 +1013,10 @@ test.group('Query Builder | whereNot', (group) => {
 	})
 
 	test('add orWhereNot wrapped clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.where('age', '>', 22)
@@ -1003,7 +1037,7 @@ test.group('Query Builder | whereNot', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1032,18 +1066,25 @@ test.group('Query Builder | whereNot', (group) => {
 
 test.group('Query Builder | whereIn', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add whereIn clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').whereIn('username', ['virk', 'nikk']).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -1054,7 +1095,7 @@ test.group('Query Builder | whereIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1073,10 +1114,10 @@ test.group('Query Builder | whereIn', (group) => {
 	})
 
 	test('add whereIn as a query callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereIn('username', (builder) => {
@@ -1094,7 +1135,7 @@ test.group('Query Builder | whereIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1117,15 +1158,15 @@ test.group('Query Builder | whereIn', (group) => {
 	})
 
 	test('add whereIn as a subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereIn(
 				'username',
-				getQueryBuilder(getQueryClient(connection)).select('id').from('accounts')
+				getQueryBuilder(getQueryClient(connection, app)).select('id').from('accounts')
 			)
 			.toSQL()
 
@@ -1137,14 +1178,14 @@ test.group('Query Builder | whereIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.whereIn(
 				'username',
-				getQueryBuilder(getQueryClient(connection)).select('id').from('accounts')
+				getQueryBuilder(getQueryClient(connection, app)).select('id').from('accounts')
 			)
 			.toSQL()
 
@@ -1159,17 +1200,17 @@ test.group('Query Builder | whereIn', (group) => {
 	})
 
 	test('add whereIn as a rawquery inside array', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
 		const ref = connection.client!.ref.bind(connection.client!)
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereIn('username', [
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					`select ${ref('id')} from ${ref('accounts')}`
 				),
 			])
@@ -1183,14 +1224,14 @@ test.group('Query Builder | whereIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.whereIn('username', [
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					`select ${ref('id')} from ${ref('accounts')}`
 				),
 			])
@@ -1210,18 +1251,18 @@ test.group('Query Builder | whereIn', (group) => {
 	})
 
 	test('add whereIn as a rawquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
 		const ref = connection.client!.ref.bind(connection.client!)
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereIn(
 				'username',
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					`select ${ref('id')} from ${ref('accounts')}`
 				)
 			)
@@ -1235,7 +1276,7 @@ test.group('Query Builder | whereIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1243,7 +1284,7 @@ test.group('Query Builder | whereIn', (group) => {
 			.whereIn(
 				'username',
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					`select ${ref('id')} from ${ref('accounts')}`
 				)
 			)
@@ -1263,15 +1304,15 @@ test.group('Query Builder | whereIn', (group) => {
 	})
 
 	test('add whereIn as a raw builder query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
 		const ref = connection.client!.ref.bind(connection.client!)
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.whereIn('username', [getDb().raw(`select ${ref('id')} from ${ref('accounts')}`)])
+			.whereIn('username', [getDb(app).raw(`select ${ref('id')} from ${ref('accounts')}`)])
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -1282,12 +1323,12 @@ test.group('Query Builder | whereIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
-			.whereIn('username', [getDb().raw(`select ${ref('id')} from ${ref('accounts')}`)])
+			.whereIn('username', [getDb(app).raw(`select ${ref('id')} from ${ref('accounts')}`)])
 			.toSQL()
 
 		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
@@ -1304,15 +1345,17 @@ test.group('Query Builder | whereIn', (group) => {
 	})
 
 	test('add whereIn as a subquery with array of keys', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereIn(
 				['username', 'email'],
-				getQueryBuilder(getQueryClient(connection)).select('username', 'email').from('accounts')
+				getQueryBuilder(getQueryClient(connection, app))
+					.select('username', 'email')
+					.from('accounts')
 			)
 			.toSQL()
 
@@ -1327,14 +1370,16 @@ test.group('Query Builder | whereIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.whereIn(
 				['username', 'email'],
-				getQueryBuilder(getQueryClient(connection)).select('username', 'email').from('accounts')
+				getQueryBuilder(getQueryClient(connection, app))
+					.select('username', 'email')
+					.from('accounts')
 			)
 			.toSQL()
 
@@ -1353,10 +1398,10 @@ test.group('Query Builder | whereIn', (group) => {
 	})
 
 	test('add whereIn as a 2d array', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereIn(['username', 'email'], [['foo', 'bar']])
@@ -1370,7 +1415,7 @@ test.group('Query Builder | whereIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1390,10 +1435,10 @@ test.group('Query Builder | whereIn', (group) => {
 	})
 
 	test('add orWhereIn clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereIn('username', ['virk', 'nikk'])
@@ -1409,7 +1454,7 @@ test.group('Query Builder | whereIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1431,10 +1476,10 @@ test.group('Query Builder | whereIn', (group) => {
 	})
 
 	test('add orWhereIn as a query callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereIn('username', (builder) => {
@@ -1458,7 +1503,7 @@ test.group('Query Builder | whereIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1490,18 +1535,25 @@ test.group('Query Builder | whereIn', (group) => {
 
 test.group('Query Builder | whereNotIn', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add whereNotIn clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').whereNotIn('username', ['virk', 'nikk']).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -1512,7 +1564,7 @@ test.group('Query Builder | whereNotIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1531,10 +1583,10 @@ test.group('Query Builder | whereNotIn', (group) => {
 	})
 
 	test('add whereNotIn as a query callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNotIn('username', (builder) => {
@@ -1552,7 +1604,7 @@ test.group('Query Builder | whereNotIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1575,15 +1627,15 @@ test.group('Query Builder | whereNotIn', (group) => {
 	})
 
 	test('add whereNotIn as a sub query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNotIn(
 				'username',
-				getQueryBuilder(getQueryClient(connection)).select('username').from('accounts')
+				getQueryBuilder(getQueryClient(connection, app)).select('username').from('accounts')
 			)
 			.toSQL()
 
@@ -1595,14 +1647,14 @@ test.group('Query Builder | whereNotIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.whereNotIn(
 				'username',
-				getQueryBuilder(getQueryClient(connection)).select('username').from('accounts')
+				getQueryBuilder(getQueryClient(connection, app)).select('username').from('accounts')
 			)
 			.toSQL()
 
@@ -1617,10 +1669,10 @@ test.group('Query Builder | whereNotIn', (group) => {
 	})
 
 	test('add whereNotIn as a 2d array', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNotIn(['username', 'email'], [['foo', 'bar']])
@@ -1634,7 +1686,7 @@ test.group('Query Builder | whereNotIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1654,10 +1706,10 @@ test.group('Query Builder | whereNotIn', (group) => {
 	})
 
 	test('add orWhereNotIn clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNotIn('username', ['virk', 'nikk'])
@@ -1673,7 +1725,7 @@ test.group('Query Builder | whereNotIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1695,10 +1747,10 @@ test.group('Query Builder | whereNotIn', (group) => {
 	})
 
 	test('add orWhereNotIn as a subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNotIn('username', (builder) => {
@@ -1722,7 +1774,7 @@ test.group('Query Builder | whereNotIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1754,18 +1806,25 @@ test.group('Query Builder | whereNotIn', (group) => {
 
 test.group('Query Builder | whereNull', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add where null clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').whereNull('deleted_at').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -1776,7 +1835,7 @@ test.group('Query Builder | whereNull', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1796,10 +1855,10 @@ test.group('Query Builder | whereNull', (group) => {
 	})
 
 	test('add or where null clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNull('deleted_at')
@@ -1815,7 +1874,7 @@ test.group('Query Builder | whereNull', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1839,18 +1898,25 @@ test.group('Query Builder | whereNull', (group) => {
 
 test.group('Query Builder | whereNotNull', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add where not null clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').whereNotNull('deleted_at').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -1861,7 +1927,7 @@ test.group('Query Builder | whereNotNull', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1881,10 +1947,10 @@ test.group('Query Builder | whereNotNull', (group) => {
 	})
 
 	test('add or where not null clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNotNull('deleted_at')
@@ -1900,7 +1966,7 @@ test.group('Query Builder | whereNotNull', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -1924,18 +1990,25 @@ test.group('Query Builder | whereNotNull', (group) => {
 
 test.group('Query Builder | whereExists', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add where exists clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereExists((builder) => {
@@ -1956,13 +2029,13 @@ test.group('Query Builder | whereExists', (group) => {
 	})
 
 	test('add where exists clause as a subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.whereExists(getQueryBuilder(getQueryClient(connection)).from('accounts'))
+			.whereExists(getQueryBuilder(getQueryClient(connection, app)).from('accounts'))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -1977,13 +2050,13 @@ test.group('Query Builder | whereExists', (group) => {
 	})
 
 	test('add where exists clause as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.whereExists(getRawQueryBuilder(getQueryClient(connection), 'select * from accounts'))
+			.whereExists(getRawQueryBuilder(getQueryClient(connection, app), 'select * from accounts'))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -1998,10 +2071,10 @@ test.group('Query Builder | whereExists', (group) => {
 	})
 
 	test('add or where exists clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.orWhereExists((builder) => {
@@ -2023,13 +2096,13 @@ test.group('Query Builder | whereExists', (group) => {
 	})
 
 	test('add or where exists clause as a subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.orWhereExists(getQueryBuilder(getQueryClient(connection)).from('accounts'))
+			.orWhereExists(getQueryBuilder(getQueryClient(connection, app)).from('accounts'))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -2046,18 +2119,25 @@ test.group('Query Builder | whereExists', (group) => {
 
 test.group('Query Builder | whereNotExists', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add where exists clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNotExists((builder) => {
@@ -2079,13 +2159,13 @@ test.group('Query Builder | whereNotExists', (group) => {
 	})
 
 	test('add where exists clause as a subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.whereNotExists(getQueryBuilder(getQueryClient(connection)).from('accounts'))
+			.whereNotExists(getQueryBuilder(getQueryClient(connection, app)).from('accounts'))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -2100,10 +2180,10 @@ test.group('Query Builder | whereNotExists', (group) => {
 	})
 
 	test('add or where exists clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.orWhereNotExists((builder) => {
@@ -2125,13 +2205,13 @@ test.group('Query Builder | whereNotExists', (group) => {
 	})
 
 	test('add or where exists clause as a subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.orWhereNotExists(getQueryBuilder(getQueryClient(connection)).from('accounts'))
+			.orWhereNotExists(getQueryBuilder(getQueryClient(connection, app)).from('accounts'))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -2148,18 +2228,25 @@ test.group('Query Builder | whereNotExists', (group) => {
 
 test.group('Query Builder | whereBetween', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add where between clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').whereBetween('age', [0, 20]).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -2170,7 +2257,7 @@ test.group('Query Builder | whereBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -2190,15 +2277,15 @@ test.group('Query Builder | whereBetween', (group) => {
 	})
 
 	test('add where between clause as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereBetween('age', [
-				getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages;'),
-				getRawQueryBuilder(getQueryClient(connection), 'select max_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select max_age from ages;'),
 			])
 			.toSQL()
 
@@ -2213,14 +2300,14 @@ test.group('Query Builder | whereBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.whereBetween('age', [
-				getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages;'),
-				getRawQueryBuilder(getQueryClient(connection), 'select max_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select max_age from ages;'),
 			])
 			.toSQL()
 
@@ -2239,10 +2326,10 @@ test.group('Query Builder | whereBetween', (group) => {
 	})
 
 	test('add or where between clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').orWhereBetween('age', [18, 20]).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -2253,7 +2340,7 @@ test.group('Query Builder | whereBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -2273,15 +2360,15 @@ test.group('Query Builder | whereBetween', (group) => {
 	})
 
 	test('add or where between clause as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.orWhereBetween('age', [
-				getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages;'),
-				getRawQueryBuilder(getQueryClient(connection), 'select max_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select max_age from ages;'),
 			])
 			.toSQL()
 
@@ -2296,14 +2383,14 @@ test.group('Query Builder | whereBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.orWhereBetween('age', [
-				getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages;'),
-				getRawQueryBuilder(getQueryClient(connection), 'select max_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select max_age from ages;'),
 			])
 			.toSQL()
 
@@ -2324,18 +2411,25 @@ test.group('Query Builder | whereBetween', (group) => {
 
 test.group('Query Builder | whereNotBetween', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add where not between clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').whereNotBetween('age', [18, 20]).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -2346,7 +2440,7 @@ test.group('Query Builder | whereNotBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -2366,15 +2460,15 @@ test.group('Query Builder | whereNotBetween', (group) => {
 	})
 
 	test('add where not between clause as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNotBetween('age', [
-				getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages;'),
-				getRawQueryBuilder(getQueryClient(connection), 'select max_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select max_age from ages;'),
 			])
 			.toSQL()
 
@@ -2389,14 +2483,14 @@ test.group('Query Builder | whereNotBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.whereNotBetween('age', [
-				getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages;'),
-				getRawQueryBuilder(getQueryClient(connection), 'select max_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select max_age from ages;'),
 			])
 			.toSQL()
 
@@ -2415,10 +2509,10 @@ test.group('Query Builder | whereNotBetween', (group) => {
 	})
 
 	test('add or where not between clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').orWhereNotBetween('age', [18, 20]).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -2429,7 +2523,7 @@ test.group('Query Builder | whereNotBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -2449,15 +2543,15 @@ test.group('Query Builder | whereNotBetween', (group) => {
 	})
 
 	test('add or where not between clause as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.orWhereNotBetween('age', [
-				getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages;'),
-				getRawQueryBuilder(getQueryClient(connection), 'select max_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select max_age from ages;'),
 			])
 			.toSQL()
 
@@ -2472,14 +2566,14 @@ test.group('Query Builder | whereNotBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.orWhereNotBetween('age', [
-				getRawQueryBuilder(getQueryClient(connection), 'select min_age from ages;'),
-				getRawQueryBuilder(getQueryClient(connection), 'select max_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select max_age from ages;'),
 			])
 			.toSQL()
 
@@ -2500,18 +2594,25 @@ test.group('Query Builder | whereNotBetween', (group) => {
 
 test.group('Query Builder | whereRaw', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add where raw clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').whereRaw('id = ?', [1]).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -2526,10 +2627,10 @@ test.group('Query Builder | whereRaw', (group) => {
 	})
 
 	test('add where raw clause without bindings', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').whereRaw('id = 1').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -2544,10 +2645,10 @@ test.group('Query Builder | whereRaw', (group) => {
 	})
 
 	test('add where raw clause with object of bindings', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').whereRaw('id = :id', { id: 1 }).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -2561,13 +2662,13 @@ test.group('Query Builder | whereRaw', (group) => {
 	})
 
 	test('add where raw clause from a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.whereRaw(getRawQueryBuilder(getQueryClient(connection), 'select id from accounts;'))
+			.whereRaw(getRawQueryBuilder(getQueryClient(connection, app), 'select id from accounts;'))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -2582,10 +2683,10 @@ test.group('Query Builder | whereRaw', (group) => {
 	})
 
 	test('add or where raw clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereRaw('id = ?', [1])
@@ -2607,18 +2708,25 @@ test.group('Query Builder | whereRaw', (group) => {
 
 test.group('Query Builder | join', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add query join', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.join('profiles', 'users.id', 'profiles.user_id')
@@ -2636,10 +2744,10 @@ test.group('Query Builder | join', (group) => {
 	})
 
 	test('add query join with operator', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.join('profiles', 'users.id', '!=', 'profiles.user_id')
@@ -2657,10 +2765,10 @@ test.group('Query Builder | join', (group) => {
 	})
 
 	test('add query join using join callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.join('profiles', (builder) => {
@@ -2682,16 +2790,16 @@ test.group('Query Builder | join', (group) => {
 	})
 
 	test('add query join as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.join(
 				'profiles',
 				'profiles.type',
-				getRawQueryBuilder(getQueryClient(connection), '?', ['social'])
+				getRawQueryBuilder(getQueryClient(connection, app), '?', ['social'])
 			)
 			.toSQL()
 
@@ -2707,13 +2815,13 @@ test.group('Query Builder | join', (group) => {
 	})
 
 	test('add query join as a raw builder query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.join('profiles', 'profiles.type', getDb().raw('?', ['social']))
+			.join('profiles', 'profiles.type', getDb(app).raw('?', ['social']))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -2730,18 +2838,25 @@ test.group('Query Builder | join', (group) => {
 
 test.group('Query Builder | innerJoin', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add query innerJoin', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.innerJoin('profiles', 'users.id', 'profiles.user_id')
@@ -2759,10 +2874,10 @@ test.group('Query Builder | innerJoin', (group) => {
 	})
 
 	test('add query innerJoin with operator', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.innerJoin('profiles', 'users.id', '!=', 'profiles.user_id')
@@ -2780,10 +2895,10 @@ test.group('Query Builder | innerJoin', (group) => {
 	})
 
 	test('add query innerJoin using join callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.innerJoin('profiles', (builder) => {
@@ -2805,16 +2920,16 @@ test.group('Query Builder | innerJoin', (group) => {
 	})
 
 	test('add query innerJoin as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.innerJoin(
 				'profiles',
 				'profiles.type',
-				getRawQueryBuilder(getQueryClient(connection), '?', ['social'])
+				getRawQueryBuilder(getQueryClient(connection, app), '?', ['social'])
 			)
 			.toSQL()
 
@@ -2830,13 +2945,13 @@ test.group('Query Builder | innerJoin', (group) => {
 	})
 
 	test('add query innerJoin as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.innerJoin('profiles', 'profiles.type', getDb().raw('?', ['social']))
+			.innerJoin('profiles', 'profiles.type', getDb(app).raw('?', ['social']))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -2853,18 +2968,25 @@ test.group('Query Builder | innerJoin', (group) => {
 
 test.group('Query Builder | leftJoin', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add query leftJoin', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.leftJoin('profiles', 'users.id', 'profiles.user_id')
@@ -2882,10 +3004,10 @@ test.group('Query Builder | leftJoin', (group) => {
 	})
 
 	test('add query leftJoin with operator', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.leftJoin('profiles', 'users.id', '!=', 'profiles.user_id')
@@ -2903,10 +3025,10 @@ test.group('Query Builder | leftJoin', (group) => {
 	})
 
 	test('add query leftJoin using join callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.leftJoin('profiles', (builder) => {
@@ -2928,16 +3050,16 @@ test.group('Query Builder | leftJoin', (group) => {
 	})
 
 	test('add query leftJoin as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.leftJoin(
 				'profiles',
 				'profiles.type',
-				getRawQueryBuilder(getQueryClient(connection), '?', ['social'])
+				getRawQueryBuilder(getQueryClient(connection, app), '?', ['social'])
 			)
 			.toSQL()
 
@@ -2955,18 +3077,25 @@ test.group('Query Builder | leftJoin', (group) => {
 
 test.group('Query Builder | leftOuterJoin', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add query leftOuterJoin', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.leftOuterJoin('profiles', 'users.id', 'profiles.user_id')
@@ -2984,10 +3113,10 @@ test.group('Query Builder | leftOuterJoin', (group) => {
 	})
 
 	test('add query leftOuterJoin with operator', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.leftOuterJoin('profiles', 'users.id', '!=', 'profiles.user_id')
@@ -3005,10 +3134,10 @@ test.group('Query Builder | leftOuterJoin', (group) => {
 	})
 
 	test('add query leftOuterJoin using join callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.leftOuterJoin('profiles', (builder) => {
@@ -3030,16 +3159,16 @@ test.group('Query Builder | leftOuterJoin', (group) => {
 	})
 
 	test('add query leftOuterJoin as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.leftOuterJoin(
 				'profiles',
 				'profiles.type',
-				getRawQueryBuilder(getQueryClient(connection), '?', ['social'])
+				getRawQueryBuilder(getQueryClient(connection, app), '?', ['social'])
 			)
 			.toSQL()
 
@@ -3057,18 +3186,25 @@ test.group('Query Builder | leftOuterJoin', (group) => {
 
 test.group('Query Builder | rightJoin', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add query rightJoin', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.rightJoin('profiles', 'users.id', 'profiles.user_id')
@@ -3086,10 +3222,10 @@ test.group('Query Builder | rightJoin', (group) => {
 	})
 
 	test('add query rightJoin with operator', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.rightJoin('profiles', 'users.id', '!=', 'profiles.user_id')
@@ -3107,10 +3243,10 @@ test.group('Query Builder | rightJoin', (group) => {
 	})
 
 	test('add query rightJoin using join callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.rightJoin('profiles', (builder) => {
@@ -3132,16 +3268,16 @@ test.group('Query Builder | rightJoin', (group) => {
 	})
 
 	test('add query rightJoin as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.rightJoin(
 				'profiles',
 				'profiles.type',
-				getRawQueryBuilder(getQueryClient(connection), '?', ['social'])
+				getRawQueryBuilder(getQueryClient(connection, app), '?', ['social'])
 			)
 			.toSQL()
 
@@ -3159,18 +3295,25 @@ test.group('Query Builder | rightJoin', (group) => {
 
 test.group('Query Builder | rightOuterJoin', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add query rightOuterJoin', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.rightOuterJoin('profiles', 'users.id', 'profiles.user_id')
@@ -3188,10 +3331,10 @@ test.group('Query Builder | rightOuterJoin', (group) => {
 	})
 
 	test('add query rightOuterJoin with operator', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.rightOuterJoin('profiles', 'users.id', '!=', 'profiles.user_id')
@@ -3209,10 +3352,10 @@ test.group('Query Builder | rightOuterJoin', (group) => {
 	})
 
 	test('add query rightOuterJoin using join callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.rightOuterJoin('profiles', (builder) => {
@@ -3234,16 +3377,16 @@ test.group('Query Builder | rightOuterJoin', (group) => {
 	})
 
 	test('add query rightOuterJoin as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.rightOuterJoin(
 				'profiles',
 				'profiles.type',
-				getRawQueryBuilder(getQueryClient(connection), '?', ['social'])
+				getRawQueryBuilder(getQueryClient(connection, app), '?', ['social'])
 			)
 			.toSQL()
 
@@ -3261,18 +3404,25 @@ test.group('Query Builder | rightOuterJoin', (group) => {
 
 test.group('Query Builder | fullOuterJoin', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add query fullOuterJoin', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.fullOuterJoin('profiles', 'users.id', 'profiles.user_id')
@@ -3290,10 +3440,10 @@ test.group('Query Builder | fullOuterJoin', (group) => {
 	})
 
 	test('add query fullOuterJoin with operator', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.fullOuterJoin('profiles', 'users.id', '!=', 'profiles.user_id')
@@ -3311,10 +3461,10 @@ test.group('Query Builder | fullOuterJoin', (group) => {
 	})
 
 	test('add query fullOuterJoin using join callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.fullOuterJoin('profiles', (builder) => {
@@ -3336,16 +3486,16 @@ test.group('Query Builder | fullOuterJoin', (group) => {
 	})
 
 	test('add query fullOuterJoin as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.fullOuterJoin(
 				'profiles',
 				'profiles.type',
-				getRawQueryBuilder(getQueryClient(connection), '?', ['social'])
+				getRawQueryBuilder(getQueryClient(connection, app), '?', ['social'])
 			)
 			.toSQL()
 
@@ -3363,18 +3513,25 @@ test.group('Query Builder | fullOuterJoin', (group) => {
 
 test.group('Query Builder | crossJoin', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add query crossJoin', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.crossJoin('profiles', 'users.id', 'profiles.user_id')
@@ -3392,10 +3549,10 @@ test.group('Query Builder | crossJoin', (group) => {
 	})
 
 	test('add query crossJoin with operator', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.crossJoin('profiles', 'users.id', '!=', 'profiles.user_id')
@@ -3413,10 +3570,10 @@ test.group('Query Builder | crossJoin', (group) => {
 	})
 
 	test('add query crossJoin using join callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.crossJoin('profiles', (builder) => {
@@ -3438,16 +3595,16 @@ test.group('Query Builder | crossJoin', (group) => {
 	})
 
 	test('add query crossJoin as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.crossJoin(
 				'profiles',
 				'profiles.type',
-				getRawQueryBuilder(getQueryClient(connection), '?', ['social'])
+				getRawQueryBuilder(getQueryClient(connection, app), '?', ['social'])
 			)
 			.toSQL()
 
@@ -3465,18 +3622,25 @@ test.group('Query Builder | crossJoin', (group) => {
 
 test.group('Query Builder | joinRaw', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add join as a raw join', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').joinRaw('natural full join table1').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -3491,13 +3655,13 @@ test.group('Query Builder | joinRaw', (group) => {
 	})
 
 	test('add join as a raw join by passing the raw query output', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.joinRaw(getRawQueryBuilder(getQueryClient(connection), 'natural full join table1'))
+			.joinRaw(getRawQueryBuilder(getQueryClient(connection, app), 'natural full join table1'))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -3514,18 +3678,25 @@ test.group('Query Builder | joinRaw', (group) => {
 
 test.group('Query Builder | distinct', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('define distinct columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').distinct('name', 'age').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -3536,7 +3707,7 @@ test.group('Query Builder | distinct', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -3558,18 +3729,25 @@ test.group('Query Builder | distinct', (group) => {
 
 test.group('Query Builder | groupBy', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('define group by columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').groupBy('name', 'age').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -3580,7 +3758,7 @@ test.group('Query Builder | groupBy', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -3602,18 +3780,25 @@ test.group('Query Builder | groupBy', (group) => {
 
 test.group('Query Builder | groupByRaw', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('define group by columns as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').groupByRaw('select (age) from user_profiles').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -3630,18 +3815,25 @@ test.group('Query Builder | groupByRaw', (group) => {
 
 test.group('Query Builder | orderBy', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('define order by columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').orderBy('name').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -3652,7 +3844,7 @@ test.group('Query Builder | orderBy', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -3672,10 +3864,10 @@ test.group('Query Builder | orderBy', (group) => {
 	})
 
 	test('define order by columns with explicit direction', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').orderBy('name', 'desc').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -3686,7 +3878,7 @@ test.group('Query Builder | orderBy', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -3706,10 +3898,10 @@ test.group('Query Builder | orderBy', (group) => {
 	})
 
 	test('define order by columns as an array', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').orderBy('name', 'desc').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -3720,7 +3912,7 @@ test.group('Query Builder | orderBy', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -3740,10 +3932,10 @@ test.group('Query Builder | orderBy', (group) => {
 	})
 
 	test('define order by columns as an array of objects', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.orderBy([
@@ -3763,7 +3955,7 @@ test.group('Query Builder | orderBy', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -3789,18 +3981,18 @@ test.group('Query Builder | orderBy', (group) => {
 	})
 
 	test('define order by columns as subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const client = getQueryClient(connection)
+		const client = getQueryClient(connection, app)
 		let db = getQueryBuilder(client)
 
 		const { sql, bindings } = db
 			.from('users')
 			.orderBy(
-				getQueryBuilder(getQueryClient(connection))
+				getQueryBuilder(getQueryClient(connection, app))
 					.from('user_logins')
-					.where('user_id', '=', getRawQueryBuilder(getQueryClient(connection), 'users.id'))
+					.where('user_id', '=', getRawQueryBuilder(getQueryClient(connection, app), 'users.id'))
 			)
 			.toSQL()
 
@@ -3820,19 +4012,19 @@ test.group('Query Builder | orderBy', (group) => {
 	})
 
 	test('define order by columns as an array of subqueries', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const client = getQueryClient(connection)
+		const client = getQueryClient(connection, app)
 		let db = getQueryBuilder(client)
 
 		const { sql, bindings } = db
 			.from('users')
 			.orderBy([
 				{
-					column: getQueryBuilder(getQueryClient(connection))
+					column: getQueryBuilder(getQueryClient(connection, app))
 						.from('user_logins')
-						.where('user_id', '=', getRawQueryBuilder(getQueryClient(connection), 'users.id')),
+						.where('user_id', '=', getRawQueryBuilder(getQueryClient(connection, app), 'users.id')),
 					order: 'desc' as const,
 				},
 			])
@@ -3859,18 +4051,25 @@ test.group('Query Builder | orderBy', (group) => {
 
 test.group('Query Builder | orderByRaw', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('define order by columns as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').orderByRaw('col DESC NULLS LAST').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -3885,18 +4084,25 @@ test.group('Query Builder | orderByRaw', (group) => {
 
 test.group('Query Builder | offset', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('define select offset', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').offset(10).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -3913,18 +4119,25 @@ test.group('Query Builder | offset', (group) => {
 
 test.group('Query Builder | limit', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('define results limit', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').limit(10).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -3941,22 +4154,25 @@ test.group('Query Builder | limit', (group) => {
 
 test.group('Query Builder | union', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
 		await resetTables()
 	})
 
 	test('define union query as a callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.union((builder) => {
@@ -3978,13 +4194,13 @@ test.group('Query Builder | union', (group) => {
 	})
 
 	test('define union query as a subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.union(getQueryBuilder(getQueryClient(connection)).from('users').whereNull('first_name'))
+			.union(getQueryBuilder(getQueryClient(connection, app)).from('users').whereNull('first_name'))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -3999,15 +4215,15 @@ test.group('Query Builder | union', (group) => {
 	})
 
 	test('define union query as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.union(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from users where first_name is null'
 				)
 			)
@@ -4025,10 +4241,10 @@ test.group('Query Builder | union', (group) => {
 	})
 
 	test('define union query as an array of callbacks', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.union([
@@ -4054,13 +4270,15 @@ test.group('Query Builder | union', (group) => {
 	})
 
 	test('define union query as an array of subqueries', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.union([getQueryBuilder(getQueryClient(connection)).from('users').whereNull('first_name')])
+			.union([
+				getQueryBuilder(getQueryClient(connection, app)).from('users').whereNull('first_name'),
+			])
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -4075,15 +4293,15 @@ test.group('Query Builder | union', (group) => {
 	})
 
 	test('define union query as an array of raw queries', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.union([
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from users where first_name is null'
 				),
 			])
@@ -4101,11 +4319,11 @@ test.group('Query Builder | union', (group) => {
 	})
 
 	test('add limit to union set', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
-		await getInsertBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
+		await getInsertBuilder(getQueryClient(connection, app))
 			.table('users')
 			.multiInsert([
 				{
@@ -4122,7 +4340,7 @@ test.group('Query Builder | union', (group) => {
 				},
 			])
 
-		await getInsertBuilder(getQueryClient(connection))
+		await getInsertBuilder(getQueryClient(connection, app))
 			.table('friends')
 			.multiInsert([
 				{
@@ -4156,11 +4374,11 @@ test.group('Query Builder | union', (group) => {
 	})
 
 	test('add limit to union subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
-		await getInsertBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
+		await getInsertBuilder(getQueryClient(connection, app))
 			.table('users')
 			.multiInsert([
 				{
@@ -4177,7 +4395,7 @@ test.group('Query Builder | union', (group) => {
 				},
 			])
 
-		await getInsertBuilder(getQueryClient(connection))
+		await getInsertBuilder(getQueryClient(connection, app))
 			.table('friends')
 			.multiInsert([
 				{
@@ -4215,11 +4433,11 @@ test.group('Query Builder | union', (group) => {
 	})
 
 	test('count union set', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
-		await getInsertBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
+		await getInsertBuilder(getQueryClient(connection, app))
 			.table('users')
 			.multiInsert([
 				{
@@ -4236,7 +4454,7 @@ test.group('Query Builder | union', (group) => {
 				},
 			])
 
-		await getInsertBuilder(getQueryClient(connection))
+		await getInsertBuilder(getQueryClient(connection, app))
 			.table('friends')
 			.multiInsert([
 				{
@@ -4265,11 +4483,11 @@ test.group('Query Builder | union', (group) => {
 	})
 
 	test('count union set with limit on subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
-		await getInsertBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
+		await getInsertBuilder(getQueryClient(connection, app))
 			.table('users')
 			.multiInsert([
 				{
@@ -4286,7 +4504,7 @@ test.group('Query Builder | union', (group) => {
 				},
 			])
 
-		await getInsertBuilder(getQueryClient(connection))
+		await getInsertBuilder(getQueryClient(connection, app))
 			.table('friends')
 			.multiInsert([
 				{
@@ -4319,18 +4537,25 @@ test.group('Query Builder | union', (group) => {
 
 test.group('Query Builder | unionAll', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('define unionAll query as a callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.unionAll((builder) => {
@@ -4352,13 +4577,15 @@ test.group('Query Builder | unionAll', (group) => {
 	})
 
 	test('define unionAll query as a subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.unionAll(getQueryBuilder(getQueryClient(connection)).from('users').whereNull('first_name'))
+			.unionAll(
+				getQueryBuilder(getQueryClient(connection, app)).from('users').whereNull('first_name')
+			)
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -4373,15 +4600,15 @@ test.group('Query Builder | unionAll', (group) => {
 	})
 
 	test('define unionAll query as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.unionAll(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from users where first_name is null'
 				)
 			)
@@ -4399,10 +4626,10 @@ test.group('Query Builder | unionAll', (group) => {
 	})
 
 	test('define unionAll query as an array of callbacks', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.unionAll([
@@ -4428,13 +4655,15 @@ test.group('Query Builder | unionAll', (group) => {
 	})
 
 	test('define unionAll query as an array of subqueries', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.unionAll([getQueryBuilder(getQueryClient(connection)).from('users').whereNull('first_name')])
+			.unionAll([
+				getQueryBuilder(getQueryClient(connection, app)).from('users').whereNull('first_name'),
+			])
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -4449,15 +4678,15 @@ test.group('Query Builder | unionAll', (group) => {
 	})
 
 	test('define unionAll query as an array of raw queries', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.unionAll([
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from users where first_name is null'
 				),
 			])
@@ -4475,18 +4704,25 @@ test.group('Query Builder | unionAll', (group) => {
 
 test.group('Query Builder | forUpdate', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('define FOR UPDATE lock', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').forUpdate().toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -4501,10 +4737,10 @@ test.group('Query Builder | forUpdate', (group) => {
 	})
 
 	test('define FOR UPDATE lock with additional tables (pg only)', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').forUpdate('profiles').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -4521,18 +4757,25 @@ test.group('Query Builder | forUpdate', (group) => {
 
 test.group('Query Builder | forShare', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('define FOR SHARE lock', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').forShare().toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -4547,10 +4790,10 @@ test.group('Query Builder | forShare', (group) => {
 	})
 
 	test('define FOR SHARE lock with additional tables (pg only)', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').forShare('profiles').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -4575,11 +4818,16 @@ if (['pg', 'mysql'].includes(process.env.DB!)) {
 			await cleanup()
 		})
 
+		group.afterEach(async () => {
+			app.container.use('Adonis/Core/Event').clearListeners('db:query')
+			await resetTables()
+		})
+
 		test('add no wait instruction to the query', async (assert) => {
-			const connection = new Connection('primary', getConfig(), getLogger())
+			const connection = new Connection('primary', getConfig(), app.logger)
 			connection.connect()
 
-			const db = getQueryBuilder(getQueryClient(connection))
+			const db = getQueryBuilder(getQueryClient(connection, app))
 			const { sql, bindings } = db.from('users').forShare().noWait().toSQL()
 
 			const { sql: knexSql, bindings: knexBindings } = connection
@@ -4605,10 +4853,10 @@ if (['pg', 'mysql'].includes(process.env.DB!)) {
 		})
 
 		test('add skip locked instruction to the query', async (assert) => {
-			const connection = new Connection('primary', getConfig(), getLogger())
+			const connection = new Connection('primary', getConfig(), app.logger)
 			connection.connect()
 
-			const db = getQueryBuilder(getQueryClient(connection))
+			const db = getQueryBuilder(getQueryClient(connection, app))
 			const { sql, bindings } = db.from('users').forShare().skipLocked().toSQL()
 
 			const { sql: knexSql, bindings: knexBindings } = connection
@@ -4627,18 +4875,25 @@ if (['pg', 'mysql'].includes(process.env.DB!)) {
 
 test.group('Query Builder | having', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add having clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').having('count', '>', 10).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -4649,7 +4904,7 @@ test.group('Query Builder | having', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -4669,10 +4924,10 @@ test.group('Query Builder | having', (group) => {
 	})
 
 	test('add having clause as a callback', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.having((builder) => {
@@ -4690,7 +4945,7 @@ test.group('Query Builder | having', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -4714,18 +4969,18 @@ test.group('Query Builder | having', (group) => {
 	})
 
 	test('add having clause value being a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 		const ref = connection.client!.ref.bind(connection.client!)
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.having(
 				'user_id',
 				'=',
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					`(select ${ref('user_id')} from ${ref('accounts')})`
 				)
 			)
@@ -4743,7 +4998,7 @@ test.group('Query Builder | having', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -4752,7 +5007,7 @@ test.group('Query Builder | having', (group) => {
 				'user_id',
 				'=',
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					`(select ${ref('user_id')} from ${ref('accounts')})`
 				)
 			)
@@ -4774,16 +5029,16 @@ test.group('Query Builder | having', (group) => {
 	})
 
 	test('add having clause value being a sub query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.having(
 				'user_id',
 				'=',
-				getQueryBuilder(getQueryClient(connection)).from('accounts').select('id')
+				getQueryBuilder(getQueryClient(connection, app)).from('accounts').select('id')
 			)
 			.toSQL()
 
@@ -4795,7 +5050,7 @@ test.group('Query Builder | having', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -4803,7 +5058,7 @@ test.group('Query Builder | having', (group) => {
 			.having(
 				'user_id',
 				'=',
-				getQueryBuilder(getQueryClient(connection)).from('accounts').select('id')
+				getQueryBuilder(getQueryClient(connection, app)).from('accounts').select('id')
 			)
 			.toSQL()
 
@@ -4819,14 +5074,14 @@ test.group('Query Builder | having', (group) => {
 	})
 
 	test('add having clause as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 
 		const { sql, bindings } = db
 			.from('users')
-			.having(getRawQueryBuilder(getQueryClient(connection), 'id > ?', [4]))
+			.having(getRawQueryBuilder(getQueryClient(connection, app), 'id > ?', [4]))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -4841,13 +5096,13 @@ test.group('Query Builder | having', (group) => {
 	})
 
 	test('add having clause as a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.havingRaw(getRawQueryBuilder(getQueryClient(connection), 'sum(likes) > ?', [200]))
+			.havingRaw(getRawQueryBuilder(getQueryClient(connection, app), 'sum(likes) > ?', [200]))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -4862,13 +5117,13 @@ test.group('Query Builder | having', (group) => {
 	})
 
 	test('add having clause as a raw builder query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.havingRaw(getDb().raw('sum(likes) > ?', [200]))
+			.havingRaw(getDb(app).raw('sum(likes) > ?', [200]))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -4883,10 +5138,10 @@ test.group('Query Builder | having', (group) => {
 	})
 
 	test('add or having clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.having('count', '>', 10)
@@ -4902,7 +5157,7 @@ test.group('Query Builder | having', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -4926,18 +5181,25 @@ test.group('Query Builder | having', (group) => {
 
 test.group('Query Builder | havingIn', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add having in clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').havingIn('id', [10, 20]).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -4948,7 +5210,7 @@ test.group('Query Builder | havingIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -4968,13 +5230,15 @@ test.group('Query Builder | havingIn', (group) => {
 	})
 
 	test('add having in clause values as subqueries', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.havingIn('id', [getQueryBuilder(getQueryClient(connection)).select('id').from('accounts')])
+			.havingIn('id', [
+				getQueryBuilder(getQueryClient(connection, app)).select('id').from('accounts'),
+			])
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -4985,12 +5249,14 @@ test.group('Query Builder | havingIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
-			.havingIn('id', [getQueryBuilder(getQueryClient(connection)).select('id').from('accounts')])
+			.havingIn('id', [
+				getQueryBuilder(getQueryClient(connection, app)).select('id').from('accounts'),
+			])
 			.toSQL()
 
 		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
@@ -5005,13 +5271,15 @@ test.group('Query Builder | havingIn', (group) => {
 	})
 
 	test('add having in clause values as raw queries', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.havingIn('id', [getRawQueryBuilder(getQueryClient(connection), 'select id from accounts')])
+			.havingIn('id', [
+				getRawQueryBuilder(getQueryClient(connection, app), 'select id from accounts'),
+			])
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -5022,12 +5290,14 @@ test.group('Query Builder | havingIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
-			.havingIn('id', [getRawQueryBuilder(getQueryClient(connection), 'select id from accounts')])
+			.havingIn('id', [
+				getRawQueryBuilder(getQueryClient(connection, app), 'select id from accounts'),
+			])
 			.toSQL()
 
 		const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
@@ -5042,14 +5312,14 @@ test.group('Query Builder | havingIn', (group) => {
 	})
 
 	test('add having in clause values as query callbacks', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
 		const fn = (builder) => {
 			builder.select('id').from('accounts')
 		}
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').havingIn('id', fn).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -5060,7 +5330,7 @@ test.group('Query Builder | havingIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -5083,10 +5353,10 @@ test.group('Query Builder | havingIn', (group) => {
 	})
 
 	test('add or having in clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingIn('id', [10, 20])
@@ -5102,7 +5372,7 @@ test.group('Query Builder | havingIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -5126,18 +5396,25 @@ test.group('Query Builder | havingIn', (group) => {
 
 test.group('Query Builder | havingNotIn', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add not having in clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').havingNotIn('id', [10, 20]).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -5148,7 +5425,7 @@ test.group('Query Builder | havingNotIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -5168,14 +5445,14 @@ test.group('Query Builder | havingNotIn', (group) => {
 	})
 
 	test('add having in clause values as subqueries', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingNotIn('id', [
-				getQueryBuilder(getQueryClient(connection)).select('id').from('accounts'),
+				getQueryBuilder(getQueryClient(connection, app)).select('id').from('accounts'),
 			])
 			.toSQL()
 
@@ -5187,13 +5464,13 @@ test.group('Query Builder | havingNotIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.havingNotIn('id', [
-				getQueryBuilder(getQueryClient(connection)).select('id').from('accounts'),
+				getQueryBuilder(getQueryClient(connection, app)).select('id').from('accounts'),
 			])
 			.toSQL()
 
@@ -5209,14 +5486,14 @@ test.group('Query Builder | havingNotIn', (group) => {
 	})
 
 	test('add having in clause values as raw queries', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingNotIn('id', [
-				getRawQueryBuilder(getQueryClient(connection), 'select id from accounts'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select id from accounts'),
 			])
 			.toSQL()
 
@@ -5228,13 +5505,13 @@ test.group('Query Builder | havingNotIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.havingNotIn('id', [
-				getRawQueryBuilder(getQueryClient(connection), 'select id from accounts'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select id from accounts'),
 			])
 			.toSQL()
 
@@ -5250,14 +5527,14 @@ test.group('Query Builder | havingNotIn', (group) => {
 	})
 
 	test('add having in clause values as query callbacks', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
 		const fn = (builder) => {
 			builder.select('id').from('accounts')
 		}
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').havingNotIn('id', fn).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -5268,7 +5545,7 @@ test.group('Query Builder | havingNotIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -5292,10 +5569,10 @@ test.group('Query Builder | havingNotIn', (group) => {
 	})
 
 	test('add or having in clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingNotIn('id', [10, 20])
@@ -5311,7 +5588,7 @@ test.group('Query Builder | havingNotIn', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -5334,18 +5611,25 @@ test.group('Query Builder | havingNotIn', (group) => {
 
 test.group('Query Builder | havingNull', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add having null clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').havingNull('deleted_at').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -5356,7 +5640,7 @@ test.group('Query Builder | havingNull', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -5376,10 +5660,10 @@ test.group('Query Builder | havingNull', (group) => {
 	})
 
 	test('add or having null clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingNull('deleted_at')
@@ -5395,7 +5679,7 @@ test.group('Query Builder | havingNull', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -5419,18 +5703,25 @@ test.group('Query Builder | havingNull', (group) => {
 
 test.group('Query Builder | havingNotNull', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add having null clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').havingNotNull('deleted_at').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -5441,7 +5732,7 @@ test.group('Query Builder | havingNotNull', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -5461,10 +5752,10 @@ test.group('Query Builder | havingNotNull', (group) => {
 	})
 
 	test('add or having not null clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingNotNull('deleted_at')
@@ -5480,7 +5771,7 @@ test.group('Query Builder | havingNotNull', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -5504,18 +5795,25 @@ test.group('Query Builder | havingNotNull', (group) => {
 
 test.group('Query Builder | havingExists', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add having exists clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingExists((builder) => {
@@ -5536,13 +5834,13 @@ test.group('Query Builder | havingExists', (group) => {
 	})
 
 	test('add having exists clause as a subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.havingExists(getQueryBuilder(getQueryClient(connection)).select('*').from('accounts'))
+			.havingExists(getQueryBuilder(getQueryClient(connection, app)).select('*').from('accounts'))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -5557,10 +5855,10 @@ test.group('Query Builder | havingExists', (group) => {
 	})
 
 	test('add or having exists clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingExists((builder) => {
@@ -5590,18 +5888,25 @@ test.group('Query Builder | havingExists', (group) => {
 
 test.group('Query Builder | havingNotExists', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add having not exists clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingNotExists((builder) => {
@@ -5623,13 +5928,15 @@ test.group('Query Builder | havingNotExists', (group) => {
 	})
 
 	test('add having not exists clause as a subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.havingNotExists(getQueryBuilder(getQueryClient(connection)).select('*').from('accounts'))
+			.havingNotExists(
+				getQueryBuilder(getQueryClient(connection, app)).select('*').from('accounts')
+			)
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -5644,10 +5951,10 @@ test.group('Query Builder | havingNotExists', (group) => {
 	})
 
 	test('add or having not exists clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingNotExists((builder) => {
@@ -5677,18 +5984,25 @@ test.group('Query Builder | havingNotExists', (group) => {
 
 test.group('Query Builder | havingBetween', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add having between clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').havingBetween('id', [5, 10]).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -5699,7 +6013,7 @@ test.group('Query Builder | havingBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -5719,15 +6033,15 @@ test.group('Query Builder | havingBetween', (group) => {
 	})
 
 	test('add having between clause with raw values', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingBetween('id', [
-				getRawQueryBuilder(getQueryClient(connection), 'select min(id) from users;'),
-				getRawQueryBuilder(getQueryClient(connection), 'select max(id) from users;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min(id) from users;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select max(id) from users;'),
 			])
 			.toSQL()
 
@@ -5742,14 +6056,14 @@ test.group('Query Builder | havingBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.havingBetween('id', [
-				getRawQueryBuilder(getQueryClient(connection), 'select min(id) from users;'),
-				getRawQueryBuilder(getQueryClient(connection), 'select max(id) from users;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min(id) from users;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select max(id) from users;'),
 			])
 			.toSQL()
 
@@ -5768,15 +6082,15 @@ test.group('Query Builder | havingBetween', (group) => {
 	})
 
 	test('add having between clause with subqueries', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingBetween('id', [
-				getQueryBuilder(getQueryClient(connection)).select('id'),
-				getQueryBuilder(getQueryClient(connection)).select('id'),
+				getQueryBuilder(getQueryClient(connection, app)).select('id'),
+				getQueryBuilder(getQueryClient(connection, app)).select('id'),
 			])
 			.toSQL()
 
@@ -5791,14 +6105,14 @@ test.group('Query Builder | havingBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.havingBetween('id', [
-				getQueryBuilder(getQueryClient(connection)).select('id'),
-				getQueryBuilder(getQueryClient(connection)).select('id'),
+				getQueryBuilder(getQueryClient(connection, app)).select('id'),
+				getQueryBuilder(getQueryClient(connection, app)).select('id'),
 			])
 			.toSQL()
 
@@ -5817,10 +6131,10 @@ test.group('Query Builder | havingBetween', (group) => {
 	})
 
 	test('add or having between clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingBetween('id', [5, 10])
@@ -5836,7 +6150,7 @@ test.group('Query Builder | havingBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -5860,18 +6174,25 @@ test.group('Query Builder | havingBetween', (group) => {
 
 test.group('Query Builder | havingNotBetween', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add having not between clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').havingNotBetween('id', [5, 10]).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -5882,7 +6203,7 @@ test.group('Query Builder | havingNotBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -5902,15 +6223,15 @@ test.group('Query Builder | havingNotBetween', (group) => {
 	})
 
 	test('add having not between clause with raw values', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingNotBetween('id', [
-				getRawQueryBuilder(getQueryClient(connection), 'select min(id) from users;'),
-				getRawQueryBuilder(getQueryClient(connection), 'select max(id) from users;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min(id) from users;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select max(id) from users;'),
 			])
 			.toSQL()
 
@@ -5925,14 +6246,14 @@ test.group('Query Builder | havingNotBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.havingNotBetween('id', [
-				getRawQueryBuilder(getQueryClient(connection), 'select min(id) from users;'),
-				getRawQueryBuilder(getQueryClient(connection), 'select max(id) from users;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select min(id) from users;'),
+				getRawQueryBuilder(getQueryClient(connection, app), 'select max(id) from users;'),
 			])
 			.toSQL()
 
@@ -5951,15 +6272,15 @@ test.group('Query Builder | havingNotBetween', (group) => {
 	})
 
 	test('add having not between clause with subqueries', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingNotBetween('id', [
-				getQueryBuilder(getQueryClient(connection)).select('id'),
-				getQueryBuilder(getQueryClient(connection)).select('id'),
+				getQueryBuilder(getQueryClient(connection, app)).select('id'),
+				getQueryBuilder(getQueryClient(connection, app)).select('id'),
 			])
 			.toSQL()
 
@@ -5974,14 +6295,14 @@ test.group('Query Builder | havingNotBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.havingNotBetween('id', [
-				getQueryBuilder(getQueryClient(connection)).select('id'),
-				getQueryBuilder(getQueryClient(connection)).select('id'),
+				getQueryBuilder(getQueryClient(connection, app)).select('id'),
+				getQueryBuilder(getQueryClient(connection, app)).select('id'),
 			])
 			.toSQL()
 
@@ -6000,10 +6321,10 @@ test.group('Query Builder | havingNotBetween', (group) => {
 	})
 
 	test('add or having not between clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingNotBetween('id', [5, 10])
@@ -6019,7 +6340,7 @@ test.group('Query Builder | havingNotBetween', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -6043,18 +6364,25 @@ test.group('Query Builder | havingNotBetween', (group) => {
 
 test.group('Query Builder | havingRaw', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add having raw clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').havingRaw('id = ?', [1]).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6069,10 +6397,10 @@ test.group('Query Builder | havingRaw', (group) => {
 	})
 
 	test('add having raw clause without bindings', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').havingRaw('id = 1').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6086,10 +6414,10 @@ test.group('Query Builder | havingRaw', (group) => {
 	})
 
 	test('add having raw clause with object of bindings', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').havingRaw('id = :id', { id: 1 }).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6104,13 +6432,13 @@ test.group('Query Builder | havingRaw', (group) => {
 	})
 
 	test('add having raw clause from a raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
-			.havingRaw(getRawQueryBuilder(getQueryClient(connection), 'select id from accounts;'))
+			.havingRaw(getRawQueryBuilder(getQueryClient(connection, app), 'select id from accounts;'))
 			.toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6125,10 +6453,10 @@ test.group('Query Builder | havingRaw', (group) => {
 	})
 
 	test('add or having raw clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.havingRaw('id = ?', [1])
@@ -6150,18 +6478,25 @@ test.group('Query Builder | havingRaw', (group) => {
 
 test.group('Query Builder | clearSelect', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('clear selected columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').select('id', 'username').clearSelect().toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6179,18 +6514,25 @@ test.group('Query Builder | clearSelect', (group) => {
 
 test.group('Query Builder | clearWhere', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('clear where clauses', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').where('username', 'virk').clearWhere().toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6208,18 +6550,25 @@ test.group('Query Builder | clearWhere', (group) => {
 
 test.group('Query Builder | clearOrder', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('clear order by columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').orderBy('id', 'desc').clearOrder().toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6237,18 +6586,25 @@ test.group('Query Builder | clearOrder', (group) => {
 
 test.group('Query Builder | clearHaving', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('clear having clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').having('id', '>', 10).clearHaving().toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6266,18 +6622,25 @@ test.group('Query Builder | clearHaving', (group) => {
 
 test.group('Query Builder | clearLimit', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('clear limit', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').limit(10).clearLimit().toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection.client!.from('users').toSQL()
@@ -6291,18 +6654,25 @@ test.group('Query Builder | clearLimit', (group) => {
 
 test.group('Query Builder | clearOffset', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('clear offset', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').offset(1).clearOffset().toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection.client!.from('users').toSQL()
@@ -6316,18 +6686,25 @@ test.group('Query Builder | clearOffset', (group) => {
 
 test.group('Query Builder | count', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('count all rows', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').count('*', 'total').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6338,7 +6715,7 @@ test.group('Query Builder | count', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -6358,10 +6735,10 @@ test.group('Query Builder | count', (group) => {
 	})
 
 	test('count multiple rows', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').count({ u: 'username', e: 'email' }).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6372,7 +6749,7 @@ test.group('Query Builder | count', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -6392,15 +6769,15 @@ test.group('Query Builder | count', (group) => {
 	})
 
 	test('count by raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.count(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -6418,14 +6795,14 @@ test.group('Query Builder | count', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.count(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -6447,14 +6824,16 @@ test.group('Query Builder | count', (group) => {
 	})
 
 	test('count by subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.count(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -6469,13 +6848,15 @@ test.group('Query Builder | count', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.count(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -6494,15 +6875,15 @@ test.group('Query Builder | count', (group) => {
 	})
 
 	test('count by raw query on multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.count({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -6521,14 +6902,14 @@ test.group('Query Builder | count', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.count({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -6551,14 +6932,16 @@ test.group('Query Builder | count', (group) => {
 	})
 
 	test('count by subquery on multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.count({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -6574,13 +6957,15 @@ test.group('Query Builder | count', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.count({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -6602,18 +6987,25 @@ test.group('Query Builder | count', (group) => {
 
 test.group('Query Builder | countDistinct', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('count all rows', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').countDistinct('*', 'total').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6624,7 +7016,7 @@ test.group('Query Builder | countDistinct', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -6644,10 +7036,10 @@ test.group('Query Builder | countDistinct', (group) => {
 	})
 
 	test('count multiple rows', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').countDistinct({ u: 'username', e: 'email' }).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6658,7 +7050,7 @@ test.group('Query Builder | countDistinct', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -6678,15 +7070,15 @@ test.group('Query Builder | countDistinct', (group) => {
 	})
 
 	test('count by raw query', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.countDistinct(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -6704,14 +7096,14 @@ test.group('Query Builder | countDistinct', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.countDistinct(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -6733,14 +7125,16 @@ test.group('Query Builder | countDistinct', (group) => {
 	})
 
 	test('count by subquery', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.countDistinct(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -6755,13 +7149,15 @@ test.group('Query Builder | countDistinct', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.countDistinct(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -6780,15 +7176,15 @@ test.group('Query Builder | countDistinct', (group) => {
 	})
 
 	test('count by raw query on multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.countDistinct({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -6807,14 +7203,14 @@ test.group('Query Builder | countDistinct', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.countDistinct({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -6837,14 +7233,16 @@ test.group('Query Builder | countDistinct', (group) => {
 	})
 
 	test('count by subquery on multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.countDistinct({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -6860,13 +7258,15 @@ test.group('Query Builder | countDistinct', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.countDistinct({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -6888,18 +7288,25 @@ test.group('Query Builder | countDistinct', (group) => {
 
 test.group('Query Builder | min', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('use min function', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').min('*', 'smallest').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6910,7 +7317,7 @@ test.group('Query Builder | min', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -6930,10 +7337,10 @@ test.group('Query Builder | min', (group) => {
 	})
 
 	test('use min function for multiple times', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').min({ u: 'username', e: 'email' }).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -6944,7 +7351,7 @@ test.group('Query Builder | min', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -6964,15 +7371,15 @@ test.group('Query Builder | min', (group) => {
 	})
 
 	test('use raw queries to compute min', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.min(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -6990,14 +7397,14 @@ test.group('Query Builder | min', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.min(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7019,14 +7426,16 @@ test.group('Query Builder | min', (group) => {
 	})
 
 	test('use subqueries to compute min', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.min(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -7041,13 +7450,15 @@ test.group('Query Builder | min', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.min(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -7066,15 +7477,15 @@ test.group('Query Builder | min', (group) => {
 	})
 
 	test('use raw query to compute min with multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.min({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7093,14 +7504,14 @@ test.group('Query Builder | min', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.min({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7123,14 +7534,16 @@ test.group('Query Builder | min', (group) => {
 	})
 
 	test('use subquery to compute min with multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.min({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -7146,13 +7559,15 @@ test.group('Query Builder | min', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.min({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -7173,18 +7588,25 @@ test.group('Query Builder | min', (group) => {
 
 test.group('Query Builder | max', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('use max function', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').max('*', 'biggest').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -7195,7 +7617,7 @@ test.group('Query Builder | max', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -7215,10 +7637,10 @@ test.group('Query Builder | max', (group) => {
 	})
 
 	test('use max function for multiple times', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').max({ u: 'username', e: 'email' }).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -7229,7 +7651,7 @@ test.group('Query Builder | max', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -7249,15 +7671,15 @@ test.group('Query Builder | max', (group) => {
 	})
 
 	test('use raw queries to compute max', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.max(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7275,14 +7697,14 @@ test.group('Query Builder | max', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.max(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7304,14 +7726,16 @@ test.group('Query Builder | max', (group) => {
 	})
 
 	test('use subqueries to compute max', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.max(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -7326,13 +7750,15 @@ test.group('Query Builder | max', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.max(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -7351,15 +7777,15 @@ test.group('Query Builder | max', (group) => {
 	})
 
 	test('use raw query to compute max with multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.max({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7378,14 +7804,14 @@ test.group('Query Builder | max', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.max({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7408,14 +7834,16 @@ test.group('Query Builder | max', (group) => {
 	})
 
 	test('use subquery to compute max with multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.max({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -7431,13 +7859,15 @@ test.group('Query Builder | max', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.max({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -7459,18 +7889,25 @@ test.group('Query Builder | max', (group) => {
 
 test.group('Query Builder | sum', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('use sum function', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').sum('*', 'total').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -7481,7 +7918,7 @@ test.group('Query Builder | sum', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -7501,10 +7938,10 @@ test.group('Query Builder | sum', (group) => {
 	})
 
 	test('use sum function for multiple times', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').sum({ u: 'username', e: 'email' }).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -7515,7 +7952,7 @@ test.group('Query Builder | sum', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -7535,15 +7972,15 @@ test.group('Query Builder | sum', (group) => {
 	})
 
 	test('use raw queries to compute sum', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.sum(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7561,14 +7998,14 @@ test.group('Query Builder | sum', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.sum(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7590,14 +8027,16 @@ test.group('Query Builder | sum', (group) => {
 	})
 
 	test('use subqueries to compute sum', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.sum(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -7612,13 +8051,15 @@ test.group('Query Builder | sum', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.sum(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -7637,15 +8078,15 @@ test.group('Query Builder | sum', (group) => {
 	})
 
 	test('use raw query to compute sum with multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.sum({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7664,14 +8105,14 @@ test.group('Query Builder | sum', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.sum({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7694,14 +8135,16 @@ test.group('Query Builder | sum', (group) => {
 	})
 
 	test('use subquery to compute sum with multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.sum({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -7717,13 +8160,15 @@ test.group('Query Builder | sum', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.sum({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -7744,18 +8189,25 @@ test.group('Query Builder | sum', (group) => {
 
 test.group('Query Builder | avg', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('use avg function', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').avg('*', 'avg').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -7766,7 +8218,7 @@ test.group('Query Builder | avg', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -7786,10 +8238,10 @@ test.group('Query Builder | avg', (group) => {
 	})
 
 	test('use avg function for multiple fields', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').avg({ u: 'username', e: 'email' }).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -7800,7 +8252,7 @@ test.group('Query Builder | avg', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -7820,15 +8272,15 @@ test.group('Query Builder | avg', (group) => {
 	})
 
 	test('use raw queries to compute avg', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.avg(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7846,14 +8298,14 @@ test.group('Query Builder | avg', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.avg(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7875,14 +8327,16 @@ test.group('Query Builder | avg', (group) => {
 	})
 
 	test('use subqueries to compute avg', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.avg(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -7897,13 +8351,15 @@ test.group('Query Builder | avg', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.avg(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -7922,15 +8378,15 @@ test.group('Query Builder | avg', (group) => {
 	})
 
 	test('use raw query to compute avg with multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.avg({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7949,14 +8405,14 @@ test.group('Query Builder | avg', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.avg({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -7979,14 +8435,16 @@ test.group('Query Builder | avg', (group) => {
 	})
 
 	test('use subquery to compute avg with multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.avg({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -8002,13 +8460,15 @@ test.group('Query Builder | avg', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.avg({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -8030,18 +8490,25 @@ test.group('Query Builder | avg', (group) => {
 
 test.group('Query Builder | avgDistinct', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('use avgDistinct function', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').avgDistinct('*', 'avgDistinct').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -8052,7 +8519,7 @@ test.group('Query Builder | avgDistinct', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -8072,10 +8539,10 @@ test.group('Query Builder | avgDistinct', (group) => {
 	})
 
 	test('use avgDistinct function for multiple times', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').avgDistinct({ u: 'username', e: 'email' }).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -8086,7 +8553,7 @@ test.group('Query Builder | avgDistinct', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -8106,15 +8573,15 @@ test.group('Query Builder | avgDistinct', (group) => {
 	})
 
 	test('use raw queries to compute avgDistinct', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.avgDistinct(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -8132,14 +8599,14 @@ test.group('Query Builder | avgDistinct', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.avgDistinct(
 				getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -8161,14 +8628,16 @@ test.group('Query Builder | avgDistinct', (group) => {
 	})
 
 	test('use subqueries to compute avgDistinct', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.avgDistinct(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -8183,13 +8652,15 @@ test.group('Query Builder | avgDistinct', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.avgDistinct(
-				getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				'u'
 			)
 			.toSQL()
@@ -8208,15 +8679,15 @@ test.group('Query Builder | avgDistinct', (group) => {
 	})
 
 	test('use raw query to compute avgDistinct with multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.avgDistinct({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -8235,14 +8706,14 @@ test.group('Query Builder | avgDistinct', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.avgDistinct({
 				u: getRawQueryBuilder(
-					getQueryClient(connection),
+					getQueryClient(connection, app),
 					'select * from profiles where is_verified = ?',
 					[true]
 				),
@@ -8265,14 +8736,16 @@ test.group('Query Builder | avgDistinct', (group) => {
 	})
 
 	test('use subquery to compute avgDistinct with multiple columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.avgDistinct({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -8288,13 +8761,15 @@ test.group('Query Builder | avgDistinct', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
 			.avgDistinct({
-				u: getQueryBuilder(getQueryClient(connection)).where('is_verified', true).from('profiles'),
+				u: getQueryBuilder(getQueryClient(connection, app))
+					.where('is_verified', true)
+					.from('profiles'),
 				e: 'email',
 			})
 			.toSQL()
@@ -8316,23 +8791,26 @@ test.group('Query Builder | avgDistinct', (group) => {
 
 test.group('Query Builder | paginate', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
 		await resetTables()
 	})
 
 	test('paginate through rows', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
-		await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+		let db = getQueryBuilder(getQueryClient(connection, app))
+		await getInsertBuilder(getQueryClient(connection, app)).table('users').multiInsert(getUsers(18))
 
 		const users = await db.from('users').paginate(1, 5)
 		users.baseUrl('/users')
@@ -8363,11 +8841,11 @@ test.group('Query Builder | paginate', (group) => {
 	})
 
 	test('paginate through rows and select columns', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
-		await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+		let db = getQueryBuilder(getQueryClient(connection, app))
+		await getInsertBuilder(getQueryClient(connection, app)).table('users').multiInsert(getUsers(18))
 
 		const users = await db.from('users').select('username').paginate(1, 5)
 		users.baseUrl('/users')
@@ -8398,11 +8876,11 @@ test.group('Query Builder | paginate', (group) => {
 	})
 
 	test('paginate through rows when there is orderBy clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
-		await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+		let db = getQueryBuilder(getQueryClient(connection, app))
+		await getInsertBuilder(getQueryClient(connection, app)).table('users').multiInsert(getUsers(18))
 
 		const users = await db.from('users').orderBy('username').paginate(1, 5)
 		users.baseUrl('/users')
@@ -8432,11 +8910,11 @@ test.group('Query Builder | paginate', (group) => {
 	})
 
 	test('paginate through rows for the last page', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
-		await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+		let db = getQueryBuilder(getQueryClient(connection, app))
+		await getInsertBuilder(getQueryClient(connection, app)).table('users').multiInsert(getUsers(18))
 
 		const users = await db.from('users').orderBy('username').paginate(4, 5)
 		users.baseUrl('/users')
@@ -8467,11 +8945,11 @@ test.group('Query Builder | paginate', (group) => {
 	})
 
 	test('paginate through rows with group by clause', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
-		await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+		let db = getQueryBuilder(getQueryClient(connection, app))
+		await getInsertBuilder(getQueryClient(connection, app)).table('users').multiInsert(getUsers(18))
 
 		const users = await db
 			.from('users')
@@ -8507,11 +8985,11 @@ test.group('Query Builder | paginate', (group) => {
 	})
 
 	test('generate range of pagination urls', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
-		await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+		let db = getQueryBuilder(getQueryClient(connection, app))
+		await getInsertBuilder(getQueryClient(connection, app)).table('users').multiInsert(getUsers(18))
 
 		const users = await db.from('users').paginate(1, 5)
 		users.baseUrl('/users')
@@ -8543,11 +9021,11 @@ test.group('Query Builder | paginate', (group) => {
 	})
 
 	test('loop over pagination rows', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
-		await getInsertBuilder(getQueryClient(connection)).table('users').multiInsert(getUsers(18))
+		let db = getQueryBuilder(getQueryClient(connection, app))
+		await getInsertBuilder(getQueryClient(connection, app)).table('users').multiInsert(getUsers(18))
 
 		const users = await db.from('users').paginate(1, 5)
 		users.forEach((user) => {
@@ -8560,22 +9038,25 @@ test.group('Query Builder | paginate', (group) => {
 
 test.group('Query Builder | clone', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
 		await resetTables()
 	})
 
 	test('clone query builder', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 
 		const clonedQuery = db.from('users').clone()
 		assert.deepEqual(clonedQuery, db)
@@ -8583,10 +9064,10 @@ test.group('Query Builder | clone', (group) => {
 	})
 
 	test('copy internal to the cloned query builder', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 
 		const clonedQuery = db.from('users').groupBy('id').clone()
 		assert.isTrue(clonedQuery.hasGroupBy)
@@ -8596,14 +9077,17 @@ test.group('Query Builder | clone', (group) => {
 
 test.group('Query Builder | event', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
 		await resetTables()
 	})
 
@@ -8611,12 +9095,12 @@ test.group('Query Builder | event', (group) => {
 		assert.plan(4)
 
 		const config = Object.assign({}, getConfig(), { debug: true })
-		const emitter = getEmitter()
+		const emitter = app.container.use('Adonis/Core/Event')
 
-		const connection = new Connection('primary', config, getLogger())
+		const connection = new Connection('primary', config, app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection, 'dual', emitter))
+		let db = getQueryBuilder(getQueryClient(connection, app, 'dual'))
 		emitter.on('db:query', (query) => {
 			assert.property(query, 'sql')
 			assert.property(query, 'inTransaction')
@@ -8631,12 +9115,12 @@ test.group('Query Builder | event', (group) => {
 
 	test('do not emit db:query event when debug not enabled', async () => {
 		const config = Object.assign({}, getConfig(), { debug: false })
-		const emitter = getEmitter()
+		const emitter = app.container.use('Adonis/Core/Event')
 
-		const connection = new Connection('primary', config, getLogger())
+		const connection = new Connection('primary', config, app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection, 'dual', emitter))
+		let db = getQueryBuilder(getQueryClient(connection, app, 'dual'))
 		emitter.on('db:query', () => {
 			throw new Error('Never expected to reach here')
 		})
@@ -8647,12 +9131,12 @@ test.group('Query Builder | event', (group) => {
 
 	test('emit db:query event when enabled on a single query', async (assert, done) => {
 		const config = Object.assign({}, getConfig(), { debug: false })
-		const emitter = getEmitter()
+		const emitter = app.container.use('Adonis/Core/Event')
 
-		const connection = new Connection('primary', config, getLogger())
+		const connection = new Connection('primary', config, app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection, 'dual', emitter))
+		let db = getQueryBuilder(getQueryClient(connection, app, 'dual'))
 		emitter.on('db:query', (query) => {
 			assert.property(query, 'sql')
 			assert.property(query, 'inTransaction')
@@ -8668,18 +9152,25 @@ test.group('Query Builder | event', (group) => {
 
 test.group('Query Builder | update', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('update columns by defining object', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').update({ account_status: 'active' }).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -8690,7 +9181,7 @@ test.group('Query Builder | update', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -8710,10 +9201,10 @@ test.group('Query Builder | update', (group) => {
 	})
 
 	test('update columns by defining key-value pair', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').update('account_status', 'active').toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -8724,7 +9215,7 @@ test.group('Query Builder | update', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -8744,10 +9235,10 @@ test.group('Query Builder | update', (group) => {
 	})
 
 	test('handle use case where update value is false or 0', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db.from('users').update('account_status', 0).toSQL()
 
 		const { sql: knexSql, bindings: knexBindings } = connection
@@ -8758,7 +9249,7 @@ test.group('Query Builder | update', (group) => {
 		assert.equal(sql, knexSql)
 		assert.deepEqual(bindings, knexBindings)
 
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 
 		const { sql: resolverSql, bindings: resolverBindings } = db
@@ -8780,18 +9271,25 @@ test.group('Query Builder | update', (group) => {
 
 test.group('Query Builder | whereColumn', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add where clause on another column', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereColumn('account_id', 'user_accounts.user_id')
@@ -8808,7 +9306,7 @@ test.group('Query Builder | whereColumn', (group) => {
 		/**
 		 * Using keys resolver
 		 */
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
@@ -8826,10 +9324,10 @@ test.group('Query Builder | whereColumn', (group) => {
 	})
 
 	test('add or where clause on another column', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereColumn('account_id', 'user_accounts.user_id')
@@ -8848,7 +9346,7 @@ test.group('Query Builder | whereColumn', (group) => {
 		/**
 		 * Using keys resolver
 		 */
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
@@ -8868,10 +9366,10 @@ test.group('Query Builder | whereColumn', (group) => {
 	})
 
 	test('add where not clause on another column', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNotColumn('account_id', 'user_accounts.user_id')
@@ -8888,7 +9386,7 @@ test.group('Query Builder | whereColumn', (group) => {
 		/**
 		 * Using keys resolver
 		 */
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
@@ -8906,10 +9404,10 @@ test.group('Query Builder | whereColumn', (group) => {
 	})
 
 	test('add or where not clause on another column', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		let db = getQueryBuilder(getQueryClient(connection))
+		let db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.whereNotColumn('account_id', 'user_accounts.user_id')
@@ -8928,7 +9426,7 @@ test.group('Query Builder | whereColumn', (group) => {
 		/**
 		 * Using keys resolver
 		 */
-		db = getQueryBuilder(getQueryClient(connection))
+		db = getQueryBuilder(getQueryClient(connection, app))
 		db.keysResolver = (key) => `my_${key}`
 		const { sql: resolverSql, bindings: resolverBindings } = db
 			.from('users')
@@ -8950,18 +9448,25 @@ test.group('Query Builder | whereColumn', (group) => {
 
 test.group('Query Builder | conditionals', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
 	})
 
 	test('add constraints to query using if condition', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.if(true, (query) => {
@@ -8983,10 +9488,10 @@ test.group('Query Builder | conditionals', (group) => {
 	})
 
 	test('define else block for the if condition', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.if(
@@ -9011,10 +9516,10 @@ test.group('Query Builder | conditionals', (group) => {
 	})
 
 	test('add constraints to query using unless condition', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.unless(true, (query) => {
@@ -9036,10 +9541,10 @@ test.group('Query Builder | conditionals', (group) => {
 	})
 
 	test('define else block for the unless condition', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.unless(
@@ -9064,10 +9569,10 @@ test.group('Query Builder | conditionals', (group) => {
 	})
 
 	test('invoke conditional function to find the conditional value', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.unless(
@@ -9095,10 +9600,10 @@ test.group('Query Builder | conditionals', (group) => {
 	})
 
 	test('define a match block with no else statement', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.match(
@@ -9118,10 +9623,10 @@ test.group('Query Builder | conditionals', (group) => {
 	})
 
 	test('define match conditionals as functions', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.match(
@@ -9141,10 +9646,10 @@ test.group('Query Builder | conditionals', (group) => {
 	})
 
 	test('use the first matching block', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.match(
@@ -9164,10 +9669,10 @@ test.group('Query Builder | conditionals', (group) => {
 	})
 
 	test('use the else block when nothing matches', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = getQueryBuilder(getQueryClient(connection))
+		const db = getQueryBuilder(getQueryClient(connection, app))
 		const { sql, bindings } = db
 			.from('users')
 			.match(

@@ -9,8 +9,8 @@
 
 import { join } from 'path'
 import { promisify } from 'util'
-import { BaseCommand, args, flags } from '@adonisjs/ace'
 import { execFile as childProcessExec } from 'child_process'
+import { BaseCommand, args, flags } from '@adonisjs/core/build/standalone'
 
 const exec = promisify(childProcessExec)
 
@@ -67,7 +67,7 @@ export default class MakeModel extends BaseCommand {
 	/**
 	 * Execute command
 	 */
-	public async handle(): Promise<void> {
+	public async run(): Promise<void> {
 		const stub = join(__dirname, '..', 'templates', 'model.txt')
 
 		const path = this.application.resolveNamespaceDirectory('models')

@@ -10,25 +10,22 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { Database } from '../../src/Database'
-import {
-	getConfig,
-	setup,
-	cleanup,
-	getLogger,
-	getProfiler,
-	getDb,
-	getEmitter,
-} from '../../test-helpers'
+import { fs, getConfig, setup, cleanup, getDb, setupApplication } from '../../test-helpers'
+
+let app: ApplicationContract
 
 test.group('Database', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('register all connections with the manager', (assert) => {
@@ -37,7 +34,12 @@ test.group('Database', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const db = new Database(config, getLogger(), getProfiler(), getEmitter())
+		const db = new Database(
+			config,
+			app.logger,
+			app.profiler,
+			app.container.use('Adonis/Core/Event')
+		)
 
 		assert.isDefined(db.manager.connections.get('primary'))
 		assert.equal(db.manager.connections.get('primary')!.state, 'registered')
@@ -52,8 +54,8 @@ test.group('Database', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const emitter = getEmitter()
-		const db = new Database(config, getLogger(), getProfiler(), emitter)
+		const emitter = app.container.use('Adonis/Core/Event')
+		const db = new Database(config, app.logger, app.profiler, emitter)
 		emitter.on('db:connection:connect', (connection) => {
 			assert.equal(connection.name, 'primary')
 			done()
@@ -71,8 +73,8 @@ test.group('Database', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const emitter = getEmitter()
-		const db = new Database(config, getLogger(), getProfiler(), emitter)
+		const emitter = app.container.use('Adonis/Core/Event')
+		const db = new Database(config, app.logger, app.profiler, emitter)
 		emitter.on('db:connection:connect', (connection) => {
 			assert.equal(connection.name, 'primary')
 			done()
@@ -90,7 +92,12 @@ test.group('Database', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const db = new Database(config, getLogger(), getProfiler(), getEmitter())
+		const db = new Database(
+			config,
+			app.logger,
+			app.profiler,
+			app.container.use('Adonis/Core/Event')
+		)
 		const client = db.connection('primary', { mode: 'write' })
 
 		assert.equal(client.mode, 'write')
@@ -105,7 +112,12 @@ test.group('Database', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const db = new Database(config, getLogger(), getProfiler(), getEmitter())
+		const db = new Database(
+			config,
+			app.logger,
+			app.profiler,
+			app.container.use('Adonis/Core/Event')
+		)
 		const client = db.connection('primary', { mode: 'read' })
 
 		assert.equal(client.mode, 'read')
@@ -118,7 +130,12 @@ test.group('Database', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const db = new Database(config, getLogger(), getProfiler(), getEmitter())
+		const db = new Database(
+			config,
+			app.logger,
+			app.profiler,
+			app.container.use('Adonis/Core/Event')
+		)
 		const trx = await db.transaction()
 
 		assert.equal(trx.mode, 'dual')
@@ -134,7 +151,12 @@ test.group('Database', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const db = new Database(config, getLogger(), getProfiler(), getEmitter())
+		const db = new Database(
+			config,
+			app.logger,
+			app.profiler,
+			app.container.use('Adonis/Core/Event')
+		)
 		const result = await db.rawQuery('select 1 + 1')
 		assert.isDefined(result)
 		await db.manager.closeAll()
@@ -146,7 +168,12 @@ test.group('Database', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const db = new Database(config, getLogger(), getProfiler(), getEmitter())
+		const db = new Database(
+			config,
+			app.logger,
+			app.profiler,
+			app.container.use('Adonis/Core/Event')
+		)
 		const result = await db.rawQuery('select 1 + 1', [], { mode: 'read' })
 		assert.isDefined(result)
 		await db.manager.closeAll()
@@ -158,7 +185,12 @@ test.group('Database', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const db = new Database(config, getLogger(), getProfiler(), getEmitter())
+		const db = new Database(
+			config,
+			app.logger,
+			app.profiler,
+			app.container.use('Adonis/Core/Event')
+		)
 		const result = await db.rawQuery('select 1 + 1', [], { mode: 'write' })
 		assert.isDefined(result)
 		await db.manager.closeAll()
@@ -170,8 +202,8 @@ test.group('Database', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const profiler = getProfiler()
-		const db = new Database(config, getLogger(), profiler, getEmitter())
+		const profiler = app.profiler
+		const db = new Database(config, app.logger, profiler, app.container.use('Adonis/Core/Event'))
 		const client = db.connection('primary')
 		assert.deepEqual(client.profiler, profiler)
 
@@ -184,10 +216,10 @@ test.group('Database', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const profiler = getProfiler()
+		const profiler = app.profiler
 		const row = profiler.create('scoped')
 
-		const db = new Database(config, getLogger(), profiler, getEmitter())
+		const db = new Database(config, app.logger, profiler, app.container.use('Adonis/Core/Event'))
 		const client = db.connection('primary', { profiler: row })
 		assert.deepEqual(client.profiler, row)
 
@@ -200,7 +232,12 @@ test.group('Database', (group) => {
 			connections: { primary: Object.assign({}, getConfig(), { healthCheck: true }) },
 		}
 
-		const db = new Database(config, getLogger(), getProfiler(), getEmitter())
+		const db = new Database(
+			config,
+			app.logger,
+			app.profiler,
+			app.container.use('Adonis/Core/Event')
+		)
 		assert.isTrue(db.hasHealthChecksEnabled)
 		await db.manager.closeAll()
 	})
@@ -208,15 +245,17 @@ test.group('Database', (group) => {
 
 test.group('Database | extend', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('extend database query builder by adding macros', async (assert) => {
-		const db = getDb()
+		const db = getDb(app)
 
 		db.DatabaseQueryBuilder.macro('whereActive', function whereActive() {
 			this.where('is_active', true)
@@ -238,7 +277,7 @@ test.group('Database | extend', (group) => {
 	})
 
 	test('extend insert query builder by adding macros', async (assert) => {
-		const db = getDb()
+		const db = getDb(app)
 
 		db.InsertQueryBuilder.macro('returnId', function whereActive() {
 			this.returning('id')
@@ -269,11 +308,13 @@ test.group('Database | extend', (group) => {
 
 test.group('Database | global transaction', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('perform queries inside a global transaction', async (assert) => {
@@ -282,7 +323,12 @@ test.group('Database | global transaction', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const db = new Database(config, getLogger(), getProfiler(), getEmitter())
+		const db = new Database(
+			config,
+			app.logger,
+			app.profiler,
+			app.container.use('Adonis/Core/Event')
+		)
 		await db.beginGlobalTransaction()
 
 		await db.table('users').insert({ username: 'virk' })
@@ -301,7 +347,12 @@ test.group('Database | global transaction', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const db = new Database(config, getLogger(), getProfiler(), getEmitter())
+		const db = new Database(
+			config,
+			app.logger,
+			app.profiler,
+			app.container.use('Adonis/Core/Event')
+		)
 		await db.beginGlobalTransaction()
 		const trx = await db.transaction()
 
@@ -323,7 +374,12 @@ test.group('Database | global transaction', (group) => {
 			connections: { primary: getConfig() },
 		}
 
-		const db = new Database(config, getLogger(), getProfiler(), getEmitter())
+		const db = new Database(
+			config,
+			app.logger,
+			app.profiler,
+			app.container.use('Adonis/Core/Event')
+		)
 		await db.beginGlobalTransaction()
 		await db.beginGlobalTransaction()
 		await db.beginGlobalTransaction()

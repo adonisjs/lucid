@@ -10,28 +10,39 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import { HasManyThrough } from '@ioc:Adonis/Lucid/Orm'
+import type { HasManyThrough } from '@ioc:Adonis/Lucid/Orm'
 
 import { scope } from '../../src/Helpers/scope'
 import { hasManyThrough, column } from '../../src/Orm/Decorators'
 import { HasManyThroughQueryBuilder } from '../../src/Orm/Relations/HasManyThrough/QueryBuilder'
 import {
+	fs,
 	ormAdapter,
 	getBaseModel,
 	setup,
 	cleanup,
 	resetTables,
 	getDb,
-	getProfiler,
+	setupApplication,
 } from '../../test-helpers'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 let db: ReturnType<typeof getDb>
+let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
 
 test.group('Model | Has Many Through | Options', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
+	})
+
+	group.after(async () => {
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('raise error when localKey is missing', (assert) => {
@@ -244,8 +255,16 @@ test.group('Model | Has Many Through | Options', (group) => {
 
 test.group('Model | Has Many Through | Set Relations', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
+	})
+
+	group.after(async () => {
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('set related model instance', (assert) => {
@@ -384,14 +403,16 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
 
 test.group('Model | Has Many Through | bulk operations', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -586,14 +607,16 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
 
 test.group('Model | HasMany | sub queries', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -867,14 +890,16 @@ test.group('Model | HasMany | sub queries', (group) => {
 
 test.group('Model | Has Many Through | aggregates', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -996,14 +1021,16 @@ test.group('Model | Has Many Through | aggregates', (group) => {
 
 test.group('Model | Has Many Through | preload', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1402,7 +1429,7 @@ test.group('Model | Has Many Through | preload', (group) => {
 				{ title: 'Adonis5', user_id: 2 },
 			])
 
-		const profiler = getProfiler(true)
+		const profiler = app.profiler
 
 		let profilerPacketIndex = 0
 		profiler.process((packet) => {
@@ -1460,14 +1487,16 @@ test.group('Model | Has Many Through | preload', (group) => {
 
 test.group('Model | Has Many Through | withCount', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1816,14 +1845,16 @@ test.group('Model | Has Many Through | withCount', (group) => {
 
 test.group('Model | Has Many Through | has', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1963,14 +1994,16 @@ test.group('Model | Has Many Through | has', (group) => {
 
 test.group('Model | Has Many Through | whereHas', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -2126,14 +2159,16 @@ test.group('Model | Has Many Through | whereHas', (group) => {
 if (process.env.DB !== 'mysql_legacy') {
 	test.group('Model | Has Many Through | Group Limit', (group) => {
 		group.before(async () => {
-			db = getDb()
-			BaseModel = getBaseModel(ormAdapter(db))
+			app = await setupApplication()
+			db = getDb(app)
+			BaseModel = getBaseModel(ormAdapter(db), app)
 			await setup()
 		})
 
 		group.after(async () => {
-			await cleanup()
 			await db.manager.closeAll()
+			await cleanup()
+			await fs.cleanup()
 		})
 
 		group.afterEach(async () => {
@@ -2673,14 +2708,16 @@ if (process.env.DB !== 'mysql_legacy') {
 
 test.group('Model | Has Many Through | pagination', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -2814,14 +2851,16 @@ test.group('Model | Has Many Through | pagination', (group) => {
 
 test.group('Model | Has Many Through | clone', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -2896,14 +2935,16 @@ test.group('Model | Has Many Through | clone', (group) => {
 
 test.group('Model | Has Many Through | scopes', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -3073,14 +3114,16 @@ test.group('Model | Has Many Through | scopes', (group) => {
 
 test.group('Model | Has Many Through | onQuery', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {

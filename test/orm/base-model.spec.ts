@@ -11,8 +11,11 @@
 
 import test from 'japa'
 import { DateTime } from 'luxon'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import type { HasOne, HasMany, BelongsTo } from '@ioc:Adonis/Lucid/Relations'
+
 import { ModelQueryBuilder } from '../../src/Orm/QueryBuilder'
+
 import {
 	column,
 	computed,
@@ -36,6 +39,7 @@ import {
 } from '../../src/Orm/Decorators'
 
 import {
+	fs,
 	getDb,
 	cleanup,
 	setup,
@@ -44,22 +48,27 @@ import {
 	ormAdapter,
 	resetTables,
 	FakeAdapter,
-	getProfiler,
 	getBaseModel,
+	setupApplication,
 } from '../../test-helpers'
 import { SimplePaginator } from '../../src/Database/Paginator/SimplePaginator'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
+let app: ApplicationContract
 
 test.group('Base model | boot', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('ensure save method is chainable', async (assert) => {
@@ -264,12 +273,16 @@ test.group('Base model | boot', (group) => {
 
 test.group('Base Model | options', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('set connection using useConnection method', (assert) => {
@@ -294,7 +307,7 @@ test.group('Base Model | options', (group) => {
 		const user = new User()
 		user.username = 'virk'
 
-		const profiler = getProfiler()
+		const profiler = app.profiler
 		user.$options = { profiler: profiler }
 
 		user.useConnection('foo')
@@ -304,12 +317,16 @@ test.group('Base Model | options', (group) => {
 
 test.group('Base Model | getter-setters', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('set property on $attributes when defined on model instance', (assert) => {
@@ -443,12 +460,16 @@ test.group('Base Model | getter-setters', (group) => {
 
 test.group('Base Model | dirty', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('get dirty properties on a fresh model', (assert) => {
@@ -539,14 +560,16 @@ test.group('Base Model | dirty', (group) => {
 
 test.group('Base Model | persist', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -945,12 +968,16 @@ test.group('Base Model | persist', (group) => {
 
 test.group('Base Model | create from adapter results', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('create model instance using $createFromAdapterResult method', async (assert) => {
@@ -1131,12 +1158,16 @@ test.group('Base Model | create from adapter results', (group) => {
 
 test.group('Base Model | delete', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('delete model instance using adapter', async (assert) => {
@@ -1667,12 +1698,16 @@ test.group('Base Model | serializeRelations', () => {
 
 test.group('Base Model | toJSON', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('convert model to its JSON representation', async (assert) => {
@@ -1770,12 +1805,16 @@ test.group('Base Model | toJSON', (group) => {
 
 test.group('BaseModel | cache', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('cache getter value', (assert) => {
@@ -1832,12 +1871,16 @@ test.group('BaseModel | cache', (group) => {
 
 test.group('BaseModel | fill/merge', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('fill model instance with bulk attributes', (assert) => {
@@ -1985,12 +2028,16 @@ test.group('BaseModel | fill/merge', (group) => {
 
 test.group('Base | apdater', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('pass model instance with attributes to the adapter insert method', async (assert) => {
@@ -2100,12 +2147,16 @@ test.group('Base | apdater', (group) => {
 
 test.group('Base Model | sideloaded', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('define sideloaded properties using $consumeAdapterResults method', (assert) => {
@@ -2155,12 +2206,16 @@ test.group('Base Model | sideloaded', (group) => {
 
 test.group('Base Model | relations', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('set hasOne relation', async (assert) => {
@@ -2554,14 +2609,16 @@ test.group('Base Model | relations', (group) => {
 
 test.group('Base Model | fetch', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -3507,14 +3564,16 @@ test.group('Base Model | fetch', (group) => {
 
 test.group('Base Model | hooks', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -4028,12 +4087,16 @@ test.group('Base Model | hooks', (group) => {
 
 test.group('Base model | extend', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('extend model query builder', async (assert) => {
@@ -4099,14 +4162,16 @@ test.group('Base model | extend', (group) => {
 
 test.group('Base Model | aggregates', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -4168,14 +4233,16 @@ test.group('Base Model | aggregates', (group) => {
 
 test.group('Base Model | date', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -4569,14 +4636,16 @@ test.group('Base Model | date', (group) => {
 
 test.group('Base Model | datetime', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -4956,14 +5025,16 @@ test.group('Base Model | datetime', (group) => {
 
 test.group('Base Model | paginate', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -5012,12 +5083,16 @@ test.group('Base Model | paginate', (group) => {
 
 test.group('Base Model | toObject', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
 	})
 
 	group.after(async () => {
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('convert model to its object representation', async (assert) => {

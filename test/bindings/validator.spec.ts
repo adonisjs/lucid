@@ -15,19 +15,23 @@ import { schema } from '@adonisjs/validator/build/src/Schema'
 import { extendValidator } from '../../src/Bindings/Validator'
 import { validator } from '@adonisjs/validator/build/src/Validator'
 
-import { getDb, setup, cleanup, resetTables } from '../../test-helpers'
+import { fs, getDb, setup, cleanup, resetTables, setupApplication } from '../../test-helpers'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
+let app: ApplicationContract
 let db: ReturnType<typeof getDb>
 
 test.group('Validator | exists', (group) => {
 	group.before(async () => {
-		db = getDb()
+		app = await setupApplication()
+		db = getDb(app)
 		await setup()
 		extendValidator(validator, db)
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 		await db.manager.closeAll()
 	})
 
@@ -519,13 +523,15 @@ test.group('Validator | exists', (group) => {
 
 test.group('Validator | unique', (group) => {
 	group.before(async () => {
-		db = getDb()
+		app = await setupApplication()
+		db = getDb(app)
 		await setup()
 		extendValidator(validator, db)
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 		await db.manager.closeAll()
 	})
 

@@ -10,26 +10,36 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+
 import { column } from '../../src/Orm/Decorators'
-import { setup, cleanup, getDb, resetTables, getBaseModel, ormAdapter } from '../../test-helpers'
+
+import {
+	setup,
+	cleanup,
+	getDb,
+	getBaseModel,
+	ormAdapter,
+	setupApplication,
+	fs,
+} from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
+let app: ApplicationContract
 
 test.group('Adapter', (group) => {
-	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+	group.beforeEach(async () => {
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
-	group.after(async () => {
-		await cleanup()
-		await db.manager.closeAll()
-	})
-
 	group.afterEach(async () => {
-		await resetTables()
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('make insert call using a model', async (assert) => {

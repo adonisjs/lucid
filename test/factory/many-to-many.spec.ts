@@ -10,11 +10,12 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import { ManyToMany } from '@ioc:Adonis/Lucid/Relations'
+import type { ManyToMany } from '@ioc:Adonis/Lucid/Relations'
 import { FactoryManager } from '../../src/Factory/index'
 import { column, manyToMany } from '../../src/Orm/Decorators'
 
 import {
+	fs,
 	setup,
 	getDb,
 	cleanup,
@@ -22,23 +23,28 @@ import {
 	resetTables,
 	getBaseModel,
 	getFactoryModel,
+	setupApplication,
 } from '../../test-helpers'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 let db: ReturnType<typeof getDb>
+let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
 const FactoryModel = getFactoryModel()
 const factoryManager = new FactoryManager()
 
 test.group('Factory | ManyToMany | make', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -240,14 +246,16 @@ test.group('Factory | ManyToMany | make', (group) => {
 
 test.group('Factory | ManyToMany | create', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {

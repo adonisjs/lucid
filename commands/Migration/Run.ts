@@ -7,18 +7,13 @@
  * file that was distributed with this source code.
  */
 
-import { inject } from '@adonisjs/fold'
-import { flags, Kernel } from '@adonisjs/ace'
-import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-
+import { flags } from '@adonisjs/core/build/standalone'
 import MigrationsBase from './Base'
 
 /**
  * The command is meant to migrate the database by execute migrations
  * in `up` direction.
  */
-@inject([null, null, 'Adonis/Lucid/Database'])
 export default class Migrate extends MigrationsBase {
 	public static commandName = 'migration:run'
 	public static description = 'Run pending migrations'
@@ -49,15 +44,13 @@ export default class Migrate extends MigrationsBase {
 		loadApp: true,
 	}
 
-	constructor(app: ApplicationContract, kernel: Kernel, private db: DatabaseContract) {
-		super(app, kernel)
-	}
-
 	/**
 	 * Handle command
 	 */
-	public async handle(): Promise<void> {
-		this.connection = this.connection || this.db.primaryConnectionName
+	public async run(): Promise<void> {
+		const db = this.application.container.use('Adonis/Lucid/Database')
+
+		this.connection = this.connection || db.primaryConnectionName
 		const continueMigrations =
 			!this.application.inProduction || this.force || (await this.takeProductionConstent())
 
@@ -68,7 +61,7 @@ export default class Migrate extends MigrationsBase {
 			return
 		}
 
-		const connection = this.db.getRawConnection(this.connection)
+		const connection = db.getRawConnection(this.connection)
 
 		/**
 		 * Ensure the define connection name does exists in the
@@ -83,7 +76,7 @@ export default class Migrate extends MigrationsBase {
 		 * New up migrator
 		 */
 		const { Migrator } = await import('../../src/Migrator')
-		const migrator = new Migrator(this.db, this.application, {
+		const migrator = new Migrator(db, this.application, {
 			direction: 'up',
 			connectionName: this.connection,
 			dryRun: this.dryRun,

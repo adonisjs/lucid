@@ -10,27 +10,24 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { Connection } from '../../src/Connection'
 import { QueryClient } from '../../src/QueryClient'
 import { TransactionClient } from '../../src/TransactionClient'
-import {
-	setup,
-	cleanup,
-	getConfig,
-	getLogger,
-	getEmitter,
-	getProfiler,
-	resetTables,
-} from '../../test-helpers'
+import { fs, setup, cleanup, getConfig, resetTables, setupApplication } from '../../test-helpers'
+
+let app: ApplicationContract
 
 test.group('Transaction | query', (group) => {
 	group.before(async () => {
+		app = await setupApplication()
 		await setup()
 	})
 
 	group.after(async () => {
 		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -38,10 +35,14 @@ test.group('Transaction | query', (group) => {
 	})
 
 	test('perform select query under a transaction', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = await new QueryClient('dual', connection, getEmitter()).transaction()
+		const db = await new QueryClient(
+			'dual',
+			connection,
+			app.container.use('Adonis/Core/Event')
+		).transaction()
 		const results = await db.query().from('users')
 		await db.commit()
 
@@ -52,14 +53,24 @@ test.group('Transaction | query', (group) => {
 	})
 
 	test('commit insert', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = await new QueryClient('dual', connection, getEmitter()).transaction()
+		const db = await new QueryClient(
+			'dual',
+			connection,
+			app.container.use('Adonis/Core/Event')
+		).transaction()
 		await db.insertQuery().table('users').insert({ username: 'virk' })
 		await db.commit()
 
-		const results = await new QueryClient('dual', connection, getEmitter()).query().from('users')
+		const results = await new QueryClient(
+			'dual',
+			connection,
+			app.container.use('Adonis/Core/Event')
+		)
+			.query()
+			.from('users')
 		assert.isArray(results)
 		assert.lengthOf(results, 1)
 		assert.equal(results[0].username, 'virk')
@@ -68,14 +79,24 @@ test.group('Transaction | query', (group) => {
 	})
 
 	test('rollback insert', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = await new QueryClient('dual', connection, getEmitter()).transaction()
+		const db = await new QueryClient(
+			'dual',
+			connection,
+			app.container.use('Adonis/Core/Event')
+		).transaction()
 		await db.insertQuery().table('users').insert({ username: 'virk' })
 		await db.rollback()
 
-		const results = await new QueryClient('dual', connection, getEmitter()).query().from('users')
+		const results = await new QueryClient(
+			'dual',
+			connection,
+			app.container.use('Adonis/Core/Event')
+		)
+			.query()
+			.from('users')
 		assert.isArray(results)
 		assert.lengthOf(results, 0)
 
@@ -83,13 +104,17 @@ test.group('Transaction | query', (group) => {
 	})
 
 	test('perform nested transactions with save points', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
 		/**
 		 * Transaction 1
 		 */
-		const db = await new QueryClient('dual', connection, getEmitter()).transaction()
+		const db = await new QueryClient(
+			'dual',
+			connection,
+			app.container.use('Adonis/Core/Event')
+		).transaction()
 		await db.insertQuery().table('users').insert({ username: 'virk' })
 
 		/**
@@ -108,7 +133,13 @@ test.group('Transaction | query', (group) => {
 		 */
 		await db.commit()
 
-		const results = await new QueryClient('dual', connection, getEmitter()).query().from('users')
+		const results = await new QueryClient(
+			'dual',
+			connection,
+			app.container.use('Adonis/Core/Event')
+		)
+			.query()
+			.from('users')
 		assert.isArray(results)
 		assert.lengthOf(results, 1)
 		assert.equal(results[0].username, 'virk')
@@ -118,10 +149,14 @@ test.group('Transaction | query', (group) => {
 
 	test('emit after commit event', async (assert) => {
 		const stack: string[] = []
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = await new QueryClient('dual', connection, getEmitter()).transaction()
+		const db = await new QueryClient(
+			'dual',
+			connection,
+			app.container.use('Adonis/Core/Event')
+		).transaction()
 
 		db.on('commit', (trx) => {
 			stack.push('commit')
@@ -140,10 +175,14 @@ test.group('Transaction | query', (group) => {
 
 	test('execute before and after rollback hooks', async (assert) => {
 		const stack: string[] = []
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const db = await new QueryClient('dual', connection, getEmitter()).transaction()
+		const db = await new QueryClient(
+			'dual',
+			connection,
+			app.container.use('Adonis/Core/Event')
+		).transaction()
 
 		db.on('rollback', (trx) => {
 			stack.push('rollback')
@@ -160,14 +199,22 @@ test.group('Transaction | query', (group) => {
 	})
 
 	test('commit insert inside a self managed transaction', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		await new QueryClient('dual', connection, getEmitter()).transaction(async (db) => {
-			await db.insertQuery().table('users').insert({ username: 'virk' })
-		})
+		await new QueryClient('dual', connection, app.container.use('Adonis/Core/Event')).transaction(
+			async (db) => {
+				await db.insertQuery().table('users').insert({ username: 'virk' })
+			}
+		)
 
-		const results = await new QueryClient('dual', connection, getEmitter()).query().from('users')
+		const results = await new QueryClient(
+			'dual',
+			connection,
+			app.container.use('Adonis/Core/Event')
+		)
+			.query()
+			.from('users')
 		assert.isArray(results)
 		assert.lengthOf(results, 1)
 		assert.equal(results[0].username, 'virk')
@@ -178,19 +225,27 @@ test.group('Transaction | query', (group) => {
 	test('rollback insert inside a self managed transaction', async (assert) => {
 		assert.plan(3)
 
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
 		try {
-			await new QueryClient('dual', connection, getEmitter()).transaction(async (db) => {
-				await db.insertQuery().table('users').insert({ username: 'virk' })
-				throw new Error('should rollback')
-			})
+			await new QueryClient('dual', connection, app.container.use('Adonis/Core/Event')).transaction(
+				async (db) => {
+					await db.insertQuery().table('users').insert({ username: 'virk' })
+					throw new Error('should rollback')
+				}
+			)
 		} catch (error) {
 			assert.equal(error.message, 'should rollback')
 		}
 
-		const results = await new QueryClient('dual', connection, getEmitter()).query().from('users')
+		const results = await new QueryClient(
+			'dual',
+			connection,
+			app.container.use('Adonis/Core/Event')
+		)
+			.query()
+			.from('users')
 		assert.isArray(results)
 		assert.lengthOf(results, 0)
 
@@ -198,29 +253,37 @@ test.group('Transaction | query', (group) => {
 	})
 
 	test('perform nested managed transactions', async (assert) => {
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
 		/**
 		 * Transaction 1
 		 */
-		await new QueryClient('dual', connection, getEmitter()).transaction(async (db) => {
-			await db.insertQuery().table('users').insert({ username: 'virk' })
-
-			/**
-			 * Transaction 2: Save point
-			 */
-			await db.transaction(async (db1) => {
-				await db1.insertQuery().table('users').insert({ username: 'nikk' })
+		await new QueryClient('dual', connection, app.container.use('Adonis/Core/Event')).transaction(
+			async (db) => {
+				await db.insertQuery().table('users').insert({ username: 'virk' })
 
 				/**
-				 * Manual callback, should work fine
+				 * Transaction 2: Save point
 				 */
-				await db1.rollback()
-			})
-		})
+				await db.transaction(async (db1) => {
+					await db1.insertQuery().table('users').insert({ username: 'nikk' })
 
-		const results = await new QueryClient('dual', connection, getEmitter()).query().from('users')
+					/**
+					 * Manual callback, should work fine
+					 */
+					await db1.rollback()
+				})
+			}
+		)
+
+		const results = await new QueryClient(
+			'dual',
+			connection,
+			app.container.use('Adonis/Core/Event')
+		)
+			.query()
+			.from('users')
 		assert.isArray(results)
 		assert.lengthOf(results, 1)
 		assert.equal(results[0].username, 'virk')
@@ -230,11 +293,11 @@ test.group('Transaction | query', (group) => {
 
 	test('nest transaction queries inside profiler row', async (assert) => {
 		const stack: { id: string; parentId: string | undefined; label: string; data: any }[] = []
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const profiler = getProfiler(true)
-		const client = new QueryClient('dual', connection, getEmitter())
+		const profiler = app.profiler
+		const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
 		client.profiler = profiler
 
 		profiler.process((log) => {
@@ -256,11 +319,11 @@ test.group('Transaction | query', (group) => {
 
 	test('nest save points queries inside profiler row', async (assert) => {
 		const stack: { id: string; parentId: string | undefined; label: string; data: any }[] = []
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const profiler = getProfiler(true)
-		const client = new QueryClient('dual', connection, getEmitter())
+		const profiler = app.profiler
+		const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
 		client.profiler = profiler
 
 		profiler.process((log) => {
@@ -287,11 +350,11 @@ test.group('Transaction | query', (group) => {
 
 	test('nest transaction queries inside managed transaction', async (assert) => {
 		const stack: { id: string; parentId: string | undefined; label: string; data: any }[] = []
-		const connection = new Connection('primary', getConfig(), getLogger())
+		const connection = new Connection('primary', getConfig(), app.logger)
 		connection.connect()
 
-		const profiler = getProfiler(true)
-		const client = new QueryClient('dual', connection, getEmitter())
+		const profiler = app.profiler
+		const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
 		client.profiler = profiler
 
 		profiler.process((log) => {

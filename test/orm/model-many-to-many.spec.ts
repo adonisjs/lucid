@@ -10,28 +10,39 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import { ManyToMany } from '@ioc:Adonis/Lucid/Orm'
+import type { ManyToMany } from '@ioc:Adonis/Lucid/Orm'
 
 import { scope } from '../../src/Helpers/scope'
 import { manyToMany, column } from '../../src/Orm/Decorators'
 import { ManyToManyQueryBuilder } from '../../src/Orm/Relations/ManyToMany/QueryBuilder'
 import {
+	fs,
 	getDb,
 	getBaseModel,
 	ormAdapter,
 	setup,
 	resetTables,
 	cleanup,
-	getProfiler,
+	setupApplication,
 } from '../../test-helpers'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 let db: ReturnType<typeof getDb>
+let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
 
 test.group('Model | ManyToMany | Options', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
+	})
+
+	group.after(async () => {
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('raise error when localKey is missing', (assert) => {
@@ -248,8 +259,16 @@ test.group('Model | ManyToMany | Options', (group) => {
 
 test.group('Model | ManyToMany | Set Relations', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
+	})
+
+	group.after(async () => {
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('set related model instance', (assert) => {
@@ -352,14 +371,16 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
 
 test.group('Model | ManyToMany | bulk operations', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -584,14 +605,16 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
 
 test.group('Model | ManyToMany | sub queries', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -838,14 +861,16 @@ test.group('Model | ManyToMany | sub queries', (group) => {
 
 test.group('Model | Many To Many | aggregates', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -968,14 +993,16 @@ test.group('Model | Many To Many | aggregates', (group) => {
 
 test.group('Model | ManyToMany | preload', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1431,14 +1458,16 @@ test.group('Model | ManyToMany | preload', (group) => {
 
 test.group('Model | ManyToMany | withCount', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1784,14 +1813,16 @@ test.group('Model | ManyToMany | withCount', (group) => {
 
 test.group('Model | ManyToMany | has', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -1905,14 +1936,16 @@ test.group('Model | ManyToMany | has', (group) => {
 
 test.group('Model | ManyToMany | whereHas', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -2051,14 +2084,16 @@ test.group('Model | ManyToMany | whereHas', (group) => {
 if (process.env.DB !== 'mysql_legacy') {
 	test.group('Model | ManyToMany | Group Limit', (group) => {
 		group.before(async () => {
-			db = getDb()
-			BaseModel = getBaseModel(ormAdapter(db))
+			app = await setupApplication()
+			db = getDb(app)
+			BaseModel = getBaseModel(ormAdapter(db), app)
 			await setup()
 		})
 
 		group.after(async () => {
-			await cleanup()
 			await db.manager.closeAll()
+			await cleanup()
+			await fs.cleanup()
 		})
 
 		group.afterEach(async () => {
@@ -2675,14 +2710,16 @@ if (process.env.DB !== 'mysql_legacy') {
 
 test.group('Model | ManyToMany | wherePivot', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('add where clause', async (assert) => {
@@ -2938,7 +2975,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
 				},
 			])
 
-		const profiler = getProfiler(true)
+		const profiler = app.profiler
 
 		let profilerPacketIndex = 0
 		profiler.process((packet) => {
@@ -2959,14 +2996,16 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
 
 test.group('Model | ManyToMany | whereNotPivot', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('add where no clause', async (assert) => {
@@ -3110,14 +3149,16 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
 
 test.group('Model | ManyToMany | whereInPivot', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('add whereIn clause', async (assert) => {
@@ -3428,14 +3469,16 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
 
 test.group('Model | ManyToMany | whereNotInPivot', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	test('add whereNotIn clause', async (assert) => {
@@ -3666,14 +3709,16 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
 
 test.group('Model | ManyToMany | save', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -3883,14 +3928,16 @@ test.group('Model | ManyToMany | save', (group) => {
 
 test.group('Model | ManyToMany | saveMany', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -4184,14 +4231,16 @@ test.group('Model | ManyToMany | saveMany', (group) => {
 
 test.group('Model | ManyToMany | create', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -4292,14 +4341,16 @@ test.group('Model | ManyToMany | create', (group) => {
 
 test.group('Model | ManyToMany | createMany', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -4406,14 +4457,16 @@ test.group('Model | ManyToMany | createMany', (group) => {
 
 test.group('Model | ManyToMany | attach', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -4518,14 +4571,16 @@ test.group('Model | ManyToMany | attach', (group) => {
 
 test.group('Model | ManyToMany | detach', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -4646,14 +4701,16 @@ test.group('Model | ManyToMany | detach', (group) => {
 
 test.group('Model | ManyToMany | sync', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -5154,14 +5211,16 @@ test.group('Model | ManyToMany | sync', (group) => {
 
 test.group('Model | ManyToMany | pagination', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -5277,14 +5336,16 @@ test.group('Model | ManyToMany | pagination', (group) => {
 
 test.group('Model | ManyToMany | clone', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -5332,14 +5393,16 @@ test.group('Model | ManyToMany | clone', (group) => {
 
 test.group('Model | ManyToMany | scopes', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -5454,14 +5517,16 @@ test.group('Model | ManyToMany | scopes', (group) => {
 
 test.group('Model | ManyToMany | onQuery', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {

@@ -14,28 +14,33 @@ import { column } from '../../src/Orm/Decorators'
 import { scope } from '../../src/Helpers/scope'
 import { ModelQueryBuilder } from '../../src/Orm/QueryBuilder'
 import {
+	fs,
 	getDb,
 	setup,
 	cleanup,
 	ormAdapter,
 	resetTables,
-	getProfiler,
 	getBaseModel,
+	setupApplication,
 } from '../../test-helpers'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 let db: ReturnType<typeof getDb>
+let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
 
 test.group('Model query builder', (group) => {
 	group.before(async () => {
-		db = getDb()
-		BaseModel = getBaseModel(ormAdapter(db))
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
 		await setup()
 	})
 
 	group.after(async () => {
-		await cleanup()
 		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
 	})
 
 	group.afterEach(async () => {
@@ -151,7 +156,7 @@ test.group('Model query builder', (group) => {
 			.table('users')
 			.insert([{ username: 'virk' }, { username: 'nikk' }])
 
-		const profiler = getProfiler()
+		const profiler = app.profiler
 		const users = await User.query({ profiler }).where('username', 'virk')
 		assert.lengthOf(users, 1)
 		assert.instanceOf(users[0], User)

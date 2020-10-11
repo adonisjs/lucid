@@ -11,33 +11,37 @@
 
 import test from 'japa'
 import { join } from 'path'
-import { Filesystem } from '@poppinss/dev-utils'
-import { Application } from '@adonisjs/application/build/standalone'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
-import { setup, cleanup, getDb, resetTables, getMigrator } from '../../test-helpers'
+import {
+	setup,
+	cleanup,
+	getDb,
+	resetTables,
+	getMigrator,
+	setupApplication,
+	fs,
+} from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
-const fs = new Filesystem(join(__dirname, 'app'))
+let app: ApplicationContract
 
 test.group('Migrator', (group) => {
-	group.before(async () => {
-		db = getDb()
+	group.beforeEach(async () => {
+		app = await setupApplication()
+		db = getDb(app)
 		await setup()
-	})
-
-	group.after(async () => {
-		await cleanup()
-		await db.manager.closeAll()
 	})
 
 	group.afterEach(async () => {
 		await resetTables()
+		await db.manager.closeAll()
+		await cleanup()
 		await cleanup(['adonis_schema', 'schema_users', 'schema_accounts'])
 		await fs.cleanup()
 	})
 
 	test('create the schema table when there are no migrations', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
 		await fs.fsExtra.ensureDir(join(fs.basePath, 'database/migrations'))
 
 		const migrator = getMigrator(db, app, {
@@ -53,12 +57,10 @@ test.group('Migrator', (group) => {
 	})
 
 	test('migrate database using schema files', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -102,12 +104,11 @@ test.group('Migrator', (group) => {
 
 	test('do not migrate when schema up action fails', async (assert) => {
 		assert.plan(8)
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
 
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -122,7 +123,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/accounts.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class Accounts extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -174,12 +175,10 @@ test.group('Migrator', (group) => {
 	})
 
 	test('do not migrate when dryRun is true', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -193,7 +192,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/accounts.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class Accounts extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -258,12 +257,10 @@ test.group('Migrator', (group) => {
 	})
 
 	test('catch and report errors in dryRun', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -277,7 +274,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/accounts.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class Accounts extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -329,12 +326,10 @@ test.group('Migrator', (group) => {
 	})
 
 	test('do not migrate a schema file twice', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-
 		await fs.add(
 			'database/migrations/accounts.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class Accounts extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -351,7 +346,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -386,12 +381,10 @@ test.group('Migrator', (group) => {
 	})
 
 	test('rollback database using schema files to a given batch', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -412,7 +405,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/accounts.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -461,12 +454,10 @@ test.group('Migrator', (group) => {
 	})
 
 	test('rollback database to the latest batch', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -487,7 +478,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/accounts.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -532,12 +523,10 @@ test.group('Migrator', (group) => {
 	})
 
 	test('rollback all down to batch 0', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -558,7 +547,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/accounts.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -614,12 +603,10 @@ test.group('Migrator', (group) => {
 	})
 
 	test('rollback multiple times must be a noop', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -640,7 +627,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/accounts.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -714,12 +701,10 @@ test.group('Migrator', (group) => {
 	})
 
 	test('do not rollback in dryRun', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -740,7 +725,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/accounts.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -798,12 +783,11 @@ test.group('Migrator', (group) => {
 
 	test('do not rollback when a schema file goes missing', async (assert) => {
 		assert.plan(4)
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
 
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -821,7 +805,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/accounts.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -863,12 +847,10 @@ test.group('Migrator', (group) => {
 	})
 
 	test('get list of migrated files', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -886,7 +868,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/accounts.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -914,12 +896,10 @@ test.group('Migrator', (group) => {
 	})
 
 	test('skip upcoming migrations after failure', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -933,7 +913,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/accounts.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class Accounts extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -987,9 +967,7 @@ test.group('Migrator', (group) => {
 	})
 
 	test('raise exception when rollbacks in production are disabled', async (assert) => {
-		process.env.NODE_ENV = 'production'
-
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
+		app.nodeEnvironment = 'production'
 		const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
 
 		db.getRawConnection('primary')!.config.migrations = {
@@ -999,7 +977,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/users.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -1020,7 +998,7 @@ test.group('Migrator', (group) => {
 		await fs.add(
 			'database/migrations/accounts.ts',
 			`
-      import { Schema } from '../../../../../src/Schema'
+      import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
