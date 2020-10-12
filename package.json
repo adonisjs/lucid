@@ -59,11 +59,12 @@
     "resolve-pkg": "^2.0.0"
   },
   "peerDependencies": {
-    "@adonisjs/core": ">=5.0.0-preview"
+    "@adonisjs/core": "^5.0.2-beta-rc"
   },
   "devDependencies": {
-    "@adonisjs/core": "^5.0.1",
+    "@adonisjs/core": "^5.0.2-beta-rc-5",
     "@adonisjs/mrm-preset": "^2.4.0",
+    "@adonisjs/repl": "^1.1.2",
     "@adonisjs/require-ts": "^1.0.4",
     "@adonisjs/sink": "^4.0.3",
     "@poppinss/dev-utils": "^1.0.11",
@@ -131,7 +132,7 @@
     ],
     "commands": [
       "@adonisjs/lucid/build/commands"
-		],
+    ],
     "templates": {
       "database": [
         "factories/index.txt"

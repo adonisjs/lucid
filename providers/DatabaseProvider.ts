@@ -116,6 +116,20 @@ export default class DatabaseServiceProvider {
 	}
 
 	/**
+	 * Defines REPL bindings
+	 */
+	private defineReplBindings() {
+		if (this.app.environment !== 'repl') {
+			return
+		}
+
+		this.app.container.with(['Adonis/Addons/Repl'], (Repl) => {
+			const { defineReplBindings } = require('../src/Bindings/Repl')
+			defineReplBindings(this.app, Repl)
+		})
+	}
+
+	/**
 	 * Called when registering providers
 	 */
 	public register(): void {
@@ -124,6 +138,7 @@ export default class DatabaseServiceProvider {
 		this.registerSchema()
 		this.registerFactory()
 		this.registerBaseSeeder()
+		this.defineReplBindings()
 	}
 
 	/**
