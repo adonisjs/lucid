@@ -95,6 +95,13 @@ export default class DatabaseServiceProvider {
 	 * Registers the health checker
 	 */
 	private registerHealthChecker() {
+		/**
+		 * Do not register health checks in the repl environment
+		 */
+		if (this.app.environment === 'repl') {
+			return
+		}
+
 		this.app.container.with(
 			['Adonis/Core/HealthCheck', 'Adonis/Lucid/Database'],
 			(HealthCheck, Db: DatabaseContract) => {
@@ -109,6 +116,13 @@ export default class DatabaseServiceProvider {
 	 * Extends the validator by defining validation rules
 	 */
 	private defineValidationRules() {
+		/**
+		 * Do not register validation rules in the "repl" environment
+		 */
+		if (this.app.environment === 'repl') {
+			return
+		}
+
 		this.app.container.with(['Adonis/Core/Validator', 'Adonis/Lucid/Database'], (Validator, Db) => {
 			const { extendValidator } = require('../src/Bindings/Validator')
 			extendValidator(Validator.validator, Db)
@@ -138,7 +152,6 @@ export default class DatabaseServiceProvider {
 		this.registerSchema()
 		this.registerFactory()
 		this.registerBaseSeeder()
-		this.defineReplBindings()
 	}
 
 	/**
@@ -147,5 +160,6 @@ export default class DatabaseServiceProvider {
 	public boot(): void {
 		this.registerHealthChecker()
 		this.defineValidationRules()
+		this.defineReplBindings()
 	}
 }
