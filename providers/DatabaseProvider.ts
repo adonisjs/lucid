@@ -162,4 +162,11 @@ export default class DatabaseServiceProvider {
 		this.defineValidationRules()
 		this.defineReplBindings()
 	}
+
+	/**
+	 * Gracefully close connections during shutdown
+	 */
+	public async shutdown() {
+		await this.app.container.use('Adonis/Lucid/Database').manager.closeAll()
+	}
 }
