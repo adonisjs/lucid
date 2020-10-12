@@ -14,7 +14,7 @@ import { join } from 'path'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { MigrationSource } from '../../src/Migrator/MigrationSource'
-import { setup, cleanup, getDb, resetTables, setupApplication, fs } from '../../test-helpers'
+import { setup, getDb, resetTables, setupApplication, fs } from '../../test-helpers'
 
 let app: ApplicationContract
 let db: ReturnType<typeof getDb>

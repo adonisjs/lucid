@@ -10,5 +10,8 @@
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
 export class BaseSeeder {
-	constructor(protected client: QueryClientContract) {}
+	public static developmentOnly: boolean
+	constructor(public client: QueryClientContract) {}
+
+	public async run() {}
 }
