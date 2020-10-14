@@ -636,6 +636,19 @@ declare module '@ioc:Adonis/Lucid/Database' {
 	}>
 
 	/**
+	 * Shape of the data emitted by the `db:query event`
+	 */
+	export type DbQueryEventNode = {
+		connection: string
+		model?: string
+		ddl?: boolean
+		duration?: [number, number]
+		method: string
+		sql: string
+		bindings?: any[]
+	}
+
+	/**
 	 * Database contract serves as the main API to interact with multiple
 	 * database connections
 	 */
@@ -657,7 +670,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
 		/**
 		 * Pretty print query logs
 		 */
-		prettyPrint: (queryLog: any) => void
+		prettyPrint: (queryLog: DbQueryEventNode) => void
 
 		/**
 		 * Name of the primary connection defined inside `config/database.ts`

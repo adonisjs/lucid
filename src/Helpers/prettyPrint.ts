@@ -7,8 +7,9 @@
  * file that was distributed with this source code.
  */
 
-import kleur from 'kleur'
+import type kleur from 'kleur'
 import { inspect } from 'util'
+import { DbQueryEventNode } from '@ioc:Adonis/Lucid/Database'
 
 /**
  * Colorizes the sql query based upon the method
@@ -34,7 +35,7 @@ function colorizeQuery(color: typeof kleur, method: string, sql: string) {
 /**
  * Pretty print queries
  */
-export function prettyPrint(queryLog: any) {
+export function prettyPrint(queryLog: DbQueryEventNode) {
 	/**
 	 * Lazy loading pretty printed dependencies
 	 */
