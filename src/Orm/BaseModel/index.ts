@@ -12,8 +12,8 @@
 import { DateTime } from 'luxon'
 import equal from 'fast-deep-equal'
 import { Hooks } from '@poppinss/hooks'
-import { IocContract } from '@adonisjs/fold'
 import { Exception, lodash } from '@poppinss/utils'
+import { Ioc } from '@adonisjs/core/build/standalone'
 
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import {
@@ -60,6 +60,7 @@ import {
 	managedTransaction,
 	normalizeCherryPickObject,
 } from '../../utils'
+import { IocContract } from '@ioc:Adonis/Core/Application'
 
 const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
 const DATE_TIME_TYPES = {
@@ -95,7 +96,7 @@ export class BaseModel implements LucidRow {
 	 * NOTE: Container is a singleton and share among all the models, unless
 	 * a user wants to swap the container for a given model
 	 */
-	public static $container: IocContract
+	public static $container: Ioc
 
 	/**
 	 * Primary key is required to build relationships across models
