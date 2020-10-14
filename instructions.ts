@@ -99,7 +99,7 @@ export default async function instructions(
 	}
 
 	env.commit()
-	sink.logger.success('.env,.env.example')
+	sink.logger.action('update').succeeded('.env,.env.example')
 
 	/**
 	 * Create tmp dir when sqlite is selected
@@ -107,7 +107,7 @@ export default async function instructions(
 	if (dbServer.includes('sqlite') && !existsSync(app.tmpPath())) {
 		mkdirSync(app.tmpPath())
 		const tmpDir = app.directoriesMap.get('tmp') || 'tmp'
-		sink.logger.success(`mkdir ./${tmpDir}`)
+		sink.logger.action('create').succeeded(`./${tmpDir}`)
 	}
 
 	/**
@@ -137,7 +137,7 @@ export default async function instructions(
 	}
 
 	const spinner = sink.logger.await(
-		`Installing packages: ${pkg.getInstalls(false).list.join(', ')}...`
+		`Installing packages: ${pkg.getInstalls(false).list.join(', ')}`
 	)
 
 	try {
