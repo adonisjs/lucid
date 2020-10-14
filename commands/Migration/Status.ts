@@ -74,7 +74,6 @@ export default class Status extends MigrationsBase {
 		const list = await migrator.getList()
 		await migrator.close()
 
-		this.printPreviewMessage()
 		const table = this.ui.table()
 		table.head(['Name', 'Status', 'Batch', 'Message'])
 

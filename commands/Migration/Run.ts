@@ -82,7 +82,6 @@ export default class Migrate extends MigrationsBase {
 			dryRun: this.dryRun,
 		})
 
-		this.printPreviewMessage()
 		await this.runMigrations(migrator, this.connection)
 	}
 }
