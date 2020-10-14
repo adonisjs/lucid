@@ -7,7 +7,6 @@
  * file that was distributed with this source code.
  */
 
-import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 /**
@@ -104,7 +103,7 @@ export default class DatabaseServiceProvider {
 
 		this.app.container.with(
 			['Adonis/Core/HealthCheck', 'Adonis/Lucid/Database'],
-			(HealthCheck, Db: DatabaseContract) => {
+			(HealthCheck, Db) => {
 				if (Db.hasHealthChecksEnabled) {
 					HealthCheck.addChecker('lucid', 'Adonis/Lucid/Database')
 				}

@@ -73,4 +73,21 @@ test.group('Database Provider', (group) => {
 		assert.property(Validator['rules'], 'unique')
 		assert.property(Validator['rules'], 'exists')
 	})
+
+	test('register repl bindings in repl environment', async (assert) => {
+		const app = await setupApplication(
+			{
+				connection: 'sqlite',
+				connections: {
+					sqlite: {},
+				},
+			},
+			['../../providers/DatabaseProvider'],
+			'repl'
+		)
+
+		const Repl = app.container.use('Adonis/Addons/Repl')
+		assert.property(Repl['customMethods'], 'loadModels')
+		assert.property(Repl['customMethods'], 'loadDb')
+	})
 })

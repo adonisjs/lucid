@@ -550,7 +550,11 @@ export function getPosts(count: number, userId: number) {
 /**
  * Setup application
  */
-export async function setupApplication(dbConfig?: any, additionalProviders?: string[]) {
+export async function setupApplication(
+	dbConfig?: any,
+	additionalProviders?: string[],
+	environment: 'web' | 'repl' | 'test' = 'test'
+) {
 	await fs.add('.env', '')
 	await fs.add(
 		'config/app.ts',
@@ -571,11 +575,11 @@ export async function setupApplication(dbConfig?: any, additionalProviders?: str
 	`
 	)
 
-	const app = new Application(fs.basePath, 'test', {
+	const app = new Application(fs.basePath, environment, {
 		aliases: {
 			App: './app',
 		},
-		providers: ['@adonisjs/core'].concat(additionalProviders || []),
+		providers: ['@adonisjs/core', '@adonisjs/repl'].concat(additionalProviders || []),
 	})
 
 	app.setup()
