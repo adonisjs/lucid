@@ -99,7 +99,7 @@ export default async function instructions(
 	}
 
 	env.commit()
-	sink.logger.success('.env')
+	sink.logger.success('.env,.env.example')
 
 	/**
 	 * Create tmp dir when sqlite is selected

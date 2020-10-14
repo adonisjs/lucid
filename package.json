@@ -62,11 +62,11 @@
     "@adonisjs/core": "^5.0.2-beta-rc"
   },
   "devDependencies": {
-    "@adonisjs/core": "^5.0.2-beta-rc-5",
+    "@adonisjs/core": "^5.0.2-beta-rc-7",
     "@adonisjs/mrm-preset": "^2.4.0",
-    "@adonisjs/repl": "^1.1.2",
+    "@adonisjs/repl": "^1.1.3",
     "@adonisjs/require-ts": "^1.0.4",
-    "@adonisjs/sink": "^4.0.3",
+    "@adonisjs/sink": "^4.1.3",
     "@poppinss/dev-utils": "^1.0.11",
     "@types/dotenv": "^8.2.0",
     "@types/luxon": "^1.25.0",
