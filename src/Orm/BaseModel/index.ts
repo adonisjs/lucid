@@ -13,7 +13,6 @@ import { DateTime } from 'luxon'
 import equal from 'fast-deep-equal'
 import { Hooks } from '@poppinss/hooks'
 import { Exception, lodash } from '@poppinss/utils'
-import { Ioc } from '@adonisjs/core/build/standalone'
 
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import {
@@ -96,7 +95,7 @@ export class BaseModel implements LucidRow {
 	 * NOTE: Container is a singleton and share among all the models, unless
 	 * a user wants to swap the container for a given model
 	 */
-	public static $container: Ioc
+	public static $container: IocContract
 
 	/**
 	 * Primary key is required to build relationships across models
