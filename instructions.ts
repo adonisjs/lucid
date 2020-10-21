@@ -78,7 +78,7 @@ const DB_SERVER_ENV_VALUES = {
  * Packages required by different drivers
  */
 const DB_DRIVER_PACKAGES = {
-	sqlite: 'sqlite',
+	sqlite: 'sqlite3',
 	mysql: 'mysql',
 	pg: 'pg',
 	oracle: 'oracledb',
