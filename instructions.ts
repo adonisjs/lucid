@@ -1,3 +1,12 @@
+/*
+ * @adonisjs/lucid
+ *
+ * (c) Harminder Virk <virk@adonisjs.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 import { join } from 'path'
 import { mkdirSync, existsSync } from 'fs'
 import * as sinkStatic from '@adonisjs/sink'
@@ -29,7 +38,57 @@ const DB_SERVER_PROMPT_CHOICES = [
 	},
 ]
 
-function getDbServer(sink: typeof sinkStatic) {
+/**
+ * Environment variables used by different database
+ * drivers
+ */
+const DB_SERVER_ENV_VALUES = {
+	sqlite: {},
+	mysql: {
+		MYSQL_HOST: 'localhost',
+		MYSQL_PORT: 3306,
+		MYSQL_USER: 'lucid',
+		MYSQL_PASSWORD: '',
+		MYSQL_DB_NAME: 'lucid',
+	},
+	pg: {
+		PG_HOST: 'localhost',
+		PG_PORT: 5432,
+		PG_USER: 'lucid',
+		PG_PASSWORD: '',
+		PG_DB_NAME: 'lucid',
+	},
+	oracle: {
+		ORACLE_HOST: 'localhost',
+		ORACLE_PORT: 1521,
+		ORACLE_USER: 'lucid',
+		ORACLE_PASSWORD: '',
+		ORACLE_DB_NAME: 'lucid',
+	},
+	mssql: {
+		MSSQL_SERVER: 'localhost',
+		MSSQL_PORT: 1433,
+		MSSQL_USER: 'lucid',
+		MSSQL_PASSWORD: '',
+		MSSQL_DB_NAME: 'lucid',
+	},
+}
+
+/**
+ * Packages required by different drivers
+ */
+const DB_DRIVER_PACKAGES = {
+	sqlite: 'sqlite',
+	mysql: 'mysql',
+	pg: 'pg',
+	oracle: 'oracledb',
+	mssql: 'mssql',
+}
+
+/**
+ * Prompts user for the drivers they want to use
+ */
+function getDbDrivers(sink: typeof sinkStatic) {
 	return sink
 		.getPrompt()
 		.multiple('Select the database driver you want to use', DB_SERVER_PROMPT_CHOICES, {
@@ -55,7 +114,10 @@ export default async function instructions(
 	app: ApplicationContract,
 	sink: typeof sinkStatic
 ) {
-	const dbServer = await getDbServer(sink)
+	/**
+	 * Get drivers
+	 */
+	const drivers = await getDbDrivers(sink)
 
 	/**
 	 * Create Config file
@@ -67,17 +129,16 @@ export default async function instructions(
 		getStub('database.txt')
 	)
 
+	databaseConfig.overwrite = true
 	databaseConfig
 		.apply({
-			primary: dbServer[0],
-			sqlite: dbServer.includes('sqlite'),
-			mysql: dbServer.includes('mysql'),
-			psql: dbServer.includes('pg'),
-			oracle: dbServer.includes('oracle'),
-			mssql: dbServer.includes('mssql'),
+			sqlite: drivers.includes('sqlite'),
+			mysql: drivers.includes('mysql'),
+			psql: drivers.includes('pg'),
+			oracle: drivers.includes('oracle'),
+			mssql: drivers.includes('mssql'),
 		})
 		.commit()
-
 	const configDir = app.directoriesMap.get('config') || 'config'
 	sink.logger.action('create').succeeded(`${configDir}/database.ts`)
 
@@ -85,18 +146,21 @@ export default async function instructions(
 	 * Setup .env file
 	 */
 	const env = new sink.files.EnvFile(projectRoot)
-	env.set('DB_CONNECTION', dbServer[0])
+	env.set('DB_CONNECTION', drivers[0])
 
 	/**
-	 * Define connection setting, when one or more database other than
-	 * sqlite are selected
+	 * Unset old values
 	 */
-	if (dbServer.find((name) => name !== 'sqlite')) {
-		env.set('DB_HOST', '127.0.0.1')
-		env.set('DB_USER', 'lucid')
-		env.set('DB_PASSWORD', '')
-		env.set('DB_NAME', 'lucid')
-	}
+	Object.keys(DB_SERVER_ENV_VALUES).forEach((driver) => {
+		Object.keys(DB_SERVER_ENV_VALUES[driver]).forEach((key) => {
+			env.unset(key)
+		})
+	})
+	drivers.forEach((driver) => {
+		Object.keys(DB_SERVER_ENV_VALUES[driver]).forEach((key) => {
+			env.set(key, DB_SERVER_ENV_VALUES[driver][key])
+		})
+	})
 
 	env.commit()
 	sink.logger.action('update').succeeded('.env,.env.example')
@@ -104,7 +168,7 @@ export default async function instructions(
 	/**
 	 * Create tmp dir when sqlite is selected
 	 */
-	if (dbServer.includes('sqlite') && !existsSync(app.tmpPath())) {
+	if (drivers.includes('sqlite') && !existsSync(app.tmpPath())) {
 		mkdirSync(app.tmpPath())
 		const tmpDir = app.directoriesMap.get('tmp') || 'tmp'
 		sink.logger.action('create').succeeded(`./${tmpDir}`)
@@ -114,30 +178,25 @@ export default async function instructions(
 	 * Install required dependencies
 	 */
 	const pkg = new sink.files.PackageJsonFile(projectRoot)
+
+	/**
+	 * Remove existing dependencies
+	 */
+	Object.keys(DB_DRIVER_PACKAGES).forEach((driver) => {
+		if (!drivers.includes(driver as any)) {
+			pkg.uninstall(DB_DRIVER_PACKAGES[driver], false)
+		}
+	})
+
 	pkg.install('luxon', undefined, false)
-
-	if (dbServer.includes('sqlite')) {
-		pkg.install('sqlite3', undefined, false)
-	}
-
-	if (dbServer.includes('mysql')) {
-		pkg.install('mysql', undefined, false)
-	}
-
-	if (dbServer.includes('pg')) {
-		pkg.install('pg', undefined, false)
-	}
-
-	if (dbServer.includes('oracle')) {
-		pkg.install('oracledb', undefined, false)
-	}
-
-	if (dbServer.includes('mssql')) {
-		pkg.install('mssql', undefined, false)
-	}
+	drivers.forEach((driver) => {
+		pkg.install(DB_DRIVER_PACKAGES[driver], undefined, false)
+	})
 
 	const spinner = sink.logger.await(
-		`Installing packages: ${pkg.getInstalls(false).list.join(', ')}`
+		`Removing: ${pkg.getUninstalls(false).list.join(',')}, Installing: ${pkg
+			.getInstalls(false)
+			.list.join(', ')}`
 	)
 
 	try {
