@@ -580,21 +580,15 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	 * Executes the query
 	 */
 	public async exec(): Promise<any[]> {
-		/**
-		 * Only execute when we are wrapping result to model
-		 * instances
-		 */
-		if (this.wrapResultsToModelInstances) {
+		const isFetchCall = this.wrapResultsToModelInstances && this.knexQuery['_method'] === 'select'
+
+		if (isFetchCall) {
 			await this.model.$hooks.exec('before', 'fetch', this)
 		}
 
 		const result = await this.execQuery()
 
-		/**
-		 * Only execute when we are wrapping result to model
-		 * instances
-		 */
-		if (this.wrapResultsToModelInstances) {
+		if (isFetchCall) {
 			await this.model.$hooks.exec('after', 'fetch', result)
 		}
 

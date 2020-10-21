@@ -3966,6 +3966,58 @@ test.group('Base Model | hooks', (group) => {
 		await User.query()
 	})
 
+	test('@regression do not invoke after fetch hooks when updating rows', async () => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@column()
+			public email: string
+
+			@beforeFetch()
+			public static beforeFetchHook() {
+				throw new Error('Never expected to reach here')
+			}
+
+			@afterFetch()
+			public static afterFetchHook() {
+				throw new Error('Never expected to reach here')
+			}
+		}
+
+		await db.insertQuery().table('users').insert({ username: 'virk' })
+		await User.query().update({ username: 'nikk' })
+	})
+
+	test('@regression do not invoke after fetch hooks when deleting rows', async () => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@column()
+			public email: string
+
+			@beforeFetch()
+			public static beforeFetchHook() {
+				throw new Error('Never expected to reach here')
+			}
+
+			@afterFetch()
+			public static afterFetchHook() {
+				throw new Error('Never expected to reach here')
+			}
+		}
+
+		await db.insertQuery().table('users').insert({ username: 'virk' })
+		await User.query().del()
+	})
+
 	test('invoke before and after find hooks', async (assert) => {
 		assert.plan(2)
 
