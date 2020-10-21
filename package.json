@@ -9,7 +9,8 @@
     "build/providers",
     "build/src",
     "build/instructions.js",
-    "build/templates"
+		"build/templates",
+		"build/instructions.md"
   ],
   "typings": "./build/adonis-typings/index.d.ts",
   "scripts": {
@@ -24,8 +25,8 @@
     "test": "docker-compose -f docker-compose.yml -f docker-compose-test.yml build && docker-compose -f docker-compose.yml -f docker-compose-test.yml run --rm test",
     "lint": "eslint . --ext=.ts",
     "clean": "del build",
-    "compile": "npm run lint && npm run clean && tsc && npm run copy:files",
-    "copy:files": "copyfiles \"templates/**/*.txt\" build",
+    "compile": "npm run lint && npm run clean && tsc && npm run copyfiles",
+		"copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
     "build": "npm run compile",
     "commit": "git-cz",
     "release": "np",
@@ -125,7 +126,8 @@
   },
   "keywords": [],
   "adonisjs": {
-    "instructions": "./build/instructions.js",
+		"instructions": "./build/instructions.js",
+		"instructionsMd": "./build/instructions.md",
     "types": "@adonisjs/lucid",
     "providers": [
       "@adonisjs/lucid"
