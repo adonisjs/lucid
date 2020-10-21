@@ -10,6 +10,7 @@
 import { join } from 'path'
 import { mkdirSync, existsSync } from 'fs'
 import * as sinkStatic from '@adonisjs/sink'
+import { Application } from '@adonisjs/application'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 /**
@@ -193,11 +194,22 @@ export default async function instructions(
 		pkg.install(DB_DRIVER_PACKAGES[driver], undefined, false)
 	})
 
-	const spinner = sink.logger.await(
-		`Removing: ${pkg.getUninstalls(false).list.join(',')}, Installing: ${pkg
-			.getInstalls(false)
-			.list.join(', ')}`
-	)
+	const logLines = [
+		`Installing: ${sink.logger.colors.gray(pkg.getInstalls(false).list.join(', '))}`,
+	]
+
+	/**
+	 * Find the list of packages we have to remove
+	 */
+	const packagesToRemove = pkg
+		.getUninstalls(false)
+		.list.filter((name) => pkg.get(`dependencies.${name}`))
+
+	if (packagesToRemove.length) {
+		logLines.push(`Removing: ${sink.logger.colors.gray(packagesToRemove.join(', '))}`)
+	}
+
+	const spinner = sink.logger.await(logLines.join(' '))
 
 	try {
 		await pkg.commitAsync()
@@ -209,3 +221,5 @@ export default async function instructions(
 
 	spinner.stop()
 }
+
+instructions(join(__dirname, 'foo'), new Application(join(__dirname, 'foo'), 'web', {}), sinkStatic)
