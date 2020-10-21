@@ -64,7 +64,8 @@ export default abstract class MigrationsBase extends BaseCommand {
 	 * Pretty print sql queries of a file
 	 */
 	private prettyPrintSql(file: MigratedFileNode, connectionName: string) {
-		console.log(file.file.name)
+		console.log(this.logger.colors.gray(`------------- ${file.file.name} -------------`))
+		console.log()
 		file.queries.map((sql) => {
 			prettyPrint({
 				connection: connectionName,
@@ -75,7 +76,7 @@ export default abstract class MigrationsBase extends BaseCommand {
 			})
 			console.log()
 		})
-		console.log()
+		console.log(this.logger.colors.gray('------------- END -------------'))
 	}
 
 	/**
