@@ -1,6 +1,6 @@
 {
   "name": "@adonisjs/lucid",
-  "version": "9.0.0",
+  "version": "9.0.1",
   "description": "SQL ORM built on top of Active Record pattern",
   "main": "build/providers/DatabaseProvider.js",
   "files": [
@@ -9,8 +9,8 @@
     "build/providers",
     "build/src",
     "build/instructions.js",
-		"build/templates",
-		"build/instructions.md"
+    "build/templates",
+    "build/instructions.md"
   ],
   "typings": "./build/adonis-typings/index.d.ts",
   "scripts": {
@@ -26,7 +26,7 @@
     "lint": "eslint . --ext=.ts",
     "clean": "del build",
     "compile": "npm run lint && npm run clean && tsc && npm run copyfiles",
-		"copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
+    "copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
     "build": "npm run compile",
     "commit": "git-cz",
     "release": "np",
@@ -126,8 +126,8 @@
   },
   "keywords": [],
   "adonisjs": {
-		"instructions": "./build/instructions.js",
-		"instructionsMd": "./build/instructions.md",
+    "instructions": "./build/instructions.js",
+    "instructionsMd": "./build/instructions.md",
     "types": "@adonisjs/lucid",
     "providers": [
       "@adonisjs/lucid"
