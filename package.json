@@ -36,14 +36,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adonisjs/adonis-lucid.git"
+    "url": "git+https://github.com/adonisjs/lucid.git"
   },
   "author": "virk,adonisjs",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/adonisjs/adonis-lucid/issues"
+    "url": "https://github.com/adonisjs/lucid/issues"
   },
-  "homepage": "https://github.com/adonisjs/adonis-lucid#readme",
+  "homepage": "https://github.com/adonisjs/lucid#readme",
   "dependencies": {
     "@poppinss/hooks": "^1.1.3",
     "@poppinss/utils": "^2.5.7",
