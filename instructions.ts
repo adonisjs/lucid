@@ -10,7 +10,6 @@
 import { join } from 'path'
 import { mkdirSync, existsSync } from 'fs'
 import * as sinkStatic from '@adonisjs/sink'
-import { Application } from '@adonisjs/application'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 /**
@@ -221,5 +220,3 @@ export default async function instructions(
 
 	spinner.stop()
 }
-
-instructions(join(__dirname, 'foo'), new Application(join(__dirname, 'foo'), 'web', {}), sinkStatic)
