@@ -629,6 +629,14 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		): Promise<InstanceType<RelatedModel>[]>
 
 		/**
+		 * Update existing rows or create new one's.
+		 */
+		updateOrCreateMany(
+			uniqueKey: keyof ModelAttributes<InstanceType<RelatedModel>>,
+			payload: Partial<ModelAttributes<InstanceType<RelatedModel>>>[]
+		): Promise<InstanceType<RelatedModel>[]>
+
+		/**
 		 * Return a query builder instance of the relationship
 		 */
 		query<Result extends any = InstanceType<RelatedModel>>(): HasManyQueryBuilderContract<

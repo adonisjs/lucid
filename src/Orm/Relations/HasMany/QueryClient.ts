@@ -168,4 +168,24 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
 				.updateOrCreate(valuesToPersist, updatePayload, { client: trx })
 		})
 	}
+
+	/**
+	 * Update existing rows or create missing one's
+	 */
+	public async updateOrCreateMany(uniqueKey: any, values: ModelObject[]): Promise<LucidRow[]> {
+		return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+			this.parent.$trx = trx
+			await this.parent.save()
+
+			const valuesToPersist = values.map((value) => {
+				const valueToPersist = Object.assign({}, value)
+				this.relation.hydrateForPersistance(this.parent, valueToPersist)
+				return valueToPersist
+			})
+
+			return this.relation
+				.relatedModel()
+				.updateOrCreateMany(uniqueKey, valuesToPersist, { client: trx })
+		})
+	}
 }
