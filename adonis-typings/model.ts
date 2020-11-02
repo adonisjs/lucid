@@ -899,11 +899,10 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		): Promise<InstanceType<T>[]>
 
 		/**
-		 * Update existing rows or create new one's.
+		 * Update existing rows or create new one's following primary key presence or absence
 		 */
 		updateOrCreateMany<T extends LucidModel>(
 			this: T,
-			uniqueKey: keyof ModelAttributes<InstanceType<T>>,
 			payload: Partial<ModelAttributes<InstanceType<T>>>[],
 			options?: ModelAdapterOptions
 		): Promise<InstanceType<T>[]>

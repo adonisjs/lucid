@@ -901,7 +901,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 
 		await db.insertQuery().table('users').insert({ username: 'virk' })
 
-		const [user] = await User.updateOrCreateMany('username', [{ username: 'virk' }], {
+		const [user] = await User.updateOrCreateMany([{ id: 1, username: 'virk' }], {
 			connection: 'secondary',
 		})
 
@@ -924,7 +924,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 			public username: string
 		}
 
-		const [user] = await User.updateOrCreateMany('username', [{ username: 'virk' }], {
+		const [user] = await User.updateOrCreateMany([{ username: 'virk' }], {
 			connection: 'secondary',
 		})
 
@@ -957,7 +957,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 			return originalCreate(label)
 		}
 
-		const [user] = await User.updateOrCreateMany('username', [{ username: 'virk' }], { profiler })
+		const [user] = await User.updateOrCreateMany([{ id: 1, username: 'virk' }], { profiler })
 
 		const total = await db.from('users').count('*', 'total')
 
@@ -986,7 +986,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 			return originalCreate(label)
 		}
 
-		const [user] = await User.updateOrCreateMany('username', [{ username: 'virk' }], { profiler })
+		const [user] = await User.updateOrCreateMany([{ username: 'virk' }], { profiler })
 
 		const total = await db.from('users').count('*', 'total')
 
@@ -1009,7 +1009,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 		await db.insertQuery().table('users').insert({ username: 'virk' })
 		const client = db.connection('secondary')
 
-		const [user] = await User.updateOrCreateMany('username', [{ username: 'virk' }], { client })
+		const [user] = await User.updateOrCreateMany([{ id: 1, username: 'virk' }], { client })
 
 		const total = await db.from('users').count('*', 'total')
 
@@ -1031,7 +1031,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 
 		const client = db.connection('secondary')
 
-		const [user] = await User.updateOrCreateMany('username', [{ username: 'virk' }], { client })
+		const [user] = await User.updateOrCreateMany([{ username: 'virk' }], { client })
 
 		const total = await db.from('users').count('*', 'total')
 
@@ -1057,7 +1057,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 		}
 
 		try {
-			await User.updateOrCreateMany('username', [
+			await User.updateOrCreateMany([
 				{ username: 'virk', email: 'foo@bar.com' },
 				{ username: 'nikk', email: 'foo@bar.com' },
 				{ username: 'romain', email: 'foo@bar.com' },
@@ -1089,7 +1089,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 			throw new Error('Never expected to be invoked')
 		}
 
-		await User.updateOrCreateMany('username', [{ username: 'virk', email: 'foo@bar.com' }], {
+		await User.updateOrCreateMany([{ username: 'virk', email: 'foo@bar.com' }], {
 			client: trx,
 		})
 

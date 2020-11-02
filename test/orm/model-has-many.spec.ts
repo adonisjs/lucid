@@ -3747,8 +3747,9 @@ test.group('Model | HasMany | updateOrCreateMany', (group) => {
 		postCreated.userId = user.id
 		await postCreated.save()
 
-		const [post, post1] = await user.related('posts').updateOrCreateMany('slug', [
+		const [post, post1] = await user.related('posts').updateOrCreateMany([
 			{
+				id: 1,
 				title: 'Adonis 101',
 				slug: 'adonis-100',
 			},
@@ -3806,7 +3807,7 @@ test.group('Model | HasMany | updateOrCreateMany', (group) => {
 		try {
 			await user
 				.related('posts')
-				.updateOrCreateMany('slug', [{ title: 'Adonis 101', slug: 'adonis-101' }, {}])
+				.updateOrCreateMany([{ id: 1, title: 'Adonis 101', slug: 'adonis-101' }, {}])
 		} catch (error) {
 			assert.exists(error)
 		}
@@ -3850,7 +3851,7 @@ test.group('Model | HasMany | updateOrCreateMany', (group) => {
 		user.$trx = trx
 		user.username = 'virk'
 
-		const [post] = await user.related('posts').updateOrCreateMany('slug', [
+		const [post] = await user.related('posts').updateOrCreateMany([
 			{
 				title: 'Adonis 101',
 				slug: 'adonis-100',

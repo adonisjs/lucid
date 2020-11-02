@@ -3320,7 +3320,7 @@ test.group('Base Model | fetch', (group) => {
 			public points: number
 		}
 
-		const users = await User.updateOrCreateMany('username', [
+		const users = await User.updateOrCreateMany([
 			{
 				username: 'virk',
 				email: 'virk@adonisjs.com',
@@ -3373,8 +3373,9 @@ test.group('Base Model | fetch', (group) => {
 			points: 10,
 		})
 
-		const users = await User.updateOrCreateMany('username', [
+		const users = await User.updateOrCreateMany([
 			{
+				id: 1,
 				username: 'virk',
 				email: 'virk@adonisjs.com',
 				points: 4,
@@ -3433,9 +3434,9 @@ test.group('Base Model | fetch', (group) => {
 		const trx = await db.transaction()
 
 		await User.updateOrCreateMany(
-			'username',
 			[
 				{
+					id: 1,
 					username: 'virk',
 					email: 'virk@adonisjs.com',
 				},
@@ -3482,9 +3483,9 @@ test.group('Base Model | fetch', (group) => {
 		const trx = await db.transaction()
 
 		await User.updateOrCreateMany(
-			'username',
 			[
 				{
+					id: 1,
 					username: 'virk',
 					email: 'virk@adonisjs.com',
 					points: 4,
@@ -3542,14 +3543,16 @@ test.group('Base Model | fetch', (group) => {
 		})
 
 		await Promise.all([
-			User.updateOrCreateMany('username', [
+			User.updateOrCreateMany([
 				{
+					id: 1,
 					username: 'virk',
 					email: 'virk-1@adonisjs.com',
 				},
 			]),
-			User.updateOrCreateMany('username', [
+			User.updateOrCreateMany([
 				{
+					id: 1,
 					username: 'virk',
 					email: 'virk-1@adonisjs.com',
 				},

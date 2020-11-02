@@ -629,10 +629,9 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		): Promise<InstanceType<RelatedModel>[]>
 
 		/**
-		 * Update existing rows or create new one's.
+		 * Update existing rows or create new one's following primary key presence or absence
 		 */
 		updateOrCreateMany(
-			uniqueKey: keyof ModelAttributes<InstanceType<RelatedModel>>,
 			payload: Partial<ModelAttributes<InstanceType<RelatedModel>>>[]
 		): Promise<InstanceType<RelatedModel>[]>
 

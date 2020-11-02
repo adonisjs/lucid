@@ -795,19 +795,12 @@ export class BaseModel implements LucidRow {
 	 * of model hooks.
 	 */
 	public static async updateOrCreateMany(
-		uniqueKey: any,
 		payload: any,
 		options?: ModelAdapterOptions
 	): Promise<any> {
-		/**
-		 * An array of values for the unique key
-		 */
-		const uniqueKeyValues = collectValues(payload, uniqueKey, () => {
-			throw new Exception(
-				`Value for the "${uniqueKey}" is null or undefined inside "updateOrCreateMany" payload`
-			)
-		})
-
+		const uniqueKeyValues = payload
+			.filter((item) => item[this.primaryKey])
+			.map((item) => item[this.primaryKey])
 		const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
 
 		return managedTransaction(client, async (trx) => {
@@ -815,12 +808,18 @@ export class BaseModel implements LucidRow {
 			 * Find existing rows
 			 */
 			const query = this.query({ client: trx }).forUpdate()
-			const existingRows = await query.whereIn(uniqueKey, uniqueKeyValues)
+			const existingRows = await query.whereIn(this.primaryKey, uniqueKeyValues)
 
 			/**
 			 * Create model instance for the missing rows
 			 */
-			const rows = this.newUpIfMissing(payload, existingRows, uniqueKey, true, query.clientOptions)
+			const rows = this.newUpIfMissing(
+				payload,
+				existingRows,
+				this.primaryKey,
+				true,
+				query.clientOptions
+			)
 
 			for (let row of rows) {
 				await row.save()
