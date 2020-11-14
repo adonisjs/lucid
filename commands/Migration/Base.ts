@@ -157,7 +157,7 @@ export default abstract class MigrationsBase extends BaseCommand {
 				break
 			case 'skipped':
 				const message =
-					migrator.direction === 'up' ? 'Already upto date' : 'Already at latest batch'
+					migrator.direction === 'up' ? 'Already up to date' : 'Already at latest batch'
 				console.log(this.colors.cyan(message))
 				break
 			case 'error':
