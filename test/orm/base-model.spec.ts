@@ -18,7 +18,6 @@ import { ModelQueryBuilder } from '../../src/Orm/QueryBuilder'
 
 import {
 	column,
-	computed,
 	hasMany,
 	hasOne,
 	belongsTo,
@@ -36,6 +35,7 @@ import {
 	afterFind,
 	afterPaginate,
 	beforePaginate,
+	computed,
 } from '../../src/Orm/Decorators'
 
 import {
@@ -5288,5 +5288,549 @@ test.group('Base Model | toObject', (group) => {
 				},
 			],
 		})
+	})
+})
+
+test.group('Base model | inheritance', (group) => {
+	group.before(async () => {
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
+	})
+
+	group.after(async () => {
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
+	})
+
+	test('inherit primary key from the base model', async (assert) => {
+		class MyBaseModel extends BaseModel {
+			public static primaryKey = 'user_id'
+		}
+
+		class User extends MyBaseModel {
+			@column()
+			public username: string
+
+			@column()
+			public age: number
+		}
+
+		MyBaseModel.boot()
+		User.boot()
+
+		assert.equal(User.primaryKey, 'user_id')
+	})
+
+	test('use explicitly defined primary key', async (assert) => {
+		class MyBaseModel extends BaseModel {
+			public static primaryKey = 'user_id'
+		}
+
+		class User extends MyBaseModel {
+			public static primaryKey = 'the_user_id'
+
+			@column()
+			public username: string
+
+			@column()
+			public age: number
+		}
+
+		MyBaseModel.boot()
+		User.boot()
+
+		assert.equal(User.primaryKey, 'the_user_id')
+	})
+
+	test('do not inherit table from the base model', async (assert) => {
+		class MyBaseModel extends BaseModel {
+			public static table = 'foo'
+		}
+
+		class User extends MyBaseModel {
+			@column()
+			public username: string
+
+			@column()
+			public age: number
+		}
+
+		MyBaseModel.boot()
+		User.boot()
+
+		assert.equal(User.table, 'users')
+	})
+
+	test('inherting a model should copy columns', async (assert) => {
+		class MyBaseModel extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+		}
+
+		class User extends MyBaseModel {
+			@column()
+			public username: string
+
+			@column()
+			public age: number
+		}
+
+		MyBaseModel.boot()
+		User.boot()
+
+		assert.deepEqual(
+			User.$columnsDefinitions,
+			new Map([
+				[
+					'age',
+					{
+						columnName: 'age',
+						consume: undefined,
+						hasGetter: false,
+						hasSetter: false,
+						isPrimary: false,
+						meta: undefined,
+						prepare: undefined,
+						serialize: undefined,
+						serializeAs: 'age',
+					},
+				],
+				[
+					'id',
+					{
+						columnName: 'id',
+						consume: undefined,
+						hasGetter: false,
+						hasSetter: false,
+						isPrimary: true,
+						meta: undefined,
+						prepare: undefined,
+						serialize: undefined,
+						serializeAs: 'id',
+					},
+				],
+				[
+					'username',
+					{
+						columnName: 'username',
+						consume: undefined,
+						hasGetter: false,
+						hasSetter: false,
+						isPrimary: false,
+						meta: undefined,
+						prepare: undefined,
+						serialize: undefined,
+						serializeAs: 'username',
+					},
+				],
+			])
+		)
+
+		assert.deepEqual(User.$keys.attributesToColumns.all(), {
+			age: 'age',
+			id: 'id',
+			username: 'username',
+		})
+
+		assert.deepEqual(
+			MyBaseModel.$columnsDefinitions,
+			new Map([
+				[
+					'id',
+					{
+						columnName: 'id',
+						consume: undefined,
+						hasGetter: false,
+						hasSetter: false,
+						isPrimary: true,
+						meta: undefined,
+						prepare: undefined,
+						serialize: undefined,
+						serializeAs: 'id',
+					},
+				],
+			])
+		)
+
+		assert.deepEqual(MyBaseModel.$keys.attributesToColumns.all(), {
+			id: 'id',
+		})
+	})
+
+	test('allow overwriting column', async (assert) => {
+		class MyBaseModel extends BaseModel {
+			@column({ isPrimary: true })
+			public userId: string
+		}
+
+		class User extends MyBaseModel {
+			@column({ isPrimary: true, columnName: 'user_uuid' })
+			public userId: string
+
+			@column()
+			public username: string
+
+			@column()
+			public age: number
+		}
+
+		MyBaseModel.boot()
+		User.boot()
+
+		assert.deepEqual(
+			User.$columnsDefinitions,
+			new Map([
+				[
+					'age',
+					{
+						columnName: 'age',
+						consume: undefined,
+						hasGetter: false,
+						hasSetter: false,
+						isPrimary: false,
+						meta: undefined,
+						prepare: undefined,
+						serialize: undefined,
+						serializeAs: 'age',
+					},
+				],
+				[
+					'userId',
+					{
+						columnName: 'user_uuid',
+						consume: undefined,
+						hasGetter: false,
+						hasSetter: false,
+						isPrimary: true,
+						meta: undefined,
+						prepare: undefined,
+						serialize: undefined,
+						serializeAs: 'user_id',
+					},
+				],
+				[
+					'username',
+					{
+						columnName: 'username',
+						consume: undefined,
+						hasGetter: false,
+						hasSetter: false,
+						isPrimary: false,
+						meta: undefined,
+						prepare: undefined,
+						serialize: undefined,
+						serializeAs: 'username',
+					},
+				],
+			])
+		)
+
+		assert.deepEqual(User.$keys.attributesToColumns.all(), {
+			age: 'age',
+			userId: 'user_uuid',
+			username: 'username',
+		})
+
+		assert.deepEqual(
+			MyBaseModel.$columnsDefinitions,
+			new Map([
+				[
+					'userId',
+					{
+						columnName: 'user_id',
+						consume: undefined,
+						hasGetter: false,
+						hasSetter: false,
+						isPrimary: true,
+						meta: undefined,
+						prepare: undefined,
+						serialize: undefined,
+						serializeAs: 'user_id',
+					},
+				],
+			])
+		)
+
+		assert.deepEqual(MyBaseModel.$keys.attributesToColumns.all(), {
+			userId: 'user_id',
+		})
+	})
+
+	test('inherting a model should copy computed properties', async (assert) => {
+		class MyBaseModel extends BaseModel {
+			@computed()
+			public fullName: string
+		}
+
+		class User extends MyBaseModel {
+			@column()
+			public username: string
+
+			@column()
+			public age: number
+
+			@computed()
+			public score: number
+		}
+
+		MyBaseModel.boot()
+		User.boot()
+
+		assert.deepEqual(
+			User.$columnsDefinitions,
+			new Map([
+				[
+					'age',
+					{
+						columnName: 'age',
+						consume: undefined,
+						hasGetter: false,
+						hasSetter: false,
+						isPrimary: false,
+						meta: undefined,
+						prepare: undefined,
+						serialize: undefined,
+						serializeAs: 'age',
+					},
+				],
+				[
+					'username',
+					{
+						columnName: 'username',
+						consume: undefined,
+						hasGetter: false,
+						hasSetter: false,
+						isPrimary: false,
+						meta: undefined,
+						prepare: undefined,
+						serialize: undefined,
+						serializeAs: 'username',
+					},
+				],
+			])
+		)
+
+		assert.deepEqual(
+			User.$computedDefinitions,
+			new Map([
+				[
+					'fullName',
+					{
+						meta: undefined,
+						serializeAs: 'fullName',
+					},
+				],
+				[
+					'score',
+					{
+						meta: undefined,
+						serializeAs: 'score',
+					},
+				],
+			])
+		)
+
+		assert.deepEqual(User.$keys.attributesToColumns.all(), {
+			age: 'age',
+			username: 'username',
+		})
+
+		assert.deepEqual(MyBaseModel.$columnsDefinitions, new Map([]))
+		assert.deepEqual(
+			MyBaseModel.$computedDefinitions,
+			new Map([
+				[
+					'fullName',
+					{
+						meta: undefined,
+						serializeAs: 'fullName',
+					},
+				],
+			])
+		)
+		assert.deepEqual(MyBaseModel.$keys.attributesToColumns.all(), {})
+	})
+
+	test('allow overwriting computed properties', async (assert) => {
+		class MyBaseModel extends BaseModel {
+			@computed()
+			public fullName: string
+		}
+
+		class User extends MyBaseModel {
+			@column()
+			public username: string
+
+			@column()
+			public age: number
+
+			@computed({ serializeAs: 'name' })
+			public fullName: string
+		}
+
+		MyBaseModel.boot()
+		User.boot()
+
+		assert.deepEqual(
+			User.$columnsDefinitions,
+			new Map([
+				[
+					'age',
+					{
+						columnName: 'age',
+						consume: undefined,
+						hasGetter: false,
+						hasSetter: false,
+						isPrimary: false,
+						meta: undefined,
+						prepare: undefined,
+						serialize: undefined,
+						serializeAs: 'age',
+					},
+				],
+				[
+					'username',
+					{
+						columnName: 'username',
+						consume: undefined,
+						hasGetter: false,
+						hasSetter: false,
+						isPrimary: false,
+						meta: undefined,
+						prepare: undefined,
+						serialize: undefined,
+						serializeAs: 'username',
+					},
+				],
+			])
+		)
+
+		assert.deepEqual(
+			User.$computedDefinitions,
+			new Map([
+				[
+					'fullName',
+					{
+						meta: undefined,
+						serializeAs: 'name',
+					},
+				],
+			])
+		)
+
+		assert.deepEqual(User.$keys.attributesToColumns.all(), {
+			age: 'age',
+			username: 'username',
+		})
+
+		assert.deepEqual(MyBaseModel.$columnsDefinitions, new Map([]))
+		assert.deepEqual(
+			MyBaseModel.$computedDefinitions,
+			new Map([
+				[
+					'fullName',
+					{
+						meta: undefined,
+						serializeAs: 'fullName',
+					},
+				],
+			])
+		)
+		assert.deepEqual(MyBaseModel.$keys.attributesToColumns.all(), {})
+	})
+
+	test('inherting a model should copy relationships', async (assert) => {
+		class Profile extends BaseModel {}
+		class Email extends BaseModel {}
+
+		class MyBaseModel extends BaseModel {
+			@hasOne(() => Profile)
+			public profile: HasOne<typeof Profile>
+		}
+
+		class User extends MyBaseModel {
+			@hasMany(() => Email)
+			public emails: HasMany<typeof Email>
+		}
+
+		Profile.boot()
+		Email.boot()
+		MyBaseModel.boot()
+		User.boot()
+
+		assert.isTrue(User.$relationsDefinitions.has('emails'))
+		assert.isTrue(User.$relationsDefinitions.has('profile'))
+		assert.isTrue(MyBaseModel.$relationsDefinitions.has('profile'))
+		assert.isFalse(MyBaseModel.$relationsDefinitions.has('emails'))
+		assert.deepEqual(
+			MyBaseModel.$relationsDefinitions.get('profile'),
+			User.$relationsDefinitions.get('profile')
+		)
+	})
+
+	test('allow overwriting relationships', async (assert) => {
+		class Profile extends BaseModel {}
+		class Email extends BaseModel {}
+
+		class MyBaseModel extends BaseModel {
+			@hasOne(() => Profile)
+			public profile: HasOne<typeof Profile>
+		}
+
+		class User extends MyBaseModel {
+			@hasOne(() => Profile, {
+				onQuery() {},
+			})
+			public profile: HasOne<typeof Profile>
+
+			@hasMany(() => Email)
+			public emails: HasMany<typeof Email>
+		}
+
+		Profile.boot()
+		Email.boot()
+		MyBaseModel.boot()
+		User.boot()
+
+		assert.isTrue(User.$relationsDefinitions.has('emails'))
+		assert.isTrue(User.$relationsDefinitions.has('profile'))
+		assert.isTrue(MyBaseModel.$relationsDefinitions.has('profile'))
+		assert.isFalse(MyBaseModel.$relationsDefinitions.has('emails'))
+		assert.isFunction(User.$relationsDefinitions.get('profile')!['onQueryHook'])
+		assert.isUndefined(MyBaseModel.$relationsDefinitions.get('profile')!['onQueryHook'])
+	})
+
+	test('inherting a model should copy hooks', async (assert) => {
+		function hook1() {}
+		function hook2() {}
+
+		class MyBaseModel extends BaseModel {
+			public static boot() {
+				const isBooted = MyBaseModel.hasOwnProperty('booted') && MyBaseModel.booted === true
+				super.boot()
+
+				if (!isBooted) {
+					this.before('create', hook1)
+				}
+			}
+		}
+
+		class User extends MyBaseModel {
+			public static boot() {
+				super.boot()
+				this.before('create', hook2)
+			}
+		}
+
+		MyBaseModel.boot()
+		User.boot()
+
+		assert.isTrue(User.$hooks.has('before', 'create', hook1))
+		assert.isTrue(User.$hooks.has('before', 'create', hook2))
+		assert.isTrue(MyBaseModel.$hooks.has('before', 'create', hook1))
+		assert.isFalse(MyBaseModel.$hooks.has('before', 'create', hook2))
 	})
 })

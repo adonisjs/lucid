@@ -12,7 +12,7 @@
 import { DateTime } from 'luxon'
 import equal from 'fast-deep-equal'
 import { Hooks } from '@poppinss/hooks'
-import { Exception, lodash } from '@poppinss/utils'
+import { Exception, lodash, defineStaticProperty } from '@poppinss/utils'
 
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import {
@@ -453,18 +453,56 @@ export class BaseModel implements LucidRow {
 	 * Boot the model
 	 */
 	public static boot() {
-		if (this.booted) {
+		/**
+		 * Define the property when not defined on self
+		 */
+		if (!this.hasOwnProperty('booted')) {
+			this.booted = false
+		}
+
+		/**
+		 * Return when already booted
+		 */
+		if (this.booted === true) {
 			return
 		}
 
 		this.booted = true
-		this.primaryKey = this.primaryKey || 'id'
-		if ('selfAssignPrimaryKey' in this === false) {
-			this.selfAssignPrimaryKey = false
-		}
 
-		Object.defineProperty(this, '$keys', {
-			value: {
+		/**
+		 * Table name is never inherited from the base model
+		 */
+		defineStaticProperty(this, BaseModel, {
+			propertyName: 'table',
+			defaultValue: this.$configurator.getTableName(this),
+			strategy: 'define',
+		})
+
+		/**
+		 * Inherit primary key or default to "id"
+		 */
+		defineStaticProperty(this, BaseModel, {
+			propertyName: 'primaryKey',
+			defaultValue: 'id',
+			strategy: 'inherit',
+		})
+
+		/**
+		 * Inherit selfAssignPrimaryKey or default to "false"
+		 */
+		defineStaticProperty(this, BaseModel, {
+			propertyName: 'selfAssignPrimaryKey',
+			defaultValue: false,
+			strategy: 'inherit',
+		})
+
+		/**
+		 * Define the keys property. This allows looking up variations
+		 * for model keys
+		 */
+		defineStaticProperty(this, BaseModel, {
+			propertyName: '$keys',
+			defaultValue: {
 				attributesToColumns: new ModelKeys(),
 				attributesToSerialized: new ModelKeys(),
 				columnsToAttributes: new ModelKeys(),
@@ -472,17 +510,67 @@ export class BaseModel implements LucidRow {
 				serializedToColumns: new ModelKeys(),
 				serializedToAttributes: new ModelKeys(),
 			},
+			strategy: (value) => {
+				return {
+					attributesToColumns: new ModelKeys(Object.assign({}, value.attributesToColumns.all())),
+					attributesToSerialized: new ModelKeys(
+						Object.assign({}, value.attributesToSerialized.all())
+					),
+					columnsToAttributes: new ModelKeys(Object.assign({}, value.columnsToAttributes.all())),
+					columnsToSerialized: new ModelKeys(Object.assign({}, value.columnsToSerialized.all())),
+					serializedToColumns: new ModelKeys(Object.assign({}, value.serializedToColumns.all())),
+					serializedToAttributes: new ModelKeys(
+						Object.assign({}, value.serializedToAttributes.all())
+					),
+				}
+			},
 		})
 
-		Object.defineProperty(this, '$columnsDefinitions', { value: new Map() })
-		Object.defineProperty(this, '$computedDefinitions', { value: new Map() })
-		Object.defineProperty(this, '$relationsDefinitions', { value: new Map() })
-
-		Object.defineProperty(this, '$hooks', {
-			value: new Hooks(this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')),
+		/**
+		 * Define columns
+		 */
+		defineStaticProperty(this, BaseModel, {
+			propertyName: '$columnsDefinitions',
+			defaultValue: new Map(),
+			strategy: 'inherit',
 		})
 
-		this.table = this.table === undefined ? this.$configurator.getTableName(this) : this.table
+		/**
+		 * Define computed properties
+		 */
+		defineStaticProperty(this, BaseModel, {
+			propertyName: '$computedDefinitions',
+			defaultValue: new Map(),
+			strategy: 'inherit',
+		})
+
+		/**
+		 * Define relationships
+		 */
+		defineStaticProperty(this, BaseModel, {
+			propertyName: '$relationsDefinitions',
+			defaultValue: new Map(),
+			strategy: (value) => {
+				const relations = new Map()
+				value.forEach((relation, key) => relations.set(key, relation))
+				return relations
+			},
+		})
+
+		/**
+		 * Define hooks.
+		 */
+		defineStaticProperty(this, BaseModel, {
+			propertyName: '$hooks',
+			defaultValue: new Hooks(
+				this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')
+			),
+			strategy: (value: Hooks) => {
+				const hooks = new Hooks()
+				hooks.merge(value)
+				return hooks
+			},
+		})
 	}
 
 	/**
