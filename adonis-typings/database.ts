@@ -646,6 +646,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
 		method: string
 		sql: string
 		bindings?: any[]
+		inTransaction?: boolean
 	}
 
 	/**

@@ -7,29 +7,27 @@
  * file that was distributed with this source code.
  */
 
-import type kleur from 'kleur'
 import { inspect } from 'util'
+import igniculus from 'igniculus'
 import { DbQueryEventNode } from '@ioc:Adonis/Lucid/Database'
 
+const illuminate = igniculus({
+	comments: { fg: 'gray' },
+	constants: { fg: 'red' },
+	delimitedIdentifiers: { fg: 'yellow' },
+	variables: { fg: 'cyan' },
+	dataTypes: { fg: 'green', casing: 'uppercase' },
+	standardKeywords: { fg: 'green', casing: 'uppercase' },
+	lesserKeywords: { mode: 'bold', fg: 'cyan', casing: 'uppercase' },
+	prefix: { replace: /.*?: / },
+	output: (line: string) => line,
+})
+
 /**
- * Colorizes the sql query based upon the method
+ * Colorizes the sql query
  */
-function colorizeQuery(color: typeof kleur, method: string, sql: string) {
-	switch (method) {
-		case 'select':
-			return color.cyan(sql)
-		case 'insert':
-		case 'create':
-			return color.green(sql)
-		case 'delete':
-		case 'drop':
-			return color.red(sql)
-		case 'alter':
-		case 'update':
-			return color.yellow(sql)
-		default:
-			return color.magenta(sql)
-	}
+function colorizeQuery(sql: string) {
+	return illuminate(sql)
 }
 
 /**
@@ -42,20 +40,17 @@ export function prettyPrint(queryLog: DbQueryEventNode) {
 	const color = require('kleur')
 	const prettyHrtime = require('pretty-hrtime')
 
-	let output: string = color.gray(`"${queryLog.connection}" `)
+	let output: string = ''
+
+	if (!queryLog.ddl) {
+		output += color.gray(`"${queryLog.connection}" `)
+	}
 
 	/**
 	 * Concatenate the model
 	 */
 	if (queryLog.model) {
 		output += `${queryLog.model} `
-	}
-
-	/**
-	 * Concatenate DDL prefix
-	 */
-	if (queryLog.ddl) {
-		output += 'DDL '
 	}
 
 	/**
@@ -68,8 +63,11 @@ export function prettyPrint(queryLog: DbQueryEventNode) {
 	/**
 	 * Colorize query and bindings
 	 */
-	output += colorizeQuery(color, queryLog.method, queryLog.sql)
-	output += color.gray(` ${inspect(queryLog.bindings)}`)
+	output += colorizeQuery(queryLog.sql)
+
+	if (!queryLog.ddl) {
+		output += color.gray(` ${inspect(queryLog.bindings)}`)
+	}
 
 	/**
 	 * Print it to the console

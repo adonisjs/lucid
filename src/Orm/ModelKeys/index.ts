@@ -13,7 +13,7 @@ import { ModelKeysContract, ModelObject } from '@ioc:Adonis/Lucid/Model'
  * Exposes the API to collect, get and resolve model keys
  */
 export class ModelKeys implements ModelKeysContract {
-	private keys: ModelObject = {}
+	constructor(private keys: ModelObject = {}) {}
 
 	/**
 	 * Add a new key

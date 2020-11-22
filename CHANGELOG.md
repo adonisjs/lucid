@@ -1029,7 +1029,7 @@ will be string over moment instance now
 * Made changes required by latest version of ace ([9092a4e](https://github.com/adonisjs/adonis-lucid/commit/9092a4e))
 * Made database access part of constructor inside static proxy ([49538bc](https://github.com/adonisjs/adonis-lucid/commit/49538bc))
 * Made flags optional and minor formatting update ([49aef82](https://github.com/adonisjs/adonis-lucid/commit/49aef82))
-* Made upto date as master ([bf46e3c](https://github.com/adonisjs/adonis-lucid/commit/bf46e3c))
+* Made up to date as master ([bf46e3c](https://github.com/adonisjs/adonis-lucid/commit/bf46e3c))
 * Merge branch 'release-2.0.1' into develop ([b516bf9](https://github.com/adonisjs/adonis-lucid/commit/b516bf9))
 * Merge branch 'release-2.0.2' into develop ([f841752](https://github.com/adonisjs/adonis-lucid/commit/f841752))
 * Merged clean-up ([3499ba3](https://github.com/adonisjs/adonis-lucid/commit/3499ba3))

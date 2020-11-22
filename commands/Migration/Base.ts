@@ -7,8 +7,6 @@
  * file that was distributed with this source code.
  */
 
-import { relative } from 'path'
-import { DateTime } from 'luxon'
 import prettyHrTime from 'pretty-hrtime'
 import { BaseCommand } from '@adonisjs/core/build/standalone'
 import { MigratedFileNode, MigratorContract } from '@ioc:Adonis/Lucid/Migrator'
@@ -59,45 +57,15 @@ export default abstract class MigrationsBase extends BaseCommand {
 					: 'reverted'
 				: 'error'
 
-		console.log(`${arrow} ${this.colors[color](message)} ${file.file.name}`)
-	}
-
-	/**
-	 * Prints the preview message that gives more context to the
-	 * user about their migrations source and the last time
-	 * it was compiled.
-	 */
-	protected printPreviewMessage() {
-		const sourceDir = this.application.appRoot
-		const rootDir = this.application.cliCwd
-
-		/**
-		 * Notify about directory when source dir is different from
-		 * the root dir
-		 */
-		if (rootDir && sourceDir !== rootDir) {
-			console.log(
-				` > ${this.colors.yellow('Migrations source base dir:')} ${relative(rootDir, sourceDir)}`
-			)
-		}
-
-		/**
-		 * Notify about the compiled at time, this may shed some light on
-		 * when last they compiled their source code
-		 */
-		const compiledAt = DateTime.fromISO(this.application.rcFile.raw.lastCompiledAt)
-		if (compiledAt.isValid) {
-			const formattedData = compiledAt.toLocaleString(DateTime.DATETIME_MED)
-			console.log(` > ${this.colors.yellow('Last compiled at:')} ${formattedData}`)
-		}
-		console.log('')
+		this.logger.logUpdate(`${arrow} ${this.colors[color](message)} ${file.file.name}`)
 	}
 
 	/**
 	 * Pretty print sql queries of a file
 	 */
 	private prettyPrintSql(file: MigratedFileNode, connectionName: string) {
-		console.log(file.file.name)
+		console.log(this.logger.colors.gray(`------------- ${file.file.name} -------------`))
+		console.log()
 		file.queries.map((sql) => {
 			prettyPrint({
 				connection: connectionName,
@@ -108,7 +76,7 @@ export default abstract class MigrationsBase extends BaseCommand {
 			})
 			console.log()
 		})
-		console.log()
+		console.log(this.logger.colors.gray('------------- END -------------'))
 	}
 
 	/**
@@ -149,6 +117,7 @@ export default abstract class MigrationsBase extends BaseCommand {
 		 */
 		migrator.on('migration:completed', (file) => {
 			this.printLogMessage(file, migrator.direction)
+			this.logger.logUpdatePersist()
 		})
 
 		/**
@@ -156,6 +125,7 @@ export default abstract class MigrationsBase extends BaseCommand {
 		 */
 		migrator.on('migration:error', (file) => {
 			this.printLogMessage(file, migrator.direction)
+			this.logger.logUpdatePersist()
 		})
 
 		migrator.on('start', () => (start = process.hrtime()))
@@ -187,7 +157,7 @@ export default abstract class MigrationsBase extends BaseCommand {
 				break
 			case 'skipped':
 				const message =
-					migrator.direction === 'up' ? 'Already upto date' : 'Already at latest batch'
+					migrator.direction === 'up' ? 'Already up to date' : 'Already at latest batch'
 				console.log(this.colors.cyan(message))
 				break
 			case 'error':

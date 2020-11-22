@@ -69,7 +69,7 @@ test.group('Migrate', (group) => {
 		assert.equal(migrated[0].batch, 1)
 	})
 
-	test('skip migrations when already upto date', async (assert) => {
+	test('skip migrations when already up to date', async (assert) => {
 		await fs.fsExtra.ensureDir(join(fs.basePath, 'database/migrations'))
 
 		const migrate = new Migrate(app, new Kernel(app))
