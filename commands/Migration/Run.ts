@@ -69,6 +69,7 @@ export default class Migrate extends MigrationsBase {
 		 */
 		if (!connection) {
 			this.printNotAValidConnection(this.connection)
+			this.exitCode = 1
 			return
 		}
 

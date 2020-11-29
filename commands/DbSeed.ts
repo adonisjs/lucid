@@ -16,6 +16,11 @@ export default class DbSeed extends BaseCommand {
 	public static description = 'Execute database seeder files'
 
 	/**
+	 * Track if one or more seeders have failed
+	 */
+	private hasError: boolean = false
+
+	/**
 	 * Choose a custom pre-defined connection. Otherwise, we use the
 	 * default connection
 	 */
@@ -149,12 +154,18 @@ export default class DbSeed extends BaseCommand {
 					status: 'failed',
 					error: new Error('Invalid file path. Pass relative path from the application root'),
 				})
+				this.hasError = true
 			} else {
 				const response = await runner.run(sourceFile)
+				if (response.status === 'failed') {
+					this.hasError = true
+				}
+
 				this.printLogMessage(response)
 			}
 		}
 
+		this.exitCode = this.hasError ? 1 : 0
 		await db.manager.closeAll(true)
 	}
 }

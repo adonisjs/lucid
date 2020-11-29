@@ -62,6 +62,7 @@ export default class Status extends MigrationsBase {
 		 */
 		if (!connection) {
 			this.printNotAValidConnection(this.connection)
+			this.exitCode = 1
 			return
 		}
 

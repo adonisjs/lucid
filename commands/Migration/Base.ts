@@ -162,6 +162,7 @@ export default abstract class MigrationsBase extends BaseCommand {
 				break
 			case 'error':
 				this.logger.fatal(migrator.error!)
+				this.exitCode = 1
 				break
 		}
 	}
