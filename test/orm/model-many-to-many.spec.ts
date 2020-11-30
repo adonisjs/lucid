@@ -5719,3 +5719,67 @@ test.group('Model | ManyToMany | onQuery', (group) => {
 		await user.related('skills').pivotQuery()
 	})
 })
+
+test.group('Model | ManyToMany | delete', (group) => {
+	group.before(async () => {
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
+	})
+
+	group.after(async () => {
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('delete related instance', async (assert) => {
+		class Skill extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public name: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@manyToMany(() => Skill)
+			public skills: ManyToMany<typeof Skill>
+		}
+
+		const user = new User()
+		user.username = 'virk'
+		await user.save()
+
+		const skill = new Skill()
+		skill.name = 'Programming'
+
+		const skill1 = new Skill()
+		skill1.name = 'Dancing'
+		await skill.save()
+
+		await user.related('skills').save(skill)
+
+		const { sql, bindings } = user.related('skills').query().del().toSQL()
+
+		const { sql: rawSql, bindings: rawBindings } = db
+			.from('skill_user')
+			.where('skill_user.user_id', user.id)
+			.del()
+			.toSQL()
+
+		assert.deepEqual(bindings, rawBindings)
+		assert.deepEqual(sql, rawSql)
+	})
+})

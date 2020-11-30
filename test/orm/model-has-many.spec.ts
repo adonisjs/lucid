@@ -4588,3 +4588,62 @@ test.group('Model | HasMany | onQuery', (group) => {
 		assert.deepEqual(bindings, knexBindings)
 	})
 })
+
+test.group('Model | HasMany | delete', (group) => {
+	group.before(async () => {
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
+	})
+
+	group.after(async () => {
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test('delete related instance', async (assert) => {
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		const user = new User()
+		user.username = 'virk'
+		await user.save()
+
+		const post = await user.related('posts').create({ title: 'Adonis 101' })
+		const { sql, bindings } = user.related('posts').query().del().toSQL()
+
+		const { sql: rawSql, bindings: rawBindings } = db
+			.from('posts')
+			.where('user_id', post.id)
+			.del()
+			.toSQL()
+
+		assert.deepEqual(bindings, rawBindings)
+		assert.deepEqual(sql, rawSql)
+	})
+})
