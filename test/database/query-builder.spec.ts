@@ -3727,6 +3727,59 @@ test.group('Query Builder | distinct', (group) => {
 	})
 })
 
+test.group('Query Builder | distinctOn', (group) => {
+	group.before(async () => {
+		app = await setupApplication()
+		await setup()
+	})
+
+	group.after(async () => {
+		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		app.container.use('Adonis/Core/Event').clearListeners('db:query')
+		await resetTables()
+	})
+
+	if (process.env.DB === 'pg') {
+		test('define distinct columns', async (assert) => {
+			const connection = new Connection('primary', getConfig(), app.logger)
+			connection.connect()
+
+			let db = getQueryBuilder(getQueryClient(connection, app))
+			const { sql, bindings } = db.from('users').distinctOn('name', 'age').toSQL()
+
+			const { sql: knexSql, bindings: knexBindings } = connection
+				.client!.from('users')
+				.distinctOn('name', 'age')
+				.toSQL()
+
+			assert.equal(sql, knexSql)
+			assert.deepEqual(bindings, knexBindings)
+
+			db = getQueryBuilder(getQueryClient(connection, app))
+			db.keysResolver = (key) => `my_${key}`
+
+			const { sql: resolverSql, bindings: resolverBindings } = db
+				.from('users')
+				.distinctOn('name', 'age')
+				.toSQL()
+
+			const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+				.client!.from('users')
+				.distinctOn('my_name', 'my_age')
+				.toSQL()
+
+			assert.equal(resolverSql, knexResolverSql)
+			assert.deepEqual(resolverBindings, knexResolverBindings)
+
+			await connection.disconnect()
+		})
+	}
+})
+
 test.group('Query Builder | groupBy', (group) => {
 	group.before(async () => {
 		app = await setupApplication()

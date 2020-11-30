@@ -1057,6 +1057,14 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 	}
 
 	/**
+	 * Add distinctOn clause
+	 */
+	public distinctOn(...columns: any[]): this {
+		this.knexQuery.distinctOn(...columns.map((column) => this.resolveKey(column)))
+		return this
+	}
+
+	/**
 	 * Add group by clause
 	 */
 	public groupBy(...columns: any[]): this {

@@ -550,6 +550,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 		andHavingRaw: RawQueryFn<this>
 
 		distinct: Distinct<this>
+		distinctOn: Distinct<this>
 
 		groupBy: GroupBy<this>
 		groupByRaw: RawQueryFn<this>
