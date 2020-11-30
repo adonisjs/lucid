@@ -3409,6 +3409,72 @@ test.group('Base Model | fetch', (group) => {
 		assert.lengthOf(usersList, 3)
 	})
 
+	test('use multiple keys to predicate a row as unique', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@column()
+			public email: string
+
+			@column()
+			public countryId: number
+
+			@column()
+			public points: number
+		}
+
+		await db.insertQuery().table('users').insert({
+			username: 'virk',
+			email: 'virk@adonisjs.com',
+			country_id: 1,
+			points: 10,
+		})
+
+		const users = await User.updateOrCreateMany(
+			['points', 'countryId'],
+			[
+				{
+					username: 'virk1',
+					email: 'virk1@adonisjs.com',
+					countryId: 1,
+					points: 11,
+				},
+				{
+					username: 'nikk',
+					email: 'nikk@adonisjs.com',
+					countryId: 2,
+					points: 10,
+				},
+				{
+					username: 'romain',
+					email: 'romain@adonisjs.com',
+					countryId: 3,
+					points: 10,
+				},
+			]
+		)
+
+		assert.lengthOf(users, 3)
+		assert.isTrue(users[0].$isPersisted)
+		assert.equal(users[0].countryId, 1)
+		assert.equal(users[0].points, 11)
+
+		assert.isTrue(users[1].$isPersisted)
+		assert.equal(users[1].countryId, 2)
+		assert.equal(users[1].points, 10)
+
+		assert.isTrue(users[2].$isPersisted)
+		assert.equal(users[2].countryId, 3)
+		assert.equal(users[2].points, 10)
+
+		const usersList = await db.query().from('users')
+		assert.lengthOf(usersList, 4)
+	})
+
 	test('wrap create calls inside a transaction using updateOrCreateMany', async (assert) => {
 		class User extends BaseModel {
 			@column({ isPrimary: true })

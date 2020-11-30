@@ -882,7 +882,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		 */
 		fetchOrNewUpMany<T extends LucidModel>(
 			this: T,
-			uniqueKey: keyof ModelAttributes<InstanceType<T>>,
+			predicate:
+				| keyof ModelAttributes<InstanceType<T>>
+				| (keyof ModelAttributes<InstanceType<T>>)[],
 			payload: Partial<ModelAttributes<InstanceType<T>>>[],
 			options?: ModelAdapterOptions
 		): Promise<InstanceType<T>[]>
@@ -893,7 +895,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		 */
 		fetchOrCreateMany<T extends LucidModel>(
 			this: T,
-			uniqueKey: keyof ModelAttributes<InstanceType<T>>,
+			predicate:
+				| keyof ModelAttributes<InstanceType<T>>
+				| (keyof ModelAttributes<InstanceType<T>>)[],
 			payload: Partial<ModelAttributes<InstanceType<T>>>[],
 			options?: ModelAdapterOptions
 		): Promise<InstanceType<T>[]>
@@ -903,7 +907,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		 */
 		updateOrCreateMany<T extends LucidModel>(
 			this: T,
-			uniqueKey: keyof ModelAttributes<InstanceType<T>>,
+			predicate:
+				| keyof ModelAttributes<InstanceType<T>>
+				| (keyof ModelAttributes<InstanceType<T>>)[],
 			payload: Partial<ModelAttributes<InstanceType<T>>>[],
 			options?: ModelAdapterOptions
 		): Promise<InstanceType<T>[]>

@@ -174,7 +174,7 @@ export class BaseModel implements LucidRow {
 	private static newUpIfMissing(
 		rowObjects: ModelObject[],
 		existingRows: BaseModel[],
-		key: string,
+		keys: string[],
 		mergeAttribute: boolean,
 		options?: ModelAdapterOptions
 	) {
@@ -183,8 +183,10 @@ export class BaseModel implements LucidRow {
 		 * array
 		 */
 		return rowObjects.map((rowObject: any) => {
-			/* eslint-disable-next-line eqeqeq */
-			const existingRow = existingRows.find((one: any) => one[key] == rowObject[key])
+			const existingRow = existingRows.find((one: any) => {
+				/* eslint-disable-next-line eqeqeq */
+				return keys.every((key) => one[key] == rowObject[key])
+			})
 
 			/**
 			 * Return the row found from the select call
@@ -800,30 +802,33 @@ export class BaseModel implements LucidRow {
 	 * Find existing rows or create an in-memory instances of the missing ones.
 	 */
 	public static async fetchOrNewUpMany(
-		uniqueKey: any,
+		uniqueKeys: any,
 		payload: any,
 		options?: ModelAdapterOptions
 	): Promise<any[]> {
-		/**
-		 * Ensure value for the unique key inside the array is not
-		 * null or undefined
-		 */
-		const uniqueKeyValues = collectValues(payload, uniqueKey, () => {
-			throw new Exception(
-				`Value for the "${uniqueKey}" is null or undefined inside "fetchOrNewUpMany" payload`
-			)
+		uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
+		const uniquenessPair = uniqueKeys.map((uniqueKey: string) => {
+			return {
+				key: uniqueKey,
+				value: collectValues(payload, uniqueKey, () => {
+					throw new Exception(
+						`Value for the "${uniqueKey}" is null or undefined inside "fetchOrNewUpMany" payload`
+					)
+				}),
+			}
 		})
 
 		/**
 		 * Find existing rows
 		 */
 		const query = this.query(options)
-		const existingRows = await query.whereIn(uniqueKey, uniqueKeyValues)
+		uniquenessPair.forEach(({ key, value }) => query.whereIn(key, value))
+		const existingRows = await query
 
 		/**
 		 * Return existing rows as it is and create a model instance for missing one's
 		 */
-		return this.newUpIfMissing(payload, existingRows, uniqueKey, false, query.clientOptions)
+		return this.newUpIfMissing(payload, existingRows, uniqueKeys, false, query.clientOptions)
 	}
 
 	/**
@@ -832,29 +837,33 @@ export class BaseModel implements LucidRow {
 	 * hooks.
 	 */
 	public static async fetchOrCreateMany(
-		uniqueKey: any,
+		uniqueKeys: any,
 		payload: any,
 		options?: ModelAdapterOptions
 	): Promise<any[]> {
-		/**
-		 * An array of values for the unique key
-		 */
-		const uniqueKeyValues = collectValues(payload, uniqueKey, () => {
-			throw new Exception(
-				`Value for the "${uniqueKey}" is null or undefined inside "fetchOrCreateMany" payload`
-			)
+		uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
+		const uniquenessPair = uniqueKeys.map((uniqueKey: string) => {
+			return {
+				key: uniqueKey,
+				value: collectValues(payload, uniqueKey, () => {
+					throw new Exception(
+						`Value for the "${uniqueKey}" is null or undefined inside "fetchOrCreateMany" payload`
+					)
+				}),
+			}
 		})
 
 		/**
 		 * Find existing rows
 		 */
 		const query = this.query(options)
-		const existingRows = await query.whereIn(uniqueKey, uniqueKeyValues)
+		uniquenessPair.forEach(({ key, value }) => query.whereIn(key, value))
+		const existingRows = await query
 
 		/**
 		 * Create model instance for the missing rows
 		 */
-		const rows = this.newUpIfMissing(payload, existingRows, uniqueKey, false, query.clientOptions)
+		const rows = this.newUpIfMissing(payload, existingRows, uniqueKeys, false, query.clientOptions)
 
 		/**
 		 * Perist inside db inside a transaction
@@ -883,17 +892,20 @@ export class BaseModel implements LucidRow {
 	 * of model hooks.
 	 */
 	public static async updateOrCreateMany(
-		uniqueKey: any,
+		uniqueKeys: any,
 		payload: any,
 		options?: ModelAdapterOptions
 	): Promise<any> {
-		/**
-		 * An array of values for the unique key
-		 */
-		const uniqueKeyValues = collectValues(payload, uniqueKey, () => {
-			throw new Exception(
-				`Value for the "${uniqueKey}" is null or undefined inside "updateOrCreateMany" payload`
-			)
+		uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
+		const uniquenessPair = uniqueKeys.map((uniqueKey: string) => {
+			return {
+				key: uniqueKey,
+				value: collectValues(payload, uniqueKey, () => {
+					throw new Exception(
+						`Value for the "${uniqueKey}" is null or undefined inside "updateOrCreateMany" payload`
+					)
+				}),
+			}
 		})
 
 		const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
@@ -903,12 +915,13 @@ export class BaseModel implements LucidRow {
 			 * Find existing rows
 			 */
 			const query = this.query({ client: trx }).forUpdate()
-			const existingRows = await query.whereIn(uniqueKey, uniqueKeyValues)
+			uniquenessPair.forEach(({ key, value }) => query.whereIn(key, value))
+			const existingRows = await query
 
 			/**
 			 * Create model instance for the missing rows
 			 */
-			const rows = this.newUpIfMissing(payload, existingRows, uniqueKey, true, query.clientOptions)
+			const rows = this.newUpIfMissing(payload, existingRows, uniqueKeys, true, query.clientOptions)
 
 			for (let row of rows) {
 				await row.save()
