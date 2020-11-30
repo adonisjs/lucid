@@ -9,7 +9,11 @@
 
 declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 	import knex from 'knex'
-	import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+	import {
+		DialectContract,
+		QueryClientContract,
+		TransactionClientContract,
+	} from '@ioc:Adonis/Lucid/Database'
 
 	/**
 	 * Extracted from ts-essentials
@@ -736,6 +740,26 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 		sum: Aggregate<this>
 		avg: Aggregate<this>
 		avgDistinct: Aggregate<this>
+
+		/**
+		 * Executes the callback when dialect matches one of the mentioned
+		 * dialects
+		 */
+		ifDialect(
+			dialect: DialectContract['name'] | DialectContract['name'][],
+			matchCallback: (query: this) => any,
+			noMatchCallback?: (query: this) => any
+		): this
+
+		/**
+		 * Executes the callback when dialect matches doesn't all the mentioned
+		 * dialects
+		 */
+		unlessDialect(
+			dialect: DialectContract['name'] | DialectContract['name'][],
+			matchCallback: (query: this) => any,
+			noMatchCallback?: (query: this) => any
+		): this
 	}
 
 	/**

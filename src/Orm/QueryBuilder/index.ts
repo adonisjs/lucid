@@ -22,7 +22,11 @@ import {
 import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 
 import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+import {
+	DialectContract,
+	QueryClientContract,
+	TransactionClientContract,
+} from '@ioc:Adonis/Lucid/Database'
 
 import { Preloader } from '../Preloader'
 import { QueryRunner } from '../../QueryRunner'
@@ -309,6 +313,44 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 		this.applyQueryFlags(clonedQuery)
 		clonedQuery.sideloaded = Object.assign({}, this.sideloaded)
 		return clonedQuery
+	}
+
+	/**
+	 * Define a query to constraint to be defined when condition is truthy
+	 */
+	public ifDialect(
+		dialects: DialectContract['name'] | DialectContract['name'][],
+		matchCallback: (query: this) => any,
+		noMatchCallback?: (query: this) => any
+	): this {
+		dialects = Array.isArray(dialects) ? dialects : [dialects]
+
+		if (dialects.includes(this.client.dialect.name)) {
+			matchCallback(this)
+		} else if (noMatchCallback) {
+			noMatchCallback(this)
+		}
+
+		return this
+	}
+
+	/**
+	 * Define a query to constraint to be defined when condition is falsy
+	 */
+	public unlessDialect(
+		dialects: DialectContract['name'] | DialectContract['name'][],
+		matchCallback: (query: this) => any,
+		noMatchCallback?: (query: this) => any
+	): this {
+		dialects = Array.isArray(dialects) ? dialects : [dialects]
+
+		if (!dialects.includes(this.client.dialect.name)) {
+			matchCallback(this)
+		} else if (noMatchCallback) {
+			noMatchCallback(this)
+		}
+
+		return this
 	}
 
 	/**

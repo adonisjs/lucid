@@ -12,10 +12,11 @@
 import knex from 'knex'
 import { Exception } from '@poppinss/utils'
 
+import { DialectContract } from '@ioc:Adonis/Lucid/Database'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import {
-	DatabaseQueryBuilderContract,
 	DBQueryCallback,
+	DatabaseQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 import { Chainable } from './Chainable'
@@ -200,6 +201,44 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
 		}
 
 		return row
+	}
+
+	/**
+	 * Define a query to constraint to be defined when condition is truthy
+	 */
+	public ifDialect(
+		dialects: DialectContract['name'] | DialectContract['name'][],
+		matchCallback: (query: this) => any,
+		noMatchCallback?: (query: this) => any
+	): this {
+		dialects = Array.isArray(dialects) ? dialects : [dialects]
+
+		if (dialects.includes(this.client.dialect.name)) {
+			matchCallback(this)
+		} else if (noMatchCallback) {
+			noMatchCallback(this)
+		}
+
+		return this
+	}
+
+	/**
+	 * Define a query to constraint to be defined when condition is falsy
+	 */
+	public unlessDialect(
+		dialects: DialectContract['name'] | DialectContract['name'][],
+		matchCallback: (query: this) => any,
+		noMatchCallback?: (query: this) => any
+	): this {
+		dialects = Array.isArray(dialects) ? dialects : [dialects]
+
+		if (!dialects.includes(this.client.dialect.name)) {
+			matchCallback(this)
+		} else if (noMatchCallback) {
+			noMatchCallback(this)
+		}
+
+		return this
 	}
 
 	/**

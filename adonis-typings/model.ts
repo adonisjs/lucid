@@ -21,7 +21,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		ExcutableQueryBuilderContract,
 	} from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
-	import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+	import {
+		DialectContract,
+		QueryClientContract,
+		TransactionClientContract,
+	} from '@ioc:Adonis/Lucid/Database'
 
 	import {
 		Has,
@@ -418,6 +422,26 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		sum: Aggregate<ModelQueryBuilderContract<Model, any>>
 		avg: Aggregate<ModelQueryBuilderContract<Model, any>>
 		avgDistinct: Aggregate<ModelQueryBuilderContract<Model, any>>
+
+		/**
+		 * Executes the callback when dialect matches one of the mentioned
+		 * dialects
+		 */
+		ifDialect(
+			dialect: DialectContract['name'] | DialectContract['name'][],
+			matchCallback: (query: this) => any,
+			noMatchCallback?: (query: this) => any
+		): this
+
+		/**
+		 * Executes the callback when dialect matches doesn't all the mentioned
+		 * dialects
+		 */
+		unlessDialect(
+			dialect: DialectContract['name'] | DialectContract['name'][],
+			matchCallback: (query: this) => any,
+			noMatchCallback?: (query: this) => any
+		): this
 	}
 
 	/**
