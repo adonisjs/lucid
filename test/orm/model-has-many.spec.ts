@@ -3742,14 +3742,14 @@ test.group('Model | HasMany | firstOrCreate', (group) => {
 		const post = await user.related('posts').firstOrCreate(
 			{},
 			{
-				title: 'Adonis 101',
+				title: 'Lucid 101',
 			}
 		)
 
 		assert.isTrue(post.$isPersisted)
 		assert.isTrue(post.$isLocal)
 		assert.equal(user.id, post.userId)
-		assert.equal(post.title, 'Adonis 101')
+		assert.equal(post.title, 'Lucid 101')
 
 		const posts = await db.query().from('posts').orderBy('id', 'asc')
 		assert.lengthOf(posts, 2)
@@ -3909,6 +3909,274 @@ test.group('Model | HasMany | updateOrCreate', (group) => {
 		assert.lengthOf(posts, 1)
 		assert.equal(posts[0].user_id, user.id)
 		assert.equal(posts[0].title, 'Adonis 101')
+	})
+})
+
+test.group('Model | HasMany | fetchOrCreateMany', (group) => {
+	group.before(async () => {
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
+	})
+
+	group.after(async () => {
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test("create related instance when there aren't any existing row", async (assert) => {
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		const user = new User()
+		user.username = 'virk'
+		await user.save()
+
+		await db.insertQuery().table('posts').insert({ title: 'Lucid 101' })
+		const [post] = await user.related('posts').fetchOrCreateMany([
+			{
+				title: 'Lucid 101',
+			},
+		])
+
+		assert.isTrue(post.$isPersisted)
+		assert.isTrue(post.$isLocal)
+		assert.equal(user.id, post.userId)
+		assert.equal(post.title, 'Lucid 101')
+
+		const posts = await db.query().from('posts').orderBy('id', 'asc')
+		assert.lengthOf(posts, 2)
+		assert.isNull(posts[0].user_id)
+		assert.equal(posts[1].user_id, user.id)
+	})
+
+	test('return existing instance vs creating one', async (assert) => {
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		const user = new User()
+		user.username = 'virk'
+		await user.save()
+
+		await db
+			.insertQuery()
+			.table('posts')
+			.multiInsert([
+				{ title: 'Lucid 101', user_id: user.id },
+				{ title: 'Lucid 102', user_id: user.id + 1 },
+			])
+
+		const [post, post1] = await user.related('posts').fetchOrCreateMany(
+			[
+				{
+					title: 'Lucid 101',
+				},
+				{
+					title: 'Lucid 102',
+				},
+			],
+			['title']
+		)
+
+		assert.isTrue(post.$isPersisted)
+		assert.isFalse(post.$isLocal)
+		assert.equal(user.id, post.userId)
+		assert.equal(post.title, 'Lucid 101')
+
+		assert.isTrue(post1.$isPersisted)
+		assert.isTrue(post1.$isLocal)
+		assert.equal(user.id, post1.userId)
+		assert.equal(post1.title, 'Lucid 102')
+
+		const posts = await db.query().from('posts').orderBy('id', 'asc')
+		assert.lengthOf(posts, 3)
+		assert.equal(posts[0].user_id, user.id)
+		assert.equal(posts[1].user_id, user.id + 1)
+		assert.equal(posts[2].user_id, user.id)
+	})
+})
+
+test.group('Model | HasMany | fetchOrCreateMany', (group) => {
+	group.before(async () => {
+		app = await setupApplication()
+		db = getDb(app)
+		BaseModel = getBaseModel(ormAdapter(db), app)
+		await setup()
+	})
+
+	group.after(async () => {
+		await db.manager.closeAll()
+		await cleanup()
+		await fs.cleanup()
+	})
+
+	group.afterEach(async () => {
+		await resetTables()
+	})
+
+	test("create related instance when there aren't any existing row", async (assert) => {
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		const user = new User()
+		user.username = 'virk'
+		await user.save()
+
+		await db.insertQuery().table('posts').insert({ title: 'Lucid 101' })
+		const [post] = await user.related('posts').updateOrCreateMany([
+			{
+				title: 'Lucid 101',
+			},
+		])
+
+		assert.isTrue(post.$isPersisted)
+		assert.isTrue(post.$isLocal)
+		assert.equal(user.id, post.userId)
+		assert.equal(post.title, 'Lucid 101')
+
+		const posts = await db.query().from('posts').orderBy('id', 'asc')
+		assert.lengthOf(posts, 2)
+		assert.isNull(posts[0].user_id)
+		assert.equal(posts[1].user_id, user.id)
+	})
+
+	test('update existing instance vs creating one', async (assert) => {
+		class Post extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public userId: number
+
+			@column()
+			public title: string
+
+			@column()
+			public isPublished: boolean
+		}
+
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@hasMany(() => Post)
+			public posts: HasMany<typeof Post>
+		}
+
+		const user = new User()
+		user.username = 'virk'
+		await user.save()
+
+		await db
+			.insertQuery()
+			.table('posts')
+			.multiInsert([
+				{ title: 'Lucid 101', user_id: user.id, is_published: false },
+				{ title: 'Lucid 102', user_id: user.id + 1, is_published: false },
+			])
+
+		const [post, post1] = await user.related('posts').updateOrCreateMany(
+			[
+				{
+					title: 'Lucid 101',
+					isPublished: true,
+				},
+				{
+					title: 'Lucid 102',
+					isPublished: true,
+				},
+			],
+			['title']
+		)
+
+		assert.isTrue(post.$isPersisted)
+		assert.isFalse(post.$isLocal)
+		assert.equal(user.id, post.userId)
+		assert.equal(post.title, 'Lucid 101')
+		assert.isTrue(!!post.isPublished)
+
+		assert.isTrue(post1.$isPersisted)
+		assert.isTrue(post1.$isLocal)
+		assert.equal(user.id, post1.userId)
+		assert.equal(post1.title, 'Lucid 102')
+		assert.isTrue(!!post1.isPublished)
+
+		const posts = await db.query().from('posts').orderBy('id', 'asc')
+		assert.lengthOf(posts, 3)
+		assert.equal(posts[0].user_id, user.id)
+		assert.isTrue(!!posts[0].is_published)
+
+		assert.equal(posts[1].user_id, user.id + 1)
+		assert.isFalse(!!posts[1].is_published)
+
+		assert.equal(posts[2].user_id, user.id)
+		assert.isTrue(!!posts[2].is_published)
 	})
 })
 

@@ -629,6 +629,26 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		): Promise<InstanceType<RelatedModel>[]>
 
 		/**
+		 * Fetch or create rows. Providers a great API to sync rows
+		 */
+		fetchOrCreateMany(
+			payload: Partial<ModelAttributes<InstanceType<RelatedModel>>>[],
+			predicate?:
+				| keyof ModelAttributes<InstanceType<RelatedModel>>
+				| (keyof ModelAttributes<InstanceType<RelatedModel>>)[]
+		): Promise<InstanceType<RelatedModel>[]>
+
+		/**
+		 * Update or create rows. Providers a great API to sync rows
+		 */
+		updateOrCreateMany(
+			payload: Partial<ModelAttributes<InstanceType<RelatedModel>>>[],
+			predicate?:
+				| keyof ModelAttributes<InstanceType<RelatedModel>>
+				| (keyof ModelAttributes<InstanceType<RelatedModel>>)[]
+		): Promise<InstanceType<RelatedModel>[]>
+
+		/**
 		 * Return a query builder instance of the relationship
 		 */
 		query<Result extends any = InstanceType<RelatedModel>>(): HasManyQueryBuilderContract<

@@ -168,4 +168,48 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
 				.updateOrCreate(valuesToPersist, updatePayload, { client: trx })
 		})
 	}
+
+	/**
+	 * Fetch the existing related rows or create new one's
+	 */
+	public async fetchOrCreateMany(payload: ModelObject[], predicate?: any): Promise<LucidRow[]> {
+		return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+			this.parent.$trx = trx
+			await this.parent.save()
+
+			payload.forEach((row) => {
+				this.relation.hydrateForPersistance(this.parent, row)
+			})
+
+			predicate = Array.isArray(predicate) ? predicate : predicate ? [predicate] : []
+
+			return this.relation
+				.relatedModel()
+				.fetchOrCreateMany(predicate.concat(this.relation.foreignKey) as any, payload, {
+					client: trx,
+				})
+		})
+	}
+
+	/**
+	 * Update the existing related rows or create new one's
+	 */
+	public async updateOrCreateMany(payload: ModelObject[], predicate?: any): Promise<LucidRow[]> {
+		return managedTransaction(this.parent.$trx || this.client, async (trx) => {
+			this.parent.$trx = trx
+			await this.parent.save()
+
+			payload.forEach((row) => {
+				this.relation.hydrateForPersistance(this.parent, row)
+			})
+
+			predicate = Array.isArray(predicate) ? predicate : predicate ? [predicate] : []
+
+			return this.relation
+				.relatedModel()
+				.updateOrCreateMany(predicate.concat(this.relation.foreignKey) as any, payload, {
+					client: trx,
+				})
+		})
+	}
 }
