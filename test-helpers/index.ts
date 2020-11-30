@@ -113,7 +113,11 @@ export function getConfig(): ConnectionConfig {
 					server: process.env.MSSQL_SERVER as string,
 					password: process.env.MSSQL_PASSWORD as string,
 					database: 'master',
+					options: {
+						enableArithAbort: true,
+					},
 				},
+				debug: true,
 				pool: {
 					min: 0,
 					idleTimeoutMillis: 300,
@@ -263,7 +267,9 @@ export async function cleanup(customTables?: string[]) {
 	const db = knex(Object.assign({}, getConfig(), { debug: false }))
 
 	if (customTables) {
-		await Promise.all(customTables.map((table) => db.schema.dropTableIfExists(table)))
+		for (let table of customTables) {
+			await db.schema.dropTableIfExists(table)
+		}
 		await db.destroy()
 		return
 	}

@@ -52,6 +52,18 @@ export class SqliteDialect implements DialectContract {
 	}
 
 	/**
+	 * Drop all tables inside the database
+	 */
+	public async dropAllTables() {
+		await this.client.rawQuery('PRAGMA writable_schema = 1;')
+		await this.client.rawQuery(
+			`delete from sqlite_master where type in ('table', 'index', 'trigger');`
+		)
+		await this.client.rawQuery('PRAGMA writable_schema = 0;')
+		await this.client.rawQuery('VACUUM;')
+	}
+
+	/**
 	 * Attempts to add advisory lock to the database and
 	 * returns it's status.
 	 */

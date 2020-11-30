@@ -47,6 +47,15 @@ export class OracleDialect implements DialectContract {
 			: this.client.rawQuery(`TRUNCATE ${table};`)
 	}
 
+	/**
+	 * Not implemented yet
+	 */
+	public async dropAllTables() {
+		throw new Error(
+			'"dropAllTables" method is not implemented for oracledb. Create a PR to add the feature'
+		)
+	}
+
 	public getAdvisoryLock(): Promise<boolean> {
 		throw new Error(
 			'Support for advisory locks is not implemented for oracledb. Create a PR to add the feature'

@@ -57,6 +57,14 @@ export class RedshiftDialect implements DialectContract {
 	}
 
 	/**
+	 * Drop all tables inside the database
+	 */
+	public async dropAllTables(schemas: string[]) {
+		const tables = await this.getAllTables(schemas)
+		await this.client.rawQuery(`DROP table ${tables.join(',')} CASCADE;`)
+	}
+
+	/**
 	 * Redshift doesn't support advisory locks. Learn more:
 	 * https://tableplus.com/blog/2018/10/redshift-vs-postgres-database-comparison.html
 	 */

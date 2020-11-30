@@ -50,6 +50,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
 		readonly supportsAdvisoryLocks: boolean
 		readonly dateTimeFormat: string
 		getAllTables(schemas?: string[]): Promise<string[]>
+		dropAllTables(schemas?: string[]): Promise<void>
 		truncate(table: string, cascade?: boolean): Promise<void>
 		getAdvisoryLock(key: string | number, timeout?: number): Promise<boolean>
 		releaseAdvisoryLock(key: string | number): Promise<boolean>
@@ -454,6 +455,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
 		// https://github.com/knex/knex/blob/master/lib/dialects/mssql/index.js#L97
 		options?: {
 			encrypt?: boolean
+			enableArithAbort?: boolean
 		}
 	}
 	export type MssqlConfig = SharedConfigNode & {

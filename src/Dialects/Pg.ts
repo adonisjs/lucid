@@ -53,6 +53,14 @@ export class PgDialect implements DialectContract {
 	}
 
 	/**
+	 * Drop all tables inside the database
+	 */
+	public async dropAllTables(schemas: string[]) {
+		const tables = await this.getAllTables(schemas)
+		await this.client.rawQuery(`DROP table ${tables.join(',')} CASCADE;`)
+	}
+
+	/**
 	 * Attempts to add advisory lock to the database and
 	 * returns it's status.
 	 */

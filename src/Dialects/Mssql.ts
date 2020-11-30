@@ -58,6 +58,22 @@ export class MssqlDialect implements DialectContract {
 		return this.client.knexQuery().table(table).truncate()
 	}
 
+	/**
+	 * Drop all tables inside the database
+	 */
+	public async dropAllTables() {
+		await this.client.rawQuery(`
+			DECLARE @sql NVARCHAR(MAX) = N'';
+				SELECT @sql += 'ALTER TABLE '
+					+ QUOTENAME(OBJECT_SCHEMA_NAME(parent_object_id)) + '.' + + QUOTENAME(OBJECT_NAME(parent_object_id))
+					+ ' DROP CONSTRAINT ' + QUOTENAME(name) + ';'
+				FROM sys.foreign_keys;
+				EXEC sp_executesql @sql;
+		`)
+
+		await this.client.rawQuery(`EXEC sp_MSforeachtable 'DROP TABLE \\?';`)
+	}
+
 	public getAdvisoryLock(): Promise<boolean> {
 		throw new Error(
 			'Support for advisory locks is not implemented for mssql. Create a PR to add the feature'

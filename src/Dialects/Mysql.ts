@@ -56,7 +56,7 @@ export class MysqlDialect implements DialectContract {
 	/**
 	 * Returns an array of table names
 	 */
-	public async getAllTables() {
+	public async getAllTables(): Promise<string[]> {
 		const tables = await this.client
 			.query()
 			.from('information_schema.tables')
@@ -66,6 +66,28 @@ export class MysqlDialect implements DialectContract {
 			.orderBy('table_name', 'asc')
 
 		return tables.map(({ table_name }) => table_name)
+	}
+
+	/**
+	 * Drop all tables inside the database
+	 */
+	public async dropAllTables() {
+		const tables = await this.getAllTables()
+
+		/**
+		 * Cascade and truncate
+		 */
+		const trx = await this.client.transaction()
+
+		try {
+			await trx.rawQuery('SET FOREIGN_KEY_CHECKS=0;')
+			await trx.rawQuery(`DROP table ${tables.join(',')};`)
+			await trx.rawQuery('SET FOREIGN_KEY_CHECKS=1;')
+			await trx.commit()
+		} catch (error) {
+			await trx.rollback()
+			throw error
+		}
 	}
 
 	/**
