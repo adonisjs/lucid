@@ -994,6 +994,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
 		processAllForOne(parent: Model, client: QueryClientContract): Promise<void>
 		processAllForMany(parent: Model[], client: QueryClientContract): Promise<void>
 		preload: Preload<Model, this>
+		debug(debug: boolean): this
 		sideload(values: ModelObject): this
 	}
 }

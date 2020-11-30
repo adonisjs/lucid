@@ -36,6 +36,8 @@ export class Preloader implements PreloaderContract<LucidRow> {
 	 */
 	private sideloaded: ModelObject = {}
 
+	private debugQueries: boolean
+
 	constructor(private model: LucidModel) {}
 
 	/**
@@ -43,7 +45,10 @@ export class Preloader implements PreloaderContract<LucidRow> {
 	 */
 	private async processRelation(name: string, parent: LucidRow, client: QueryClientContract) {
 		const { relation, callback } = this.preloads[name]
-		const query = relation.eagerQuery(parent, client).sideload(this.sideloaded)
+		const query = relation
+			.eagerQuery(parent, client)
+			.debug(this.debugQueries)
+			.sideload(this.sideloaded)
 
 		/**
 		 * Pass query to end user for adding more constraints
@@ -78,7 +83,10 @@ export class Preloader implements PreloaderContract<LucidRow> {
 		client: QueryClientContract
 	) {
 		const { relation, callback } = this.preloads[name]
-		const query = relation.eagerQuery(parent, client).sideload(this.sideloaded)
+		const query = relation
+			.eagerQuery(parent, client)
+			.debug(this.debugQueries)
+			.sideload(this.sideloaded)
 
 		/**
 		 * Pass query to end user for adding more constraints
@@ -114,6 +122,14 @@ export class Preloader implements PreloaderContract<LucidRow> {
 			callback: callback,
 		}
 
+		return this
+	}
+
+	/**
+	 * Toggle query debugging
+	 */
+	public debug(debug: boolean) {
+		this.debugQueries = debug
 		return this
 	}
 

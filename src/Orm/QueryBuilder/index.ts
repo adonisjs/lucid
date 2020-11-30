@@ -168,7 +168,10 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 		/**
 		 * Preload for model instances
 		 */
-		await this.preloader.sideload(this.sideloaded).processAllForMany(modelInstances, this.client)
+		await this.preloader
+			.sideload(this.sideloaded)
+			.debug(this.debugQueries)
+			.processAllForMany(modelInstances, this.client)
 		return modelInstances
 	}
 
