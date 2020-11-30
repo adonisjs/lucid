@@ -1788,10 +1788,18 @@ export class BaseModel implements LucidRow {
 	 * Converting model to it's JSON representation
 	 */
 	public serialize(cherryPick?: CherryPick) {
+		let extras: any = null
+		if (this['serializeExtras'] === true) {
+			extras = { meta: this.$extras }
+		} else if (typeof this['serializeExtras'] === 'function') {
+			extras = this['serializeExtras']()
+		}
+
 		return {
 			...this.serializeAttributes(cherryPick?.fields, false),
 			...this.serializeRelations(cherryPick?.relations, false),
 			...this.serializeComputed(cherryPick?.fields),
+			...extras,
 		}
 	}
 
@@ -1826,6 +1834,7 @@ export class BaseModel implements LucidRow {
 			...this.$attributes,
 			...preloaded,
 			...computed,
+			$extras: this.$extras,
 		}
 	}
 

@@ -92,7 +92,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 	export type ModelAttributes<Model extends LucidRow> = Model['$columns'] extends undefined
 		? {
 				[Filtered in {
-					[P in keyof Model]: P extends keyof LucidRow
+					[P in keyof Model]: P extends keyof LucidRow | 'serializeExtras'
 						? never
 						: Model[P] extends Function | ModelRelationTypes
 						? never

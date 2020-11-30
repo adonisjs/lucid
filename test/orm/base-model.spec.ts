@@ -1801,6 +1801,64 @@ test.group('Base Model | toJSON', (group) => {
 			{ username: 'virk' }
 		)
 	})
+
+	test('serialize extras', async (assert) => {
+		class User extends BaseModel {
+			public serializeExtras = true
+
+			@column()
+			public username: string
+
+			@computed()
+			public get fullName() {
+				return this.username.toUpperCase()
+			}
+		}
+
+		const user = new User()
+		user.username = 'virk'
+		user.$extras = { postsCount: 10 }
+
+		assert.deepEqual(user.toJSON(), {
+			username: 'virk',
+			fullName: 'VIRK',
+			meta: {
+				postsCount: 10,
+			},
+		})
+	})
+
+	test('define serialize extras as a function', async (assert) => {
+		class User extends BaseModel {
+			public serializeExtras() {
+				return {
+					posts: {
+						count: this.$extras.postsCount,
+					},
+				}
+			}
+
+			@column()
+			public username: string
+
+			@computed()
+			public get fullName() {
+				return this.username.toUpperCase()
+			}
+		}
+
+		const user = new User()
+		user.username = 'virk'
+		user.$extras = { postsCount: 10 }
+
+		assert.deepEqual(user.toJSON(), {
+			username: 'virk',
+			fullName: 'VIRK',
+			posts: {
+				count: 10,
+			},
+		})
+	})
 })
 
 test.group('BaseModel | cache', (group) => {
@@ -5222,7 +5280,7 @@ test.group('Base Model | toObject', (group) => {
 		const user = new User()
 		user.username = 'virk'
 
-		assert.deepEqual(user.toObject(), { username: 'virk' })
+		assert.deepEqual(user.toObject(), { username: 'virk', $extras: {} })
 	})
 
 	test('use model property key when converting model to object', async (assert) => {
@@ -5234,7 +5292,7 @@ test.group('Base Model | toObject', (group) => {
 		const user = new User()
 		user.username = 'virk'
 
-		assert.deepEqual(user.toObject(), { username: 'virk' })
+		assert.deepEqual(user.toObject(), { username: 'virk', $extras: {} })
 	})
 
 	test('add computed properties to toObject result', async (assert) => {
@@ -5251,7 +5309,7 @@ test.group('Base Model | toObject', (group) => {
 		const user = new User()
 		user.username = 'virk'
 
-		assert.deepEqual(user.toObject(), { username: 'virk', fullName: 'VIRK' })
+		assert.deepEqual(user.toObject(), { username: 'virk', fullName: 'VIRK', $extras: {} })
 	})
 
 	test('do not add computed property when it returns undefined', async (assert) => {
@@ -5268,7 +5326,7 @@ test.group('Base Model | toObject', (group) => {
 		const user = new User()
 		user.username = 'virk'
 
-		assert.deepEqual(user.toObject(), { username: 'virk' })
+		assert.deepEqual(user.toObject(), { username: 'virk', $extras: {} })
 	})
 
 	test('add preloaded hasOne relationship to toObject result', async (assert) => {
@@ -5295,7 +5353,13 @@ test.group('Base Model | toObject', (group) => {
 		user.username = 'virk'
 		user.$setRelated('profile', new Profile())
 
-		assert.deepEqual(user.toObject(), { username: 'virk', profile: {} })
+		assert.deepEqual(user.toObject(), {
+			username: 'virk',
+			profile: {
+				$extras: {},
+			},
+			$extras: {},
+		})
 	})
 
 	test('add preloaded hasMany relationship to toObject result', async (assert) => {
@@ -5349,10 +5413,13 @@ test.group('Base Model | toObject', (group) => {
 					comments: [
 						{
 							body: 'Nice post',
+							$extras: {},
 						},
 					],
+					$extras: {},
 				},
 			],
+			$extras: {},
 		})
 	})
 })
