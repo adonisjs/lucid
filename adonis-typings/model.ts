@@ -519,6 +519,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		save(): Promise<this>
 		delete(): Promise<void>
 		refresh(): Promise<this>
+		load: LucidRowPreload<this>
 		preload: LucidRowPreload<this>
 
 		/**

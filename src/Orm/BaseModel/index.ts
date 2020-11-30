@@ -1611,6 +1611,13 @@ export class BaseModel implements LucidRow {
 	}
 
 	/**
+	 * A more expressive alias for "this.preload"
+	 */
+	public async load(relationName: any, callback?: any) {
+		return this.preload(relationName, callback)
+	}
+
+	/**
 	 * Preloads one or more relationships for the current model
 	 */
 	public async preload(relationName: any, callback?: any) {
