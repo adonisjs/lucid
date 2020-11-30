@@ -451,6 +451,10 @@ declare module '@ioc:Adonis/Lucid/Database' {
 		connectionTimeout?: number
 		requestTimeout?: number
 		parseJSON?: boolean
+		// https://github.com/knex/knex/blob/master/lib/dialects/mssql/index.js#L97
+		options?: {
+			encrypt?: boolean
+		}
 	}
 	export type MssqlConfig = SharedConfigNode & {
 		client: 'mssql'
