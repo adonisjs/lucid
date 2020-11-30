@@ -190,6 +190,19 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
 	}
 
 	/**
+	 * Fetch and return first results from the results set. This method
+	 * will implicitly set a `limit` on the query
+	 */
+	public async firstOrFail(): Promise<any> {
+		const row = await this.first()
+		if (!row) {
+			throw new Exception('Row not found', 404, 'E_ROW_NOT_FOUND')
+		}
+
+		return row
+	}
+
+	/**
 	 * Turn on/off debugging for this query
 	 */
 	public debug(debug: boolean): this {

@@ -697,6 +697,11 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 		first(): Promise<Result | null>
 
 		/**
+		 * Execute and get first result or fail
+		 */
+		firstOrFail(): Promise<Result>
+
+		/**
 		 * Perform delete operation
 		 */
 		del(): this
