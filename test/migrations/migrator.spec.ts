@@ -966,7 +966,7 @@ test.group('Migrator', (group) => {
 		assert.equal(migrator.status, 'error')
 	})
 
-	test.only('use a natural sort to order files when configured', async (assert) => {
+	test('use a natural sort to order files when configured', async (assert) => {
 		const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
 
 		db.getRawConnection('primary')!.config.migrations = {
