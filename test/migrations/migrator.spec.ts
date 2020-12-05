@@ -1011,14 +1011,14 @@ test.group('Migrator', (group) => {
 		await migrator.run()
 		const files = await migrator.getList()
 
+		db.getRawConnection('primary')!.config = originalConfig
+
 		assert.lengthOf(files, 2)
 		assert.equal(files[0].name, 'database/migrations/1_accounts')
 		assert.equal(files[0].batch, 1)
 
 		assert.equal(files[1].name, 'database/migrations/12_users')
 		assert.equal(files[1].batch, 1)
-
-		db.getRawConnection('primary')!.config = originalConfig
 	})
 
 	test('raise exception when rollbacks in production are disabled', async (assert) => {
