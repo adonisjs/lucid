@@ -29,7 +29,7 @@ export class MigrationSource {
 
 		if (this.config.migrations?.naturalSort) {
 			files = files.sort((a, b) =>
-				a.filename.localeCompare(b.filename, undefined, { numeric: true, sensitivity: 'base' })
+				a.filename!.localeCompare(b.filename!, undefined, { numeric: true, sensitivity: 'base' })
 			)
 		}
 
