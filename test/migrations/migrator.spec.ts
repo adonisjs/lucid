@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import { join } from 'path'
+import { join, sep } from 'path'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import {
@@ -1014,11 +1014,8 @@ test.group('Migrator', (group) => {
 		db.getRawConnection('primary')!.config = originalConfig
 
 		assert.lengthOf(files, 2)
-		assert.equal(files[0].name, 'database/migrations/1_accounts')
-		assert.equal(files[0].batch, 1)
-
-		assert.equal(files[1].name, 'database/migrations/12_users')
-		assert.equal(files[1].batch, 1)
+		assert.equal(files[0].name, `database${sep}migrations${sep}1_accounts`)
+		assert.equal(files[1].name, `database${sep}migrations${sep}12_users`)
 	})
 
 	test('raise exception when rollbacks in production are disabled', async (assert) => {
