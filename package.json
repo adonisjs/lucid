@@ -63,7 +63,6 @@
     "@adonisjs/core": "^5.0.4-preview-rc"
   },
   "devDependencies": {
-    "@adonisjs/ace": "^5.0.8",
     "@adonisjs/core": "^5.0.4-preview-rc-2.1",
     "@adonisjs/mrm-preset": "^2.4.0",
     "@adonisjs/repl": "^1.1.6",
