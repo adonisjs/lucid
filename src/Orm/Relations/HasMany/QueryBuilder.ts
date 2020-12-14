@@ -131,8 +131,8 @@ export class HasManyQueryBuilder
 		}
 
 		const rowName = 'adonis_group_limit_counter'
-		const partitionBy = `PARTITION BY ${this.relation.foreignKeyColumName}`
-		const orderBy = `ORDER BY ${column} ${direction}`
+		const partitionBy = `PARTITION BY "${this.relation.foreignKeyColumName}"`
+		const orderBy = `ORDER BY "${column}" ${direction}`
 
 		/**
 		 * Select * when no columns are selected
