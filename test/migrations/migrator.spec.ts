@@ -1018,6 +1018,58 @@ test.group('Migrator', (group) => {
 		assert.equal(files[1].name, `database${sep}migrations${sep}12_users`)
 	})
 
+	test('use a natural sort to order nested files when configured', async (assert) => {
+		const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
+
+		db.getRawConnection('primary')!.config.migrations = {
+			naturalSort: true,
+		}
+
+		await fs.add(
+			'database/migrations/1/12_users.ts',
+			`
+      import { Schema } from '../../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+        public async down () {
+          this.schema.dropTable('schema_users')
+        }
+      }
+    `
+		)
+
+		await fs.add(
+			'database/migrations/12/1_accounts.ts',
+			`
+      import { Schema } from '../../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_accounts', (table) => {
+            table.increments()
+          })
+        }
+        public async down () {
+          this.schema.dropTable('schema_accounts')
+        }
+      }
+    `
+		)
+
+		const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+		await migrator.run()
+		const files = await migrator.getList()
+
+		db.getRawConnection('primary')!.config = originalConfig
+
+		assert.lengthOf(files, 2)
+		assert.equal(files[0].name, `database${sep}migrations${sep}1${sep}12_users`)
+		assert.equal(files[1].name, `database${sep}migrations${sep}12${sep}1_accounts`)
+	})
+
 	test('raise exception when rollbacks in production are disabled', async (assert) => {
 		app.nodeEnvironment = 'production'
 		const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
