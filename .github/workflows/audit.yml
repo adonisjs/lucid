@@ -1,0 +1,22 @@
+name: Package Audit
+on:
+	schedule:
+		# At 12:00 AM, only on Friday
+		- cron: "0 0 * * FRI"
+	workflow_dispatch:
+jobs:
+	build:
+		runs-on: ubuntu-latest
+		steps:
+			- uses: actions/checkout@v2
+			- name: Install deps
+				run: npm i
+			- name: Create audit file
+				run: npm audit --production --json | ./node_modules/.bin/npm-audit-html
+			- name: Commit the file
+				run: |
+          git config user.name "Github Action"
+          git config user.email github-action@users.noreply.github.com
+          git add npm-audit.html
+          git commit -m "chore: update packages' audit"
+          git push
