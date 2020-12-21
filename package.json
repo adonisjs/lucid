@@ -91,7 +91,6 @@
     "mssql": "^6.2.3",
     "mysql": "^2.18.1",
     "np": "^7.0.0",
-    "npm-audit-html": "^1.5.0",
     "pg": "^8.5.1",
     "prettier": "^2.2.1",
     "reflect-metadata": "^0.1.13",
@@ -112,8 +111,7 @@
   },
   "husky": {
     "hooks": {
-      "commit-msg": "node ./node_modules/@adonisjs/mrm-preset/validateCommit/conventional/validate.js",
-      "pre-commit": "npm audit --production --json | ./node_modules/.bin/npm-audit-html && git add npm-audit.html"
+      "commit-msg": "node ./node_modules/@adonisjs/mrm-preset/validateCommit/conventional/validate.js"
     }
   },
   "config": {
