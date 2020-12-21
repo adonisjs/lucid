@@ -12,7 +12,7 @@
 import test from 'japa'
 import 'reflect-metadata'
 import { join } from 'path'
-import { Kernel } from '@adonisjs/ace'
+import { Kernel } from '@adonisjs/core/build/standalone'
 import { Filesystem } from '@poppinss/dev-utils'
 import { toNewlineArray, fs, setupApplication } from '../../test-helpers'
 

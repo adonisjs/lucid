@@ -36,6 +36,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
 	 * implementation
 	 */
 	export type FileNode<T extends any> = {
+		filename?: string
 		absPath: string
 		name: string
 		getSource: () => T
@@ -274,6 +275,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
 		paths?: string[]
 		tableName?: string
 		disableRollbacksInProduction?: boolean
+		naturalSort?: boolean
 	}
 
 	/**

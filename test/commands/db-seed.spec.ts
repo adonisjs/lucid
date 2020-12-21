@@ -11,7 +11,7 @@
 
 import test from 'japa'
 import 'reflect-metadata'
-import { Kernel } from '@adonisjs/ace'
+import { Kernel } from '@adonisjs/core/build/standalone'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import DbSeed from '../../commands/DbSeed'

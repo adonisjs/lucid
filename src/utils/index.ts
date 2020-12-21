@@ -215,8 +215,9 @@ export function sourceFiles(
 		try {
 			resolve({
 				directory,
-				files: files.sort().map((file) => {
+				files: files.sort().map((file: string) => {
 					return {
+						filename: file,
 						absPath: join(path, file),
 						name: join(directory, file.replace(RegExp(`${extname(file)}$`), '')),
 						getSource() {

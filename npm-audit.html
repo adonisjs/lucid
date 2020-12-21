@@ -15,7 +15,7 @@
         href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.3.1/build/styles/atom-one-dark.min.css">
 
     <title>NPM Audit Report</title>
-    <meta name="description" content="0 known vulnerabilities found.">
+    <meta name="description" content="2 known vulnerabilities found.">
 
     <style>
         pre {
@@ -39,7 +39,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
-                            0
+                            2
                         </h5>
                         <p class="card-text">Known vulnerabilities</p>
                     </div>
@@ -47,7 +47,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
-                            177
+                            195
                         </h5>
                         <p class="card-text">Dependencies</p>
                     </div>
@@ -55,7 +55,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
-                            December 1st 2020, 1:23:10 pm
+                            December 14th 2020, 7:15:17 pm
                         </h5>
                         <p class="card-text">Last updated</p>
                     </div>
@@ -95,7 +95,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">
-                            0
+                            2
                         </h5>
                         <p class="card-text">
                             <span class="badge badge-primary">low</span>
@@ -128,6 +128,20 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <tr>
+                            <th scope="row">
+                                <a href="https://npmjs.com/advisories/1589" data-toggle="modal" data-target="#advisory-modal-1589">Prototype Pollution</a>
+                            </th>
+                            <td>
+                                <a href="https://npmjs.com/package/ini" target="_blank"
+                                    rel="noopener">ini</a>
+                            </td>
+                            <td data-order="4"><span
+                                    class="badge badge-primary">low</span></td>
+                            <td>
+                                CWE-471
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -135,6 +149,91 @@
     </div>
 
 
+    <div class="modal" tabindex="-1" role="dialog" id="advisory-modal-1589">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <span class="badge badge-primary">low</span>
+                        Prototype Pollution
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul>
+                                <li>Module:
+                                    <a href="https://npmjs.com/package/ini" target="_blank"
+                                        rel="noopener">ini</a>
+                                </li>
+                                <li>Published: December 9th 2020 </li>
+                                <li>Reported by: Gur Shafriri</li>
+                                <li>CWE-471</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul>
+                                <li>Vulnerable: &lt;1.3.6</li>
+                                <li>Patched: &gt;1.3.6</li>
+                                <li>Exploitability: 3</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <h3>Overview</h3>
+                    <p class="card-text"><p><code>ini</code> before version 1.3.6 has a Prototype Pollution vulnerability.</p>
+<h3 id="impact">Impact</h3>
+<p>If an attacker submits a malicious INI file to an application that parses it with <code>ini.parse</code>, they will pollute the prototype on the application. This can be exploited further depending on the context.</p>
+<h3 id="patches">Patches</h3>
+<p>This has been patched in 1.3.6</p>
+<h3 id="steps-to-reproduce">Steps to reproduce</h3>
+<p>payload.ini</p>
+<pre><code><span class="hljs-section">[__proto__]</span>
+<span class="hljs-attr">polluted</span> = <span class="hljs-string">&quot;polluted&quot;</span></code></pre>
+<p>poc.js:</p>
+<pre><code><span class="hljs-keyword">var</span> fs = <span class="hljs-built_in">require</span>(<span class="hljs-string">&#x27;fs&#x27;</span>)
+<span class="hljs-keyword">var</span> ini = <span class="hljs-built_in">require</span>(<span class="hljs-string">&#x27;ini&#x27;</span>)
+
+<span class="hljs-keyword">var</span> parsed = ini.parse(fs.readFileSync(<span class="hljs-string">&#x27;./payload.ini&#x27;</span>, <span class="hljs-string">&#x27;utf-8&#x27;</span>))
+<span class="hljs-built_in">console</span>.log(parsed)
+<span class="hljs-built_in">console</span>.log(parsed.__proto__)
+<span class="hljs-built_in">console</span>.log(polluted)</code></pre>
+<pre><code>&gt; <span class="hljs-selector-tag">node</span> <span class="hljs-selector-tag">poc</span><span class="hljs-selector-class">.js</span>
+{}
+{ <span class="hljs-attribute">polluted</span>: <span class="hljs-string">&#x27;polluted&#x27;</span> }
+{ <span class="hljs-attribute">polluted</span>: <span class="hljs-string">&#x27;polluted&#x27;</span> }
+<span class="hljs-selector-tag">polluted</span>
+</code></pre>
+</p>
+
+                    <h3>Findings</h3>
+                    <ul>
+                        <li>knex&gt;liftoff&gt;findup-sync&gt;resolve-dir&gt;global-modules&gt;global-prefix&gt;ini </li>
+                        <li>knex-dynamic-connection&gt;knex&gt;liftoff&gt;findup-sync&gt;resolve-dir&gt;global-modules&gt;global-prefix&gt;ini </li>
+                    </ul>
+
+                    <h3>Remediation</h3>
+                    <p class="card-text"><p>Upgrade to version 1.3.6 or later.</p>
+</p>
+                     
+                    <h3>References</h3>
+                    <p class="card-text"><ul>
+<li><a href="https://github.com/npm/ini/commit/56d2805e07ccd94e2ba0984ac9240ff02d44b6f1">Fix Commit</a></li>
+<li><a href="https://github.com/advisories/GHSA-qqgx-2p2h-9c37">GitHub Advisory</a></li>
+</ul>
+</p>
+                     
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-raised mr-2 btn-primary" href="https://npmjs.com/advisories/1589" target="_blank" rel="noopener">More about
+                        this vulnerability</a>
+                    <button type="button" class="btn btn-raised btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
         integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"

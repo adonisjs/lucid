@@ -12,7 +12,7 @@
 import test from 'japa'
 import 'reflect-metadata'
 import { join } from 'path'
-import { Kernel } from '@adonisjs/ace'
+import { Kernel } from '@adonisjs/core/build/standalone'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import Migrate from '../../commands/Migration/Run'
