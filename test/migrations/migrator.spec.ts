@@ -603,8 +603,6 @@ test.group('Migrator', (group) => {
 	})
 
 	test('cannot define batch & step options at the same time', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-
 		const migrator = getMigrator(db, app, {
 			direction: 'down',
 			batch: 1,
@@ -618,8 +616,6 @@ test.group('Migrator', (group) => {
 	})
 
 	test('rollback given number of migration file', async (assert) => {
-		const app = new Application(fs.basePath, {} as any, {} as any, {})
-
 		await fs.add(
 			'database/migrations/users.ts',
 			`
