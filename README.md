@@ -13,7 +13,7 @@
 
 <div align="center">
 
-[![circleci-image]][circleci-url] [![typescript-image]][typescript-url] [![npm-image]][npm-url] [![license-image]][license-url] [![audit-report-image]][audit-report-url]
+[![circleci-image]][circleci-url] [![typescript-image]][typescript-url] [![npm-image]][npm-url] [![license-image]][license-url] [![snyk-report-image]][snyk-report-url]
 
 </div>
 
@@ -49,5 +49,5 @@
 [license-image]: https://img.shields.io/npm/l/@adonisjs/lucid?color=blueviolet&style=for-the-badge
 [license-url]: LICENSE.md "license"
 
-[audit-report-image]: https://img.shields.io/badge/-Audit%20Report-blueviolet?style=for-the-badge
-[audit-report-url]: https://htmlpreview.github.io/?https://github.com/adonisjs/lucid/blob/develop/npm-audit.html "audit-report"
+[snyk-report-image]: https://img.shields.io/snyk/vulnerabilities/github/adonisjs/lucid?style=for-the-badge
+[snyk-report-url]: https://snyk.io/test/github/adonisjs/lucid "Snyk Audit"
