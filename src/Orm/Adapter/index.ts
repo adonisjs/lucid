@@ -9,8 +9,18 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
-import { LucidRow, LucidModel, AdapterContract, ModelAdapterOptions } from '@ioc:Adonis/Lucid/Model'
+import {
+	DatabaseContract,
+	QueryClientContract,
+	TransactionClientContract,
+} from '@ioc:Adonis/Lucid/Database'
+import {
+	LucidRow,
+	LucidModel,
+	AdapterContract,
+	ModelAdapterOptions,
+	ModelQueryBuilderContract,
+} from '@ioc:Adonis/Lucid/Model'
 
 /**
  * Adapter exposes the API to make database queries and constructor
@@ -22,7 +32,10 @@ export class Adapter implements AdapterContract {
 	/**
 	 * Returns the query client based upon the model instance
 	 */
-	public modelConstructorClient(modelConstructor: LucidModel, options?: ModelAdapterOptions) {
+	public modelConstructorClient(
+		modelConstructor: LucidModel,
+		options?: ModelAdapterOptions
+	): QueryClientContract {
 		if (options && options.client) {
 			return options.client
 		}
@@ -35,7 +48,10 @@ export class Adapter implements AdapterContract {
 	/**
 	 * Returns the model query builder instance for a given model
 	 */
-	public query(modelConstructor: LucidModel, options?: ModelAdapterOptions): any {
+	public query(
+		modelConstructor: LucidModel,
+		options?: ModelAdapterOptions
+	): ModelQueryBuilderContract<LucidModel, LucidRow> {
 		const client = this.modelConstructorClient(modelConstructor, options)
 		return client.modelQuery(modelConstructor)
 	}
@@ -43,7 +59,7 @@ export class Adapter implements AdapterContract {
 	/**
 	 * Returns query client for a model instance by inspecting it's options
 	 */
-	public modelClient(instance: LucidRow): any {
+	public modelClient(instance: LucidRow): TransactionClientContract | QueryClientContract {
 		const modelConstructor = (instance.constructor as unknown) as LucidModel
 		return instance.$trx
 			? instance.$trx
@@ -53,7 +69,7 @@ export class Adapter implements AdapterContract {
 	/**
 	 * Perform insert query on a given model instance
 	 */
-	public async insert(instance: LucidRow, attributes: any) {
+	public async insert(instance: LucidRow, attributes: any): Promise<void> {
 		const modelConstructor = (instance.constructor as unknown) as LucidModel
 		const query = instance.$getQueryFor('insert', this.modelClient(instance))
 
@@ -71,14 +87,14 @@ export class Adapter implements AdapterContract {
 	/**
 	 * Perform update query on a given model instance
 	 */
-	public async update(instance: LucidRow, dirty: any) {
+	public async update(instance: LucidRow, dirty: any): Promise<void> {
 		await instance.$getQueryFor('update', this.modelClient(instance)).update(dirty)
 	}
 
 	/**
 	 * Perform delete query on a given model instance
 	 */
-	public async delete(instance: LucidRow) {
+	public async delete(instance: LucidRow): Promise<void> {
 		await instance.$getQueryFor('delete', this.modelClient(instance)).del()
 	}
 }
