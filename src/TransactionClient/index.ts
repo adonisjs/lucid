@@ -163,7 +163,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
 	/**
 	 * Execute raw query on transaction
 	 */
-	public rawQuery(sql: any, bindings?: any): any {
+	public rawQuery(sql: any, bindings?: any): RawQueryBuilder {
 		return new RawQueryBuilder(this.knexClient.raw(sql, bindings), this)
 	}
 
@@ -223,14 +223,14 @@ export class TransactionClient extends EventEmitter implements TransactionClient
 	/**
 	 * Same as [[Transaction.query]] but also selects the table
 	 */
-	public from(table: any): any {
+	public from(table: any): DatabaseQueryBuilderContract {
 		return this.query().from(table)
 	}
 
 	/**
 	 * Same as [[Transaction.insertTable]] but also selects the table
 	 */
-	public table(table: any): any {
+	public table(table: any): InsertQueryBuilderContract {
 		return this.insertQuery().table(table)
 	}
 
@@ -269,14 +269,14 @@ export class TransactionClient extends EventEmitter implements TransactionClient
 	/**
 	 * Get advisory lock on the selected connection
 	 */
-	public getAdvisoryLock(key: string, timeout?: number): any {
+	public getAdvisoryLock(key: string, timeout?: number): Promise<boolean> {
 		return this.dialect.getAdvisoryLock(key, timeout)
 	}
 
 	/**
 	 * Release advisory lock
 	 */
-	public releaseAdvisoryLock(key: string): any {
+	public releaseAdvisoryLock(key: string): Promise<boolean> {
 		return this.dialect.releaseAdvisoryLock(key)
 	}
 }
