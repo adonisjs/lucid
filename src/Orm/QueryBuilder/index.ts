@@ -63,9 +63,9 @@ class ModelScopes {
  * Database query builder exposes the API to construct and run queries for selecting,
  * updating and deleting records.
  */
-export class ModelQueryBuilder<T extends LucidModel = LucidModel>
+export class ModelQueryBuilder<Model extends LucidModel = LucidModel>
 	extends Chainable
-	implements ModelQueryBuilderContract<T> {
+	implements ModelQueryBuilderContract<Model> {
 	/**
 	 * Sideloaded attributes that will be passed to the model instances
 	 */
@@ -128,7 +128,7 @@ export class ModelQueryBuilder<T extends LucidModel = LucidModel>
 
 	constructor(
 		builder: knex.QueryBuilder,
-		public model: T,
+		public model: Model,
 		public client: QueryClientContract,
 		customFn: DBQueryCallback = (userFn) => {
 			return ($builder) => {
@@ -311,7 +311,7 @@ export class ModelQueryBuilder<T extends LucidModel = LucidModel>
 	/**
 	 * Clone the current query builder
 	 */
-	public clone(): ModelQueryBuilder<T> {
+	public clone(): ModelQueryBuilder<Model> {
 		const clonedQuery = new ModelQueryBuilder(this.knexQuery.clone(), this.model, this.client)
 		this.applyQueryFlags(clonedQuery)
 		clonedQuery.sideloaded = Object.assign({}, this.sideloaded)
@@ -552,7 +552,7 @@ export class ModelQueryBuilder<T extends LucidModel = LucidModel>
 	 * Perform update by incrementing value for a given column. Increments
 	 * can be clubbed with `update` as well
 	 */
-	public increment(column: any, counter?: any): ModelQueryBuilderContract<T, number> {
+	public increment(column: any, counter?: any): ModelQueryBuilderContract<Model, number> {
 		this.ensureCanPerformWrites()
 		this.knexQuery.increment(column, counter)
 		return this
@@ -562,7 +562,7 @@ export class ModelQueryBuilder<T extends LucidModel = LucidModel>
 	 * Perform update by decrementing value for a given column. Decrements
 	 * can be clubbed with `update` as well
 	 */
-	public decrement(column: any, counter?: any): ModelQueryBuilderContract<T, number> {
+	public decrement(column: any, counter?: any): ModelQueryBuilderContract<Model, number> {
 		this.ensureCanPerformWrites()
 		this.knexQuery.decrement(column, counter)
 		return this
@@ -571,7 +571,7 @@ export class ModelQueryBuilder<T extends LucidModel = LucidModel>
 	/**
 	 * Perform update
 	 */
-	public update(columns: any): ModelQueryBuilderContract<T, number> {
+	public update(columns: any): ModelQueryBuilderContract<Model, number> {
 		this.ensureCanPerformWrites()
 		this.knexQuery.update(columns)
 		return this
@@ -580,7 +580,7 @@ export class ModelQueryBuilder<T extends LucidModel = LucidModel>
 	/**
 	 * Delete rows under the current query
 	 */
-	public del(): ModelQueryBuilderContract<T, number> {
+	public del(): ModelQueryBuilderContract<Model, number> {
 		this.ensureCanPerformWrites()
 		this.knexQuery.del()
 		return this
@@ -589,7 +589,7 @@ export class ModelQueryBuilder<T extends LucidModel = LucidModel>
 	/**
 	 * Alias for [[del]]
 	 */
-	public delete(): ModelQueryBuilderContract<T, number> {
+	public delete(): ModelQueryBuilderContract<Model, number> {
 		return this.del()
 	}
 

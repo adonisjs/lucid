@@ -140,9 +140,9 @@ export class TransactionClient extends EventEmitter implements TransactionClient
 	 * and `profiler` is passed down to the model, so that it continue
 	 * using the same options
 	 */
-	public modelQuery<T extends LucidModel, Result extends any = T>(
-		model: T
-	): ModelQueryBuilderContract<T, Result> {
+	public modelQuery<Model extends LucidModel, Result extends any = Model>(
+		model: Model
+	): ModelQueryBuilderContract<Model, Result> {
 		return new ModelQueryBuilder(this.knexQuery(), model, this)
 	}
 
@@ -156,9 +156,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
 	/**
 	 * Get a new insert query builder instance
 	 */
-	public insertQuery<ReturnColumns extends any = any>(): InsertQueryBuilderContract<
-		ReturnColumns[]
-	> {
+	public insertQuery<Result extends any = any>(): InsertQueryBuilderContract<Result> {
 		return new InsertQueryBuilder(this.knexQuery(), this)
 	}
 
