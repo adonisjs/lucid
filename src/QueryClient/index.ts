@@ -30,6 +30,12 @@ import { RawQueryBuilder } from '../Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../Database/QueryBuilder/Insert'
 import { ReferenceBuilder } from '../Database/StaticBuilder/Reference'
 import { DatabaseQueryBuilder } from '../Database/QueryBuilder/Database'
+import { ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm'
+import {
+	DatabaseQueryBuilderContract,
+	InsertQueryBuilderContract,
+	RawQueryBuilderContract,
+} from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 /**
  * Query client exposes the API to fetch instance of different query builders
@@ -188,7 +194,7 @@ export class QueryClient implements QueryClientContract {
 	/**
 	 * Returns a query builder instance for a given model.
 	 */
-	public modelQuery(model: any): any {
+	public modelQuery(model: any): ModelQueryBuilderContract<any, any> {
 		return new ModelQueryBuilder(this.knexQuery(), model, this)
 	}
 
@@ -196,21 +202,21 @@ export class QueryClient implements QueryClientContract {
 	 * Returns instance of a query builder for selecting, updating
 	 * or deleting rows
 	 */
-	public query(): any {
+	public query(): DatabaseQueryBuilderContract<any> {
 		return new DatabaseQueryBuilder(this.knexQuery(), this)
 	}
 
 	/**
 	 * Returns instance of a query builder for inserting rows
 	 */
-	public insertQuery(): any {
+	public insertQuery(): InsertQueryBuilderContract {
 		return new InsertQueryBuilder(this.getWriteClient().queryBuilder(), this)
 	}
 
 	/**
 	 * Returns instance of raw query builder
 	 */
-	public rawQuery(sql: any, bindings?: any): any {
+	public rawQuery(sql: any, bindings?: any): RawQueryBuilderContract {
 		return new RawQueryBuilder(this.connection.client!.raw(sql, bindings), this)
 	}
 
