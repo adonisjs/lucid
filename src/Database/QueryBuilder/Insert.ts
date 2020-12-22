@@ -156,21 +156,21 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
 	/**
 	 * Implementation of `catch` for the promise API
 	 */
-	public catch(reject: any): any {
+	public catch(reject: any): Promise<any> {
 		return this.exec().catch(reject)
 	}
 
 	/**
 	 * Implementation of `finally` for the promise API
 	 */
-	public finally(fullfilled: any) {
+	public finally(fullfilled: any): Promise<any> {
 		return this.exec().finally(fullfilled)
 	}
 
 	/**
 	 * Required when Promises are extended
 	 */
-	public get [Symbol.toStringTag]() {
+	public get [Symbol.toStringTag](): string {
 		return this.constructor.name
 	}
 }

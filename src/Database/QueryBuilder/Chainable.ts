@@ -70,7 +70,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
 	/**
 	 * Returns the value pair for the `whereBetween` clause
 	 */
-	private getBetweenPair(value: any[]): any {
+	private getBetweenPair(value: any[]): [any, any] {
 		const [lhs, rhs] = value
 		if (lhs === undefined || rhs === undefined) {
 			throw new Error('Invalid array for whereBetween value')

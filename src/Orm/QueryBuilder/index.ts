@@ -17,6 +17,7 @@ import {
 	ModelObject,
 	ModelAdapterOptions,
 	ModelQueryBuilderContract,
+	LucidRow,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
@@ -146,7 +147,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	/**
 	 * Executes the current query
 	 */
-	private async execQuery() {
+	private async execQuery(): Promise<any[] | LucidRow[]> {
 		const isWriteQuery = ['update', 'del', 'insert'].includes(this.knexQuery['_method'])
 		const queryData = Object.assign(this.getQueryData(), this.customReporterData)
 		const rows = await new QueryRunner(this.client, this.debugQueries, queryData).run(
@@ -183,7 +184,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	 * Ensures that we are not executing `update` or `del` when using read only
 	 * client
 	 */
-	private ensureCanPerformWrites() {
+	private ensureCanPerformWrites(): void {
 		if (this.client && this.client.mode === 'read') {
 			throw new Exception('Updates and deletes cannot be performed in read mode')
 		}
@@ -198,7 +199,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 		operator?: string,
 		value?: any,
 		callback?: any
-	) {
+	): this {
 		let rawMethod: string = 'whereRaw'
 		let existsMethod: string = 'whereExists'
 
@@ -549,7 +550,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	 * Perform update by incrementing value for a given column. Increments
 	 * can be clubbed with `update` as well
 	 */
-	public increment(column: any, counter?: any): any {
+	public increment(column: any, counter?: any): ModelQueryBuilderContract<LucidModel, number> {
 		this.ensureCanPerformWrites()
 		this.knexQuery.increment(column, counter)
 		return this
@@ -559,7 +560,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	 * Perform update by decrementing value for a given column. Decrements
 	 * can be clubbed with `update` as well
 	 */
-	public decrement(column: any, counter?: any): any {
+	public decrement(column: any, counter?: any): ModelQueryBuilderContract<LucidModel, number> {
 		this.ensureCanPerformWrites()
 		this.knexQuery.decrement(column, counter)
 		return this
@@ -568,7 +569,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	/**
 	 * Perform update
 	 */
-	public update(columns: any): any {
+	public update(columns: any): ModelQueryBuilderContract<LucidModel, number> {
 		this.ensureCanPerformWrites()
 		this.knexQuery.update(columns)
 		return this
@@ -577,7 +578,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	/**
 	 * Delete rows under the current query
 	 */
-	public del(): any {
+	public del(): ModelQueryBuilderContract<LucidModel, number> {
 		this.ensureCanPerformWrites()
 		this.knexQuery.del()
 		return this
@@ -586,7 +587,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	/**
 	 * Alias for [[del]]
 	 */
-	public delete(): this {
+	public delete(): ModelQueryBuilderContract<LucidModel, number> {
 		return this.del()
 	}
 
@@ -616,7 +617,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	/**
 	 * Run query inside the given transaction
 	 */
-	public useTransaction(transaction: TransactionClientContract) {
+	public useTransaction(transaction: TransactionClientContract): this {
 		this.knexQuery.transacting(transaction.knexClient)
 		return this
 	}
@@ -643,7 +644,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	/**
 	 * Paginate through rows inside a given table
 	 */
-	public async paginate(page: number, perPage: number = 20) {
+	public async paginate(page: number, perPage: number = 20): Promise<SimplePaginator> {
 		/**
 		 * Cast to number
 		 */
@@ -693,21 +694,21 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	/**
 	 * Implementation of `catch` for the promise API
 	 */
-	public catch(reject: any): any {
+	public catch(reject: any): Promise<any[]> {
 		return this.exec().catch(reject)
 	}
 
 	/**
 	 * Implementation of `finally` for the promise API
 	 */
-	public finally(fullfilled: any) {
+	public finally(fullfilled: any): Promise<any[]> {
 		return this.exec().finally(fullfilled)
 	}
 
 	/**
 	 * Required when Promises are extended
 	 */
-	public get [Symbol.toStringTag]() {
+	public get [Symbol.toStringTag](): string {
 		return this.constructor.name
 	}
 }
