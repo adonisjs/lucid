@@ -21,6 +21,11 @@ import { RawQueryBuilder } from '../Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../Database/QueryBuilder/Insert'
 import { ReferenceBuilder } from '../Database/StaticBuilder/Reference'
 import { DatabaseQueryBuilder } from '../Database/QueryBuilder/Database'
+import { LucidModel, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
+import {
+	DatabaseQueryBuilderContract,
+	InsertQueryBuilderContract,
+} from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 /**
  * Transaction uses a dedicated connection from the connection pool
@@ -135,21 +140,25 @@ export class TransactionClient extends EventEmitter implements TransactionClient
 	 * and `profiler` is passed down to the model, so that it continue
 	 * using the same options
 	 */
-	public modelQuery(model: any): any {
+	public modelQuery<T extends LucidModel, Result extends any = T>(
+		model: T
+	): ModelQueryBuilderContract<T, Result> {
 		return new ModelQueryBuilder(this.knexQuery(), model, this)
 	}
 
 	/**
 	 * Get a new query builder instance
 	 */
-	public query(): any {
+	public query<Result extends any = any>(): DatabaseQueryBuilderContract<Result> {
 		return new DatabaseQueryBuilder(this.knexQuery(), this)
 	}
 
 	/**
 	 * Get a new insert query builder instance
 	 */
-	public insertQuery(): any {
+	public insertQuery<ReturnColumns extends any = any>(): InsertQueryBuilderContract<
+		ReturnColumns[]
+	> {
 		return new InsertQueryBuilder(this.knexQuery(), this)
 	}
 

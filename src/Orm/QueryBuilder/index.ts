@@ -63,7 +63,9 @@ class ModelScopes {
  * Database query builder exposes the API to construct and run queries for selecting,
  * updating and deleting records.
  */
-export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderContract<LucidModel> {
+export class ModelQueryBuilder<T extends LucidModel = LucidModel>
+	extends Chainable
+	implements ModelQueryBuilderContract<T> {
 	/**
 	 * Sideloaded attributes that will be passed to the model instances
 	 */
@@ -126,7 +128,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 
 	constructor(
 		builder: knex.QueryBuilder,
-		public model: LucidModel,
+		public model: T,
 		public client: QueryClientContract,
 		customFn: DBQueryCallback = (userFn) => {
 			return ($builder) => {
@@ -309,7 +311,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	/**
 	 * Clone the current query builder
 	 */
-	public clone(): ModelQueryBuilder {
+	public clone(): ModelQueryBuilder<T> {
 		const clonedQuery = new ModelQueryBuilder(this.knexQuery.clone(), this.model, this.client)
 		this.applyQueryFlags(clonedQuery)
 		clonedQuery.sideloaded = Object.assign({}, this.sideloaded)
@@ -550,7 +552,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	 * Perform update by incrementing value for a given column. Increments
 	 * can be clubbed with `update` as well
 	 */
-	public increment(column: any, counter?: any): ModelQueryBuilderContract<LucidModel, number> {
+	public increment(column: any, counter?: any): ModelQueryBuilderContract<T, number> {
 		this.ensureCanPerformWrites()
 		this.knexQuery.increment(column, counter)
 		return this
@@ -560,7 +562,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	 * Perform update by decrementing value for a given column. Decrements
 	 * can be clubbed with `update` as well
 	 */
-	public decrement(column: any, counter?: any): ModelQueryBuilderContract<LucidModel, number> {
+	public decrement(column: any, counter?: any): ModelQueryBuilderContract<T, number> {
 		this.ensureCanPerformWrites()
 		this.knexQuery.decrement(column, counter)
 		return this
@@ -569,7 +571,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	/**
 	 * Perform update
 	 */
-	public update(columns: any): ModelQueryBuilderContract<LucidModel, number> {
+	public update(columns: any): ModelQueryBuilderContract<T, number> {
 		this.ensureCanPerformWrites()
 		this.knexQuery.update(columns)
 		return this
@@ -578,7 +580,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	/**
 	 * Delete rows under the current query
 	 */
-	public del(): ModelQueryBuilderContract<LucidModel, number> {
+	public del(): ModelQueryBuilderContract<T, number> {
 		this.ensureCanPerformWrites()
 		this.knexQuery.del()
 		return this
@@ -587,7 +589,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 	/**
 	 * Alias for [[del]]
 	 */
-	public delete(): ModelQueryBuilderContract<LucidModel, number> {
+	public delete(): ModelQueryBuilderContract<T, number> {
 		return this.del()
 	}
 
