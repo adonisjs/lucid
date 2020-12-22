@@ -30,7 +30,11 @@ export class BelongsToQueryClient implements BelongsToClientContract<BelongsTo, 
 	/**
 	 * Generate a query builder instance
 	 */
-	public static query(client: QueryClientContract, relation: BelongsTo, rows: OneOrMany<LucidRow>) {
+	public static query(
+		client: QueryClientContract,
+		relation: BelongsTo,
+		rows: OneOrMany<LucidRow>
+	): BelongsToQueryBuilder {
 		const query = new BelongsToQueryBuilder(client.knexQuery(), client, rows, relation)
 
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
@@ -44,7 +48,7 @@ export class BelongsToQueryClient implements BelongsToClientContract<BelongsTo, 
 		client: QueryClientContract,
 		relation: BelongsTo,
 		rows: OneOrMany<LucidRow>
-	) {
+	): BelongsToQueryBuilder {
 		const query = new BelongsToQueryBuilder(client.knexQuery(), client, rows, relation)
 
 		query.isRelatedPreloadQuery = true
@@ -55,7 +59,10 @@ export class BelongsToQueryClient implements BelongsToClientContract<BelongsTo, 
 	/**
 	 * Returns an instance of the subquery
 	 */
-	public static subQuery(client: QueryClientContract, relation: BelongsTo) {
+	public static subQuery(
+		client: QueryClientContract,
+		relation: BelongsTo
+	): BelongsToSubQueryBuilder {
 		const query = new BelongsToSubQueryBuilder(client.knexQuery(), client, relation)
 
 		typeof relation.onQueryHook === 'function' && relation.onQueryHook(query)
@@ -65,14 +72,14 @@ export class BelongsToQueryClient implements BelongsToClientContract<BelongsTo, 
 	/**
 	 * Returns instance of query builder
 	 */
-	public query(): any {
+	public query(): BelongsToQueryBuilder {
 		return BelongsToQueryClient.query(this.client, this.relation, this.parent)
 	}
 
 	/**
 	 * Associate the related model with the parent model
 	 */
-	public async associate(related: LucidRow) {
+	public async associate(related: LucidRow): Promise<void> {
 		await managedTransaction(this.parent.$trx || this.client, async (trx) => {
 			related.$trx = trx
 			await related.save()
@@ -86,7 +93,7 @@ export class BelongsToQueryClient implements BelongsToClientContract<BelongsTo, 
 	/**
 	 * Drop association
 	 */
-	public async dissociate() {
+	public async dissociate(): Promise<void> {
 		this.parent[this.relation.foreignKey] = null
 		await this.parent.save()
 	}
