@@ -74,7 +74,7 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
 	/**
 	 * Define returning columns for the insert query
 	 */
-	public returning(column: any): InsertQueryBuilderContract {
+	public returning(column: any): this {
 		/**
 		 * Do not chain `returning` in sqlite3 to avoid knex warnings
 		 */

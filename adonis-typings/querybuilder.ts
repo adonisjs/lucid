@@ -778,7 +778,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
 		/**
 		 * Define returning columns
 		 */
-		returning: Returning<InsertQueryBuilderContract>
+		returning: Returning<this>
 
 		/**
 		 * Inserting a single record.
