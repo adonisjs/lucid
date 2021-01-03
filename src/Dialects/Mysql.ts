@@ -26,7 +26,7 @@ export class MysqlDialect implements DialectContract {
 	 * The default format for datetime column. The date formats is
 	 * valid for luxon date parsing library
 	 */
-	public readonly dateTimeFormat = 'yyyy-MM-dd HH:mm:ss'
+	public readonly dateTimeFormat = 'yyyy-MM-dd HH:mm:ss.SSS'
 
 	constructor(private client: QueryClientContract) {}
 
