@@ -146,7 +146,7 @@ export async function setup(destroyDb: boolean = true) {
 			table.string('username').unique()
 			table.string('email').unique()
 			table.integer('points').defaultTo(0)
-			table.timestamp('joined_at', { useTz: process.env.DB === 'mssql' })
+			table.timestamp('joined_at', { precision: 3, useTz: process.env.DB === 'mssql' })
 			table.integer('parent_id').nullable()
 			table.timestamp('created_at').defaultTo(db.fn.now())
 			table.timestamp('updated_at').nullable()
