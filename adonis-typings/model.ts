@@ -542,7 +542,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 		merge(value: Partial<ModelAttributes<this>>, allowNonExtraProperties?: boolean): this
 		save(): Promise<this>
 		delete(): Promise<void>
-		refresh(): Promise<this>
+		refresh(options?: ModelAdapterOptions): Promise<this>
 		load: LucidRowPreload<this>
 		preload: LucidRowPreload<this>
 

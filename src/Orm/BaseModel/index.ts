@@ -1888,7 +1888,7 @@ export class BaseModel implements LucidRow {
 	/**
 	 * Reload/Refresh the model instance
 	 */
-	public async refresh() {
+	public async refresh(options?: ModelAdapterOptions) {
 		this.ensureIsntDeleted()
 		const modelConstructor = this.constructor as typeof BaseModel
 		const { table } = modelConstructor
@@ -1908,7 +1908,7 @@ export class BaseModel implements LucidRow {
 		 * This will occur, when some other part of the application removes
 		 * the row
 		 */
-		const freshModelInstance = await modelConstructor.find(this.$primaryKeyValue)
+		const freshModelInstance = await modelConstructor.find(this.$primaryKeyValue, options)
 		if (!freshModelInstance) {
 			throw new Exception(
 				[
