@@ -17,7 +17,7 @@ import MigrationsBase from './Base'
  */
 export default class Status extends MigrationsBase {
 	public static commandName = 'migration:status'
-	public static description = 'Check migrations current status.'
+	public static description = 'Check migrations current status'
 
 	/**
 	 * Define custom connection
