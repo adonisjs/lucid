@@ -425,7 +425,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 		 * Select "*" when no custom selects are defined
 		 */
 		if (!this.columns.length) {
-			this.select(`${this.model.table}.*`)
+			this.select('*')
 		}
 
 		/**
