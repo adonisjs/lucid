@@ -142,6 +142,34 @@ test.group('Base model | boot', (group) => {
 
 		assert.instanceOf(chained, User)
 	})
+	test('ensure refresh works on trx', async (assert) => {
+		class User extends BaseModel {
+			@column({ isPrimary: true })
+			public id: number
+
+			@column()
+			public username: string
+
+			@column()
+			public age: number
+		}
+
+		const user = await User.firstOrCreate({ username: 'virik' })
+
+		const trx = await db.transaction()
+
+		user.useTransaction(trx)
+
+		user.username = 'virik2'
+
+		await user.save()
+
+		await user.refresh()
+
+		await trx.rollback()
+
+		assert.equal(user.username, 'virik2')
+	})
 
 	test('compute table name from model name', async (assert) => {
 		class User extends BaseModel {
