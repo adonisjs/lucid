@@ -2,8 +2,9 @@ import { DateTime } from 'luxon'
 import { BaseModel, HasOne, hasOne, scope, column } from '@ioc:Adonis/Lucid/Orm'
 import Factory from '@ioc:Adonis/Lucid/Factory'
 
-enum ProfileTypes {
-	TWITTER = 'TWITTER',
+const ProfileTypes = {
+	TWITTER: 'TWITTER' as 'TWITTER',
+	FACEBOOK: 'FACEBOOK' as 'FACEBOOK',
 }
 
 class Profile extends BaseModel {
@@ -11,7 +12,7 @@ class Profile extends BaseModel {
 	public userId: string
 	public user: HasOne<typeof User>
 
-	public type: ProfileTypes
+	public type: keyof typeof ProfileTypes
 
 	@column.dateTime()
 	public createdAt?: DateTime
