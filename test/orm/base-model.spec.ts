@@ -142,6 +142,7 @@ test.group('Base model | boot', (group) => {
 
 		assert.instanceOf(chained, User)
 	})
+
 	test('ensure refresh works on trx', async (assert) => {
 		class User extends BaseModel {
 			@column({ isPrimary: true })

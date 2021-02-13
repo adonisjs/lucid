@@ -1912,6 +1912,7 @@ export class BaseModel implements LucidRow {
 		const freshModelInstance = await modelConstructor.find(this.$primaryKeyValue, {
 			client: this.$trx,
 		})
+
 		if (!freshModelInstance) {
 			throw new Exception(
 				[
