@@ -2,6 +2,10 @@ The package has been configured successfully. The database configuration stored 
 
 **Open the `env.ts` file and paste the following code inside the `Env.rules` object.**
 
+```ts
+DB_CONNECTION: Env.schema.string(),
+```
+
 ## Variables for the MYSQL driver
 
 ```ts
