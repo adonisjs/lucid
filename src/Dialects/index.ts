@@ -15,11 +15,11 @@ import { OracleDialect } from './Oracle'
 import { RedshiftDialect } from './Redshift'
 
 export const dialects = {
-	mssql: MssqlDialect,
-	mysql: MysqlDialect,
-	mysql2: MysqlDialect,
-	oracledb: OracleDialect,
-	postgres: PgDialect,
-	redshift: RedshiftDialect,
-	sqlite3: SqliteDialect,
+  mssql: MssqlDialect,
+  mysql: MysqlDialect,
+  mysql2: MysqlDialect,
+  oracledb: OracleDialect,
+  postgres: PgDialect,
+  redshift: RedshiftDialect,
+  sqlite3: SqliteDialect,
 }

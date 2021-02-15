@@ -16,35 +16,35 @@ import { ReferenceBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder
  * Reference builder to create SQL reference values
  */
 export class ReferenceBuilder implements ReferenceBuilderContract {
-	private schema: string
-	private alias: string
+  private schema: string
+  private alias: string
 
-	constructor(private ref: string) {}
+  constructor(private ref: string) {}
 
-	/**
-	 * Define schema
-	 */
-	public withSchema(schema: string): this {
-		this.schema = schema
-		return this
-	}
+  /**
+   * Define schema
+   */
+  public withSchema(schema: string): this {
+    this.schema = schema
+    return this
+  }
 
-	/**
-	 * Define alias
-	 */
-	public as(alias: string): this {
-		this.alias = alias
-		return this
-	}
+  /**
+   * Define alias
+   */
+  public as(alias: string): this {
+    this.alias = alias
+    return this
+  }
 
-	/**
-	 * Converts reference to knex
-	 */
-	public toKnex(client: knex.Client) {
-		const ref = client.ref(this.ref)
-		this.schema && ref.withSchema(this.schema)
-		this.alias && ref.as(this.alias)
+  /**
+   * Converts reference to knex
+   */
+  public toKnex(client: knex.Client) {
+    const ref = client.ref(this.ref)
+    this.schema && ref.withSchema(this.schema)
+    this.alias && ref.as(this.alias)
 
-		return ref
-	}
+    return ref
+  }
 }

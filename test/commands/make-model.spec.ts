@@ -21,41 +21,41 @@ import MakeModel from '../../commands/MakeModel'
 const templatesFs = new Filesystem(join(__dirname, '..', '..', 'templates'))
 
 test.group('MakeModel', (group) => {
-	group.afterEach(async () => {
-		delete process.env.ADONIS_ACE_CWD
-		await fs.cleanup()
-	})
+  group.afterEach(async () => {
+    delete process.env.ADONIS_ACE_CWD
+    await fs.cleanup()
+  })
 
-	test('make a model inside the default directory', async (assert) => {
-		const app = await setupApplication()
+  test('make a model inside the default directory', async (assert) => {
+    const app = await setupApplication()
 
-		const makeModel = new MakeModel(app, new Kernel(app))
-		makeModel.name = 'user'
-		await makeModel.run()
+    const makeModel = new MakeModel(app, new Kernel(app))
+    makeModel.name = 'user'
+    await makeModel.run()
 
-		const userModel = await fs.get('app/Models/User.ts')
-		const schemaTemplate = await templatesFs.get('model.txt')
+    const userModel = await fs.get('app/Models/User.ts')
+    const schemaTemplate = await templatesFs.get('model.txt')
 
-		assert.deepEqual(
-			toNewlineArray(userModel),
-			toNewlineArray(schemaTemplate.replace('{{ filename }}', 'User'))
-		)
-	})
+    assert.deepEqual(
+      toNewlineArray(userModel),
+      toNewlineArray(schemaTemplate.replace('{{ filename }}', 'User'))
+    )
+  })
 
-	test('make a model inside a custom directory', async (assert) => {
-		const app = await setupApplication()
-		app.rcFile.namespaces.models = 'App'
+  test('make a model inside a custom directory', async (assert) => {
+    const app = await setupApplication()
+    app.rcFile.namespaces.models = 'App'
 
-		const makeModel = new MakeModel(app, new Kernel(app))
-		makeModel.name = 'user'
-		await makeModel.run()
+    const makeModel = new MakeModel(app, new Kernel(app))
+    makeModel.name = 'user'
+    await makeModel.run()
 
-		const userModel = await fs.get('app/User.ts')
-		const schemaTemplate = await templatesFs.get('model.txt')
+    const userModel = await fs.get('app/User.ts')
+    const schemaTemplate = await templatesFs.get('model.txt')
 
-		assert.deepEqual(
-			toNewlineArray(userModel),
-			toNewlineArray(schemaTemplate.replace('{{ filename }}', 'User'))
-		)
-	})
+    assert.deepEqual(
+      toNewlineArray(userModel),
+      toNewlineArray(schemaTemplate.replace('{{ filename }}', 'User'))
+    )
+  })
 })

@@ -12,7 +12,7 @@ import { FactoryContextContract } from '@ioc:Adonis/Lucid/Factory'
 import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 
 export class FactoryContext implements FactoryContextContract {
-	public faker = faker
+  public faker = faker
 
-	constructor(public isStubbed: boolean, public $trx: TransactionClientContract | undefined) {}
+  constructor(public isStubbed: boolean, public $trx: TransactionClientContract | undefined) {}
 }

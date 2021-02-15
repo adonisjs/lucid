@@ -13,7 +13,7 @@ import { LucidModel, QueryScope, QueryScopeCallback } from '@ioc:Adonis/Lucid/Mo
  * Helper to mark a function as query scope
  */
 export function scope<Model extends LucidModel, Callback extends QueryScopeCallback<Model>>(
-	callback: Callback
+  callback: Callback
 ): QueryScope<Callback> {
-	return callback as QueryScope<Callback>
+  return callback as QueryScope<Callback>
 }

@@ -1,19 +1,42 @@
-version: 2.1
+version: 2
 orbs:
   aws-ecr: circleci/aws-ecr@4.0.1
 jobs:
-  tests:
+  build_14.15.4:
     docker:
-      - image: bayesimpact/circleci
-    working_directory: /adonis-lucid
+      - image: circleci/node:14.15.4
+    working_directory: ~/app
     steps:
       - checkout
-      - setup_remote_docker
-      - run:
-          name: Run tests
-          command: docker-compose -f docker-compose.yml -f docker-compose-test.yml run --rm test
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            - v1-dependencies-
+      - run: npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+      - run: npm test
+  build_latest:
+    docker:
+      - image: circleci/node:latest
+    working_directory: ~/app
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            - v1-dependencies-
+      - run: npm install
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+      - run: npm test
 workflows:
-  version: 2.1
+  version: 2
   workflow:
     jobs:
-      - tests
+      - build_14.15.4
+      - build_latest

@@ -3,39 +3,39 @@ import { BaseModel, HasOne, hasOne, scope, column } from '@ioc:Adonis/Lucid/Orm'
 import Factory from '@ioc:Adonis/Lucid/Factory'
 
 enum ProfileTypes {
-	TWITTER = 'TWITTER',
+  TWITTER = 'TWITTER',
 }
 
 class Profile extends BaseModel {
-	public id: string
-	public userId: string
-	public user: HasOne<typeof User>
+  public id: string
+  public userId: string
+  public user: HasOne<typeof User>
 
-	public type: ProfileTypes
+  public type: ProfileTypes
 
-	@column.dateTime()
-	public createdAt?: DateTime
+  @column.dateTime()
+  public createdAt?: DateTime
 }
 
 export class User extends BaseModel {
-	public id: string
-	public username: string
+  public id: string
+  public username: string
 
-	@hasOne(() => Profile, {
-		onQuery: (builder) => {
-			if (builder.isRelatedQuery) {
-				builder.preload('user')
-			}
-		},
-	})
-	public profile: HasOne<typeof Profile>
+  @hasOne(() => Profile, {
+    onQuery: (builder) => {
+      if (builder.isRelatedQuery) {
+        builder.preload('user')
+      }
+    },
+  })
+  public profile: HasOne<typeof Profile>
 
-	public static active = scope<typeof User>((builder) => {
-		builder.apply((scopes) => scopes.country('India'))
-	})
-	public static country = scope((builder, _country: string) => {
-		builder.whereIn('', [])
-	})
+  public static active = scope<typeof User>((builder) => {
+    builder.apply((scopes) => scopes.country('India'))
+  })
+  public static country = scope((builder, _country: string) => {
+    builder.whereIn('', [])
+  })
 }
 
 User.query().apply((scopes) => scopes.active().country('India'))
@@ -47,30 +47,30 @@ User.create({ id: '1', username: 'virk' })
 User.create({ id: '1' })
 
 const F = Factory.define(User, ({ faker }) => {
-	return {
-		username: faker.internet.userName(),
-	}
+  return {
+    username: faker.internet.userName(),
+  }
 })
 
 const P = Factory.define(Profile, () => {
-	return {}
+  return {}
 })
 
 const ProfileF = P.state('social', () => {}).build()
 
 const UserF = F.state('active', (user) => {
-	user.username = 'virk'
+  user.username = 'virk'
 })
-	.relation('profile', () => ProfileF)
-	.build()
+  .relation('profile', () => ProfileF)
+  .build()
 
 UserF.with('profile', 1).merge({})
 User.query().withCount('profile', (query) => {
-	query.where('isActive', true).has('user', '>', 1)
+  query.where('isActive', true).has('user', '>', 1)
 })
 
 User.query()
-	.paginate(1, 1)
-	.then((users) => {
-		users.forEach((user) => user.username)
-	})
+  .paginate(1, 1)
+  .then((users) => {
+    users.forEach((user) => user.username)
+  })

@@ -17,30 +17,30 @@ import { RawBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
  * raw queries, you can use the RawQueryBuilder
  */
 export class RawBuilder implements RawBuilderContract {
-	private wrapBefore: string
-	private wrapAfter: string
+  private wrapBefore: string
+  private wrapAfter: string
 
-	constructor(private sql: string, private bindings?: any) {}
+  constructor(private sql: string, private bindings?: any) {}
 
-	/**
-	 * Wrap the query with before/after strings.
-	 */
-	public wrap(before: string, after: string): this {
-		this.wrapAfter = after
-		this.wrapBefore = before
-		return this
-	}
+  /**
+   * Wrap the query with before/after strings.
+   */
+  public wrap(before: string, after: string): this {
+    this.wrapAfter = after
+    this.wrapBefore = before
+    return this
+  }
 
-	/**
-	 * Converts the raw query to knex raw query instance
-	 */
-	public toKnex(client: knex.Client): knex.Raw {
-		const rawQuery = client.raw(this.sql, this.bindings)
+  /**
+   * Converts the raw query to knex raw query instance
+   */
+  public toKnex(client: knex.Client): knex.Raw {
+    const rawQuery = client.raw(this.sql, this.bindings)
 
-		if (this.wrapBefore && this.wrapAfter) {
-			rawQuery.wrap(this.wrapBefore, this.wrapAfter)
-		}
+    if (this.wrapBefore && this.wrapAfter) {
+      rawQuery.wrap(this.wrapBefore, this.wrapAfter)
+    }
 
-		return rawQuery
-	}
+    return rawQuery
+  }
 }

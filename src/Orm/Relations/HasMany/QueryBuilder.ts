@@ -21,134 +21,134 @@ import { BaseQueryBuilder } from '../Base/QueryBuilder'
  * to the current relationship
  */
 export class HasManyQueryBuilder
-	extends BaseQueryBuilder
-	implements HasManyQueryBuilderContract<LucidModel, LucidModel> {
-	protected appliedConstraints: boolean = false
+  extends BaseQueryBuilder
+  implements HasManyQueryBuilderContract<LucidModel, LucidModel> {
+  protected appliedConstraints: boolean = false
 
-	constructor(
-		builder: knex.QueryBuilder,
-		client: QueryClientContract,
-		private parent: LucidRow | LucidRow[],
-		private relation: HasMany
-	) {
-		super(builder, client, relation, (userFn) => {
-			return ($builder) => {
-				const subQuery = new HasManyQueryBuilder($builder, this.client, this.parent, this.relation)
-				subQuery.isChildQuery = true
-				subQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
-				userFn(subQuery)
-			}
-		})
-	}
+  constructor(
+    builder: knex.QueryBuilder,
+    client: QueryClientContract,
+    private parent: LucidRow | LucidRow[],
+    private relation: HasMany
+  ) {
+    super(builder, client, relation, (userFn) => {
+      return ($builder) => {
+        const subQuery = new HasManyQueryBuilder($builder, this.client, this.parent, this.relation)
+        subQuery.isChildQuery = true
+        subQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
+        userFn(subQuery)
+      }
+    })
+  }
 
-	/**
-	 * Profiler data for HasMany relationship
-	 */
-	protected profilerData() {
-		return {
-			type: this.relation.type,
-			model: this.relation.model.name,
-			relatedModel: this.relation.relatedModel().name,
-		}
-	}
+  /**
+   * Profiler data for HasMany relationship
+   */
+  protected profilerData() {
+    return {
+      type: this.relation.type,
+      model: this.relation.model.name,
+      relatedModel: this.relation.relatedModel().name,
+    }
+  }
 
-	/**
-	 * The keys for constructing the join query
-	 */
-	protected getRelationKeys(): string[] {
-		return [this.relation.foreignKey]
-	}
+  /**
+   * The keys for constructing the join query
+   */
+  protected getRelationKeys(): string[] {
+    return [this.relation.foreignKey]
+  }
 
-	/**
-	 * Clones the current query
-	 */
-	public clone() {
-		const clonedQuery = new HasManyQueryBuilder(
-			this.knexQuery.clone(),
-			this.client,
-			this.parent,
-			this.relation
-		)
+  /**
+   * Clones the current query
+   */
+  public clone() {
+    const clonedQuery = new HasManyQueryBuilder(
+      this.knexQuery.clone(),
+      this.client,
+      this.parent,
+      this.relation
+    )
 
-		this.applyQueryFlags(clonedQuery)
-		clonedQuery.appliedConstraints = this.appliedConstraints
-		clonedQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
-		return clonedQuery
-	}
+    this.applyQueryFlags(clonedQuery)
+    clonedQuery.appliedConstraints = this.appliedConstraints
+    clonedQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
+    return clonedQuery
+  }
 
-	/**
-	 * Applies constraint to limit rows to the current relationship
-	 * only.
-	 */
-	protected applyConstraints() {
-		if (this.appliedConstraints) {
-			return
-		}
+  /**
+   * Applies constraint to limit rows to the current relationship
+   * only.
+   */
+  protected applyConstraints() {
+    if (this.appliedConstraints) {
+      return
+    }
 
-		const queryAction = this.queryAction()
-		this.appliedConstraints = true
+    const queryAction = this.queryAction()
+    this.appliedConstraints = true
 
-		/**
-		 * Eager query contraints
-		 */
-		if (Array.isArray(this.parent)) {
-			this.whereIn(
-				this.relation.foreignKey,
-				unique(
-					this.parent.map((model) => {
-						return getValue(model, this.relation.localKey, this.relation, queryAction)
-					})
-				)
-			)
-			return
-		}
+    /**
+     * Eager query contraints
+     */
+    if (Array.isArray(this.parent)) {
+      this.whereIn(
+        this.relation.foreignKey,
+        unique(
+          this.parent.map((model) => {
+            return getValue(model, this.relation.localKey, this.relation, queryAction)
+          })
+        )
+      )
+      return
+    }
 
-		/**
-		 * Query constraints
-		 */
-		const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
-		this.where(this.relation.foreignKey, value)
-	}
+    /**
+     * Query constraints
+     */
+    const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
+    this.where(this.relation.foreignKey, value)
+  }
 
-	/**
-	 * Same as standard model query builder paginate method. But ensures that
-	 * it is not invoked during eagerloading
-	 */
-	public paginate(page: number, perPage: number = 20) {
-		if (this.isRelatedPreloadQuery) {
-			throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
-		}
-		return super.paginate(page, perPage)
-	}
+  /**
+   * Same as standard model query builder paginate method. But ensures that
+   * it is not invoked during eagerloading
+   */
+  public paginate(page: number, perPage: number = 20) {
+    if (this.isRelatedPreloadQuery) {
+      throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
+    }
+    return super.paginate(page, perPage)
+  }
 
-	/**
-	 * Returns the group limit query
-	 */
-	public getGroupLimitQuery() {
-		const { direction, column } = this.groupConstraints.orderBy || {
-			column: this.resolveKey(this.relation.relatedModel().primaryKey),
-			direction: 'desc',
-		}
+  /**
+   * Returns the group limit query
+   */
+  public getGroupLimitQuery() {
+    const { direction, column } = this.groupConstraints.orderBy || {
+      column: this.resolveKey(this.relation.relatedModel().primaryKey),
+      direction: 'desc',
+    }
 
-		const rowName = 'adonis_group_limit_counter'
-		const partitionBy = `PARTITION BY ${this.relation.foreignKeyColumName}`
-		const orderBy = `ORDER BY ${column} ${direction}`
+    const rowName = 'adonis_group_limit_counter'
+    const partitionBy = `PARTITION BY ${this.relation.foreignKeyColumName}`
+    const orderBy = `ORDER BY ${column} ${direction}`
 
-		/**
-		 * Select * when no columns are selected
-		 */
-		if (!this.getSelectedColumns()) {
-			this.select('*')
-		}
+    /**
+     * Select * when no columns are selected
+     */
+    if (!this.getSelectedColumns()) {
+      this.select('*')
+    }
 
-		this.select(this.client.raw(`row_number() over (${partitionBy} ${orderBy}) as ${rowName}`)).as(
-			'adonis_temp'
-		)
+    this.select(this.client.raw(`row_number() over (${partitionBy} ${orderBy}) as ${rowName}`)).as(
+      'adonis_temp'
+    )
 
-		return this.relation
-			.relatedModel()
-			.query()
-			.from(this)
-			.where(rowName, '<=', this.groupConstraints.limit!)
-	}
+    return this.relation
+      .relatedModel()
+      .query()
+      .from(this)
+      .where(rowName, '<=', this.groupConstraints.limit!)
+  }
 }

@@ -9,41 +9,41 @@
 
 import { LucidModel } from '@ioc:Adonis/Lucid/Model'
 import {
-	RelationCallback,
-	FactoryModelContract,
-	FactoryContextContract,
-	FactoryBuilderQueryContract,
+  RelationCallback,
+  FactoryModelContract,
+  FactoryContextContract,
+  FactoryBuilderQueryContract,
 } from '@ioc:Adonis/Lucid/Factory'
 
 /**
  * Base relation to be extended by other factory relations
  */
 export abstract class BaseRelation {
-	protected ctx: FactoryContextContract
+  protected ctx: FactoryContextContract
 
-	constructor(
-		private factory: () => FactoryBuilderQueryContract<FactoryModelContract<LucidModel>>
-	) {}
+  constructor(
+    private factory: () => FactoryBuilderQueryContract<FactoryModelContract<LucidModel>>
+  ) {}
 
-	/**
-	 * Instantiates the relationship factory
-	 */
-	protected compile(callback?: RelationCallback) {
-		const factory = this.factory().query()
-		if (typeof callback === 'function') {
-			callback(factory)
-		}
+  /**
+   * Instantiates the relationship factory
+   */
+  protected compile(callback?: RelationCallback) {
+    const factory = this.factory().query()
+    if (typeof callback === 'function') {
+      callback(factory)
+    }
 
-		factory.useCtx(this.ctx)
-		return factory
-	}
+    factory.useCtx(this.ctx)
+    return factory
+  }
 
-	/**
-	 * Use custom ctx. This must always be called by the factory, otherwise
-	 * `make` and `create` calls will fail.
-	 */
-	public useCtx(ctx: FactoryContextContract): this {
-		this.ctx = ctx
-		return this
-	}
+  /**
+   * Use custom ctx. This must always be called by the factory, otherwise
+   * `make` and `create` calls will fail.
+   */
+  public useCtx(ctx: FactoryContextContract): this {
+    this.ctx = ctx
+    return this
+  }
 }

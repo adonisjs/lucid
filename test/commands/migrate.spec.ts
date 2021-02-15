@@ -23,23 +23,23 @@ let db: ReturnType<typeof getDb>
 let app: ApplicationContract
 
 test.group('Migrate', (group) => {
-	group.beforeEach(async () => {
-		app = await setupApplication()
-		db = getDb(app)
-		app.container.bind('Adonis/Lucid/Database', () => db)
-		await setup()
-	})
+  group.beforeEach(async () => {
+    app = await setupApplication()
+    db = getDb(app)
+    app.container.bind('Adonis/Lucid/Database', () => db)
+    await setup()
+  })
 
-	group.afterEach(async () => {
-		await cleanup()
-		await cleanup(['adonis_schema', 'schema_users', 'schema_accounts'])
-		await fs.cleanup()
-	})
+  group.afterEach(async () => {
+    await cleanup()
+    await cleanup(['adonis_schema', 'schema_users', 'schema_accounts'])
+    await fs.cleanup()
+  })
 
-	test('run migrations from default directory', async (assert) => {
-		await fs.add(
-			'database/migrations/users.ts',
-			`
+  test('run migrations from default directory', async (assert) => {
+    await fs.add(
+      'database/migrations/users.ts',
+      `
       import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
@@ -49,45 +49,45 @@ test.group('Migrate', (group) => {
         }
       }
     `
-		)
+    )
 
-		const migrate = new Migrate(app, new Kernel(app))
-		await migrate.run()
+    const migrate = new Migrate(app, new Kernel(app))
+    await migrate.run()
 
-		/**
-		 * Migrate command closes the db connection. So we need to re-instantiate
-		 * it
-		 */
-		db = getDb(app)
+    /**
+     * Migrate command closes the db connection. So we need to re-instantiate
+     * it
+     */
+    db = getDb(app)
 
-		const migrated = await db.connection().from('adonis_schema').select('*')
-		const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const migrated = await db.connection().from('adonis_schema').select('*')
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
 
-		assert.lengthOf(migrated, 1)
-		assert.isTrue(hasUsersTable)
-		assert.equal(migrated[0].name, 'database/migrations/users')
-		assert.equal(migrated[0].batch, 1)
-	})
+    assert.lengthOf(migrated, 1)
+    assert.isTrue(hasUsersTable)
+    assert.equal(migrated[0].name, 'database/migrations/users')
+    assert.equal(migrated[0].batch, 1)
+  })
 
-	test('skip migrations when already up to date', async (assert) => {
-		await fs.fsExtra.ensureDir(join(fs.basePath, 'database/migrations'))
+  test('skip migrations when already up to date', async (assert) => {
+    await fs.fsExtra.ensureDir(join(fs.basePath, 'database/migrations'))
 
-		const migrate = new Migrate(app, new Kernel(app))
-		await migrate.run()
+    const migrate = new Migrate(app, new Kernel(app))
+    await migrate.run()
 
-		/**
-		 * Migrate command closes the db connection. So we need to re-instantiate
-		 * it
-		 */
-		db = getDb(app)
-		const migrated = await db.connection().from('adonis_schema').select('*')
-		assert.lengthOf(migrated, 0)
-	})
+    /**
+     * Migrate command closes the db connection. So we need to re-instantiate
+     * it
+     */
+    db = getDb(app)
+    const migrated = await db.connection().from('adonis_schema').select('*')
+    assert.lengthOf(migrated, 0)
+  })
 
-	test('print sql queries in dryRun', async (assert) => {
-		await fs.add(
-			'database/migrations/users.ts',
-			`
+  test('print sql queries in dryRun', async (assert) => {
+    await fs.add(
+      'database/migrations/users.ts',
+      `
       import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
@@ -97,29 +97,29 @@ test.group('Migrate', (group) => {
         }
       }
     `
-		)
+    )
 
-		const migrate = new Migrate(app, new Kernel(app))
-		migrate.dryRun = true
+    const migrate = new Migrate(app, new Kernel(app))
+    migrate.dryRun = true
 
-		await migrate.run()
+    await migrate.run()
 
-		/**
-		 * Migrate command closes the db connection. So we need to re-instantiate
-		 * it
-		 */
-		db = getDb(app)
-		const migrated = await db.connection().from('adonis_schema').select('*')
-		assert.lengthOf(migrated, 0)
-	})
+    /**
+     * Migrate command closes the db connection. So we need to re-instantiate
+     * it
+     */
+    db = getDb(app)
+    const migrated = await db.connection().from('adonis_schema').select('*')
+    assert.lengthOf(migrated, 0)
+  })
 
-	test('prompt during migrations in production without force flag', async (assert) => {
-		assert.plan(1)
-		app.nodeEnvironment = 'production'
+  test('prompt during migrations in production without force flag', async (assert) => {
+    assert.plan(1)
+    app.nodeEnvironment = 'production'
 
-		await fs.add(
-			'database/migrations/users.ts',
-			`
+    await fs.add(
+      'database/migrations/users.ts',
+      `
       import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
@@ -129,28 +129,28 @@ test.group('Migrate', (group) => {
         }
       }
     `
-		)
+    )
 
-		const migrate = new Migrate(app, new Kernel(app))
+    const migrate = new Migrate(app, new Kernel(app))
 
-		migrate.prompt.on('prompt', (prompt) => {
-			assert.equal(
-				prompt.message,
-				'You are in production environment. Want to continue running migrations?'
-			)
-			prompt.accept()
-		})
+    migrate.prompt.on('prompt', (prompt) => {
+      assert.equal(
+        prompt.message,
+        'You are in production environment. Want to continue running migrations?'
+      )
+      prompt.accept()
+    })
 
-		await migrate.run()
-		delete process.env.NODE_ENV
-	})
+    await migrate.run()
+    delete process.env.NODE_ENV
+  })
 
-	test('do not prompt during migration when force flag is defined', async () => {
-		app.nodeEnvironment = 'production'
+  test('do not prompt during migration when force flag is defined', async () => {
+    app.nodeEnvironment = 'production'
 
-		await fs.add(
-			'database/migrations/users.ts',
-			`
+    await fs.add(
+      'database/migrations/users.ts',
+      `
       import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
@@ -160,67 +160,67 @@ test.group('Migrate', (group) => {
         }
       }
     `
-		)
+    )
 
-		const migrate = new Migrate(app, new Kernel(app))
-		migrate.force = true
-		migrate.prompt.on('prompt', () => {
-			throw new Error('Never expected to be here')
-		})
+    const migrate = new Migrate(app, new Kernel(app))
+    migrate.force = true
+    migrate.prompt.on('prompt', () => {
+      throw new Error('Never expected to be here')
+    })
 
-		await migrate.run()
-		delete process.env.NODE_ENV
-	})
+    await migrate.run()
+    delete process.env.NODE_ENV
+  })
 
-	test('prompt during rollback in production without force flag', async (assert) => {
-		assert.plan(1)
-		app.nodeEnvironment = 'production'
+  test('prompt during rollback in production without force flag', async (assert) => {
+    assert.plan(1)
+    app.nodeEnvironment = 'production'
 
-		await fs.add(
-			'database/migrations/users.ts',
-			`
+    await fs.add(
+      'database/migrations/users.ts',
+      `
       import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async down () {
         }
       }
     `
-		)
+    )
 
-		const rollback = new Rollback(app, new Kernel(app))
-		rollback.prompt.on('prompt', (prompt) => {
-			assert.equal(
-				prompt.message,
-				'You are in production environment. Want to continue running migrations?'
-			)
-			prompt.accept()
-		})
+    const rollback = new Rollback(app, new Kernel(app))
+    rollback.prompt.on('prompt', (prompt) => {
+      assert.equal(
+        prompt.message,
+        'You are in production environment. Want to continue running migrations?'
+      )
+      prompt.accept()
+    })
 
-		await rollback.run()
-		delete process.env.NODE_ENV
-	})
+    await rollback.run()
+    delete process.env.NODE_ENV
+  })
 
-	test('do not prompt during rollback in production when force flag is defined', async () => {
-		app.nodeEnvironment = 'production'
+  test('do not prompt during rollback in production when force flag is defined', async () => {
+    app.nodeEnvironment = 'production'
 
-		await fs.add(
-			'database/migrations/users.ts',
-			`
+    await fs.add(
+      'database/migrations/users.ts',
+      `
       import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async down () {
         }
       }
     `
-		)
+    )
 
-		const rollback = new Rollback(app, new Kernel(app))
-		rollback.force = true
-		rollback.prompt.on('prompt', () => {
-			throw new Error('Never expected to be here')
-		})
+    const rollback = new Rollback(app, new Kernel(app))
+    rollback.force = true
+    rollback.prompt.on('prompt', () => {
+      throw new Error('Never expected to be here')
+    })
 
-		await rollback.run()
-		delete process.env.NODE_ENV
-	})
+    await rollback.run()
+    delete process.env.NODE_ENV
+  })
 })

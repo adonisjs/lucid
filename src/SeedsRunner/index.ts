@@ -18,67 +18,67 @@ import { SeedersSource } from './SeedersSource'
  * in bulk
  */
 export class SeedsRunner {
-	private client = this.db.connection(this.connectionName || this.db.primaryConnectionName)
-	private config = this.db.getRawConnection(this.client.connectionName)!.config
+  private client = this.db.connection(this.connectionName || this.db.primaryConnectionName)
+  private config = this.db.getRawConnection(this.client.connectionName)!.config
 
-	constructor(
-		private db: DatabaseContract,
-		private app: ApplicationContract,
-		private connectionName?: string
-	) {}
+  constructor(
+    private db: DatabaseContract,
+    private app: ApplicationContract,
+    private connectionName?: string
+  ) {}
 
-	/**
-	 * Returns the seeder source by ensuring value is a class constructor
-	 */
-	private getSeederSource(file: FileNode<unknown>): SeederConstructorContract {
-		const source = file.getSource()
-		if (typeof source === 'function') {
-			return source as SeederConstructorContract
-		}
+  /**
+   * Returns the seeder source by ensuring value is a class constructor
+   */
+  private getSeederSource(file: FileNode<unknown>): SeederConstructorContract {
+    const source = file.getSource()
+    if (typeof source === 'function') {
+      return source as SeederConstructorContract
+    }
 
-		throw new Error(`Invalid schema class exported by "${file.name}"`)
-	}
+    throw new Error(`Invalid schema class exported by "${file.name}"`)
+  }
 
-	/**
-	 * Returns an array of seeders
-	 */
-	public async getList() {
-		return new SeedersSource(this.config, this.app).getSeeders()
-	}
+  /**
+   * Returns an array of seeders
+   */
+  public async getList() {
+    return new SeedersSource(this.config, this.app).getSeeders()
+  }
 
-	/**
-	 * Executes the seeder
-	 */
-	public async run(file: FileNode<unknown>): Promise<SeederFileNode> {
-		const Source = this.getSeederSource(file)
+  /**
+   * Executes the seeder
+   */
+  public async run(file: FileNode<unknown>): Promise<SeederFileNode> {
+    const Source = this.getSeederSource(file)
 
-		const seeder: SeederFileNode = {
-			status: 'pending',
-			file: file,
-		}
+    const seeder: SeederFileNode = {
+      status: 'pending',
+      file: file,
+    }
 
-		/**
-		 * Ignore when running in non-development environment and seeder is development
-		 * only
-		 */
-		if (Source.developmentOnly && !this.app.inDev) {
-			seeder.status = 'ignored'
-			return seeder
-		}
+    /**
+     * Ignore when running in non-development environment and seeder is development
+     * only
+     */
+    if (Source.developmentOnly && !this.app.inDev) {
+      seeder.status = 'ignored'
+      return seeder
+    }
 
-		try {
-			const seederInstance = new Source(this.client)
-			if (typeof seederInstance.run !== 'function') {
-				throw new Error(`Missing method "run" on "${seeder.file.name}" seeder`)
-			}
+    try {
+      const seederInstance = new Source(this.client)
+      if (typeof seederInstance.run !== 'function') {
+        throw new Error(`Missing method "run" on "${seeder.file.name}" seeder`)
+      }
 
-			await seederInstance.run()
-			seeder.status = 'completed'
-		} catch (error) {
-			seeder.status = 'failed'
-			seeder.error = error
-		}
+      await seederInstance.run()
+      seeder.status = 'completed'
+    } catch (error) {
+      seeder.status = 'failed'
+      seeder.error = error
+    }
 
-		return seeder
-	}
+    return seeder
+  }
 }

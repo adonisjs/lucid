@@ -30,7 +30,7 @@ export const appKey: string = 'alongrandomsecretkey'
 |
 */
 export const http = {
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Allow method spoofing
 	|--------------------------------------------------------------------------
@@ -41,16 +41,16 @@ export const http = {
 	| so on.
 	|
 	*/
-	allowMethodSpoofing: false,
+  allowMethodSpoofing: false,
 
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Subdomain offset
 	|--------------------------------------------------------------------------
 	*/
-	subdomainOffset: 2,
+  subdomainOffset: 2,
 
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Request Ids
 	|--------------------------------------------------------------------------
@@ -59,9 +59,9 @@ export const http = {
 	| HTTP request and set it as `x-request-id` header.
 	|
 	*/
-	generateRequestId: false,
+  generateRequestId: false,
 
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Trusting proxy servers
 	|--------------------------------------------------------------------------
@@ -70,9 +70,9 @@ export const http = {
 	| headers.
 	|
 	*/
-	trustProxy: () => true,
+  trustProxy: () => true,
 
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Generating Etag
 	|--------------------------------------------------------------------------
@@ -80,30 +80,30 @@ export const http = {
 	| Whether or not to generate an etag for every response.
 	|
 	*/
-	etag: false,
+  etag: false,
 
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| JSONP Callback
 	|--------------------------------------------------------------------------
 	*/
-	jsonpCallbackName: 'callback',
+  jsonpCallbackName: 'callback',
 
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Cookie settings
 	|--------------------------------------------------------------------------
 	*/
-	cookie: {
-		domain: '',
-		path: '/',
-		maxAge: '2h',
-		httpOnly: true,
-		secure: false,
-		sameSite: false,
-	},
+  cookie: {
+    domain: '',
+    path: '/',
+    maxAge: '2h',
+    httpOnly: true,
+    secure: false,
+    sameSite: false,
+  },
 
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Force content negotiation to JSON
 	|--------------------------------------------------------------------------
@@ -119,7 +119,7 @@ export const http = {
 	| to set the header explicitly.
 	|
 	*/
-	forceContentNegotiationToJSON: true,
+  forceContentNegotiationToJSON: true,
 }
 
 /*
@@ -128,7 +128,7 @@ export const http = {
 |--------------------------------------------------------------------------
 */
 export const logger = {
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Application name
 	|--------------------------------------------------------------------------
@@ -140,9 +140,9 @@ export const logger = {
 	| reading the `name` property from the `package.json` file.
 	|
 	*/
-	name: 'AdonisJS',
+  name: 'AdonisJS',
 
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Toggle logger
 	|--------------------------------------------------------------------------
@@ -150,9 +150,9 @@ export const logger = {
 	| Enable or disable logger application wide
 	|
 	*/
-	enabled: true,
+  enabled: true,
 
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Logging level
 	|--------------------------------------------------------------------------
@@ -162,9 +162,9 @@ export const logger = {
 	| at deployment level and not code level.
 	|
 	*/
-	level: 'info',
+  level: 'info',
 
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Pretty print
 	|--------------------------------------------------------------------------
@@ -173,7 +173,7 @@ export const logger = {
 	| can have huge impact on performance.
 	|
 	*/
-	prettyPrint: false,
+  prettyPrint: false,
 }
 
 /*
@@ -182,7 +182,7 @@ export const logger = {
 |--------------------------------------------------------------------------
 */
 export const profiler = {
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Toggle profiler
 	|--------------------------------------------------------------------------
@@ -190,9 +190,9 @@ export const profiler = {
 	| Enable or disable profiler
 	|
 	*/
-	enabled: true,
+  enabled: true,
 
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Blacklist actions/row labels
 	|--------------------------------------------------------------------------
@@ -201,9 +201,9 @@ export const profiler = {
 	| getting profiled.
 	|
 	*/
-	blacklist: [],
+  blacklist: [],
 
-	/*
+  /*
 	|--------------------------------------------------------------------------
 	| Whitelist actions/row labels
 	|--------------------------------------------------------------------------
@@ -212,5 +212,5 @@ export const profiler = {
 	| the profiler. When whitelist is defined, then `blacklist` is ignored.
 	|
 	*/
-	whitelist: [],
+  whitelist: [],
 }

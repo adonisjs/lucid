@@ -19,75 +19,75 @@ import * as decorators from '../src/Orm/Decorators'
 import { setupApplication, fs } from '../test-helpers'
 
 test.group('Database Provider', (group) => {
-	group.afterEach(async () => {
-		await fs.cleanup()
-	})
+  group.afterEach(async () => {
+    await fs.cleanup()
+  })
 
-	test('register database provider', async (assert) => {
-		const app = await setupApplication(
-			{
-				connection: 'sqlite',
-				connections: {
-					sqlite: {},
-				},
-			},
-			['../../providers/DatabaseProvider']
-		)
+  test('register database provider', async (assert) => {
+    const app = await setupApplication(
+      {
+        connection: 'sqlite',
+        connections: {
+          sqlite: {},
+        },
+      },
+      ['../../providers/DatabaseProvider']
+    )
 
-		assert.instanceOf(app.container.use('Adonis/Lucid/Database'), Database)
-		assert.deepEqual(app.container.use('Adonis/Lucid/Orm'), { BaseModel, scope, ...decorators })
-		assert.isTrue(app.container.hasBinding('Adonis/Lucid/Schema'))
-		assert.instanceOf(app.container.use('Adonis/Lucid/Factory'), FactoryManager)
-		assert.deepEqual(app.container.use('Adonis/Lucid/Seeder'), BaseSeeder)
-	})
+    assert.instanceOf(app.container.use('Adonis/Lucid/Database'), Database)
+    assert.deepEqual(app.container.use('Adonis/Lucid/Orm'), { BaseModel, scope, ...decorators })
+    assert.isTrue(app.container.hasBinding('Adonis/Lucid/Schema'))
+    assert.instanceOf(app.container.use('Adonis/Lucid/Factory'), FactoryManager)
+    assert.deepEqual(app.container.use('Adonis/Lucid/Seeder'), BaseSeeder)
+  })
 
-	test('register health checker', async (assert) => {
-		const app = await setupApplication(
-			{
-				connection: 'sqlite',
-				connections: {
-					sqlite: {
-						healthCheck: true,
-					},
-				},
-			},
-			['../../providers/DatabaseProvider']
-		)
+  test('register health checker', async (assert) => {
+    const app = await setupApplication(
+      {
+        connection: 'sqlite',
+        connections: {
+          sqlite: {
+            healthCheck: true,
+          },
+        },
+      },
+      ['../../providers/DatabaseProvider']
+    )
 
-		const HealthCheck = app.container.use('Adonis/Core/HealthCheck')
-		assert.equal(HealthCheck['healthCheckers']['lucid'], 'Adonis/Lucid/Database')
-	})
+    const HealthCheck = app.container.use('Adonis/Core/HealthCheck')
+    assert.equal(HealthCheck['healthCheckers']['lucid'], 'Adonis/Lucid/Database')
+  })
 
-	test('register validator rules', async (assert) => {
-		const app = await setupApplication(
-			{
-				connection: 'sqlite',
-				connections: {
-					sqlite: {},
-				},
-			},
-			['../../providers/DatabaseProvider']
-		)
+  test('register validator rules', async (assert) => {
+    const app = await setupApplication(
+      {
+        connection: 'sqlite',
+        connections: {
+          sqlite: {},
+        },
+      },
+      ['../../providers/DatabaseProvider']
+    )
 
-		const Validator = app.container.use('Adonis/Core/Validator')
-		assert.property(Validator['rules'], 'unique')
-		assert.property(Validator['rules'], 'exists')
-	})
+    const Validator = app.container.use('Adonis/Core/Validator')
+    assert.property(Validator['rules'], 'unique')
+    assert.property(Validator['rules'], 'exists')
+  })
 
-	test('register repl bindings in repl environment', async (assert) => {
-		const app = await setupApplication(
-			{
-				connection: 'sqlite',
-				connections: {
-					sqlite: {},
-				},
-			},
-			['../../providers/DatabaseProvider'],
-			'repl'
-		)
+  test('register repl bindings in repl environment', async (assert) => {
+    const app = await setupApplication(
+      {
+        connection: 'sqlite',
+        connections: {
+          sqlite: {},
+        },
+      },
+      ['../../providers/DatabaseProvider'],
+      'repl'
+    )
 
-		const Repl = app.container.use('Adonis/Addons/Repl')
-		assert.property(Repl['customMethods'], 'loadModels')
-		assert.property(Repl['customMethods'], 'loadDb')
-	})
+    const Repl = app.container.use('Adonis/Addons/Repl')
+    assert.property(Repl['customMethods'], 'loadModels')
+    assert.property(Repl['customMethods'], 'loadDb')
+  })
 })
