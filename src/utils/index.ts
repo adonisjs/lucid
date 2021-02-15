@@ -209,25 +209,25 @@ export function sourceFiles(
   fromLocation: string,
   directory: string
 ): Promise<{ directory: string; files: FileNode<unknown>[] }> {
-	return new Promise((resolve, reject) => {
-		const path = resolveDir(fromLocation, directory)
-		const files = fsReadAll(path)
-		try {
-			resolve({
-				directory,
-				files: files.sort().map((file: string) => {
-					return {
-						filename: file,
-						absPath: join(path, file),
-						name: join(directory, file.replace(RegExp(`${extname(file)}$`), '')),
-						getSource() {
-							return esmRequire(this.absPath)
-						},
-					}
-				}),
-			})
-		} catch (error) {
-			reject(error)
-		}
-	})
+  return new Promise((resolve, reject) => {
+    const path = resolveDir(fromLocation, directory)
+    const files = fsReadAll(path)
+    try {
+      resolve({
+        directory,
+        files: files.sort().map((file: string) => {
+          return {
+            filename: file,
+            absPath: join(path, file),
+            name: join(directory, file.replace(RegExp(`${extname(file)}$`), '')),
+            getSource() {
+              return esmRequire(this.absPath)
+            },
+          }
+        }),
+      })
+    } catch (error) {
+      reject(error)
+    }
+  })
 }

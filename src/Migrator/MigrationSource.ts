@@ -20,21 +20,21 @@ import { sourceFiles } from '../utils'
 export class MigrationSource {
   constructor(private config: ConnectionConfig, private app: ApplicationContract) {}
 
-	/**
-	 * Returns an array of files inside a given directory. Relative
-	 * paths are resolved from the project root
-	 */
-	private async getDirectoryFiles(directoryPath: string): Promise<FileNode<unknown>[]> {
-		let { files } = await sourceFiles(this.app.appRoot, directoryPath)
+  /**
+   * Returns an array of files inside a given directory. Relative
+   * paths are resolved from the project root
+   */
+  private async getDirectoryFiles(directoryPath: string): Promise<FileNode<unknown>[]> {
+    let { files } = await sourceFiles(this.app.appRoot, directoryPath)
 
-		if (this.config.migrations?.naturalSort) {
-			files = files.sort((a, b) =>
-				a.filename!.localeCompare(b.filename!, undefined, { numeric: true, sensitivity: 'base' })
-			)
-		}
+    if (this.config.migrations?.naturalSort) {
+      files = files.sort((a, b) =>
+        a.filename!.localeCompare(b.filename!, undefined, { numeric: true, sensitivity: 'base' })
+      )
+    }
 
-		return files
-	}
+    return files
+  }
 
   /**
    * Returns an array of migrations paths for a given connection. If paths

@@ -923,59 +923,59 @@ test.group('Migrator', (group) => {
         }
       }
     `
-		)
+    )
 
-		const migrator = getMigrator(db, app, {
-			direction: 'up',
-			connectionName: 'primary',
-		})
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+    })
 
-		try {
-			await migrator.run()
-		} catch (error) {
-			assert.exists(error)
-		}
+    try {
+      await migrator.run()
+    } catch (error) {
+      assert.exists(error)
+    }
 
-		const migrated = await db.connection().from('adonis_schema').select('*')
-		const hasUsersTable = await db.connection().schema.hasTable('schema_users')
-		const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
-		const migratedFiles = Object.keys(migrator.migratedFiles).map((file) => {
-			return {
-				status: migrator.migratedFiles[file].status,
-				file: file,
-				queries: migrator.migratedFiles[file].queries,
-			}
-		})
+    const migrated = await db.connection().from('adonis_schema').select('*')
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+    const migratedFiles = Object.keys(migrator.migratedFiles).map((file) => {
+      return {
+        status: migrator.migratedFiles[file].status,
+        file: file,
+        queries: migrator.migratedFiles[file].queries,
+      }
+    })
 
-		assert.lengthOf(migrated, 0)
-		assert.isFalse(hasUsersTable, 'Has users table')
-		assert.isFalse(hasAccountsTable, 'Has accounts table')
-		assert.deepEqual(migratedFiles, [
-			{
-				status: 'error',
-				file: 'database/migrations/accounts',
-				queries: [],
-			},
-			{
-				status: 'pending',
-				file: 'database/migrations/users',
-				queries: [],
-			},
-		])
+    assert.lengthOf(migrated, 0)
+    assert.isFalse(hasUsersTable, 'Has users table')
+    assert.isFalse(hasAccountsTable, 'Has accounts table')
+    assert.deepEqual(migratedFiles, [
+      {
+        status: 'error',
+        file: 'database/migrations/accounts',
+        queries: [],
+      },
+      {
+        status: 'pending',
+        file: 'database/migrations/users',
+        queries: [],
+      },
+    ])
 
-		assert.equal(migrator.status, 'error')
-	})
+    assert.equal(migrator.status, 'error')
+  })
 
-	test('use a natural sort to order files when configured', async (assert) => {
-		const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
+  test('use a natural sort to order files when configured', async (assert) => {
+    const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
 
-		db.getRawConnection('primary')!.config.migrations = {
-			naturalSort: true,
-		}
+    db.getRawConnection('primary')!.config.migrations = {
+      naturalSort: true,
+    }
 
-		await fs.add(
-			'database/migrations/12_users.ts',
-			`
+    await fs.add(
+      'database/migrations/12_users.ts',
+      `
       import { Schema } from '../../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
@@ -988,11 +988,11 @@ test.group('Migrator', (group) => {
         }
       }
     `
-		)
+    )
 
-		await fs.add(
-			'database/migrations/1_accounts.ts',
-			`
+    await fs.add(
+      'database/migrations/1_accounts.ts',
+      `
       import { Schema } from '../../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
@@ -1005,29 +1005,29 @@ test.group('Migrator', (group) => {
         }
       }
     `
-		)
+    )
 
-		const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
-		await migrator.run()
-		const files = await migrator.getList()
+    const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    await migrator.run()
+    const files = await migrator.getList()
 
-		db.getRawConnection('primary')!.config = originalConfig
+    db.getRawConnection('primary')!.config = originalConfig
 
-		assert.lengthOf(files, 2)
-		assert.equal(files[0].name, `database${sep}migrations${sep}1_accounts`)
-		assert.equal(files[1].name, `database${sep}migrations${sep}12_users`)
-	})
+    assert.lengthOf(files, 2)
+    assert.equal(files[0].name, `database${sep}migrations${sep}1_accounts`)
+    assert.equal(files[1].name, `database${sep}migrations${sep}12_users`)
+  })
 
-	test('use a natural sort to order nested files when configured', async (assert) => {
-		const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
+  test('use a natural sort to order nested files when configured', async (assert) => {
+    const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
 
-		db.getRawConnection('primary')!.config.migrations = {
-			naturalSort: true,
-		}
+    db.getRawConnection('primary')!.config.migrations = {
+      naturalSort: true,
+    }
 
-		await fs.add(
-			'database/migrations/1/12_users.ts',
-			`
+    await fs.add(
+      'database/migrations/1/12_users.ts',
+      `
       import { Schema } from '../../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
@@ -1040,11 +1040,11 @@ test.group('Migrator', (group) => {
         }
       }
     `
-		)
+    )
 
-		await fs.add(
-			'database/migrations/12/1_accounts.ts',
-			`
+    await fs.add(
+      'database/migrations/12/1_accounts.ts',
+      `
       import { Schema } from '../../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
@@ -1057,30 +1057,30 @@ test.group('Migrator', (group) => {
         }
       }
     `
-		)
+    )
 
-		const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
-		await migrator.run()
-		const files = await migrator.getList()
+    const migrator = getMigrator(db, app, { direction: 'up', connectionName: 'primary' })
+    await migrator.run()
+    const files = await migrator.getList()
 
-		db.getRawConnection('primary')!.config = originalConfig
+    db.getRawConnection('primary')!.config = originalConfig
 
-		assert.lengthOf(files, 2)
-		assert.equal(files[0].name, `database${sep}migrations${sep}1${sep}12_users`)
-		assert.equal(files[1].name, `database${sep}migrations${sep}12${sep}1_accounts`)
-	})
+    assert.lengthOf(files, 2)
+    assert.equal(files[0].name, `database${sep}migrations${sep}1${sep}12_users`)
+    assert.equal(files[1].name, `database${sep}migrations${sep}12${sep}1_accounts`)
+  })
 
-	test('raise exception when rollbacks in production are disabled', async (assert) => {
-		app.nodeEnvironment = 'production'
-		const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
+  test('raise exception when rollbacks in production are disabled', async (assert) => {
+    app.nodeEnvironment = 'production'
+    const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
 
-		db.getRawConnection('primary')!.config.migrations = {
-			disableRollbacksInProduction: true,
-		}
+    db.getRawConnection('primary')!.config.migrations = {
+      disableRollbacksInProduction: true,
+    }
 
-		await fs.add(
-			'database/migrations/users.ts',
-			`
+    await fs.add(
+      'database/migrations/users.ts',
+      `
       import { Schema } from '../../../../src/Schema'
       module.exports = class User extends Schema {
         public async up () {
