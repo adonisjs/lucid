@@ -21,10 +21,10 @@ export default class DatabaseServiceProvider {
 	 */
 	private registerDatabase() {
 		this.app.container.singleton('Adonis/Lucid/Database', () => {
-			const config = this.app.container.use('Adonis/Core/Config').get('database', {})
-			const Logger = this.app.container.use('Adonis/Core/Logger')
-			const Profiler = this.app.container.use('Adonis/Core/Profiler')
-			const Emitter = this.app.container.use('Adonis/Core/Event')
+			const config = this.app.container.resolveBinding('Adonis/Core/Config').get('database', {})
+			const Logger = this.app.container.resolveBinding('Adonis/Core/Logger')
+			const Profiler = this.app.container.resolveBinding('Adonis/Core/Profiler')
+			const Emitter = this.app.container.resolveBinding('Adonis/Core/Event')
 
 			const { Database } = require('../src/Database')
 			return new Database(config, Logger, Profiler, Emitter)
@@ -36,7 +36,7 @@ export default class DatabaseServiceProvider {
 	 */
 	private registerOrm() {
 		this.app.container.singleton('Adonis/Lucid/Orm', () => {
-			const Config = this.app.container.use('Adonis/Core/Config')
+			const Config = this.app.container.resolveBinding('Adonis/Core/Config')
 
 			const { Adapter } = require('../src/Orm/Adapter')
 			const { scope } = require('../src/Helpers/scope')
@@ -48,7 +48,7 @@ export default class DatabaseServiceProvider {
 			 * Attaching adapter to the base model. Each model is allowed to define
 			 * a different adapter.
 			 */
-			BaseModel.$adapter = new Adapter(this.app.container.use('Adonis/Lucid/Database'))
+			BaseModel.$adapter = new Adapter(this.app.container.resolveBinding('Adonis/Lucid/Database'))
 			BaseModel.$container = this.app.container
 			BaseModel.$configurator = Object.assign({}, ormConfig, Config.get('database.orm', {}))
 
@@ -136,7 +136,7 @@ export default class DatabaseServiceProvider {
 			return
 		}
 
-		this.app.container.with(['Adonis/Addons/Repl'], (Repl) => {
+		this.app.container.withBindings(['Adonis/Addons/Repl'], (Repl) => {
 			const { defineReplBindings } = require('../src/Bindings/Repl')
 			defineReplBindings(this.app, Repl)
 		})
@@ -166,6 +166,6 @@ export default class DatabaseServiceProvider {
 	 * Gracefully close connections during shutdown
 	 */
 	public async shutdown() {
-		await this.app.container.use('Adonis/Lucid/Database').manager.closeAll()
+		await this.app.container.resolveBinding('Adonis/Lucid/Database').manager.closeAll()
 	}
 }

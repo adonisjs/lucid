@@ -8,7 +8,7 @@
  */
 
 import { join } from 'path'
-import { lodash } from '@poppinss/utils'
+import { string } from '@poppinss/utils/build/helpers'
 import { BaseCommand, args, flags } from '@adonisjs/core/build/standalone'
 
 export default class MakeMigration extends BaseCommand {
@@ -135,7 +135,7 @@ export default class MakeMigration extends BaseCommand {
 			.apply({
 				toClassName() {
 					return function (filename: string, render: (text: string) => string) {
-						const migrationClassName = lodash.camelCase(
+						const migrationClassName = string.camelCase(
 							tableName || render(filename).replace(prefix, '')
 						)
 						return `${migrationClassName.charAt(0).toUpperCase()}${migrationClassName.slice(1)}`
@@ -143,7 +143,7 @@ export default class MakeMigration extends BaseCommand {
 				},
 				toTableName() {
 					return function (filename: string, render: (text: string) => string) {
-						return tableName || lodash.snakeCase(render(filename).replace(prefix, ''))
+						return tableName || string.snakeCase(render(filename).replace(prefix, ''))
 					}
 				},
 			})

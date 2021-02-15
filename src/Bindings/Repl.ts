@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
  */
 
-import { requireAll } from '@poppinss/utils'
 import { ReplContract } from '@ioc:Adonis/Addons/Repl'
+import { requireAll } from '@poppinss/utils/build/helpers'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 /**

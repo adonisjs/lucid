@@ -10,8 +10,8 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { join, extname } from 'path'
-import { Exception } from '@poppinss/utils'
-import { esmRequire, fsReadAll, resolveDir } from '@poppinss/utils'
+import { Exception, esmRequire } from '@poppinss/utils'
+import { fsReadAll, resolveDir } from '@poppinss/utils/build/helpers'
 import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
 import { LucidRow, ModelObject, CherryPickFields } from '@ioc:Adonis/Lucid/Model'
 import {
