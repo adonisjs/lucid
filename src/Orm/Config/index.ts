@@ -7,7 +7,6 @@
  * file that was distributed with this source code.
  */
 
-import { plural } from 'pluralize'
 import { string } from '@poppinss/utils/build/helpers'
 import { ModelRelations } from '@ioc:Adonis/Lucid/Relations'
 import { OrmConfig, LucidModel } from '@ioc:Adonis/Lucid/Model'
@@ -20,7 +19,7 @@ export const Config: OrmConfig = {
    * Returns the table name for a given model
    */
   getTableName(model: LucidModel) {
-    return plural(string.snakeCase(model.name))
+    return string.pluralize(string.snakeCase(model.name))
   },
 
   /**
