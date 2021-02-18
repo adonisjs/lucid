@@ -449,6 +449,8 @@ test.group('Query client | get tables', (group) => {
 				'countries',
 				'follows',
 				'friends',
+				'group_user',
+				'groups',
 				'identities',
 				'posts',
 				'profiles',
