@@ -1845,7 +1845,7 @@ test.group('Model | ManyToMany | withCount', (group) => {
 			.insertQuery()
 			.table('skills')
 			.insert([{ name: 'Programming' }, { name: 'Dancing' }])
-		
+
 		await db
 			.insertQuery()
 			.table('groups')
@@ -1868,7 +1868,7 @@ test.group('Model | ManyToMany | withCount', (group) => {
 					skill_id: 2,
 				},
 			])
-		
+
 		await db
 			.insertQuery()
 			.table('group_user')
@@ -1887,8 +1887,8 @@ test.group('Model | ManyToMany | withCount', (group) => {
 				},
 			])
 
-		let group = await Group.find(1)
-		const users = await group!.related('users').query().withCount('skills').orderBy('id', 'asc')
+		let firstGroup = await Group.find(1)
+		const users = await firstGroup!.related('users').query().withCount('skills').orderBy('id', 'asc')
 		assert.lengthOf(users, 2)
 
 		assert.deepEqual(Number(users[0].$extras.skills_count), 2)
