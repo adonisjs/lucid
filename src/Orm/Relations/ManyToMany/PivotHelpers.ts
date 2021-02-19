@@ -74,6 +74,26 @@ export class PivotHelpers {
   /**
    * Adds a where pivot condition to the query
    */
+  public whereNullPivot(varition: 'or' | 'and' | 'not' | 'orNot', key: string) {
+    let method: string = 'whereNull'
+
+    switch (varition) {
+      case 'or':
+        method = 'orWhereNull'
+        break
+      case 'not':
+        method = 'whereNotNull'
+        break
+      case 'orNot':
+        method = 'orWhereNotNull'
+    }
+
+    return this.query[method](this.prefixPivotTable(key))
+  }
+
+  /**
+   * Adds a where pivot condition to the query
+   */
   public whereInPivot(varition: 'or' | 'and' | 'not' | 'orNot', key: any, value?: any) {
     let method: string = 'whereIn'
 

@@ -3816,6 +3816,328 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
   })
 })
 
+test.group('Model | ManyToMany | whereNullPivot', (group) => {
+  group.before(async () => {
+    app = await setupApplication()
+    db = getDb(app)
+    BaseModel = getBaseModel(ormAdapter(db), app)
+    await setup()
+  })
+
+  group.after(async () => {
+    await db.manager.closeAll()
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  test('add where null clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    User.boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['appliedConstraints'] = true
+
+    const { sql, bindings } = query.whereNullPivot('deleted_at').toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('skills')
+      .whereNull('skill_user.deleted_at')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add where null wrapped clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    User.boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .where((builder) => builder.whereNullPivot('deleted_at'))
+      ['toSQL']()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('skills')
+      .where((builder) => builder.whereNull('skill_user.deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add orWhere null clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    User.boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereNullPivot('deleted_at')
+      .orWhereNullPivot('updated_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('skills')
+      .whereNull('skill_user.deleted_at')
+      .orWhereNull('skill_user.updated_at')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add orWhere null wrapped clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    User.boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereNullPivot('deleted_at')
+      .orWhere((builder) => {
+        builder.whereNullPivot('updated_at')
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('skills')
+      .whereNull('skill_user.deleted_at')
+      .orWhere((builder) => {
+        builder.whereNull('skill_user.updated_at')
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})
+
+test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
+  group.before(async () => {
+    app = await setupApplication()
+    db = getDb(app)
+    BaseModel = getBaseModel(ormAdapter(db), app)
+    await setup()
+  })
+
+  group.after(async () => {
+    await db.manager.closeAll()
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  test('add where not null clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    User.boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['appliedConstraints'] = true
+
+    const { sql, bindings } = query.whereNotNullPivot('deleted_at').toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('skills')
+      .whereNotNull('skill_user.deleted_at')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add where not null wrapped clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    User.boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .where((builder) => builder.whereNotNullPivot('deleted_at'))
+      ['toSQL']()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('skills')
+      .where((builder) => builder.whereNotNull('skill_user.deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add orWhere not null clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    User.boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereNotNullPivot('deleted_at')
+      .orWhereNotNullPivot('updated_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('skills')
+      .whereNotNull('skill_user.deleted_at')
+      .orWhereNotNull('skill_user.updated_at')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('add orWhere not null wrapped clause', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    User.boot()
+    const user = new User()
+    const query = user!.related('skills').query()
+
+    query['appliedConstraints'] = true
+
+    const { sql, bindings } = query
+      .whereNotNullPivot('deleted_at')
+      .orWhere((builder) => {
+        builder.whereNotNullPivot('updated_at')
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('skills')
+      .whereNotNull('skill_user.deleted_at')
+      .orWhere((builder) => {
+        builder.whereNotNull('skill_user.updated_at')
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+})
+
 test.group('Model | ManyToMany | save', (group) => {
   group.before(async () => {
     app = await setupApplication()

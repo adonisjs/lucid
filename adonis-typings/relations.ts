@@ -791,6 +791,14 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     whereNotInPivot: WhereInPivot<this>
     orWhereNotInPivot: WhereInPivot<this>
     andWhereNotInPivot: WhereInPivot<this>
+
+    whereNullPivot: WhereNullPivot<this>
+    orWhereNullPivot: WhereNullPivot<this>
+    andWhereNullPivot: WhereNullPivot<this>
+
+    whereNotNullPivot: WhereNullPivot<this>
+    orWhereNotNullPivot: WhereNullPivot<this>
+    andWhereNotNullPivot: WhereNullPivot<this>
   }
 
   /**
@@ -841,6 +849,13 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   interface WherePivot<Builder extends any> {
     (key: string, value: StrictValues | ChainableContract): Builder
     (key: string, operator: string, value: StrictValues | ChainableContract): Builder
+  }
+
+  /**
+   * Possible signatures for adding whereNull clause.
+   */
+  interface WhereNullPivot<Builder extends any> {
+    (key: string): Builder
   }
 
   /**

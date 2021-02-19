@@ -225,6 +225,52 @@ export class ManyToManySubQueryBuilder
   }
 
   /**
+   * Same as "whereNull", but for the pivot table only
+   */
+  public whereNullPivot(key: string): this {
+    this.pivotHelpers.whereNullPivot('and', key)
+    return this
+  }
+
+  /**
+   * Same as "orWhereNull", but for the pivot table only
+   */
+  public orWhereNullPivot(key: string): this {
+    this.pivotHelpers.whereNullPivot('or', key)
+    return this
+  }
+
+  /**
+   * Same as "andWhereNull", but for the pivot table only
+   */
+  public andWhereNullPivot(key: string): this {
+    return this.whereNullPivot(key)
+  }
+
+  /**
+   * Same as "whereNotNull", but for the pivot table only
+   */
+  public whereNotNullPivot(key: string): this {
+    this.pivotHelpers.whereNullPivot('not', key)
+    return this
+  }
+
+  /**
+   * Same as "orWhereNotNull", but for the pivot table only
+   */
+  public orWhereNotNullPivot(key: string): this {
+    this.pivotHelpers.whereNullPivot('orNot', key)
+    return this
+  }
+
+  /**
+   * Same as "andWhereNotNull", but for the pivot table only
+   */
+  public andWhereNotNullPivot(key: string): this {
+    return this.whereNotNullPivot(key)
+  }
+
+  /**
    * Select pivot columns
    */
   public pivotColumns(columns: string[]): this {
