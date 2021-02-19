@@ -4373,8 +4373,9 @@ test.group('Base Model | aggregates', (group) => {
     const usersCount = await User.query().count('* as total')
     assert.deepEqual(
       usersCount.map((row) => {
-        row.total = Number(row.total)
-        return row
+        return {
+          total: Number(row.$extras.total),
+        }
       }),
       [{ total: 2 }]
     )
@@ -4399,8 +4400,9 @@ test.group('Base Model | aggregates', (group) => {
     const usersCount = await User.query().countDistinct('username as total')
     assert.deepEqual(
       usersCount.map((row) => {
-        row.total = Number(row.total)
-        return row
+        return {
+          total: Number(row.$extras.total),
+        }
       }),
       [{ total: 2 }]
     )

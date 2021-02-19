@@ -954,7 +954,7 @@ test.group('Model | Has Many Through | aggregates', (group) => {
 
     const country = await Country.find(1)
     const total = await country!.related('posts').query().count('* as total')
-    assert.deepEqual(Number(total[0].total), 2)
+    assert.deepEqual(Number(total[0].$extras.total), 2)
   })
 
   test('select extra columns with count', async (assert) => {
@@ -1012,10 +1012,10 @@ test.group('Model | Has Many Through | aggregates', (group) => {
       .count('* as total')
 
     assert.lengthOf(total, 2)
-    assert.deepEqual(Number(total[0].total), 1)
-    assert.equal(total[0].title, 'Adonis 101')
-    assert.deepEqual(Number(total[0].total), 1)
-    assert.equal(total[1].title, 'Lucid 101')
+    assert.deepEqual(Number(total[0].$extras.total), 1)
+    assert.equal(total[0].$extras.title, 'Adonis 101')
+    assert.deepEqual(Number(total[0].$extras.total), 1)
+    assert.equal(total[1].$extras.title, 'Lucid 101')
   })
 })
 

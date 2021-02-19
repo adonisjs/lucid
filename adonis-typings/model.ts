@@ -367,8 +367,8 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Perform delete operation
      */
-    del(): ModelQueryBuilderContract<Model, number>
-    delete(): ModelQueryBuilderContract<Model, number>
+    del(): ModelQueryBuilderContract<Model, any>
+    delete(): ModelQueryBuilderContract<Model, any>
 
     /**
      * Execute query with pagination
@@ -378,9 +378,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Mutations (update and increment can be one query aswell)
      */
-    update: Update<ModelQueryBuilderContract<Model, number>>
-    increment: Counter<ModelQueryBuilderContract<Model, number>>
-    decrement: Counter<ModelQueryBuilderContract<Model, number>>
+    update: Update<ModelQueryBuilderContract<Model, any>>
+    increment: Counter<ModelQueryBuilderContract<Model, any>>
+    decrement: Counter<ModelQueryBuilderContract<Model, any>>
 
     /**
      * Fetch relationship count
@@ -415,13 +415,13 @@ declare module '@ioc:Adonis/Lucid/Model' {
     /**
      * Aggregates
      */
-    count: Aggregate<ModelQueryBuilderContract<Model, any>>
-    countDistinct: Aggregate<ModelQueryBuilderContract<Model, any>>
-    min: Aggregate<ModelQueryBuilderContract<Model, any>>
-    max: Aggregate<ModelQueryBuilderContract<Model, any>>
-    sum: Aggregate<ModelQueryBuilderContract<Model, any>>
-    avg: Aggregate<ModelQueryBuilderContract<Model, any>>
-    avgDistinct: Aggregate<ModelQueryBuilderContract<Model, any>>
+    count: Aggregate<this>
+    countDistinct: Aggregate<this>
+    min: Aggregate<this>
+    max: Aggregate<this>
+    sum: Aggregate<this>
+    avg: Aggregate<this>
+    avgDistinct: Aggregate<this>
 
     /**
      * Executes the callback when dialect matches one of the mentioned

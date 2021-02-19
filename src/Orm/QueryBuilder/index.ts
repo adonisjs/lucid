@@ -159,7 +159,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     /**
      * Return the rows as it is when query is a write query
      */
-    if (isWriteQuery || this.hasAggregates || !this.wrapResultsToModelInstances) {
+    if (isWriteQuery || !this.wrapResultsToModelInstances) {
       return Array.isArray(rows) ? rows : [rows]
     }
 

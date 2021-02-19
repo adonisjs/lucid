@@ -727,7 +727,7 @@ test.group('Model | HasMany | aggregates', (group) => {
 
     const user = await User.find(1)
     const total = await user!.related('posts').query().count('* as total')
-    assert.equal(Number(total[0].total), 2)
+    assert.equal(Number(total[0].$extras.total), 2)
   })
 })
 

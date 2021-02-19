@@ -386,6 +386,6 @@ test.group('Model query builder', (group) => {
       .insert([{ username: 'virk' }, { username: 'nikk' }])
 
     const users = await User.query().count('* as total')
-    assert.equal(Number(users[0].total), 2)
+    assert.equal(Number(users[0].$extras.total), 2)
   })
 })

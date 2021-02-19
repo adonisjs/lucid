@@ -904,7 +904,7 @@ test.group('Model | Many To Many | aggregates', (group) => {
     const user = await User.find(1)
     const total = await user!.related('skills').query().count('* as total')
 
-    assert.deepEqual(Number(total[0].total), 2)
+    assert.deepEqual(Number(total[0].$extras.total), 2)
   })
 
   test('select extra columns with count', async (assert) => {
@@ -941,11 +941,11 @@ test.group('Model | Many To Many | aggregates', (group) => {
       .orderBy('skills.id', 'desc')
 
     assert.lengthOf(total, 2)
-    assert.equal(total[0].name, 'Cooking')
-    assert.equal(Number(total[0].total), 1)
+    assert.equal(total[0].$extras.name, 'Cooking')
+    assert.equal(Number(total[0].$extras.total), 1)
 
-    assert.equal(total[1].name, 'Programming')
-    assert.equal(Number(total[1].total), 1)
+    assert.equal(total[1].$extras.name, 'Programming')
+    assert.equal(Number(total[1].$extras.total), 1)
   })
 
   test('select extra pivot columns with count', async (assert) => {
@@ -983,11 +983,11 @@ test.group('Model | Many To Many | aggregates', (group) => {
       .orderBy('skills.id', 'desc')
 
     assert.lengthOf(total, 2)
-    assert.equal(total[0].pivot_proficiency, 'Advanced')
-    assert.equal(Number(total[0].total), 1)
+    assert.equal(total[0].$extras.pivot_proficiency, 'Advanced')
+    assert.equal(Number(total[0].$extras.total), 1)
 
-    assert.equal(total[1].pivot_proficiency, 'Beginner')
-    assert.equal(Number(total[1].total), 1)
+    assert.equal(total[1].$extras.pivot_proficiency, 'Beginner')
+    assert.equal(Number(total[1].$extras.total), 1)
   })
 })
 
