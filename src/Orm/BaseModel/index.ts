@@ -1851,7 +1851,10 @@ export class BaseModel implements LucidRow {
    * Since the query builder for these actions are not exposed to
    * the end user, this method gives a way to compose queries.
    */
-  public $getQueryFor(action: 'insert' | 'update' | 'delete', client: QueryClientContract): any {
+  public $getQueryFor(
+    action: 'insert' | 'update' | 'delete' | 'refresh',
+    client: QueryClientContract
+  ): any {
     const modelConstructor = this.constructor as typeof BaseModel
     const primaryKeyColumn = modelConstructor.$keys.attributesToColumns.get(
       modelConstructor.primaryKey,
@@ -1890,12 +1893,6 @@ export class BaseModel implements LucidRow {
    */
   public async refresh() {
     this.ensureIsntDeleted()
-    const modelConstructor = this.constructor as typeof BaseModel
-    const { table } = modelConstructor
-    const primaryKeyColumn = modelConstructor.$keys.attributesToColumns.get(
-      modelConstructor.primaryKey,
-      modelConstructor.primaryKey
-    )
 
     /**
      * Noop when model instance is not persisted
@@ -1904,22 +1901,9 @@ export class BaseModel implements LucidRow {
       return this
     }
 
-    /**
-     * This will occur, when some other part of the application removes
-     * the row
-     */
-    const freshModelInstance = await modelConstructor.find(this.$primaryKeyValue)
-    if (!freshModelInstance) {
-      throw new Exception(
-        [
-          '"Model.refresh" failed. ',
-          `Unable to lookup "${table}" table where "${primaryKeyColumn}" = ${this.$primaryKeyValue}`,
-        ].join('')
-      )
-    }
+    const Model = this.constructor as typeof BaseModel
+    await Model.$adapter.refresh(this)
 
-    this.fill(freshModelInstance.$attributes)
-    this.$hydrateOriginals()
     return this
   }
 }

@@ -440,6 +440,7 @@ export class FakeAdapter implements AdapterContract {
     find: null,
     delete: null,
     findAll: null,
+    refresh: null,
   }
 
   private _invokeHandler(
@@ -465,6 +466,7 @@ export class FakeAdapter implements AdapterContract {
   public on(action: 'insert', handler: (model: LucidRow, attributes: any) => void): void
   public on(action: 'update', handler: (model: LucidRow, attributes: any) => void): void
   public on(action: 'delete', handler: (model: LucidRow) => void): void
+  public on(action: 'refresh', handler: (model: LucidRow) => void): void
   public on(action: 'find', handler: (model: LucidModel, options?: any) => void): void
   public on(action: 'findAll', handler: (model: LucidModel, options?: any) => void): void
   public on(
@@ -481,6 +483,11 @@ export class FakeAdapter implements AdapterContract {
   public async insert(instance: LucidRow, attributes: any) {
     this.operations.push({ type: 'insert', instance, attributes })
     return this._invokeHandler('insert', instance, attributes)
+  }
+
+  public async refresh(instance: LucidRow) {
+    this.operations.push({ type: 'refresh', instance })
+    return this._invokeHandler('refresh', instance)
   }
 
   public async delete(instance: LucidRow) {

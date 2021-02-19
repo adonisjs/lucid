@@ -798,6 +798,51 @@ test.group('Base Model | persist', (group) => {
     assert.isDefined(user.updatedAt)
   })
 
+  test('refresh model instance inside a transaction', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public createdAt: string
+
+      @column({ columnName: 'updated_at' })
+      public updatedAt: string
+    }
+
+    /**
+     * Create user
+     */
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    /**
+     * Update inside transaction
+     */
+    const trx = await db.transaction()
+    user.useTransaction(trx)
+    user.username = 'romain'
+    await user.save()
+    assert.equal(user.username, 'romain')
+
+    /**
+     * Refresh inside transaction
+     */
+    await user.refresh()
+    assert.equal(user.username, 'romain')
+
+    /**
+     * Refresh outside transaction
+     */
+    await trx.rollback()
+    await user.refresh()
+    assert.equal(user.username, 'virk')
+  })
+
   test('raise exception when attempted to refresh deleted row', async (assert) => {
     assert.plan(4)
 

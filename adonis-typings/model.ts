@@ -509,9 +509,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
       client: QueryClientContract
     ): ReturnType<QueryClientContract['insertQuery']>
     $getQueryFor(
-      action: 'update' | 'delete',
+      action: 'update' | 'delete' | 'refresh',
       client: QueryClientContract
-    ): ReturnType<QueryClientContract['query']>
+    ): ModelQueryBuilderContract<LucidModel>
 
     /**
      * Read/write attributes. Following methods are intentionally loosely typed,
@@ -540,10 +540,22 @@ declare module '@ioc:Adonis/Lucid/Model' {
 
     fill(value: Partial<ModelAttributes<this>>, allowNonExtraProperties?: boolean): this
     merge(value: Partial<ModelAttributes<this>>, allowNonExtraProperties?: boolean): this
+
+    /**
+     * Actions to perform on the instance
+     */
     save(): Promise<this>
     delete(): Promise<void>
     refresh(): Promise<this>
+
+    /**
+     * Load relationships onto the instance
+     */
     load: LucidRowPreload<this>
+
+    /**
+     * Alias for "load"
+     */
     preload: LucidRowPreload<this>
 
     /**
@@ -987,6 +999,12 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Delete model instance
      */
     delete(instance: LucidRow): Promise<void>
+
+    /**
+     * Refresh model instance to reflect new values
+     * from the database
+     */
+    refresh(instance: LucidRow): Promise<void>
 
     /**
      * Perform insert

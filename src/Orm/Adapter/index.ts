@@ -9,6 +9,7 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
+import { Exception } from '@poppinss/utils'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import { LucidRow, LucidModel, AdapterContract, ModelAdapterOptions } from '@ioc:Adonis/Lucid/Model'
 
@@ -18,6 +19,10 @@ import { LucidRow, LucidModel, AdapterContract, ModelAdapterOptions } from '@ioc
  */
 export class Adapter implements AdapterContract {
   constructor(private db: DatabaseContract) {}
+
+  private getPrimaryKeyColumnName(Model: LucidModel) {
+    return Model.$keys.attributesToColumns.get(Model.primaryKey, Model.primaryKey)
+  }
 
   /**
    * Returns the query client based upon the model instance
@@ -54,16 +59,13 @@ export class Adapter implements AdapterContract {
    * Perform insert query on a given model instance
    */
   public async insert(instance: LucidRow, attributes: any) {
-    const modelConstructor = (instance.constructor as unknown) as LucidModel
     const query = instance.$getQueryFor('insert', this.modelClient(instance))
 
-    const primaryKeyColumnName = modelConstructor.$keys.attributesToColumns.get(
-      modelConstructor.primaryKey,
-      modelConstructor.primaryKey
-    )
+    const Model = instance.constructor as LucidModel
+    const primaryKeyColumnName = this.getPrimaryKeyColumnName(Model)
 
-    const result = await query.insert(attributes).reporterData({ model: modelConstructor.name })
-    if (!modelConstructor.selfAssignPrimaryKey) {
+    const result = await query.insert(attributes).reporterData({ model: Model.name })
+    if (!Model.selfAssignPrimaryKey) {
       instance.$consumeAdapterResult({ [primaryKeyColumnName]: result[0] })
     }
   }
@@ -80,5 +82,29 @@ export class Adapter implements AdapterContract {
    */
   public async delete(instance: LucidRow) {
     await instance.$getQueryFor('delete', this.modelClient(instance)).del()
+  }
+
+  /**
+   * Refresh the model instance attributes
+   */
+  public async refresh(instance: LucidRow) {
+    const Model = instance.constructor as LucidModel
+    const primaryKeyColumnName = this.getPrimaryKeyColumnName(Model)
+
+    const freshModelInstance = await instance
+      .$getQueryFor('refresh', this.modelClient(instance))
+      .first()
+
+    if (!freshModelInstance) {
+      throw new Exception(
+        [
+          '"Model.refresh" failed. ',
+          `Unable to lookup "${Model.table}" table where "${primaryKeyColumnName}" = ${instance.$primaryKeyValue}`,
+        ].join('')
+      )
+    }
+
+    instance.fill(freshModelInstance.$attributes)
+    instance.$hydrateOriginals()
   }
 }
