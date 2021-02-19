@@ -8,7 +8,8 @@ jobs:
     working_directory: /adonis-lucid
     steps:
       - checkout
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 19.03.13
       - run:
           name: Run tests
           command: docker-compose -f docker-compose.yml -f docker-compose-test.yml run --rm test
