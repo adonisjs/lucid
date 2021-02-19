@@ -11110,3 +11110,49 @@ test.group('Query Builder | conditionals', (group) => {
     await connection.disconnect()
   })
 })
+
+test.group('Query Builder | wrapExisting', (group) => {
+  group.before(async () => {
+    app = await setupApplication()
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  group.afterEach(async () => {
+    app.container.use('Adonis/Core/Event').clearListeners('db:query')
+    await resetTables()
+  })
+
+  test('apply where clauses only once, when calling toSQL multiple times', async (assert) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection, app))
+
+    const query = db.from('users').where('username', 'virk')
+
+    const { sql: knexSql } = connection.client!.from('users').where('username', 'virk').toSQL()
+
+    assert.equal(query.toSQL().sql, knexSql)
+    assert.equal(query.toSQL().sql, knexSql)
+    await connection.disconnect()
+  })
+
+  test('allow mutating query where clauses post toSQL call', async (assert) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection, app))
+
+    const query = db.from('users').where('username', 'virk')
+    const knexQuery = connection.client!.from('users').where('username', 'virk')
+
+    assert.equal(query.toSQL().sql, knexQuery.toSQL().sql)
+    assert.equal(query.where('age', 30).toSQL().sql, knexQuery.where('age', 30).toSQL().sql)
+    await connection.disconnect()
+  })
+})

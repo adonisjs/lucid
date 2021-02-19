@@ -74,6 +74,8 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Applies the where clauses
    */
   protected applyWhere() {
+    this.knexQuery.clearWhere()
+
     if (this.whereStack.length === 1) {
       this.whereStack[0].forEach(({ method, args }) => {
         this.knexQuery[method](...args)
