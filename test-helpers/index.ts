@@ -46,7 +46,6 @@ import { Adapter } from '../src/Orm/Adapter'
 import { Database } from '../src/Database/index'
 import { QueryClient } from '../src/QueryClient'
 import { BaseModel } from '../src/Orm/BaseModel'
-import { Config as OrmConfig } from '../src/Orm/Config'
 import { FactoryModel } from '../src/Factory/FactoryModel'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
@@ -411,7 +410,6 @@ export function ormAdapter(db: DatabaseContract) {
 export function getBaseModel(adapter: AdapterContract, application: ApplicationContract) {
   BaseModel.$adapter = adapter
   BaseModel.$container = application.container
-  BaseModel.$configurator = Object.assign({}, OrmConfig)
   return (BaseModel as unknown) as LucidModel
 }
 

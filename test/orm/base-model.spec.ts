@@ -5302,6 +5302,59 @@ test.group('Base Model | paginate', (group) => {
       previous_page_url: null,
     })
   })
+
+  test('use model naming strategy for pagination properties', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    User.namingStrategy.paginationMetaKeys = () => {
+      return {
+        total: 'total',
+        perPage: 'perPage',
+        currentPage: 'currentPage',
+        lastPage: 'lastPage',
+        firstPage: 'firstPage',
+        firstPageUrl: 'firstPageUrl',
+        lastPageUrl: 'lastPageUrl',
+        nextPageUrl: 'nextPageUrl',
+        previousPageUrl: 'previousPageUrl',
+      }
+    }
+
+    await db.insertQuery().table('users').multiInsert(getUsers(18))
+    const users = await User.query().paginate(1, 5)
+    users.baseUrl('/users')
+
+    assert.lengthOf(users.all(), 5)
+    assert.instanceOf(users.all()[0], User)
+    assert.equal(users.perPage, 5)
+    assert.equal(users.currentPage, 1)
+    assert.equal(users.lastPage, 4)
+    assert.isTrue(users.hasPages)
+    assert.isTrue(users.hasMorePages)
+    assert.isFalse(users.isEmpty)
+    assert.equal(users.total, 18)
+    assert.isTrue(users.hasTotal)
+    assert.deepEqual(users.getMeta(), {
+      total: 18,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=4',
+      nextPageUrl: '/users?page=2',
+      previousPageUrl: null,
+    })
+  })
 })
 
 test.group('Base Model | toObject', (group) => {

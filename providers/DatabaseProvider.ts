@@ -36,13 +36,10 @@ export default class DatabaseServiceProvider {
    */
   private registerOrm() {
     this.app.container.singleton('Adonis/Lucid/Orm', () => {
-      const Config = this.app.container.resolveBinding('Adonis/Core/Config')
-
       const { Adapter } = require('../src/Orm/Adapter')
       const { scope } = require('../src/Helpers/scope')
       const decorators = require('../src/Orm/Decorators')
       const { BaseModel } = require('../src/Orm/BaseModel')
-      const ormConfig = require('../src/Orm/Config').Config
 
       /**
        * Attaching adapter to the base model. Each model is allowed to define
@@ -50,7 +47,6 @@ export default class DatabaseServiceProvider {
        */
       BaseModel.$adapter = new Adapter(this.app.container.resolveBinding('Adonis/Lucid/Database'))
       BaseModel.$container = this.app.container
-      BaseModel.$configurator = Object.assign({}, ormConfig, Config.get('database.orm', {}))
 
       return {
         BaseModel,

@@ -17,6 +17,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     OneOrMany,
     Aggregate,
     ChainableContract,
+    SimplePaginatorMetaKeys,
     SimplePaginatorContract,
     ExcutableQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
@@ -661,6 +662,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
     connection?: string
 
     /**
+     * Naming strategy to use
+     */
+    namingStrategy: NamingStrategyContract
+
+    /**
      * Database table to use
      */
     table: string
@@ -680,11 +686,6 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Reference to hooks
      */
     $hooks: Hooks
-
-    /**
-     * Used to construct defaults for the model
-     */
-    $configurator: OrmConfig
 
     /**
      * A copy of internal keys mapping. One should be able to resolve between
@@ -1031,47 +1032,48 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
-   * Shape of ORM config to have a standard place for computing
-   * defaults
+   * Naming strategy for model
    */
-  export type OrmConfig = {
+  export interface NamingStrategyContract {
     /**
-     * Return the default table name for a given model
+     * The default table name for the given model
      */
-    getTableName(model: LucidModel): string
+    tableName(model: LucidModel): string
 
     /**
-     * Return the `columnName` for a given model
+     * The database column name for a given model attribute
      */
-    getColumnName(model: LucidModel, key: string): string
+    columnName(model: LucidModel, attributeName: string): string
 
     /**
-     * Return the `serializeAs` key for a given model property
+     * The post serialization name for a given model attribute
      */
-    getSerializeAsKey(model: LucidModel, key: string): string
+    serializedName(model: LucidModel, attributeName: string): string
 
     /**
-     * Return the local key property name for a given relationship
+     * The local key for a given model relationship
      */
-    getLocalKey(
+    relationLocalKey(
       relation: ModelRelations['__opaque_type'],
       model: LucidModel,
-      relatedModel: LucidModel
+      relatedModel: LucidModel,
+      relationName: string
     ): string
 
     /**
-     * Return the foreign key property name for a given relationship
+     * The foreign key for a given model relationship
      */
-    getForeignKey(
+    relationForeignKey(
       relation: ModelRelations['__opaque_type'],
       model: LucidModel,
-      relatedModel: LucidModel
+      relatedModel: LucidModel,
+      relationName: string
     ): string
 
     /**
-     * Return the pivot table name for many to many relationship
+     * Pivot table name for many to many relationship
      */
-    getPivotTableName(
+    relationPivotTable(
       relation: 'manyToMany',
       model: LucidModel,
       relatedModel: LucidModel,
@@ -1079,13 +1081,18 @@ declare module '@ioc:Adonis/Lucid/Model' {
     ): string
 
     /**
-     * Return the pivot foreign key for many to many relationship
+     * Pivot foreign key for many to many relationship
      */
-    getPivotForeignKey(
+    relationPivotForeignKey(
       relation: 'manyToMany',
       model: LucidModel,
       relatedModel: LucidModel,
       relationName: string
     ): string
+
+    /**
+     * Keys for the pagination meta
+     */
+    paginationMetaKeys(): SimplePaginatorMetaKeys
   }
 }

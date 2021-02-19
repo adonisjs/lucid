@@ -72,6 +72,7 @@
     "@types/luxon": "^1.26.0",
     "@types/node": "^14.14.28",
     "@types/pluralize": "0.0.29",
+    "@types/qs": "^6.9.5",
     "chance": "^1.1.7",
     "commitizen": "^4.2.3",
     "copyfiles": "^2.4.1",

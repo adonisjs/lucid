@@ -646,18 +646,19 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   }
 
   /**
-   * Paginator Metadata
+   * The keys for the simple paginator meta
+   * data
    */
-  export type SimplePaginatorMeta = {
-    total: number
-    per_page: number
-    current_page: number
-    last_page: number
-    first_page: number
-    first_page_url: string
-    last_page_url: string
-    next_page_url: string | null
-    previous_page_url: string | null
+  export type SimplePaginatorMetaKeys = {
+    total: string
+    perPage: string
+    currentPage: string
+    lastPage: string
+    firstPage: string
+    firstPageUrl: string
+    lastPageUrl: string
+    nextPageUrl: string
+    previousPageUrl: string
   }
 
   /**
@@ -674,14 +675,17 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     readonly isEmpty: boolean
     readonly total: number
     readonly hasTotal: boolean
+    namingStrategy: {
+      paginationMetaKeys(): SimplePaginatorMetaKeys
+    }
     baseUrl(url: string): this
     queryString(values: { [key: string]: any }): this
     getUrl(page: number): string
-    getMeta(): SimplePaginatorMeta
+    getMeta(): any
     getNextPageUrl(): string | null
     getPreviousPageUrl(): string | null
     getUrlsForRange(start: number, end: number): { url: string; page: number; isActive: boolean }[]
-    toJSON(): { meta: SimplePaginatorMeta; data: Result[] }
+    toJSON(): { meta: any; data: Result[] }
   }
 
   /**

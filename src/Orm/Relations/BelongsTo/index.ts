@@ -98,13 +98,23 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
         model: relatedModel,
         key:
           this.options.localKey ||
-          this.model.$configurator.getLocalKey(this.type, this.model, relatedModel),
+          this.model.namingStrategy.relationLocalKey(
+            this.type,
+            this.model,
+            relatedModel,
+            this.relationName
+          ),
       },
       foreignKey: {
         model: this.model,
         key:
           this.options.foreignKey ||
-          this.model.$configurator.getForeignKey(this.type, this.model, relatedModel),
+          this.model.namingStrategy.relationForeignKey(
+            this.type,
+            this.model,
+            relatedModel,
+            this.relationName
+          ),
       },
     }).extract()
 

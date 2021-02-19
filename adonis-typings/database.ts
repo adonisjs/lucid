@@ -25,6 +25,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     RawQueryBindings,
     RawBuilderContract,
     RawQueryBuilderContract,
+    SimplePaginatorMetaKeys,
     SimplePaginatorContract,
     ReferenceBuilderContract,
     InsertQueryBuilderContract,
@@ -666,6 +667,9 @@ declare module '@ioc:Adonis/Lucid/Database' {
     InsertQueryBuilder: MacroableConstructorContract<InsertQueryBuilderContract>
     ModelQueryBuilder: MacroableConstructorContract<ModelQueryBuilderContract<any, any>>
     SimplePaginator: {
+      namingStrategy: {
+        paginationMetaKeys(): SimplePaginatorMetaKeys
+      }
       new <Row extends any>(
         rows: Row[],
         total: number,

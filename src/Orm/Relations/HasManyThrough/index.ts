@@ -100,32 +100,44 @@ export class HasManyThrough implements HasManyThroughRelationContract<LucidModel
           model: this.model,
           key:
             this.options.localKey ||
-            this.model.$configurator.getLocalKey(this.type, this.model, this.relatedModel()),
+            this.model.namingStrategy.relationLocalKey(
+              this.type,
+              this.model,
+              this.relatedModel(),
+              this.relationName
+            ),
         },
         foreignKey: {
           model: this.throughModel(),
           key:
             this.options.foreignKey ||
-            this.model.$configurator.getForeignKey(this.type, this.model, this.throughModel()),
+            this.model.namingStrategy.relationForeignKey(
+              this.type,
+              this.model,
+              this.throughModel(),
+              this.relationName
+            ),
         },
         throughLocalKey: {
           model: this.throughModel(),
           key:
             this.options.throughLocalKey ||
-            this.model.$configurator.getLocalKey(
+            this.model.namingStrategy.relationLocalKey(
               this.type,
               this.throughModel(),
-              this.relatedModel()
+              this.relatedModel(),
+              this.relationName
             ),
         },
         throughForeignKey: {
           model: this.relatedModel(),
           key:
             this.options.throughForeignKey ||
-            this.model.$configurator.getForeignKey(
+            this.model.namingStrategy.relationForeignKey(
               this.type,
               this.throughModel(),
-              this.relatedModel()
+              this.relatedModel(),
+              this.relationName
             ),
         },
       }

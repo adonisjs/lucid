@@ -10403,6 +10403,57 @@ test.group('Query Builder | paginate', (group) => {
 
     await connection.disconnect()
   })
+
+  test('use custom strategy for pagination keys', async (assert) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    await getInsertBuilder(getQueryClient(connection, app)).table('users').multiInsert(getUsers(18))
+
+    const users = await db.from('users').paginate(1, 5)
+    users.baseUrl('/users')
+
+    users.namingStrategy = {
+      paginationMetaKeys() {
+        return {
+          total: 'total',
+          perPage: 'perPage',
+          currentPage: 'currentPage',
+          lastPage: 'lastPage',
+          firstPage: 'firstPage',
+          firstPageUrl: 'firstPageUrl',
+          lastPageUrl: 'lastPageUrl',
+          nextPageUrl: 'nextPageUrl',
+          previousPageUrl: 'previousPageUrl',
+        }
+      },
+    }
+
+    assert.lengthOf(users.all(), 5)
+    assert.equal(users.perPage, 5)
+    assert.equal(users.currentPage, 1)
+    assert.equal(users.lastPage, 4)
+    assert.isTrue(users.hasPages)
+    assert.isTrue(users.hasMorePages)
+    assert.isFalse(users.isEmpty)
+    assert.equal(users.total, 18)
+    assert.isTrue(users.hasTotal)
+
+    assert.deepEqual(users.getMeta(), {
+      total: 18,
+      perPage: 5,
+      currentPage: 1,
+      lastPage: 4,
+      firstPage: 1,
+      firstPageUrl: '/users?page=1',
+      lastPageUrl: '/users?page=4',
+      nextPageUrl: '/users?page=2',
+      previousPageUrl: null,
+    })
+
+    await connection.disconnect()
+  })
 })
 
 test.group('Query Builder | clone', (group) => {

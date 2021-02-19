@@ -85,19 +85,29 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
         model: this.model,
         key:
           this.options.localKey ||
-          this.model.$configurator.getLocalKey(this.type, this.model, relatedModel),
+          this.model.namingStrategy.relationLocalKey(
+            this.type,
+            this.model,
+            relatedModel,
+            this.relationName
+          ),
       },
       relatedKey: {
         model: relatedModel,
         key:
           this.options.relatedKey ||
-          this.model.$configurator.getLocalKey(this.type, this.model, relatedModel),
+          this.model.namingStrategy.relationLocalKey(
+            this.type,
+            this.model,
+            relatedModel,
+            this.relationName
+          ),
       },
     }).extract()
 
     this.pivotTable =
       this.options.pivotTable ||
-      this.model.$configurator.getPivotTableName(
+      this.model.namingStrategy.relationPivotTable(
         this.type,
         this.model,
         relatedModel,
@@ -121,7 +131,7 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
      */
     this.pivotForeignKey =
       this.options.pivotForeignKey ||
-      this.model.$configurator.getPivotForeignKey(
+      this.model.namingStrategy.relationPivotForeignKey(
         this.type,
         this.model,
         relatedModel,
@@ -133,7 +143,7 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
      */
     this.pivotRelatedForeignKey =
       this.options.pivotRelatedForeignKey ||
-      this.model.$configurator.getPivotForeignKey(
+      this.model.namingStrategy.relationPivotForeignKey(
         this.type,
         relatedModel,
         this.model,

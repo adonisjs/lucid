@@ -675,6 +675,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
 
     const results = total > 0 ? await this.forPage(page, perPage).execQuery() : []
     const paginator = new SimplePaginator(results, total, perPage, page)
+    paginator.namingStrategy = this.model.namingStrategy
 
     await this.model.$hooks.exec('after', 'paginate', paginator)
     await this.model.$hooks.exec('after', 'fetch', results)

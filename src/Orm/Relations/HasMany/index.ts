@@ -97,13 +97,23 @@ export class HasMany implements HasManyRelationContract<LucidModel, LucidModel> 
         model: this.model,
         key:
           this.options.localKey ||
-          this.model.$configurator.getLocalKey(this.type, this.model, relatedModel),
+          this.model.namingStrategy.relationLocalKey(
+            this.type,
+            this.model,
+            relatedModel,
+            this.relationName
+          ),
       },
       foreignKey: {
         model: relatedModel,
         key:
           this.options.foreignKey ||
-          this.model.$configurator.getForeignKey(this.type, this.model, relatedModel),
+          this.model.namingStrategy.relationForeignKey(
+            this.type,
+            this.model,
+            relatedModel,
+            this.relationName
+          ),
       },
     }).extract()
 

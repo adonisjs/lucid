@@ -17,7 +17,6 @@ import { Exception, lodash, defineStaticProperty } from '@poppinss/utils'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import {
   LucidRow,
-  OrmConfig,
   CacheNode,
   LucidModel,
   CherryPick,
@@ -43,7 +42,6 @@ import {
   ManyToManyRelationOptions,
 } from '@ioc:Adonis/Lucid/Relations'
 
-import { Config } from '../Config'
 import { ModelKeys } from '../ModelKeys'
 import { Preloader } from '../Preloader'
 import { HasOne } from '../Relations/HasOne'
@@ -60,6 +58,7 @@ import {
   normalizeCherryPickObject,
 } from '../../utils'
 import { IocContract } from '@ioc:Adonis/Core/Application'
+import { SnakeCaseNamingStrategy } from '../NamingStrategies/SnakeCase'
 
 const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
 const DATE_TIME_TYPES = {
@@ -85,9 +84,9 @@ export class BaseModel implements LucidRow {
   public static $adapter: AdapterContract
 
   /**
-   * Used to construct defaults for the model
+   * Naming strategy for model properties
    */
-  public static $configurator: OrmConfig = Config
+  public static namingStrategy = new SnakeCaseNamingStrategy()
 
   /**
    * The container required to resolve hooks
@@ -270,13 +269,13 @@ export class BaseModel implements LucidRow {
 
     const column: ModelColumnOptions = {
       isPrimary: options.isPrimary || false,
-      columnName: options.columnName || this.$configurator.getColumnName(this, name),
+      columnName: options.columnName || this.namingStrategy.columnName(this, name),
       hasGetter: !!(descriptor && descriptor.get),
       hasSetter: !!(descriptor && descriptor.set),
       serializeAs:
         options.serializeAs !== undefined
           ? options.serializeAs
-          : this.$configurator.getSerializeAsKey(this, name),
+          : this.namingStrategy.serializedName(this, name),
       serialize: options.serialize,
       prepare: options.prepare,
       consume: options.consume,
@@ -476,7 +475,7 @@ export class BaseModel implements LucidRow {
      */
     defineStaticProperty(this, BaseModel, {
       propertyName: 'table',
-      defaultValue: this.$configurator.getTableName(this),
+      defaultValue: this.namingStrategy.tableName(this),
       strategy: 'define',
     })
 

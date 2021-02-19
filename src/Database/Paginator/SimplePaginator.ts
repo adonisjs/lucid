@@ -9,9 +9,10 @@
 
 import { stringify } from 'qs'
 import {
-  SimplePaginatorMeta,
   SimplePaginatorContract,
+  SimplePaginatorMetaKeys,
 } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { SnakeCaseNamingStrategy } from '../../Orm/NamingStrategies/SnakeCase'
 
 /**
  * Simple paginator works with the data set provided by the standard
@@ -20,6 +21,18 @@ import {
 export class SimplePaginator extends Array implements SimplePaginatorContract<any> {
   private qs: { [key: string]: any } = {}
   private url: string = '/'
+
+  /**
+   * Naming strategy for the pagination meta keys
+   */
+  public static namingStrategy: {
+    paginationMetaKeys(): SimplePaginatorMetaKeys
+  } = new SnakeCaseNamingStrategy()
+
+  /**
+   * Can be defined at per instance level as well
+   */
+  public namingStrategy = SimplePaginator.namingStrategy
 
   /**
    * The first page is always 1
@@ -80,17 +93,19 @@ export class SimplePaginator extends Array implements SimplePaginatorContract<an
   /**
    * Returns JSON meta data
    */
-  public getMeta(): SimplePaginatorMeta {
+  public getMeta(): any {
+    const metaKeys = this.namingStrategy.paginationMetaKeys()
+
     return {
-      total: this.total,
-      per_page: this.perPage,
-      current_page: this.currentPage,
-      last_page: this.lastPage,
-      first_page: this.firstPage,
-      first_page_url: this.getUrl(1),
-      last_page_url: this.getUrl(this.lastPage),
-      next_page_url: this.getNextPageUrl(),
-      previous_page_url: this.getPreviousPageUrl(),
+      [metaKeys.total]: this.total,
+      [metaKeys.perPage]: this.perPage,
+      [metaKeys.currentPage]: this.currentPage,
+      [metaKeys.lastPage]: this.lastPage,
+      [metaKeys.firstPage]: this.firstPage,
+      [metaKeys.firstPageUrl]: this.getUrl(1),
+      [metaKeys.lastPageUrl]: this.getUrl(this.lastPage),
+      [metaKeys.nextPageUrl]: this.getNextPageUrl(),
+      [metaKeys.previousPageUrl]: this.getPreviousPageUrl(),
     }
   }
 
