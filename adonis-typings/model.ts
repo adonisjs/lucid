@@ -442,6 +442,12 @@ declare module '@ioc:Adonis/Lucid/Model' {
       matchCallback: (query: this) => any,
       noMatchCallback?: (query: this) => any
     ): this
+
+    /**
+     * Get rows back as a plain javascript object and not an array
+     * of model instances
+     */
+    pojo<T extends any>(): ModelQueryBuilderContract<Model, T>
   }
 
   /**

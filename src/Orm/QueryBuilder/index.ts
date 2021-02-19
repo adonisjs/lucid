@@ -661,6 +661,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
       .clearOffset()
       .clearSelect()
       .count('* as total')
+      .pojo()
 
     /**
      * We pass both the counts query and the main query to the
@@ -687,6 +688,15 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   public toSQL(): knex.Sql {
     this.applyWhere()
     return this.knexQuery.toSQL()
+  }
+
+  /**
+   * Get rows back as a plain javascript object and not an array
+   * of model instances
+   */
+  public pojo(): this {
+    this.wrapResultsToModelInstances = false
+    return this
   }
 
   /**

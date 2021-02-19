@@ -5783,7 +5783,7 @@ test.group('Model | ManyToMany | onQuery', (group) => {
   })
 
   test('invoke onQuery method on pivot query builder', async (assert) => {
-    assert.plan(1)
+    assert.plan(4)
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })
@@ -5810,6 +5810,7 @@ test.group('Model | ManyToMany | onQuery', (group) => {
       .insertQuery()
       .table('skills')
       .insert([{ name: 'Programming' }, { name: 'Dancing' }, { name: 'Singing' }])
+
     await db
       .insertQuery()
       .table('skill_user')
@@ -5825,7 +5826,11 @@ test.group('Model | ManyToMany | onQuery', (group) => {
       ])
 
     const user = await User.findOrFail(1)
-    await user.related('skills').pivotQuery()
+    const skills = await user.related('skills').pivotQuery()
+
+    assert.lengthOf(skills, 2)
+    assert.notInstanceOf(skills[0], Skill)
+    assert.notInstanceOf(skills[1], Skill)
   })
 })
 

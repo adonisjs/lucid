@@ -40,7 +40,13 @@ export class ManyToManyQueryBuilder
   }
   public set isPivotOnlyQuery(pivotOnly) {
     this.pivotQuery = pivotOnly
-    this.wrapResultsToModelInstances = !this.pivotQuery
+
+    /**
+     * Get plain object for a pivot only query
+     */
+    if (this.pivotQuery) {
+      this.pojo()
+    }
   }
 
   constructor(
