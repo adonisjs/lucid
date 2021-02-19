@@ -754,12 +754,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
      */
     $getRelation<Model extends LucidModel, Name extends ExtractModelRelations<InstanceType<Model>>>(
       this: Model,
-      name: Name | string
-    ):
-      | (InstanceType<Model>[Name] extends ModelRelations
-          ? InstanceType<Model>[Name]['client']['relation']
-          : RelationshipsContract)
-      | undefined
+      name: Name
+    ): InstanceType<Model>[Name] extends ModelRelations
+      ? InstanceType<Model>[Name]['client']['relation']
+      : RelationshipsContract
+    $getRelation<Model extends LucidModel>(this: Model, name: string): RelationshipsContract
 
     /**
      * Boot model
