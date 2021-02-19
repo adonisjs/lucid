@@ -34,6 +34,7 @@ export class HasOneQueryBuilder extends BaseQueryBuilder {
         subQuery.isChildQuery = true
         subQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
         userFn(subQuery)
+        subQuery.applyWhere()
       }
     })
   }

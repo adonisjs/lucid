@@ -19,6 +19,8 @@ import { RawQueryBuilder } from './Raw'
 import { RawBuilder } from '../StaticBuilder/Raw'
 import { ReferenceBuilder } from '../StaticBuilder/Reference'
 
+const WRAPPING_METHODS = ['where', 'orWhere', 'whereNot', 'orWhereNot']
+
 /**
  * The chainable query builder to consturct SQL queries for selecting, updating and
  * deleting records.
@@ -30,6 +32,64 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public hasAggregates: boolean = false
   public hasGroupBy: boolean = false
   public hasUnion: boolean = false
+
+  /**
+   * Collection where clauses in a 2nd array. Calling `wrapExisting`
+   * adds a new stack item
+   */
+  private whereStack: any[][] = [[]]
+
+  /**
+   * Returns the recent most array from the where stack
+   */
+  private getRecentStackItem() {
+    return this.whereStack[this.whereStack.length - 1]
+  }
+
+  /**
+   * Returns the wrapping method for a given where method
+   */
+  private getWrappingMethod(method: string) {
+    if (WRAPPING_METHODS.includes(method)) {
+      return {
+        method: 'where',
+        wrappingMethod: method,
+      }
+    }
+
+    if (method.startsWith('or')) {
+      return {
+        method: method,
+        wrappingMethod: 'orWhere',
+      }
+    }
+
+    return {
+      method: method,
+      wrappingMethod: 'where',
+    }
+  }
+
+  /**
+   * Applies the where clauses
+   */
+  protected applyWhere() {
+    if (this.whereStack.length === 1) {
+      this.whereStack[0].forEach(({ method, args }) => {
+        this.knexQuery[method](...args)
+      })
+      return
+    }
+
+    this.whereStack.forEach((collection) => {
+      const firstItem = collection.shift()
+      const wrapper = this.getWrappingMethod(firstItem.method)
+      this.knexQuery[wrapper.wrappingMethod]((subquery) => {
+        subquery[wrapper.method](...firstItem.args)
+        collection.forEach(({ method, args }) => subquery[method](...args))
+      })
+    })
+  }
 
   /**
    * An array of selected columns
@@ -142,10 +202,13 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Apply existing query flags to a new query builder. This is
    * done during clone operation
    */
-  protected applyQueryFlags(query: ChainableContract) {
+  protected applyQueryFlags(query: Chainable) {
     query.hasAggregates = this.hasAggregates
     query.hasGroupBy = this.hasGroupBy
     query.hasUnion = this.hasUnion
+    query.whereStack = this.whereStack.map((collection) => {
+      return collection.map((node) => node)
+    })
   }
 
   /**
@@ -160,6 +223,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   protected transformValue(value: any) {
     if (value instanceof Chainable) {
+      value.applyWhere()
       return value.knexQuery
     }
 
@@ -232,20 +296,41 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   }
 
   /**
+   * Wrap existing where clauses to its own group
+   */
+  public wrapExisting(): this {
+    if (this.getRecentStackItem().length) {
+      this.whereStack.push([])
+    }
+    return this
+  }
+
+  /**
    * Add a `where` clause
    */
   public where(key: any, operator?: any, value?: any): this {
+    const whereClauses = this.getRecentStackItem()
+
     if (value !== undefined) {
-      this.knexQuery.where(this.resolveKey(key), operator, this.transformValue(value))
+      whereClauses.push({
+        method: 'where',
+        args: [this.resolveKey(key), operator, this.transformValue(value)],
+      })
     } else if (operator !== undefined) {
-      this.knexQuery.where(this.resolveKey(key), this.transformValue(operator))
+      whereClauses.push({
+        method: 'where',
+        args: [this.resolveKey(key), this.transformValue(operator)],
+      })
     } else {
       /**
        * Only callback is allowed as a standalone param. One must use `whereRaw`
        * for raw/sub queries. This is our limitation to have consistent API
        */
       this.validateWhereSingleArgument(key, 'where')
-      this.knexQuery.where(this.resolveKey(key, true, this.transformCallback(key)))
+      whereClauses.push({
+        method: 'where',
+        args: [this.resolveKey(key, true, this.transformCallback(key))],
+      })
     }
 
     return this
@@ -255,13 +340,24 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add a `or where` clause
    */
   public orWhere(key: any, operator?: any, value?: any): this {
+    const whereClauses = this.getRecentStackItem()
+
     if (value !== undefined) {
-      this.knexQuery.orWhere(this.resolveKey(key), operator, this.transformValue(value))
+      whereClauses.push({
+        method: 'orWhere',
+        args: [this.resolveKey(key), operator, this.transformValue(value)],
+      })
     } else if (operator !== undefined) {
-      this.knexQuery.orWhere(this.resolveKey(key), this.transformValue(operator))
+      whereClauses.push({
+        method: 'orWhere',
+        args: [this.resolveKey(key), this.transformValue(operator)],
+      })
     } else {
       this.validateWhereSingleArgument(key, 'orWhere')
-      this.knexQuery.orWhere(this.resolveKey(key, true, this.transformCallback(key)))
+      whereClauses.push({
+        method: 'orWhere',
+        args: [this.resolveKey(key, true, this.transformCallback(key))],
+      })
     }
 
     return this
@@ -278,13 +374,24 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `where not` clause
    */
   public whereNot(key: any, operator?: any, value?: any): this {
+    const whereClauses = this.getRecentStackItem()
+
     if (value !== undefined) {
-      this.knexQuery.whereNot(this.resolveKey(key), operator, this.transformValue(value))
+      whereClauses.push({
+        method: 'whereNot',
+        args: [this.resolveKey(key), operator, this.transformValue(value)],
+      })
     } else if (operator !== undefined) {
-      this.knexQuery.whereNot(this.resolveKey(key), this.transformValue(operator))
+      whereClauses.push({
+        method: 'whereNot',
+        args: [this.resolveKey(key), this.transformValue(operator)],
+      })
     } else {
       this.validateWhereSingleArgument(key, 'whereNot')
-      this.knexQuery.whereNot(this.resolveKey(key, true, this.transformCallback(key)))
+      whereClauses.push({
+        method: 'whereNot',
+        args: [this.resolveKey(key, true, this.transformCallback(key))],
+      })
     }
 
     return this
@@ -294,13 +401,24 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `or where not` clause
    */
   public orWhereNot(key: any, operator?: any, value?: any): this {
+    const whereClauses = this.getRecentStackItem()
+
     if (value !== undefined) {
-      this.knexQuery.orWhereNot(this.resolveKey(key), operator, this.transformValue(value))
+      whereClauses.push({
+        method: 'orWhereNot',
+        args: [this.resolveKey(key), operator, this.transformValue(value)],
+      })
     } else if (operator !== undefined) {
-      this.knexQuery.orWhereNot(this.resolveKey(key), this.transformValue(operator))
+      whereClauses.push({
+        method: 'orWhereNot',
+        args: [this.resolveKey(key), this.transformValue(operator)],
+      })
     } else {
       this.validateWhereSingleArgument(key, 'orWhereNot')
-      this.knexQuery.orWhereNot(this.resolveKey(key, true, this.transformCallback(key)))
+      whereClauses.push({
+        method: 'orWhereNot',
+        args: [this.resolveKey(key, true, this.transformCallback(key))],
+      })
     }
 
     return this
@@ -387,7 +505,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? columns.map((column) => this.resolveKey(column))
       : this.resolveKey(columns)
 
-    this.knexQuery.whereIn(columns, value)
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'whereIn',
+      args: [columns, value],
+    })
     return this
   }
 
@@ -403,7 +525,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? columns.map((column) => this.resolveKey(column))
       : this.resolveKey(columns)
 
-    this.knexQuery.orWhereIn(columns, value)
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'orWhereIn',
+      args: [columns, value],
+    })
     return this
   }
 
@@ -426,7 +552,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? columns.map((column) => this.resolveKey(column))
       : this.resolveKey(columns)
 
-    this.knexQuery.whereNotIn(columns, value)
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'whereNotIn',
+      args: [columns, value],
+    })
     return this
   }
 
@@ -442,7 +572,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? columns.map((column) => this.resolveKey(column))
       : this.resolveKey(columns)
 
-    this.knexQuery.orWhereNotIn(columns, value)
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'orWhereNotIn',
+      args: [columns, value],
+    })
     return this
   }
 
@@ -457,7 +591,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `where not null` clause
    */
   public whereNull(key: any): this {
-    this.knexQuery.whereNull(this.resolveKey(key))
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'whereNull',
+      args: [this.resolveKey(key)],
+    })
     return this
   }
 
@@ -465,7 +603,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `or where not null` clause
    */
   public orWhereNull(key: any): this {
-    this.knexQuery.orWhereNull(this.resolveKey(key))
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'orWhereNull',
+      args: [this.resolveKey(key)],
+    })
     return this
   }
 
@@ -473,14 +615,18 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Alias for [[whereNull]]
    */
   public andWhereNull(key: any): this {
-    return this.whereNull(this.resolveKey(key))
+    return this.whereNull(key)
   }
 
   /**
    * Adding `where not null` clause
    */
   public whereNotNull(key: any): this {
-    this.knexQuery.whereNotNull(this.resolveKey(key))
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'whereNotNull',
+      args: [this.resolveKey(key)],
+    })
     return this
   }
 
@@ -488,7 +634,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `or where not null` clause
    */
   public orWhereNotNull(key: any): this {
-    this.knexQuery.orWhereNotNull(this.resolveKey(key))
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'orWhereNotNull',
+      args: [this.resolveKey(key)],
+    })
     return this
   }
 
@@ -496,14 +646,18 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Alias for [[whereNotNull]]
    */
   public andWhereNotNull(key: any): this {
-    return this.whereNotNull(this.resolveKey(key))
+    return this.whereNotNull(key)
   }
 
   /**
    * Add a `where exists` clause
    */
   public whereExists(value: any) {
-    this.knexQuery.whereExists(this.transformValue(value))
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'whereExists',
+      args: [this.transformValue(value)],
+    })
     return this
   }
 
@@ -511,7 +665,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add a `or where exists` clause
    */
   public orWhereExists(value: any) {
-    this.knexQuery.orWhereExists(this.transformValue(value))
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'orWhereExists',
+      args: [this.transformValue(value)],
+    })
     return this
   }
 
@@ -526,7 +684,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add a `where not exists` clause
    */
   public whereNotExists(value: any) {
-    this.knexQuery.whereNotExists(this.transformValue(value))
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'whereNotExists',
+      args: [this.transformValue(value)],
+    })
     return this
   }
 
@@ -534,7 +696,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add a `or where not exists` clause
    */
   public orWhereNotExists(value: any) {
-    this.knexQuery.orWhereNotExists(this.transformValue(value))
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'orWhereNotExists',
+      args: [this.transformValue(value)],
+    })
     return this
   }
 
@@ -549,7 +715,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add where between clause
    */
   public whereBetween(key: any, value: [any, any]): this {
-    this.knexQuery.whereBetween(this.resolveKey(key), this.getBetweenPair(value))
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'whereBetween',
+      args: [this.resolveKey(key), this.getBetweenPair(value)],
+    })
     return this
   }
 
@@ -557,7 +727,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add where between clause
    */
   public orWhereBetween(key: any, value: any): this {
-    this.knexQuery.orWhereBetween(this.resolveKey(key), this.getBetweenPair(value))
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'orWhereBetween',
+      args: [this.resolveKey(key), this.getBetweenPair(value)],
+    })
     return this
   }
 
@@ -572,7 +746,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add where between clause
    */
   public whereNotBetween(key: any, value: any): this {
-    this.knexQuery.whereNotBetween(this.resolveKey(key), this.getBetweenPair(value))
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'whereNotBetween',
+      args: [this.resolveKey(key), this.getBetweenPair(value)],
+    })
     return this
   }
 
@@ -580,7 +758,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Add where between clause
    */
   public orWhereNotBetween(key: any, value: any): this {
-    this.knexQuery.orWhereNotBetween(this.resolveKey(key), this.getBetweenPair(value))
+    const whereClauses = this.getRecentStackItem()
+    whereClauses.push({
+      method: 'orWhereNotBetween',
+      args: [this.resolveKey(key), this.getBetweenPair(value)],
+    })
     return this
   }
 
@@ -595,14 +777,22 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding a where clause using raw sql
    */
   public whereRaw(sql: any, bindings?: any): this {
+    const whereClauses = this.getRecentStackItem()
+
     if (bindings) {
       bindings = Array.isArray(bindings)
         ? bindings.map((binding) => this.transformValue(binding))
         : bindings
 
-      this.knexQuery.whereRaw(sql, bindings)
+      whereClauses.push({
+        method: 'whereRaw',
+        args: [sql, bindings],
+      })
     } else {
-      this.knexQuery.whereRaw(this.transformRaw(sql))
+      whereClauses.push({
+        method: 'whereRaw',
+        args: [this.transformRaw(sql)],
+      })
     }
 
     return this
@@ -612,14 +802,22 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding a or where clause using raw sql
    */
   public orWhereRaw(sql: any, bindings?: any): this {
+    const whereClauses = this.getRecentStackItem()
+
     if (bindings) {
       bindings = Array.isArray(bindings)
         ? bindings.map((binding) => this.transformValue(binding))
         : bindings
 
-      this.knexQuery.orWhereRaw(sql, bindings)
+      whereClauses.push({
+        method: 'orWhereRaw',
+        args: [sql, bindings],
+      })
     } else {
-      this.knexQuery.orWhereRaw(this.transformRaw(sql))
+      whereClauses.push({
+        method: 'orWhereRaw',
+        args: [this.transformRaw(sql)],
+      })
     }
     return this
   }
@@ -1209,6 +1407,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Clear where clauses
    */
   public clearWhere(): this {
+    this.whereStack = [[]]
     this.knexQuery.clearWhere()
     return this
   }

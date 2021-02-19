@@ -38,7 +38,9 @@ const queryCallback: DBQueryCallback = (userFn, keysResolver) => {
      * Other option is to have this method for each instance of the class, but this
      * is waste of resources.
      */
-    userFn(new DatabaseQueryBuilder(builder, {} as any, keysResolver))
+    const query = new DatabaseQueryBuilder(builder, {} as any, keysResolver)
+    userFn(query)
+    query['applyWhere']()
   }
 }
 
@@ -261,13 +263,14 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Returns SQL query as a string
    */
   public toQuery(): string {
+    this.applyWhere()
     return this.knexQuery.toQuery()
   }
 
   /**
    * Run query inside the given transaction
    */
-  public useTransaction(transaction: TransactionClientContract) {
+  public useTransaction(transaction: TransactionClientContract): this {
     this.knexQuery.transacting(transaction.knexClient)
     return this
   }
@@ -276,6 +279,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Executes the query
    */
   public async exec(): Promise<any> {
+    this.applyWhere()
     return new QueryRunner(this.client, this.debugQueries, this.getQueryData()).run(this.knexQuery)
   }
 
@@ -307,6 +311,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Get sql representation of the query
    */
   public toSQL(): knex.Sql {
+    this.applyWhere()
     return this.knexQuery.toSQL()
   }
 

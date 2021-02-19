@@ -451,6 +451,8 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     from: FromTable<this>
     select: DatabaseQueryBuilderSelect<this>
 
+    wrapExisting(): this
+
     where: Where<this>
     orWhere: Where<this>
     andWhere: Where<this>

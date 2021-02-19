@@ -50,6 +50,7 @@ export class HasManyThroughSubQueryBuilder
         const subQuery = new HasManyThroughSubQueryBuilder($builder, this.client, this.relation)
         subQuery.isChildQuery = true
         userFn(subQuery)
+        subQuery.applyWhere()
       }
     })
   }

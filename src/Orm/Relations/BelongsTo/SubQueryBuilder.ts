@@ -30,6 +30,7 @@ export class BelongsToSubQueryBuilder
         const subQuery = new BelongsToSubQueryBuilder($builder, this.client, this.relation)
         subQuery.isChildQuery = true
         userFn(subQuery)
+        subQuery.applyWhere()
       }
     })
   }

@@ -26,6 +26,7 @@ export class HasOneSubQueryBuilder
         const subQuery = new HasOneSubQueryBuilder($builder, this.client, this.relation)
         subQuery.isChildQuery = true
         userFn(subQuery)
+        subQuery.applyWhere()
       }
     })
   }

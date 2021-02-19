@@ -50,6 +50,7 @@ export class ManyToManySubQueryBuilder
         const subQuery = new ManyToManySubQueryBuilder($builder, this.client, this.relation)
         subQuery.isChildQuery = true
         userFn(subQuery)
+        subQuery.applyWhere()
       }
     })
   }

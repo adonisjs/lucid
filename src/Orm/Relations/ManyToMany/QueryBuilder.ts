@@ -61,6 +61,7 @@ export class ManyToManyQueryBuilder
         subQuery.isPivotOnlyQuery = this.isPivotOnlyQuery
         subQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
         userFn(subQuery)
+        subQuery.applyWhere()
       }
     })
   }

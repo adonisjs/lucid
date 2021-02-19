@@ -132,6 +132,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
         const subQuery = new ModelQueryBuilder($builder, this.model, this.client)
         subQuery.isChildQuery = true
         userFn(subQuery)
+        subQuery.applyWhere()
       }
     }
   ) {
@@ -147,6 +148,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Executes the current query
    */
   private async execQuery() {
+    this.applyWhere()
+
     const isWriteQuery = ['update', 'del', 'insert'].includes(this.knexQuery['_method'])
     const queryData = Object.assign(this.getQueryData(), this.customReporterData)
     const rows = await new QueryRunner(this.client, this.debugQueries, queryData).run(
@@ -176,6 +179,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
       .sideload(this.sideloaded)
       .debug(this.debugQueries)
       .processAllForMany(modelInstances, this.client)
+
     return modelInstances
   }
 
@@ -549,7 +553,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Perform update by incrementing value for a given column. Increments
    * can be clubbed with `update` as well
    */
-  public increment(column: any, counter?: any): any {
+  public increment(column: any, counter?: any): this {
     this.ensureCanPerformWrites()
     this.knexQuery.increment(column, counter)
     return this
@@ -559,7 +563,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Perform update by decrementing value for a given column. Decrements
    * can be clubbed with `update` as well
    */
-  public decrement(column: any, counter?: any): any {
+  public decrement(column: any, counter?: any): this {
     this.ensureCanPerformWrites()
     this.knexQuery.decrement(column, counter)
     return this
@@ -568,7 +572,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Perform update
    */
-  public update(columns: any): any {
+  public update(columns: any): this {
     this.ensureCanPerformWrites()
     this.knexQuery.update(columns)
     return this
@@ -577,7 +581,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Delete rows under the current query
    */
-  public del(): any {
+  public del(): this {
     this.ensureCanPerformWrites()
     this.knexQuery.del()
     return this
@@ -610,6 +614,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Returns SQL query as a string
    */
   public toQuery(): string {
+    this.applyWhere()
     return this.knexQuery.toQuery()
   }
 
@@ -680,6 +685,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Get sql representation of the query
    */
   public toSQL(): knex.Sql {
+    this.applyWhere()
     return this.knexQuery.toSQL()
   }
 

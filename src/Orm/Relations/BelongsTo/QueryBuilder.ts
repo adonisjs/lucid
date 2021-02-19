@@ -40,6 +40,7 @@ export class BelongsToQueryBuilder extends BaseQueryBuilder {
         subQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
         subQuery.isChildQuery = true
         userFn(subQuery)
+        subQuery.applyWhere()
       }
     })
   }
