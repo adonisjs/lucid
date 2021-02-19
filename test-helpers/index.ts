@@ -255,6 +255,25 @@ export async function setup(destroyDb: boolean = true) {
     })
   }
 
+  const hasGroupsTable = await db.schema.hasTable('groups')
+  if (!hasGroupsTable) {
+    await db.schema.createTable('groups', (table) => {
+      table.increments()
+      table.integer('name').notNullable()
+      table.timestamps()
+    })
+  }
+
+  const hasGroupUsersTable = await db.schema.hasTable('group_user')
+  if (!hasGroupUsersTable) {
+    await db.schema.createTable('group_user', (table) => {
+      table.increments()
+      table.integer('group_id')
+      table.integer('user_id')
+      table.timestamps()
+    })
+  }
+
   if (destroyDb) {
     await db.destroy()
   }
@@ -286,6 +305,8 @@ export async function cleanup(customTables?: string[]) {
   await db.schema.dropTableIfExists('comments')
   await db.schema.dropTableIfExists('identities')
   await db.schema.dropTableIfExists('knex_migrations')
+  await db.schema.dropTableIfExists('groups')
+  await db.schema.dropTableIfExists('group_user')
 
   await db.destroy()
 }
@@ -306,6 +327,8 @@ export async function resetTables() {
   await db.table('posts').truncate()
   await db.table('comments').truncate()
   await db.table('identities').truncate()
+  await db.table('groups').truncate()
+  await db.table('group_user').truncate()
   await db.destroy()
 }
 

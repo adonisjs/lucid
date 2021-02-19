@@ -1697,6 +1697,112 @@ test.group('Model | HasMany | withCount', (group) => {
     assert.deepEqual(Number(users[0].$extras.totalPosts), 2)
     assert.deepEqual(Number(users[1].$extras.totalPosts), 1)
   })
+
+  test('get count of a nested relationship', async (assert) => {
+    class Comment extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public postId: number
+
+      @column()
+      public body: string
+    }
+
+    class Post extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @hasMany(() => Comment)
+      public comments: HasMany<typeof Comment>
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<typeof Post>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const [user0, user1] = await db.query().from('users')
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert([
+        {
+          user_id: user0.id,
+          title: 'Adonis 101',
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 102',
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 101',
+        },
+      ])
+
+    const [post1, post2, post3] = await db.query().from('posts')
+    await db
+      .insertQuery()
+      .table('comments')
+      .insert([
+        {
+          post_id: post1.id,
+          body: 'Nice post',
+        },
+        {
+          post_id: post1.id,
+          body: 'Nice post',
+        },
+        {
+          post_id: post2.id,
+          body: 'Nice post',
+        },
+        {
+          post_id: post3.id,
+          body: 'Nice post',
+        },
+      ])
+
+    User.boot()
+
+    const user = await User.query().orderBy('id', 'asc').first()
+    const query = user!.related('posts').query().withCount('comments')
+
+    const { sql, bindings } = query.toSQL()
+    const { sql: rawSql, bindings: rawBindings } = db
+      .from('posts')
+      .select('posts.*')
+      .select(
+        db
+          .from('comments')
+          .count('*')
+          .whereColumn('posts.id', 'comments.post_id')
+          .as('comments_count')
+      )
+      .where('user_id', user!.id)
+      .toSQL()
+
+    assert.equal(sql, rawSql)
+    assert.deepEqual(bindings, rawBindings)
+
+    const posts = await query
+    assert.lengthOf(posts, 2)
+    assert.deepEqual(Number(posts[0].$extras.comments_count), 2)
+    assert.deepEqual(Number(posts[1].$extras.comments_count), 1)
+  })
 })
 
 test.group('Model | HasMany | has', (group) => {

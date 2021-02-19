@@ -35,7 +35,9 @@ export class PivotHelpers {
       return `${this.query.relation.pivotTable}.${column}`
     }
 
-    return this.query.isPivotOnlyQuery ? column : `${this.query.relation.pivotTable}.${column}`
+    return this.query.isPivotOnlyQuery || column.startsWith(`${this.query.relation.pivotTable}.`)
+      ? column
+      : `${this.query.relation.pivotTable}.${column}`
   }
 
   /**

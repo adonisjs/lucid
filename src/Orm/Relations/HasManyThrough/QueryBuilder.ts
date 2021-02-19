@@ -55,14 +55,14 @@ export class HasManyThroughQueryBuilder
    * Prefixes the through table name to a column
    */
   private prefixThroughTable(column: string) {
-    return `${this.throughTable}.${column}`
+    return column.startsWith(`${this.throughTable}.`) ? column : `${this.throughTable}.${column}`
   }
 
   /**
    * Prefixes the related table name to a column
    */
   private prefixRelatedTable(column: string) {
-    return `${this.relatedTable}.${column}`
+    return column.startsWith(`${this.relatedTable}.`) ? column : `${this.relatedTable}.${column}`
   }
 
   /**

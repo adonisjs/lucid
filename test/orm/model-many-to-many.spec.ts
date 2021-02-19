@@ -1809,6 +1809,115 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[0].$extras.mySkills), 2)
     assert.deepEqual(Number(users[1].$extras.mySkills), 1)
   })
+
+  test('get count of a nested relationship rows', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    class Group extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => User)
+      public users: ManyToMany<typeof User>
+    }
+
+    Group.boot()
+
+    await db
+      .insertQuery()
+      .table('groups')
+      .insert([{ name: 'Tech' }, { name: 'Movie' }])
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    await db
+      .insertQuery()
+      .table('skills')
+      .insert([{ name: 'Programming' }, { name: 'Dancing' }])
+
+    await db
+      .insertQuery()
+      .table('skill_user')
+      .insert([
+        {
+          user_id: 1,
+          skill_id: 1,
+        },
+        {
+          user_id: 1,
+          skill_id: 2,
+        },
+        {
+          user_id: 2,
+          skill_id: 2,
+        },
+      ])
+
+    await db
+      .insertQuery()
+      .table('group_user')
+      .insert([
+        {
+          user_id: 1,
+          group_id: 1,
+        },
+        {
+          user_id: 2,
+          group_id: 1,
+        },
+        {
+          user_id: 2,
+          group_id: 2,
+        },
+      ])
+
+    const firstGroup = await Group.firstOrFail()
+    const query = firstGroup.related('users').query().withCount('skills').orderBy('id', 'asc')
+
+    const { sql, bindings } = query.toSQL()
+    const { sql: rawSql, bindings: rawBindings } = db
+      .from('users')
+      .select('users.*')
+      .select(
+        db
+          .from('skills')
+          .count('*')
+          .innerJoin('skill_user', 'skills.id', 'skill_user.skill_id')
+          .whereColumn('users.id', 'skill_user.user_id')
+          .as('skills_count')
+      )
+      .select('group_user.group_id as pivot_group_id')
+      .select('group_user.user_id as pivot_user_id')
+      .innerJoin('group_user', 'users.id', 'group_user.user_id')
+      .where('group_user.group_id', firstGroup.id)
+      .orderBy('id', 'asc')
+      .toSQL()
+
+    assert.equal(sql, rawSql)
+    assert.deepEqual(bindings, rawBindings)
+
+    const users = await query
+    assert.lengthOf(users, 2)
+    assert.deepEqual(Number(users[0].$extras.skills_count), 2)
+    assert.deepEqual(Number(users[1].$extras.skills_count), 1)
+  })
 })
 
 test.group('Model | ManyToMany | has', (group) => {
