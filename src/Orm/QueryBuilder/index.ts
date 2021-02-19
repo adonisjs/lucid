@@ -553,7 +553,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Perform update by incrementing value for a given column. Increments
    * can be clubbed with `update` as well
    */
-  public increment(column: any, counter?: any): this {
+  public increment(column: any, counter?: any): any {
     this.ensureCanPerformWrites()
     this.knexQuery.increment(column, counter)
     return this
@@ -563,7 +563,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Perform update by decrementing value for a given column. Decrements
    * can be clubbed with `update` as well
    */
-  public decrement(column: any, counter?: any): this {
+  public decrement(column: any, counter?: any): any {
     this.ensureCanPerformWrites()
     this.knexQuery.decrement(column, counter)
     return this
@@ -572,7 +572,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Perform update
    */
-  public update(columns: any): this {
+  public update(columns: any): any {
     this.ensureCanPerformWrites()
     this.knexQuery.update(columns)
     return this
@@ -581,7 +581,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Delete rows under the current query
    */
-  public del(): this {
+  public del(): any {
     this.ensureCanPerformWrites()
     this.knexQuery.del()
     return this
@@ -590,7 +590,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Alias for [[del]]
    */
-  public delete(): this {
+  public delete(): any {
     return this.del()
   }
 
