@@ -1631,14 +1631,14 @@ test.group('Model | ManyToMany | withCount', (group) => {
       ])
 
     const users = await User.query()
-      .withCount('skills', (query) => {
-        query.countDistinct('skill_user.user_id')
+      .withAggregate('skills', (query) => {
+        query.countDistinct('skill_user.user_id').as('skillsCount')
       })
       .orderBy('id', 'asc')
 
     assert.lengthOf(users, 2)
-    assert.deepEqual(Number(users[0].$extras.skills_count), 1)
-    assert.deepEqual(Number(users[1].$extras.skills_count), 1)
+    assert.deepEqual(Number(users[0].$extras.skillsCount), 1)
+    assert.deepEqual(Number(users[1].$extras.skillsCount), 1)
   })
 
   test('allow cherry picking columns', async (assert) => {

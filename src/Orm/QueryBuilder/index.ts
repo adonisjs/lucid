@@ -19,9 +19,9 @@ import {
   ModelQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Model'
 
-import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
-
 import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { RelationQueryBuilderContract, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
+
 import {
   DialectContract,
   QueryClientContract,
@@ -404,25 +404,22 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
-   * Get count of a relationship along side the main query results
+   * Load aggregate value as a subquery for a relationship
    */
-  public withCount(relationName: any, userCallback?: any): this {
+  public withAggregate(relationName: any, userCallback: any): this {
     const subQuery = this.getRelationship(relationName).subQuery(this.client)
     subQuery.selfJoinCounter = this.joinCounter
 
     /**
      * Invoke user callback
      */
-    if (typeof userCallback === 'function') {
-      userCallback(subQuery)
-    }
+    userCallback(subQuery)
 
     /**
-     * If user callback has not defined any aggregates, then we should
-     * add a count
+     * Raise exception if the callback has not defined an aggregate
      */
     if (!subQuery.hasAggregates) {
-      subQuery.count('*')
+      throw new Exception('"withAggregate" callback must use an aggregate function')
     }
 
     /**
@@ -433,10 +430,10 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     }
 
     /**
-     * Define alias, when a custom alias is not defined
+     * Throw exception when no alias
      */
     if (!subQuery.subQueryAlias) {
-      subQuery.as(`${relationName}_count`)
+      throw new Exception('"withAggregate" callback must define the alias for the aggregate query')
     }
 
     /**
@@ -448,6 +445,33 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
      * Bump the counter
      */
     this.joinCounter++
+
+    return this
+  }
+
+  /**
+   * Get count of a relationship along side the main query results
+   */
+  public withCount(relationName: any, userCallback?: any): this {
+    this.withAggregate(relationName, (subQuery: RelationQueryBuilderContract<any, any>) => {
+      if (typeof userCallback === 'function') {
+        userCallback(subQuery)
+      }
+
+      /**
+       * Count "*"
+       */
+      if (!subQuery.hasAggregates) {
+        subQuery.count('*')
+      }
+
+      /**
+       * Define alias for the subquery
+       */
+      if (!subQuery.subQueryAlias) {
+        subQuery.as(`${relationName}_count`)
+      }
+    })
 
     return this
   }

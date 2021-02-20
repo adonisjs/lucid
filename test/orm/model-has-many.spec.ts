@@ -1532,13 +1532,13 @@ test.group('Model | HasMany | withCount', (group) => {
 
     User.boot()
 
-    const users = await User.query().withCount('posts', (query) => {
-      query.countDistinct('title')
+    const users = await User.query().withAggregate('posts', (query) => {
+      query.countDistinct('title').as('postsCount')
     })
 
     assert.lengthOf(users, 2)
-    assert.deepEqual(Number(users[0].$extras.posts_count), 1)
-    assert.deepEqual(Number(users[1].$extras.posts_count), 1)
+    assert.deepEqual(Number(users[0].$extras.postsCount), 1)
+    assert.deepEqual(Number(users[1].$extras.postsCount), 1)
   })
 
   test('allow cherry picking columns', async (assert) => {

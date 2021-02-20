@@ -958,6 +958,19 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   }
 
   /**
+   * The with aggregate function
+   */
+  export interface WithAggregate<Model extends LucidRow, Builder extends any> {
+    <
+      Name extends ExtractModelRelations<Model>,
+      RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['subQuery'] : never
+    >(
+      relation: Name,
+      callback: (builder: RelatedBuilder) => void
+    ): Builder
+  }
+
+  /**
    * The has function
    */
   export interface Has<Model extends LucidRow, Builder extends any> {

@@ -52,6 +52,7 @@ import {
   setupApplication,
 } from '../../test-helpers'
 import { SimplePaginator } from '../../src/Database/Paginator/SimplePaginator'
+import { SnakeCaseNamingStrategy } from '../../src/Orm/NamingStrategies/SnakeCase'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
@@ -5315,6 +5316,7 @@ test.group('Base Model | paginate', (group) => {
       public email: string
     }
 
+    User.namingStrategy = new SnakeCaseNamingStrategy()
     User.namingStrategy.paginationMetaKeys = () => {
       return {
         total: 'total',

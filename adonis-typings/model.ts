@@ -33,6 +33,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     Preload,
     WhereHas,
     WithCount,
+    WithAggregate,
     ModelRelations,
     RelationOptions,
     PreloaderContract,
@@ -387,6 +388,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * Fetch relationship count
      */
     withCount: WithCount<InstanceType<Model>, this>
+
+    /**
+     * Fetch aggregate value for a given relationship
+     */
+    withAggregate: WithAggregate<InstanceType<Model>, this>
 
     /**
      * Add where constraint using the relationship

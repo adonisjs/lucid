@@ -1693,14 +1693,14 @@ test.group('Model | Has Many Through | withCount', (group) => {
       ])
 
     const countries = await Country.query()
-      .withCount('posts', (query) => {
-        query.countDistinct('posts.user_id')
+      .withAggregate('posts', (query) => {
+        query.countDistinct('posts.user_id').as('postsCount')
       })
       .orderBy('id', 'asc')
 
     assert.lengthOf(countries, 2)
-    assert.equal(countries[0].$extras.posts_count, 2)
-    assert.equal(countries[1].$extras.posts_count, 2)
+    assert.equal(countries[0].$extras.postsCount, 2)
+    assert.equal(countries[1].$extras.postsCount, 2)
   })
 
   test('allow cherry picking columns', async (assert) => {
