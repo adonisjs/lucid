@@ -97,7 +97,7 @@ export default class DatabaseServiceProvider {
       return
     }
 
-    this.app.container.with(
+    this.app.container.withBindings(
       ['Adonis/Core/HealthCheck', 'Adonis/Lucid/Database'],
       (HealthCheck, Db) => {
         if (Db.hasHealthChecksEnabled) {
@@ -118,10 +118,13 @@ export default class DatabaseServiceProvider {
       return
     }
 
-    this.app.container.with(['Adonis/Core/Validator', 'Adonis/Lucid/Database'], (Validator, Db) => {
-      const { extendValidator } = require('../src/Bindings/Validator')
-      extendValidator(Validator.validator, Db)
-    })
+    this.app.container.withBindings(
+      ['Adonis/Core/Validator', 'Adonis/Lucid/Database'],
+      (Validator, Db) => {
+        const { extendValidator } = require('../src/Bindings/Validator')
+        extendValidator(Validator.validator, Db)
+      }
+    )
   }
 
   /**
