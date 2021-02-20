@@ -258,7 +258,7 @@ export async function setup(destroyDb: boolean = true) {
   if (!hasGroupsTable) {
     await db.schema.createTable('groups', (table) => {
       table.increments()
-      table.integer('name').notNullable()
+      table.string('name').notNullable()
       table.timestamps()
     })
   }
