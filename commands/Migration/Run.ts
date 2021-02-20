@@ -11,7 +11,7 @@ import { flags } from '@adonisjs/core/build/standalone'
 import MigrationsBase from './Base'
 
 /**
- * The command is meant to migrate the database by execute migrations
+ * The command is meant to migrate the database by executing migrations
  * in `up` direction.
  */
 export default class Migrate extends MigrationsBase {
