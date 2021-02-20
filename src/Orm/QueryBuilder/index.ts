@@ -569,7 +569,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Define a relationship to be preloaded
    */
   public preload(relationName: any, userCallback?: any): this {
-    this.preloader.preload(relationName, userCallback)
+    this.preloader.load(relationName, userCallback)
     return this
   }
 

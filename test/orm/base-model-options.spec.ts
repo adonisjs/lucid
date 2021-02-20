@@ -1439,7 +1439,7 @@ test.group('Model options | Model Preloads', (group) => {
     const user = await User.query({ connection: 'secondary' }).firstOrFail()
     assert.equal(user.$options!.connection, 'secondary')
 
-    await user.preload('profile')
+    await user.load('profile')
 
     assert.equal(user.profile.$options!.connection, 'secondary')
     assert.deepEqual(user.profile.$options!.profiler, app.profiler)
@@ -1477,7 +1477,7 @@ test.group('Model options | Model Preloads', (group) => {
     assert.equal(user.$options!.connection, 'primary')
     assert.deepEqual(user.$options!.profiler, profiler)
 
-    await user.preload('profile')
+    await user.load('profile')
 
     assert.equal(user.profile.$options!.connection, 'primary')
     assert.deepEqual(user.profile.$options!.profiler, profiler)
@@ -1512,7 +1512,7 @@ test.group('Model options | Model Preloads', (group) => {
     const user = await User.query().sideload({ id: 1 }).firstOrFail()
     assert.deepEqual(user.$sideloaded, { id: 1 })
 
-    await user.preload('profile')
+    await user.load('profile')
     assert.deepEqual(user.profile.$sideloaded, { id: 1 })
   })
 
@@ -1545,7 +1545,7 @@ test.group('Model options | Model Preloads', (group) => {
     const user = await User.query().sideload({ id: 1 }).firstOrFail()
     assert.deepEqual(user.$sideloaded, { id: 1 })
 
-    await user.preload('profile', (query) => query.sideload({ id: 2 }))
+    await user.load('profile', (query) => query.sideload({ id: 2 }))
     assert.deepEqual(user.profile.$sideloaded, { id: 2 })
   })
 })

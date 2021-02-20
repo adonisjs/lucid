@@ -568,6 +568,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
 
     /**
      * Alias for "load"
+     * @deprecated
      */
     preload: LucidRowPreload<this>
 

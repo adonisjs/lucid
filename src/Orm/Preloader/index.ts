@@ -106,7 +106,7 @@ export class Preloader implements PreloaderContract<LucidRow> {
   /**
    * Define a relationship to preload
    */
-  public preload(name: any, callback?: any): this {
+  public load(name: any, callback?: any): this {
     const relation = this.model.$getRelation(name) as RelationshipsContract
     if (!relation) {
       throw new Exception(
@@ -123,6 +123,13 @@ export class Preloader implements PreloaderContract<LucidRow> {
     }
 
     return this
+  }
+
+  /**
+   * Alias for "this.load"
+   */
+  public preload(name: any, callback?: any): this {
+    return this.load(name, callback)
   }
 
   /**

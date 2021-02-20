@@ -997,7 +997,7 @@ test.group('Model | BelongsTo | preload', (group) => {
       ])
 
     const profile = await Profile.findOrFail(1)
-    await profile.preload('user')
+    await profile.load('user')
 
     assert.instanceOf(profile.user, User)
     assert.equal(profile.user.id, profile.userId)
@@ -1145,8 +1145,8 @@ test.group('Model | BelongsTo | preload', (group) => {
       ])
 
     const identity = await Identity.query().firstOrFail()
-    await identity.preload((preloader) => {
-      preloader.preload('profile', (builder) => builder.preload('user'))
+    await identity.load((preloader) => {
+      preloader.load('profile', (builder) => builder.preload('user'))
     })
 
     assert.instanceOf(identity!.profile, Profile)

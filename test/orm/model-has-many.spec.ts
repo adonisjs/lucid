@@ -1203,12 +1203,12 @@ test.group('Model | HasMany | preload', (group) => {
 
     const users = await User.all()
 
-    await users[0].preload((preloader) => {
-      preloader.preload('posts', (builder) => builder.preload('comments'))
+    await users[0].load((preloader) => {
+      preloader.load('posts', (builder) => builder.preload('comments'))
     })
 
-    await users[1].preload((preloader) => {
-      preloader.preload('posts', (builder) => builder.preload('comments'))
+    await users[1].load((preloader) => {
+      preloader.load('posts', (builder) => builder.preload('comments'))
     })
 
     assert.lengthOf(users[0].posts, 1)

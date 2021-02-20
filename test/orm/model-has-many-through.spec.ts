@@ -1227,8 +1227,8 @@ test.group('Model | Has Many Through | preload', (group) => {
     const countries = await Country.query().orderBy('id', 'asc')
     assert.lengthOf(countries, 2)
 
-    await countries[0].preload('posts')
-    await countries[1].preload('posts')
+    await countries[0].load('posts')
+    await countries[1].load('posts')
 
     assert.lengthOf(countries[0].posts, 2)
     assert.lengthOf(countries[1].posts, 1)

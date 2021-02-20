@@ -1021,7 +1021,10 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   export interface PreloaderContract<Model extends LucidRow> {
     processAllForOne(parent: Model, client: QueryClientContract): Promise<void>
     processAllForMany(parent: Model[], client: QueryClientContract): Promise<void>
+
+    load: Preload<Model, this>
     preload: Preload<Model, this>
+
     debug(debug: boolean): this
     sideload(values: ModelObject): this
   }

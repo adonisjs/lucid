@@ -1164,8 +1164,8 @@ test.group('Model | ManyToMany | preload', (group) => {
     const users = await User.query().orderBy('id', 'asc')
     assert.lengthOf(users, 2)
 
-    await users[0].preload('skills')
-    await users[1].preload('skills')
+    await users[0].load('skills')
+    await users[1].load('skills')
 
     assert.lengthOf(users[0].skills, 2)
     assert.lengthOf(users[1].skills, 1)

@@ -1610,29 +1610,34 @@ export class BaseModel implements LucidRow {
   }
 
   /**
-   * A more expressive alias for "this.preload"
-   */
-  public async load(relationName: any, callback?: any) {
-    return this.preload(relationName, callback)
-  }
-
-  /**
    * Preloads one or more relationships for the current model
    */
-  public async preload(relationName: any, callback?: any) {
+  public async load(relationName: any, callback?: any) {
     this.ensureIsntDeleted()
-    const constructor = this.constructor as LucidModel
-    const preloader = new Preloader(constructor)
+
+    const Model = this.constructor as LucidModel
+    const preloader = new Preloader(Model)
 
     if (typeof relationName === 'function') {
       relationName(preloader)
     } else {
-      preloader.preload(relationName, callback)
+      preloader.load(relationName, callback)
     }
 
     await preloader
       .sideload(this.$sideloaded)
-      .processAllForOne(this, constructor.$adapter.modelClient(this))
+      .processAllForOne(this, Model.$adapter.modelClient(this))
+  }
+
+  /**
+   * @deprecated
+   */
+  public async preload(relationName: any, callback?: any) {
+    process.emitWarning(
+      'DeprecationWarning',
+      '"Model.preload()" is deprecated. Use "Model.load()" instead'
+    )
+    return this.load(relationName, callback)
   }
 
   /**

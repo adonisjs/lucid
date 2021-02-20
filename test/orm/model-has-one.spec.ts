@@ -1172,8 +1172,8 @@ test.group('Model | HasOne | preload', (group) => {
     const users = await User.all()
     assert.lengthOf(users, 2)
 
-    await users[0].preload('profile')
-    await users[1].preload('profile')
+    await users[0].load('profile')
+    await users[1].load('profile')
 
     assert.equal(users[0].profile.userId, users[0].id)
     assert.equal(users[1].profile.userId, users[1].id)
@@ -1299,12 +1299,12 @@ test.group('Model | HasOne | preload', (group) => {
     const users = await User.all()
     assert.lengthOf(users, 2)
 
-    await users[0].preload((preloader) => {
-      preloader.preload('profile', (builder) => builder.preload('identity'))
+    await users[0].load((preloader) => {
+      preloader.load('profile', (builder) => builder.preload('identity'))
     })
 
-    await users[1].preload((preloader) => {
-      preloader.preload('profile', (builder) => builder.preload('identity'))
+    await users[1].load((preloader) => {
+      preloader.load('profile', (builder) => builder.preload('identity'))
     })
 
     assert.instanceOf(users[0].profile, Profile)
