@@ -12,8 +12,8 @@ import { flags } from '@adonisjs/core/build/standalone'
 import MigrationsBase from './Base'
 
 /**
- * The command is meant to migrate the database by execute migrations
- * in `up` direction.
+ * The command is meant to migrate the database by executing migrations
+ * in `down` direction.
  */
 export default class Migrate extends MigrationsBase {
   public static commandName = 'migration:rollback'
