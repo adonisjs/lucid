@@ -9,6 +9,24 @@ services:
       MYSQL_ROOT_PASSWORD: password
     ports:
       - '3306:3306'
+  mysql_replace_1:
+    image: mysql:5.7
+    environment:
+      MYSQL_DATABASE: lucid
+      MYSQL_USER: virk
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - '3304:3306'
+  mysql_replace_2:
+    image: mysql:5.7
+    environment:
+      MYSQL_DATABASE: lucid
+      MYSQL_USER: virk
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - '3303:3306'
   mysql:
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password --sync_binlog=0 --innodb_doublewrite=OFF  --innodb-flush-log-at-trx-commit=0 --innodb-flush-method=nosync

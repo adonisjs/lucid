@@ -10,10 +10,20 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
+import knex from 'knex'
 import { MysqlConfig } from '@ioc:Adonis/Lucid/Database'
 
 import { Connection } from '../../src/Connection'
-import { fs, getConfig, setup, cleanup, resetTables, setupApplication } from '../../test-helpers'
+import {
+  fs,
+  getConfig,
+  setup,
+  cleanup,
+  resetTables,
+  setupReplicaDb,
+  cleanupReplicaDb,
+  setupApplication,
+} from '../../test-helpers'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 let app: ApplicationContract
@@ -153,25 +163,198 @@ test.group('Connection | setup', (group) => {
     const fn = () => connection.connect()
     assert.throw(fn, /knex: Required configuration option/)
   })
-
-  if (process.env.DB === 'mysql') {
-    test.group('Connection | setup mysql', () => {
-      test('pass user config to mysql driver', async (assert) => {
-        const config = getConfig() as MysqlConfig
-        config.connection!.charset = 'utf-8'
-        config.connection!.typeCast = false
-
-        const connection = new Connection('primary', config, app.logger)
-        connection.connect()
-
-        assert.equal(connection.client!['context'].client.constructor.name, 'Client_MySQL')
-        assert.equal(connection.client!['context'].client.config.connection.charset, 'utf-8')
-        assert.equal(connection.client!['context'].client.config.connection.typeCast, false)
-        await connection.disconnect()
-      })
-    })
-  }
 })
+
+if (process.env.DB === 'mysql') {
+  test.group('Connection | setup mysql', () => {
+    test('pass user config to mysql driver', async (assert) => {
+      const config = getConfig() as MysqlConfig
+      config.connection!.charset = 'utf-8'
+      config.connection!.typeCast = false
+
+      const connection = new Connection('primary', config, app.logger)
+      connection.connect()
+
+      assert.equal(connection.client!['context'].client.constructor.name, 'Client_MySQL')
+      assert.equal(connection.client!['context'].client.config.connection.charset, 'utf-8')
+      assert.equal(connection.client!['context'].client.config.connection.typeCast, false)
+      await connection.disconnect()
+    })
+  })
+}
+
+if (process.env.DB === 'mysql_legacy') {
+  test.group('Connection | round robin', (group) => {
+    group.before(async () => {
+      app = await setupApplication()
+    })
+
+    group.after(async () => {
+      await cleanup()
+      await fs.cleanup()
+    })
+
+    test.only('round robin between read connections when pool is not free', async (assert) => {
+      /**
+       * Initial setup
+       */
+      const writeConnection = {
+        host: process.env.MYSQL_LEGACY_HOST,
+        port: Number(process.env.MYSQL_LEGACY_PORT),
+        user: process.env.MYSQL_LEGACY_USER,
+        password: process.env.MYSQL_LEGACY_PASSWORD,
+        database: 'lucid',
+      }
+
+      const readConnection = {
+        host: process.env.MYSQL_LEGACY_HOST,
+        port: Number(process.env.MYSQL_LEGACY_PORT),
+        user: process.env.MYSQL_LEGACY_USER,
+        password: process.env.MYSQL_LEGACY_PASSWORD,
+        database: 'lucid',
+      }
+
+      const replica1 = {
+        host: process.env.MYSQL_REPLICA_1_HOST,
+        port: Number(process.env.MYSQL_REPLICA_1_PORT),
+        user: process.env.MYSQL_REPLICA_1_USER,
+        password: process.env.MYSQL_REPLICA_1_PASSWORD,
+        database: 'lucid',
+      }
+
+      const replica2 = {
+        host: process.env.MYSQL_REPLICA_2_HOST,
+        port: Number(process.env.MYSQL_REPLICA_2_PORT),
+        user: process.env.MYSQL_REPLICA_2_USER,
+        password: process.env.MYSQL_REPLICA_2_PASSWORD,
+        database: 'lucid',
+      }
+
+      const knexConnection = knex({ client: 'mysql', connection: writeConnection })
+      await setupReplicaDb(knexConnection, [{ username: 'virk' }])
+
+      const knexReplica1 = knex({ client: 'mysql', connection: replica1 })
+      await setupReplicaDb(knexReplica1, [{ username: 'romain' }])
+
+      const knexReplica2 = knex({ client: 'mysql', connection: replica2 })
+      await setupReplicaDb(knexReplica2, [{ username: 'nikk' }])
+
+      const config: MysqlConfig = {
+        client: 'mysql' as const,
+        replicas: {
+          write: {
+            connection: writeConnection,
+          },
+          read: {
+            pool: {
+              min: 0,
+              idleTimeoutMillis: 30000,
+            },
+            connection: [readConnection, replica1, replica2],
+          },
+        },
+        debug: false,
+      }
+
+      const connection = new Connection('primary', config, app.logger)
+      connection.connect()
+
+      const [a, b, c] = await Promise.all([
+        connection.readClient!.from('replica_users').select('*'),
+        connection.readClient!.from('replica_users').select('*'),
+        connection.readClient!.from('replica_users').select('*'),
+      ])
+
+      assert.notEqual(a[0].username, b[0].username)
+      assert.notEqual(a[0].username, c[0].username)
+      assert.notEqual(b[0].username, c[0].username)
+
+      await cleanupReplicaDb(knexConnection)
+      await cleanupReplicaDb(knexReplica1)
+      await cleanupReplicaDb(knexReplica2)
+    })
+
+    test.only('send requests to the same connection, when pool has connections', async (assert) => {
+      /**
+       * Initial setup
+       */
+      const writeConnection = {
+        host: process.env.MYSQL_LEGACY_HOST,
+        port: Number(process.env.MYSQL_LEGACY_PORT),
+        user: process.env.MYSQL_LEGACY_USER,
+        password: process.env.MYSQL_LEGACY_PASSWORD,
+        database: 'lucid',
+      }
+
+      const readConnection = {
+        host: process.env.MYSQL_LEGACY_HOST,
+        port: Number(process.env.MYSQL_LEGACY_PORT),
+        user: process.env.MYSQL_LEGACY_USER,
+        password: process.env.MYSQL_LEGACY_PASSWORD,
+        database: 'lucid',
+      }
+
+      const replica1 = {
+        host: process.env.MYSQL_REPLICA_1_HOST,
+        port: Number(process.env.MYSQL_REPLICA_1_PORT),
+        user: process.env.MYSQL_REPLICA_1_USER,
+        password: process.env.MYSQL_REPLICA_1_PASSWORD,
+        database: 'lucid',
+      }
+
+      const replica2 = {
+        host: process.env.MYSQL_REPLICA_2_HOST,
+        port: Number(process.env.MYSQL_REPLICA_2_PORT),
+        user: process.env.MYSQL_REPLICA_2_USER,
+        password: process.env.MYSQL_REPLICA_2_PASSWORD,
+        database: 'lucid',
+      }
+
+      const knexConnection = knex({ client: 'mysql', connection: writeConnection })
+      await setupReplicaDb(knexConnection, [{ username: 'virk' }])
+
+      const knexReplica1 = knex({ client: 'mysql', connection: replica1 })
+      await setupReplicaDb(knexReplica1, [{ username: 'romain' }])
+
+      const knexReplica2 = knex({ client: 'mysql', connection: replica2 })
+      await setupReplicaDb(knexReplica2, [{ username: 'nikk' }])
+
+      const config: MysqlConfig = {
+        client: 'mysql' as const,
+        replicas: {
+          write: {
+            connection: writeConnection,
+          },
+          read: {
+            pool: {
+              min: 3,
+              idleTimeoutMillis: 30000,
+            },
+            connection: [readConnection, replica1, replica2],
+          },
+        },
+        debug: false,
+      }
+
+      const connection = new Connection('primary', config, app.logger)
+      connection.connect()
+
+      const [a, b, c] = await Promise.all([
+        connection.readClient!.from('replica_users').select('*'),
+        connection.readClient!.from('replica_users').select('*'),
+        connection.readClient!.from('replica_users').select('*'),
+      ])
+
+      assert.equal(a[0].username, b[0].username)
+      assert.equal(a[0].username, c[0].username)
+      assert.equal(b[0].username, c[0].username)
+
+      await cleanupReplicaDb(knexConnection)
+      await cleanupReplicaDb(knexReplica1)
+      await cleanupReplicaDb(knexReplica2)
+    })
+  })
+}
 
 test.group('Health Checks', (group) => {
   group.before(async () => {

@@ -593,20 +593,20 @@ export async function setupApplication(
   await fs.add(
     'config/app.ts',
     `
-		export const appKey = 'averylong32charsrandomsecretkey',
-		export const http = {
-			cookie: {},
-			trustProxy: () => true,
-		}
-	`
+    export const appKey = 'averylong32charsrandomsecretkey',
+    export const http = {
+      cookie: {},
+      trustProxy: () => true,
+    }
+  `
   )
 
   await fs.add(
     'config/database.ts',
     `
-		const dbConfig = ${JSON.stringify(dbConfig, null, 2)}
-		export default dbConfig
-	`
+    const dbConfig = ${JSON.stringify(dbConfig, null, 2)}
+    export default dbConfig
+  `
   )
 
   const app = new Application(fs.basePath, environment, {
@@ -621,4 +621,20 @@ export async function setupApplication(
   await app.bootProviders()
 
   return app
+}
+
+export async function setupReplicaDb(connection: knex, datatoInsert: { username: string }[]) {
+  const hasUsersTable = await connection.schema.hasTable('replica_users')
+  if (!hasUsersTable) {
+    await connection.schema.createTable('replica_users', (table) => {
+      table.increments()
+      table.string('username')
+    })
+  }
+
+  await connection.table('replica_users').insert(datatoInsert)
+}
+
+export async function cleanupReplicaDb(connection: knex) {
+  await connection.schema.dropTable('replica_users')
 }

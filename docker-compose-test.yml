@@ -6,6 +6,8 @@ services:
       target: build-deps
     links:
       - mysql_legacy
+      - mysql_replace_1
+      - mysql_replace_2
       - mysql
       - pg
       - mssql
