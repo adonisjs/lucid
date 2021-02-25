@@ -44,7 +44,7 @@ const databaseConfig: DatabaseConfig = {
       },
       useNullAsDefault: true,
       healthCheck: false,
-			debug: false,
+      debug: false,
     },
 
     {{/sqlite}}
@@ -70,7 +70,7 @@ const databaseConfig: DatabaseConfig = {
         database: Env.get('MYSQL_DB_NAME'),
       },
       healthCheck: false,
-			debug: false,
+      debug: false,
     },
 
     {{/mysql}}
@@ -96,11 +96,11 @@ const databaseConfig: DatabaseConfig = {
         database: Env.get('PG_DB_NAME'),
       },
       healthCheck: false,
-			debug: false,
+      debug: false,
     },
 
     {{/psql}}
-		{{#oracle}}
+    {{#oracle}}
     /*
     |--------------------------------------------------------------------------
     | OracleDB config
@@ -112,8 +112,8 @@ const databaseConfig: DatabaseConfig = {
     | npm i oracledb
     |
     */
-		oracle: {
-			client: 'oracledb',
+    oracle: {
+      client: 'oracledb',
       connection: {
         host: Env.get('ORACLE_HOST'),
         port: Env.get('ORACLE_PORT'),
@@ -122,11 +122,11 @@ const databaseConfig: DatabaseConfig = {
         database: Env.get('ORACLE_DB_NAME'),
       },
       healthCheck: false,
-			debug: false,
-		},
+      debug: false,
+    },
 
-		{{/oracle}}
-		{{#mssql}}
+    {{/oracle}}
+    {{#mssql}}
     /*
     |--------------------------------------------------------------------------
     | MSSQL config
@@ -138,19 +138,19 @@ const databaseConfig: DatabaseConfig = {
     | npm i mssql
     |
     */
-		mssql: {
-			client: 'mssql',
+    mssql: {
+      client: 'mssql',
       connection: {
-				user: Env.get('MSSQL_USER'),
-				port: Env.get('MSSQL_PORT'),
-				server: Env.get('MSSQL_SERVER'),
-				password: Env.get('MSSQL_PASSWORD', ''),
-				database: Env.get('MSSQL_DB_NAME'),
+        user: Env.get('MSSQL_USER'),
+        port: Env.get('MSSQL_PORT'),
+        server: Env.get('MSSQL_SERVER'),
+        password: Env.get('MSSQL_PASSWORD', ''),
+        database: Env.get('MSSQL_DB_NAME'),
       },
       healthCheck: false,
-			debug: false,
-		}
-		{{/mssql}}
+      debug: false,
+    }
+    {{/mssql}}
   }
 }
 
