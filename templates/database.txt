@@ -42,6 +42,9 @@ const databaseConfig: DatabaseConfig = {
       connection: {
         filename: Application.tmpPath('db.sqlite3'),
       },
+      migrations: {
+        naturalSort: true,
+      },
       useNullAsDefault: true,
       healthCheck: false,
       debug: false,
@@ -69,6 +72,9 @@ const databaseConfig: DatabaseConfig = {
         password: Env.get('MYSQL_PASSWORD', ''),
         database: Env.get('MYSQL_DB_NAME'),
       },
+      migrations: {
+        naturalSort: true,
+      },
       healthCheck: false,
       debug: false,
     },
@@ -94,6 +100,9 @@ const databaseConfig: DatabaseConfig = {
         user: Env.get('PG_USER'),
         password: Env.get('PG_PASSWORD', ''),
         database: Env.get('PG_DB_NAME'),
+      },
+      migrations: {
+        naturalSort: true,
       },
       healthCheck: false,
       debug: false,
@@ -121,6 +130,9 @@ const databaseConfig: DatabaseConfig = {
         password: Env.get('ORACLE_PASSWORD', ''),
         database: Env.get('ORACLE_DB_NAME'),
       },
+      migrations: {
+        naturalSort: true,
+      },
       healthCheck: false,
       debug: false,
     },
@@ -146,6 +158,9 @@ const databaseConfig: DatabaseConfig = {
         server: Env.get('MSSQL_SERVER'),
         password: Env.get('MSSQL_PASSWORD', ''),
         database: Env.get('MSSQL_DB_NAME'),
+      },
+      migrations: {
+        naturalSort: true,
       },
       healthCheck: false,
       debug: false,
