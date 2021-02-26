@@ -227,7 +227,7 @@ export class QueryClient implements QueryClientContract {
    * Returns reference builder.
    */
   public ref(reference: string) {
-    return new ReferenceBuilder(reference)
+    return new ReferenceBuilder(reference, this.getReadClient().client)
   }
 
   /**

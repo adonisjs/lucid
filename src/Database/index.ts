@@ -235,7 +235,7 @@ export class Database implements DatabaseContract {
    * Returns reference builder.
    */
   public ref(reference: string) {
-    return new ReferenceBuilder(reference)
+    return new ReferenceBuilder(reference, this.connection().getReadClient().client)
   }
 
   /**

@@ -19,7 +19,7 @@ export class ReferenceBuilder implements ReferenceBuilderContract {
   private schema: string
   private alias: string
 
-  constructor(private ref: string) {}
+  constructor(private ref: string, private client: knex.Client) {}
 
   /**
    * Define schema
@@ -40,8 +40,8 @@ export class ReferenceBuilder implements ReferenceBuilderContract {
   /**
    * Converts reference to knex
    */
-  public toKnex(client: knex.Client) {
-    const ref = client.ref(this.ref)
+  public toKnex(client?: knex.Client) {
+    const ref = (client || this.client).ref(this.ref)
     this.schema && ref.withSchema(this.schema)
     this.alias && ref.as(this.alias)
 

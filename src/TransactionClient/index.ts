@@ -173,7 +173,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
    * Returns reference builder.
    */
   public ref(reference: string) {
-    return new ReferenceBuilder(reference)
+    return new ReferenceBuilder(reference, this.knexClient.client)
   }
 
   /**
