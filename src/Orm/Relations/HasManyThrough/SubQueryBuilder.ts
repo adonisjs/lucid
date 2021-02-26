@@ -59,13 +59,17 @@ export class HasManyThroughSubQueryBuilder
    * Prefixes the through table name to a column
    */
   private prefixThroughTable(column: string) {
-    return `${this.throughTable}.${column}`
+    return column.includes('.') ? column : `${this.throughTable}.${column}`
   }
 
   /**
    * Prefixes the related table name to a column
    */
   private prefixRelatedTable(column: string) {
+    if (column.includes('.')) {
+      return column
+    }
+
     if (this.hasSelfRelation) {
       return `${this.selfJoinAlias}.${column}`
     }

@@ -95,7 +95,7 @@ export class ManyToManyQueryBuilder
    * Prefixes the related table name to a column
    */
   private prefixRelatedTable(column: string) {
-    return column.startsWith(`${this.relatedTable}`) ? column : `${this.relatedTable}.${column}`
+    return column.includes('.') ? column : `${this.relatedTable}.${column}`
   }
 
   /**

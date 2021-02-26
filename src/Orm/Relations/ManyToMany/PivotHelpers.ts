@@ -31,13 +31,15 @@ export class PivotHelpers {
    * Prefixes the pivot table name to a column
    */
   public prefixPivotTable(column: string) {
+    if (column.includes('.')) {
+      return column
+    }
+
     if (this.query instanceof ManyToManySubQueryBuilder) {
       return `${this.query.relation.pivotTable}.${column}`
     }
 
-    return this.query.isPivotOnlyQuery || column.startsWith(`${this.query.relation.pivotTable}.`)
-      ? column
-      : `${this.query.relation.pivotTable}.${column}`
+    return this.query.isPivotOnlyQuery ? column : `${this.query.relation.pivotTable}.${column}`
   }
 
   /**

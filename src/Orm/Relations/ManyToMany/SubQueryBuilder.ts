@@ -59,6 +59,10 @@ export class ManyToManySubQueryBuilder
    * Prefixes the related table name to a column
    */
   private prefixRelatedTable(column: string) {
+    if (column.includes('.')) {
+      return column
+    }
+
     if (this.hasSelfRelation) {
       return `${this.selfJoinAlias}.${column}`
     }
