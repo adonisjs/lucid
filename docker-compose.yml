@@ -9,7 +9,7 @@ services:
       MYSQL_ROOT_PASSWORD: password
     ports:
       - '3306:3306'
-  mysql_replace_1:
+  mysql_replica_1:
     image: mysql:5.7
     environment:
       MYSQL_DATABASE: lucid
@@ -18,7 +18,7 @@ services:
       MYSQL_ROOT_PASSWORD: password
     ports:
       - '3304:3306'
-  mysql_replace_2:
+  mysql_replica_2:
     image: mysql:5.7
     environment:
       MYSQL_DATABASE: lucid
