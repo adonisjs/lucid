@@ -80,6 +80,7 @@ test.group('Validator | exists', (group) => {
           .where('id', userId)
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -117,6 +118,7 @@ test.group('Validator | exists', (group) => {
           .where('username', 'nikk')
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -163,6 +165,7 @@ test.group('Validator | exists', (group) => {
           .where('username', 'nikk')
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -214,6 +217,7 @@ test.group('Validator | exists', (group) => {
           .whereIn('username', ['nikk', 'romain'])
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -260,6 +264,7 @@ test.group('Validator | exists', (group) => {
           .whereIn('username', ['nikk', 'romain'])
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -311,6 +316,7 @@ test.group('Validator | exists', (group) => {
           .whereNot('username', 'virk')
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -357,6 +363,7 @@ test.group('Validator | exists', (group) => {
           .whereNot('username', 'virk')
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -408,6 +415,7 @@ test.group('Validator | exists', (group) => {
           .whereNotIn('username', ['virk', 'nikk'])
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -454,6 +462,7 @@ test.group('Validator | exists', (group) => {
           .whereNotIn('username', ['virk', 'nikk'])
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -501,6 +510,7 @@ test.group('Validator | exists', (group) => {
           .whereRaw(`lower(username) = ?`, [db.connection().knexRawQuery(`lower(?)`, ['VIRK'])])
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -600,6 +610,7 @@ test.group('Validator | unique', (group) => {
           .where('username', 'virk')
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -646,6 +657,7 @@ test.group('Validator | unique', (group) => {
           .where('username', 'virk')
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -697,6 +709,7 @@ test.group('Validator | unique', (group) => {
           .whereIn('username', ['virk', 'nikk'])
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -743,6 +756,7 @@ test.group('Validator | unique', (group) => {
           .whereIn('username', ['virk', 'nikk'])
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -794,6 +808,7 @@ test.group('Validator | unique', (group) => {
           .whereNot('username', 'nikk')
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -840,6 +855,7 @@ test.group('Validator | unique', (group) => {
           .whereNot('username', 'nikk')
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -891,6 +907,7 @@ test.group('Validator | unique', (group) => {
           .whereNotIn('country_id', [1, 2])
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -937,6 +954,7 @@ test.group('Validator | unique', (group) => {
           .whereNotIn('country_id', [1, 2])
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
@@ -983,6 +1001,7 @@ test.group('Validator | unique', (group) => {
           .whereRaw(`lower(username) = ?`, [db.connection().knexRawQuery(`lower(?)`, ['VIRK'])])
           .limit(1)
           .toSQL()
+          .toNative()
 
         assert.equal(sql, knexSql)
         assert.deepEqual(bindings, knexBindings)
