@@ -10,20 +10,10 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import knex from 'knex'
 import { MysqlConfig } from '@ioc:Adonis/Lucid/Database'
 
 import { Connection } from '../../src/Connection'
-import {
-  fs,
-  getConfig,
-  setup,
-  cleanup,
-  resetTables,
-  setupReplicaDb,
-  cleanupReplicaDb,
-  setupApplication,
-} from '../../test-helpers'
+import { fs, getConfig, setup, cleanup, resetTables, setupApplication } from '../../test-helpers'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 let app: ApplicationContract
