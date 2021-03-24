@@ -29,7 +29,7 @@ function prepareDateColumn(value: any, attributeName: string, modelInstance: Luc
   /**
    * Format luxon instances to SQL formatted date
    */
-  if (value instanceof DateTime) {
+  if (DateTime.isDateTime(value)) {
     if (!value.isValid) {
       throw new Exception(
         `Invalid value for "${modelName}.${attributeName}". ${value.invalidReason}`,
@@ -100,7 +100,7 @@ export const dateColumn: DateColumnDecorator = (options?) => {
         prepare: prepareDateColumn,
         consume: consumeDateColumn,
         serialize: (value: DateTime) => {
-          if (value instanceof DateTime) {
+          if (DateTime.isDateTime(value)) {
             return value.toISODate()
           }
           return value

@@ -1206,7 +1206,7 @@ export class BaseModel implements LucidRow {
       const originalValue = this.$original[key]
       let isEqual = true
 
-      if (value instanceof DateTime || originalValue instanceof DateTime) {
+      if (DateTime.isDateTime(value) || DateTime.isDateTime(originalValue)) {
         isEqual = value === originalValue
       } else {
         isEqual = equal(originalValue, value)
