@@ -8,9 +8,9 @@
  */
 
 declare module '@ioc:Adonis/Core/Application' {
+  import * as Orm from '@ioc:Adonis/Lucid/Orm'
   import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
   import { FactoryManagerContract } from '@ioc:Adonis/Lucid/Factory'
-  import * as Orm from '@ioc:Adonis/Lucid/Orm'
   import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
   import { SeederConstructorContract } from '@ioc:Adonis/Lucid/Seeder'
 

@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import knex from 'knex'
+import { Knex } from 'knex'
 import { EventEmitter } from 'events'
 import { EmitterContract } from '@ioc:Adonis/Core/Event'
 import { ProfilerRowContract } from '@ioc:Adonis/Core/Profiler'
@@ -44,7 +44,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   public profiler?: ProfilerRowContract
 
   constructor(
-    public knexClient: knex.Transaction,
+    public knexClient: Knex.Transaction,
     public dialect: DialectContract,
     public connectionName: string,
     public debug: boolean,
@@ -117,7 +117,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   /**
    * Get a new query builder instance
    */
-  public knexQuery(): knex.QueryBuilder {
+  public knexQuery(): Knex.QueryBuilder {
     return this.knexClient.queryBuilder()
   }
 
@@ -126,7 +126,7 @@ export class TransactionClient extends EventEmitter implements TransactionClient
    * created from the `write` client, so before executing the query, you
    * may want to decide which client to use.
    */
-  public knexRawQuery(sql: string, bindings?: any): knex.Raw {
+  public knexRawQuery(sql: string, bindings?: any): Knex.Raw {
     return bindings ? this.knexClient.raw(sql, bindings) : this.knexClient.raw(sql)
   }
 

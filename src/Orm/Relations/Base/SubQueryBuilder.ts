@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import knex from 'knex'
+import { Knex } from 'knex'
 import { LucidModel } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
@@ -56,7 +56,7 @@ export abstract class BaseSubQueryBuilder
   }
 
   constructor(
-    builder: knex.QueryBuilder,
+    builder: Knex.QueryBuilder,
     client: QueryClientContract,
     relation: RelationshipsContract,
     dbCallback: DBQueryCallback

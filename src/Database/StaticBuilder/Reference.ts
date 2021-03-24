@@ -9,7 +9,7 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import knex from 'knex'
+import { Knex } from 'knex'
 import { ReferenceBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 /**
@@ -19,7 +19,7 @@ export class ReferenceBuilder implements ReferenceBuilderContract {
   private schema: string
   private alias: string
 
-  constructor(private ref: string, private client: knex.Client) {}
+  constructor(private ref: string, private client: Knex.Client) {}
 
   /**
    * Define schema
@@ -40,7 +40,7 @@ export class ReferenceBuilder implements ReferenceBuilderContract {
   /**
    * Converts reference to knex
    */
-  public toKnex(client?: knex.Client) {
+  public toKnex(client?: Knex.Client) {
     const ref = (client || this.client).ref(this.ref)
     this.schema && ref.withSchema(this.schema)
     this.alias && ref.as(this.alias)

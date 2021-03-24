@@ -9,7 +9,7 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import knex from 'knex'
+import { Knex } from 'knex'
 import { RawBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
 /**
@@ -34,7 +34,7 @@ export class RawBuilder implements RawBuilderContract {
   /**
    * Converts the raw query to knex raw query instance
    */
-  public toKnex(client: knex.Client): knex.Raw {
+  public toKnex(client: Knex.Client): Knex.Raw {
     const rawQuery = client.raw(this.sql, this.bindings)
 
     if (this.wrapBefore && this.wrapAfter) {

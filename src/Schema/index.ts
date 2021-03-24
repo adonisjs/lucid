@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { SchemaBuilder, Sql } from 'knex'
+import { Knex } from 'knex'
 import { Exception } from '@poppinss/utils'
 import { QueryReporter } from '../QueryReporter'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
@@ -25,7 +25,7 @@ export class Schema implements SchemaContract {
    * All calls to `schema` and `defer` are tracked to be
    * executed later
    */
-  private trackedCalls: (SchemaBuilder | DeferCallback)[] = []
+  private trackedCalls: (Knex.SchemaBuilder | DeferCallback)[] = []
 
   /**
    * The state of the schema. It cannot be re-executed after completion
@@ -64,7 +64,7 @@ export class Schema implements SchemaContract {
   private getQueries(): string[] {
     return this.trackedCalls
       .filter((schema) => typeof schema['toQuery'] === 'function')
-      .map((schema) => (schema as SchemaBuilder).toQuery())
+      .map((schema) => (schema as Knex.SchemaBuilder).toQuery())
   }
 
   /**
@@ -77,7 +77,7 @@ export class Schema implements SchemaContract {
   /**
    * Returns the log data
    */
-  private getQueryData(sql: Sql) {
+  private getQueryData(sql: Knex.Sql) {
     return {
       connection: this.db.connectionName,
       inTransaction: this.db.isTransaction,
@@ -98,7 +98,7 @@ export class Schema implements SchemaContract {
         const reporter = this.getReporter()
 
         try {
-          trackedCall['once']('query', (sql) => reporter.begin(this.getQueryData(sql)))
+          trackedCall['once']('query', (sql: Knex.Sql) => reporter.begin(this.getQueryData(sql)))
           await trackedCall
           reporter.end()
         } catch (error) {

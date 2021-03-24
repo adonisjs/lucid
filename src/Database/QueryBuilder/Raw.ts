@@ -9,7 +9,7 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import knex from 'knex'
+import { Knex } from 'knex'
 
 import { RawQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
@@ -31,7 +31,7 @@ export class RawQueryBuilder implements RawQueryBuilderContract {
    */
   private debugQueries: boolean = this.client.debug
 
-  constructor(public knexQuery: knex.Raw, public client: QueryClientContract) {}
+  constructor(public knexQuery: Knex.Raw, public client: QueryClientContract) {}
 
   /**
    * Returns the log data
@@ -102,7 +102,7 @@ export class RawQueryBuilder implements RawQueryBuilderContract {
   /**
    * Get sql representation of the query
    */
-  public toSQL(): knex.Sql {
+  public toSQL(): Knex.Sql {
     return this.knexQuery.toSQL()
   }
 

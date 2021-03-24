@@ -9,10 +9,10 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import knex from 'knex'
+import { Knex } from 'knex'
 import { Exception } from '@poppinss/utils'
 import { EmitterContract } from '@ioc:Adonis/Core/Event'
-import { resolveClientNameWithAliases } from 'knex/lib/helpers'
+import { resolveClientNameWithAliases } from 'knex/lib/util/helpers'
 import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 import {
@@ -80,7 +80,7 @@ export class QueryClient implements QueryClientContract {
    * Returns the read client. The readClient is optional, since we can get
    * an instance of [[QueryClient]] with a sticky write client.
    */
-  public getReadClient(): knex {
+  public getReadClient(): Knex {
     if (this.mode === 'read' || this.mode === 'dual') {
       return this.connection.readClient!
     }
@@ -91,7 +91,7 @@ export class QueryClient implements QueryClientContract {
   /**
    * Returns the write client
    */
-  public getWriteClient(): knex {
+  public getWriteClient(): Knex {
     if (this.mode === 'write' || this.mode === 'dual') {
       return this.connection.client!
     }
@@ -172,7 +172,7 @@ export class QueryClient implements QueryClientContract {
    * created from the `write` client, so before executing the query, you
    * may want to decide which client to use.
    */
-  public knexQuery(): knex.QueryBuilder {
+  public knexQuery(): Knex.QueryBuilder {
     return this.connection.client!.queryBuilder()
   }
 
@@ -181,7 +181,7 @@ export class QueryClient implements QueryClientContract {
    * created from the `write` client, so before executing the query, you
    * may want to decide which client to use.
    */
-  public knexRawQuery(sql: string, bindings?: any): knex.Raw {
+  public knexRawQuery(sql: string, bindings?: any): Knex.Raw {
     return bindings ? this.connection.client!.raw(sql, bindings) : this.connection.client!.raw(sql)
   }
 

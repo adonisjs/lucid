@@ -8,7 +8,7 @@
  */
 
 declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
-  import knex from 'knex'
+  import { Knex } from 'knex'
   import {
     DialectContract,
     QueryClientContract,
@@ -84,7 +84,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    * `.where(function () {})`.
    *
    * - This method will accept the wrapped callback
-   * - Return a new method, that is accepted by knex.
+   * - Return a new method, that is accepted by Knex.
    * - When knex calls that method, this method will invoke the user wrapped
    *   callback, but instead of passing the knex query builder, it will
    *   pass the appropriate lucid query builder.
@@ -92,7 +92,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   type DBQueryCallback = (
     userFn: QueryCallback<ChainableContract>,
     keysResolver?: (columnName: string) => string
-  ) => (builder: knex.QueryBuilder) => void
+  ) => (builder: Knex.QueryBuilder) => void
 
   /**
    * Possible signatures for a select method on database query builder.
@@ -234,7 +234,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
      * Join with a callback. The callback receives an array of join class from
      * knex directly.
      */
-    (table: string, callback: knex.JoinCallback): Builder
+    (table: string, callback: Knex.JoinCallback): Builder
   }
 
   /**
@@ -440,8 +440,8 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    * methods to execute a query.
    */
   export interface ChainableContract {
-    knexQuery: knex.QueryBuilder
-    columns: (string | knex.QueryBuilder | knex.RawQueryBuilder)[]
+    knexQuery: Knex.QueryBuilder
+    columns: (string | Knex.QueryBuilder | Knex.RawQueryBuilder)[]
     subQueryAlias?: string
     hasAggregates: boolean
     hasGroupBy: boolean
@@ -623,7 +623,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    */
   export interface RawQueryBuilderContract<Result extends any = any>
     extends ExcutableQueryBuilderContract<Result> {
-    knexQuery: knex.Raw
+    knexQuery: Knex.Raw
     client: QueryClientContract
     wrap(before: string, after: string): this
   }
@@ -634,7 +634,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
   export interface ReferenceBuilderContract {
     withSchema(name: string): this
     as(name: string): this
-    toKnex(client: knex.Client): knex.Ref<string, any>
+    toKnex(client: Knex.Client): Knex.Ref<string, any>
   }
 
   /**
@@ -642,7 +642,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    */
   export interface RawBuilderContract {
     wrap(before: string, after: string): this
-    toKnex(client: knex.Client): knex.Raw
+    toKnex(client: Knex.Client): Knex.Raw
   }
 
   /**
@@ -773,7 +773,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
    */
   export interface InsertQueryBuilderContract<Result extends any = any>
     extends ExcutableQueryBuilderContract<Result> {
-    knexQuery: knex.QueryBuilder
+    knexQuery: Knex.QueryBuilder
     client: QueryClientContract
 
     /**
@@ -807,6 +807,6 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
     reporterData(data: any): this
     toQuery(): string
     exec(): Promise<Result>
-    toSQL(): knex.Sql
+    toSQL(): Knex.Sql
   }
 }

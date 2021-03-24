@@ -11,7 +11,7 @@
 
 import test from 'japa'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import { resolveClientNameWithAliases } from 'knex/lib/helpers'
+import { resolveClientNameWithAliases } from 'knex/lib/util/helpers'
 
 import { Connection } from '../../src/Connection'
 import { QueryClient } from '../../src/QueryClient'

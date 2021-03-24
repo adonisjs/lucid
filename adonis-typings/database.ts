@@ -10,7 +10,7 @@
 /// <reference path="./querybuilder.ts" />
 
 declare module '@ioc:Adonis/Lucid/Database' {
-  import knex from 'knex'
+  import { Knex } from 'knex'
   import { Pool } from 'tarn'
   import { EventEmitter } from 'events'
   import { ConnectionOptions } from 'tls'
@@ -108,13 +108,13 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns schema instance for the write client
      */
-    schema: knex.SchemaBuilder
+    schema: Knex.SchemaBuilder
 
     /**
      * Returns the read and write clients
      */
-    getReadClient(): knex<any, any>
-    getWriteClient(): knex<any, any>
+    getReadClient(): Knex<any, any>
+    getWriteClient(): Knex<any, any>
 
     /**
      * Returns the query builder for a given model
@@ -126,12 +126,12 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns the knex query builder instance
      */
-    knexQuery(): knex.QueryBuilder
+    knexQuery(): Knex.QueryBuilder
 
     /**
      * Returns the knex raw query builder instance
      */
-    knexRawQuery(sql: string, bindings?: RawQueryBindings): knex.Raw
+    knexRawQuery(sql: string, bindings?: RawQueryBindings): Knex.Raw
 
     /**
      * Get new query builder instance for select, update and
@@ -170,8 +170,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns columns info for a given table
      */
-    columnsInfo(table: string): Promise<{ [column: string]: knex.ColumnInfo }>
-    columnsInfo(table: string, column: string): Promise<knex.ColumnInfo>
+    columnsInfo(table: string): Promise<{ [column: string]: Knex.ColumnInfo }>
+    columnsInfo(table: string, column: string): Promise<Knex.ColumnInfo>
 
     /**
      * Get all tables of the database
@@ -209,7 +209,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * transaction on a single connection
    */
   export interface TransactionClientContract extends QueryClientContract, EventEmitter {
-    knexClient: knex.Transaction
+    knexClient: Knex.Transaction
 
     /**
      * Custom profiler to time queries
@@ -234,8 +234,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns the read and write transaction clients
      */
-    getReadClient(): knex.Transaction<any, any>
-    getWriteClient(): knex.Transaction<any, any>
+    getReadClient(): Knex.Transaction<any, any>
+    getWriteClient(): Knex.Transaction<any, any>
 
     /**
      * Transaction named events
@@ -370,7 +370,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * https://node-postgres.com/features/connecting#programmatic.
    *
    * - `returning` is added by knex and not driver.
-   * - `searchPath` is also added by knex.
+   * - `searchPath` is also added by Knex.
    *
    * Knex forwards all config options to the driver directly. So feel
    * free to define them (let us know, in case any options are missing)
@@ -579,8 +579,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * pooling capabilities.
    */
   export interface ConnectionContract extends EventEmitter {
-    client?: knex
-    readClient?: knex
+    client?: Knex
+    readClient?: Knex
 
     /**
      * Property to find if explicit read/write is enabled
@@ -710,12 +710,12 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns the knex query builder instance
      */
-    knexQuery(): knex.QueryBuilder
+    knexQuery(): Knex.QueryBuilder
 
     /**
      * Returns the knex raw query builder instance
      */
-    knexRawQuery(sql: string, bindings?: RawQueryBindings): knex.Raw
+    knexRawQuery(sql: string, bindings?: RawQueryBindings): Knex.Raw
 
     /**
      * Returns the query builder for a given model

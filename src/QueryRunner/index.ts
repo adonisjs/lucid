@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import knex from 'knex'
+import { Knex } from 'knex'
 import { Exception } from '@poppinss/utils'
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import { QueryReporter } from '../QueryReporter'
@@ -38,21 +38,21 @@ export class QueryRunner {
    * Find if query has a transaction attached to it, by using
    * `useTransaction` method
    */
-  private isInTransaction(query: knex.QueryBuilder | knex.Raw) {
+  private isInTransaction(query: Knex.QueryBuilder | Knex.Raw) {
     return query['client'].transacting
   }
 
   /**
    * Find if query is a write query or not.
    */
-  private isWriteQuery(query: knex.QueryBuilder | knex.Raw) {
+  private isWriteQuery(query: Knex.QueryBuilder | Knex.Raw) {
     return ['update', 'del', 'delete', 'insert'].includes(query['_method'])
   }
 
   /**
    * Returns read or write client by inspecting the query
    */
-  private getQueryClient(query: knex.QueryBuilder | knex.Raw) {
+  private getQueryClient(query: Knex.QueryBuilder | Knex.Raw) {
     return this.isWriteQuery(query) ? this.client.getWriteClient() : this.client.getReadClient()
   }
 
@@ -61,7 +61,7 @@ export class QueryRunner {
    * gracefully.
    */
   private async executeQuery(
-    query: knex.QueryBuilder | knex.Raw
+    query: Knex.QueryBuilder | Knex.Raw
   ): Promise<[Error | undefined, any | undefined]> {
     try {
       const result = await query
@@ -74,7 +74,7 @@ export class QueryRunner {
   /**
    * Executes the knex builder directly
    */
-  private async executeDirectly(query: knex.QueryBuilder | knex.Raw) {
+  private async executeDirectly(query: Knex.QueryBuilder | Knex.Raw) {
     /**
      * We listen for query event on the knex query builder to avoid calling
      * toSQL too many times and also get the actual time it took to
@@ -94,7 +94,7 @@ export class QueryRunner {
   /**
    * Executes query by using a proper read or write connection.
    */
-  private async executeUsingManagedConnection(query: knex.QueryBuilder | knex.Raw) {
+  private async executeUsingManagedConnection(query: Knex.QueryBuilder | Knex.Raw) {
     const queryClient = this.getQueryClient(query)
 
     /**
@@ -135,7 +135,7 @@ export class QueryRunner {
   /**
    * Run query by managing its life-cycle
    */
-  public async run(query: knex.QueryBuilder | knex.Raw) {
+  public async run(query: Knex.QueryBuilder | Knex.Raw) {
     /**
      * We execute the queries using transaction or using sqlite database
      * directly.

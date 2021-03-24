@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import knex from 'knex'
+import { Knex } from 'knex'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { LucidModel, LucidRow, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
@@ -52,7 +52,7 @@ export abstract class BaseQueryBuilder
   public isRelatedPreloadQuery: boolean = false
 
   constructor(
-    builder: knex.QueryBuilder,
+    builder: Knex.QueryBuilder,
     client: QueryClientContract,
     relation: RelationshipsContract,
     dbCallback: DBQueryCallback

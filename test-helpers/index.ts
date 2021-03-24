@@ -9,7 +9,7 @@
 
 /// <reference path="../adonis-typings/index.ts" />
 
-import knex from 'knex'
+import knex, { Knex } from 'knex'
 import dotenv from 'dotenv'
 import { join } from 'path'
 import { Chance } from 'chance'
@@ -623,7 +623,7 @@ export async function setupApplication(
   return app
 }
 
-export async function setupReplicaDb(connection: knex, datatoInsert: { username: string }[]) {
+export async function setupReplicaDb(connection: Knex, datatoInsert: { username: string }[]) {
   const hasUsersTable = await connection.schema.hasTable('replica_users')
   if (!hasUsersTable) {
     await connection.schema.createTable('replica_users', (table) => {
@@ -635,6 +635,6 @@ export async function setupReplicaDb(connection: knex, datatoInsert: { username:
   await connection.table('replica_users').insert(datatoInsert)
 }
 
-export async function cleanupReplicaDb(connection: knex) {
+export async function cleanupReplicaDb(connection: Knex) {
   await connection.schema.dropTable('replica_users')
 }

@@ -9,7 +9,7 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import knex from 'knex'
+import { Knex } from 'knex'
 import { Exception } from '@poppinss/utils'
 
 import { DialectContract } from '@ioc:Adonis/Lucid/Database'
@@ -29,7 +29,7 @@ import { SimplePaginator } from '../Paginator/SimplePaginator'
  * knex.QueryBuilder
  */
 const queryCallback: DBQueryCallback = (userFn, keysResolver) => {
-  return (builder: knex.QueryBuilder) => {
+  return (builder: Knex.QueryBuilder) => {
     /**
      * Sub queries don't need the client, since client is used to execute the query
      * and subqueries are not executed seperately. That's why we just pass
@@ -68,7 +68,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   protected static getters = {}
 
   constructor(
-    builder: knex.QueryBuilder,
+    builder: Knex.QueryBuilder,
     public client: QueryClientContract,
     public keysResolver?: (columnName: string) => string
   ) {
@@ -310,7 +310,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   /**
    * Get sql representation of the query
    */
-  public toSQL(): knex.Sql {
+  public toSQL(): Knex.Sql {
     this.applyWhere()
     return this.knexQuery.toSQL()
   }

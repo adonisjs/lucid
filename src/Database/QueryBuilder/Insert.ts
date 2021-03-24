@@ -9,7 +9,7 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import knex from 'knex'
+import { Knex } from 'knex'
 import { Macroable } from 'macroable'
 
 import { InsertQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
@@ -39,7 +39,7 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
   protected static macros = {}
   protected static getters = {}
 
-  constructor(public knexQuery: knex.QueryBuilder, public client: QueryClientContract) {
+  constructor(public knexQuery: Knex.QueryBuilder, public client: QueryClientContract) {
     super()
   }
 
@@ -142,7 +142,7 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
   /**
    * Get sql representation of the query
    */
-  public toSQL(): knex.Sql {
+  public toSQL(): Knex.Sql {
     return this.knexQuery.toSQL()
   }
 

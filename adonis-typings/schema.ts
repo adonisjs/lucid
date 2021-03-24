@@ -8,7 +8,7 @@
  */
 
 declare module '@ioc:Adonis/Lucid/Schema' {
-  import { SchemaBuilder, Raw } from 'knex'
+  import { Knex } from 'knex'
   import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
   import { RawQueryBindings } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
@@ -33,9 +33,9 @@ declare module '@ioc:Adonis/Lucid/Schema' {
     dryRun: boolean
     debug: boolean
     db: QueryClientContract
-    schema: SchemaBuilder
-    now(precision?: number): Raw
-    raw(sql: string, bindings?: RawQueryBindings): Raw
+    schema: Knex.SchemaBuilder
+    now(precision?: number): Knex.Raw
+    raw(sql: string, bindings?: RawQueryBindings): Knex.Raw
     defer: (cb: DeferCallback) => void
     up(): Promise<void> | void
     down(): Promise<void> | void

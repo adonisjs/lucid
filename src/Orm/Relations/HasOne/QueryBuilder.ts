@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import knex from 'knex'
+import { Knex } from 'knex'
 import { LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
@@ -23,7 +23,7 @@ export class HasOneQueryBuilder extends BaseQueryBuilder {
   protected appliedConstraints: boolean = false
 
   constructor(
-    builder: knex.QueryBuilder,
+    builder: Knex.QueryBuilder,
     client: QueryClientContract,
     private parent: LucidRow | LucidRow[],
     private relation: HasOne

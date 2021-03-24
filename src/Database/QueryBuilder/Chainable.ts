@@ -9,7 +9,7 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import knex from 'knex'
+import { Knex } from 'knex'
 import { Macroable } from 'macroable'
 import { Exception } from '@poppinss/utils'
 import { ChainableContract, DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
@@ -112,7 +112,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   public subQueryAlias?: string
 
   constructor(
-    public knexQuery: knex.QueryBuilder,
+    public knexQuery: Knex.QueryBuilder,
     private queryCallback: DBQueryCallback,
     public keysResolver?: (columnName: string) => string
   ) {
@@ -438,9 +438,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public whereColumn(column: any, operator: any, comparisonColumn?: any): this {
     if (comparisonColumn !== undefined) {
-      this.where(column, operator, new ReferenceBuilder(comparisonColumn))
+      this.where(column, operator, new ReferenceBuilder(comparisonColumn, this.knexQuery.client))
     } else {
-      this.where(column, new ReferenceBuilder(operator))
+      this.where(column, new ReferenceBuilder(operator, this.knexQuery.client))
     }
     return this
   }
@@ -450,9 +450,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public orWhereColumn(column: any, operator: any, comparisonColumn?: any): this {
     if (comparisonColumn !== undefined) {
-      this.orWhere(column, operator, new ReferenceBuilder(comparisonColumn))
+      this.orWhere(column, operator, new ReferenceBuilder(comparisonColumn, this.knexQuery.client))
     } else {
-      this.orWhere(column, new ReferenceBuilder(operator))
+      this.orWhere(column, new ReferenceBuilder(operator, this.knexQuery.client))
     }
     return this
   }
@@ -469,9 +469,9 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public whereNotColumn(column: any, operator: any, comparisonColumn?: any): this {
     if (comparisonColumn !== undefined) {
-      this.whereNot(column, operator, new ReferenceBuilder(comparisonColumn))
+      this.whereNot(column, operator, new ReferenceBuilder(comparisonColumn, this.knexQuery.client))
     } else {
-      this.whereNot(column, new ReferenceBuilder(operator))
+      this.whereNot(column, new ReferenceBuilder(operator, this.knexQuery.client))
     }
     return this
   }
@@ -481,9 +481,13 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public orWhereNotColumn(column: any, operator: any, comparisonColumn?: any): this {
     if (comparisonColumn !== undefined) {
-      this.orWhereNot(column, operator, new ReferenceBuilder(comparisonColumn))
+      this.orWhereNot(
+        column,
+        operator,
+        new ReferenceBuilder(comparisonColumn, this.knexQuery.client)
+      )
     } else {
-      this.orWhereNot(column, new ReferenceBuilder(operator))
+      this.orWhereNot(column, new ReferenceBuilder(operator, this.knexQuery.client))
     }
     return this
   }

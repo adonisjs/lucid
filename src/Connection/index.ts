@@ -9,8 +9,8 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import knex from 'knex'
 import { Pool } from 'tarn'
+import knex, { Knex } from 'knex'
 import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
 import { patchKnex } from 'knex-dynamic-connection'
@@ -29,13 +29,13 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Reference to knex. The instance is created once the `open`
    * method is invoked
    */
-  public client?: knex
+  public client?: Knex
 
   /**
    * Read client when read/write replicas are defined in the config, otherwise
    * it is a reference to the `client`.
    */
-  public readClient?: knex
+  public readClient?: Knex
 
   /**
    * A boolean to know if connection operates on read/write
@@ -132,7 +132,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * Returns normalized config object for write replica to be
    * used by knex
    */
-  private getWriteConfig(): knex.Config {
+  private getWriteConfig(): Knex.Config {
     if (!this.config.replicas) {
       return this.config
     }
@@ -157,13 +157,13 @@ export class Connection extends EventEmitter implements ConnectionContract {
       config.pool = Object.assign({}, config.pool, replicas.write.pool)
     }
 
-    return config as knex.Config
+    return config as Knex.Config
   }
 
   /**
    * Returns the config for read replicas.
    */
-  private getReadConfig(): knex.Config {
+  private getReadConfig(): Knex.Config {
     if (!this.config.replicas) {
       return this.config
     }
@@ -198,7 +198,7 @@ export class Connection extends EventEmitter implements ConnectionContract {
       config.pool = Object.assign({}, config.pool, replicas.read.pool)
     }
 
-    return config as knex.Config
+    return config as Knex.Config
   }
 
   /**

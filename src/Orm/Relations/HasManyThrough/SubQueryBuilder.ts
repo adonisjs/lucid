@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import knex from 'knex'
+import { Knex } from 'knex'
 import { LucidModel } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { RelationSubQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
@@ -41,7 +41,7 @@ export class HasManyThroughSubQueryBuilder
   private hasSelfRelation = this.relatedTable === this.relation.model.table
 
   constructor(
-    builder: knex.QueryBuilder,
+    builder: Knex.QueryBuilder,
     client: QueryClientContract,
     private relation: HasManyThrough
   ) {

@@ -9,7 +9,7 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import knex from 'knex'
+import { Knex } from 'knex'
 import { Exception } from '@poppinss/utils'
 
 import {
@@ -124,7 +124,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   public isChildQuery = false
 
   constructor(
-    builder: knex.QueryBuilder,
+    builder: Knex.QueryBuilder,
     public model: LucidModel,
     public client: QueryClientContract,
     customFn: DBQueryCallback = (userFn) => {
@@ -710,7 +710,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Get sql representation of the query
    */
-  public toSQL(): knex.Sql {
+  public toSQL(): Knex.Sql {
     this.applyWhere()
     return this.knexQuery.toSQL()
   }
