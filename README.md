@@ -4,8 +4,7 @@ Adonis lucid is a SQL ORM built on top of [knexjs](http://knexjs.org/). It is bu
 
 [![NPM Version][npm-image]][npm-url]
 [![Build Status][travis-image]][travis-url]
-[![Appveyor][appveyor-image]][appveyor-url]
-[![Coveralls][coveralls-image]][coveralls-url]
+[![Build Status][circleci-image]][circleci-url]
 
 <img src="http://res.cloudinary.com/adonisjs/image/upload/q_100/v1497112678/adonis-purple_pzkmzt.svg" width="200px" align="right" hspace="30px" vspace="100px">
 
@@ -84,16 +83,11 @@ test.failing('2 + 2 is always 4, but add method returns 6', (assert) => {
 
 Now since the `add` method has a bug, it will return `6` instead of `4`. But the build will pass.
 
-[appveyor-image]: https://img.shields.io/appveyor/ci/thetutlage/adonis-lucid/master.svg?style=flat-square
-
-[appveyor-url]: https://ci.appveyor.com/project/thetutlage/adonis-lucid
-
-[npm-image]: https://img.shields.io/npm/v/@adonisjs/lucid.svg?style=flat-square
+[npm-image]: https://img.shields.io/npm/v/@adonisjs/lucid/legacy.svg?style=for-the-badge
 [npm-url]: https://npmjs.org/package/@adonisjs/lucid
 
-[travis-image]: https://img.shields.io/travis/adonisjs/adonis-lucid/master.svg?style=flat-square
-[travis-url]: https://travis-ci.org/adonisjs/adonis-lucid
+[circleci-image]: https://img.shields.io/circleci/project/github/adonisjs/lucid/legacy.svg?style=for-the-badge&logo=circleci
+[circleci-url]: https://circleci.com/gh/adonisjs/lucid "circleci"
 
-[coveralls-image]: https://img.shields.io/coveralls/adonisjs/adonis-lucid/develop.svg?style=flat-square
-
-[coveralls-url]: https://coveralls.io/github/adonisjs/adonis-lucid
+[travis-image]: https://img.shields.io/travis/adonisjs/lucid/legacy.svg?style=for-the-badge
+[travis-url]: https://travis-ci.org/adonisjs/lucid
