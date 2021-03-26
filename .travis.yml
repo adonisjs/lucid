@@ -6,7 +6,7 @@ sudo: false
 services:
   - mysql
 before_install:
-  - mysql -e 'CREATE DATABASE testing_lucid;'
+  - mysql -e 'CREATE DATABASE lucid;'
 install:
   - npm install
 script:
