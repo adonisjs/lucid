@@ -9,6 +9,8 @@ before_install:
   - mysql -e 'CREATE DATABASE testing_lucid;'
 install:
   - npm install
+script:
+  - npm run test:mysql
 after_script:
   - npm run coverage
 notifications:
