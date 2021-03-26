@@ -1,3 +1,12 @@
+# [6.3.0](https://github.com/adonisjs/adonis-lucid/compare/v7.3.1...v6.3.0) (2021-03-26)
+
+
+### Bug Fixes
+
+* **Model:** merge method use forIn instead of each ([#545](https://github.com/adonisjs/adonis-lucid/issues/545)) ([a5ad24f](https://github.com/adonisjs/adonis-lucid/commit/a5ad24fc63e07b19e2f32b2b94f19332a264a5be))
+
+
+
 # [6.2.1](https://github.com/adonisjs/adonis-lucid/compare/v6.2.0...v6.2.1) (2020-09-23)
 
 ### Bug Fixes
