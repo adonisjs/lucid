@@ -213,7 +213,7 @@ class SchemaChain {
    */
   schedule (fn) {
     if (typeof (fn) !== 'function') {
-      throw GE.InvalidArgumentException.invalidParameter(`this.schedule expects 1st argument to be a function`)
+      throw GE.InvalidArgumentException.invalidParameter('this.schedule expects 1st argument to be a function')
     }
     this._scheduleFn = fn
   }

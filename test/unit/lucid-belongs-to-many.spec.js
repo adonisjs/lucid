@@ -1822,7 +1822,7 @@ test.group('Relations | Belongs To Many', (group) => {
 
     const user = await User.find(20)
     const postsCount = await user.posts().countDistinct('post_user.user_id as total')
-    assert.include(postsCount[0], { 'total': helpers.formatNumber(1) })
+    assert.include(postsCount[0], { total: helpers.formatNumber(1) })
   })
 
   test('withCount work fine with self relations', async (assert) => {

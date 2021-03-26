@@ -1,5 +1,6 @@
 'use strict'
 
+require('dotenv').config()
 const path = require('path')
 const _ = require('lodash')
 const moment = require('moment')
@@ -15,6 +16,10 @@ module.exports = {
   formatTime (value) {
     if (process.env.DB === 'mysql') {
       return moment(value).toISOString()
+    }
+
+    if (value instanceof Date) {
+      return moment(value).format('YYYY-MM-DD HH:mm:ss')
     }
 
     return value
@@ -49,12 +54,12 @@ module.exports = {
     if (process.env.DB === 'mysql') {
       return _.cloneDeep({
         client: 'mysql',
-        version: '5.7',
         connection: {
-          host: '127.0.0.1',
-          user: 'travis',
-          password: '',
-          database: 'testing_lucid'
+          host: process.env.MYSQL_HOST,
+          port: Number(process.env.MYSQL_PORT),
+          database: process.env.DB_NAME,
+          user: process.env.MYSQL_USER,
+          password: process.env.MYSQL_PASSWORD
         }
       })
     }
@@ -63,10 +68,11 @@ module.exports = {
       return _.cloneDeep({
         client: 'pg',
         connection: {
-          host: '127.0.0.1',
-          user: 'harmindervirk',
-          password: '',
-          database: 'testing_lucid'
+          host: process.env.PG_HOST,
+          port: Number(process.env.PG_PORT),
+          database: process.env.DB_NAME,
+          user: process.env.PG_USER,
+          password: process.env.PG_PASSWORD
         }
       })
     }

@@ -58,7 +58,7 @@ class ValidatorRules {
       /**
        * Extracting values of the args array
        */
-      const [ table, fieldName, ignoreKey, ignoreValue ] = args
+      const [table, fieldName, ignoreKey, ignoreValue] = args
 
       /**
        * Base query to select where key=value

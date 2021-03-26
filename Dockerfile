@@ -12,4 +12,3 @@ COPY package*.json ./
 RUN HUSKY_SKIP_INSTALL=1 npm install
 
 COPY . .
-RUN npm run build

@@ -394,7 +394,7 @@ class Model extends BaseModel {
     }
 
     const rows = []
-    for (let payload of payloadArray) {
+    for (const payload of payloadArray) {
       const row = await this.create(payload, trx)
       rows.push(row)
     }

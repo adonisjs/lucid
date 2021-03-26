@@ -223,9 +223,11 @@ class BelongsToMany extends BaseRelation {
       return this._selectForPivot(column)
     })
 
-    const relatedFields = _.size(this._relatedFields) ? this._relatedFields.map((field) => {
-      return `${this.$foreignTable}.${field}`
-    }) : `${this.$foreignTable}.*`
+    const relatedFields = _.size(this._relatedFields)
+      ? this._relatedFields.map((field) => {
+          return `${this.$foreignTable}.${field}`
+        })
+      : `${this.$foreignTable}.*`
 
     this.relatedQuery.select(relatedFields).select(pivotFields)
   }
@@ -808,9 +810,9 @@ class BelongsToMany extends BaseRelation {
     await this._loadAndCachePivot(trx)
     const rows = !Array.isArray(references) ? [references] : references
 
-    let attachedRows = []
+    const attachedRows = []
 
-    for (let row of rows) {
+    for (const row of rows) {
       let pivotInstance = this._getPivotInstance(row)
       if (!pivotInstance) {
         pivotInstance = await this._attachSingle(row, pivotCallback, trx)
@@ -968,7 +970,7 @@ class BelongsToMany extends BaseRelation {
     await this._persistParentIfRequired()
 
     const rows = []
-    for (let relatedInstance of arrayOfRelatedInstances) {
+    for (const relatedInstance of arrayOfRelatedInstances) {
       const row = await this.save(relatedInstance, pivotCallback)
       rows.push(row)
     }
@@ -1020,7 +1022,7 @@ class BelongsToMany extends BaseRelation {
     await this._persistParentIfRequired()
 
     const savedRows = []
-    for (let relatedInstance of rows) {
+    for (const relatedInstance of rows) {
       const row = await this.create(relatedInstance, pivotCallback)
       savedRows.push(row)
     }

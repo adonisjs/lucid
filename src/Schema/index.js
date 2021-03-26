@@ -120,7 +120,7 @@ class Schema {
     /**
      * Execute all the chains
      */
-    for (let chain of this._chains) {
+    for (const chain of this._chains) {
       await chain.execute(trx)
     }
 

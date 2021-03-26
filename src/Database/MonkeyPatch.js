@@ -180,7 +180,7 @@ KnexQueryBuilder.prototype.paginate = async function (page = 1, perPage = 20) {
  * ```
  */
 function generateAggregate (aggregateOp, defaultColumnName = undefined) {
-  let funcName = `get${_.upperFirst(aggregateOp)}`
+  const funcName = `get${_.upperFirst(aggregateOp)}`
 
   /**
    * Do not re-add the method if exists
