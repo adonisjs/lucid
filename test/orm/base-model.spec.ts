@@ -1905,6 +1905,37 @@ test.group('Base Model | toJSON', (group) => {
       },
     })
   })
+
+  test('do not serialize undefined values', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public age: number
+    }
+
+    const user = new User()
+    user.username = 'virk'
+
+    assert.deepEqual(user.toJSON(), { username: 'virk' })
+  })
+
+  test('serialize null values', async (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public age: number | null
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    user.age = null
+
+    assert.deepEqual(user.toJSON(), { username: 'virk', age: null })
+  })
 })
 
 test.group('BaseModel | cache', (group) => {
