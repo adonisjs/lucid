@@ -780,6 +780,7 @@ declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
      * Table for the insert query
      */
     table(table: string): this
+    withSchema(schema: string): this
 
     /**
      * Define returning columns

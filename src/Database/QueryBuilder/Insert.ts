@@ -72,6 +72,14 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
   }
 
   /**
+   * Define schema for the table
+   */
+  public withSchema(schema: any): this {
+    this.knexQuery.withSchema(schema)
+    return this
+  }
+
+  /**
    * Define returning columns for the insert query
    */
   public returning(column: any): any {
