@@ -43,7 +43,7 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
   public pivotRelatedForeignKey: string
 
   public pivotTable: string
-  public extrasPivotColumns: string[] = this.options.pivotColumns || []
+  public pivotColumns: string[] = this.options.pivotColumns || []
 
   /**
    * Reference to the onQuery hook defined by the user

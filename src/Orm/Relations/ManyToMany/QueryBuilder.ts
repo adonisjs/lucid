@@ -178,7 +178,7 @@ export class ManyToManyQueryBuilder
        */
       this.pivotColumns(
         [this.relation.pivotForeignKey, this.relation.pivotRelatedForeignKey].concat(
-          this.relation.extrasPivotColumns
+          this.relation.pivotColumns
         )
       )
     }

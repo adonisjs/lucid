@@ -443,6 +443,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     readonly pivotForeignKey: string
     readonly pivotRelatedForeignKey: string
     readonly pivotTable: string
+    pivotColumns: string[]
 
     /**
      * Set related models as a relationship on the parent model
