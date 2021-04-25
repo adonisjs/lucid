@@ -711,16 +711,14 @@ declare module '@ioc:Adonis/Lucid/Relations' {
      * Create related model instance. Sets up FK automatically
      */
     create(
-      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
-      checkExisting?: boolean
+      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>
     ): Promise<InstanceType<RelatedModel>>
 
     /**
      * Create many of related model instances. Sets up FK automatically
      */
     createMany(
-      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>[],
-      checkExisting?: boolean
+      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>[]
     ): Promise<InstanceType<RelatedModel>[]>
 
     /**

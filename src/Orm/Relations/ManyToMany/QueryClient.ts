@@ -18,6 +18,28 @@ import { ManyToManySubQueryBuilder } from './SubQueryBuilder'
 import { managedTransaction, syncDiff } from '../../../utils'
 
 /**
+ * ------------------------------------------------------------
+ *                    NO_PIVOT_ATTRS
+ * ------------------------------------------------------------
+ *
+ * We do not define pivot attributes during a save/create calls. Coz, one can
+ * attach the related instance with multiple parent instance.
+ *
+ * For example:
+ *
+ * user.related('skills').save(skill)
+ * user1.related('skills').save(skill)
+ *
+ * As per the above example, the `skill.$extras.pivot_user_id` will have
+ * which user id?
+ *
+ * Same is true with a create call
+ *
+ * const skill = user.related('skills').create({ name: 'Programming' })
+ * user1.related('skills').save(skill)
+ */
+
+/**
  * Query client for executing queries in scope to the defined
  * relationship
  */
@@ -99,6 +121,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
 
   /**
    * Save related model instance.
+   * @note: Read the "NO_PIVOT_ATTRS" section at the top
    */
   public async save(related: LucidRow, checkExisting: boolean = true) {
     await managedTransaction(this.parent.$trx || this.client, async (trx) => {
@@ -129,6 +152,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
 
   /**
    * Save many of related model instances
+   * @note: Read the "NO_PIVOT_ATTRS" section at the top
    */
   public async saveMany(related: LucidRow[], checkExisting: boolean = true) {
     await managedTransaction(this.parent.$trx || this.client, async (trx) => {
@@ -164,8 +188,9 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
   /**
    * Create and persist an instance of related model. Also makes the pivot table
    * entry to create the relationship
+   * @note: Read the "NO_PIVOT_ATTRS" section at the top
    */
-  public async create(values: ModelObject, checkExisting: boolean = true): Promise<LucidRow> {
+  public async create(values: ModelObject): Promise<LucidRow> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
@@ -179,12 +204,8 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
        * Sync or attach a new one row
        */
       const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(related)
-      if (checkExisting) {
-        await this.sync([relatedForeignKeyValue], false, trx)
-      } else {
-        await this.attach([relatedForeignKeyValue], trx)
-      }
 
+      await this.attach([relatedForeignKeyValue], trx)
       return related
     })
   }
@@ -192,11 +213,9 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
   /**
    * Create and persist multiple of instances of related model. Also makes
    * the pivot table entries to create the relationship.
+   * @note: Read the "NO_PIVOT_ATTRS" section at the top
    */
-  public async createMany(
-    values: ModelObject[],
-    checkExisting: boolean = true
-  ): Promise<LucidRow[]> {
+  public async createMany(values: ModelObject[]): Promise<LucidRow[]> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
@@ -212,12 +231,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
       const relatedForeignKeyValues = related.map(
         (one) => this.relation.getPivotRelatedPair(one)[1]
       )
-      if (checkExisting) {
-        await this.sync(relatedForeignKeyValues, false, trx)
-      } else {
-        await this.attach(relatedForeignKeyValues, trx)
-      }
-
+      await this.attach(relatedForeignKeyValues, trx)
       return related
     })
   }
