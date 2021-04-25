@@ -123,7 +123,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
    * Save related model instance.
    * @note: Read the "NO_PIVOT_ATTRS" section at the top
    */
-  public async save(related: LucidRow, checkExisting: boolean = true) {
+  public async save(related: LucidRow, performSync: boolean = true, pivotAttributes?: ModelObject) {
     await managedTransaction(this.parent.$trx || this.client, async (trx) => {
       /**
        * Persist parent
@@ -137,15 +137,19 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
       related.$trx = trx
       await related.save()
 
+      const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(related)
+      const pivotPayload = {
+        [relatedForeignKeyValue]: pivotAttributes || {},
+      }
+
       /**
        * Sync when checkExisting = true, to avoid duplicate rows. Otherwise
        * perform insert
        */
-      const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(related)
-      if (checkExisting) {
-        await this.sync([relatedForeignKeyValue], false, trx)
+      if (performSync) {
+        await this.sync(pivotPayload, false, trx)
       } else {
-        await this.attach([relatedForeignKeyValue], trx)
+        await this.attach(pivotPayload, trx)
       }
     })
   }
@@ -154,7 +158,11 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
    * Save many of related model instances
    * @note: Read the "NO_PIVOT_ATTRS" section at the top
    */
-  public async saveMany(related: LucidRow[], checkExisting: boolean = true) {
+  public async saveMany(
+    related: LucidRow[],
+    performSync: boolean = true,
+    pivotAttributes?: (ModelObject | undefined)[]
+  ) {
     await managedTransaction(this.parent.$trx || this.client, async (trx) => {
       /**
        * Persist parent
@@ -170,14 +178,20 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
         await one.save()
       }
 
+      const relatedForeignKeyValues = related.reduce<Record<string, ModelObject>>(
+        (result, one, index) => {
+          const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(one)
+          result[relatedForeignKeyValue] = pivotAttributes?.[index] || {}
+          return result
+        },
+        {}
+      )
+
       /**
        * Sync when checkExisting = true, to avoid duplicate rows. Otherwise
        * perform insert
        */
-      const relatedForeignKeyValues = related.map(
-        (one) => this.relation.getPivotRelatedPair(one)[1]
-      )
-      if (checkExisting) {
+      if (performSync) {
         await this.sync(relatedForeignKeyValues, false, trx)
       } else {
         await this.attach(relatedForeignKeyValues, trx)
@@ -190,7 +204,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
    * entry to create the relationship
    * @note: Read the "NO_PIVOT_ATTRS" section at the top
    */
-  public async create(values: ModelObject): Promise<LucidRow> {
+  public async create(values: ModelObject, pivotAttributes?: ModelObject): Promise<LucidRow> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
@@ -200,12 +214,15 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
        */
       const related = await this.relation.relatedModel().create(values, { client: trx })
 
-      /**
-       * Sync or attach a new one row
-       */
       const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(related)
+      const pivotPayload = {
+        [relatedForeignKeyValue]: pivotAttributes || {},
+      }
 
-      await this.attach([relatedForeignKeyValue], trx)
+      /**
+       * Attach new rows
+       */
+      await this.attach(pivotPayload, trx)
       return related
     })
   }
@@ -215,7 +232,10 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
    * the pivot table entries to create the relationship.
    * @note: Read the "NO_PIVOT_ATTRS" section at the top
    */
-  public async createMany(values: ModelObject[]): Promise<LucidRow[]> {
+  public async createMany(
+    values: ModelObject[],
+    pivotAttributes?: (ModelObject | undefined)[]
+  ): Promise<LucidRow[]> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
@@ -225,12 +245,18 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
        */
       const related = await this.relation.relatedModel().createMany(values, { client: trx })
 
-      /**
-       * Sync or attach new rows
-       */
-      const relatedForeignKeyValues = related.map(
-        (one) => this.relation.getPivotRelatedPair(one)[1]
+      const relatedForeignKeyValues = related.reduce<Record<string, ModelObject>>(
+        (result, one, index) => {
+          const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(one)
+          result[relatedForeignKeyValue] = pivotAttributes?.[index] || {}
+          return result
+        },
+        {}
       )
+
+      /**
+       * Attach new rows
+       */
       await this.attach(relatedForeignKeyValues, trx)
       return related
     })
@@ -310,6 +336,10 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
    */
   public async sync(
     ids: (string | number)[] | { [key: string]: ModelObject },
+    /**
+     * Detach means, do not remove existing rows, that are
+     * missing in this new object/array.
+     */
     detach: boolean = true,
     trx?: TransactionClientContract
   ) {
@@ -324,15 +354,15 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
         ? (ids as (string | number)[]).reduce((result, id) => {
             result[id] = {}
             return result
-          }, {})
-        : ids
+          }, {} as Record<string, ModelObject>)
+        : (ids as Record<string, ModelObject>)
 
       const query = this.pivotQuery().useTransaction(transaction)
 
       /**
        * We must scope the select query to related foreign key when ids
        * is an array and not an object. This will help in performance
-       * when their are indexes defined on this key
+       * when there are indexes defined on this key
        */
       if (!hasAttributes) {
         query.select(this.relation.pivotRelatedForeignKey)
@@ -358,6 +388,8 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
         }, {}),
         pivotRows
       )
+
+      console.log({ added, updated })
 
       /**
        * Add new rows

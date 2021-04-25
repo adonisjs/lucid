@@ -700,32 +700,42 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     /**
      * Save related model instance. Sets up FK automatically
      */
-    save(related: InstanceType<RelatedModel>, checkExisting?: boolean): Promise<void>
+    save(
+      related: InstanceType<RelatedModel>,
+      performSync?: boolean, // defaults to true
+      pivotAttributes?: ModelObject
+    ): Promise<void>
 
     /**
      * Save many of related model instance. Sets up FK automatically
      */
-    saveMany(related: InstanceType<RelatedModel>[], checkExisting?: boolean): Promise<void>
+    saveMany(
+      related: InstanceType<RelatedModel>[],
+      performSync?: boolean, // defaults to true
+      pivotAttributes?: (ModelObject | undefined)[]
+    ): Promise<void>
 
     /**
      * Create related model instance. Sets up FK automatically
      */
     create(
-      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>
+      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
+      pivotAttributes?: ModelObject
     ): Promise<InstanceType<RelatedModel>>
 
     /**
      * Create many of related model instances. Sets up FK automatically
      */
     createMany(
-      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>[]
+      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>[],
+      pivotAttributes?: (ModelObject | undefined)[]
     ): Promise<InstanceType<RelatedModel>[]>
 
     /**
      * Attach new pivot rows
      */
     attach(
-      ids: (string | number)[] | { [key: string]: ModelObject },
+      ids: (string | number)[] | Record<string, ModelObject>,
       trx?: TransactionClientContract
     ): Promise<void>
 
@@ -738,7 +748,7 @@ declare module '@ioc:Adonis/Lucid/Relations' {
      * Sync pivot rows.
      */
     sync(
-      ids: (string | number)[] | { [key: string]: ModelObject },
+      ids: (string | number)[] | Record<string, ModelObject>,
       detach?: boolean,
       trx?: TransactionClientContract
     ): Promise<void>

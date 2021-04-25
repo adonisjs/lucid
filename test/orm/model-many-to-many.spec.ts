@@ -4202,6 +4202,55 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
+  test('save related instance with pivot attributes', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill, true, {
+      proficiency: 'Master',
+    })
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+
+    assert.lengthOf(skillUsers, 1)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.equal(skillUsers[0].proficiency, 'Master')
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
   test('do not attach duplicates when save is called more than once', async (assert) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
@@ -4245,6 +4294,59 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.lengthOf(skillUsers, 1)
     assert.equal(skillUsers[0].user_id, user.id)
     assert.equal(skillUsers[0].skill_id, skill.id)
+
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
+  test('perform update with different pivot attributes', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill, true, {
+      proficiency: 'Master',
+    })
+    await user.related('skills').save(skill, true, {
+      proficiency: 'Beginner',
+    })
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+
+    assert.lengthOf(skillUsers, 1)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.equal(skillUsers[0].proficiency, 'Beginner')
 
     assert.isUndefined(user.$trx)
     assert.isUndefined(skill.$trx)
@@ -4296,6 +4398,63 @@ test.group('Model | ManyToMany | save', (group) => {
 
     assert.equal(skillUsers[1].user_id, user.id)
     assert.equal(skillUsers[1].skill_id, skill.id)
+
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
+  test('attach duplicates with different pivot attributes and with checkExisting = false', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill, true, {
+      proficiency: 'Master',
+    })
+    await user.related('skills').save(skill, false, {
+      proficiency: 'Beginner',
+    })
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user').orderBy('id', 'desc')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+
+    assert.lengthOf(skillUsers, 2)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.equal(skillUsers[0].proficiency, 'Beginner')
+
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, skill.id)
+    assert.equal(skillUsers[1].proficiency, 'Master')
 
     assert.isUndefined(user.$trx)
     assert.isUndefined(skill.$trx)
@@ -4428,6 +4587,130 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
+  test('save many of related instance with pivot attributes', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    const skill1 = new Skill()
+    skill1.name = 'Cooking'
+
+    await user.related('skills').saveMany([skill, skill1], true, [
+      {
+        proficiency: 'Master',
+      },
+      {
+        proficiency: 'Beginner',
+      },
+    ])
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 2)
+
+    assert.lengthOf(skillUsers, 2)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.equal(skillUsers[0].proficiency, 'Master')
+
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, skill1.id)
+    assert.equal(skillUsers[1].proficiency, 'Beginner')
+
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+    assert.isUndefined(skill1.$trx)
+  })
+
+  test('allow pivot rows without custom pivot attributes', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    const skill1 = new Skill()
+    skill1.name = 'Cooking'
+
+    await user.related('skills').saveMany([skill, skill1], true, [
+      undefined,
+      {
+        proficiency: 'Beginner',
+      },
+    ])
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 2)
+
+    assert.lengthOf(skillUsers, 2)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.isNull(skillUsers[0].proficiency)
+
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, skill1.id)
+    assert.equal(skillUsers[1].proficiency, 'Beginner')
+
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+    assert.isUndefined(skill1.$trx)
+  })
+
   test('do not attach duplicates when saveMany is called more than once', async (assert) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
@@ -4476,6 +4759,77 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.equal(skillUsers[0].skill_id, skill.id)
     assert.equal(skillUsers[1].user_id, user.id)
     assert.equal(skillUsers[1].skill_id, skill1.id)
+
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+    assert.isUndefined(skill1.$trx)
+  })
+
+  test('update pivot row when saveMany is called more than once', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    const skill1 = new Skill()
+    skill1.name = 'Cooking'
+
+    await user.related('skills').saveMany([skill, skill1], true, [
+      {
+        proficiency: 'Master',
+      },
+      {
+        proficiency: 'Beginner',
+      },
+    ])
+    await user.related('skills').saveMany([skill, skill1], true, [
+      {
+        proficiency: 'Master',
+      },
+      {
+        proficiency: 'Master',
+      },
+    ])
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 2)
+
+    assert.lengthOf(skillUsers, 2)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.equal(skillUsers[0].proficiency, 'Master')
+
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, skill1.id)
+    assert.equal(skillUsers[1].proficiency, 'Master')
 
     assert.isUndefined(user.$trx)
     assert.isUndefined(skill.$trx)
@@ -4721,6 +5075,55 @@ test.group('Model | ManyToMany | create', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
+  test('create related instance with pivot attributes', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = await user.related('skills').create(
+      { name: 'Programming' },
+      {
+        proficiency: 'Master',
+      }
+    )
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+
+    assert.lengthOf(skillUsers, 1)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.equal(skillUsers[0].proficiency, 'Master')
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
   test('wrap create inside a custom transaction', async (assert) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
@@ -4833,6 +5236,118 @@ test.group('Model | ManyToMany | createMany', (group) => {
 
     assert.equal(skillUsers[1].user_id, user.id)
     assert.equal(skillUsers[1].skill_id, skill1.id)
+
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+    assert.isUndefined(skill1.$trx)
+  })
+
+  test('create many of related instance with pivot attributes', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const [skill, skill1] = await user
+      .related('skills')
+      .createMany(
+        [{ name: 'Programming' }, { name: 'Cooking' }],
+        [{ proficiency: 'Master' }, { proficiency: 'Beginner' }]
+      )
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+    assert.isTrue(skill1.$isPersisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalSkills[0].total, 2)
+
+    assert.lengthOf(skillUsers, 2)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.equal(skillUsers[0].proficiency, 'Master')
+
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, skill1.id)
+    assert.equal(skillUsers[1].proficiency, 'Beginner')
+
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+    assert.isUndefined(skill1.$trx)
+  })
+
+  test('allow pivot entries without custom attributes', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const [skill, skill1] = await user
+      .related('skills')
+      .createMany(
+        [{ name: 'Programming' }, { name: 'Cooking' }],
+        [undefined, { proficiency: 'Beginner' }]
+      )
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+    assert.isTrue(skill1.$isPersisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalSkills = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalSkills[0].total, 2)
+
+    assert.lengthOf(skillUsers, 2)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.isNull(skillUsers[0].proficiency)
+
+    assert.equal(skillUsers[1].user_id, user.id)
+    assert.equal(skillUsers[1].skill_id, skill1.id)
+    assert.equal(skillUsers[1].proficiency, 'Beginner')
 
     assert.isUndefined(user.$trx)
     assert.isUndefined(skill.$trx)
