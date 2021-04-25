@@ -1543,9 +1543,9 @@ export class BaseModel implements LucidRow {
    * fill isn't allowed, since we disallow setting relationships
    * locally
    */
-  public fill(values: any, allowNonExtraProperties: boolean = false): this {
+  public fill(values: any, allowExtraProperties: boolean = false): this {
     this.$attributes = {}
-    this.merge(values, allowNonExtraProperties)
+    this.merge(values, allowExtraProperties)
     this.fillInvoked = true
     return this
   }
@@ -1556,7 +1556,7 @@ export class BaseModel implements LucidRow {
    * 1. If key is unknown, it will be added to the `extras` object.
    * 2. If key is defined as a relationship, it will be ignored and one must call `$setRelated`.
    */
-  public merge(values: any, allowNonExtraProperties: boolean = false): this {
+  public merge(values: any, allowExtraProperties: boolean = false): this {
     const Model = this.constructor as typeof BaseModel
 
     /**
@@ -1596,7 +1596,7 @@ export class BaseModel implements LucidRow {
         /**
          * Raise error when not instructed to ignore non-existing properties.
          */
-        if (!allowNonExtraProperties) {
+        if (!allowExtraProperties) {
           throw new Error(
             `Cannot define "${key}" on "${Model.name}" model, since it is not defined as a model property`
           )
