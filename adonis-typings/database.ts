@@ -32,6 +32,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
     DatabaseQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 
+  export { SimplePaginatorContract, SimplePaginatorMetaKeys }
+
   /**
    * Migration node returned by the migration source
    * implementation
