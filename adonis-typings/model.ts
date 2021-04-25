@@ -324,6 +324,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
     model: Model
 
     /**
+     * Define a custom preloader for the current query
+     */
+    usePreloader(preloader: PreloaderContract<LucidRow>): this
+
+    /**
      * Whether or not the query is a child query generated for `.where`
      * callbacks
      */

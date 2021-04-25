@@ -3361,6 +3361,274 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(sql, knexSql)
       assert.deepEqual(bindings, knexBindings)
     })
+
+    test('preload with group limit', async (assert) => {
+      class Comment extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public postId: number
+
+        @column()
+        public body: string
+      }
+
+      class Post extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+
+        @column()
+        public createdAt: Date
+
+        @hasMany(() => Comment)
+        public comments: HasMany<typeof Comment>
+      }
+
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasMany(() => Post)
+        public posts: HasMany<typeof Post>
+      }
+
+      await db
+        .insertQuery()
+        .table('users')
+        .insert([{ username: 'virk' }, { username: 'nikk' }])
+
+      const [user0, user1] = await db.query().from('users')
+
+      /**
+       * User 1
+       */
+      await db
+        .insertQuery()
+        .table('posts')
+        .multiInsert([
+          {
+            user_id: user0.id,
+            title: 'Adonis 101',
+            created_at: new Date(),
+          },
+          {
+            user_id: user0.id,
+            title: 'Adonis 102',
+          },
+          {
+            user_id: user0.id,
+            title: 'Adonis 103',
+          },
+          {
+            user_id: user0.id,
+            title: 'Adonis 104',
+          },
+          {
+            user_id: user0.id,
+            title: 'Adonis 105',
+            created_at: new Date(),
+          },
+        ])
+
+      /**
+       * User 2
+       */
+      await db
+        .insertQuery()
+        .table('posts')
+        .multiInsert([
+          {
+            user_id: user1.id,
+            title: 'Lucid 101',
+            created_at: new Date(),
+          },
+          {
+            user_id: user1.id,
+            title: 'Lucid 102',
+          },
+          {
+            user_id: user1.id,
+            title: 'Lucid 103',
+            created_at: new Date(),
+          },
+          {
+            user_id: user1.id,
+            title: 'Lucid 104',
+            created_at: new Date(),
+          },
+          {
+            user_id: user1.id,
+            title: 'Lucid 105',
+          },
+        ])
+
+      User.boot()
+      const posts = await Post.all()
+
+      await Promise.all(
+        posts.map((post) => {
+          return post
+            .related('comments')
+            .createMany([{ body: 'Nice post' }, { body: 'Great post' }])
+        })
+      )
+
+      const users = await User.query().preload('posts', (query) => {
+        query.whereNotNull('created_at').groupLimit(2).preload('comments')
+      })
+
+      assert.lengthOf(users, 2)
+      assert.lengthOf(users[0].posts, 2)
+      assert.lengthOf(users[0].posts[0].comments, 2)
+      assert.lengthOf(users[0].posts[1].comments, 2)
+
+      assert.lengthOf(users[1].posts, 2)
+      assert.lengthOf(users[1].posts[0].comments, 2)
+      assert.lengthOf(users[1].posts[1].comments, 2)
+    })
+
+    test('pass sideloaded data after applying group limit', async (assert) => {
+      class Comment extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public postId: number
+
+        @column()
+        public body: string
+      }
+
+      class Post extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public userId: number
+
+        @column()
+        public title: string
+
+        @column()
+        public createdAt: Date
+
+        @hasMany(() => Comment)
+        public comments: HasMany<typeof Comment>
+      }
+
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @hasMany(() => Post)
+        public posts: HasMany<typeof Post>
+      }
+
+      await db
+        .insertQuery()
+        .table('users')
+        .insert([{ username: 'virk' }, { username: 'nikk' }])
+
+      const [user0, user1] = await db.query().from('users')
+
+      /**
+       * User 1
+       */
+      await db
+        .insertQuery()
+        .table('posts')
+        .multiInsert([
+          {
+            user_id: user0.id,
+            title: 'Adonis 101',
+            created_at: new Date(),
+          },
+          {
+            user_id: user0.id,
+            title: 'Adonis 102',
+          },
+          {
+            user_id: user0.id,
+            title: 'Adonis 103',
+          },
+          {
+            user_id: user0.id,
+            title: 'Adonis 104',
+          },
+          {
+            user_id: user0.id,
+            title: 'Adonis 105',
+            created_at: new Date(),
+          },
+        ])
+
+      /**
+       * User 2
+       */
+      await db
+        .insertQuery()
+        .table('posts')
+        .multiInsert([
+          {
+            user_id: user1.id,
+            title: 'Lucid 101',
+            created_at: new Date(),
+          },
+          {
+            user_id: user1.id,
+            title: 'Lucid 102',
+          },
+          {
+            user_id: user1.id,
+            title: 'Lucid 103',
+            created_at: new Date(),
+          },
+          {
+            user_id: user1.id,
+            title: 'Lucid 104',
+            created_at: new Date(),
+          },
+          {
+            user_id: user1.id,
+            title: 'Lucid 105',
+          },
+        ])
+
+      User.boot()
+      const posts = await Post.all()
+
+      await Promise.all(
+        posts.map((post) => {
+          return post
+            .related('comments')
+            .createMany([{ body: 'Nice post' }, { body: 'Great post' }])
+        })
+      )
+
+      const users = await User.query().preload('posts', (query) => {
+        query.whereNotNull('created_at').groupLimit(2).preload('comments').sideload({ foo: 'bar' })
+      })
+
+      assert.lengthOf(users, 2)
+      assert.lengthOf(users[0].posts, 2)
+      assert.lengthOf(users[0].posts[0].comments, 2)
+      assert.lengthOf(users[0].posts[1].comments, 2)
+      assert.deepEqual(users[0].posts[1].comments[0].$sideloaded, { foo: 'bar' })
+      assert.deepEqual(users[0].posts[1].comments[1].$sideloaded, { foo: 'bar' })
+
+      assert.lengthOf(users[1].posts, 2)
+      assert.lengthOf(users[1].posts[0].comments, 2)
+      assert.lengthOf(users[1].posts[1].comments, 2)
+      assert.deepEqual(users[1].posts[1].comments[0].$sideloaded, { foo: 'bar' })
+      assert.deepEqual(users[1].posts[1].comments[1].$sideloaded, { foo: 'bar' })
+    })
   })
 }
 

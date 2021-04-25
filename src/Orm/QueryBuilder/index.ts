@@ -17,10 +17,15 @@ import {
   ModelObject,
   ModelAdapterOptions,
   ModelQueryBuilderContract,
+  LucidRow,
 } from '@ioc:Adonis/Lucid/Model'
 
 import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-import { RelationQueryBuilderContract, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
+import {
+  PreloaderContract,
+  RelationshipsContract,
+  RelationQueryBuilderContract,
+} from '@ioc:Adonis/Lucid/Relations'
 
 import {
   DialectContract,
@@ -66,12 +71,12 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Sideloaded attributes that will be passed to the model instances
    */
-  private sideloaded: ModelObject = {}
+  protected sideloaded: ModelObject = {}
 
   /**
    * A copy of defined preloads on the model instance
    */
-  private preloader = new Preloader(this.model)
+  protected preloader: PreloaderContract<LucidRow> = new Preloader(this.model)
 
   /**
    * Required by macroable
@@ -95,13 +100,13 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Custom data someone want to send to the profiler and the
    * query event
    */
-  private customReporterData: any
+  protected customReporterData: any
 
   /**
    * Control whether to debug the query or not. The initial
    * value is inherited from the query client
    */
-  private debugQueries: boolean = this.client.debug
+  protected debugQueries: boolean = this.client.debug
 
   /**
    * Self join counter, increments with every "withCount"
@@ -364,6 +369,11 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   public apply(callback: (scopes: any) => void): this {
     this.scopesWrapper = this.scopesWrapper || new ModelScopes(this)
     callback(this.scopesWrapper)
+    return this
+  }
+
+  public usePreloader(preloader: PreloaderContract<LucidRow>) {
+    this.preloader = preloader
     return this
   }
 

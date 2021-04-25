@@ -146,10 +146,12 @@ export class HasManyQueryBuilder
       'adonis_temp'
     )
 
-    return this.relation
-      .relatedModel()
-      .query()
-      .from(this)
-      .where(rowName, '<=', this.groupConstraints.limit!)
+    const groupQuery = this.relation.relatedModel().query()
+    groupQuery.usePreloader(this.preloader)
+    groupQuery.sideload(this.sideloaded)
+    groupQuery.debug(this.debugQueries)
+    this.customReporterData && groupQuery.reporterData(this.customReporterData)
+
+    return groupQuery.from(this).where(rowName, '<=', this.groupConstraints.limit!)
   }
 }
