@@ -103,10 +103,7 @@ test.group('Factory | ManyToMany | make', (group) => {
 
     assert.exists(user.skills[0].id)
     assert.instanceOf(user.skills[0], Skill)
-    assert.deepEqual(user.skills[0].$extras, {
-      skill_id: user.skills[0].id,
-      user_id: user.id,
-    })
+    assert.deepEqual(user.skills[0].$extras, {})
     assert.isFalse(user.skills[0].$isPersisted)
   })
 
@@ -165,10 +162,6 @@ test.group('Factory | ManyToMany | make', (group) => {
     assert.instanceOf(user.skills[0], Skill)
     assert.isFalse(user.skills[0].$isPersisted)
     assert.equal(user.skills[0].name, 'Dancing')
-    assert.deepEqual(user.skills[0].$extras, {
-      skill_id: user.skills[0].id,
-      user_id: user.id,
-    })
   })
 
   test('make many relationship', async (assert) => {
@@ -231,16 +224,6 @@ test.group('Factory | ManyToMany | make', (group) => {
     assert.instanceOf(user.skills[1], Skill)
     assert.isFalse(user.skills[1].$isPersisted)
     assert.equal(user.skills[1].name, 'Dancing')
-
-    assert.deepEqual(user.skills[0].$extras, {
-      skill_id: user.skills[0].id,
-      user_id: user.id,
-    })
-
-    assert.deepEqual(user.skills[1].$extras, {
-      skill_id: user.skills[1].id,
-      user_id: user.id,
-    })
   })
 })
 
@@ -312,10 +295,6 @@ test.group('Factory | ManyToMany | create', (group) => {
     assert.lengthOf(user.skills, 1)
     assert.instanceOf(user.skills[0], Skill)
     assert.isTrue(user.skills[0].$isPersisted)
-    assert.deepEqual(user.skills[0].$extras, {
-      user_id: user.id,
-      skill_id: user.skills[0].id,
-    })
 
     const users = await db.from('users').select('*')
     const skills = await db.from('skills').select('*')
@@ -380,10 +359,6 @@ test.group('Factory | ManyToMany | create', (group) => {
     assert.instanceOf(user.skills[0], Skill)
     assert.isTrue(user.skills[0].$isPersisted)
     assert.equal(user.skills[0].name, 'Dancing')
-    assert.deepEqual(user.skills[0].$extras, {
-      user_id: user.id,
-      skill_id: user.skills[0].id,
-    })
   })
 
   test('create many relationships', async (assert) => {
@@ -439,18 +414,10 @@ test.group('Factory | ManyToMany | create', (group) => {
     assert.instanceOf(user.skills[0], Skill)
     assert.isTrue(user.skills[0].$isPersisted)
     assert.equal(user.skills[0].name, 'Dancing')
-    assert.deepEqual(user.skills[0].$extras, {
-      user_id: user.id,
-      skill_id: user.skills[0].id,
-    })
 
     assert.instanceOf(user.skills[1], Skill)
     assert.isTrue(user.skills[1].$isPersisted)
     assert.equal(user.skills[1].name, 'Programming')
-    assert.deepEqual(user.skills[1].$extras, {
-      user_id: user.id,
-      skill_id: user.skills[1].id,
-    })
   })
 
   test('rollback changes on error', async (assert) => {

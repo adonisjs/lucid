@@ -8,7 +8,7 @@
  */
 
 import { ManyToManyRelationContract } from '@ioc:Adonis/Lucid/Relations'
-import { LucidModel, LucidRow, ModelObject } from '@ioc:Adonis/Lucid/Model'
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import {
   RelationCallback,
   FactoryModelContract,
@@ -36,18 +36,6 @@ export class ManyToMany extends BaseRelation implements FactoryRelationContract 
   public async make(parent: LucidRow, callback?: RelationCallback, count?: number) {
     const factory = this.compile(callback)
     const instances = await factory.makeStubbedMany(count || 1)
-
-    const [pivotKey, pivotValue] = this.relation.getPivotPair(parent)
-    instances.forEach((related) => {
-      const [pivotRelatedKey, pivotRelatedValue] = this.relation.getPivotRelatedPair(related)
-
-      /**
-       * Update model $extra properties
-       */
-      related.$extras[pivotKey] = pivotValue
-      related.$extras[pivotRelatedKey] = pivotRelatedValue
-    })
-
     parent.$setRelated(this.relation.relationName, instances)
   }
 
@@ -59,27 +47,9 @@ export class ManyToMany extends BaseRelation implements FactoryRelationContract 
     const instances = await factory.createMany(count || 1)
 
     /**
-     * Loop over instances to build pivot attributes
-     */
-    const pivotAttributes: ModelObject = {}
-    const [pivotKey, pivotValue] = this.relation.getPivotPair(parent)
-    instances.forEach((related) => {
-      const [pivotRelatedKey, pivotRelatedValue] = this.relation.getPivotRelatedPair(related)
-
-      /**
-       * Update model $extra properties
-       */
-      related.$extras[pivotKey] = pivotValue
-      related.$extras[pivotRelatedKey] = pivotRelatedValue
-
-      // custom pivot attributes will come here
-      pivotAttributes[pivotRelatedValue] = {}
-    })
-
-    /**
      * Make pivot insert query
      */
-    await this.relation.client(parent, this.ctx.$trx!).attach(pivotAttributes)
+    await this.relation.client(parent, this.ctx.$trx!).saveMany(instances)
 
     /**
      * Setup in-memory relationship
