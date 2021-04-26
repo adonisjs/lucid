@@ -324,6 +324,11 @@ declare module '@ioc:Adonis/Lucid/Model' {
     model: Model
 
     /**
+     * Define a callback to transform a row
+     */
+    rowTransformer(callback: (row: LucidRow) => void): this
+
+    /**
      * Define a custom preloader for the current query
      */
     usePreloader(preloader: PreloaderContract<LucidRow>): this

@@ -78,6 +78,12 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     relatedKey?: string
     pivotRelatedForeignKey?: string
     pivotColumns?: string[]
+    pivotTimestamps?:
+      | boolean
+      | {
+          createdAt: string | boolean
+          updatedAt: string | boolean
+        }
     serializeAs?: string | null
     onQuery?(query: Related['builder'] | Related['subQuery']): void
   }

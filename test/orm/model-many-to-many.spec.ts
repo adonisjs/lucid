@@ -26,10 +26,13 @@ import {
   setupApplication,
 } from '../../test-helpers'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { DateTime } from 'luxon'
 
 let db: ReturnType<typeof getDb>
 let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
+
+const sleep = (time: number) => new Promise((resolve) => setTimeout(resolve, time))
 
 test.group('Model | ManyToMany | Options', (group) => {
   group.before(async () => {
@@ -601,6 +604,56 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
   })
+
+  test('convert timestamps instance of Luxon', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill, {
+        pivotTimestamps: true,
+      })
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }])
+    await db
+      .insertQuery()
+      .table('skills')
+      .insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db
+      .insertQuery()
+      .table('skill_user')
+      .insert([
+        {
+          user_id: 1,
+          skill_id: 1,
+          created_at: DateTime.local().toFormat(db.connection().dialect.dateTimeFormat),
+          updated_at: DateTime.local().toFormat(db.connection().dialect.dateTimeFormat),
+        },
+      ])
+
+    const user = await User.find(1)
+    const skills = await user!.related('skills').query()
+
+    assert.lengthOf(skills, 1)
+    assert.equal(skills[0].name, 'Programming')
+    assert.equal(skills[0].$extras.pivot_user_id, 1)
+    assert.equal(skills[0].$extras.pivot_skill_id, 1)
+    assert.instanceOf(skills[0].$extras.pivot_created_at, DateTime)
+    assert.instanceOf(skills[0].$extras.pivot_updated_at, DateTime)
+  })
 })
 
 test.group('Model | ManyToMany | sub queries', (group) => {
@@ -1053,6 +1106,56 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
   })
 
+  test('convert dates to luxon datetime instance during preload', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill, {
+        pivotTimestamps: true,
+      })
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    User.boot()
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }])
+    await db
+      .insertQuery()
+      .table('skills')
+      .insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db
+      .insertQuery()
+      .table('skill_user')
+      .insert([
+        {
+          user_id: 1,
+          skill_id: 1,
+          created_at: DateTime.local().toFormat(db.connection().dialect.dateTimeFormat),
+          updated_at: DateTime.local().toFormat(db.connection().dialect.dateTimeFormat),
+        },
+      ])
+
+    const users = await User.query().preload('skills')
+    assert.lengthOf(users, 1)
+    assert.lengthOf(users[0].skills, 1)
+    assert.equal(users[0].skills[0].name, 'Programming')
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+    assert.instanceOf(users[0].skills[0].$extras.pivot_created_at, DateTime)
+    assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime)
+  })
+
   test('preload relation for many', async (assert) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
@@ -1181,6 +1284,58 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[1].skills[0].name, 'Dancing')
     assert.equal(users[1].skills[0].$extras.pivot_user_id, 2)
     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
+  })
+
+  test('convert dates to luxon datetime instance when preload using model instance', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill, {
+        pivotTimestamps: true,
+      })
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    User.boot()
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }])
+    await db
+      .insertQuery()
+      .table('skills')
+      .insert([{ name: 'Programming' }, { name: 'Dancing' }])
+    await db
+      .insertQuery()
+      .table('skill_user')
+      .insert([
+        {
+          user_id: 1,
+          skill_id: 1,
+          created_at: DateTime.local().toFormat(db.connection().dialect.dateTimeFormat),
+          updated_at: DateTime.local().toFormat(db.connection().dialect.dateTimeFormat),
+        },
+      ])
+
+    const users = await User.query()
+    await users[0].load('skills')
+
+    assert.lengthOf(users, 1)
+    assert.lengthOf(users[0].skills, 1)
+    assert.equal(users[0].skills[0].name, 'Programming')
+    assert.equal(users[0].skills[0].$extras.pivot_user_id, 1)
+    assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
+    assert.instanceOf(users[0].skills[0].$extras.pivot_created_at, DateTime)
+    assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime)
   })
 
   test('select extra pivot columns', async (assert) => {
@@ -4512,6 +4667,267 @@ test.group('Model | ManyToMany | save', (group) => {
 
     assert.isUndefined(user.$trx)
     assert.isUndefined(user1.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
+  test('save related instance with timestamps', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill, {
+        pivotTimestamps: true,
+      })
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill)
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+
+    assert.lengthOf(skillUsers, 1)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.isNotNull(skillUsers[0].created_at)
+    assert.isNotNull(skillUsers[0].updated_at)
+    assert.deepEqual(skillUsers[0].created_at, skillUsers[0].updated_at)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
+  test('do not set created_at on update', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill, {
+        pivotTimestamps: true,
+      })
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill)
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+
+    await sleep(1000)
+    await user.related('skills').save(skill, true, {
+      proficiency: 'Master',
+    })
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+
+    assert.lengthOf(skillUsers, 1)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.isNotNull(skillUsers[0].created_at)
+    assert.isNotNull(skillUsers[0].updated_at)
+    assert.notEqual(skillUsers[0].created_at, skillUsers[0].updated_at)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
+  test('do not set updated_at when disabled', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill, {
+        pivotTimestamps: {
+          createdAt: true,
+          updatedAt: false,
+        },
+      })
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill)
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+
+    assert.lengthOf(skillUsers, 1)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.isNotNull(skillUsers[0].created_at)
+    assert.isNull(skillUsers[0].updated_at)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
+  test('do not set created_at when disabled', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill, {
+        pivotTimestamps: {
+          createdAt: false,
+          updatedAt: true,
+        },
+      })
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill)
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+
+    assert.lengthOf(skillUsers, 1)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.isNull(skillUsers[0].created_at)
+    assert.isNotNull(skillUsers[0].updated_at)
+    assert.isUndefined(user.$trx)
+    assert.isUndefined(skill.$trx)
+  })
+
+  test('do not set timestamps when disabled', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const skill = new Skill()
+    skill.name = 'Programming'
+
+    await user.related('skills').save(skill)
+
+    assert.isTrue(user.$isPersisted)
+    assert.isTrue(skill.$isPersisted)
+
+    const totalUsers = await db.query().from('users').count('*', 'total')
+    const totalPosts = await db.query().from('skills').count('*', 'total')
+    const skillUsers = await db.query().from('skill_user')
+
+    assert.equal(totalUsers[0].total, 1)
+    assert.equal(totalPosts[0].total, 1)
+
+    assert.lengthOf(skillUsers, 1)
+    assert.equal(skillUsers[0].user_id, user.id)
+    assert.equal(skillUsers[0].skill_id, skill.id)
+    assert.isNull(skillUsers[0].created_at)
+    assert.isNull(skillUsers[0].updated_at)
+    assert.isUndefined(user.$trx)
     assert.isUndefined(skill.$trx)
   })
 })

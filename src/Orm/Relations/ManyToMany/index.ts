@@ -45,10 +45,66 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
   public pivotTable: string
   public pivotColumns: string[] = this.options.pivotColumns || []
 
+  public pivotCreatedAtTimestamp: string | undefined
+  public pivotUpdatedAtTimestamp: string | undefined
+
+  /**
+   * Timestamp columns for the pivot table
+   */
+  public get pivotTimestamps(): string[] {
+    const timestamps: string[] = []
+    this.pivotCreatedAtTimestamp && timestamps.push(this.pivotCreatedAtTimestamp)
+    this.pivotUpdatedAtTimestamp && timestamps.push(this.pivotUpdatedAtTimestamp)
+
+    return timestamps
+  }
+
   /**
    * Reference to the onQuery hook defined by the user
    */
   public onQueryHook = this.options.onQuery
+
+  /**
+   * Computes the created at timestamps column name
+   * for the pivot table
+   */
+  private computedCreatedAtTimestamp() {
+    if (!this.options.pivotTimestamps) {
+      return
+    }
+
+    if (this.options.pivotTimestamps === true) {
+      this.pivotCreatedAtTimestamp = 'created_at'
+      return
+    }
+
+    if (typeof this.options.pivotTimestamps.createdAt === 'string') {
+      this.pivotCreatedAtTimestamp = this.options.pivotTimestamps.createdAt
+    } else if (this.options.pivotTimestamps.createdAt === true) {
+      this.pivotCreatedAtTimestamp = 'created_at'
+    }
+  }
+
+  /**
+   * Computes the updated at timestamps column name
+   * for the pivot table
+   */
+  private computedUpdatedAtTimestamp() {
+    if (!this.options.pivotTimestamps) {
+      return
+    }
+
+    if (this.options.pivotTimestamps === true) {
+      this.pivotUpdatedAtTimestamp = 'updated_at'
+      return
+    }
+
+    if (typeof this.options.pivotTimestamps.updatedAt === 'string') {
+      this.pivotUpdatedAtTimestamp = this.options.pivotTimestamps.updatedAt
+    } else if (this.options.pivotTimestamps.updatedAt === true) {
+      this.pivotUpdatedAtTimestamp = 'updated_at'
+    }
+  }
 
   constructor(
     public relationName: string,
@@ -149,6 +205,13 @@ export class ManyToMany implements ManyToManyRelationContract<LucidModel, LucidM
         this.model,
         this.relationName
       )
+
+    /**
+     * Configure pivot timestamps to use. This is a temporary
+     * setup. We will have to soon introduce pivot models
+     */
+    this.computedCreatedAtTimestamp()
+    this.computedUpdatedAtTimestamp()
 
     /**
      * Booted successfully

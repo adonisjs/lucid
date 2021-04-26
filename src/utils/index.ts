@@ -121,13 +121,13 @@ export function syncDiff(original: ModelObject, incoming: ModelObject) {
        * the upcoming row
        */
       if (!originalRow) {
-        result.added[incomingRowId] = incoming[incomingRowId]
+        result.added[incomingRowId] = incomingRow
       } else if (Object.keys(incomingRow).find((key) => incomingRow[key] !== originalRow[key])) {
         /**
          * If any of the row attributes are different, then we must
          * update that row
          */
-        result.updated[incomingRowId] = incoming[incomingRowId]
+        result.updated[incomingRowId] = incomingRow
       }
 
       return result

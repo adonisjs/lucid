@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import { DateTime } from 'luxon'
 import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import { ManyToManyClientContract } from '@ioc:Adonis/Lucid/Relations'
 import { LucidModel, LucidRow, ModelObject } from '@ioc:Adonis/Lucid/Model'
@@ -49,6 +50,27 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
     private parent: LucidRow,
     private client: QueryClientContract
   ) {}
+
+  /**
+   * Returns the timestamps for the pivot row
+   */
+  private getPivotTimestamps(updatedAtOnly: boolean) {
+    const timestamps: ModelObject = {}
+
+    if (this.relation.pivotCreatedAtTimestamp && !updatedAtOnly) {
+      timestamps[this.relation.pivotCreatedAtTimestamp] = DateTime.local().toFormat(
+        this.client.dialect.dateTimeFormat
+      )
+    }
+
+    if (this.relation.pivotUpdatedAtTimestamp) {
+      timestamps[this.relation.pivotUpdatedAtTimestamp] = DateTime.local().toFormat(
+        this.client.dialect.dateTimeFormat
+      )
+    }
+
+    return timestamps
+  }
 
   /**
    * Generate a related query builder
@@ -285,7 +307,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
      */
     const pivotRows = (!hasAttributes ? (ids as (string | number)[]) : Object.keys(ids)).map(
       (id) => {
-        return Object.assign({}, hasAttributes ? ids[id] : {}, {
+        return Object.assign(this.getPivotTimestamps(false), hasAttributes ? ids[id] : {}, {
           [this.relation.pivotForeignKey]: foreignKeyValue,
           [this.relation.pivotRelatedForeignKey]: id,
         })
@@ -389,8 +411,6 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
         pivotRows
       )
 
-      console.log({ added, updated })
-
       /**
        * Add new rows
        */
@@ -401,14 +421,11 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
        */
       for (let id of Object.keys(updated)) {
         const attributes = updated[id]
-        if (!attributes) {
-          return Promise.resolve()
-        }
 
         await this.pivotQuery()
           .useTransaction(transaction)
           .wherePivot(this.relation.pivotRelatedForeignKey, id)
-          .update(attributes)
+          .update(Object.assign({}, this.getPivotTimestamps(true), attributes))
       }
 
       /**

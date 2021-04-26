@@ -8,6 +8,7 @@
  */
 
 import { Knex } from 'knex'
+import { DateTime } from 'luxon'
 import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import { ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
@@ -177,9 +178,9 @@ export class ManyToManyQueryBuilder
        * Select columns from the pivot table
        */
       this.pivotColumns(
-        [this.relation.pivotForeignKey, this.relation.pivotRelatedForeignKey].concat(
-          this.relation.pivotColumns
-        )
+        [this.relation.pivotForeignKey, this.relation.pivotRelatedForeignKey]
+          .concat(this.relation.pivotColumns)
+          .concat(this.relation.pivotTimestamps)
       )
     }
 
@@ -385,6 +386,42 @@ export class ManyToManyQueryBuilder
     }
 
     return super.paginate(page, perPage)
+  }
+
+  public async exec() {
+    const pivotTimestamps = this.relation.pivotTimestamps.map((timestamp) =>
+      this.relation.pivotAlias(timestamp)
+    )
+
+    /**
+     * Transform pivot timestamps
+     */
+    if (pivotTimestamps.length) {
+      this.rowTransformer((row) => {
+        pivotTimestamps.forEach((timestamp) => {
+          const timestampValue = row.$extras[timestamp]
+          if (!timestampValue) {
+            return
+          }
+
+          /**
+           * Convert from string
+           */
+          if (typeof timestampValue === 'string') {
+            row.$extras[timestamp] = DateTime.fromSQL(timestampValue)
+          }
+
+          /**
+           * Convert from date
+           */
+          if (timestampValue instanceof Date) {
+            row.$extras[timestamp] = DateTime.fromJSDate(timestampValue)
+          }
+        })
+      })
+    }
+
+    return super.exec()
   }
 
   /**

@@ -33,6 +33,7 @@ import {
   TransactionClientContract,
 } from '@ioc:Adonis/Lucid/Database'
 
+import { isObject } from '../../utils'
 import { Preloader } from '../Preloader'
 import { QueryRunner } from '../../QueryRunner'
 import { Chainable } from '../../Database/QueryBuilder/Chainable'
@@ -77,6 +78,11 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * A copy of defined preloads on the model instance
    */
   protected preloader: PreloaderContract<LucidRow> = new Preloader(this.model)
+
+  /**
+   * A custom callback to transform each model row
+   */
+  protected rowTransformerCallback: (row: LucidRow) => void
 
   /**
    * Required by macroable
@@ -169,13 +175,27 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     }
 
     /**
-     * Convert fetch results to an array of model instances
+     * Convert fetched results to an array of model instances
      */
-    const modelInstances = this.model.$createMultipleFromAdapterResult(
-      rows,
-      this.sideloaded,
-      this.clientOptions
-    )
+    const modelInstances = rows.reduce((models: LucidRow[], row: ModelObject) => {
+      if (isObject(row)) {
+        const modelInstance = this.model.$createFromAdapterResult(
+          row,
+          this.sideloaded,
+          this.clientOptions
+        )!
+
+        /**
+         * Transform row when row transformer is defined
+         */
+        if (this.rowTransformerCallback) {
+          this.rowTransformerCallback(modelInstance)
+        }
+
+        models.push(modelInstance)
+      }
+      return models
+    }, [])
 
     /**
      * Preload for model instances
@@ -315,12 +335,21 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   }
 
   /**
+   * Define a custom callback to transform rows
+   */
+  public rowTransformer(callback: (row: LucidRow) => void): this {
+    this.rowTransformerCallback = callback
+    return this
+  }
+
+  /**
    * Clone the current query builder
    */
   public clone(): ModelQueryBuilder {
     const clonedQuery = new ModelQueryBuilder(this.knexQuery.clone(), this.model, this.client)
     this.applyQueryFlags(clonedQuery)
     clonedQuery.sideloaded = Object.assign({}, this.sideloaded)
+    this.rowTransformerCallback && this.rowTransformer(this.rowTransformerCallback)
     return clonedQuery
   }
 
@@ -372,6 +401,9 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     return this
   }
 
+  /**
+   * Define a custom preloader instance for preloading relationships
+   */
   public usePreloader(preloader: PreloaderContract<LucidRow>) {
     this.preloader = preloader
     return this
