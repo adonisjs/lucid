@@ -280,7 +280,7 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
 
     assert.deepEqual(profile.user, user)
     assert.deepEqual(profile1.user, user1)
-    assert.isUndefined(profile2.user)
+    assert.isNull(profile2.user)
   })
 })
 
@@ -745,6 +745,30 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.equal(profiles[0].user.id, profiles[0].userId)
   })
 
+  test('set property value to null when no preload rows were found', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @belongsTo(() => User)
+      public user: BelongsTo<typeof User>
+    }
+
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: null })
+
+    Profile.boot()
+
+    const profiles = await Profile.query().preload('user')
+    assert.lengthOf(profiles, 1)
+
+    assert.isNull(profiles[0].user)
+  })
+
   test('preload relationship for many rows', async (assert) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -817,8 +841,8 @@ test.group('Model | BelongsTo | preload', (group) => {
     )
 
     assert.lengthOf(profiles, 2)
-    assert.isUndefined(profiles[0].user)
-    assert.isUndefined(profiles[1].user)
+    assert.isNull(profiles[0].user)
+    assert.isNull(profiles[1].user)
   })
 
   test('cherry pick columns during preload', async (assert) => {
@@ -1289,7 +1313,32 @@ test.group('Model | BelongsTo | preload', (group) => {
     const profiles = await Profile.query().preload('user')
     assert.lengthOf(profiles, 1)
 
-    assert.isUndefined(profiles[0].user)
+    assert.isNull(profiles[0].user)
+  })
+
+  test('work fine during lazy load when foreign key is null', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @belongsTo(() => User)
+      public user: BelongsTo<typeof User>
+    }
+
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: null })
+
+    Profile.boot()
+
+    const profiles = await Profile.query()
+    assert.lengthOf(profiles, 1)
+    await profiles[0].load('user')
+
+    assert.isNull(profiles[0].user)
   })
 
   test('do not run preload query when parent rows are empty', async (assert) => {
@@ -1803,7 +1852,7 @@ test.group('Model | BelongsTo | scopes', (group) => {
       .first()
 
     const profileWithoutScope = await Profile.query().preload('user').first()
-    assert.isUndefined(profile?.user)
+    assert.isNull(profile?.user)
     assert.instanceOf(profileWithoutScope?.user, User)
   })
 
@@ -1899,7 +1948,7 @@ test.group('Model | BelongsTo | onQuery', (group) => {
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
 
     const profile = await Profile.query().preload('user').first()
-    assert.isUndefined(profile?.user)
+    assert.isNull(profile?.user)
   })
 
   test('do not run onQuery hook on subqueries', async (assert) => {
@@ -1940,7 +1989,7 @@ test.group('Model | BelongsTo | onQuery', (group) => {
       })
       .first()
 
-    assert.isUndefined(profile?.user)
+    assert.isNull(profile?.user)
   })
 
   test('invoke onQuery method on related query builder', async (assert) => {

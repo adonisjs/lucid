@@ -68,7 +68,7 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
   ) {}
 
   /**
-   * Returns a boolean saving related row belongs to the parent
+   * Returns a boolean telling if the related row belongs to the parent
    * row or not.
    */
   private isRelatedRow(parent: LucidRow, related: LucidRow) {
@@ -141,12 +141,8 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
    */
   public setRelated(parent: LucidRow, related: LucidRow | null): void {
     ensureRelationIsBooted(this)
-    if (!related) {
+    if (related === undefined) {
       return
-    }
-
-    if (!this.isRelatedRow(parent, related)) {
-      throw new Error('malformed setRelated call')
     }
 
     parent.$setRelated(this.relationName, related)
@@ -157,12 +153,8 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
    */
   public pushRelated(parent: LucidRow, related: LucidRow | null): void {
     ensureRelationIsBooted(this)
-    if (!related) {
+    if (related === undefined) {
       return
-    }
-
-    if (!this.isRelatedRow(parent, related)) {
-      throw new Error('malformed pushRelated call')
     }
 
     parent.$setRelated(this.relationName, related)

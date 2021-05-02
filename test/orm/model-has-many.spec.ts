@@ -792,6 +792,34 @@ test.group('Model | HasMany | preload', (group) => {
     assert.equal(users[1].posts[0].userId, users[1].id)
   })
 
+  test('set relationship property value to empty array when no related rows have been found', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<typeof Post>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    User.boot()
+
+    const users = await User.query().preload('posts')
+    assert.lengthOf(users, 2)
+
+    assert.lengthOf(users[0].posts, 0)
+    assert.lengthOf(users[1].posts, 0)
+  })
+
   test('preload relationship for many rows', async (assert) => {
     class Post extends BaseModel {
       @column({ isPrimary: true })

@@ -551,9 +551,9 @@ declare module '@ioc:Adonis/Lucid/Model' {
      * advanced use cases
      */
     $hasRelated(key: string): boolean
-    $setRelated(key: string, result: OneOrMany<LucidRow>): void
-    $pushRelated(key: string, result: OneOrMany<LucidRow>): void
-    $getRelated(key: string, defaultValue?: any): OneOrMany<LucidRow> | undefined
+    $setRelated(key: string, result: OneOrMany<LucidRow> | null): void
+    $pushRelated(key: string, result: OneOrMany<LucidRow> | null): void
+    $getRelated(key: string, defaultValue?: any): OneOrMany<LucidRow> | undefined | null
 
     /**
      * Consume the adapter result and hydrate the model

@@ -140,13 +140,6 @@ export class HasMany implements HasManyRelationContract<LucidModel, LucidModel> 
    */
   public setRelated(parent: LucidRow, related: LucidRow[]): void {
     ensureRelationIsBooted(this)
-
-    related.forEach((relatedRow) => {
-      if (!this.isRelatedRow(parent, relatedRow)) {
-        throw new Error('malformed setRelated call')
-      }
-    })
-
     parent.$setRelated(this.relationName, related)
   }
 
@@ -155,19 +148,6 @@ export class HasMany implements HasManyRelationContract<LucidModel, LucidModel> 
    */
   public pushRelated(parent: LucidRow, related: LucidRow | LucidRow[]): void {
     ensureRelationIsBooted(this)
-
-    if (Array.isArray(related)) {
-      related.forEach((relatedRow) => {
-        if (!this.isRelatedRow(parent, relatedRow)) {
-          throw new Error('malformed pushRelated call')
-        }
-      })
-    } else {
-      if (!this.isRelatedRow(parent, related)) {
-        throw new Error('malformed pushRelated call')
-      }
-    }
-
     parent.$pushRelated(this.relationName, related)
   }
 

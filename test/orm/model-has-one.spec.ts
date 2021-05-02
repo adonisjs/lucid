@@ -274,7 +274,7 @@ test.group('Model | HasOne | Set Relations', (group) => {
     User.$getRelation('profile')!.setRelatedForMany([user, user1, user2], [profile, profile1])
     assert.deepEqual(user.profile, profile)
     assert.deepEqual(user1.profile, profile1)
-    assert.isUndefined(user2.profile)
+    assert.isNull(user2.profile)
   })
 })
 
@@ -796,6 +796,40 @@ test.group('Model | HasOne | preload', (group) => {
     assert.equal(users[1].profile.userId, users[1].id)
   })
 
+  test('set relationship property value to null when no related rows were found', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: HasOne<typeof Profile>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    User.boot()
+
+    const users = await User.query().preload('profile')
+    assert.lengthOf(users, 2)
+
+    assert.isNull(users[0].profile)
+    assert.isNull(users[1].profile)
+  })
+
   test('preload nested relations', async (assert) => {
     class Identity extends BaseModel {
       @column({ isPrimary: true })
@@ -972,8 +1006,8 @@ test.group('Model | HasOne | preload', (group) => {
     )
     assert.lengthOf(users, 2)
 
-    assert.isUndefined(users[0].profile)
-    assert.isUndefined(users[1].profile)
+    assert.isNull(users[0].profile)
+    assert.isNull(users[1].profile)
   })
 
   test('cherry pick columns during preload', async (assert) => {
@@ -2405,7 +2439,7 @@ test.group('Model | HasOne | scopes', (group) => {
       .firstOrFail()
     const userWithScopes = await User.query().preload('profile').firstOrFail()
 
-    assert.isUndefined(user.profile)
+    assert.isNull(user.profile)
     assert.instanceOf(userWithScopes.profile, Profile)
   })
 
@@ -2504,7 +2538,7 @@ test.group('Model | HasOne | onQuery', (group) => {
       .multiInsert([{ user_id: userId, display_name: 'virk', type: 'github' }])
 
     const user = await User.query().preload('profile').firstOrFail()
-    assert.isUndefined(user.profile)
+    assert.isNull(user.profile)
   })
 
   test('do not invoke onQuery method on preloading subqueries', async (assert) => {
@@ -2545,7 +2579,7 @@ test.group('Model | HasOne | onQuery', (group) => {
     const user = await User.query()
       .preload('profile', (query) => query.where(() => {}))
       .firstOrFail()
-    assert.isUndefined(user.profile)
+    assert.isNull(user.profile)
   })
 
   test('invoke onQuery method on related query builder', async (assert) => {

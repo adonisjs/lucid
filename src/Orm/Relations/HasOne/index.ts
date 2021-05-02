@@ -122,7 +122,7 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
    */
   public setRelated(parent: LucidRow, related: LucidRow | null): void {
     ensureRelationIsBooted(this)
-    if (!related) {
+    if (related === undefined) {
       return
     }
 
@@ -135,7 +135,7 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
   public pushRelated(parent: LucidRow, related: LucidRow | null): void {
     ensureRelationIsBooted(this)
 
-    if (!related) {
+    if (related === undefined) {
       return
     }
 
@@ -149,19 +149,13 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
   public setRelatedForMany(parent: LucidRow[], related: LucidRow[]): void {
     ensureRelationIsBooted(this)
 
-    /**
-     * The related model will always be equal or less than the parent
-     * models. So we loop over them to lower down the number of
-     * iterations.
-     */
-    related.forEach((relatedModel) => {
-      const match = parent.find((parentModel) => {
+    parent.forEach((parentModel) => {
+      const match = related.find((relatedModel) => {
         const value = parentModel[this.localKey]
         return value !== undefined && value === relatedModel[this.foreignKey]
       })
-      if (match) {
-        this.setRelated(match, relatedModel)
-      }
+
+      this.setRelated(parentModel, match || null)
     })
   }
 
