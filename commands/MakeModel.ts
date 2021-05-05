@@ -61,6 +61,7 @@ export default class MakeModel extends BaseCommand {
 
     if (stderr) {
       console.log(stderr.trim())
+      throw new Error(`Command "${command}" failed`)
     }
   }
 
