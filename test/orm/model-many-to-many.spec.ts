@@ -832,8 +832,10 @@ test.group('Model | ManyToMany | sub queries', (group) => {
       .from('users as adonis_temp_0')
       .select('adonis_temp_0.name')
       .innerJoin('follows', 'adonis_temp_0.id', 'follows.following_user_id')
-      .where('follows.following_user_id', 10)
-      .where('users.id', '=', db.connection().getReadClient().ref('follows.user_id'))
+      .where((query) => query.where('follows.following_user_id', 10))
+      .where((query) =>
+        query.where('users.id', '=', db.connection().getReadClient().ref('follows.user_id'))
+      )
       .toSQL()
 
     assert.deepEqual(sql, knexSql)
@@ -903,8 +905,10 @@ test.group('Model | ManyToMany | sub queries', (group) => {
       .knexQuery()
       .from('skills')
       .innerJoin('skill_user', 'skills.id', 'skill_user.skill_id')
-      .where('name', 'Programming')
-      .where('users.id', '=', db.connection().getReadClient().ref('skill_user.user_id'))
+      .where((query) => query.where('name', 'Programming'))
+      .where((query) =>
+        query.where('users.id', '=', db.connection().getReadClient().ref('skill_user.user_id'))
+      )
       .toSQL()
 
     assert.deepEqual(sql, knexSql)

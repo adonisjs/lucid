@@ -117,7 +117,7 @@ export class ManyToManySubQueryBuilder
       `${this.relation.pivotTable}.${this.relation.pivotRelatedForeignKey}`
     )
 
-    this.where(
+    this.wrapExisting().where(
       `${localTable}.${this.relation.localKeyColumnName}`,
       this.client.ref(this.pivotHelpers.prefixPivotTable(this.relation.pivotForeignKey))
     )

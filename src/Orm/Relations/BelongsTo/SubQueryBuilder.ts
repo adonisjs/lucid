@@ -80,7 +80,7 @@ export class BelongsToSubQueryBuilder
       tablePrefix = this.selfJoinAlias
     }
 
-    this.where(
+    this.wrapExisting().where(
       `${tablePrefix}.${this.relation.localKeyColumName}`,
       this.client.ref(`${localTable}.${this.relation.foreignKeyColumName}`)
     )

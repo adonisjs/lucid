@@ -674,8 +674,10 @@ test.group('Model | HasMany | sub queries', (group) => {
       .connection()
       .knexQuery()
       .from('posts')
-      .where('is_published', true)
-      .where('users.id', '=', db.connection().getReadClient().ref('posts.user_id'))
+      .where((query) => query.where('is_published', true))
+      .where((query) =>
+        query.where('users.id', '=', db.connection().getReadClient().ref('posts.user_id'))
+      )
       .toSQL()
 
     assert.deepEqual(sql, knexSql)
@@ -2313,8 +2315,10 @@ test.group('Model | HasMany | whereHas', (group) => {
         connection
           .knexQuery()
           .from('posts')
-          .where('title', 'Adonis 101')
-          .where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+          .where((subquery) => subquery.where('title', 'Adonis 101'))
+          .where((subquery) =>
+            subquery.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+          )
       )
       .toSQL()
 
@@ -2388,9 +2392,11 @@ test.group('Model | HasMany | whereHas', (group) => {
     const knexSubQuery = connection
       .knexQuery()
       .from('posts')
-      .where('title', 'Adonis 101')
       .count('*')
-      .where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+      .where((subquery) => subquery.where('title', 'Adonis 101'))
+      .where((subquery) =>
+        subquery.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+      )
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection
@@ -2554,15 +2560,19 @@ test.group('Model | HasMany | whereHas', (group) => {
     const knexSubQuery = connection
       .knexQuery()
       .from('posts')
-      .where('title', 'Lucid 101')
-      .where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+      .where((subquery) => subquery.where('title', 'Lucid 101'))
+      .where((subquery) =>
+        subquery.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+      )
 
     const knexCountSubQuery = connection
       .knexQuery()
       .from('posts')
-      .where('title', 'Adonis 101')
       .count('*')
-      .where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+      .where((subquery) => subquery.where('title', 'Lucid 101'))
+      .where((subquery) =>
+        subquery.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+      )
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection
@@ -2651,15 +2661,19 @@ test.group('Model | HasMany | whereHas', (group) => {
     const knexSubQuery = connection
       .knexQuery()
       .from('posts')
-      .where('title', 'Lucid 101')
-      .where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+      .where((subquery) => subquery.where('title', 'Lucid 101'))
+      .where((subquery) =>
+        subquery.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+      )
 
     const knexCountSubQuery = connection
       .knexQuery()
       .from('posts')
-      .where('title', 'Adonis 101')
       .count('*')
-      .where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+      .where((subquery) => subquery.where('title', 'Lucid 101'))
+      .where((subquery) =>
+        subquery.where('users.id', '=', connection.getReadClient().ref('posts.user_id'))
+      )
       .toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = connection
@@ -4981,9 +4995,12 @@ test.group('Model | HasMany | onQuery', (group) => {
     const { sql: knexSql, bindings: knexBindings } = db
       .connection()
       .from('posts')
-      .where('title', 'Adonis 101')
-      .where((query) => query.whereNotNull('created_at'))
-      .where('user_id', 1)
+      .where((query) => {
+        query.where('title', 'Adonis 101').where((subquery) => subquery.whereNotNull('created_at'))
+      })
+      .where((query) => {
+        query.where('user_id', 1)
+      })
       .toSQL()
 
     assert.equal(sql, knexSql)

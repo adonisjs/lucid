@@ -38,6 +38,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * adds a new stack item
    */
   private whereStack: any[][] = [[]]
+  private appliedWhere = false
 
   /**
    * Returns the recent most array from the where stack
@@ -74,6 +75,11 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Applies the where clauses
    */
   protected applyWhere() {
+    if (this.appliedWhere) {
+      return
+    }
+
+    this.appliedWhere = true
     this.knexQuery.clearWhere()
 
     if (this.whereStack.length === 1) {

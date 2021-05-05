@@ -72,7 +72,7 @@ export abstract class BaseQueryBuilder
    * by relationships
    */
   protected getQueryData() {
-    return Object.assign(this.toSQL(), {
+    return Object.assign(this.knexQuery.toSQL(), {
       connection: this.client.connectionName,
       inTransaction: this.client.isTransaction,
       model: this.model.name,

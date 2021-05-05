@@ -90,7 +90,7 @@ export class HasOneQueryBuilder extends BaseQueryBuilder {
      * Eager query contraints
      */
     if (Array.isArray(this.parent)) {
-      this.whereIn(
+      this.wrapExisting().whereIn(
         this.relation.foreignKey,
         unique(
           this.parent.map((model) => {
@@ -105,7 +105,7 @@ export class HasOneQueryBuilder extends BaseQueryBuilder {
      * Query constraints
      */
     const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
-    this.where(this.relation.foreignKey, value)
+    this.wrapExisting().where(this.relation.foreignKey, value)
 
     /**
      * Do not add limit when updating or deleting

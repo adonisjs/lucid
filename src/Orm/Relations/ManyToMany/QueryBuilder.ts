@@ -109,7 +109,7 @@ export class ManyToManyQueryBuilder
      * Eager query contraints
      */
     if (Array.isArray(this.parent)) {
-      this.whereInPivot(
+      this.wrapExisting().whereInPivot(
         this.relation.pivotForeignKey,
         unique(
           this.parent.map((model) => {
@@ -124,7 +124,7 @@ export class ManyToManyQueryBuilder
      * Query constraints
      */
     const value = getValue(this.parent, this.relation.localKey, this.relation, queryAction)
-    this.wherePivot(this.relation.pivotForeignKey, value)
+    this.wrapExisting().wherePivot(this.relation.pivotForeignKey, value)
   }
 
   /**

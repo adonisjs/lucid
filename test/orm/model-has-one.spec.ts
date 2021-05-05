@@ -720,8 +720,10 @@ test.group('Model | HasOne | sub queries', (group) => {
       .connection()
       .knexQuery()
       .from('profiles')
-      .where('account_type', 'twitter')
-      .where('users.id', '=', db.connection().getReadClient().ref('profiles.user_id'))
+      .where((query) => query.where('account_type', 'twitter'))
+      .where((query) =>
+        query.where('users.id', '=', db.connection().getReadClient().ref('profiles.user_id'))
+      )
       .toSQL()
 
     assert.deepEqual(sql, knexSql)
@@ -2659,9 +2661,12 @@ test.group('Model | HasOne | onQuery', (group) => {
     const { sql: knexSql, bindings: knexBindings } = db
       .connection()
       .from('profiles')
-      .where('type', 'twitter')
-      .where((query) => query.whereNotNull('created_at'))
-      .where('user_id', 1)
+      .where((query) => {
+        query.where('type', 'twitter').where((subquery) => subquery.whereNotNull('created_at'))
+      })
+      .where((query) => {
+        query.where('user_id', 1)
+      })
       .limit(1)
       .toSQL()
 

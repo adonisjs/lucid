@@ -104,7 +104,7 @@ export class BelongsToQueryBuilder extends BaseQueryBuilder {
           return foreignKeyValue !== null
         })
 
-      this.whereIn(this.relation.localKey, unique(foreignKeyValues))
+      this.wrapExisting().whereIn(this.relation.localKey, unique(foreignKeyValues))
       return
     }
 
@@ -115,7 +115,7 @@ export class BelongsToQueryBuilder extends BaseQueryBuilder {
       this.raiseMissingForeignKey()
     }
 
-    this.where(this.relation.localKey, this.parent[this.relation.foreignKey])
+    this.wrapExisting().where(this.relation.localKey, this.parent[this.relation.foreignKey])
 
     /**
      * Do not add limit when updating or deleting
