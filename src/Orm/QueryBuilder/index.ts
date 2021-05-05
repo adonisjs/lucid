@@ -736,7 +736,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     await this.model.$hooks.exec('before', 'paginate', [countQuery, this])
     await this.model.$hooks.exec('before', 'fetch', this)
 
-    const aggregateResult = await countQuery.execQuery()
+    const aggregateResult = await countQuery.exec()
     const total = this.hasGroupBy ? aggregateResult.length : aggregateResult[0].total
 
     const results = total > 0 ? await this.forPage(page, perPage).execQuery() : []

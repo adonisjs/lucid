@@ -693,8 +693,10 @@ test.group('Model | BelongsTo | sub queries', (group) => {
       .connection()
       .knexQuery()
       .from('users')
-      .where('is_active', false)
-      .where('users.id', '=', db.connection().getReadClient().ref('profiles.user_id'))
+      .where((subquery) => subquery.where('is_active', false))
+      .where((subquery) =>
+        subquery.where('users.id', '=', db.connection().getReadClient().ref('profiles.user_id'))
+      )
       .toSQL()
 
     assert.deepEqual(sql, knexSql)
@@ -2066,9 +2068,10 @@ test.group('Model | BelongsTo | onQuery', (group) => {
     const { sql: knexSql, bindings: knexBindings } = db
       .connection()
       .from('users')
-      .where('country_id', 1)
-      .where((query) => query.where('score', '>', 0))
-      .where('id', 1)
+      .where((subquery) => {
+        subquery.where('country_id', 1).where((query) => query.where('score', '>', 0))
+      })
+      .where((subquery) => subquery.where('id', 1))
       .limit(1)
       .toSQL()
 
