@@ -771,6 +771,30 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.isNull(profiles[0].user)
   })
 
+  test('set value to null when serializing', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+
+      @belongsTo(() => User)
+      public user: BelongsTo<typeof User>
+    }
+
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: null })
+
+    Profile.boot()
+
+    const profiles = await Profile.query().preload('user')
+    assert.lengthOf(profiles, 1)
+
+    assert.isNull(profiles[0].toJSON().user)
+  })
+
   test('preload relationship for many rows', async (assert) => {
     class User extends BaseModel {
       @column({ isPrimary: true })

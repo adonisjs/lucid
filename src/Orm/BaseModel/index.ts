@@ -1782,6 +1782,8 @@ export class BaseModel implements LucidRow {
       const relationOptions = cherryPick ? cherryPick[relation.serializeAs] : undefined
       result[relation.serializeAs] = Array.isArray(value)
         ? value.map((one) => one.serialize(relationOptions))
+        : value === null
+        ? null
         : value.serialize(relationOptions)
 
       return result
