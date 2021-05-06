@@ -40,6 +40,7 @@ export default class DatabaseServiceProvider {
       const { scope } = require('../src/Helpers/scope')
       const decorators = require('../src/Orm/Decorators')
       const { BaseModel } = require('../src/Orm/BaseModel')
+      const { ModelPaginator } = require('../src/Orm/Paginator')
 
       /**
        * Attaching adapter to the base model. Each model is allowed to define
@@ -50,6 +51,7 @@ export default class DatabaseServiceProvider {
 
       return {
         BaseModel,
+        ModelPaginator,
         scope,
         ...decorators,
       }

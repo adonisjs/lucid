@@ -10,13 +10,17 @@
 declare module '@ioc:Adonis/Lucid/Orm' {
   import {
     ScopeFn,
+    LucidRow,
     LucidModel,
     HooksDecorator,
     ColumnDecorator,
     ComputedDecorator,
     DateColumnDecorator,
+    ModelPaginatorContract,
     DateTimeColumnDecorator,
   } from '@ioc:Adonis/Lucid/Model'
+
+  import { SimplePaginatorMetaKeys } from '@ioc:Adonis/Lucid/Database'
 
   import {
     HasOneDecorator,
@@ -33,7 +37,11 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     ManyToMany,
     HasManyThrough,
   } from '@ioc:Adonis/Lucid/Relations'
-  export { NamingStrategyContract, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
+  export {
+    NamingStrategyContract,
+    ModelQueryBuilderContract,
+    ModelPaginatorContract,
+  } from '@ioc:Adonis/Lucid/Model'
 
   export const scope: ScopeFn
   export const BaseModel: LucidModel
@@ -64,6 +72,17 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   export const afterFetch: HooksDecorator
   export const beforePaginate: HooksDecorator
   export const afterPaginate: HooksDecorator
+  export const ModelPaginator: {
+    namingStrategy: {
+      paginationMetaKeys(): SimplePaginatorMetaKeys
+    }
+    new <Row extends LucidRow>(
+      rows: Row[],
+      total: number,
+      perPage: number,
+      currentPage: number
+    ): ModelPaginatorContract<Row>
+  }
 
   /**
    * Columns and computed

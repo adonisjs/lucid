@@ -308,6 +308,15 @@ declare module '@ioc:Adonis/Lucid/Model' {
   }
 
   /**
+   * An extension of the simple paginator with support for serializing models
+   */
+  export interface ModelPaginatorContract<Result extends LucidRow>
+    extends Omit<SimplePaginatorContract<Result>, 'toJSON'> {
+    serialize(cherryPick?: CherryPick): { meta: any; data: ModelObject[] }
+    toJSON(): { meta: any; data: ModelObject[] }
+  }
+
+  /**
    * ------------------------------------------------------
    * Model Query Builder
    * ------------------------------------------------------
@@ -383,9 +392,20 @@ declare module '@ioc:Adonis/Lucid/Model' {
     delete(): ModelQueryBuilderContract<Model, any>
 
     /**
+     * A shorthand to define limit and offset based upon the
+     * current page
+     */
+    forPage(page: number, perPage?: number): this
+
+    /**
      * Execute query with pagination
      */
-    paginate(page: number, perPage?: number): Promise<SimplePaginatorContract<Result>>
+    paginate(
+      page: number,
+      perPage?: number
+    ): Promise<
+      Result extends LucidRow ? ModelPaginatorContract<Result> : SimplePaginatorContract<Result>
+    >
 
     /**
      * Mutations (update and increment can be one query aswell)
@@ -816,7 +836,7 @@ declare module '@ioc:Adonis/Lucid/Model' {
     after<Model extends LucidModel>(
       this: Model,
       event: 'paginate',
-      handler: HooksHandler<SimplePaginatorContract<InstanceType<Model>>, 'paginate'>
+      handler: HooksHandler<ModelPaginatorContract<InstanceType<Model>>, 'paginate'>
     ): void
     after<Model extends LucidModel, Event extends EventsList>(
       this: Model,

@@ -14,6 +14,7 @@ import { scope } from '../src/Helpers/scope'
 import { BaseSeeder } from '../src/BaseSeeder'
 import { FactoryManager } from '../src/Factory'
 import { BaseModel } from '../src/Orm/BaseModel'
+import { ModelPaginator } from '../src/Orm/Paginator'
 import * as decorators from '../src/Orm/Decorators'
 
 import { setupApplication, fs } from '../test-helpers'
@@ -35,7 +36,12 @@ test.group('Database Provider', (group) => {
     )
 
     assert.instanceOf(app.container.use('Adonis/Lucid/Database'), Database)
-    assert.deepEqual(app.container.use('Adonis/Lucid/Orm'), { BaseModel, scope, ...decorators })
+    assert.deepEqual(app.container.use('Adonis/Lucid/Orm'), {
+      BaseModel,
+      ModelPaginator,
+      scope,
+      ...decorators,
+    })
     assert.isTrue(app.container.hasBinding('Adonis/Lucid/Schema'))
     assert.instanceOf(app.container.use('Adonis/Lucid/Factory'), FactoryManager)
     assert.deepEqual(app.container.use('Adonis/Lucid/Seeder'), BaseSeeder)

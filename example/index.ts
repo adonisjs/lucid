@@ -39,7 +39,6 @@ export class User extends BaseModel {
 }
 
 User.query().apply((scopes) => scopes.active().country('India'))
-
 User.create({ id: '1', username: 'a' })
 User.fetchOrCreateMany('id', [{ id: '1', username: 'virk' }])
 User.create({ id: '1', username: 'virk' })

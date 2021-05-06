@@ -51,6 +51,7 @@ import {
   getBaseModel,
   setupApplication,
 } from '../../test-helpers'
+import { ModelPaginator } from '../../src/Orm/Paginator'
 import { SimplePaginator } from '../../src/Database/Paginator/SimplePaginator'
 import { SnakeCaseNamingStrategy } from '../../src/Orm/NamingStrategies/SnakeCase'
 
@@ -4336,6 +4337,32 @@ test.group('Base Model | hooks', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await User.query().paginate(1)
   })
+
+  test('do not invoke before and after paginate hooks when using pojo', async () => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+
+      @beforePaginate()
+      public static beforePaginateHook() {
+        throw new Error('Never expected to reached here')
+      }
+
+      @afterPaginate()
+      public static afterPaginateHook() {
+        throw new Error('Never expected to reached here')
+      }
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await User.query().pojo().paginate(1)
+  })
 })
 
 test.group('Base model | extend', (group) => {
@@ -5312,8 +5339,89 @@ test.group('Base Model | paginate', (group) => {
     const users = await User.query().paginate(1, 5)
     users.baseUrl('/users')
 
+    assert.instanceOf(users, ModelPaginator)
+
     assert.lengthOf(users.all(), 5)
     assert.instanceOf(users.all()[0], User)
+    assert.equal(users.perPage, 5)
+    assert.equal(users.currentPage, 1)
+    assert.equal(users.lastPage, 4)
+    assert.isTrue(users.hasPages)
+    assert.isTrue(users.hasMorePages)
+    assert.isFalse(users.isEmpty)
+    assert.equal(users.total, 18)
+    assert.isTrue(users.hasTotal)
+    assert.deepEqual(users.getMeta(), {
+      total: 18,
+      per_page: 5,
+      current_page: 1,
+      last_page: 4,
+      first_page: 1,
+      first_page_url: '/users?page=1',
+      last_page_url: '/users?page=4',
+      next_page_url: '/users?page=2',
+      previous_page_url: null,
+    })
+  })
+
+  test('serialize from model paginator', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    await db.insertQuery().table('users').multiInsert(getUsers(18))
+    const users = await User.query().paginate(1, 5)
+    users.baseUrl('/users')
+
+    assert.instanceOf(users, ModelPaginator)
+    const { meta, data } = users.serialize({
+      fields: ['username'],
+    })
+
+    data.forEach((row) => {
+      assert.notProperty(row, 'email')
+      assert.notProperty(row, 'id')
+    })
+    assert.deepEqual(meta, {
+      total: 18,
+      per_page: 5,
+      current_page: 1,
+      last_page: 4,
+      first_page: 1,
+      first_page_url: '/users?page=1',
+      last_page_url: '/users?page=4',
+      next_page_url: '/users?page=2',
+      previous_page_url: null,
+    })
+  })
+
+  test('return simple paginator instance when using pojo', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    await db.insertQuery().table('users').multiInsert(getUsers(18))
+    const users = await User.query().pojo().paginate(1, 5)
+    users.baseUrl('/users')
+
+    assert.instanceOf(users, SimplePaginator)
+
+    assert.lengthOf(users.all(), 5)
+    assert.notInstanceOf(users.all()[0], User)
     assert.equal(users.perPage, 5)
     assert.equal(users.currentPage, 1)
     assert.equal(users.lastPage, 4)

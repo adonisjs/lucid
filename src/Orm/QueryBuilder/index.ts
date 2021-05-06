@@ -35,6 +35,7 @@ import {
 
 import { isObject } from '../../utils'
 import { Preloader } from '../Preloader'
+import { ModelPaginator } from '../Paginator'
 import { QueryRunner } from '../../QueryRunner'
 import { Chainable } from '../../Database/QueryBuilder/Chainable'
 import { SimplePaginator } from '../../Database/Paginator/SimplePaginator'
@@ -714,7 +715,9 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Paginate through rows inside a given table
    */
-  public async paginate(page: number, perPage: number = 20) {
+  public async paginate(page: number, perPage: number = 20): Promise<any> {
+    const isFetchCall = this.wrapResultsToModelInstances && this.knexQuery['_method'] === 'select'
+
     /**
      * Cast to number
      */
@@ -733,18 +736,29 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
      * We pass both the counts query and the main query to the
      * paginate hook
      */
-    await this.model.$hooks.exec('before', 'paginate', [countQuery, this])
-    await this.model.$hooks.exec('before', 'fetch', this)
+    if (isFetchCall) {
+      await this.model.$hooks.exec('before', 'paginate', [countQuery, this])
+      await this.model.$hooks.exec('before', 'fetch', this)
+    }
 
     const aggregateResult = await countQuery.exec()
     const total = this.hasGroupBy ? aggregateResult.length : aggregateResult[0].total
 
     const results = total > 0 ? await this.forPage(page, perPage).execQuery() : []
-    const paginator = new SimplePaginator(results, total, perPage, page)
+
+    /**
+     * Choose paginator
+     */
+    const paginator = this.wrapResultsToModelInstances
+      ? new ModelPaginator(results, total, perPage, page)
+      : new SimplePaginator(results, total, perPage, page)
+
     paginator.namingStrategy = this.model.namingStrategy
 
-    await this.model.$hooks.exec('after', 'paginate', paginator)
-    await this.model.$hooks.exec('after', 'fetch', results)
+    if (isFetchCall) {
+      await this.model.$hooks.exec('after', 'paginate', paginator)
+      await this.model.$hooks.exec('after', 'fetch', results)
+    }
 
     return paginator
   }
