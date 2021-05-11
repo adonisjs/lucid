@@ -212,9 +212,13 @@ export class HasManyThroughQueryBuilder
     )
 
     this.applyQueryFlags(clonedQuery)
+
     clonedQuery.appliedConstraints = this.appliedConstraints
     clonedQuery.cherryPickingKeys = this.cherryPickingKeys
     clonedQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
+    clonedQuery.debug(this.debugQueries)
+    clonedQuery.reporterData(this.customReporterData)
+
     return clonedQuery
   }
 

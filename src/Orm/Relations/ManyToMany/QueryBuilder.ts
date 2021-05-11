@@ -370,10 +370,14 @@ export class ManyToManyQueryBuilder
     )
 
     this.applyQueryFlags(clonedQuery)
+
     clonedQuery.isPivotOnlyQuery = this.isPivotOnlyQuery
     clonedQuery.cherryPickingKeys = this.cherryPickingKeys
     clonedQuery.appliedConstraints = this.appliedConstraints
     clonedQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
+    clonedQuery.debug(this.debugQueries)
+    clonedQuery.reporterData(this.customReporterData)
+
     return clonedQuery
   }
 

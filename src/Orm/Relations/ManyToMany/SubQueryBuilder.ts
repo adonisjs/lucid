@@ -294,6 +294,8 @@ export class ManyToManySubQueryBuilder
 
     this.applyQueryFlags(clonedQuery)
     clonedQuery.appliedConstraints = this.appliedConstraints
+    clonedQuery.debug(this.debugQueries)
+    clonedQuery.reporterData(this.customReporterData)
     return clonedQuery
   }
 }

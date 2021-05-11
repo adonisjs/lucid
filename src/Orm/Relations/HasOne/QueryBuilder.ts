@@ -71,6 +71,9 @@ export class HasOneQueryBuilder extends BaseQueryBuilder {
     this.applyQueryFlags(clonedQuery)
     clonedQuery.appliedConstraints = this.appliedConstraints
     clonedQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery
+    clonedQuery.debug(this.debugQueries)
+    clonedQuery.reporterData(this.customReporterData)
+
     return clonedQuery
   }
 
