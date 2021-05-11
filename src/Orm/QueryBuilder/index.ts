@@ -423,10 +423,15 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * will implicitly set a `limit` on the query
    */
   public async first(): Promise<any> {
-    await this.model.$hooks.exec('before', 'find', this)
+    const isFetchCall = this.wrapResultsToModelInstances && this.knexQuery['_method'] === 'select'
+
+    if (isFetchCall) {
+      await this.model.$hooks.exec('before', 'find', this)
+    }
 
     const result = await this.limit(1).execQuery()
-    if (result[0]) {
+
+    if (result[0] && isFetchCall) {
       await this.model.$hooks.exec('after', 'find', result[0])
     }
 

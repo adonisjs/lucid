@@ -448,6 +448,77 @@ test.group('Model | HasMany | bulk operations', (group) => {
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
   })
+
+  test('generate correct sql with additional constraints', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<typeof Post>
+    }
+
+    User.boot()
+    User.$getRelation('posts')!.boot()
+
+    await db.table('users').insert({ username: 'virk' })
+    await db.table('posts').insert({ title: 'Adonis 101' })
+
+    const user = await User.find(1)
+    const { sql, bindings } = user!.related('posts').query().where('id', 1).toSQL()
+
+    const post = await user!.related('posts').query().where('id', 1).first()
+    assert.isNull(post)
+
+    const { sql: knexSql, bindings: knexBindings } = db
+      .connection()
+      .getWriteClient()
+      .from('posts')
+      .where((query) => query.where('id', 1))
+      .where((query) => query.where('user_id', 1))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('paginate with additional constraints using related query builder', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<typeof Post>
+    }
+
+    User.boot()
+    User.$getRelation('posts')!.boot()
+
+    const [id] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    await db
+      .table('posts')
+      .multiInsert([
+        { title: 'Adonis 101' },
+        { title: 'Adonis 101', user_id: id },
+        { title: 'Auth 101', user_id: id },
+      ])
+
+    const user = await User.find(1)
+    const posts = await user!.related('posts').query().where('title', 'Adonis 101').paginate(1, 20)
+
+    assert.equal(posts.total, 1)
+    assert.lengthOf(posts.all(), 1)
+  })
 })
 
 test.group('Model | HasMany | sub queries', (group) => {

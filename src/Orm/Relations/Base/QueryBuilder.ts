@@ -187,6 +187,15 @@ export abstract class BaseQueryBuilder
   }
 
   /**
+   * Apply constraints before fetching the first
+   * row
+   */
+  public first() {
+    this.applyConstraints()
+    return super.first()
+  }
+
+  /**
    * Execute query
    */
   public exec() {

@@ -385,6 +385,7 @@ export class ManyToManyQueryBuilder
       throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`)
     }
 
+    this.applyConstraints()
     return super.paginate(page, perPage)
   }
 
