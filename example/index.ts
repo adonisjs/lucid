@@ -1,10 +1,19 @@
 import { DateTime } from 'luxon'
-import { BaseModel, HasOne, hasOne, scope, column } from '@ioc:Adonis/Lucid/Orm'
+import {
+  BaseModel,
+  HasOne,
+  hasOne,
+  scope,
+  column,
+  ModelQueryBuilderContract,
+} from '@ioc:Adonis/Lucid/Orm'
 import Factory from '@ioc:Adonis/Lucid/Factory'
 
 enum ProfileTypes {
   TWITTER = 'TWITTER',
 }
+
+type Builder = ModelQueryBuilderContract<typeof User>
 
 class Profile extends BaseModel {
   public id: string
@@ -30,7 +39,7 @@ export class User extends BaseModel {
   })
   public profile: HasOne<typeof Profile>
 
-  public static active = scope<typeof User>((builder) => {
+  public static active = scope((builder: Builder) => {
     builder.apply((scopes) => scopes.country('India'))
   })
   public static country = scope((builder, _country: string) => {
