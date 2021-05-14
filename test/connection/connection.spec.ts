@@ -239,7 +239,6 @@ test.group('Health Checks', (group) => {
       connection.connect()
 
       const report = await connection.getReport()
-      console.log(report)
       assert.equal(report.message, 'Unable to reach one of the read hosts')
       assert.exists(report.error)
 

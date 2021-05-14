@@ -62,9 +62,6 @@ test.group('MakeMigration', (group) => {
     assert.lengthOf(makeMigration.ui.testingRenderer.logs, 1)
     const successLog = makeMigration.ui.testingRenderer.logs[0]
 
-    console.log(makeMigration.logger.colors)
-    console.log(makeMigration.logger.colors.green('foo'))
-
     const userSchema = await fs.get(successLog.message.replace('green(CREATE:)', '').trim())
     const schemaTemplate = await templatesFs.get('migration-make.txt')
 
