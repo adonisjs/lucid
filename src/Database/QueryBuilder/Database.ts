@@ -128,7 +128,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
     const clonedQuery = new DatabaseQueryBuilder(this.knexQuery.clone(), this.client)
     this.applyQueryFlags(clonedQuery)
     clonedQuery.debug(this.debugQueries)
-    clonedQuery.reporterData(this.customReporterData)
+    this.customReporterData && clonedQuery.reporterData(this.customReporterData)
     return clonedQuery
   }
 
