@@ -400,10 +400,18 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Applies the query scopes on the current query builder
    * instance
    */
-  public apply(callback: (scopes: any) => void): this {
+  public withScopes(callback: (scopes: any) => void): this {
     this.scopesWrapper = this.scopesWrapper || new ModelScopes(this)
     callback(this.scopesWrapper)
     return this
+  }
+
+  /**
+   * Applies the query scopes on the current query builder
+   * instance
+   */
+  public apply(callback: (scopes: any) => void): this {
+    return this.withSchema(callback)
   }
 
   /**

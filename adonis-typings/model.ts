@@ -349,9 +349,14 @@ declare module '@ioc:Adonis/Lucid/Model' {
     isChildQuery: boolean
 
     /**
-     * Apply user defined query scopes
+     * Alias for the @withScopes method
      */
     apply<Scopes extends ExtractScopes<Model>>(callback: (scopes: Scopes) => void): this
+
+    /**
+     * Apply model query scopes on the query bulder
+     */
+    withScopes<Scopes extends ExtractScopes<Model>>(callback: (scopes: Scopes) => void): this
 
     /**
      * A copy of client options.
