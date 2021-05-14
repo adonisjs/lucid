@@ -24,7 +24,8 @@ import { BaseQueryBuilder } from '../Base/QueryBuilder'
  */
 export class ManyToManyQueryBuilder
   extends BaseQueryBuilder
-  implements ManyToManyQueryBuilderContract<LucidModel, LucidModel> {
+  implements ManyToManyQueryBuilderContract<LucidModel, LucidModel>
+{
   private pivotQuery = false
   private relatedTable = this.relation.relatedModel().table
   private pivotHelpers = new PivotHelpers(this, true)

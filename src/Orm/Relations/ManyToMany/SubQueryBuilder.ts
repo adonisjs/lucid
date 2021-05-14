@@ -21,7 +21,8 @@ import { BaseSubQueryBuilder } from '../Base/SubQueryBuilder'
  */
 export class ManyToManySubQueryBuilder
   extends BaseSubQueryBuilder
-  implements ManyToManySubQueryBuilderContract<LucidModel> {
+  implements ManyToManySubQueryBuilderContract<LucidModel>
+{
   /**
    * Pivot helpers provides the implementation for pivot table constraints
    * and clauses

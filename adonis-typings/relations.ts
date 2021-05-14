@@ -45,11 +45,10 @@ declare module '@ioc:Adonis/Lucid/Relations' {
    * Returns relationship model instance or array of instances based
    * upon the relationship type
    */
-  export type GetRelationModelInstance<
-    Relation extends ModelRelations
-  > = Relation['__opaque_type'] extends 'hasOne' | 'belongsTo'
-    ? Relation['instance']
-    : Relation['instance'][]
+  export type GetRelationModelInstance<Relation extends ModelRelations> =
+    Relation['__opaque_type'] extends 'hasOne' | 'belongsTo'
+      ? Relation['instance']
+      : Relation['instance'][]
 
   /**
    * ------------------------------------------------------
@@ -159,17 +158,15 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   /**
    * Opaque type for has one relationship
    */
-  export type HasOne<
-    RelatedModel extends LucidModel,
-    ParentModel extends LucidModel = LucidModel
-  > = InstanceType<RelatedModel> & {
-    readonly __opaque_type: 'hasOne'
-    model: RelatedModel
-    instance: InstanceType<RelatedModel>
-    client: HasOneClientContract<HasOneRelationContract<ParentModel, RelatedModel>, RelatedModel>
-    builder: RelationQueryBuilderContract<RelatedModel, any>
-    subQuery: RelationSubQueryBuilderContract<RelatedModel>
-  }
+  export type HasOne<RelatedModel extends LucidModel, ParentModel extends LucidModel = LucidModel> =
+    InstanceType<RelatedModel> & {
+      readonly __opaque_type: 'hasOne'
+      model: RelatedModel
+      instance: InstanceType<RelatedModel>
+      client: HasOneClientContract<HasOneRelationContract<ParentModel, RelatedModel>, RelatedModel>
+      builder: RelationQueryBuilderContract<RelatedModel, any>
+      subQuery: RelationSubQueryBuilderContract<RelatedModel>
+    }
 
   /**
    * Opaque type for has many relationship

@@ -21,7 +21,8 @@ import { HasManyThroughSubQueryBuilder } from './SubQueryBuilder'
  * relationship
  */
 export class HasManyThroughClient
-  implements HasManyThroughClientContract<HasManyThrough, LucidModel> {
+  implements HasManyThroughClientContract<HasManyThrough, LucidModel>
+{
   constructor(
     public relation: HasManyThrough,
     private parent: LucidRow,

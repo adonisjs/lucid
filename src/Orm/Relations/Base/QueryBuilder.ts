@@ -20,7 +20,8 @@ import { ModelQueryBuilder } from '../../QueryBuilder'
  */
 export abstract class BaseQueryBuilder
   extends ModelQueryBuilder
-  implements RelationQueryBuilderContract<LucidModel, LucidRow> {
+  implements RelationQueryBuilderContract<LucidModel, LucidRow>
+{
   /**
    * Eager constraints
    */

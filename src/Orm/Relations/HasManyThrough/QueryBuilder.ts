@@ -22,7 +22,8 @@ import { BaseQueryBuilder } from '../Base/QueryBuilder'
  */
 export class HasManyThroughQueryBuilder
   extends BaseQueryBuilder
-  implements HasManyThroughQueryBuilderContract<LucidModel, LucidModel> {
+  implements HasManyThroughQueryBuilderContract<LucidModel, LucidModel>
+{
   protected cherryPickingKeys: boolean = false
   protected appliedConstraints: boolean = false
 

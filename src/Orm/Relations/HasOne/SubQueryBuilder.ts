@@ -17,7 +17,8 @@ import { BaseSubQueryBuilder } from '../Base/SubQueryBuilder'
 
 export class HasOneSubQueryBuilder
   extends BaseSubQueryBuilder
-  implements RelationSubQueryBuilderContract<LucidModel> {
+  implements RelationSubQueryBuilderContract<LucidModel>
+{
   protected appliedConstraints: boolean = false
 
   constructor(builder: Knex.QueryBuilder, client: QueryClientContract, private relation: HasOne) {

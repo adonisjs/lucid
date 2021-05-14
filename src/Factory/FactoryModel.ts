@@ -255,6 +255,6 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
       },
     }
 
-    return (builder as unknown) as FactoryBuilderQueryContract<FactoryModelContract<Model>>
+    return builder as unknown as FactoryBuilderQueryContract<FactoryModelContract<Model>>
   }
 }

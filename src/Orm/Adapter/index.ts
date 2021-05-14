@@ -49,7 +49,7 @@ export class Adapter implements AdapterContract {
    * Returns query client for a model instance by inspecting it's options
    */
   public modelClient(instance: LucidRow): any {
-    const modelConstructor = (instance.constructor as unknown) as LucidModel
+    const modelConstructor = instance.constructor as unknown as LucidModel
     return instance.$trx
       ? instance.$trx
       : this.modelConstructorClient(modelConstructor, instance.$options)

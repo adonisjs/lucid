@@ -350,10 +350,10 @@ export function getQueryClient(
  * Returns query builder instance for a given connection
  */
 export function getQueryBuilder(client: QueryClientContract) {
-  return (new DatabaseQueryBuilder(
+  return new DatabaseQueryBuilder(
     client.getWriteClient().queryBuilder(),
     client
-  ) as unknown) as DatabaseQueryBuilderContract
+  ) as unknown as DatabaseQueryBuilderContract
 }
 
 /**
@@ -361,20 +361,20 @@ export function getQueryBuilder(client: QueryClientContract) {
  */
 export function getRawQueryBuilder(client: QueryClientContract, sql: string, bindings?: any[]) {
   const writeClient = client.getWriteClient()
-  return (new RawQueryBuilder(
+  return new RawQueryBuilder(
     bindings ? writeClient.raw(sql, bindings) : writeClient.raw(sql),
     client
-  ) as unknown) as RawQueryBuilderContract
+  ) as unknown as RawQueryBuilderContract
 }
 
 /**
  * Returns query builder instance for a given connection
  */
 export function getInsertBuilder(client: QueryClientContract) {
-  return (new InsertQueryBuilder(
+  return new InsertQueryBuilder(
     client.getWriteClient().queryBuilder(),
     client
-  ) as unknown) as InsertQueryBuilderContract
+  ) as unknown as InsertQueryBuilderContract
 }
 
 /**
@@ -410,14 +410,14 @@ export function ormAdapter(db: DatabaseContract) {
 export function getBaseModel(adapter: AdapterContract, application: ApplicationContract) {
   BaseModel.$adapter = adapter
   BaseModel.$container = application.container
-  return (BaseModel as unknown) as LucidModel
+  return BaseModel as unknown as LucidModel
 }
 
 /**
  * Returns the factory model
  */
 export function getFactoryModel() {
-  return (FactoryModel as unknown) as {
+  return FactoryModel as unknown as {
     new <Model extends LucidModel>(
       model: Model,
       callback: DefineCallback<Model>,
@@ -534,7 +534,7 @@ export function mapToObj<T extends any>(collection: Map<any, any>): T {
  * Returns the base schema class typed to it's interface
  */
 export function getBaseSchema() {
-  return (Schema as unknown) as SchemaConstructorContract
+  return Schema as unknown as SchemaConstructorContract
 }
 
 /**
@@ -545,7 +545,7 @@ export function getMigrator(
   app: ApplicationContract,
   config: MigratorOptions
 ) {
-  return (new Migrator(db, app, config) as unknown) as MigratorContract
+  return new Migrator(db, app, config) as unknown as MigratorContract
 }
 
 /**

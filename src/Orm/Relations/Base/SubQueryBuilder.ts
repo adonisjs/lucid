@@ -20,7 +20,8 @@ import { ModelQueryBuilder } from '../../QueryBuilder'
  */
 export abstract class BaseSubQueryBuilder
   extends ModelQueryBuilder
-  implements RelationSubQueryBuilderContract<LucidModel> {
+  implements RelationSubQueryBuilderContract<LucidModel>
+{
   /**
    * The counter for the self join alias. Usually will be set by
    * the consumer

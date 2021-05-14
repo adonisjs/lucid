@@ -21,7 +21,8 @@ import { BaseSubQueryBuilder } from '../Base/SubQueryBuilder'
  */
 export class HasManyThroughSubQueryBuilder
   extends BaseSubQueryBuilder
-  implements RelationSubQueryBuilderContract<LucidModel> {
+  implements RelationSubQueryBuilderContract<LucidModel>
+{
   /**
    * A boolean to track if query constraints for the relationship
    * has been applied or not

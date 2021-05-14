@@ -17,7 +17,8 @@ import { BaseSubQueryBuilder } from '../Base/SubQueryBuilder'
 
 export class BelongsToSubQueryBuilder
   extends BaseSubQueryBuilder
-  implements RelationSubQueryBuilderContract<LucidModel> {
+  implements RelationSubQueryBuilderContract<LucidModel>
+{
   protected appliedConstraints: boolean = false
 
   constructor(
