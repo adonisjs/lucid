@@ -9,10 +9,10 @@
 
 /// <reference path="../adonis-typings/index.ts" />
 
-import knex, { Knex } from 'knex'
 import dotenv from 'dotenv'
 import { join } from 'path'
 import { Chance } from 'chance'
+import knex, { Knex } from 'knex'
 import { Filesystem } from '@poppinss/dev-utils'
 import { Application } from '@adonisjs/core/build/standalone'
 

@@ -26,7 +26,7 @@ test.group('Validator | exists', (group) => {
     app = await setupApplication()
     db = getDb(app)
     await setup()
-    extendValidator(validator, db)
+    extendValidator(validator, db, app.logger)
   })
 
   group.after(async () => {
@@ -529,6 +529,29 @@ test.group('Validator | exists', (group) => {
       data: { username: 'VIRK' },
     })
   })
+
+  test('do not report SQL errors to the validator', async (assert) => {
+    assert.plan(1)
+
+    try {
+      await validator.validate({
+        schema: schema.create({
+          username: schema.string({}, [
+            rules.exists({
+              table: 'invalid_users',
+              caseInsensitive: true,
+              column: 'username',
+            }),
+          ]),
+        }),
+        data: { username: 'VIRK' },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        username: ['exists validation failure'],
+      })
+    }
+  })
 })
 
 test.group('Validator | unique', (group) => {
@@ -536,7 +559,7 @@ test.group('Validator | unique', (group) => {
     app = await setupApplication()
     db = getDb(app)
     await setup()
-    extendValidator(validator, db)
+    extendValidator(validator, db, app.logger)
   })
 
   group.after(async () => {
@@ -1013,6 +1036,29 @@ test.group('Validator | unique', (group) => {
           username: schema.string({}, [
             rules.unique({
               table: 'users',
+              column: 'username',
+              caseInsensitive: true,
+            }),
+          ]),
+        }),
+        data: { username: 'VIRK' },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        username: ['unique validation failure'],
+      })
+    }
+  })
+
+  test('do not report SQL errors to the validator', async (assert) => {
+    assert.plan(1)
+
+    try {
+      await validator.validate({
+        schema: schema.create({
+          username: schema.string({}, [
+            rules.unique({
+              table: 'invalid_users',
               column: 'username',
               caseInsensitive: true,
             }),

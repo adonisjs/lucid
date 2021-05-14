@@ -8,6 +8,7 @@
  */
 
 import { Exception } from '@poppinss/utils'
+import { LoggerContract } from '@ioc:Adonis/Core/Logger'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import { DatabaseQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
 import {
@@ -203,7 +204,11 @@ class DbRowCheck {
 /**
  * Extends the validator by adding `unique` and `exists`
  */
-export function extendValidator(validator: typeof validatorStatic, database: DatabaseContract) {
+export function extendValidator(
+  validator: typeof validatorStatic,
+  database: DatabaseContract,
+  logger: LoggerContract
+) {
   /**
    * Exists rule to ensure the value exists in the database
    */
@@ -215,10 +220,11 @@ export function extendValidator(validator: typeof validatorStatic, database: Dat
       try {
         await existsChecker.validate(value, compiledOptions, options)
       } catch (error) {
+        logger.fatal({ err: error }, '"exists" validation rule failed')
         options.errorReporter.report(
           options.pointer,
           'exists',
-          error.message,
+          'exists validation failure',
           options.arrayExpressionPointer
         )
       }
@@ -242,10 +248,11 @@ export function extendValidator(validator: typeof validatorStatic, database: Dat
       try {
         await uniqueChecker.validate(value, compiledOptions, options)
       } catch (error) {
+        logger.fatal({ err: error }, '"unique" validation rule failed')
         options.errorReporter.report(
           options.pointer,
           'unique',
-          error.message,
+          'unique validation failure',
           options.arrayExpressionPointer
         )
       }
