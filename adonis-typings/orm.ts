@@ -38,6 +38,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     HasManyThrough,
   } from '@ioc:Adonis/Lucid/Relations'
   export {
+    LucidModel,
+    LucidRow,
     NamingStrategyContract,
     ModelQueryBuilderContract,
     ModelPaginatorContract,
