@@ -411,7 +411,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * instance
    */
   public apply(callback: (scopes: any) => void): this {
-    return this.withSchema(callback)
+    return this.withScopes(callback)
   }
 
   /**
