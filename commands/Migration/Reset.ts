@@ -16,8 +16,8 @@ import MigrationsBase from './Base'
  * in `down` direction.
  */
 export default class Migrate extends MigrationsBase {
-  public static commandName = 'migration:rollback'
-  public static description = 'Rollback migrations to a given batch number'
+  public static commandName = 'migration:reset'
+  public static description = 'Reset migrations to initial state'
 
   /**
    * Custom connection for running migrations.
@@ -36,14 +36,6 @@ export default class Migrate extends MigrationsBase {
    */
   @flags.boolean({ description: 'Print SQL queries, instead of running the migrations' })
   public dryRun: boolean
-
-  /**
-   * Define custom batch, instead of rolling back to the latest batch
-   */
-  @flags.number({
-    description: 'Define custom batch number for rollback. Use 0 to rollback to initial state',
-  })
-  public batch: number
 
   /**
    * This command loads the application, since we need the runtime
@@ -88,7 +80,7 @@ export default class Migrate extends MigrationsBase {
     const { Migrator } = await import('../../src/Migrator')
     const migrator = new Migrator(db, this.application, {
       direction: 'down',
-      batch: this.batch,
+      batch: 0,
       connectionName: this.connection,
       dryRun: this.dryRun,
     })

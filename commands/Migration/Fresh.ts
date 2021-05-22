@@ -8,16 +8,19 @@
  */
 
 import { flags } from '@adonisjs/core/build/standalone'
-
+import { promisify } from 'util'
+import { execFile as childProcessExec } from 'child_process'
 import MigrationsBase from './Base'
+
+const exec = promisify(childProcessExec)
 
 /**
  * The command is meant to migrate the database by executing migrations
- * in `down` direction.
+ * in `down` and `up` directions.
  */
 export default class Migrate extends MigrationsBase {
-  public static commandName = 'migration:rollback'
-  public static description = 'Rollback migrations to a given batch number'
+  public static commandName = 'migration:fresh'
+  public static description = 'Reset migrations to initial state and run all migrations again'
 
   /**
    * Custom connection for running migrations.
@@ -38,19 +41,43 @@ export default class Migrate extends MigrationsBase {
   public dryRun: boolean
 
   /**
-   * Define custom batch, instead of rolling back to the latest batch
-   */
-  @flags.number({
-    description: 'Define custom batch number for rollback. Use 0 to rollback to initial state',
-  })
-  public batch: number
-
-  /**
    * This command loads the application, since we need the runtime
    * to find the migration directories for a given connection
    */
   public static settings = {
     loadApp: true,
+  }
+
+  /**
+   * Executes a given command
+   */
+  private async execCommand(command: string, commandArgs: string[]) {
+    const { stdout, stderr } = await exec(command, commandArgs, {
+      env: {
+        ...process.env,
+        FORCE_COLOR: 'true',
+      },
+    })
+
+    if (stdout) {
+      console.log(stdout.trim())
+    }
+
+    if (stderr) {
+      console.log(stderr.trim())
+      throw new Error(`Command "${command}" failed`)
+    }
+  }
+
+  /**
+   * Returns a arguments array with current values
+   */
+  private argsWithCurrentValues(): string[] {
+    let args: string[] = []
+    this.connection && args.push(`--connection=${this.connection}`)
+    this.force && args.push(`--force`)
+    this.dryRun && args.push(`--dry-run`)
+    return args
   }
 
   /**
@@ -83,16 +110,10 @@ export default class Migrate extends MigrationsBase {
     }
 
     /**
-     * New down migrator
+     * Execute migration:reset and migration:run commands
+     * with current arguments
      */
-    const { Migrator } = await import('../../src/Migrator')
-    const migrator = new Migrator(db, this.application, {
-      direction: 'down',
-      batch: this.batch,
-      connectionName: this.connection,
-      dryRun: this.dryRun,
-    })
-
-    await this.runMigrations(migrator, this.connection)
+    await this.execCommand('node', ['ace', 'migration:reset', ...this.argsWithCurrentValues()])
+    await this.execCommand('node', ['ace', 'migration:run', ...this.argsWithCurrentValues()])
   }
 }
