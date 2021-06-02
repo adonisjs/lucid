@@ -35,6 +35,17 @@ declare module '@ioc:Adonis/Lucid/Database' {
   export { SimplePaginatorContract, SimplePaginatorMetaKeys }
 
   /**
+   * Same as knex. Need to redefine, as knex doesn't export this
+   * type
+   */
+  export type IsolationLevels =
+    | 'read uncommitted'
+    | 'read committed'
+    | 'snapshot'
+    | 'repeatable read'
+    | 'serializable'
+
+  /**
    * Migration node returned by the migration source
    * implementation
    */
@@ -64,8 +75,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Shape of the transaction function to create a new transaction
    */
   export interface TransactionFn {
-    <T extends any>(callback: (trx: TransactionClientContract) => Promise<T>): Promise<T>
-    (): Promise<TransactionClientContract>
+    <T extends any>(
+      callback: (trx: TransactionClientContract) => Promise<T>,
+      options?: { isolationLevel?: IsolationLevels }
+    ): Promise<T>
+    (options?: { isolationLevel?: IsolationLevels }): Promise<TransactionClientContract>
   }
 
   /**

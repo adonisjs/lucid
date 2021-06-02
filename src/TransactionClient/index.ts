@@ -13,7 +13,11 @@ import { Knex } from 'knex'
 import { EventEmitter } from 'events'
 import { EmitterContract } from '@ioc:Adonis/Core/Event'
 import { ProfilerRowContract } from '@ioc:Adonis/Core/Profiler'
-import { TransactionClientContract, DialectContract } from '@ioc:Adonis/Lucid/Database'
+import {
+  IsolationLevels,
+  DialectContract,
+  TransactionClientContract,
+} from '@ioc:Adonis/Lucid/Database'
 
 import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { RawBuilder } from '../Database/StaticBuilder/Raw'
@@ -180,9 +184,12 @@ export class TransactionClient extends EventEmitter implements TransactionClient
    * Returns another instance of transaction with save point
    */
   public async transaction(
-    callback?: (trx: TransactionClientContract) => Promise<any>
+    callback?:
+      | { isolationLevel?: IsolationLevels }
+      | ((trx: TransactionClientContract) => Promise<any>),
+    options?: { isolationLevel?: IsolationLevels }
   ): Promise<any> {
-    const trx = await this.knexClient.transaction()
+    const trx = await this.knexClient.transaction(options)
     const transaction = new TransactionClient(
       trx,
       this.dialect,

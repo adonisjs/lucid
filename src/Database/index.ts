@@ -20,6 +20,8 @@ import {
   DatabaseClientOptions,
   TransactionClientContract,
   ConnectionManagerContract,
+  IsolationLevels,
+  QueryClientContract,
 } from '@ioc:Adonis/Lucid/Database'
 
 import { QueryClient } from '../QueryClient'
@@ -123,7 +125,7 @@ export class Database implements DatabaseContract {
   public connection(
     connection: string = this.primaryConnectionName,
     options?: DatabaseClientOptions
-  ) {
+  ): QueryClientContract | TransactionClientContract {
     options = options || {}
 
     /**
@@ -256,8 +258,16 @@ export class Database implements DatabaseContract {
    * Returns a transaction instance on the default
    * connection
    */
-  public transaction(callback?: (trx: TransactionClientContract) => Promise<any>) {
-    return this.connection().transaction(callback)
+  public transaction(
+    callback?:
+      | { isolationLevel?: IsolationLevels }
+      | ((trx: TransactionClientContract) => Promise<any>),
+    options?: { isolationLevel?: IsolationLevels }
+  ) {
+    const client = this.connection()
+    return typeof callback === 'function'
+      ? client.transaction(callback, options)
+      : client.transaction(callback)
   }
 
   /**

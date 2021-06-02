@@ -15,6 +15,7 @@ import { EmitterContract } from '@ioc:Adonis/Core/Event'
 import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 import {
+  IsolationLevels,
   DialectContract,
   ConnectionContract,
   QueryClientContract,
@@ -130,9 +131,12 @@ export class QueryClient implements QueryClientContract {
    * query and hold a single connection for all queries.
    */
   public async transaction(
-    callback?: (trx: TransactionClientContract) => Promise<any>
+    callback?:
+      | { isolationLevel?: IsolationLevels }
+      | ((trx: TransactionClientContract) => Promise<any>),
+    options?: { isolationLevel?: IsolationLevels }
   ): Promise<any> {
-    const trx = await this.getWriteClient().transaction()
+    const trx = await this.getWriteClient().transaction(options)
     const transaction = new TransactionClient(
       trx,
       this.dialect,
