@@ -16,6 +16,7 @@ import { FactoryManager } from '../src/Factory'
 import { BaseModel } from '../src/Orm/BaseModel'
 import { ModelPaginator } from '../src/Orm/Paginator'
 import * as decorators from '../src/Orm/Decorators'
+import { SnakeCaseNamingStrategy } from '../src/Orm/NamingStrategies/SnakeCase'
 
 import { setupApplication, fs } from '../test-helpers'
 
@@ -39,6 +40,7 @@ test.group('Database Provider', (group) => {
     assert.deepEqual(app.container.use('Adonis/Lucid/Orm'), {
       BaseModel,
       ModelPaginator,
+      SnakeCaseNamingStrategy,
       scope,
       ...decorators,
     })
