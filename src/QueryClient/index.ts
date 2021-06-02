@@ -12,7 +12,6 @@
 import { Knex } from 'knex'
 import { Exception } from '@poppinss/utils'
 import { EmitterContract } from '@ioc:Adonis/Core/Event'
-import { resolveClientNameWithAliases } from 'knex/lib/util/helpers'
 import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
 
 import {
@@ -44,9 +43,7 @@ export class QueryClient implements QueryClientContract {
   /**
    * The dialect in use
    */
-  public dialect: DialectContract = new dialects[
-    resolveClientNameWithAliases(this.connection.config.client)
-  ](this)
+  public dialect: DialectContract = new dialects[this.connection.dialectName](this)
 
   /**
    * The profiler to be used for profiling queries

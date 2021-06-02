@@ -15,6 +15,7 @@ import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
 import { patchKnex } from 'knex-dynamic-connection'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
+import { resolveClientNameWithAliases } from 'knex/lib/util/helpers'
 import { ConnectionConfig, ConnectionContract, ReportNode } from '@ioc:Adonis/Lucid/Database'
 
 import { Logger } from './Logger'
@@ -36,6 +37,13 @@ export class Connection extends EventEmitter implements ConnectionContract {
    * it is a reference to the `client`.
    */
   public readClient?: Knex
+
+  /**
+   * Connection dialect name
+   */
+  public dialectName: ConnectionContract['dialectName'] = resolveClientNameWithAliases(
+    this.config.client
+  )
 
   /**
    * A boolean to know if connection operates on read/write
@@ -269,7 +277,11 @@ export class Connection extends EventEmitter implements ConnectionContract {
       const client = knex(configCopy)
 
       try {
-        await client.raw('SELECT 1 + 1 AS result')
+        if (this.dialectName === 'oracledb') {
+          await client.raw('SELECT 1 + 1 AS result FROM dual')
+        } else {
+          await client.raw('SELECT 1 + 1 AS result')
+        }
       } catch (err) {
         error = err
       }
@@ -296,7 +308,11 @@ export class Connection extends EventEmitter implements ConnectionContract {
    */
   private async checkWriteHost() {
     try {
-      await this.client!.raw('SELECT 1 + 1 AS result')
+      if (this.dialectName === 'oracledb') {
+        await this.client!.raw('SELECT 1 + 1 AS result FROM dual')
+      } else {
+        await this.client!.raw('SELECT 1 + 1 AS result')
+      }
     } catch (error) {
       return error
     }

@@ -600,6 +600,15 @@ declare module '@ioc:Adonis/Lucid/Database' {
     client?: Knex
     readClient?: Knex
 
+    readonly dialectName:
+      | 'mssql'
+      | 'mysql'
+      | 'mysql2'
+      | 'oracledb'
+      | 'postgres'
+      | 'redshift'
+      | 'sqlite3'
+
     /**
      * Property to find if explicit read/write is enabled
      */
