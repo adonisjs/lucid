@@ -18,6 +18,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     DateColumnDecorator,
     ModelPaginatorContract,
     DateTimeColumnDecorator,
+    NamingStrategyContract,
   } from '@ioc:Adonis/Lucid/Model'
 
   import { SimplePaginatorMetaKeys } from '@ioc:Adonis/Lucid/Database'
@@ -45,6 +46,9 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     ModelPaginatorContract,
   } from '@ioc:Adonis/Lucid/Model'
 
+  export const SnakeCaseNamingStrategy: {
+    new (): NamingStrategyContract
+  }
   export const scope: ScopeFn
   export const BaseModel: LucidModel
 

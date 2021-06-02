@@ -41,7 +41,7 @@ export default class DatabaseServiceProvider {
       const decorators = require('../src/Orm/Decorators')
       const { BaseModel } = require('../src/Orm/BaseModel')
       const { ModelPaginator } = require('../src/Orm/Paginator')
-      const SnakeCaseNamingStrategy = require('../src/Orm/NamingStrategies/SnakeCase')
+      const { SnakeCaseNamingStrategy } = require('../src/Orm/NamingStrategies/SnakeCase')
 
       /**
        * Attaching adapter to the base model. Each model is allowed to define
