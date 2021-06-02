@@ -74,9 +74,7 @@
     "@types/pluralize": "0.0.29",
     "@types/qs": "^6.9.6",
     "chance": "^1.1.7",
-    "commitizen": "^4.2.4",
     "copyfiles": "^2.4.1",
-    "cz-conventional-changelog": "^3.3.0",
     "del-cli": "^3.0.1",
     "dotenv": "^10.0.0",
     "eslint": "^7.27.0",
@@ -109,11 +107,6 @@
       ".ts"
     ]
   },
-  "husky": {
-    "hooks": {
-      "commit-msg": "node ./node_modules/@adonisjs/mrm-preset/validateCommit/conventional/validate.js"
-    }
-  },
   "config": {
     "commitizen": {
       "path": "cz-conventional-changelog"
@@ -141,7 +134,6 @@
   },
   "np": {
     "contents": ".",
-    "anyBranch": true,
-    "yolo": true
+    "anyBranch": false
   }
 }
