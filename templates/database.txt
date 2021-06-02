@@ -147,7 +147,7 @@ const databaseConfig: DatabaseConfig = {
     | Configuration for MSSQL database. Make sure to install the driver
     | from npm when using this connection
     |
-    | npm i mssql
+    | npm i tedious
     |
     */
     mssql: {

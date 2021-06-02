@@ -325,6 +325,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
     client: 'sqlite' | 'sqlite3'
     connection: {
       filename: string
+      flags?: string[]
+      debug?: boolean
       mode?: any
     }
     replicas?: never
@@ -411,7 +413,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
 
   /**
    * Please install `oracledb` driver and not the `oracle`. The later is
-   * depreciated. Config is only allowed for `oracledb`.
+   * deprecated. Config is only allowed for `oracledb`.
    *
    * Please refer to the driver configuration docs to learn more about the
    * config values.
@@ -457,10 +459,24 @@ declare module '@ioc:Adonis/Lucid/Database' {
     connectionTimeout?: number
     requestTimeout?: number
     parseJSON?: boolean
-    // https://github.com/knex/knex/blob/master/lib/dialects/mssql/index.js#L97
     options?: {
       encrypt?: boolean
+      useUTC?: boolean
+      tdsVersion?: string
+      appName?: string
+      abortTransactionOnError?: boolean
+      trustedConnection?: boolean
       enableArithAbort?: boolean
+      isolationLevel?:
+        | 'READ_UNCOMMITTED'
+        | 'READ_COMMITTED'
+        | 'REPEATABLE_READ'
+        | 'SERIALIZABLE'
+        | 'SNAPSHOT'
+      maxRetriesOnTransientErrors?: number
+      multiSubnetFailover?: boolean
+      packetSize?: number
+      trustServerCertificate?: boolean
     }
   }
   export type MssqlConfig = SharedConfigNode & {
