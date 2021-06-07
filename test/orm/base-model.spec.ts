@@ -12,7 +12,7 @@
 import test from 'japa'
 import { DateTime } from 'luxon'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import type { HasOne, HasMany, BelongsTo } from '@ioc:Adonis/Lucid/Relations'
+import type { HasOne, HasMany, BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 
 import { ModelQueryBuilder } from '../../src/Orm/QueryBuilder'
 

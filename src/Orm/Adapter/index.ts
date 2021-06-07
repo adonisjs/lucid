@@ -11,7 +11,7 @@
 
 import { Exception } from '@poppinss/utils'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
-import { LucidRow, LucidModel, AdapterContract, ModelAdapterOptions } from '@ioc:Adonis/Lucid/Model'
+import { LucidRow, LucidModel, AdapterContract, ModelAdapterOptions } from '@ioc:Adonis/Lucid/Orm'
 
 /**
  * Adapter exposes the API to make database queries and constructor

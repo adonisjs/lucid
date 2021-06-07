@@ -10,7 +10,7 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import { Knex } from 'knex'
-import { ReferenceBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { ReferenceBuilderContract } from '@ioc:Adonis/Lucid/Database'
 
 /**
  * Reference builder to create SQL reference values

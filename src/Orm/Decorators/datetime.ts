@@ -9,7 +9,7 @@
 
 import { DateTime } from 'luxon'
 import { Exception } from '@poppinss/utils'
-import { LucidRow, LucidModel, DateTimeColumnDecorator } from '@ioc:Adonis/Lucid/Model'
+import { LucidRow, LucidModel, DateTimeColumnDecorator } from '@ioc:Adonis/Lucid/Orm'
 
 /**
  * The method to prepare the datetime column before persisting it's

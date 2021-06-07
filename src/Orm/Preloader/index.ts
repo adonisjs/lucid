@@ -8,13 +8,15 @@
  */
 
 import { Exception } from '@poppinss/utils'
-import { ModelObject, LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model'
 
 import {
+  LucidRow,
+  LucidModel,
+  ModelObject,
   PreloaderContract,
   RelationshipsContract,
   RelationQueryBuilderContract,
-} from '@ioc:Adonis/Lucid/Relations'
+} from '@ioc:Adonis/Lucid/Orm'
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 

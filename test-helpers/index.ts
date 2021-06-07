@@ -21,18 +21,15 @@ import {
   DatabaseContract,
   ConnectionContract,
   QueryClientContract,
-} from '@ioc:Adonis/Lucid/Database'
-
-import {
   RawQueryBuilderContract,
   InsertQueryBuilderContract,
   DatabaseQueryBuilderContract,
-} from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+} from '@ioc:Adonis/Lucid/Database'
 
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
 import { MigratorContract, MigratorOptions } from '@ioc:Adonis/Lucid/Migrator'
-import { LucidRow, LucidModel, AdapterContract } from '@ioc:Adonis/Lucid/Model'
+import { LucidRow, LucidModel, AdapterContract } from '@ioc:Adonis/Lucid/Orm'
 
 import {
   DefineCallback,

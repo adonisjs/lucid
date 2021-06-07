@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
+declare module '@ioc:Adonis/Lucid/Database' {
   import { Knex } from 'knex'
   import {
     DialectContract,

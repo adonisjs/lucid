@@ -8,10 +8,8 @@
  */
 
 import { stringify } from 'qs'
-import {
-  SimplePaginatorContract,
-  SimplePaginatorMetaKeys,
-} from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { SimplePaginatorContract, SimplePaginatorMetaKeys } from '@ioc:Adonis/Lucid/Database'
+
 import { SnakeCaseNamingStrategy } from '../../Orm/NamingStrategies/SnakeCase'
 
 /**

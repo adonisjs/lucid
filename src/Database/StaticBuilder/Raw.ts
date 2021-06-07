@@ -10,7 +10,7 @@
 /// <reference path="../../../adonis-typings/index.ts" />
 
 import { Knex } from 'knex'
-import { RawBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { RawBuilderContract } from '@ioc:Adonis/Lucid/Database'
 
 /**
  * Exposes the API to construct raw queries. If you want to execute

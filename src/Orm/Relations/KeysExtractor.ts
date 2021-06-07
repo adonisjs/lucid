@@ -8,7 +8,7 @@
  */
 
 import { Exception } from '@poppinss/utils'
-import { LucidModel } from '@ioc:Adonis/Lucid/Model'
+import { LucidModel } from '@ioc:Adonis/Lucid/Orm'
 
 /**
  * Utility to consistently extract relationship keys from the model

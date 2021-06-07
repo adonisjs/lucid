@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-declare module '@ioc:Adonis/Lucid/Model' {
+declare module '@ioc:Adonis/Lucid/Orm' {
   import { DateTime } from 'luxon'
   import { Hooks } from '@poppinss/hooks'
   import { ProfilerContract, ProfilerRowContract } from '@ioc:Adonis/Core/Profiler'
@@ -16,33 +16,14 @@ declare module '@ioc:Adonis/Lucid/Model' {
     Counter,
     OneOrMany,
     Aggregate,
+    DialectContract,
     ChainableContract,
+    QueryClientContract,
     SimplePaginatorMetaKeys,
     SimplePaginatorContract,
-    ExcutableQueryBuilderContract,
-  } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-
-  import {
-    DialectContract,
-    QueryClientContract,
     TransactionClientContract,
+    ExcutableQueryBuilderContract,
   } from '@ioc:Adonis/Lucid/Database'
-
-  import {
-    Has,
-    Preload,
-    WhereHas,
-    WithCount,
-    WithAggregate,
-    ModelRelations,
-    RelationOptions,
-    PreloaderContract,
-    ModelRelationTypes,
-    RelationshipsContract,
-    ExtractModelRelations,
-    ThroughRelationOptions,
-    ManyToManyRelationOptions,
-  } from '@ioc:Adonis/Lucid/Relations'
 
   /**
    * ------------------------------------------------------

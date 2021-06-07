@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import type { HasMany } from '@ioc:Adonis/Lucid/Relations'
+import type { HasMany } from '@ioc:Adonis/Lucid/Orm'
 import { FactoryManager } from '../../src/Factory/index'
 import { column, hasMany } from '../../src/Orm/Decorators'
 

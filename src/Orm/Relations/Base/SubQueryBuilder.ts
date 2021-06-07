@@ -8,10 +8,12 @@
  */
 
 import { Knex } from 'knex'
-import { LucidModel } from '@ioc:Adonis/Lucid/Model'
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-import { RelationshipsContract, RelationSubQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
+import { QueryClientContract, DBQueryCallback } from '@ioc:Adonis/Lucid/Database'
+import {
+  LucidModel,
+  RelationshipsContract,
+  RelationSubQueryBuilderContract,
+} from '@ioc:Adonis/Lucid/Orm'
 
 import { ModelQueryBuilder } from '../../QueryBuilder'
 

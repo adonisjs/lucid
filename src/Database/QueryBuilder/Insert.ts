@@ -12,8 +12,11 @@
 import { Knex } from 'knex'
 import { Macroable } from 'macroable'
 
-import { InsertQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+import {
+  QueryClientContract,
+  TransactionClientContract,
+  InsertQueryBuilderContract,
+} from '@ioc:Adonis/Lucid/Database'
 
 import { QueryRunner } from '../../QueryRunner'
 

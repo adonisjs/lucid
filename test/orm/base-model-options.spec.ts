@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import type { HasOne } from '@ioc:Adonis/Lucid/Relations'
+import type { HasOne } from '@ioc:Adonis/Lucid/Orm'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { column, hasOne } from '../../src/Orm/Decorators'

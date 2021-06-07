@@ -9,7 +9,7 @@
 
 import { Knex } from 'knex'
 import { Exception } from '@poppinss/utils'
-import { LucidRow } from '@ioc:Adonis/Lucid/Model'
+import { LucidRow } from '@ioc:Adonis/Lucid/Orm'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
 import { BelongsTo } from './index'

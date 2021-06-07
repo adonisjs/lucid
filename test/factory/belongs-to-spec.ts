@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
-import { BelongsTo } from '@ioc:Adonis/Lucid/Relations'
+import { BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { FactoryManager } from '../../src/Factory/index'

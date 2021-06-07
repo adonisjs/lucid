@@ -8,7 +8,7 @@
  */
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { LucidRow, LucidModel, ModelAdapterOptions } from '@ioc:Adonis/Lucid/Model'
+import { LucidRow, LucidModel, ModelAdapterOptions } from '@ioc:Adonis/Lucid/Orm'
 import {
   FactoryModelContract,
   FactoryContextContract,

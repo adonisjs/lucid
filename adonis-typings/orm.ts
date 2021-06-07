@@ -8,44 +8,7 @@
  */
 
 declare module '@ioc:Adonis/Lucid/Orm' {
-  import {
-    ScopeFn,
-    LucidRow,
-    LucidModel,
-    HooksDecorator,
-    ColumnDecorator,
-    ComputedDecorator,
-    DateColumnDecorator,
-    ModelPaginatorContract,
-    DateTimeColumnDecorator,
-    NamingStrategyContract,
-  } from '@ioc:Adonis/Lucid/Model'
-
   import { SimplePaginatorMetaKeys } from '@ioc:Adonis/Lucid/Database'
-
-  import {
-    HasOneDecorator,
-    HasManyDecorator,
-    BelongsToDecorator,
-    ManyToManyDecorator,
-    HasManyThroughDecorator,
-  } from '@ioc:Adonis/Lucid/Relations'
-
-  export {
-    HasOne,
-    HasMany,
-    BelongsTo,
-    ManyToMany,
-    HasManyThrough,
-  } from '@ioc:Adonis/Lucid/Relations'
-  export {
-    LucidModel,
-    LucidRow,
-    NamingStrategyContract,
-    ModelQueryBuilderContract,
-    ModelPaginatorContract,
-  } from '@ioc:Adonis/Lucid/Model'
-
   export const SnakeCaseNamingStrategy: {
     new (): NamingStrategyContract
   }

@@ -8,9 +8,8 @@
  */
 
 import { Knex } from 'knex'
-import { LucidModel } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ManyToManySubQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
+import { LucidModel, ManyToManySubQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm'
 
 import { ManyToMany } from './index'
 import { PivotHelpers } from './PivotHelpers'

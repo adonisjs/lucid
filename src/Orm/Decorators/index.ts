@@ -12,20 +12,17 @@
 import 'reflect-metadata'
 import {
   LucidModel,
+  HasOneDecorator,
+  HasManyDecorator,
   HooksDecorator,
   ColumnDecorator,
   ComputedDecorator,
-  DateColumnDecorator,
-  DateTimeColumnDecorator,
-} from '@ioc:Adonis/Lucid/Model'
-
-import {
-  HasOneDecorator,
-  HasManyDecorator,
   BelongsToDecorator,
+  DateColumnDecorator,
   ManyToManyDecorator,
+  DateTimeColumnDecorator,
   HasManyThroughDecorator,
-} from '@ioc:Adonis/Lucid/Relations'
+} from '@ioc:Adonis/Lucid/Orm'
 
 import { dateColumn } from './date'
 import { dateTimeColumn } from './datetime'

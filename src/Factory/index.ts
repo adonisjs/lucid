@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Orm'
 import { FactoryManagerContract, DefineCallback, StubIdCallback } from '@ioc:Adonis/Lucid/Factory'
 import { FactoryModel } from './FactoryModel'
 

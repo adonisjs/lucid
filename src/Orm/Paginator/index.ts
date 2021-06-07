@@ -9,7 +9,7 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import { ModelPaginatorContract, CherryPick } from '@ioc:Adonis/Lucid/Model'
+import { ModelPaginatorContract, CherryPick } from '@ioc:Adonis/Lucid/Orm'
 import { SimplePaginator } from '../../Database/Paginator/SimplePaginator'
 
 /**

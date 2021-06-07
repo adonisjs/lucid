@@ -9,9 +9,8 @@
 
 import { Knex } from 'knex'
 import { DateTime } from 'luxon'
-import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
+import { LucidModel, LucidRow, ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm'
 
 import { ManyToMany } from './index'
 import { PivotHelpers } from './PivotHelpers'

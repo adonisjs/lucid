@@ -8,10 +8,12 @@
  */
 
 import { DateTime } from 'luxon'
-import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-import { ManyToManyClientContract } from '@ioc:Adonis/Lucid/Relations'
-import { LucidModel, LucidRow, ModelObject } from '@ioc:Adonis/Lucid/Model'
-import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+import { LucidModel, LucidRow, ModelObject, ManyToManyClientContract } from '@ioc:Adonis/Lucid/Orm'
+import {
+  OneOrMany,
+  QueryClientContract,
+  TransactionClientContract,
+} from '@ioc:Adonis/Lucid/Database'
 
 import { ManyToMany } from './index'
 import { ManyToManyQueryBuilder } from './QueryBuilder'

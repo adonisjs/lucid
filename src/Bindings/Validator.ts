@@ -9,8 +9,7 @@
 
 import { Exception } from '@poppinss/utils'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
-import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
-import { DatabaseQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { DatabaseContract, DatabaseQueryBuilderContract } from '@ioc:Adonis/Lucid/Database'
 import {
   DbRowCheckOptions,
   ValidationRuntimeOptions,

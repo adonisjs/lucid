@@ -12,12 +12,16 @@
 import { join, extname } from 'path'
 import { Exception, esmRequire } from '@poppinss/utils'
 import { fsReadAll, resolveDir } from '@poppinss/utils/build/helpers'
-import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
-import { LucidRow, ModelObject, CherryPickFields } from '@ioc:Adonis/Lucid/Model'
 import {
+  LucidRow,
+  ModelObject,
+  CherryPickFields,
+  RelationshipsContract,
+} from '@ioc:Adonis/Lucid/Orm'
+import {
+  FileNode,
   QueryClientContract,
   TransactionClientContract,
-  FileNode,
 } from '@ioc:Adonis/Lucid/Database'
 
 /**

@@ -11,8 +11,11 @@
 
 import { Knex } from 'knex'
 
-import { RawQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+import {
+  QueryClientContract,
+  RawQueryBuilderContract,
+  TransactionClientContract,
+} from '@ioc:Adonis/Lucid/Database'
 import { QueryRunner } from '../../QueryRunner'
 
 /**

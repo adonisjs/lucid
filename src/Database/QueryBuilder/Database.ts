@@ -11,13 +11,13 @@
 
 import { Knex } from 'knex'
 import { Exception } from '@poppinss/utils'
-
-import { DialectContract } from '@ioc:Adonis/Lucid/Database'
-import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 import {
+  DialectContract,
   DBQueryCallback,
+  QueryClientContract,
+  TransactionClientContract,
   DatabaseQueryBuilderContract,
-} from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+} from '@ioc:Adonis/Lucid/Database'
 
 import { Chainable } from './Chainable'
 import { QueryRunner } from '../../QueryRunner'

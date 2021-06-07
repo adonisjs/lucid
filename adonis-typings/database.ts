@@ -17,22 +17,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
   import { EmitterContract } from '@ioc:Adonis/Core/Event'
   import { MacroableConstructorContract } from 'macroable'
   import { HealthReportEntry } from '@ioc:Adonis/Core/HealthCheck'
-  import { LucidModel, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model'
+  import { LucidModel, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm'
   import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
-
-  import {
-    FromTable,
-    RawQueryBindings,
-    RawBuilderContract,
-    RawQueryBuilderContract,
-    SimplePaginatorMetaKeys,
-    SimplePaginatorContract,
-    ReferenceBuilderContract,
-    InsertQueryBuilderContract,
-    DatabaseQueryBuilderContract,
-  } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-
-  export { SimplePaginatorContract, SimplePaginatorMetaKeys }
 
   /**
    * Same as knex. Need to redefine, as knex doesn't export this

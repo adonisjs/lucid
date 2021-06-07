@@ -9,7 +9,7 @@
 
 /// <reference path="../../../adonis-typings/index.ts" />
 
-import { LucidModel } from '@ioc:Adonis/Lucid/Model'
+import { LucidModel } from '@ioc:Adonis/Lucid/Orm'
 
 /**
  * A proxy trap to add support for custom getters and setters

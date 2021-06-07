@@ -13,22 +13,19 @@ import { Knex } from 'knex'
 import { Exception } from '@poppinss/utils'
 
 import {
+  LucidRow,
   LucidModel,
   ModelObject,
-  ModelAdapterOptions,
-  ModelQueryBuilderContract,
-  LucidRow,
-} from '@ioc:Adonis/Lucid/Model'
-
-import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-import {
   PreloaderContract,
+  ModelAdapterOptions,
   RelationshipsContract,
+  ModelQueryBuilderContract,
   RelationQueryBuilderContract,
-} from '@ioc:Adonis/Lucid/Relations'
+} from '@ioc:Adonis/Lucid/Orm'
 
 import {
   DialectContract,
+  DBQueryCallback,
   QueryClientContract,
   TransactionClientContract,
 } from '@ioc:Adonis/Lucid/Database'

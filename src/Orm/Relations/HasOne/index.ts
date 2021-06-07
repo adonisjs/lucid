@@ -7,15 +7,15 @@
  * file that was distributed with this source code.
  */
 
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-import { LucidRow, LucidModel, ModelObject } from '@ioc:Adonis/Lucid/Model'
-
+import { QueryClientContract, OneOrMany } from '@ioc:Adonis/Lucid/Database'
 import {
+  LucidRow,
+  LucidModel,
+  ModelObject,
   RelationOptions,
   HasOne as ModelHasOne,
   HasOneRelationContract,
-} from '@ioc:Adonis/Lucid/Relations'
+} from '@ioc:Adonis/Lucid/Orm'
 
 import { KeysExtractor } from '../KeysExtractor'
 import { HasOneQueryClient } from './QueryClient'

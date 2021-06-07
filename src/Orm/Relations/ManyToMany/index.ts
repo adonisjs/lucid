@@ -7,13 +7,14 @@
  * file that was distributed with this source code.
  */
 
-import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 import {
+  LucidRow,
+  LucidModel,
   ManyToManyRelationOptions,
   ManyToManyRelationContract,
   ManyToMany as ModelManyToMany,
-} from '@ioc:Adonis/Lucid/Relations'
+} from '@ioc:Adonis/Lucid/Orm'
 
 import { KeysExtractor } from '../KeysExtractor'
 import { ManyToManyQueryClient } from './QueryClient'

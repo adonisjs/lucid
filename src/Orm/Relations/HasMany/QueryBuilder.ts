@@ -8,9 +8,8 @@
  */
 
 import { Knex } from 'knex'
-import { LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model'
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { HasManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations'
+import { LucidRow, LucidModel, HasManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm'
 
 import { HasMany } from './index'
 import { getValue, unique } from '../../../utils'

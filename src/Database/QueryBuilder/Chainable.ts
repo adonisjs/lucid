@@ -12,7 +12,7 @@
 import { Knex } from 'knex'
 import { Macroable } from 'macroable'
 import { Exception } from '@poppinss/utils'
-import { ChainableContract, DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+import { ChainableContract, DBQueryCallback } from '@ioc:Adonis/Lucid/Database'
 
 import { isObject } from '../../utils'
 import { RawQueryBuilder } from './Raw'

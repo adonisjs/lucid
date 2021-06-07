@@ -9,15 +9,19 @@
 
 declare module '@ioc:Adonis/Lucid/Factory' {
   import faker from 'faker'
-  import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
-  import { TransactionClientContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-  import { ExtractModelRelations, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
+  import {
+    OneOrMany,
+    QueryClientContract,
+    TransactionClientContract,
+  } from '@ioc:Adonis/Lucid/Database'
   import {
     LucidRow,
     LucidModel,
     ModelAttributes,
     ModelAdapterOptions,
-  } from '@ioc:Adonis/Lucid/Model'
+    RelationshipsContract,
+    ExtractModelRelations,
+  } from '@ioc:Adonis/Lucid/Orm'
 
   /**
    * ------------------------------------------------------

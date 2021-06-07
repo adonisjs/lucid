@@ -8,8 +8,13 @@
  */
 
 import { Hooks } from '@poppinss/hooks'
-import { LucidRow, LucidModel, ModelAdapterOptions } from '@ioc:Adonis/Lucid/Model'
-import { ExtractModelRelations, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations'
+import {
+  LucidRow,
+  LucidModel,
+  ModelAdapterOptions,
+  ExtractModelRelations,
+  RelationshipsContract,
+} from '@ioc:Adonis/Lucid/Orm'
 
 import {
   EventsList,

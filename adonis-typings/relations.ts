@@ -7,18 +7,7 @@
  * file that was distributed with this source code.
  */
 
-declare module '@ioc:Adonis/Lucid/Relations' {
-  import {
-    LucidRow,
-    LucidModel,
-    ModelObject,
-    TypedDecorator,
-    ModelAttributes,
-    ModelQueryBuilderContract,
-  } from '@ioc:Adonis/Lucid/Model'
-
-  import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
-
+declare module '@ioc:Adonis/Lucid/Orm' {
   import {
     RawQuery,
     OneOrMany,
@@ -26,7 +15,9 @@ declare module '@ioc:Adonis/Lucid/Relations' {
     QueryCallback,
     ChainableContract,
     RawBuilderContract,
-  } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder'
+    QueryClientContract,
+    TransactionClientContract,
+  } from '@ioc:Adonis/Lucid/Database'
 
   /**
    * ------------------------------------------------------
@@ -158,15 +149,17 @@ declare module '@ioc:Adonis/Lucid/Relations' {
   /**
    * Opaque type for has one relationship
    */
-  export type HasOne<RelatedModel extends LucidModel, ParentModel extends LucidModel = LucidModel> =
-    InstanceType<RelatedModel> & {
-      readonly __opaque_type: 'hasOne'
-      model: RelatedModel
-      instance: InstanceType<RelatedModel>
-      client: HasOneClientContract<HasOneRelationContract<ParentModel, RelatedModel>, RelatedModel>
-      builder: RelationQueryBuilderContract<RelatedModel, any>
-      subQuery: RelationSubQueryBuilderContract<RelatedModel>
-    }
+  export type HasOne<
+    RelatedModel extends LucidModel,
+    ParentModel extends LucidModel = LucidModel
+  > = InstanceType<RelatedModel> & {
+    readonly __opaque_type: 'hasOne'
+    model: RelatedModel
+    instance: InstanceType<RelatedModel>
+    client: HasOneClientContract<HasOneRelationContract<ParentModel, RelatedModel>, RelatedModel>
+    builder: RelationQueryBuilderContract<RelatedModel, any>
+    subQuery: RelationSubQueryBuilderContract<RelatedModel>
+  }
 
   /**
    * Opaque type for has many relationship

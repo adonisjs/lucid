@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { ModelKeysContract, ModelObject } from '@ioc:Adonis/Lucid/Model'
+import { ModelKeysContract, ModelObject } from '@ioc:Adonis/Lucid/Orm'
 
 /**
  * Exposes the API to collect, get and resolve model keys

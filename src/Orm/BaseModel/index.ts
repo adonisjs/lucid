@@ -32,15 +32,12 @@ import {
   ModelKeysContract,
   ModelAdapterOptions,
   ModelRelationOptions,
-} from '@ioc:Adonis/Lucid/Model'
-
-import {
   ModelRelations,
   RelationOptions,
   RelationshipsContract,
   ThroughRelationOptions,
   ManyToManyRelationOptions,
-} from '@ioc:Adonis/Lucid/Relations'
+} from '@ioc:Adonis/Lucid/Orm'
 
 import { ModelKeys } from '../ModelKeys'
 import { Preloader } from '../Preloader'

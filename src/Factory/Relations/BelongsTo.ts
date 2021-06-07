@@ -7,8 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model'
-import { BelongsToRelationContract } from '@ioc:Adonis/Lucid/Relations'
+import { LucidModel, LucidRow, BelongsToRelationContract } from '@ioc:Adonis/Lucid/Orm'
 import {
   RelationCallback,
   FactoryModelContract,
