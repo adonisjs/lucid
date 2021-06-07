@@ -9,7 +9,8 @@
 
 declare module '@ioc:Adonis/Lucid/Migrator' {
   import { EventEmitter } from 'events'
-  import { FileNode } from '@ioc:Adonis/Lucid/Database'
+  import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+  import { FileNode, DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 
   /**
    * Options accepted by migrator constructor
@@ -68,4 +69,13 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
     on(event: 'migration:completed', callback: (file: MigratedFileNode) => void): this
     on(event: 'migration:error', callback: (file: MigratedFileNode) => void): this
   }
+
+  /**
+   * Migrator class constructor
+   */
+  const Migrator: {
+    new (db: DatabaseContract, app: ApplicationContract, options: MigratorOptions): MigratorContract
+  }
+
+  export default Migrator
 }

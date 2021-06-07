@@ -66,7 +66,7 @@ export default class Status extends MigrationsBase {
       return
     }
 
-    const { Migrator } = await import('../../src/Migrator')
+    const Migrator = this.application.container.resolveBinding('Adonis/Lucid/Migrator')
     const migrator = new Migrator(db, this.application, {
       direction: 'up',
       connectionName: this.connection,

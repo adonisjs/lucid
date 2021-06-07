@@ -112,6 +112,16 @@ export default class DatabaseServiceProvider {
   }
 
   /**
+   * Register the migrator used for database migration
+   */
+  private registerMigrator() {
+    this.app.container.bind('Adonis/Lucid/Migrator', () => {
+      const { Migrator } = require('../src/Migrator')
+      return Migrator
+    })
+  }
+
+  /**
    * Extends the validator by defining validation rules
    */
   private defineValidationRules() {
@@ -154,6 +164,7 @@ export default class DatabaseServiceProvider {
     this.registerSchema()
     this.registerFactory()
     this.registerBaseSeeder()
+    this.registerMigrator()
   }
 
   /**
