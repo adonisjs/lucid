@@ -29,7 +29,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Allowing a generic value along with raw query instance or a subquery
    * instance
    */
-  export type ValueWithSubQueries<T extends any> = T | ChainableContract | RawQuery
+  export type ValueWithSubQueries<T> = T | ChainableContract | RawQuery
 
   /**
    * Acceptable raw queries
@@ -76,7 +76,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Query callback is used to write wrapped queries. We get rid of `this` from
    * knex, since it makes everything confusing.
    */
-  type QueryCallback<Builder extends any> = (builder: Builder) => void
+  type QueryCallback<Builder> = (builder: Builder) => void
 
   /**
    * Shape of the function accepted by the chainable query builder to
@@ -621,7 +621,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Shape of the raw query that can also be passed as a value to
    * other queries
    */
-  export interface RawQueryBuilderContract<Result extends any = any>
+  export interface RawQueryBuilderContract<Result = any>
     extends ExcutableQueryBuilderContract<Result> {
     knexQuery: Knex.Raw
     client: QueryClientContract
@@ -664,7 +664,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   /**
    * Shape of the simple paginator that works with offset and limit
    */
-  export interface SimplePaginatorContract<Result extends any> extends Array<Result> {
+  export interface SimplePaginatorContract<Result> extends Array<Result> {
     all(): Result[]
     readonly firstPage: number
     readonly perPage: number
@@ -692,7 +692,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Database query builder exposes the API to construct SQL query using fluent
    * chainable API
    */
-  export interface DatabaseQueryBuilderContract<Result extends any = Dictionary<any, string>>
+  export interface DatabaseQueryBuilderContract<Result = Dictionary<any, string>>
     extends ChainableContract,
       ExcutableQueryBuilderContract<Result[]> {
     client: QueryClientContract
@@ -771,7 +771,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   /**
    * Insert query builder to perform database inserts.
    */
-  export interface InsertQueryBuilderContract<Result extends any = any>
+  export interface InsertQueryBuilderContract<Result = any>
     extends ExcutableQueryBuilderContract<Result> {
     knexQuery: Knex.QueryBuilder
     client: QueryClientContract
@@ -801,7 +801,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   /**
    * A executable query builder will always have these methods on it.
    */
-  export interface ExcutableQueryBuilderContract<Result extends any> extends Promise<Result> {
+  export interface ExcutableQueryBuilderContract<Result> extends Promise<Result> {
     debug(debug: boolean): this
     timeout(time: number, options?: { cancel: boolean }): this
     useTransaction(trx: TransactionClientContract): this

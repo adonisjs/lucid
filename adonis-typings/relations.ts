@@ -563,10 +563,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     /**
      * Return a query builder instance of the relationship
      */
-    query<Result extends any = InstanceType<RelatedModel>>(): RelationQueryBuilderContract<
-      RelatedModel,
-      Result
-    >
+    query<Result = InstanceType<RelatedModel>>(): RelationQueryBuilderContract<RelatedModel, Result>
   }
 
   /**
@@ -648,10 +645,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     /**
      * Return a query builder instance of the relationship
      */
-    query<Result extends any = InstanceType<RelatedModel>>(): HasManyQueryBuilderContract<
-      RelatedModel,
-      Result
-    >
+    query<Result = InstanceType<RelatedModel>>(): HasManyQueryBuilderContract<RelatedModel, Result>
   }
 
   /**
@@ -683,7 +677,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     /**
      * Returns related model query builder instance
      */
-    query<Result extends any = InstanceType<RelatedModel>>(): ManyToManyQueryBuilderContract<
+    query<Result = InstanceType<RelatedModel>>(): ManyToManyQueryBuilderContract<
       RelatedModel,
       Result
     >
@@ -691,7 +685,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     /**
      * Pivot query just targets the pivot table without any joins
      */
-    pivotQuery<Result extends any = any>(): ManyToManyQueryBuilderContract<RelatedModel, Result>
+    pivotQuery<Result = any>(): ManyToManyQueryBuilderContract<RelatedModel, Result>
 
     /**
      * Save related model instance. Sets up FK automatically
@@ -762,7 +756,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     /**
      * Return a query builder instance of the relationship
      */
-    query<Result extends any = InstanceType<RelatedModel>>(): HasManyThroughQueryBuilderContract<
+    query<Result = InstanceType<RelatedModel>>(): HasManyThroughQueryBuilderContract<
       RelatedModel,
       Result
     >
@@ -809,7 +803,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   /**
    * Base query builder for all relations
    */
-  export interface RelationQueryBuilderContract<Related extends LucidModel, Result extends any>
+  export interface RelationQueryBuilderContract<Related extends LucidModel, Result>
     extends ModelQueryBuilderContract<Related, Result> {
     /**
      * Is query a relationship query obtained using `related('relation').query()`
@@ -831,7 +825,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   /**
    * Has many query builder contract
    */
-  export interface HasManyQueryBuilderContract<Related extends LucidModel, Result extends any>
+  export interface HasManyQueryBuilderContract<Related extends LucidModel, Result>
     extends RelationQueryBuilderContract<Related, Result> {
     groupLimit(limit: number): this
     groupOrderBy(column: string, direction?: 'asc' | 'desc'): this
@@ -840,10 +834,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   /**
    * Has many query through builder contract
    */
-  export interface HasManyThroughQueryBuilderContract<
-    Related extends LucidModel,
-    Result extends any
-  > extends RelationQueryBuilderContract<Related, Result> {
+  export interface HasManyThroughQueryBuilderContract<Related extends LucidModel, Result>
+    extends RelationQueryBuilderContract<Related, Result> {
     groupLimit(limit: number): this
     groupOrderBy(column: string, direction?: 'asc' | 'desc'): this
   }
@@ -851,7 +843,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   /**
    * Possible signatures for adding a where clause
    */
-  interface WherePivot<Builder extends any> {
+  interface WherePivot<Builder> {
     (key: string, value: StrictValues | ChainableContract): Builder
     (key: string, operator: string, value: StrictValues | ChainableContract): Builder
   }
@@ -859,14 +851,14 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   /**
    * Possible signatures for adding whereNull clause.
    */
-  interface WhereNullPivot<Builder extends any> {
+  interface WhereNullPivot<Builder> {
     (key: string): Builder
   }
 
   /**
    * Possible signatures for adding where in clause.
    */
-  interface WhereInPivot<Builder extends any> {
+  interface WhereInPivot<Builder> {
     (K: string, value: StrictValues[]): Builder
     (K: string[], value: StrictValues[][]): Builder
     (
@@ -880,7 +872,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
    * Shape of many to many query builder. It has few methods over the standard
    * model query builder
    */
-  export interface ManyToManyQueryBuilderContract<Related extends LucidModel, Result extends any>
+  export interface ManyToManyQueryBuilderContract<Related extends LucidModel, Result>
     extends RelationQueryBuilderContract<Related, Result>,
       PivotQueryBuilderContract {
     isPivotOnlyQuery: boolean
@@ -952,7 +944,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   /**
    * The withCount function
    */
-  export interface WithCount<Model extends LucidRow, Builder extends any> {
+  export interface WithCount<Model extends LucidRow, Builder> {
     <
       Name extends ExtractModelRelations<Model>,
       RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['subQuery'] : never
@@ -965,7 +957,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   /**
    * The with aggregate function
    */
-  export interface WithAggregate<Model extends LucidRow, Builder extends any> {
+  export interface WithAggregate<Model extends LucidRow, Builder> {
     <
       Name extends ExtractModelRelations<Model>,
       RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['subQuery'] : never
@@ -978,7 +970,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   /**
    * The has function
    */
-  export interface Has<Model extends LucidRow, Builder extends any> {
+  export interface Has<Model extends LucidRow, Builder> {
     <Name extends ExtractModelRelations<Model>>(
       relation: Name,
       operator?: string,
@@ -989,7 +981,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   /**
    * The whereHas function
    */
-  export interface WhereHas<Model extends LucidRow, Builder extends any> {
+  export interface WhereHas<Model extends LucidRow, Builder> {
     <
       Name extends ExtractModelRelations<Model>,
       RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['subQuery'] : never
@@ -1010,7 +1002,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   /**
    * The preload function
    */
-  export interface Preload<Model extends LucidRow, Builder extends any> {
+  export interface Preload<Model extends LucidRow, Builder> {
     <
       Name extends ExtractModelRelations<Model>,
       RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['builder'] : never

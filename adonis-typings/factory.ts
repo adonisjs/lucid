@@ -327,7 +327,7 @@ declare module '@ioc:Adonis/Lucid/Factory' {
     /**
      * Define a relationship on another factory
      */
-    relation<K extends ExtractModelRelations<InstanceType<Model>>, Relation extends any>(
+    relation<K extends ExtractModelRelations<InstanceType<Model>>, Relation>(
       relation: K,
       callback: Relation
     ): this & { relations: { [P in K]: Relation } }

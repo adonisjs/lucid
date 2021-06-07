@@ -91,7 +91,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   /**
    * Extract the query scopes of a model
    */
-  export type ExtractScopes<Model extends any> = {
+  export type ExtractScopes<Model> = {
     [Scope in keyof PickProperties<Model, QueryScope<QueryScopeCallback>>]: (
       ...args: OmitFirst<Model[Scope]>
     ) => ExtractScopes<Model>
@@ -135,7 +135,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
    * List of events for which a model will trigger hooks
    */
   export type EventsList = 'save' | 'create' | 'update' | 'delete' | 'fetch' | 'find' | 'paginate'
-  export type HooksHandler<Data extends any, Event extends EventsList> =
+  export type HooksHandler<Data, Event extends EventsList> =
     | ((data: Data, event: Event) => Promise<void> | void)
     | string
 
@@ -306,10 +306,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   /**
    * Model query builder will have extras methods on top of the Database query builder
    */
-  export interface ModelQueryBuilderContract<
-    Model extends LucidModel,
-    Result extends any = InstanceType<Model>
-  > extends ChainableContract,
+  export interface ModelQueryBuilderContract<Model extends LucidModel, Result = InstanceType<Model>>
+    extends ChainableContract,
       ExcutableQueryBuilderContract<Result[]> {
     model: Model
 
@@ -470,7 +468,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
      * Get rows back as a plain javascript object and not an array
      * of model instances
      */
-    pojo<T extends any>(): ModelQueryBuilderContract<Model, T>
+    pojo<T>(): ModelQueryBuilderContract<Model, T>
   }
 
   /**
@@ -988,7 +986,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     /**
      * Returns the query for fetching a model instance
      */
-    query<Model extends LucidModel, Result extends any = InstanceType<Model>>(
+    query<Model extends LucidModel, Result = InstanceType<Model>>(
       this: Model,
       options?: ModelAdapterOptions
     ): ModelQueryBuilderContract<Model, Result>

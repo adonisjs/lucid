@@ -35,7 +35,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Migration node returned by the migration source
    * implementation
    */
-  export type FileNode<T extends any> = {
+  export type FileNode<T> = {
     filename?: string
     absPath: string
     name: string
@@ -61,7 +61,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Shape of the transaction function to create a new transaction
    */
   export interface TransactionFn {
-    <T extends any>(
+    <T>(
       callback: (trx: TransactionClientContract) => Promise<T>,
       options?: { isolationLevel?: IsolationLevels }
     ): Promise<T>
@@ -121,9 +121,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns the query builder for a given model
      */
-    modelQuery<T extends LucidModel, Result extends any = T>(
-      model: T
-    ): ModelQueryBuilderContract<T, Result>
+    modelQuery<T extends LucidModel, Result = T>(model: T): ModelQueryBuilderContract<T, Result>
 
     /**
      * Returns the knex query builder instance
@@ -139,17 +137,17 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Get new query builder instance for select, update and
      * delete calls
      */
-    query<Result extends any = any>(): DatabaseQueryBuilderContract<Result>
+    query<Result = any>(): DatabaseQueryBuilderContract<Result>
 
     /**
      * Get new query builder instance inserts
      */
-    insertQuery<ReturnColumns extends any = any>(): InsertQueryBuilderContract<ReturnColumns[]>
+    insertQuery<ReturnColumns = any>(): InsertQueryBuilderContract<ReturnColumns[]>
 
     /**
      * Get raw query builder instance
      */
-    rawQuery<Result extends any = any>(
+    rawQuery<Result = any>(
       sql: string,
       bindings?: RawQueryBindings
     ): RawQueryBuilderContract<Result>
@@ -697,7 +695,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
       namingStrategy: {
         paginationMetaKeys(): SimplePaginatorMetaKeys
       }
-      new <Row extends any>(
+      new <Row>(
         rows: Row[],
         total: number,
         perPage: number,
@@ -747,7 +745,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Returns the query builder for a given model
      */
-    modelQuery<T extends LucidModel, Result extends any = T>(
+    modelQuery<T extends LucidModel, Result = T>(
       model: T,
       options?: DatabaseClientOptions
     ): ModelQueryBuilderContract<T, Result>
@@ -755,21 +753,19 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Get query builder instance for a given connection.
      */
-    query<Result extends any = any>(
-      options?: DatabaseClientOptions
-    ): DatabaseQueryBuilderContract<Result>
+    query<Result = any>(options?: DatabaseClientOptions): DatabaseQueryBuilderContract<Result>
 
     /**
      * Get insert query builder instance for a given connection.
      */
-    insertQuery<ReturnColumns extends any = any>(
+    insertQuery<ReturnColumns = any>(
       options?: DatabaseClientOptions
     ): InsertQueryBuilderContract<ReturnColumns[]>
 
     /**
      * Get raw query builder instance
      */
-    rawQuery<Result extends any = any>(
+    rawQuery<Result = any>(
       sql: string,
       bindings?: RawQueryBindings,
       options?: DatabaseClientOptions
