@@ -15,6 +15,7 @@ import { join } from 'path'
 import { Kernel } from '@adonisjs/core/build/standalone'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
+import { Migrator } from '../../src/Migrator'
 import Migrate from '../../commands/Migration/Run'
 import Rollback from '../../commands/Migration/Rollback'
 import { fs, setup, cleanup, getDb, setupApplication } from '../../test-helpers'
@@ -27,6 +28,7 @@ test.group('Migrate', (group) => {
     app = await setupApplication()
     db = getDb(app)
     app.container.bind('Adonis/Lucid/Database', () => db)
+    app.container.bind('Adonis/Lucid/Migrator', () => Migrator)
     await setup()
   })
 
