@@ -8,7 +8,7 @@ export default class {{#toClassName}}{{ filename }}{{/toClassName}} extends Base
       table.increments('id')
 
       /**
-       * Uses timestampz for PostgreSQL and DATETIME2 for MSSQL
+       * Uses timestamptz for PostgreSQL and DATETIME2 for MSSQL
        */
       table.timestamp('created_at', { useTz: true })
       table.timestamp('updated_at', { useTz: true })
