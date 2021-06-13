@@ -133,10 +133,10 @@ export default class DatabaseServiceProvider {
     }
 
     this.app.container.withBindings(
-      ['Adonis/Core/Validator', 'Adonis/Lucid/Database'],
-      (Validator, Db) => {
+      ['Adonis/Core/Validator', 'Adonis/Lucid/Database', 'Adonis/Core/Logger'],
+      (Validator, Db, Logger) => {
         const { extendValidator } = require('../src/Bindings/Validator')
-        extendValidator(Validator.validator, Db)
+        extendValidator(Validator.validator, Db, Logger)
       }
     )
   }
