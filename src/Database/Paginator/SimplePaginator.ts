@@ -100,10 +100,12 @@ export class SimplePaginator extends Array implements SimplePaginatorContract<an
       [metaKeys.currentPage]: this.currentPage,
       [metaKeys.lastPage]: this.lastPage,
       [metaKeys.firstPage]: this.firstPage,
+      [metaKeys.nextPage]: this.getNextPage(),
+      [metaKeys.previousPage]: this.getPreviousPage(),
       [metaKeys.firstPageUrl]: this.getUrl(1),
       [metaKeys.lastPageUrl]: this.getUrl(this.lastPage),
-      [metaKeys.nextPageUrl]: this.getNextPageUrl(),
-      [metaKeys.previousPageUrl]: this.getPreviousPageUrl(),
+      [metaKeys.nextPageUrl]: this.getUrl(this.getNextPage()),
+      [metaKeys.previousPageUrl]: this.getUrl(this.getPreviousPage()),
     }
   }
 
@@ -135,30 +137,31 @@ export class SimplePaginator extends Array implements SimplePaginatorContract<an
   }
 
   /**
-   * Returns url for a given page. Doesn't validates the integrity of the
-   * page
+   * Returns url for a given page.
    */
-  public getUrl(page: number): string {
+  public getUrl(page: number | null): string | null {
+    if (page === null) return null
+
     const qs = stringify(Object.assign({}, this.qs, { page: page < 1 ? 1 : page }))
     return `${this.url}?${qs}`
   }
 
   /**
-   * Returns url for the next page
+   * Returns value for the next page
    */
-  public getNextPageUrl(): string | null {
+  public getNextPage(): number | null {
     if (this.hasMorePages) {
-      return this.getUrl(this.currentPage + 1)
+      return this.currentPage + 1
     }
     return null
   }
 
   /**
-   * Returns URL for the previous page
+   * Returns value for the previous page
    */
-  public getPreviousPageUrl(): string | null {
+  public getPreviousPage(): number | null {
     if (this.currentPage > 1) {
-      return this.getUrl(this.currentPage - 1)
+      return this.currentPage - 1
     }
 
     return null
@@ -170,7 +173,7 @@ export class SimplePaginator extends Array implements SimplePaginatorContract<an
   public getUrlsForRange(start: number, end: number) {
     let urls: { url: string; page: number; isActive: boolean }[] = []
     for (let i = start; i <= end; i++) {
-      urls.push({ url: this.getUrl(i), page: i, isActive: i === this.currentPage })
+      urls.push({ url: this.getUrl(i)!, page: i, isActive: i === this.currentPage })
     }
 
     return urls

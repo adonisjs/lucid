@@ -655,6 +655,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
     currentPage: string
     lastPage: string
     firstPage: string
+    nextPage: string
+    previousPage: string
     firstPageUrl: string
     lastPageUrl: string
     nextPageUrl: string
@@ -680,10 +682,10 @@ declare module '@ioc:Adonis/Lucid/Database' {
     }
     baseUrl(url: string): this
     queryString(values: { [key: string]: any }): this
-    getUrl(page: number): string
+    getUrl(page: number | null): string | null
     getMeta(): any
-    getNextPageUrl(): string | null
-    getPreviousPageUrl(): string | null
+    getNextPage(): number | null
+    getPreviousPage(): number | null
     getUrlsForRange(start: number, end: number): { url: string; page: number; isActive: boolean }[]
     toJSON(): { meta: any; data: Result[] }
   }
