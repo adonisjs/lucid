@@ -8,6 +8,7 @@
  */
 
 import { extname } from 'path'
+import normalizePath from 'normalize-path'
 import { SeederFileNode } from '@ioc:Adonis/Lucid/Seeder'
 import { BaseCommand, flags } from '@adonisjs/core/build/standalone'
 
@@ -122,7 +123,9 @@ export default class DbSeed extends BaseCommand {
     if (this.files.length) {
       selectedFileNames = this.files.map((file) => {
         const fileExt = extname(file)
-        return (fileExt ? file.replace(fileExt, '') : file).replace(/^\.\/|^\.\\\\/, '')
+        return normalizePath(
+          (fileExt ? file.replace(fileExt, '') : file).replace(/^\.\/|^\.\\\\/, '')
+        )
       })
 
       if (this.interactive) {
