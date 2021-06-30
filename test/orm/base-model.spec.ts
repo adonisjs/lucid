@@ -54,6 +54,7 @@ import {
 import { ModelPaginator } from '../../src/Orm/Paginator'
 import { SimplePaginator } from '../../src/Database/Paginator/SimplePaginator'
 import { SnakeCaseNamingStrategy } from '../../src/Orm/NamingStrategies/SnakeCase'
+import { dir } from 'console'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
@@ -1010,6 +1011,121 @@ test.group('Base Model | persist', (group) => {
     assert.isFalse(user.$isDirty)
     assert.isDefined(user.updatedAt)
     assert.equal(user.id.toLocaleLowerCase(), uuid)
+  })
+
+  test('perform update query when local primary key is updated', async (assert) => {
+    class User extends BaseModel {
+      public static table = 'uuid_users'
+      public static selfAssignPrimaryKey = true
+
+      @column({ isPrimary: true })
+      public id: string
+
+      @column()
+      public username: string
+
+      @column()
+      public createdAt: string
+
+      @column({ columnName: 'updated_at' })
+      public updatedAt: string
+    }
+
+    User.boot()
+
+    const uuid = '2da96a33-57a0-4752-9d56-0e2485d4d2a4'
+
+    const user = new User()
+    user.id = uuid
+    user.username = 'virk'
+    await user.save()
+
+    const newUuid = '4da96a33-57a0-4752-9d56-0e2485d4d2a1'
+    user.id = newUuid
+
+    await user.save()
+    const users = await User.all()
+    assert.lengthOf(users, 1)
+    assert.equal(users[0].id, newUuid)
+  })
+})
+
+test.group('Self assign primary key', () => {
+  test('send primary value during insert to the adapter', async (assert) => {
+    assert.plan(1)
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      public static selfAssignPrimaryKey = true
+
+      @column({ isPrimary: true })
+      public id: string
+
+      @column()
+      public username: string
+
+      @column({ columnName: 'full_name' })
+      public fullName: string
+    }
+
+    User.$adapter = adapter
+    adapter.on('insert', (_, attributes) => {
+      assert.deepEqual(attributes, {
+        id: '12345',
+        username: 'virk',
+        full_name: 'H virk',
+      })
+    })
+
+    const user = new User()
+    user.id = '12345'
+    user.username = 'virk'
+    user.fullName = 'H virk'
+
+    await user.save()
+  })
+
+  test('update primary key when changed', async (assert) => {
+    assert.plan(3)
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      public static selfAssignPrimaryKey = true
+
+      @column({ isPrimary: true })
+      public id: string
+
+      @column()
+      public username: string
+
+      @column({ columnName: 'full_name' })
+      public fullName: string
+    }
+
+    User.$adapter = adapter
+    adapter.on('insert', (_, attributes) => {
+      assert.deepEqual(attributes, {
+        id: '12345',
+        username: 'virk',
+        full_name: 'H virk',
+      })
+    })
+    adapter.on('update', (_, dirty) => {
+      assert.deepEqual(dirty, {
+        id: '3456',
+      })
+    })
+
+    const user = new User()
+    user.id = '12345'
+    user.username = 'virk'
+    user.fullName = 'H virk'
+
+    await user.save()
+    user.id = '3456'
+
+    await user.save()
+    assert.isFalse(user.$isDirty)
   })
 })
 

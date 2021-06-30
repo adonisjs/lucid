@@ -1874,9 +1874,18 @@ export class BaseModel implements LucidRow {
     }
 
     /**
+     * When self assigning the primary key, then we read the primary
+     * value from the originals and the attributes, since we allow
+     * updating primary key itself
+     */
+    const primaryKeyValue = modelConstructor.selfAssignPrimaryKey
+      ? this.$original[primaryKeyColumn]
+      : this.$primaryKeyValue
+
+    /**
      * Returning generic query builder for rest of the queries
      */
-    return client.modelQuery(modelConstructor).where(primaryKeyColumn, this.$primaryKeyValue)
+    return client.modelQuery(modelConstructor).where(primaryKeyColumn, primaryKeyValue)
   }
 
   /**
