@@ -26,7 +26,9 @@ export default class MakeMigration extends BaseCommand {
    * Choose a custom pre-defined connection. Otherwise, we use the
    * default connection
    */
-  @flags.string({ description: 'Define a custom database connection for the migration' })
+  @flags.string({
+    description: 'The connection flag is used to lookup the directory for the migration file',
+  })
   public connection: string
 
   /**
