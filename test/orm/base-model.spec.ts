@@ -54,7 +54,6 @@ import {
 import { ModelPaginator } from '../../src/Orm/Paginator'
 import { SimplePaginator } from '../../src/Database/Paginator/SimplePaginator'
 import { SnakeCaseNamingStrategy } from '../../src/Orm/NamingStrategies/SnakeCase'
-import { dir } from 'console'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
