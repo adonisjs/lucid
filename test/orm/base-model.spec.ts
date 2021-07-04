@@ -1045,7 +1045,7 @@ test.group('Base Model | persist', (group) => {
     await user.save()
     const users = await User.all()
     assert.lengthOf(users, 1)
-    assert.equal(users[0].id, newUuid)
+    assert.equal(users[0].id.toLowerCase(), newUuid)
   })
 })
 
