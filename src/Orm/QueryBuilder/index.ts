@@ -653,9 +653,17 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * Perform update
    */
-  public update(columns: any): any {
+  public update(column: any, value?: any, returning?: string[]): any {
     this.ensureCanPerformWrites()
-    this.knexQuery.update(columns)
+
+    if (value === undefined && returning === undefined) {
+      this.knexQuery.update(this.resolveKey(column, true))
+    } else if (returning === undefined) {
+      this.knexQuery.update(this.resolveKey(column), value)
+    } else {
+      this.knexQuery.update(this.resolveKey(column), value, returning)
+    }
+
     return this
   }
 

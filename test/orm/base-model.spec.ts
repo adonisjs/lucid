@@ -4478,6 +4478,44 @@ test.group('Base Model | hooks', (group) => {
     await db.insertQuery().table('users').insert({ username: 'virk' })
     await User.query().pojo().paginate(1)
   })
+
+  test('@regression resolve update keys when an object is passed', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column({ columnName: 'username' })
+      public theUserName: string
+
+      @column()
+      public email: string
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await User.query().update({ theUserName: 'nikk' })
+
+    const users = await db.from('users').select('*')
+    assert.equal(users[0].username, 'nikk')
+  })
+
+  test('@regression resolve update keys when a key value pair is passed', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column({ columnName: 'username' })
+      public theUserName: string
+
+      @column()
+      public email: string
+    }
+
+    await db.table('users').insert({ username: 'virk' })
+    await User.query().update('theUserName', 'nikk')
+
+    const users = await db.from('users').select('*')
+    assert.equal(users[0].username, 'nikk')
+  })
 })
 
 test.group('Base model | extend', (group) => {
