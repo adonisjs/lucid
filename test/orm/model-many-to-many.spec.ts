@@ -32,7 +32,7 @@ let db: ReturnType<typeof getDb>
 let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
 
-const sleep = (time: number) => new Promise((resolve) => setTimeout(resolve, time))
+const sleep = (time: number) => new Promise<void>((resolve) => setTimeout(resolve, time))
 
 test.group('Model | ManyToMany | Options', (group) => {
   group.before(async () => {
