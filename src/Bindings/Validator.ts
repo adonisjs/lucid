@@ -157,7 +157,7 @@ class DbRowCheck {
     { pointer, errorReporter, arrayExpressionPointer, refs }: ValidationRuntimeOptions
   ) {
     const client = this.database.connection(connection)
-    const query = client.from(table)
+    const query = client.from(table).select(1)
 
     /**
      * Convert datetime to a string
