@@ -552,6 +552,105 @@ test.group('Validator | exists', (group) => {
       })
     }
   })
+
+  test('make correct sql query schema field is of date type', async (assert) => {
+    assert.plan(3)
+
+    let sql: any
+    let bindings: any
+    let knexSql: any
+    let knexBindings: any
+
+    db.connection()
+      .getReadClient()
+      .on('query', (query) => {
+        sql = query.sql
+        bindings = query.bindings
+
+        const knexQuery = db
+          .connection()
+          .getReadClient()
+          .from('users')
+          .where('created_at', '2020-10-20 00:00:00')
+          .limit(1)
+          .toSQL()
+          .toNative()
+
+        knexSql = knexQuery.sql
+        knexBindings = knexQuery.bindings
+      })
+
+    try {
+      await validator.validate({
+        schema: schema.create({
+          id: schema.date({}, [
+            rules.exists({
+              table: 'users',
+              column: 'created_at',
+            }),
+          ]),
+        }),
+        data: { id: '2020-10-20' },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['exists validation failure'],
+      })
+    }
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('define custom format datetime values', async (assert) => {
+    assert.plan(3)
+
+    let sql: any
+    let bindings: any
+    let knexSql: any
+    let knexBindings: any
+
+    db.connection()
+      .getReadClient()
+      .on('query', (query) => {
+        sql = query.sql
+        bindings = query.bindings
+
+        const knexQuery = db
+          .connection()
+          .getReadClient()
+          .from('users')
+          .where('created_at', '2020-10-20')
+          .limit(1)
+          .toSQL()
+          .toNative()
+
+        knexSql = knexQuery.sql
+        knexBindings = knexQuery.bindings
+      })
+
+    try {
+      await validator.validate({
+        schema: schema.create({
+          id: schema.date({}, [
+            rules.exists({
+              table: 'users',
+              dateFormat: 'yyyy-LL-dd',
+              column: 'created_at',
+            }),
+          ]),
+        }),
+        data: { id: '2020-10-20' },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['exists validation failure'],
+      })
+    }
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
 })
 
 test.group('Validator | unique', (group) => {
@@ -1071,5 +1170,112 @@ test.group('Validator | unique', (group) => {
         username: ['unique validation failure'],
       })
     }
+  })
+
+  test('make correct sql query schema field is of date type', async (assert) => {
+    assert.plan(3)
+
+    await db
+      .table('users')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk', created_at: '2020-10-20 00:00:00' })
+
+    let sql: any
+    let bindings: any
+    let knexSql: any
+    let knexBindings: any
+
+    db.connection()
+      .getReadClient()
+      .on('query', (query) => {
+        sql = query.sql
+        bindings = query.bindings
+
+        const knexQuery = db
+          .connection()
+          .getReadClient()
+          .from('users')
+          .where('created_at', '2020-10-20 00:00:00')
+          .limit(1)
+          .toSQL()
+          .toNative()
+
+        knexSql = knexQuery.sql
+        knexBindings = knexQuery.bindings
+      })
+
+    try {
+      await validator.validate({
+        schema: schema.create({
+          id: schema.date({}, [
+            rules.unique({
+              table: 'users',
+              column: 'created_at',
+            }),
+          ]),
+        }),
+        data: { id: '2020-10-20' },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['unique validation failure'],
+      })
+    }
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+  })
+
+  test('define custom format datetime values', async (assert) => {
+    assert.plan(3)
+
+    await db
+      .table('users')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk', created_at: '2020-10-20' })
+
+    let sql: any
+    let bindings: any
+    let knexSql: any
+    let knexBindings: any
+
+    db.connection()
+      .getReadClient()
+      .on('query', (query) => {
+        sql = query.sql
+        bindings = query.bindings
+
+        const knexQuery = db
+          .connection()
+          .getReadClient()
+          .from('users')
+          .where('created_at', '2020-10-20')
+          .limit(1)
+          .toSQL()
+          .toNative()
+
+        knexSql = knexQuery.sql
+        knexBindings = knexQuery.bindings
+      })
+
+    try {
+      await validator.validate({
+        schema: schema.create({
+          id: schema.date({}, [
+            rules.unique({
+              table: 'users',
+              dateFormat: 'yyyy-LL-dd',
+              column: 'created_at',
+            }),
+          ]),
+        }),
+        data: { id: '2020-10-20' },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['unique validation failure'],
+      })
+    }
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
   })
 })

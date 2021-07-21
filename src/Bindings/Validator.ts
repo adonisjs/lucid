@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import { DateTime } from 'luxon'
 import { Exception } from '@poppinss/utils'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
 import { DatabaseContract, DatabaseQueryBuilderContract } from '@ioc:Adonis/Lucid/Database'
@@ -141,6 +142,7 @@ class DbRowCheck {
       column: options.column,
       caseInsensitive: !!options.caseInsensitive,
       connection: options.connection,
+      dateFormat: options.dateFormat,
       where: this.normalizeConstraints(options.where || options.constraints),
       whereNot: this.normalizeConstraints(options.whereNot),
     }
@@ -151,10 +153,19 @@ class DbRowCheck {
    */
   public async validate(
     value: any,
-    { table, column, where, whereNot, connection, caseInsensitive }: NormalizedOptions,
+    { table, column, where, whereNot, connection, caseInsensitive, dateFormat }: NormalizedOptions,
     { pointer, errorReporter, arrayExpressionPointer, refs }: ValidationRuntimeOptions
   ) {
-    const query = this.database.connection(connection).query().from(table)
+    const client = this.database.connection(connection)
+    const query = client.from(table)
+
+    /**
+     * Convert datetime to a string
+     */
+    if (DateTime.isDateTime(value)) {
+      const format = dateFormat || client.dialect.dateTimeFormat
+      value = value.toFormat(format)
+    }
 
     /**
      * https://www.sqlite.org/lang_corefunc.html#lower
