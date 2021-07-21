@@ -17,6 +17,7 @@ import { validator } from '@adonisjs/validator/build/src/Validator'
 
 import { fs, getDb, setup, cleanup, resetTables, setupApplication } from '../../test-helpers'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { DateTime } from 'luxon'
 
 let app: ApplicationContract
 let db: ReturnType<typeof getDb>
@@ -567,11 +568,15 @@ test.group('Validator | exists', (group) => {
         sql = query.sql
         bindings = query.bindings
 
-        const knexQuery = db
-          .connection()
+        const client = db.connection()
+
+        const knexQuery = client
           .getReadClient()
           .from('users')
-          .where('created_at', '2020-10-20 00:00:00')
+          .where(
+            'created_at',
+            DateTime.fromISO('2020-10-20').toFormat(client.dialect.dateTimeFormat)
+          )
           .limit(1)
           .toSQL()
           .toNative()
@@ -1190,11 +1195,15 @@ test.group('Validator | unique', (group) => {
         sql = query.sql
         bindings = query.bindings
 
-        const knexQuery = db
-          .connection()
+        const client = db.connection()
+
+        const knexQuery = client
           .getReadClient()
           .from('users')
-          .where('created_at', '2020-10-20 00:00:00')
+          .where(
+            'created_at',
+            DateTime.fromISO('2020-10-20').toFormat(client.dialect.dateTimeFormat)
+          )
           .limit(1)
           .toSQL()
           .toNative()
