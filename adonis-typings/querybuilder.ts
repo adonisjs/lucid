@@ -107,12 +107,12 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * An array of values with subqueries
      */
-    (columns: ValueWithSubQueries<string>[]): Builder
+    (columns: ValueWithSubQueries<string | number>[]): Builder
 
     /**
      * A spread of array arguments
      */
-    (...columns: ValueWithSubQueries<string>[]): Builder
+    (...columns: ValueWithSubQueries<string | number>[]): Builder
 
     /**
      * Wildcard selector.
