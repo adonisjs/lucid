@@ -77,6 +77,7 @@ test.group('Validator | exists', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .limit(1)
@@ -114,6 +115,7 @@ test.group('Validator | exists', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .where('username', 'nikk')
@@ -161,6 +163,7 @@ test.group('Validator | exists', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .where('username', 'nikk')
@@ -213,6 +216,7 @@ test.group('Validator | exists', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .whereIn('username', ['nikk', 'romain'])
@@ -260,6 +264,7 @@ test.group('Validator | exists', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .whereIn('username', ['nikk', 'romain'])
@@ -312,6 +317,7 @@ test.group('Validator | exists', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .whereNot('username', 'virk')
@@ -359,6 +365,7 @@ test.group('Validator | exists', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .whereNot('username', 'virk')
@@ -411,6 +418,7 @@ test.group('Validator | exists', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .whereNotIn('username', ['virk', 'nikk'])
@@ -458,6 +466,7 @@ test.group('Validator | exists', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .whereNotIn('username', ['virk', 'nikk'])
@@ -507,6 +516,7 @@ test.group('Validator | exists', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .whereRaw(`lower(username) = ?`, [db.connection().knexRawQuery(`lower(?)`, ['VIRK'])])
           .limit(1)
@@ -572,6 +582,7 @@ test.group('Validator | exists', (group) => {
 
         const knexQuery = client
           .getReadClient()
+          .select(1)
           .from('users')
           .where(
             'created_at',
@@ -624,6 +635,7 @@ test.group('Validator | exists', (group) => {
         const knexQuery = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('created_at', '2020-10-20')
           .limit(1)
@@ -732,6 +744,7 @@ test.group('Validator | unique', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .where('username', 'virk')
@@ -779,6 +792,7 @@ test.group('Validator | unique', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .where('username', 'virk')
@@ -831,6 +845,7 @@ test.group('Validator | unique', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .whereIn('username', ['virk', 'nikk'])
@@ -878,6 +893,7 @@ test.group('Validator | unique', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .whereIn('username', ['virk', 'nikk'])
@@ -930,6 +946,7 @@ test.group('Validator | unique', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .whereNot('username', 'nikk')
@@ -977,6 +994,7 @@ test.group('Validator | unique', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .whereNot('username', 'nikk')
@@ -1029,6 +1047,7 @@ test.group('Validator | unique', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .whereNotIn('country_id', [1, 2])
@@ -1076,6 +1095,7 @@ test.group('Validator | unique', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('id', userId)
           .whereNotIn('country_id', [1, 2])
@@ -1124,6 +1144,7 @@ test.group('Validator | unique', (group) => {
         const { sql: knexSql, bindings: knexBindings } = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .whereRaw(`lower(username) = ?`, [db.connection().knexRawQuery(`lower(?)`, ['VIRK'])])
           .limit(1)
@@ -1199,6 +1220,7 @@ test.group('Validator | unique', (group) => {
 
         const knexQuery = client
           .getReadClient()
+          .select(1)
           .from('users')
           .where(
             'created_at',
@@ -1255,6 +1277,7 @@ test.group('Validator | unique', (group) => {
         const knexQuery = db
           .connection()
           .getReadClient()
+          .select(1)
           .from('users')
           .where('created_at', '2020-10-20')
           .limit(1)
