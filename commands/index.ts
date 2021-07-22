@@ -14,5 +14,7 @@ export default [
   '@adonisjs/lucid/build/commands/MakeSeeder',
   '@adonisjs/lucid/build/commands/Migration/Run',
   '@adonisjs/lucid/build/commands/Migration/Rollback',
+  '@adonisjs/lucid/build/commands/Migration/Reset',
+  '@adonisjs/lucid/build/commands/Migration/Fresh',
   '@adonisjs/lucid/build/commands/Migration/Status',
 ]
