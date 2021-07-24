@@ -282,6 +282,14 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   }
 
   /**
+   * Options used by the method that internally invokes
+   * the merge method.
+]   */
+  export type ModelAssignOptions = ModelAdapterOptions & {
+    allowExtraProperties?: boolean
+  }
+
+  /**
    * Preload function on a model instance
    */
   interface LucidRowPreload<Model extends LucidRow> extends Preload<Model, Promise<void>> {
@@ -834,7 +842,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     create<T extends LucidModel>(
       this: T,
       values: Partial<ModelAttributes<InstanceType<T>>>,
-      options?: ModelAdapterOptions
+      options?: ModelAssignOptions
     ): Promise<InstanceType<T>>
 
     /**
@@ -843,7 +851,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     createMany<T extends LucidModel>(
       this: T,
       values: Partial<ModelAttributes<InstanceType<T>>>[],
-      options?: ModelAdapterOptions
+      options?: ModelAssignOptions
     ): Promise<InstanceType<T>[]>
 
     /**
@@ -917,7 +925,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
       this: T,
       searchPayload: Partial<ModelAttributes<InstanceType<T>>>,
       savePayload?: Partial<ModelAttributes<InstanceType<T>>>,
-      options?: ModelAdapterOptions
+      options?: ModelAssignOptions
     ): Promise<InstanceType<T>>
 
     /**
@@ -927,7 +935,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
       this: T,
       searchPayload: Partial<ModelAttributes<InstanceType<T>>>,
       savePayload?: Partial<ModelAttributes<InstanceType<T>>>,
-      options?: ModelAdapterOptions
+      options?: ModelAssignOptions
     ): Promise<InstanceType<T>>
 
     /**
@@ -937,7 +945,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
       this: T,
       searchPayload: Partial<ModelAttributes<InstanceType<T>>>,
       updatePayload: Partial<ModelAttributes<InstanceType<T>>>,
-      options?: ModelAdapterOptions
+      options?: ModelAssignOptions
     ): Promise<InstanceType<T>>
 
     /**
@@ -950,7 +958,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         | keyof ModelAttributes<InstanceType<T>>
         | (keyof ModelAttributes<InstanceType<T>>)[],
       payload: Partial<ModelAttributes<InstanceType<T>>>[],
-      options?: ModelAdapterOptions
+      options?: ModelAssignOptions
     ): Promise<InstanceType<T>[]>
 
     /**
@@ -963,7 +971,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         | keyof ModelAttributes<InstanceType<T>>
         | (keyof ModelAttributes<InstanceType<T>>)[],
       payload: Partial<ModelAttributes<InstanceType<T>>>[],
-      options?: ModelAdapterOptions
+      options?: ModelAssignOptions
     ): Promise<InstanceType<T>[]>
 
     /**
@@ -975,7 +983,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         | keyof ModelAttributes<InstanceType<T>>
         | (keyof ModelAttributes<InstanceType<T>>)[],
       payload: Partial<ModelAttributes<InstanceType<T>>>[],
-      options?: ModelAdapterOptions
+      options?: ModelAssignOptions
     ): Promise<InstanceType<T>[]>
 
     /**

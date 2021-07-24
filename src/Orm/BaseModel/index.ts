@@ -30,6 +30,7 @@ import {
   CherryPickFields,
   ModelColumnOptions,
   ModelKeysContract,
+  ModelAssignOptions,
   ModelAdapterOptions,
   ModelRelationOptions,
   ModelRelations,
@@ -163,6 +164,26 @@ export class BaseModel implements LucidRow {
     serializedToAttributes: ModelKeysContract
   }
 
+
+  /**
+   * Creates a new model instance with payload and adapter options
+   */
+  private static newUpWithOptions(
+    payload: any,
+    options?: ModelAdapterOptions,
+    allowExtraProperties?: boolean
+  ) {
+    const row = new this()
+    row.fill(payload, allowExtraProperties)
+
+    /**
+     * Pass client options to the newly created row. If row was found
+     * the query builder will set the same options.
+     */
+    row.$setOptionsAndTrx(options)
+    return row
+  }
+
   /**
    * Helper method for `fetchOrNewUpMany`, `fetchOrCreateMany` and `createOrUpdate`
    * many.
@@ -172,7 +193,8 @@ export class BaseModel implements LucidRow {
     existingRows: BaseModel[],
     keys: string[],
     mergeAttribute: boolean,
-    options?: ModelAdapterOptions
+    options?: ModelAdapterOptions,
+    allowExtraProperties?: boolean
   ) {
     /**
      * Return existing or create missing rows in the same order as the original
@@ -189,7 +211,7 @@ export class BaseModel implements LucidRow {
        */
       if (existingRow) {
         if (mergeAttribute) {
-          existingRow.merge(rowObject)
+          existingRow.merge(rowObject, allowExtraProperties)
         }
         return existingRow
       }
@@ -197,7 +219,7 @@ export class BaseModel implements LucidRow {
       /**
        * Otherwise create a new one
        */
-      return this.newUpWithOptions(rowObject, options)
+      return this.newUpWithOptions(rowObject, options, allowExtraProperties)
     })
   }
 
@@ -591,8 +613,8 @@ export class BaseModel implements LucidRow {
    * Returns a fresh persisted instance of model by applying
    * attributes to the model instance
    */
-  public static async create(values: any, options?: ModelAdapterOptions): Promise<any> {
-    const instance = this.newUpWithOptions(values, options)
+  public static async create(values: any, options?: ModelAssignOptions): Promise<any> {
+    const instance = this.newUpWithOptions(values, options, options?.allowExtraProperties)
     await instance.save()
     return instance
   }
@@ -603,15 +625,21 @@ export class BaseModel implements LucidRow {
    * If required, you can also pass a transaction client and the method
    * will use that instead of create a new one.
    */
-  public static async createMany(values: any, options?: ModelAdapterOptions): Promise<any[]> {
+  public static async createMany(values: any, options?: ModelAssignOptions): Promise<any[]> {
     const client = this.$adapter.modelConstructorClient(this, options)
 
     return managedTransaction(client, async (trx) => {
       const modelInstances: LucidRow[] = []
+      const createOptions = {
+        client: trx,
+        allowExtraProperties: options?.allowExtraProperties,
+      }
+
       for (let row of values) {
-        const modelInstance = await this.create(row, { client: trx })
+        const modelInstance = await this.create(row, createOptions)
         modelInstances.push(modelInstance)
       }
+
       return modelInstances
     })
   }
@@ -688,28 +716,13 @@ export class BaseModel implements LucidRow {
   }
 
   /**
-   * Creates a new model instance with payload and adapter options
-   */
-  private static newUpWithOptions(payload: any, options?: ModelAdapterOptions) {
-    const row = new this()
-    row.fill(payload)
-
-    /**
-     * Pass client options to the newly created row. If row was found
-     * the query builder will set the same options.
-     */
-    row.$setOptionsAndTrx(options)
-    return row
-  }
-
-  /**
    * Find model instance using a key/value pair or create a
    * new one without persisting it.
    */
   public static async firstOrNew(
     searchPayload: any,
     savePayload?: any,
-    options?: ModelAdapterOptions
+    options?: ModelAssignOptions
   ): Promise<any> {
     /**
      * Search using the search payload and fetch the first row
@@ -723,7 +736,8 @@ export class BaseModel implements LucidRow {
     if (!row) {
       return this.newUpWithOptions(
         Object.assign({}, searchPayload, savePayload),
-        query.clientOptions
+        query.clientOptions,
+        options?.allowExtraProperties
       )
     }
 
@@ -736,7 +750,7 @@ export class BaseModel implements LucidRow {
   public static async firstOrCreate(
     searchPayload: any,
     savePayload?: any,
-    options?: ModelAdapterOptions
+    options?: ModelAssignOptions
   ): Promise<any> {
     /**
      * Search using the search payload and fetch the first row
@@ -750,7 +764,8 @@ export class BaseModel implements LucidRow {
     if (!row) {
       row = this.newUpWithOptions(
         Object.assign({}, searchPayload, savePayload),
-        query.clientOptions
+        query.clientOptions,
+        options?.allowExtraProperties
       )
       await row.save()
     }
@@ -764,7 +779,7 @@ export class BaseModel implements LucidRow {
   public static async updateOrCreate(
     searchPayload: any,
     updatedPayload: any,
-    options?: ModelAdapterOptions
+    options?: ModelAssignOptions
   ): Promise<any> {
     const client = this.$adapter.modelConstructorClient(this as LucidModel, options)
 
@@ -783,10 +798,11 @@ export class BaseModel implements LucidRow {
       if (!row) {
         row = this.newUpWithOptions(
           Object.assign({}, searchPayload, updatedPayload),
-          query.clientOptions
+          query.clientOptions,
+          options?.allowExtraProperties
         )
       } else {
-        row.merge(updatedPayload)
+        row.merge(updatedPayload, options?.allowExtraProperties)
       }
 
       await row.save()
@@ -800,7 +816,7 @@ export class BaseModel implements LucidRow {
   public static async fetchOrNewUpMany(
     uniqueKeys: any,
     payload: any,
-    options?: ModelAdapterOptions
+    options?: ModelAssignOptions
   ): Promise<any[]> {
     uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
     const uniquenessPair = uniqueKeys.map((uniqueKey: string) => {
@@ -824,7 +840,14 @@ export class BaseModel implements LucidRow {
     /**
      * Return existing rows as it is and create a model instance for missing one's
      */
-    return this.newUpIfMissing(payload, existingRows, uniqueKeys, false, query.clientOptions)
+    return this.newUpIfMissing(
+      payload,
+      existingRows,
+      uniqueKeys,
+      false,
+      query.clientOptions,
+      options?.allowExtraProperties
+    )
   }
 
   /**
@@ -835,7 +858,7 @@ export class BaseModel implements LucidRow {
   public static async fetchOrCreateMany(
     uniqueKeys: any,
     payload: any,
-    options?: ModelAdapterOptions
+    options?: ModelAssignOptions
   ): Promise<any[]> {
     uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
     const uniquenessPair = uniqueKeys.map((uniqueKey: string) => {
@@ -859,7 +882,14 @@ export class BaseModel implements LucidRow {
     /**
      * Create model instance for the missing rows
      */
-    const rows = this.newUpIfMissing(payload, existingRows, uniqueKeys, false, query.clientOptions)
+    const rows = this.newUpIfMissing(
+      payload,
+      existingRows,
+      uniqueKeys,
+      false,
+      query.clientOptions,
+      options?.allowExtraProperties
+    )
 
     /**
      * Perist inside db inside a transaction
@@ -890,7 +920,7 @@ export class BaseModel implements LucidRow {
   public static async updateOrCreateMany(
     uniqueKeys: any,
     payload: any,
-    options?: ModelAdapterOptions
+    options?: ModelAssignOptions
   ): Promise<any> {
     uniqueKeys = Array.isArray(uniqueKeys) ? uniqueKeys : [uniqueKeys]
     const uniquenessPair = uniqueKeys.map((uniqueKey: string) => {
@@ -917,7 +947,14 @@ export class BaseModel implements LucidRow {
       /**
        * Create model instance for the missing rows
        */
-      const rows = this.newUpIfMissing(payload, existingRows, uniqueKeys, true, query.clientOptions)
+      const rows = this.newUpIfMissing(
+        payload,
+        existingRows,
+        uniqueKeys,
+        true,
+        query.clientOptions,
+        options?.allowExtraProperties
+      )
 
       for (let row of rows) {
         await row.save()
