@@ -2275,6 +2275,48 @@ test.group('BaseModel | fill/merge', (group) => {
     user.fill({ user_age: 22 } as any)
     assert.deepEqual(user.$attributes, { age: 23 })
   })
+
+  test('merge set non-column model properties', (assert) => {
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public age: number
+
+      public foo: string
+    }
+
+    const user = new User()
+    user.age = 22
+
+    assert.deepEqual(user.$attributes, { age: 22 })
+    user.merge({ username: 'virk', foo: 'bar' })
+    assert.deepEqual(user.$attributes, { username: 'virk', age: 22 })
+    assert.equal(user.foo, 'bar')
+  })
+
+  test('merge set non-column model properties with inheritance', (assert) => {
+    class Super extends BaseModel {
+      public foo: string
+    }
+
+    class User extends Super {
+      @column()
+      public username: string
+
+      @column()
+      public age: number
+    }
+
+    const user = new User()
+    user.age = 22
+
+    assert.deepEqual(user.$attributes, { age: 22 })
+    user.merge({ username: 'virk', foo: 'bar' })
+    assert.deepEqual(user.$attributes, { username: 'virk', age: 22 })
+    assert.equal(user.foo, 'bar')
+  })
 })
 
 test.group('Base | apdater', (group) => {

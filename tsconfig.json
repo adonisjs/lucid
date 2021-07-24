@@ -3,7 +3,8 @@
   "compilerOptions": {
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "useDefineForClassFields": true
   },
   "files": [
     "./node_modules/@adonisjs/core/build/adonis-typings/index.d.ts",

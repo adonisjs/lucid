@@ -1591,6 +1591,15 @@ export class BaseModel implements LucidRow {
         }
 
         /**
+         * If the property already exists on the model, then set it
+         * as it is vs defining it as an extra property
+         */
+        if (this.hasOwnProperty(key)) {
+          this[key] = value
+          return
+        }
+
+        /**
          * Raise error when not instructed to ignore non-existing properties.
          */
         if (!allowExtraProperties) {
