@@ -164,7 +164,6 @@ export class BaseModel implements LucidRow {
     serializedToAttributes: ModelKeysContract
   }
 
-
   /**
    * Creates a new model instance with payload and adapter options
    */
