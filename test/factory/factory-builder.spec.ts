@@ -105,6 +105,7 @@ test.group('Factory | Factory Builder | make', (group) => {
       .build()
 
     const user = await factory.apply('withPoints').apply('withPoints').makeStubbed()
+
     assert.equal(user.points, 10)
     assert.exists(user.id)
     assert.isFalse(user.$isPersisted)

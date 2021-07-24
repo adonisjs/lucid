@@ -24,7 +24,12 @@ export const proxyHandler = {
      * doesn't have a getter
      */
     if (column && !column.hasGetter) {
-      return target.$getAttribute(key)
+      const attributeValue = target.$getAttribute(key)
+      if (attributeValue === undefined) {
+        return Reflect.get(target, key, receiver)
+      }
+
+      return attributeValue
     }
 
     /**
@@ -48,6 +53,7 @@ export const proxyHandler = {
      */
     if (column && !column.hasSetter) {
       target.$setAttribute(key, value)
+      Reflect.set(target, key, value, receiver)
       return true
     }
 
