@@ -1521,6 +1521,14 @@ export class BaseModel implements LucidRow {
           return
         }
 
+        /**
+         * Set directly on the model
+         */
+        if (this.hasOwnProperty(key)) {
+          this[key] = adapterResult[key]
+          return
+        }
+
         this.$extras[key] = adapterResult[key]
       })
     }
