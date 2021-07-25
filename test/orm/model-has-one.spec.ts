@@ -1685,7 +1685,7 @@ test.group('Model | HasOne | withCount', (group) => {
     const user = await User.firstOrFail()
     await user.loadCount('profile')
 
-    assert.equal(user.$extras.profile_count, 1)
+    assert.deepEqual(Number(user.$extras.profile_count), 1)
   })
 
   test('lazy load count of self referenced relationship', async (assert) => {
@@ -1710,7 +1710,7 @@ test.group('Model | HasOne | withCount', (group) => {
     const user = await User.firstOrFail()
     await user.loadCount('manager')
 
-    assert.deepEqual(user.$extras.manager_count, 1)
+    assert.deepEqual(Number(user.$extras.manager_count), 1)
   })
 })
 
