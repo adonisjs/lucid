@@ -2077,6 +2077,104 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[0].$extras.skills_count), 2)
     assert.deepEqual(Number(users[1].$extras.skills_count), 1)
   })
+
+  test('lazy load count of relationship rows', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    User.boot()
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }])
+
+    await db
+      .insertQuery()
+      .table('skills')
+      .insert([{ name: 'Programming' }, { name: 'Dancing' }])
+
+    await db
+      .insertQuery()
+      .table('skill_user')
+      .insert([
+        {
+          user_id: 1,
+          skill_id: 1,
+        },
+        {
+          user_id: 1,
+          skill_id: 2,
+        },
+      ])
+
+    const user = await User.query().firstOrFail()
+    await user.loadCount('skills')
+
+    assert.deepEqual(Number(user.$extras.skills_count), 2)
+  })
+
+  test('apply constraints to the loadCount subquery', async (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    User.boot()
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }])
+
+    await db
+      .insertQuery()
+      .table('skills')
+      .insert([{ name: 'Programming' }, { name: 'Dancing' }])
+
+    await db
+      .insertQuery()
+      .table('skill_user')
+      .insert([
+        {
+          user_id: 1,
+          skill_id: 1,
+        },
+        {
+          user_id: 1,
+          skill_id: 2,
+        },
+      ])
+
+    const user = await User.query().firstOrFail()
+    await user.loadCount('skills', (query) => {
+      query.where('name', 'Programming')
+    })
+
+    assert.deepEqual(Number(user.$extras.skills_count), 1)
+  })
 })
 
 test.group('Model | ManyToMany | has', (group) => {

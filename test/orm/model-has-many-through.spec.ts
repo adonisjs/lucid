@@ -1841,6 +1841,130 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.deepEqual(Number(countries[0].$extras.countryPosts), 3)
     assert.deepEqual(Number(countries[1].$extras.countryPosts), 2)
   })
+
+  test('lazy load relationship rows', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<typeof Post>
+    }
+    Country.boot()
+
+    await db
+      .insertQuery()
+      .table('countries')
+      .insert([{ name: 'India' }])
+
+    await db
+      .insertQuery()
+      .table('users')
+      .multiInsert([
+        { username: 'virk', country_id: 1 },
+        { username: 'nikk', country_id: 1 },
+      ])
+
+    await db
+      .insertQuery()
+      .table('posts')
+      .multiInsert([
+        { title: 'Adonis 101', user_id: 1 },
+        { title: 'Lucid 101', user_id: 1 },
+        { title: 'Adonis5', user_id: 2 },
+        { title: 'Validations 101', user_id: 3 },
+        { title: 'Assets 101', user_id: 4 },
+      ])
+
+    const country = await Country.query().orderBy('id', 'asc').firstOrFail()
+    await country.loadCount('posts')
+
+    assert.equal(Number(country.$extras.posts_count), 3)
+  })
+
+  test('apply constraints to the loadCount subquery', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public countryId: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public title: string
+    }
+    Post.boot()
+
+    class Country extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasManyThrough([() => Post, () => User])
+      public posts: HasManyThrough<typeof Post>
+    }
+    Country.boot()
+
+    await db
+      .insertQuery()
+      .table('countries')
+      .insert([{ name: 'India' }, { name: 'Switzerland' }])
+
+    await db
+      .insertQuery()
+      .table('users')
+      .multiInsert([
+        { username: 'virk', country_id: 1 },
+        { username: 'nikk', country_id: 1 },
+      ])
+
+    await db
+      .insertQuery()
+      .table('posts')
+      .multiInsert([
+        { title: 'Adonis 101', user_id: 1 },
+        { title: 'Lucid 101', user_id: 1 },
+        { title: 'Adonis5', user_id: 2 },
+        { title: 'Validations 101', user_id: 3 },
+        { title: 'Assets 101', user_id: 4 },
+      ])
+
+    const country = await Country.query().orderBy('id', 'asc').firstOrFail()
+    await country.loadCount('posts', (query) => {
+      query.whereIn('title', ['Adonis 101', 'Assets 101'])
+    })
+
+    assert.equal(country.$extras.posts_count, 1)
+  })
 })
 
 test.group('Model | Has Many Through | has', (group) => {

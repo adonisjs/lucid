@@ -1460,6 +1460,34 @@ test.group('Model | BelongsTo | withCount', (group) => {
     assert.lengthOf(profiles, 1)
     assert.deepEqual(profiles[0].$attributes, { displayName: 'Hvirk' })
   })
+
+  test('lazy load relationship row', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @belongsTo(() => User)
+      public user: BelongsTo<typeof User>
+    }
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
+
+    Profile.boot()
+
+    const profile = await Profile.query().firstOrFail()
+    await profile.loadCount('user')
+
+    assert.equal(profile.$extras.user_count, 1)
+  })
 })
 
 test.group('Model | BelongsTo | has', (group) => {

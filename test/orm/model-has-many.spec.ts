@@ -1953,6 +1953,92 @@ test.group('Model | HasMany | withCount', (group) => {
     assert.deepEqual(Number(users[0].postsCount), 2)
     assert.deepEqual(Number(users[1].postsCount), 1)
   })
+
+  test('lazy load related rows count', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<typeof Post>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }])
+
+    const user0 = await db.query().from('users').firstOrFail()
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert([
+        {
+          user_id: user0.id,
+          title: 'Adonis 101',
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 102',
+        },
+      ])
+
+    User.boot()
+
+    const user = await User.firstOrFail()
+    await user.loadCount('posts')
+
+    assert.deepEqual(Number(user.$extras.posts_count), 2)
+  })
+
+  test('apply constraints to the loadCount subquery', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post)
+      public posts: HasMany<typeof Post>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }])
+
+    const [user0] = await db.query().from('users')
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert([
+        {
+          user_id: user0.id,
+          title: 'Adonis 101',
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 102',
+        },
+      ])
+
+    User.boot()
+
+    const user = await User.query().firstOrFail()
+    await user.loadCount('posts', (query) => {
+      query.whereIn('title', ['Adonis 101', 'Lucid 101'])
+    })
+
+    assert.deepEqual(Number(user.$extras.posts_count), 1)
+  })
 })
 
 test.group('Model | HasMany | has', (group) => {

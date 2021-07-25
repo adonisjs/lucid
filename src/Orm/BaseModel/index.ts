@@ -12,9 +12,10 @@
 import { DateTime } from 'luxon'
 import equal from 'fast-deep-equal'
 import { Hooks } from '@poppinss/hooks'
+import { IocContract } from '@ioc:Adonis/Core/Application'
 import { Exception, lodash, defineStaticProperty } from '@poppinss/utils'
-
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+
 import {
   LucidRow,
   CacheNode,
@@ -55,8 +56,8 @@ import {
   managedTransaction,
   normalizeCherryPickObject,
 } from '../../utils'
-import { IocContract } from '@ioc:Adonis/Core/Application'
 import { SnakeCaseNamingStrategy } from '../NamingStrategies/SnakeCase'
+import { LazyLoadAggregates } from '../Relations/AggregatesLoader/LazyLoad'
 
 const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
 const DATE_TIME_TYPES = {
@@ -1665,6 +1666,10 @@ export class BaseModel implements LucidRow {
   public async load(relationName: any, callback?: any) {
     this.ensureIsntDeleted()
 
+    if (!this.$isPersisted) {
+      throw new Exception('Cannot lazy load relationship for an unpersisted model instance')
+    }
+
     const Model = this.constructor as LucidModel
     const preloader = new Preloader(Model)
 
@@ -1687,7 +1692,38 @@ export class BaseModel implements LucidRow {
       'DeprecationWarning',
       '"Model.preload()" is deprecated. Use "Model.load()" instead'
     )
+
     return this.load(relationName, callback)
+  }
+
+  /**
+   * Lazy load the relationship aggregate value
+   */
+  public loadAggregate(relationName: any, callback?: any) {
+    this.ensureIsntDeleted()
+
+    if (!this.$isPersisted) {
+      throw new Exception(
+        'Cannot lazy load relationship aggregates for an unpersisted model instance'
+      )
+    }
+
+    return new LazyLoadAggregates(this).loadAggregate(relationName, callback)
+  }
+
+  /**
+   * Lazy load the relationship count value
+   */
+  public loadCount(relationName: any, callback?: any) {
+    this.ensureIsntDeleted()
+
+    if (!this.$isPersisted) {
+      throw new Exception(
+        'Cannot lazy load relationship aggregates for an unpersisted model instance'
+      )
+    }
+
+    return new LazyLoadAggregates(this).loadCount(relationName, callback)
   }
 
   /**
@@ -1736,7 +1772,6 @@ export class BaseModel implements LucidRow {
     this.initiateAutoUpdateColumns()
     await Model.$adapter.update(this, this.prepareForAdapter(this.$dirty))
     this.$hydrateOriginals()
-    this.$isPersisted = true
 
     await Model.$hooks.exec('after', 'update', this)
     await Model.$hooks.exec('after', 'save', this)

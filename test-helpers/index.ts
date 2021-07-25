@@ -63,7 +63,7 @@ export function getConfig(): ConnectionConfig {
           filename: join(fs.basePath, 'db.sqlite'),
         },
         useNullAsDefault: true,
-        debug: false,
+        debug: true,
       }
     case 'mysql':
       return {
@@ -75,6 +75,7 @@ export function getConfig(): ConnectionConfig {
           user: process.env.MYSQL_USER as string,
           password: process.env.MYSQL_PASSWORD as string,
         },
+        debug: true,
         useNullAsDefault: true,
       }
     case 'mysql_legacy':
@@ -87,6 +88,7 @@ export function getConfig(): ConnectionConfig {
           user: process.env.MYSQL_LEGACY_USER as string,
           password: process.env.MYSQL_LEGACY_PASSWORD as string,
         },
+        debug: true,
         useNullAsDefault: true,
       }
     case 'pg':
@@ -99,6 +101,7 @@ export function getConfig(): ConnectionConfig {
           user: process.env.PG_USER as string,
           password: process.env.PG_PASSWORD as string,
         },
+        debug: true,
         useNullAsDefault: true,
       }
     case 'mssql':
@@ -616,6 +619,16 @@ export async function setupApplication(
   await app.setup()
   await app.registerProviders()
   await app.bootProviders()
+
+  if (process.env.DEBUG) {
+    app.container.use('Adonis/Core/Event').on('db:query', (query) => {
+      console.log({
+        model: query.model,
+        sql: query.sql,
+        bindings: query.bindings,
+      })
+    })
+  }
 
   return app
 }

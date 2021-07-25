@@ -1639,6 +1639,79 @@ test.group('Model | HasOne | withCount', (group) => {
     assert.deepEqual(users[0].$attributes, { username: 'virk' })
     assert.deepEqual(users[1].$attributes, { username: 'nikk' })
   })
+
+  test('lazy load related count', async (assert) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: HasOne<typeof Profile>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const [user0, user1] = await db.query().from('users')
+    await db
+      .insertQuery()
+      .table('profiles')
+      .insert([
+        {
+          user_id: user0.id,
+          display_name: 'virk',
+        },
+        {
+          user_id: user1.id,
+          display_name: 'nikk',
+        },
+      ])
+
+    User.boot()
+
+    const user = await User.firstOrFail()
+    await user.loadCount('profile')
+
+    assert.equal(user.$extras.profile_count, 1)
+  })
+
+  test('lazy load count of self referenced relationship', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public parentId: number
+
+      @hasOne(() => User, { foreignKey: 'parentId' })
+      public manager: HasOne<typeof User>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk', parent_id: 1 }])
+
+    User.boot()
+
+    const user = await User.firstOrFail()
+    await user.loadCount('manager')
+
+    assert.deepEqual(user.$extras.manager_count, 1)
+  })
 })
 
 test.group('Model | HasOne | has', (group) => {

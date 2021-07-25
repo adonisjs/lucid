@@ -296,6 +296,10 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     (callback: (preloader: PreloaderContract<Model>) => void): Promise<void>
   }
 
+  interface LucidRowAggregate<Model extends LucidRow> extends Preload<Model, Promise<void>> {
+    (callback: (preloader: PreloaderContract<Model>) => void): Promise<void>
+  }
+
   /**
    * An extension of the simple paginator with support for serializing models
    */
@@ -303,6 +307,15 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     extends Omit<SimplePaginatorContract<Result>, 'toJSON'> {
     serialize(cherryPick?: CherryPick): { meta: any; data: ModelObject[] }
     toJSON(): { meta: any; data: ModelObject[] }
+  }
+
+  /**
+   * Lazy load aggregates for a given model instance
+   */
+  export interface LazyLoadAggregatesContract<Model extends LucidRow> extends Promise<void> {
+    loadAggregate: WithAggregate<Model, this>
+    loadCount: WithCount<Model, this>
+    exec(): Promise<void>
   }
 
   /**
@@ -593,6 +606,30 @@ declare module '@ioc:Adonis/Lucid/Orm' {
      * @deprecated
      */
     preload: LucidRowPreload<this>
+
+    /**
+     * Load aggregates
+     */
+    loadAggregate: <
+      Self extends this,
+      Name extends ExtractModelRelations<Self>,
+      RelatedBuilder = Self[Name] extends ModelRelations ? Self[Name]['subQuery'] : never
+    >(
+      name: Name,
+      callback: (builder: RelatedBuilder) => void
+    ) => LazyLoadAggregatesContract<Self>
+
+    /**
+     * Load count
+     */
+    loadCount: <
+      Self extends this,
+      Name extends ExtractModelRelations<Self>,
+      RelatedBuilder = Self[Name] extends ModelRelations ? Self[Name]['subQuery'] : never
+    >(
+      name: Name,
+      callback?: (builder: RelatedBuilder) => void
+    ) => LazyLoadAggregatesContract<Self>
 
     /**
      * Serialize attributes to a plain object
