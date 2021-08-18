@@ -102,6 +102,8 @@ class MirationRollback extends BaseMigration {
       if (!this.viaAce) {
         return { status, migrated, queries }
       }
+
+      process.exit()
     } catch (error) {
       console.log(error)
     }

@@ -60,6 +60,8 @@ class MigrationStatus extends BaseMigration {
         return [migration.name, migration.migrated ? 'Yes' : 'No', migration.batch || '']
       })
       this.table(head, body)
+
+      process.exit()
     } catch (error) {
       console.log(error)
     }
