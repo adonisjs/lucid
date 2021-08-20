@@ -62,4 +62,18 @@ export const proxyHandler = {
 
     return Reflect.set(target, key, value, receiver)
   },
+
+  defineProperty(target: any, key: any, value: any) {
+    const Model = target.constructor as LucidModel
+    const column = Model.$getColumn(key)
+
+    /**
+     * Set the attribute along side defining the property
+     */
+    if (column && !column.hasSetter && value.value !== undefined) {
+      target.$setAttribute(key, value.value)
+    }
+
+    return Reflect.defineProperty(target, key, value)
+  },
 }

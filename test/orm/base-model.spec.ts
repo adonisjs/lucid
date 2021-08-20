@@ -5441,7 +5441,7 @@ test.group('Base Model | datetime', (group) => {
     const originalDateTimeString = user.joinedAt.toString()
     await user.save()
     assert.notEqual(originalDateTimeString, user.joinedAt.toString())
-  })
+  }).retry(3)
 
   test('convert datetime to toISO during serialize', async (assert) => {
     class User extends BaseModel {
