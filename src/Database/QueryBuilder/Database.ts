@@ -156,6 +156,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * can be clubbed with `update` as well
    */
   public increment(column: any, counter?: any): this {
+    this.ensureCanPerformWrites()
     this.knexQuery.increment(this.resolveKey(column, true), counter)
     return this
   }
@@ -165,6 +166,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * can be clubbed with `update` as well
    */
   public decrement(column: any, counter?: any): this {
+    this.ensureCanPerformWrites()
     this.knexQuery.decrement(this.resolveKey(column, true), counter)
     return this
   }
@@ -174,6 +176,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    */
   public update(column: any, value?: any, returning?: string[]): this {
     this.ensureCanPerformWrites()
+
     if (value === undefined && returning === undefined) {
       this.knexQuery.update(this.resolveKey(column, true))
     } else if (returning === undefined) {

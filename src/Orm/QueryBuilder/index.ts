@@ -636,7 +636,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    */
   public increment(column: any, counter?: any): any {
     this.ensureCanPerformWrites()
-    this.knexQuery.increment(column, counter)
+    this.knexQuery.increment(this.resolveKey(column, true), counter)
     return this
   }
 
@@ -646,7 +646,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    */
   public decrement(column: any, counter?: any): any {
     this.ensureCanPerformWrites()
-    this.knexQuery.decrement(column, counter)
+    this.knexQuery.decrement(this.resolveKey(column, true), counter)
     return this
   }
 
