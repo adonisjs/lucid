@@ -6037,7 +6037,7 @@ test.group('Base model | inheritance', (group) => {
 
     class User extends MyBaseModel {
       @column({ isPrimary: true, columnName: 'user_uuid' })
-      public userId: string
+      public declare userId: string
 
       @column()
       public username: string
@@ -6237,7 +6237,7 @@ test.group('Base model | inheritance', (group) => {
       public age: number
 
       @computed({ serializeAs: 'name' })
-      public fullName: string
+      public declare fullName: string
     }
 
     MyBaseModel.boot()
@@ -6353,7 +6353,7 @@ test.group('Base model | inheritance', (group) => {
       @hasOne(() => Profile, {
         onQuery() {},
       })
-      public profile: HasOne<typeof Profile>
+      public declare profile: HasOne<typeof Profile>
 
       @hasMany(() => Email)
       public emails: HasMany<typeof Email>
