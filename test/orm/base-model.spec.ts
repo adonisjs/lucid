@@ -2205,6 +2205,22 @@ test.group('BaseModel | fill/merge', (group) => {
     assert.deepEqual(user.$attributes, { username: 'virk', age: 22 })
   })
 
+  test('merge recursively when attribute is object', (assert) => {
+    class User extends BaseModel {
+      @column()
+      public preferences: object
+    }
+
+    const user = new User()
+    user.preferences = {
+      theme: 'dark',
+    }
+
+    assert.deepEqual(user.$attributes, { preferences: { theme: 'dark' } })
+    user.merge({ preferences: { notifications: true } })
+    assert.deepEqual(user.$attributes, { preferences: { theme: 'dark', notifications: true } })
+  })
+
   test('set properties with explicit undefined values', (assert) => {
     class User extends BaseModel {
       @column()

@@ -1567,7 +1567,11 @@ export class BaseModel implements LucidRow {
          * Set as column
          */
         if (Model.$hasColumn(key)) {
-          this[key] = value
+          if (isObject(this[key])) {
+            lodash.merge(this[key], value)
+          } else {
+            this[key] = value
+          }
           return
         }
 
