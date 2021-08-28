@@ -45,10 +45,12 @@ declare module '@ioc:Adonis/Lucid/Database' {
     | number
     | boolean
     | Date
+    | BigInt
     | Array<string>
     | Array<number>
-    | Array<Date>
     | Array<boolean>
+    | Array<Date>
+    | Array<BigInt>
     | Buffer
     | RawQuery
     | ReferenceBuilderContract
