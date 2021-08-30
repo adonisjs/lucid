@@ -1954,6 +1954,59 @@ test.group('Model | HasMany | withCount', (group) => {
     assert.deepEqual(Number(users[1].postsCount), 1)
   })
 
+  test('do not set count directly on the model when defined as a getter', async (assert) => {
+    class Post extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      public get postsCount(): number {
+        return this.$extras.postsCount
+      }
+
+      @hasMany(() => Post)
+      public posts: HasMany<typeof Post>
+    }
+
+    await db
+      .insertQuery()
+      .table('users')
+      .insert([{ username: 'virk' }, { username: 'nikk' }])
+
+    const [user0, user1] = await db.query().from('users')
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert([
+        {
+          user_id: user0.id,
+          title: 'Adonis 101',
+        },
+        {
+          user_id: user0.id,
+          title: 'Adonis 102',
+        },
+        {
+          user_id: user1.id,
+          title: 'Lucid 101',
+        },
+      ])
+
+    User.boot()
+
+    const users = await User.query().withCount('posts', (query) => query.as('postsCount'))
+    assert.lengthOf(users, 2)
+
+    assert.deepEqual(Number(users[0].postsCount), 2)
+    assert.deepEqual(Number(users[1].postsCount), 1)
+    assert.deepEqual(Number(users[0].$extras.postsCount), 2)
+    assert.deepEqual(Number(users[1].$extras.postsCount), 1)
+  })
+
   test('lazy load related rows count', async (assert) => {
     class Post extends BaseModel {
       @column()
