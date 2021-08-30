@@ -5127,8 +5127,8 @@ test.group('Base Model | date', (group) => {
       @column.date({
         consume: (value) =>
           typeof value === 'string'
-            ? DateTime.fromSQL(value).minus({ day: 1 }).toISODate()
-            : DateTime.fromJSDate(value).minus({ day: 1 }).toISODate(),
+            ? DateTime.fromSQL(value).minus({ days: 1 }).toISODate()
+            : DateTime.fromJSDate(value).minus({ days: 1 }).toISODate(),
       })
       public createdAt: DateTime
     }
@@ -5138,7 +5138,7 @@ test.group('Base Model | date', (group) => {
       created_at: DateTime.local().toISODate(),
     })
     const user = await User.find(1)
-    assert.equal(user!.toJSON().created_at, DateTime.local().minus({ day: 1 }).toISODate())
+    assert.equal(user!.toJSON().created_at, DateTime.local().minus({ days: 1 }).toISODate())
   })
 })
 
@@ -5512,8 +5512,8 @@ test.group('Base Model | datetime', (group) => {
       @column.dateTime({
         consume: (value) =>
           typeof value === 'string'
-            ? DateTime.fromSQL(value).minus({ day: 1 }).toISODate()
-            : DateTime.fromJSDate(value).minus({ day: 1 }).toISODate(),
+            ? DateTime.fromSQL(value).minus({ days: 1 }).toISODate()
+            : DateTime.fromJSDate(value).minus({ days: 1 }).toISODate(),
       })
       public joinedAt: DateTime
     }
@@ -5527,7 +5527,7 @@ test.group('Base Model | datetime', (group) => {
       })
 
     const user = await User.find(1)
-    assert.equal(user!.toJSON().joined_at, DateTime.local().minus({ day: 1 }).toISODate())
+    assert.equal(user!.toJSON().joined_at, DateTime.local().minus({ days: 1 }).toISODate())
   })
 })
 
