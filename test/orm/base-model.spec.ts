@@ -11,6 +11,7 @@
 
 import test from 'japa'
 import { DateTime } from 'luxon'
+import { lodash } from '@poppinss/utils'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import type { HasOne, HasMany, BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 
@@ -457,6 +458,36 @@ test.group('Base Model | getter-setters', (group) => {
     user.$attributes = { username: 'virk', id: 1 }
     assert.equal(user.username, 'virk')
     assert.equal(user.toJSON().username, 'VIRK')
+  })
+
+  test.failing('implement custom merge strategies using getters and setters', (assert) => {
+    class User extends BaseModel {
+      private _preferences: object = {}
+
+      @column()
+      public get preferences(): object {
+        return this._preferences
+      }
+
+      public set preferences(value: object) {
+        lodash.merge(this._preferences, value)
+      }
+    }
+
+    const user = new User()
+    user.preferences = {
+      theme: 'dark',
+    }
+
+    assert.deepEqual(user.preferences, { theme: 'dark' })
+    user.$hydrateOriginals()
+
+    assert.deepEqual(user.$dirty, {})
+
+    user.merge({ preferences: { notifications: true } })
+    assert.deepEqual(user.preferences, { theme: 'dark', notifications: true })
+
+    assert.deepEqual(user.$dirty, { preferences: { theme: 'dark', notifications: true } })
   })
 })
 
