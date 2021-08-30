@@ -292,6 +292,8 @@ test.group('Schema', (group) => {
     }
 
     const trx = await db.transaction()
+    trx.debug = false
+
     const schema = new UsersSchema(trx, 'users.ts', false)
     app.container.use('Adonis/Core/Event').on('db:query', () => {
       throw new Error('Never expected to reach here')

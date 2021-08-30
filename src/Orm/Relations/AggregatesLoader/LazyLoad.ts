@@ -43,7 +43,7 @@ export class LazyLoadAggregates<Model extends LucidRow>
    * Load aggregate of relationship
    */
   public loadAggregate(relationName: any, userCallback?: any) {
-    this.query.withCount(relationName, userCallback)
+    this.query.withAggregate(relationName, userCallback)
     return this
   }
 
