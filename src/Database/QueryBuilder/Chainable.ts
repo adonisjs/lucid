@@ -1490,7 +1490,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Define `with` CTE
    */
   public with(alias: any, query: any): this {
-    this.knexQuery.with(alias, query)
+    this.knexQuery.with(alias, this.transformValue(query))
     return this
   }
 
@@ -1498,7 +1498,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Define `with` CTE with recursive keyword
    */
   public withRecursive(alias: any, query: any): this {
-    this.knexQuery.withRecursive(alias, query)
+    this.knexQuery.withRecursive(alias, this.transformValue(query))
     return this
   }
 
