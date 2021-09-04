@@ -46,10 +46,10 @@ declare module '@ioc:Adonis/Lucid/Orm' {
       paginationMetaKeys(): SimplePaginatorMetaKeys
     }
     new <Row extends LucidRow>(
-      rows: Row[],
       total: number,
       perPage: number,
-      currentPage: number
+      currentPage: number,
+      ...rows: Row[]
     ): ModelPaginatorContract<Row>
   }
 

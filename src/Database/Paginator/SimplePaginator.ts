@@ -19,7 +19,7 @@ import { SnakeCaseNamingStrategy } from '../../Orm/NamingStrategies/SnakeCase'
 export class SimplePaginator extends Array implements SimplePaginatorContract<any> {
   private qs: { [key: string]: any } = {}
   private url: string = '/'
-  private rows: any[] = []
+  private rows: any[]
 
   /**
    * Naming strategy for the pagination meta keys
@@ -41,7 +41,7 @@ export class SimplePaginator extends Array implements SimplePaginatorContract<an
   /**
    * Find if results set is empty or not
    */
-  public readonly isEmpty: boolean = this.rows.length === 0
+  public readonly isEmpty: boolean
 
   /**
    * Casting `total` to a number. Later, we can think of situations
@@ -81,6 +81,7 @@ export class SimplePaginator extends Array implements SimplePaginatorContract<an
   ) {
     super(...rows)
     this.rows = rows
+    this.isEmpty = this.rows.length === 0
   }
 
   /**

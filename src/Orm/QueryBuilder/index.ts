@@ -772,8 +772,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
      * Choose paginator
      */
     const paginator = this.wrapResultsToModelInstances
-      ? new ModelPaginator(total, perPage, page, results)
-      : new SimplePaginator(total, perPage, page, results)
+      ? new ModelPaginator(total, perPage, page, ...results)
+      : new SimplePaginator(total, perPage, page, ...results)
 
     paginator.namingStrategy = this.model.namingStrategy
 
