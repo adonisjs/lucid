@@ -71,7 +71,7 @@ export class SimplePaginator extends Array implements SimplePaginatorContract<an
   /**
    * Find if there are enough results to be paginated or not
    */
-  public readonly hasPages: boolean = this.currentPage !== 1 || this.hasMorePages
+  public readonly hasPages: boolean = this.lastPage !== 1
 
   constructor(
     private totalNumber: number,
