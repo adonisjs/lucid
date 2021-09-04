@@ -19,6 +19,7 @@ import { SnakeCaseNamingStrategy } from '../../Orm/NamingStrategies/SnakeCase'
 export class SimplePaginator extends Array implements SimplePaginatorContract<any> {
   private qs: { [key: string]: any } = {}
   private url: string = '/'
+  private rows: any[] = []
 
   /**
    * Naming strategy for the pagination meta keys
@@ -73,12 +74,13 @@ export class SimplePaginator extends Array implements SimplePaginatorContract<an
   public readonly hasPages: boolean = this.currentPage !== 1 || this.hasMorePages
 
   constructor(
-    private rows: any[],
     private totalNumber: number,
     public readonly perPage: number,
-    public readonly currentPage: number
+    public readonly currentPage: number,
+    ...rows: any[]
   ) {
     super(...rows)
+    this.rows = rows
   }
 
   /**

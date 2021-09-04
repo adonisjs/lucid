@@ -309,7 +309,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
     const total = this.hasGroupBy ? aggregates.length : aggregates[0].total
     const results = total > 0 ? await this.forPage(page, perPage).exec() : []
 
-    return new SimplePaginator(results, total, perPage, page)
+    return new SimplePaginator(total, perPage, page, results)
   }
 
   /**

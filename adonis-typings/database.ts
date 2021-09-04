@@ -696,10 +696,10 @@ declare module '@ioc:Adonis/Lucid/Database' {
         paginationMetaKeys(): SimplePaginatorMetaKeys
       }
       new <Row>(
-        rows: Row[],
         total: number,
         perPage: number,
-        currentPage: number
+        currentPage: number,
+        ...rows: Row[]
       ): SimplePaginatorContract<Row>
     }
 
