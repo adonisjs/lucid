@@ -4,12 +4,12 @@ export default class {{#toClassName}}{{ filename }}{{/toClassName}} extends Base
   protected tableName = '{{#toTableName}}{{ filename }}{{/toTableName}}'
 
   public async up () {
-    this.schema.table(this.tableName, (table) => {
+    this.schema.alterTable(this.tableName, (table) => {
     })
   }
 
   public async down () {
-    this.schema.table(this.tableName, (table) => {
+    this.schema.alterTable(this.tableName, (table) => {
     })
   }
 }
