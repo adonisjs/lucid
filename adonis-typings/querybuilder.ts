@@ -403,12 +403,12 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Accepts an array of object of named key/value pair and returns an array
      * of Generic return columns.
      */
-    (values: Dictionary<any, string>, returning?: string | string[]): Builder
+    (values: Dictionary<any, string>, returning?: OneOrMany<string>): Builder
 
     /**
      * Accepts a key-value pair to update.
      */
-    (column: string, value: any, returning?: string | string[]): Builder
+    (column: string, value: any, returning?: OneOrMany<string>): Builder
   }
 
   /**
@@ -696,6 +696,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     extends ChainableContract,
       ExcutableQueryBuilderContract<Result[]> {
     client: QueryClientContract
+    returning: Returning<this>
 
     /**
      * Clone current query
@@ -715,8 +716,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Perform delete operation
      */
-    del(): this
-    delete(): this
+    del(returning?: OneOrMany<string>): this
+    delete(returning?: OneOrMany<string>): this
 
     /**
      * A shorthand to define limit and offset based upon the

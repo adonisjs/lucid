@@ -16,6 +16,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     Counter,
     OneOrMany,
     Aggregate,
+    Returning,
     DialectContract,
     ChainableContract,
     QueryClientContract,
@@ -331,6 +332,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     extends ChainableContract,
       ExcutableQueryBuilderContract<Result[]> {
     model: Model
+    returning: Returning<this>
 
     /**
      * Define a callback to transform a row
@@ -393,8 +395,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     /**
      * Perform delete operation
      */
-    del(): ModelQueryBuilderContract<Model, any>
-    delete(): ModelQueryBuilderContract<Model, any>
+    del(returning?: OneOrMany<string>): ModelQueryBuilderContract<Model, any>
+    delete(returning?: OneOrMany<string>): ModelQueryBuilderContract<Model, any>
 
     /**
      * A shorthand to define limit and offset based upon the
