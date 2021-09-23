@@ -11,6 +11,7 @@
 
 import { Knex } from 'knex'
 import { EventEmitter } from 'events'
+import { Hooks } from '@poppinss/hooks'
 import { EmitterContract } from '@ioc:Adonis/Core/Event'
 import { ProfilerRowContract } from '@ioc:Adonis/Core/Profiler'
 import {
@@ -46,6 +47,8 @@ export class TransactionClient extends EventEmitter implements TransactionClient
    * The profiler to be used for profiling queries
    */
   public profiler?: ProfilerRowContract
+
+  private hooks = new Hooks()
 
   constructor(
     public knexClient: Knex.Transaction,
@@ -235,6 +238,14 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   }
 
   /**
+   * Register after commit or rollback hook
+   */
+  public after(event: 'rollback' | 'commit', handler: () => void | Promise<void>) {
+    this.hooks.add('after', event, handler)
+    return this
+  }
+
+  /**
    * Commit the transaction
    */
   public async commit() {
@@ -248,6 +259,11 @@ export class TransactionClient extends EventEmitter implements TransactionClient
       this.removeAllListeners()
       throw error
     }
+
+    try {
+      await this.hooks.exec('after', 'commit')
+      this.hooks.clear('after')
+    } catch {}
   }
 
   /**
@@ -264,6 +280,11 @@ export class TransactionClient extends EventEmitter implements TransactionClient
       this.removeAllListeners()
       throw error
     }
+
+    try {
+      await this.hooks.exec('after', 'rollback')
+      this.hooks.clear('after')
+    } catch {}
   }
 
   /**

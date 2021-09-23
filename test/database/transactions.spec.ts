@@ -173,7 +173,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('execute before and after rollback hooks', async (assert) => {
+  test('emit after rollback event', async (assert) => {
     const stack: string[] = []
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
@@ -370,6 +370,52 @@ test.group('Transaction | query', (group) => {
     assert.equal(stack[1].label, 'trx:begin')
     assert.equal(stack[0].parentId, stack[1].id)
     assert.deepEqual(stack[1].data, { state: 'commit' })
+
+    await connection.disconnect()
+  })
+
+  test('execute after commit hook', async (assert) => {
+    const stack: string[] = []
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = await new QueryClient(
+      'dual',
+      connection,
+      app.container.use('Adonis/Core/Event')
+    ).transaction()
+
+    db.after('commit', async () => {
+      stack.push('commit')
+    })
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.commit()
+    assert.deepEqual(stack, ['commit'])
+
+    await connection.disconnect()
+  })
+
+  test('execute after rollback hook', async (assert) => {
+    const stack: string[] = []
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = await new QueryClient(
+      'dual',
+      connection,
+      app.container.use('Adonis/Core/Event')
+    ).transaction()
+
+    db.after('rollback', async () => {
+      stack.push('rollback')
+    })
+
+    await db.insertQuery().table('users').insert({ username: 'virk' })
+    await db.rollback()
+    assert.deepEqual(db.listenerCount('commit'), 0)
+    assert.deepEqual(db.listenerCount('rollback'), 0)
+    assert.deepEqual(stack, ['rollback'])
 
     await connection.disconnect()
   })

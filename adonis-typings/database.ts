@@ -245,6 +245,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
 
     once(event: 'commit', handler: (client: this) => void): this
     once(event: 'rollback', handler: (client: this) => void): this
+
+    after(event: 'rollback' | 'commit', handler: () => void | Promise<void>): this
   }
 
   /**
