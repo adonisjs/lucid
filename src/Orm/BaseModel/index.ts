@@ -273,7 +273,7 @@ export class BaseModel implements LucidRow {
 
     return adapterResults.reduce((models, row) => {
       if (isObject(row)) {
-        models.push(this['$createFromAdapterResult'](row, sideloadAttributes, options))
+        models.push(this.$createFromAdapterResult(row, sideloadAttributes, options))
       }
       return models
     }, []) as InstanceType<T>[]
@@ -470,6 +470,26 @@ export class BaseModel implements LucidRow {
   }
 
   /**
+   * Define a static property on the model using the inherit or
+   * define strategy.
+   *
+   * Inherit strategy will clone the property from the parent model
+   * and will set it on the current model
+   */
+  public static $defineProperty<Model extends LucidModel, Prop extends keyof Model>(
+    this: Model,
+    propertyName: Prop,
+    defaultValue: Model[Prop],
+    strategy: 'inherit' | 'define' | ((value: Model[Prop]) => Model[Prop])
+  ) {
+    defineStaticProperty(this, BaseModel, {
+      propertyName: propertyName,
+      defaultValue: defaultValue,
+      strategy: strategy,
+    })
+  }
+
+  /**
    * Boot the model
    */
   public static boot() {
@@ -492,37 +512,25 @@ export class BaseModel implements LucidRow {
     /**
      * Table name is never inherited from the base model
      */
-    defineStaticProperty(this, BaseModel, {
-      propertyName: 'table',
-      defaultValue: this.namingStrategy.tableName(this),
-      strategy: 'define',
-    })
+    this.$defineProperty('table', this.namingStrategy.tableName(this), 'define')
 
     /**
      * Inherit primary key or default to "id"
      */
-    defineStaticProperty(this, BaseModel, {
-      propertyName: 'primaryKey',
-      defaultValue: 'id',
-      strategy: 'inherit',
-    })
+    this.$defineProperty('primaryKey', 'id', 'inherit')
 
     /**
      * Inherit selfAssignPrimaryKey or default to "false"
      */
-    defineStaticProperty(this, BaseModel, {
-      propertyName: 'selfAssignPrimaryKey',
-      defaultValue: false,
-      strategy: 'inherit',
-    })
+    this.$defineProperty('selfAssignPrimaryKey', false, 'inherit')
 
     /**
      * Define the keys property. This allows looking up variations
      * for model keys
      */
-    defineStaticProperty(this, BaseModel, {
-      propertyName: '$keys',
-      defaultValue: {
+    this.$defineProperty(
+      '$keys',
+      {
         attributesToColumns: new ModelKeys(),
         attributesToSerialized: new ModelKeys(),
         columnsToAttributes: new ModelKeys(),
@@ -530,7 +538,7 @@ export class BaseModel implements LucidRow {
         serializedToColumns: new ModelKeys(),
         serializedToAttributes: new ModelKeys(),
       },
-      strategy: (value) => {
+      (value) => {
         return {
           attributesToColumns: new ModelKeys(Object.assign({}, value.attributesToColumns.all())),
           attributesToSerialized: new ModelKeys(
@@ -543,54 +551,40 @@ export class BaseModel implements LucidRow {
             Object.assign({}, value.serializedToAttributes.all())
           ),
         }
-      },
-    })
+      }
+    )
 
     /**
      * Define columns
      */
-    defineStaticProperty(this, BaseModel, {
-      propertyName: '$columnsDefinitions',
-      defaultValue: new Map(),
-      strategy: 'inherit',
-    })
+    this.$defineProperty('$columnsDefinitions', new Map(), 'inherit')
 
     /**
      * Define computed properties
      */
-    defineStaticProperty(this, BaseModel, {
-      propertyName: '$computedDefinitions',
-      defaultValue: new Map(),
-      strategy: 'inherit',
-    })
+    this.$defineProperty('$computedDefinitions', new Map(), 'inherit')
 
     /**
      * Define relationships
      */
-    defineStaticProperty(this, BaseModel, {
-      propertyName: '$relationsDefinitions',
-      defaultValue: new Map(),
-      strategy: (value) => {
-        const relations = new Map()
-        value.forEach((relation, key) => relations.set(key, relation))
-        return relations
-      },
+    this.$defineProperty('$relationsDefinitions', new Map(), (value) => {
+      const relations = new Map<string, RelationshipsContract>()
+      value.forEach((relation, key) => relations.set(key, relation))
+      return relations
     })
 
     /**
      * Define hooks.
      */
-    defineStaticProperty(this, BaseModel, {
-      propertyName: '$hooks',
-      defaultValue: new Hooks(
-        this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')
-      ),
-      strategy: (value: Hooks) => {
+    this.$defineProperty(
+      '$hooks',
+      new Hooks(this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')),
+      (value: Hooks) => {
         const hooks = new Hooks()
         hooks.merge(value)
         return hooks
-      },
-    })
+      }
+    )
   }
 
   /**

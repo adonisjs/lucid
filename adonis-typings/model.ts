@@ -830,6 +830,20 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     $getRelation<Model extends LucidModel>(this: Model, name: string): RelationshipsContract
 
     /**
+     * Define a static property on the model using the inherit or
+     * define strategy.
+     *
+     * Inherit strategy will clone the property from the parent model
+     * and will set it on the current model
+     */
+    $defineProperty<Model extends LucidModel, Prop extends keyof Model>(
+      this: Model,
+      propertyName: Prop,
+      defaultValue: Model[Prop],
+      strategy: 'inherit' | 'define' | ((value: Model[Prop]) => Model[Prop])
+    ): void
+
+    /**
      * Boot model
      */
     boot(): void
