@@ -47,7 +47,6 @@ import { FactoryModel } from '../src/Factory/FactoryModel'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
-import EventEmitter from 'events'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
 dotenv.config()
