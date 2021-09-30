@@ -47,6 +47,7 @@ import { FactoryModel } from '../src/Factory/FactoryModel'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
+import EventEmitter from 'events'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
 dotenv.config()
@@ -474,7 +475,19 @@ export class FakeAdapter implements AdapterContract {
     this._handlers[action] = handler
   }
 
-  public modelClient(): any {}
+  public modelClient(): any {
+    return {
+      transaction() {
+        return {
+          on() {},
+          once() {},
+          removeListeners() {},
+          commit() {},
+          rollback() {},
+        }
+      },
+    }
+  }
 
   public modelConstructorClient(): any {}
 

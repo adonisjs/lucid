@@ -545,6 +545,12 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     $trx?: TransactionClientContract
     $setOptionsAndTrx(options?: ModelAdapterOptions): void
 
+    /**
+     * Enable/disable managed transaction for "insert", "update" and "delete"
+     * queries
+     */
+    $enableManagedTransaction(state: boolean): void
+
     useTransaction(trx: TransactionClientContract): this
     useConnection(connection: string): this
 
