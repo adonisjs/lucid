@@ -1009,11 +1009,6 @@ export class BaseModel implements LucidRow {
   private cachedGetters: { [key: string]: CacheNode } = {}
 
   /**
-   * Wrap insert, update and delete queries inside a transaction
-   */
-  private saveInsideTransaction = false
-
-  /**
    * Raises exception when mutations are performed on a delete model
    */
   private ensureIsntDeleted() {
@@ -1132,90 +1127,6 @@ export class BaseModel implements LucidRow {
      * Otherwise ensure is inside pick array
      */
     return !pick || pick.includes(serializeAs)
-  }
-
-  /**
-   * Peform the insert query
-   */
-  private async performInsert() {
-    const Model = this.constructor as typeof BaseModel
-
-    /**
-     * Execute insert call when "saveInsideTransaction" is not enabled
-     * or the model is already using a transaction
-     */
-    if (!this.saveInsideTransaction || this.$trx) {
-      return Model.$adapter.insert(this, this.prepareForAdapter(this.$attributes))
-    }
-
-    /**
-     * Create a self managed transaction and rollback/commit it
-     */
-    this.$trx = await Model.$adapter.modelClient(this).transaction()
-
-    try {
-      await Model.$adapter.insert(this, this.prepareForAdapter(this.$attributes))
-      await this.$trx.commit()
-    } catch (error) {
-      await this.$trx.rollback()
-      throw error
-    }
-  }
-
-  /**
-   * Peform the update query
-   */
-  private async performUpdate() {
-    const Model = this.constructor as typeof BaseModel
-
-    /**
-     * Execute insert call when "saveInsideTransaction" is not enabled
-     * or the model is already using a transaction
-     */
-    if (!this.saveInsideTransaction || this.$trx) {
-      return Model.$adapter.update(this, this.prepareForAdapter(this.$dirty))
-    }
-
-    /**
-     * Create a self managed transaction and rollback/commit it
-     */
-    this.$trx = await Model.$adapter.modelClient(this).transaction()
-
-    try {
-      await Model.$adapter.update(this, this.prepareForAdapter(this.$dirty))
-      await this.$trx.commit()
-    } catch (error) {
-      await this.$trx.rollback()
-      throw error
-    }
-  }
-
-  /**
-   * Perform the delete query
-   */
-  private async performDelete() {
-    const Model = this.constructor as typeof BaseModel
-
-    /**
-     * Execute insert call when "saveInsideTransaction" is not enabled
-     * or the model is already using a transaction
-     */
-    if (!this.saveInsideTransaction || this.$trx) {
-      return Model.$adapter.delete(this)
-    }
-
-    /**
-     * Create a self managed transaction and rollback/commit it
-     */
-    this.$trx = await Model.$adapter.modelClient(this).transaction()
-
-    try {
-      await Model.$adapter.delete(this)
-      await this.$trx.commit()
-    } catch (error) {
-      await this.$trx.rollback()
-      throw error
-    }
   }
 
   /**
@@ -1432,14 +1343,6 @@ export class BaseModel implements LucidRow {
       this.$trx = options.client as TransactionClientContract
     }
     this.$options = options
-  }
-
-  /**
-   * Enable/disable managed transaction for "insert", "update" and "delete"
-   * queries
-   */
-  public $enableManagedTransaction(state: boolean): void {
-    this.saveInsideTransaction = state
   }
 
   /**
@@ -1832,7 +1735,7 @@ export class BaseModel implements LucidRow {
       await Model.$hooks.exec('before', 'save', this)
 
       this.initiateAutoCreateColumns()
-      await this.performInsert()
+      await Model.$adapter.insert(this, this.prepareForAdapter(this.$attributes))
 
       this.$hydrateOriginals()
       this.$isPersisted = true
@@ -1861,7 +1764,7 @@ export class BaseModel implements LucidRow {
      * Perform update
      */
     this.initiateAutoUpdateColumns()
-    await this.performUpdate()
+    await Model.$adapter.update(this, this.prepareForAdapter(this.$dirty))
     this.$hydrateOriginals()
 
     await Model.$hooks.exec('after', 'update', this)
@@ -1878,7 +1781,7 @@ export class BaseModel implements LucidRow {
 
     await Model.$hooks.exec('before', 'delete', this)
 
-    await this.performDelete()
+    await Model.$adapter.delete(this)
     this.$isDeleted = true
 
     await Model.$hooks.exec('after', 'delete', this)

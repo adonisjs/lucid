@@ -474,19 +474,7 @@ export class FakeAdapter implements AdapterContract {
     this._handlers[action] = handler
   }
 
-  public modelClient(): any {
-    return {
-      transaction() {
-        return {
-          on() {},
-          once() {},
-          removeListeners() {},
-          commit() {},
-          rollback() {},
-        }
-      },
-    }
-  }
+  public modelClient(): any {}
 
   public modelConstructorClient(): any {}
 

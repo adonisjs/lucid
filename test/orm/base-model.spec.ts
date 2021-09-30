@@ -1078,45 +1078,6 @@ test.group('Base Model | persist', (group) => {
     assert.lengthOf(users, 1)
     assert.equal(users[0].id.toLowerCase(), newUuid)
   })
-
-  test('wrap insert/update calls inside a self managed transaction', async (assert) => {
-    assert.plan(3)
-
-    class User extends BaseModel {
-      public get $trx() {
-        return super.$trx
-      }
-
-      public set $trx(transaction) {
-        assert.isTrue(true)
-        super.$trx = transaction
-      }
-
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public username: string
-
-      @column()
-      public createdAt: string
-
-      @column({ columnName: 'updated_at' })
-      public updatedAt: string
-    }
-
-    User.boot()
-
-    const user = new User()
-    user.username = 'virk'
-    user.$enableManagedTransaction(true)
-    await user.save()
-
-    user.username = 'nikk'
-    await user.save()
-
-    await user.delete()
-  })
 })
 
 test.group('Self assign primary key', () => {
