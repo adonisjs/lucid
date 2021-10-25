@@ -460,28 +460,40 @@ test.group('Base Model | getter-setters', (group) => {
     assert.equal(user.toJSON().username, 'VIRK')
   })
 
-  test.failing('implement custom merge strategies using getters and setters', (assert) => {
+  test('implement custom merge strategies using getters and setters', (assert) => {
     class User extends BaseModel {
-      private _preferences: object = {}
-
       @column()
       public get preferences(): object {
-        return this._preferences
+        return this.$getAttribute('preferences')
       }
 
       public set preferences(value: object) {
-        lodash.merge(this._preferences, value)
+        this.$setAttribute('preferences', lodash.merge(this.preferences, value))
       }
     }
 
     const user = new User()
+
+    /**
+     * Define and check property
+     */
     user.preferences = {
       theme: 'dark',
     }
-
     assert.deepEqual(user.preferences, { theme: 'dark' })
-    user.$hydrateOriginals()
 
+    /**
+     * Hydrate originals as if persisted
+     */
+    user.$hydrateOriginals()
+    user.$isPersisted = true
+
+    /**
+     * Ensure $original is same as $attributes and nothing
+     * is dirty
+     */
+    assert.deepEqual(user.$original, { preferences: { theme: 'dark' } })
+    assert.deepEqual(user.$original, user.$attributes)
     assert.deepEqual(user.$dirty, {})
 
     user.merge({ preferences: { notifications: true } })
