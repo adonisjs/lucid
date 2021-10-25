@@ -262,6 +262,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     readonly model: ParentModel
     relatedModel(): RelatedModel
     boot(): void
+    clone(parent: LucidModel): this
 
     /**
      * Get client

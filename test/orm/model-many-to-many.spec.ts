@@ -258,6 +258,28 @@ test.group('Model | ManyToMany | Options', (group) => {
 
     assert.equal(User.$getRelation('skills')!['pivotRelatedForeignKey'], 'skill_uid')
   })
+
+  test('clone relationship instance with options', (assert) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class BaseUser extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @manyToMany(() => Skill, { pivotRelatedForeignKey: 'skill_uid' })
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    class User extends BaseUser {}
+    User.boot()
+    User.$getRelation('skills')!.boot()
+
+    assert.deepEqual(User.$getRelation('skills')!.model, User)
+    assert.equal(User.$getRelation('skills')!['pivotRelatedForeignKey'], 'skill_uid')
+  })
 })
 
 test.group('Model | ManyToMany | Set Relations', (group) => {

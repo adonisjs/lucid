@@ -59,6 +59,13 @@ export class HasOne implements HasOneRelationContract<LucidModel, LucidModel> {
   ) {}
 
   /**
+   * Clone relationship instance
+   */
+  public clone(parent: LucidModel): any {
+    return new HasOne(this.relationName, this.relatedModel, { ...this.options }, parent)
+  }
+
+  /**
    * Boot the relationship and ensure that all keys are in
    * place for queries to do their job.
    */

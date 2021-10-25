@@ -69,6 +69,13 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
   ) {}
 
   /**
+   * Clone relationship instance
+   */
+  public clone(parent: LucidModel): any {
+    return new BelongsTo(this.relationName, this.relatedModel, { ...this.options }, parent)
+  }
+
+  /**
    * Returns a boolean telling if the related row belongs to the parent
    * row or not.
    */

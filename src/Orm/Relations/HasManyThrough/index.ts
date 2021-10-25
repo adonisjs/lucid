@@ -72,6 +72,13 @@ export class HasManyThrough implements HasManyThroughRelationContract<LucidModel
   ) {}
 
   /**
+   * Clone relationship instance
+   */
+  public clone(parent: LucidModel): any {
+    return new HasManyThrough(this.relationName, this.relatedModel, { ...this.options }, parent)
+  }
+
+  /**
    * Returns the alias for the through key
    */
   public throughAlias(key: string): string {

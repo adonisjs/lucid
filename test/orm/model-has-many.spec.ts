@@ -175,6 +175,29 @@ test.group('Model | HasMany | Options', (group) => {
 
     assert.equal(User.$getRelation('posts')!['foreignKey'], 'userUid')
   })
+
+  test('clone relationship instance with options', (assert) => {
+    class Post extends BaseModel {
+      @column({ columnName: 'user_id' })
+      public userUid: number
+    }
+
+    class BaseUser extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @hasMany(() => Post, { foreignKey: 'userUid' })
+      public posts: HasMany<typeof Post>
+    }
+
+    class User extends BaseUser {}
+
+    User.boot()
+    User.$getRelation('posts')!.boot()
+
+    assert.deepEqual(User.$getRelation('posts')!.model, User)
+    assert.equal(User.$getRelation('posts')!['foreignKey'], 'userUid')
+  })
 })
 
 test.group('Model | HasMany | Set Relations', (group) => {

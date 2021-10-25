@@ -171,6 +171,31 @@ test.group('Model | BelongsTo | Options', (group) => {
 
     assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userUid')
   })
+
+  test('clone relationship instance with options', (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+    }
+
+    class BaseProfile extends BaseModel {
+      @column({ columnName: 'user_id' })
+      public userUid: number
+
+      @belongsTo(() => User, { foreignKey: 'userUid' })
+      public user: BelongsTo<typeof User>
+    }
+
+    class Profile extends BaseProfile {}
+    Profile.boot()
+
+    Profile.$getRelation('user')!.boot()
+    console.log(Profile.$getRelation('user'))
+
+    assert.deepEqual(Profile.$getRelation('user')!.relatedModel(), User)
+    assert.deepEqual(Profile.$getRelation('user')!.model, Profile)
+    assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userUid')
+  })
 })
 
 test.group('Model | BelongsTo | Set Relations', (group) => {

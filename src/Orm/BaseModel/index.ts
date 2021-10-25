@@ -569,7 +569,11 @@ export class BaseModel implements LucidRow {
      */
     this.$defineProperty('$relationsDefinitions', new Map(), (value) => {
       const relations = new Map<string, RelationshipsContract>()
-      value.forEach((relation, key) => relations.set(key, relation))
+      value.forEach((relation, key) => {
+        const relationClone = relation.clone(this)
+        relationClone.boot()
+        relations.set(key, relationClone)
+      })
       return relations
     })
 

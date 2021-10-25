@@ -251,6 +251,56 @@ test.group('Model | Has Many Through | Options', (group) => {
     assert.equal(relation['throughForeignKey'], 'userUid')
     assert.equal(relation['throughForeignKeyColumnName'], 'user_uid')
   })
+
+  test('clone relationship instance with options', (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public uid: number
+
+      @column()
+      public countryUid: number
+    }
+    User.boot()
+
+    class Post extends BaseModel {
+      @column()
+      public userUid: number
+    }
+    Post.boot()
+
+    class BaseCountry extends BaseModel {
+      @column({ isPrimary: true })
+      public uid: number
+
+      @hasManyThrough([() => Post, () => User], {
+        throughForeignKey: 'userUid',
+        throughLocalKey: 'uid',
+        foreignKey: 'countryUid',
+        localKey: 'uid',
+      })
+      public posts: HasManyThrough<typeof Post>
+    }
+
+    class Country extends BaseCountry {}
+    Country.boot()
+
+    const relation = Country.$getRelation('posts')!
+    relation.boot()
+
+    assert.deepEqual(relation.model, Country)
+
+    assert.equal(relation['localKey'], 'uid')
+    assert.equal(relation['localKeyColumnName'], 'uid')
+
+    assert.equal(relation['foreignKey'], 'countryUid')
+    assert.equal(relation['foreignKeyColumnName'], 'country_uid')
+
+    assert.equal(relation['throughLocalKey'], 'uid')
+    assert.equal(relation['throughLocalKeyColumnName'], 'uid')
+
+    assert.equal(relation['throughForeignKey'], 'userUid')
+    assert.equal(relation['throughForeignKeyColumnName'], 'user_uid')
+  })
 })
 
 test.group('Model | Has Many Through | Set Relations', (group) => {
