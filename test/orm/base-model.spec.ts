@@ -6352,6 +6352,9 @@ test.group('Base model | inheritance', (group) => {
     }
 
     class User extends MyBaseModel {
+      @column()
+      public id: number
+
       @hasMany(() => Email)
       public emails: HasMany<typeof Email>
     }
@@ -6381,6 +6384,9 @@ test.group('Base model | inheritance', (group) => {
     }
 
     class User extends MyBaseModel {
+      @column()
+      public id: number
+
       @hasOne(() => Profile, {
         onQuery() {},
       })

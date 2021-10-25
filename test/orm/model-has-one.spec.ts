@@ -199,7 +199,7 @@ test.group('Model | HasOne | Options', (group) => {
     User.$getRelation('profile')!.boot()
 
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userUid')
-    assert.deepEqual(User.$getRelation('posts')!.model, User)
+    assert.deepEqual(User.$getRelation('profile')!.model, User)
   })
 })
 
