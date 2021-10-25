@@ -18,7 +18,10 @@ import {
   InsertQueryBuilderContract,
 } from '@ioc:Adonis/Lucid/Database'
 
+import { RawQueryBuilder } from './Raw'
 import { QueryRunner } from '../../QueryRunner'
+import { RawBuilder } from '../StaticBuilder/Raw'
+import { ReferenceBuilder } from '../StaticBuilder/Reference'
 
 /**
  * Exposes the API for performing SQL inserts
@@ -55,6 +58,37 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
       inTransaction: this.client.isTransaction,
       ...this.customReporterData,
     }
+  }
+
+  /**
+   * Transforms the value to something that knex can internally understand and
+   * handle. It includes.
+   *
+   * 1. Returning the `knexBuilder` for sub queries.
+   * 2. Returning the `knexBuilder` for raw queries.
+   */
+  protected transformValue(value: any) {
+    if (value instanceof ReferenceBuilder) {
+      return value.toKnex(this.knexQuery.client)
+    }
+
+    return this.transformRaw(value)
+  }
+
+  /**
+   * Returns the underlying knex raw query builder for Lucid raw
+   * query builder
+   */
+  protected transformRaw(value: any) {
+    if (value instanceof RawQueryBuilder) {
+      return value['knexQuery']
+    }
+
+    if (value instanceof RawBuilder) {
+      return value.toKnex(this.knexQuery.client)
+    }
+
+    return value
   }
 
   /**
@@ -101,6 +135,22 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
    * Perform insert query
    */
   public insert(columns: any): this {
+    if (columns && Array.isArray(columns)) {
+      columns = columns.map((column) => {
+        return column && typeof column === 'object'
+          ? Object.keys(column).reduce((result, key) => {
+              result[key] = this.transformValue(column[key])
+              return result
+            }, {})
+          : column
+      })
+    } else if (columns && typeof columns === 'object') {
+      columns = Object.keys(columns).reduce((result, key) => {
+        result[key] = this.transformValue(columns[key])
+        return result
+      }, {})
+    }
+
     this.knexQuery.insert(columns)
     return this
   }

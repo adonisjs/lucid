@@ -21,6 +21,7 @@ import {
   getQueryClient,
   getInsertBuilder,
   setupApplication,
+  getRawQueryBuilder,
 } from '../../test-helpers'
 
 let app: ApplicationContract
@@ -94,6 +95,35 @@ test.group('Query Builder | insert', (group) => {
 
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('derive key value from raw query', async (assert) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = getInsertBuilder(getQueryClient(connection, app))
+
+    const { sql, bindings } = db
+      .table('users')
+      .insert({
+        username: getRawQueryBuilder(
+          getQueryClient(connection, app),
+          `ST_GeomFromText(POINT('row.lat_lng'))`
+        ),
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .insert({
+        username: connection.client!.raw(`ST_GeomFromText(POINT('row.lat_lng'))`),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
     await connection.disconnect()
   })
 })
