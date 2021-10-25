@@ -6389,6 +6389,55 @@ test.group('Base model | inheritance', (group) => {
     assert.isFalse(MyBaseModel.$relationsDefinitions.has('emails'))
   })
 
+  test('overwrite relationship during relationsip', async (assert) => {
+    class SocialProfile extends BaseModel {
+      @column()
+      public socialParentId: number
+
+      @column()
+      public userId: number
+    }
+
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class Email extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    SocialProfile.boot()
+    Profile.boot()
+    Email.boot()
+
+    class MyBaseModel extends BaseModel {
+      @column()
+      public id: number
+
+      @hasOne(() => Profile)
+      public profile: HasOne<typeof Profile>
+    }
+
+    class User extends MyBaseModel {
+      @hasMany(() => Email)
+      public emails: HasMany<typeof Email>
+
+      @hasOne(() => SocialProfile, { foreignKey: 'socialParentId' })
+      public declare profile: HasOne<typeof SocialProfile>
+    }
+
+    MyBaseModel.boot()
+    User.boot()
+
+    assert.deepEqual(User.$getRelation('profile').relatedModel(), SocialProfile)
+    assert.deepEqual(User.$getRelation('profile').model, User)
+
+    assert.deepEqual(MyBaseModel.$getRelation('profile').relatedModel(), Profile)
+    assert.deepEqual(MyBaseModel.$getRelation('profile').model, MyBaseModel)
+  })
+
   test('allow overwriting relationships', async (assert) => {
     class Profile extends BaseModel {
       @column()
