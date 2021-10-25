@@ -6355,24 +6355,31 @@ test.group('Base model | inheritance', (group) => {
   })
 
   test('inherting a model should copy relationships', async (assert) => {
-    class Profile extends BaseModel {}
-    class Email extends BaseModel {}
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+    }
+    class Email extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    Profile.boot()
+    Email.boot()
 
     class MyBaseModel extends BaseModel {
+      @column()
+      public id: number
+
       @hasOne(() => Profile)
       public profile: HasOne<typeof Profile>
     }
 
     class User extends MyBaseModel {
-      @column()
-      public id: number
-
       @hasMany(() => Email)
       public emails: HasMany<typeof Email>
     }
 
-    Profile.boot()
-    Email.boot()
     MyBaseModel.boot()
     User.boot()
 
@@ -6380,25 +6387,31 @@ test.group('Base model | inheritance', (group) => {
     assert.isTrue(User.$relationsDefinitions.has('profile'))
     assert.isTrue(MyBaseModel.$relationsDefinitions.has('profile'))
     assert.isFalse(MyBaseModel.$relationsDefinitions.has('emails'))
-    assert.deepEqual(
-      MyBaseModel.$relationsDefinitions.get('profile'),
-      User.$relationsDefinitions.get('profile')
-    )
   })
 
   test('allow overwriting relationships', async (assert) => {
-    class Profile extends BaseModel {}
-    class Email extends BaseModel {}
+    class Profile extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    class Email extends BaseModel {
+      @column()
+      public userId: number
+    }
+
+    Profile.boot()
+    Email.boot()
 
     class MyBaseModel extends BaseModel {
+      @column()
+      public id: number
+
       @hasOne(() => Profile)
       public profile: HasOne<typeof Profile>
     }
 
     class User extends MyBaseModel {
-      @column()
-      public id: number
-
       @hasOne(() => Profile, {
         onQuery() {},
       })
@@ -6408,8 +6421,6 @@ test.group('Base model | inheritance', (group) => {
       public emails: HasMany<typeof Email>
     }
 
-    Profile.boot()
-    Email.boot()
     MyBaseModel.boot()
     User.boot()
 
