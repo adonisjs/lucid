@@ -81,7 +81,7 @@ export default class MakeModel extends BaseCommand {
       .appRoot(this.application.cliCwd || this.application.appRoot)
 
     if (this.migration) {
-      await this.execCommand('node', ['ace', 'make:migration', this.name])
+      await this.kernel.exec('make:migration', [this.name])
     }
 
     if (this.controller) {
