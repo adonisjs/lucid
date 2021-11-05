@@ -1583,6 +1583,15 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   }
 
   /**
+   * Make use of distinct `sum` aggregate function
+   */
+  public sumDistinct(columns: any, alias?: any): this {
+    this.hasAggregates = true
+    this.knexQuery.sumDistinct(this.normalizeAggregateColumns(columns, alias))
+    return this
+  }
+
+  /**
    * A shorthand for applying offset and limit based upon
    * the current page
    */

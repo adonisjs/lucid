@@ -9556,6 +9556,307 @@ test.group('Query Builder | sum', (group) => {
   })
 })
 
+test.group('Query Builder | sumDistinct', (group) => {
+  group.before(async () => {
+    app = await setupApplication()
+    await setup()
+  })
+
+  group.after(async () => {
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  group.afterEach(async () => {
+    app.container.use('Adonis/Core/Event').clearListeners('db:query')
+    await resetTables()
+  })
+
+  test('use sumDistinct function', async (assert) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db.from('users').sumDistinct('*', 'sumDistinct').toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .sumDistinct('*', { as: 'sumDistinct' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .sumDistinct('*', 'sumDistinct')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .sumDistinct('*', { as: 'sumDistinct' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('use sumDistinct function for multiple times', async (assert) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db.from('users').sumDistinct({ u: 'username', e: 'email' }).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .sumDistinct({ u: 'username', e: 'email' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .sumDistinct({ u: 'username', e: 'email' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .sumDistinct({ u: 'my_username', e: 'my_email' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('use raw queries to compute sumDistinct', async (assert) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .sumDistinct(
+        getRawQueryBuilder(
+          getQueryClient(connection, app),
+          'select * from profiles where is_verified = ?',
+          [true]
+        ),
+        'u'
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .sumDistinct({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .sumDistinct(
+        getRawQueryBuilder(
+          getQueryClient(connection, app),
+          'select * from profiles where is_verified = ?',
+          [true]
+        ),
+        'u'
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .sumDistinct({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('use subqueries to compute sumDistinct', async (assert) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .sumDistinct(
+        getQueryBuilder(getQueryClient(connection, app))
+          .where('is_verified', true)
+          .from('profiles'),
+        'u'
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .sumDistinct({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .sumDistinct(
+        getQueryBuilder(getQueryClient(connection, app))
+          .where('is_verified', true)
+          .from('profiles'),
+        'u'
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .sumDistinct({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('use raw query to compute sumDistinct with multiple columns', async (assert) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .sumDistinct({
+        u: getRawQueryBuilder(
+          getQueryClient(connection, app),
+          'select * from profiles where is_verified = ?',
+          [true]
+        ),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .sumDistinct({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .sumDistinct({
+        u: getRawQueryBuilder(
+          getQueryClient(connection, app),
+          'select * from profiles where is_verified = ?',
+          [true]
+        ),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .sumDistinct({
+        u: connection.client!.raw('select * from profiles where is_verified = ?', [true]),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('use subquery to compute sumDistinct with multiple columns', async (assert) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .sumDistinct({
+        u: getQueryBuilder(getQueryClient(connection, app))
+          .where('is_verified', true)
+          .from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .sumDistinct({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .sumDistinct({
+        u: getQueryBuilder(getQueryClient(connection, app))
+          .where('is_verified', true)
+          .from('profiles'),
+        e: 'email',
+      })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .sumDistinct({
+        u: connection.client!.where('is_verified', true).from('profiles'),
+        e: 'my_email',
+      })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+})
+
 test.group('Query Builder | avg', (group) => {
   group.before(async () => {
     app = await setupApplication()

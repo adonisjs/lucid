@@ -745,6 +745,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     min: Aggregate<this>
     max: Aggregate<this>
     sum: Aggregate<this>
+    sumDistinct: Aggregate<this>
     avg: Aggregate<this>
     avgDistinct: Aggregate<this>
 
