@@ -34,7 +34,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
   /**
    * Acceptable raw queries
    */
-  export type RawQuery = RawBuilderContract | RawQueryBuilderContract
+  export type RawQuery =
+    | RawBuilderContract
+    | RawQueryBuilderContract
+    | Knex.Raw
+    | Knex.RawQueryBuilder
 
   /**
    * A known set of values allowed when defining values for different
