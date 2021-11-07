@@ -16,6 +16,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   import { ConnectionOptions } from 'tls'
   import { EmitterContract } from '@ioc:Adonis/Core/Event'
   import { MacroableConstructorContract } from 'macroable'
+  import { LoggerContract } from '@ioc:Adonis/Core/Logger'
   import { HealthReportEntry } from '@ioc:Adonis/Core/HealthCheck'
   import { LucidModel, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm'
   import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler'
@@ -690,6 +691,14 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * database connections
    */
   export interface DatabaseContract {
+    Database: MacroableConstructorContract<DatabaseContract> & {
+      new (
+        config: DatabaseConfig,
+        logger: LoggerContract,
+        profiler: ProfilerContract,
+        emitter: EmitterContract
+      ): DatabaseContract
+    }
     DatabaseQueryBuilder: MacroableConstructorContract<DatabaseQueryBuilderContract>
     InsertQueryBuilder: MacroableConstructorContract<InsertQueryBuilderContract>
     ModelQueryBuilder: MacroableConstructorContract<ModelQueryBuilderContract<any, any>>

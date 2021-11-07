@@ -9,6 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
+import { Macroable } from 'macroable'
 import { EmitterContract } from '@ioc:Adonis/Core/Event'
 import { LoggerContract } from '@ioc:Adonis/Core/Logger'
 import { ProfilerContract } from '@ioc:Adonis/Core/Profiler'
@@ -16,12 +17,12 @@ import { Exception, ManagerConfigValidator } from '@poppinss/utils'
 
 import {
   DatabaseConfig,
+  IsolationLevels,
   DatabaseContract,
+  QueryClientContract,
   DatabaseClientOptions,
   TransactionClientContract,
   ConnectionManagerContract,
-  IsolationLevels,
-  QueryClientContract,
 } from '@ioc:Adonis/Lucid/Database'
 
 import { QueryClient } from '../QueryClient'
@@ -38,7 +39,19 @@ import { DatabaseQueryBuilder } from './QueryBuilder/Database'
  * Database class exposes the API to manage multiple connections and obtain an instance
  * of query/transaction clients.
  */
-export class Database implements DatabaseContract {
+export class Database extends Macroable implements DatabaseContract {
+  /**
+   * Required by macroable
+   */
+  protected static macros = {}
+  protected static getters = {}
+
+  /**
+   * Reference to self constructor. TypeScript sucks with "this.constructor"
+   * https://github.com/microsoft/TypeScript/issues/4586
+   */
+  public Database = Database
+
   /**
    * Reference to connections manager
    */
@@ -71,6 +84,7 @@ export class Database implements DatabaseContract {
     private profiler: ProfilerContract,
     private emitter: EmitterContract
   ) {
+    super()
     this.validateConfig()
     this.manager = new ConnectionManager(this.logger, this.emitter)
     this.registerConnections()
