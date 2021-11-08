@@ -166,6 +166,21 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   }
 
   /**
+   * Resolves the column name considering raw queries as well.
+   */
+  private resolveColumn(columns: any, checkForObject: boolean = false, returnValue?: any) {
+    if (columns instanceof RawQueryBuilder) {
+      return columns['knexQuery']
+    }
+
+    if (columns instanceof RawBuilder) {
+      return columns.toKnex(this.knexQuery.client)
+    }
+
+    return this.resolveKey(columns, checkForObject, returnValue)
+  }
+
+  /**
    * Resolves column names
    */
   protected resolveKey(columns: any, checkForObject: boolean = false, returnValue?: any): any {
@@ -316,12 +331,12 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     if (value !== undefined) {
       whereClauses.push({
         method: 'where',
-        args: [this.resolveKey(key), operator, this.transformValue(value)],
+        args: [this.resolveColumn(key), operator, this.transformValue(value)],
       })
     } else if (operator !== undefined) {
       whereClauses.push({
         method: 'where',
-        args: [this.resolveKey(key), this.transformValue(operator)],
+        args: [this.resolveColumn(key), this.transformValue(operator)],
       })
     } else {
       /**
@@ -331,7 +346,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       this.validateWhereSingleArgument(key, 'where')
       whereClauses.push({
         method: 'where',
-        args: [this.resolveKey(key, true, this.transformCallback(key))],
+        args: [this.resolveColumn(key, true, this.transformCallback(key))],
       })
     }
 
@@ -347,18 +362,18 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     if (value !== undefined) {
       whereClauses.push({
         method: 'orWhere',
-        args: [this.resolveKey(key), operator, this.transformValue(value)],
+        args: [this.resolveColumn(key), operator, this.transformValue(value)],
       })
     } else if (operator !== undefined) {
       whereClauses.push({
         method: 'orWhere',
-        args: [this.resolveKey(key), this.transformValue(operator)],
+        args: [this.resolveColumn(key), this.transformValue(operator)],
       })
     } else {
       this.validateWhereSingleArgument(key, 'orWhere')
       whereClauses.push({
         method: 'orWhere',
-        args: [this.resolveKey(key, true, this.transformCallback(key))],
+        args: [this.resolveColumn(key, true, this.transformCallback(key))],
       })
     }
 
@@ -381,18 +396,18 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     if (value !== undefined) {
       whereClauses.push({
         method: 'whereNot',
-        args: [this.resolveKey(key), operator, this.transformValue(value)],
+        args: [this.resolveColumn(key), operator, this.transformValue(value)],
       })
     } else if (operator !== undefined) {
       whereClauses.push({
         method: 'whereNot',
-        args: [this.resolveKey(key), this.transformValue(operator)],
+        args: [this.resolveColumn(key), this.transformValue(operator)],
       })
     } else {
       this.validateWhereSingleArgument(key, 'whereNot')
       whereClauses.push({
         method: 'whereNot',
-        args: [this.resolveKey(key, true, this.transformCallback(key))],
+        args: [this.resolveColumn(key, true, this.transformCallback(key))],
       })
     }
 
@@ -408,18 +423,18 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     if (value !== undefined) {
       whereClauses.push({
         method: 'orWhereNot',
-        args: [this.resolveKey(key), operator, this.transformValue(value)],
+        args: [this.resolveColumn(key), operator, this.transformValue(value)],
       })
     } else if (operator !== undefined) {
       whereClauses.push({
         method: 'orWhereNot',
-        args: [this.resolveKey(key), this.transformValue(operator)],
+        args: [this.resolveColumn(key), this.transformValue(operator)],
       })
     } else {
       this.validateWhereSingleArgument(key, 'orWhereNot')
       whereClauses.push({
         method: 'orWhereNot',
-        args: [this.resolveKey(key, true, this.transformCallback(key))],
+        args: [this.resolveColumn(key, true, this.transformCallback(key))],
       })
     }
 
@@ -508,8 +523,8 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       : this.transformValue(value)
 
     columns = Array.isArray(columns)
-      ? columns.map((column) => this.resolveKey(column))
-      : this.resolveKey(columns)
+      ? columns.map((column) => this.resolveColumn(column))
+      : this.resolveColumn(columns)
 
     const whereClauses = this.getRecentStackItem()
     whereClauses.push({
@@ -528,8 +543,8 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       : this.transformValue(value)
 
     columns = Array.isArray(columns)
-      ? columns.map((column) => this.resolveKey(column))
-      : this.resolveKey(columns)
+      ? columns.map((column) => this.resolveColumn(column))
+      : this.resolveColumn(columns)
 
     const whereClauses = this.getRecentStackItem()
     whereClauses.push({
@@ -555,8 +570,8 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       : this.transformValue(value)
 
     columns = Array.isArray(columns)
-      ? columns.map((column) => this.resolveKey(column))
-      : this.resolveKey(columns)
+      ? columns.map((column) => this.resolveColumn(column))
+      : this.resolveColumn(columns)
 
     const whereClauses = this.getRecentStackItem()
     whereClauses.push({
@@ -575,8 +590,8 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       : this.transformValue(value)
 
     columns = Array.isArray(columns)
-      ? columns.map((column) => this.resolveKey(column))
-      : this.resolveKey(columns)
+      ? columns.map((column) => this.resolveColumn(column))
+      : this.resolveColumn(columns)
 
     const whereClauses = this.getRecentStackItem()
     whereClauses.push({
@@ -600,7 +615,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     const whereClauses = this.getRecentStackItem()
     whereClauses.push({
       method: 'whereNull',
-      args: [this.resolveKey(key)],
+      args: [this.resolveColumn(key)],
     })
     return this
   }
@@ -612,7 +627,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     const whereClauses = this.getRecentStackItem()
     whereClauses.push({
       method: 'orWhereNull',
-      args: [this.resolveKey(key)],
+      args: [this.resolveColumn(key)],
     })
     return this
   }
@@ -631,7 +646,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     const whereClauses = this.getRecentStackItem()
     whereClauses.push({
       method: 'whereNotNull',
-      args: [this.resolveKey(key)],
+      args: [this.resolveColumn(key)],
     })
     return this
   }
@@ -643,7 +658,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     const whereClauses = this.getRecentStackItem()
     whereClauses.push({
       method: 'orWhereNotNull',
-      args: [this.resolveKey(key)],
+      args: [this.resolveColumn(key)],
     })
     return this
   }
@@ -724,7 +739,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     const whereClauses = this.getRecentStackItem()
     whereClauses.push({
       method: 'whereBetween',
-      args: [this.resolveKey(key), this.getBetweenPair(value)],
+      args: [this.resolveColumn(key), this.getBetweenPair(value)],
     })
     return this
   }
@@ -736,7 +751,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     const whereClauses = this.getRecentStackItem()
     whereClauses.push({
       method: 'orWhereBetween',
-      args: [this.resolveKey(key), this.getBetweenPair(value)],
+      args: [this.resolveColumn(key), this.getBetweenPair(value)],
     })
     return this
   }
@@ -755,7 +770,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     const whereClauses = this.getRecentStackItem()
     whereClauses.push({
       method: 'whereNotBetween',
-      args: [this.resolveKey(key), this.getBetweenPair(value)],
+      args: [this.resolveColumn(key), this.getBetweenPair(value)],
     })
     return this
   }
@@ -767,7 +782,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
     const whereClauses = this.getRecentStackItem()
     whereClauses.push({
       method: 'orWhereNotBetween',
-      args: [this.resolveKey(key), this.getBetweenPair(value)],
+      args: [this.resolveColumn(key), this.getBetweenPair(value)],
     })
     return this
   }
@@ -976,7 +991,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public having(key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
-      this.knexQuery.having(this.resolveKey(key), operator, this.transformValue(value))
+      this.knexQuery.having(this.resolveColumn(key), operator, this.transformValue(value))
       return this
     }
 
@@ -998,7 +1013,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    */
   public orHaving(key: any, operator?: any, value?: any): this {
     if (value !== undefined) {
-      this.knexQuery.orHaving(this.resolveKey(key), operator, this.transformValue(value))
+      this.knexQuery.orHaving(this.resolveColumn(key), operator, this.transformValue(value))
       return this
     }
 
@@ -1027,7 +1042,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? value.map((one) => this.transformValue(one))
       : this.transformValue(value)
 
-    this.knexQuery.havingIn(this.resolveKey(key), value)
+    this.knexQuery.havingIn(this.resolveColumn(key), value)
     return this
   }
 
@@ -1039,7 +1054,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? value.map((one) => this.transformValue(one))
       : this.transformValue(value)
 
-    this.knexQuery['orHavingIn'](this.resolveKey(key), value)
+    this.knexQuery['orHavingIn'](this.resolveColumn(key), value)
     return this
   }
 
@@ -1058,7 +1073,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? value.map((one) => this.transformValue(one))
       : this.transformValue(value)
 
-    this.knexQuery['havingNotIn'](this.resolveKey(key), value)
+    this.knexQuery['havingNotIn'](this.resolveColumn(key), value)
     return this
   }
 
@@ -1070,7 +1085,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
       ? value.map((one) => this.transformValue(one))
       : this.transformValue(value)
 
-    this.knexQuery['orHavingNotIn'](this.resolveKey(key), value)
+    this.knexQuery['orHavingNotIn'](this.resolveColumn(key), value)
     return this
   }
 
@@ -1085,7 +1100,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding having null clause
    */
   public havingNull(key: any): this {
-    this.knexQuery['havingNull'](this.resolveKey(key))
+    this.knexQuery['havingNull'](this.resolveColumn(key))
     return this
   }
 
@@ -1093,7 +1108,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding or having null clause
    */
   public orHavingNull(key: any): this {
-    this.knexQuery['orHavingNull'](this.resolveKey(key))
+    this.knexQuery['orHavingNull'](this.resolveColumn(key))
     return this
   }
 
@@ -1108,7 +1123,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding having not null clause
    */
   public havingNotNull(key: any): this {
-    this.knexQuery['havingNotNull'](this.resolveKey(key))
+    this.knexQuery['havingNotNull'](this.resolveColumn(key))
     return this
   }
 
@@ -1116,7 +1131,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding or having not null clause
    */
   public orHavingNotNull(key: any): this {
-    this.knexQuery['orHavingNotNull'](this.resolveKey(key))
+    this.knexQuery['orHavingNotNull'](this.resolveColumn(key))
     return this
   }
 
@@ -1177,7 +1192,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `having between` clause
    */
   public havingBetween(key: any, value: any): this {
-    this.knexQuery.havingBetween(this.resolveKey(key), this.getBetweenPair(value))
+    this.knexQuery.havingBetween(this.resolveColumn(key), this.getBetweenPair(value))
     return this
   }
 
@@ -1185,7 +1200,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `or having between` clause
    */
   public orHavingBetween(key: any, value: any): this {
-    this.knexQuery.orHavingBetween(this.resolveKey(key), this.getBetweenPair(value))
+    this.knexQuery.orHavingBetween(this.resolveColumn(key), this.getBetweenPair(value))
     return this
   }
 
@@ -1193,14 +1208,14 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Alias for [[havingBetween]]
    */
   public andHavingBetween(key: any, value: any): this {
-    return this.havingBetween(this.resolveKey(key), value)
+    return this.havingBetween(this.resolveColumn(key), value)
   }
 
   /**
    * Adding `having not between` clause
    */
   public havingNotBetween(key: any, value: any): this {
-    this.knexQuery.havingNotBetween(this.resolveKey(key), this.getBetweenPair(value))
+    this.knexQuery.havingNotBetween(this.resolveColumn(key), this.getBetweenPair(value))
     return this
   }
 
@@ -1208,7 +1223,7 @@ export abstract class Chainable extends Macroable implements ChainableContract {
    * Adding `or having not between` clause
    */
   public orHavingNotBetween(key: any, value: any): this {
-    this.knexQuery.orHavingNotBetween(this.resolveKey(key), this.getBetweenPair(value))
+    this.knexQuery.orHavingNotBetween(this.resolveColumn(key), this.getBetweenPair(value))
     return this
   }
 

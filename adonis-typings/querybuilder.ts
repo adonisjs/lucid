@@ -141,8 +141,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Key-value pair. The value can also be a subquery
      */
-    (key: string, value: StrictValues | ChainableContract): Builder
-    (key: string, operator: string, value: StrictValues | ChainableContract): Builder
+    (key: string | RawQuery, value: StrictValues | ChainableContract): Builder
+    (key: string | RawQuery, operator: string, value: StrictValues | ChainableContract): Builder
   }
 
   /**
@@ -152,8 +152,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Key-value pair.
      */
-    (column: string, comparisonColumn: string): Builder
-    (column: string, operator: string, comparisonColumn: string): Builder
+    (column: string | RawQuery, comparisonColumn: string): Builder
+    (column: string | RawQuery, operator: string, comparisonColumn: string): Builder
   }
 
   /**
@@ -163,7 +163,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Column name and array of values
      */
-    (K: string, value: StrictValues[]): Builder
+    (K: string | RawQuery, value: StrictValues[]): Builder
 
     /**
      * Column names and array of values as an 2d array
@@ -175,7 +175,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * results
      */
     (
-      k: string,
+      k: string | RawQuery,
       subquery: ChainableContract | QueryCallback<Builder> | RawBuilderContract | RawQuery
     ): Builder
 
@@ -189,7 +189,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Possible signatures for adding whereNull clause.
    */
   interface WhereNull<Builder extends ChainableContract> {
-    (key: string): Builder
+    (key: string | RawQuery): Builder
   }
 
   /**
@@ -207,7 +207,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Accept any string as a key for supporting prefix columns
      */
     (
-      key: string,
+      key: string | RawQuery,
       value: [StrictValues | ChainableContract, StrictValues | ChainableContract]
     ): Builder
   }
@@ -331,7 +331,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Key operator and value. Value can be a subquery as well
      */
     (
-      key: string,
+      key: string | RawQuery,
       operator: string,
       value: StrictValues | ChainableContract | RawBuilderContract | RawQuery
     ): Builder
@@ -346,14 +346,14 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * subqueries.
      */
     (
-      key: string,
+      key: string | RawQuery,
       value: (StrictValues | ChainableContract | RawBuilderContract | RawQuery)[]
     ): Builder
 
     /**
      * Key, along with a query callback
      */
-    (key: string, callback: QueryCallback<Builder>): Builder
+    (key: string | RawQuery, callback: QueryCallback<Builder>): Builder
   }
 
   /**

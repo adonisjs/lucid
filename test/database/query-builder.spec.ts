@@ -1050,6 +1050,28 @@ test.group('Query Builder | where', (group) => {
     assert.deepEqual(resolverBindings, knexResolverBindings)
     await connection.disconnect()
   })
+
+  test('allow raw query for the column name', async (assert) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const client = getQueryClient(connection, app)
+    let db = getQueryBuilder(client)
+    const { sql, bindings } = db
+      .from('users')
+      .where(getRawQueryBuilder(client, 'age', []), '>', 22)
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .where(connection.client!.raw('age'), '>', 22)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
 })
 
 test.group('Query Builder | whereNot', (group) => {
