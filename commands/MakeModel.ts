@@ -8,11 +8,7 @@
  */
 
 import { join } from 'path'
-import { promisify } from 'util'
-import { execFile as childProcessExec } from 'child_process'
 import { BaseCommand, args, flags } from '@adonisjs/core/build/standalone'
-
-const exec = promisify(childProcessExec)
 
 export default class MakeModel extends BaseCommand {
   public static commandName = 'make:model'
@@ -45,24 +41,10 @@ export default class MakeModel extends BaseCommand {
   public controller: boolean
 
   /**
-   * Executes a given command
+   * This command loads the application
    */
-  private async execCommand(command: string, commandArgs: string[]) {
-    const { stdout, stderr } = await exec(command, commandArgs, {
-      env: {
-        ...process.env,
-        FORCE_COLOR: 'true',
-      },
-    })
-
-    if (stdout) {
-      console.log(stdout.trim())
-    }
-
-    if (stderr) {
-      console.log(stderr.trim())
-      throw new Error(`Command "${command}" failed`)
-    }
+  public static settings = {
+    loadApp: true,
   }
 
   /**
@@ -81,11 +63,11 @@ export default class MakeModel extends BaseCommand {
       .appRoot(this.application.cliCwd || this.application.appRoot)
 
     if (this.migration) {
-      await this.execCommand('node', ['ace', 'make:migration', this.name])
+      await this.kernel.exec('make:migration', [this.name])
     }
 
     if (this.controller) {
-      await this.execCommand('node', ['ace', 'make:controller', this.name, '--resource'])
+      await this.kernel.exec('make:controller', [this.name, '--resource'])
     }
 
     await this.generator.run()
