@@ -150,7 +150,13 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
       customFn,
       model.$keys.attributesToColumns.resolve.bind(model.$keys.attributesToColumns)
     )
-    builder.table(model.table)
+
+    /**
+     * Assign table when not already assigned
+     */
+    if (!builder['_single'] || !builder['_single'].table) {
+      builder.table(model.table)
+    }
   }
 
   /**

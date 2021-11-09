@@ -5734,6 +5734,53 @@ test.group('Base Model | paginate', (group) => {
       previousPageUrl: null,
     })
   })
+
+  test('use table aliases', async (assert) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public email: string
+    }
+
+    const usersList = getUsers(18)
+    await db.insertQuery().table('users').multiInsert(usersList)
+
+    const users = await User.query()
+      .from({ u: User.table })
+      .where('u.username', usersList[0].username)
+      .paginate(1, 5)
+
+    users.baseUrl('/users')
+
+    assert.instanceOf(users, ModelPaginator)
+
+    assert.lengthOf(users.all(), 1)
+    assert.instanceOf(users.all()[0], User)
+    assert.equal(users.perPage, 5)
+    assert.equal(users.currentPage, 1)
+    assert.equal(users.lastPage, 1)
+    assert.isFalse(users.hasPages)
+    assert.isFalse(users.hasMorePages)
+    assert.isFalse(users.isEmpty)
+    assert.equal(users.total, 1)
+    assert.isTrue(users.hasTotal)
+    assert.deepEqual(users.getMeta(), {
+      total: 1,
+      per_page: 5,
+      current_page: 1,
+      last_page: 1,
+      first_page: 1,
+      first_page_url: '/users?page=1',
+      last_page_url: '/users?page=1',
+      next_page_url: null,
+      previous_page_url: null,
+    })
+  })
 })
 
 test.group('Base Model | toObject', (group) => {

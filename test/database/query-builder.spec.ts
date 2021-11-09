@@ -10777,6 +10777,46 @@ test.group('Query Builder | paginate', (group) => {
 
     await connection.disconnect()
   })
+
+  test('use table aliases', async (assert) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection, app))
+    const usersList = getUsers(18)
+    await getInsertBuilder(getQueryClient(connection, app)).table('users').multiInsert(usersList)
+
+    const users = await db
+      .from({ u: 'users' })
+      .where('u.username', usersList[0].username)
+      .paginate(1, 5)
+
+    users.baseUrl('/users')
+
+    assert.lengthOf(users.all(), 1)
+    assert.equal(users.perPage, 5)
+    assert.equal(users.currentPage, 1)
+    assert.equal(users.lastPage, 1)
+    assert.isFalse(users.hasPages)
+    assert.isFalse(users.hasMorePages)
+    assert.isFalse(users.isEmpty)
+    assert.equal(users.total, 1)
+    assert.isTrue(users.hasTotal)
+
+    assert.deepEqual(users.getMeta(), {
+      total: 1,
+      per_page: 5,
+      current_page: 1,
+      last_page: 1,
+      first_page: 1,
+      first_page_url: '/users?page=1',
+      last_page_url: '/users?page=1',
+      next_page_url: null,
+      previous_page_url: null,
+    })
+
+    await connection.disconnect()
+  })
 })
 
 test.group('Query Builder | clone', (group) => {

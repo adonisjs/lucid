@@ -304,6 +304,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
       .clearOffset()
       .clearSelect()
       .count('* as total')
+
     const aggregates = await countQuery.exec()
 
     const total = this.hasGroupBy ? aggregates.length : aggregates[0].total
