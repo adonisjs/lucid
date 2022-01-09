@@ -19,6 +19,7 @@ import { Migrator } from '../../src/Migrator'
 import Migrate from '../../commands/Migration/Run'
 import Rollback from '../../commands/Migration/Rollback'
 import { fs, setup, cleanup, getDb, setupApplication } from '../../test-helpers'
+import Reset from '../../commands/Migration/Reset'
 
 let db: ReturnType<typeof getDb>
 let app: ApplicationContract
@@ -224,5 +225,61 @@ test.group('Migrate', (group) => {
 
     await rollback.run()
     delete process.env.NODE_ENV
+  })
+
+  test.only('migration:reset should rollback to batch 0', async (assert) => {
+    await fs.add(
+      'database/migrations/users.ts',
+      `
+        import { Schema } from '../../../../src/Schema'
+        module.exports = class User extends Schema {
+          public async up () {
+            this.schema.createTable('schema_users', (table) => {
+              table.increments()
+            })
+          }
+
+          public async down() {
+            this.schema.dropTable('schema_users')
+          }
+        }
+      `
+    )
+
+    await fs.add(
+      'database/migrations/posts.ts',
+      `
+        import { Schema } from '../../../../src/Schema'
+        module.exports = class Account extends Schema {
+          public async up () {
+            this.schema.createTable('schema_accounts', (table) => {
+              table.increments()
+            })
+          }
+
+          public async down() {
+            this.schema.dropTable('schema_accounts')
+          }
+        }
+      `
+    )
+
+    const migrate = new Migrate(app, new Kernel(app))
+    await migrate.run()
+
+    db = getDb(app)
+
+    const reset = new Reset(app, new Kernel(app))
+    await reset.run()
+
+    db = getDb(app)
+
+    let migrated = await db.connection().from('adonis_schema').select('*')
+    let hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    let hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+
+    assert.lengthOf(migrated, 0)
+    assert.isFalse(hasUsersTable)
+    assert.isFalse(hasAccountsTable)
   })
 })
