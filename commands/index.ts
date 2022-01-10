@@ -16,4 +16,5 @@ export default [
   '@adonisjs/lucid/build/commands/Migration/Rollback',
   '@adonisjs/lucid/build/commands/Migration/Status',
   '@adonisjs/lucid/build/commands/Migration/Reset',
+  '@adonisjs/lucid/build/commands/Migration/Refresh',
 ]
