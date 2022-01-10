@@ -19,6 +19,12 @@ import { getDDLMethod } from '../../src/utils'
  */
 export default abstract class MigrationsBase extends BaseCommand {
   /**
+   * Whether to close the connection after migrations are run
+   * Useful if the Migrator have to be used several times in a row.
+   */
+  public shouldCloseConnectionAfterMigrations: boolean = true
+
+  /**
    * Not a valid message
    */
   protected printNotAValidConnection(connection: string) {
@@ -88,7 +94,10 @@ export default abstract class MigrationsBase extends BaseCommand {
      */
     if (migrator.dryRun) {
       await migrator.run()
-      await migrator.close()
+
+      if (this.shouldCloseConnectionAfterMigrations) {
+        await migrator.close()
+      }
 
       Object.keys(migrator.migratedFiles).forEach((file) => {
         this.prettyPrintSql(migrator.migratedFiles[file], connectionName)
@@ -135,7 +144,9 @@ export default abstract class MigrationsBase extends BaseCommand {
      * Run and close db connection
      */
     await migrator.run()
-    await migrator.close()
+    if (this.shouldCloseConnectionAfterMigrations) {
+      await migrator.close()
+    }
 
     /**
      * Log all pending files. This will happen, when one of the migration
