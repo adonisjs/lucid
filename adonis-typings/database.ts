@@ -399,6 +399,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
       }
     }
     searchPath?: string[]
+    wrapIdentifier?: (value: string) => string
   }
 
   /**
