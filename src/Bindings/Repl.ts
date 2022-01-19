@@ -38,7 +38,7 @@ export function defineReplBindings(app: ApplicationContract, Repl: ReplContract)
       setupReplState(repl, 'models', requireAll(modelsAbsPath))
     },
     {
-      description: 'Recursively models Lucid models to the "models" property',
+      description: 'Recursively load Lucid models to the "models" property',
     }
   )
 
@@ -52,6 +52,33 @@ export function defineReplBindings(app: ApplicationContract, Repl: ReplContract)
     },
     {
       description: 'Load database provider to the "Db" property',
+    }
+  )
+
+  /**
+   * Load all factories to the factories property
+   */
+  Repl.addMethod(
+    'loadFactories',
+    (repl) => {
+      const factoriesPath = app.resolveNamespaceDirectory('factories') || 'database/factories'
+      console.log(repl.colors.dim(`recursively reading factories from "${factoriesPath}"`))
+
+      const factoriesAbsPath = app.makePath(factoriesPath)
+      const loadedFactories = requireAll(factoriesAbsPath)
+
+      if (!loadedFactories) {
+        return
+      }
+
+      setupReplState(
+        repl,
+        'factories',
+        Object.values(loadedFactories).reduce((acc, items) => ({ ...acc, ...items }), {})
+      )
+    },
+    {
+      description: 'Recursively load factories to the "factories" property',
     }
   )
 }
