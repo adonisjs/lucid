@@ -345,7 +345,6 @@ test.group('Migrate', (group) => {
       'database/seeders/user.ts',
       `export default class UserSeeder {
 				public async run () {
-          console.log('lets go')
 					process.env.EXEC_USER_SEEDER = 'true'
 				}
 			}`
