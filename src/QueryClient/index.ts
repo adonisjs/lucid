@@ -127,6 +127,13 @@ export class QueryClient implements QueryClientContract {
   }
 
   /**
+   * Drop all tables inside database
+   */
+  public async dropAllTables(schemas?: string[]): Promise<void> {
+    return this.dialect.dropAllTables(schemas || ['public'])
+  }
+
+  /**
    * Returns an instance of a transaction. Each transaction will
    * query and hold a single connection for all queries.
    */

@@ -122,6 +122,13 @@ export class TransactionClient extends EventEmitter implements TransactionClient
   }
 
   /**
+   * Drop all tables inside database
+   */
+  public async dropAllTables(schemas?: string[]): Promise<void> {
+    return this.dialect.dropAllTables(schemas || ['public'])
+  }
+
+  /**
    * Get a new query builder instance
    */
   public knexQuery(): Knex.QueryBuilder {
