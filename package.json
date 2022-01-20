@@ -24,7 +24,7 @@
     "test:docker": "npm run test:sqlite && npm run test:mysql && npm run test:mysql_legacy && npm run test:pg && npm run test:mssql",
     "test": "docker-compose -f docker-compose.yml -f docker-compose-test.yml build && docker-compose -f docker-compose.yml -f docker-compose-test.yml run --rm test",
     "lint": "eslint . --ext=.ts",
-    "clean": "del build",
+    "clean": "del-cli build",
     "compile": "npm run lint && npm run clean && tsc && npm run copyfiles",
     "copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
     "build": "npm run compile",
