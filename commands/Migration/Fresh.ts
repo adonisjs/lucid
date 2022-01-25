@@ -27,7 +27,7 @@ export default class Refresh extends MigrationsBase {
   /**
    * Perform dry run
    */
-  @flags.boolean({ description: 'Print SQL queries, instead of running the migrations' })
+  @flags.boolean({ description: 'Only print SQL queries instead of executing them' })
   public dryRun: boolean
 
   /**
