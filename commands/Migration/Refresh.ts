@@ -19,9 +19,9 @@ export default class Refresh extends MigrationsBase {
   public connection: string
 
   /**
-   * Force run migrations in production
+   * Force command execution in production
    */
-  @flags.boolean({ description: 'Explicitly force to run migrations in production' })
+  @flags.boolean({ description: 'Explicitly force command to run in production' })
   public force: boolean
 
   /**
