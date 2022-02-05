@@ -18,6 +18,8 @@ import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { Migrator } from '../../src/Migrator'
 import Migrate from '../../commands/Migration/Run'
 import Rollback from '../../commands/Migration/Rollback'
+import Reset from '../../commands/Migration/Reset'
+import Refresh from '../../commands/Migration/Refresh'
 import { fs, setup, cleanup, getDb, setupApplication } from '../../test-helpers'
 
 let db: ReturnType<typeof getDb>
@@ -67,7 +69,7 @@ test.group('Migrate', (group) => {
 
     assert.lengthOf(migrated, 1)
     assert.isTrue(hasUsersTable)
-    assert.equal(migrated[0].name, 'database/migrations/users')
+    assert.equal(migrated[0].name.replaceAll('\\', '/'), 'database/migrations/users')
     assert.equal(migrated[0].batch, 1)
   })
 
@@ -224,5 +226,178 @@ test.group('Migrate', (group) => {
 
     await rollback.run()
     delete process.env.NODE_ENV
+  })
+
+  test('migration:reset should rollback to batch 0', async (assert) => {
+    await fs.add(
+      'database/migrations/users.ts',
+      `
+        import { Schema } from '../../../../src/Schema'
+        module.exports = class User extends Schema {
+          public async up () {
+            this.schema.createTable('schema_users', (table) => {
+              table.increments()
+            })
+          }
+
+          public async down() {
+            this.schema.dropTable('schema_users')
+          }
+        }
+      `
+    )
+
+    await fs.add(
+      'database/migrations/posts.ts',
+      `
+        import { Schema } from '../../../../src/Schema'
+        module.exports = class Account extends Schema {
+          public async up () {
+            this.schema.createTable('schema_accounts', (table) => {
+              table.increments()
+            })
+          }
+
+          public async down() {
+            this.schema.dropTable('schema_accounts')
+          }
+        }
+      `
+    )
+
+    const migrate = new Migrate(app, new Kernel(app))
+    await migrate.run()
+
+    db = getDb(app)
+
+    const reset = new Reset(app, new Kernel(app))
+    await reset.run()
+
+    db = getDb(app)
+
+    let migrated = await db.connection().from('adonis_schema').select('*')
+    let hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    let hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+
+    assert.lengthOf(migrated, 0)
+    assert.isFalse(hasUsersTable)
+    assert.isFalse(hasAccountsTable)
+  })
+
+  test('migration:refresh should rollback to batch 0 then run all migrations', async (assert) => {
+    await fs.add(
+      'database/migrations/users.ts',
+      `
+        import { Schema } from '../../../../src/Schema'
+        module.exports = class User extends Schema {
+          public async up () {
+            this.schema.createTable('schema_users', (table) => {
+              table.increments()
+            })
+          }
+
+          public async down() {
+            this.schema.dropTable('schema_users')
+          }
+        }
+      `
+    )
+
+    await fs.add(
+      'database/migrations/posts.ts',
+      `
+        import { Schema } from '../../../../src/Schema'
+        module.exports = class Account extends Schema {
+          public async up () {
+            this.schema.createTable('schema_accounts', (table) => {
+              table.increments()
+            })
+          }
+
+          public async down() {
+            this.schema.dropTable('schema_accounts')
+          }
+        }
+      `
+    )
+
+    const migrate = new Migrate(app, new Kernel(app))
+    await migrate.run()
+
+    db = getDb(app)
+
+    const refresh = new Refresh(app, new Kernel(app))
+    await refresh.run()
+
+    db = getDb(app)
+
+    let migrated = await db.connection().from('adonis_schema').select('*')
+    let hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    let hasAccountsTable = await db.connection().schema.hasTable('schema_accounts')
+
+    assert.lengthOf(migrated, 2)
+    assert.isTrue(hasUsersTable)
+    assert.isTrue(hasAccountsTable)
+  })
+
+  test('migration:refresh --seed should rollback to batch 0, run all migrations then run seeders', async (assert) => {
+    await fs.add(
+      'database/seeders/user.ts',
+      `export default class UserSeeder {
+				public async run () {
+					process.env.EXEC_USER_SEEDER = 'true'
+				}
+			}`
+    )
+
+    await fs.add(
+      'database/migrations/users.ts',
+      `
+        import { Schema } from '../../../../src/Schema'
+        module.exports = class User extends Schema {
+          public async up () {
+            this.schema.createTable('schema_users', (table) => {
+              table.increments()
+            })
+          }
+
+          public async down() {
+            this.schema.dropTable('schema_users')
+          }
+        }
+      `
+    )
+
+    await fs.add(
+      'database/migrations/posts.ts',
+      `
+        import { Schema } from '../../../../src/Schema'
+        module.exports = class Account extends Schema {
+          public async up () {
+            this.schema.createTable('schema_accounts', (table) => {
+              table.increments()
+            })
+          }
+
+          public async down() {
+            this.schema.dropTable('schema_accounts')
+          }
+        }
+      `
+    )
+
+    const migrate = new Migrate(app, new Kernel(app))
+    await migrate.run()
+
+    db = getDb(app)
+
+    const reset = new Refresh(app, new Kernel(app))
+    reset.seed = true
+    await reset.run()
+
+    db = getDb(app)
+
+    assert.equal(process.env.EXEC_USER_SEEDER, 'true')
+    delete process.env.EXEC_USER_SEEDER
   })
 })

@@ -180,6 +180,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
     getAllTables(schemas?: string[]): Promise<string[]>
 
     /**
+     * Drop all tables inside database
+     */
+    dropAllTables(schemas?: string[]): Promise<void>
+
+    /**
      * Same as `query()`, but also selects the table for the query. The `from` method
      * doesn't allow defining the return type and one must use `query` to define
      * that.

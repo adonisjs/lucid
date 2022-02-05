@@ -62,4 +62,19 @@ test.group('Query client | drop tables', (group) => {
     assert.isFalse(await connection.client!.schema.hasTable('profiles'))
     assert.isFalse(await connection.client!.schema.hasTable('identities'))
   })
+
+  test('dropAllTables should not throw when there are no tables', async (assert) => {
+    await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
+
+    try {
+      await client.dropAllTables()
+      await client.dropAllTables()
+    } catch (err) {
+      assert.fail(err)
+    }
+  })
 })

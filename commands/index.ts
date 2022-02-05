@@ -12,7 +12,11 @@ export default [
   '@adonisjs/lucid/build/commands/MakeModel',
   '@adonisjs/lucid/build/commands/MakeMigration',
   '@adonisjs/lucid/build/commands/MakeSeeder',
+  '@adonisjs/lucid/build/commands/DbWipe',
   '@adonisjs/lucid/build/commands/Migration/Run',
   '@adonisjs/lucid/build/commands/Migration/Rollback',
   '@adonisjs/lucid/build/commands/Migration/Status',
+  '@adonisjs/lucid/build/commands/Migration/Reset',
+  '@adonisjs/lucid/build/commands/Migration/Refresh',
+  '@adonisjs/lucid/build/commands/Migration/Fresh',
 ]

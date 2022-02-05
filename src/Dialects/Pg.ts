@@ -57,6 +57,8 @@ export class PgDialect implements DialectContract {
    */
   public async dropAllTables(schemas: string[]) {
     const tables = await this.getAllTables(schemas)
+    if (!tables.length) return
+
     await this.client.rawQuery(`DROP table ${tables.join(',')} CASCADE;`)
   }
 
