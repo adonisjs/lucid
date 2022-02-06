@@ -45,7 +45,7 @@
   },
   "homepage": "https://github.com/adonisjs/lucid#readme",
   "dependencies": {
-    "@poppinss/hooks": "^3.0.5",
+    "@poppinss/hooks": "^5.0.1",
     "@poppinss/utils": "^3.2.1",
     "@types/faker": "^5.5.7",
     "faker": "^5.5.3",
