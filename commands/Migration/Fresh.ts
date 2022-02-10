@@ -37,6 +37,18 @@ export default class Refresh extends MigrationsBase {
   public seed: boolean
 
   /**
+   * Drop all views in database
+   */
+  @flags.boolean({ description: 'Also drop all views in database' })
+  public dropViews: boolean
+
+  /**
+   * Drop all types in database
+   */
+  @flags.boolean({ description: 'Also drop all types in database ( Postgres only )' })
+  public dropTypes: boolean
+
+  /**
    * This command loads the application, since we need the runtime
    * to find the migration directories for a given connection
    */
@@ -94,6 +106,8 @@ export default class Refresh extends MigrationsBase {
     const resetCmd = new DbWipe(this.application, this.kernel)
     resetCmd.connection = this.connection
     resetCmd.force = true
+    resetCmd.dropTypes = this.dropTypes
+    resetCmd.dropViews = this.dropViews
 
     await resetCmd.run()
   }
