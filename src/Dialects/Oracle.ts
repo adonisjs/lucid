@@ -56,6 +56,30 @@ export class OracleDialect implements DialectContract {
     )
   }
 
+  public async getAllViews(): Promise<string[]> {
+    throw new Error(
+      '"getAllViews" method is not implemented for oracledb. Create a PR to add the feature.'
+    )
+  }
+
+  public async getAllTypes(): Promise<string[]> {
+    throw new Error(
+      '"getAllTypes" method is not implemented for oracledb. Create a PR to add the feature.'
+    )
+  }
+
+  public async dropAllViews(): Promise<void> {
+    throw new Error(
+      '"dropAllViews" method is not implemented for oracledb. Create a PR to add the feature.'
+    )
+  }
+
+  public async dropAllTypes(): Promise<void> {
+    throw new Error(
+      '"dropAllTypes" method is not implemented for oracledb. Create a PR to add the feature.'
+    )
+  }
+
   public getAdvisoryLock(): Promise<boolean> {
     throw new Error(
       'Support for advisory locks is not implemented for oracledb. Create a PR to add the feature'

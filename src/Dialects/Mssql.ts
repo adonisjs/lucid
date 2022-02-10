@@ -74,6 +74,30 @@ export class MssqlDialect implements DialectContract {
     await this.client.rawQuery(`EXEC sp_MSforeachtable 'DROP TABLE \\?';`)
   }
 
+  public async getAllViews(): Promise<string[]> {
+    throw new Error(
+      '"getAllViews" method not implemented is not implemented for mssql. Create a PR to add the feature'
+    )
+  }
+
+  public async getAllTypes(): Promise<string[]> {
+    throw new Error(
+      '"getAllTypes" method not implemented is not implemented for mssql. Create a PR to add the feature'
+    )
+  }
+
+  public async dropAllViews(): Promise<void> {
+    throw new Error(
+      '"dropAllViews" method not implemented is not implemented for mssql. Create a PR to add the feature'
+    )
+  }
+
+  public async dropAllTypes(): Promise<void> {
+    throw new Error(
+      '"dropAllTypes" method not implemented is not implemented for mssql. Create a PR to add the feature'
+    )
+  }
+
   public getAdvisoryLock(): Promise<boolean> {
     throw new Error(
       'Support for advisory locks is not implemented for mssql. Create a PR to add the feature'

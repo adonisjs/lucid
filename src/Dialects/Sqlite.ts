@@ -45,6 +45,28 @@ export class SqliteDialect implements DialectContract {
   }
 
   /**
+   * Returns an array of all views names
+   */
+  public async getAllViews(): Promise<string[]> {
+    const tables = await this.client
+      .query()
+      .from('sqlite_master')
+      .select('name as table_name')
+      .where('type', 'view')
+      .whereNot('name', 'like', 'sqlite_%')
+      .orderBy('name', 'asc')
+
+    return tables.map(({ table_name }) => table_name)
+  }
+
+  /**
+   * Returns an array of all types names
+   */
+  public async getAllTypes(): Promise<string[]> {
+    throw new Error("Sqlite doesn't support types")
+  }
+
+  /**
    * Truncate SQLITE tables
    */
   public async truncate(table: string, _: boolean) {
@@ -61,6 +83,23 @@ export class SqliteDialect implements DialectContract {
     )
     await this.client.rawQuery('PRAGMA writable_schema = 0;')
     await this.client.rawQuery('VACUUM;')
+  }
+
+  /**
+   * Drop all views inside the database
+   */
+  public async dropAllViews(): Promise<void> {
+    await this.client.rawQuery('PRAGMA writable_schema = 1;')
+    await this.client.rawQuery(`delete from sqlite_schema where type = 'view';`)
+    await this.client.rawQuery('PRAGMA writable_schema = 0;')
+    await this.client.rawQuery('VACUUM;')
+  }
+
+  /**
+   * Drop all custom types inside the database
+   */
+  public async dropAllTypes(): Promise<void> {
+    throw new Error("Sqlite doesn't support types")
   }
 
   /**
