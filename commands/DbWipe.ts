@@ -60,17 +60,17 @@ export default class DbWipe extends BaseCommand {
       return
     }
 
-    if (this.dropTypes) {
-      await db.connection().dropAllTypes()
-      this.logger.info('All types dropped successfully')
+    if (this.dropViews) {
+      await db.connection().dropAllViews()
+      this.logger.info('All views dropped successfully')
     }
 
     await db.connection().dropAllTables()
     this.logger.info('All tables have been dropped successfully')
 
-    if (this.dropViews) {
-      await db.connection().dropAllViews()
-      this.logger.info('All views dropped successfully')
+    if (this.dropTypes) {
+      await db.connection().dropAllTypes()
+      this.logger.info('All types dropped successfully')
     }
   }
 
