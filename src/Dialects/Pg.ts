@@ -60,7 +60,7 @@ export class PgDialect implements DialectContract {
   /**
    * Returns an array of all types names
    */
-  public async getAllTypes(schemas: string[]) {
+  public async getAllTypes(_schemas: string[]) {
     const types = await this.client
       .query()
       .select('pg_type.typname')

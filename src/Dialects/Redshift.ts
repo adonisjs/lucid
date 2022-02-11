@@ -66,7 +66,7 @@ export class RedshiftDialect implements DialectContract {
    *
    * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
    */
-  public async getAllTypes(schemas: string[]) {
+  public async getAllTypes(_schemas: string[]) {
     const types = await this.client
       .query()
       .select('pg_type.typname')

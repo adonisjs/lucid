@@ -7,7 +7,6 @@ import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { Connection } from '../../src/Connection'
 import { QueryClient } from '../../src/QueryClient'
 import { fs, getConfig, setup, cleanup, setupApplication } from '../../test-helpers'
-import knex from 'knex'
 
 let app: ApplicationContract
 
