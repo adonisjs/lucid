@@ -22,52 +22,54 @@ test.group('Query client | Views and types', (group) => {
     await fs.cleanup()
   })
 
-  test('Get all views', async (assert) => {
-    await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
-    const connection = new Connection('primary', getConfig(), app.logger)
-    connection.connect()
-    const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
+  if (['sqlite', 'mysql', 'pg'].includes(process.env.DB!)) {
+    test('Get all views', async (assert) => {
+      await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
+      const connection = new Connection('primary', getConfig(), app.logger)
+      connection.connect()
+      const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
 
-    await connection.client!.schema.createView('users_view', async (view) => {
-      view.columns(['username', 'email'])
-      view.as(connection.client!('users').select('username', 'email'))
+      await connection.client!.schema.createView('users_view', async (view) => {
+        view.columns(['username', 'email'])
+        view.as(connection.client!('users').select('username', 'email'))
+      })
+
+      await connection.client!.schema.createView('follows_view', async (view) => {
+        view.columns(['user_id'])
+        view.as(connection.client!('follows').select('user_id'))
+      })
+
+      const allViews = await client.getAllViews(['public'])
+      assert.deepEqual(allViews.sort(), ['users_view', 'follows_view'].sort())
+
+      await client.dropAllViews()
     })
 
-    await connection.client!.schema.createView('follows_view', async (view) => {
-      view.columns(['user_id'])
-      view.as(connection.client!('follows').select('user_id'))
+    test('Drop all views', async (assert) => {
+      await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
+      const connection = new Connection('primary', getConfig(), app.logger)
+      connection.connect()
+      const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
+
+      await connection.client!.schema.createView('users_view', async (view) => {
+        view.columns(['username', 'email'])
+        view.as(connection.client!('users').select('username', 'email'))
+      })
+
+      await connection.client!.schema.createView('follows_view', async (view) => {
+        view.columns(['user_id'])
+        view.as(connection.client!('follows').select('user_id'))
+      })
+
+      let allViews = await client.getAllViews(['public'])
+      assert.deepEqual(allViews.sort(), ['users_view', 'follows_view'].sort())
+
+      await client.dropAllViews()
+
+      allViews = await client.getAllViews(['public'])
+      assert.equal(allViews.length, 0)
     })
-
-    const allViews = await client.getAllViews(['public'])
-    assert.deepEqual(allViews.sort(), ['users_view', 'follows_view'].sort())
-
-    await client.dropAllViews()
-  })
-
-  test('Drop all views', async (assert) => {
-    await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
-    const connection = new Connection('primary', getConfig(), app.logger)
-    connection.connect()
-    const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
-
-    await connection.client!.schema.createView('users_view', async (view) => {
-      view.columns(['username', 'email'])
-      view.as(connection.client!('users').select('username', 'email'))
-    })
-
-    await connection.client!.schema.createView('follows_view', async (view) => {
-      view.columns(['user_id'])
-      view.as(connection.client!('follows').select('user_id'))
-    })
-
-    let allViews = await client.getAllViews(['public'])
-    assert.deepEqual(allViews.sort(), ['users_view', 'follows_view'].sort())
-
-    await client.dropAllViews()
-
-    allViews = await client.getAllViews(['public'])
-    assert.equal(allViews.length, 0)
-  })
+  }
 
   if (['pg'].includes(process.env.DB!)) {
     test('Get all types', async (assert) => {
