@@ -88,7 +88,7 @@ test.group('db:wipe and migrate:fresh', (group) => {
 
     assert.lengthOf(migrated, 1)
     assert.isTrue(hasUsersTable)
-    assert.equal(migrated[0].name.replaceAll('\\', '/'), 'database/migrations/users')
+    assert.equal(migrated[0].name, 'database/migrations/users')
     assert.equal(migrated[0].batch, 1)
   })
 
