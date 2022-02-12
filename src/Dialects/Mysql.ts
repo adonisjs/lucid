@@ -94,7 +94,13 @@ export class MysqlDialect implements DialectContract {
    * Drop all tables inside the database
    */
   public async dropAllTables() {
-    const tables = await this.getAllTables()
+    let tables = await this.getAllTables()
+
+    /**
+     * Add backquote around table names to avoid syntax errors
+     * in case of a table name with a reserved keyword
+     */
+    tables = tables.map((table) => '`' + table + '`')
 
     /**
      * Cascade and truncate
@@ -103,7 +109,7 @@ export class MysqlDialect implements DialectContract {
 
     try {
       await trx.rawQuery('SET FOREIGN_KEY_CHECKS=0;')
-      await trx.rawQuery(`DROP table ${tables.join(',')};`)
+      await trx.rawQuery(`DROP TABLE ${tables.join(',')};`)
       await trx.rawQuery('SET FOREIGN_KEY_CHECKS=1;')
       await trx.commit()
     } catch (error) {
