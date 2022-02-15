@@ -55,7 +55,6 @@ import {
 import { ModelPaginator } from '../../src/Orm/Paginator'
 import { SimplePaginator } from '../../src/Database/Paginator/SimplePaginator'
 import { SnakeCaseNamingStrategy } from '../../src/Orm/NamingStrategies/SnakeCase'
-import { LucidModel } from '@ioc:Adonis/Lucid/Orm'
 
 let db: ReturnType<typeof getDb>
 let BaseModel: ReturnType<typeof getBaseModel>
@@ -5359,7 +5358,7 @@ test.group('Base Model | datetime', (group) => {
 
     const user = new User()
     const date = DateTime.now()
-    const model = user.constructor as LucidModel
+    const model = user.constructor as any
     User.$adapter = adapter
     adapter.on('insert', (_: User, attributes) => {
       assert.deepEqual(attributes, {
