@@ -28,6 +28,14 @@ function prepareDateTimeColumn(value: any, attributeName: string, modelInstance:
   const modelName = model.name
 
   /**
+   * Convert from number
+   */
+  if (typeof value === 'number') {
+    const dateTimeFormat = model.query(modelInstance.$options).client.dialect.dateTimeFormat
+    return DateTime.fromSeconds(value).toFormat(dateTimeFormat)
+  }
+
+  /**
    * Format luxon instances to SQL formatted date
    */
   if (DateTime.isDateTime(value)) {
@@ -69,6 +77,13 @@ function consumeDateTimeColumn(value: any, attributeName: string, modelInstance:
    */
   if (typeof value === 'string') {
     return DateTime.fromSQL(value)
+  }
+
+  /**
+   * Convert from number
+   */
+  if (typeof value === 'number') {
+    return DateTime.fromSeconds(value)
   }
 
   /**

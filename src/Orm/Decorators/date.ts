@@ -24,6 +24,13 @@ function prepareDateColumn(value: any, attributeName: string, modelInstance: Luc
     return value
   }
 
+  /**
+   * Convert from number
+   */
+  if (typeof value === 'number') {
+    return DateTime.fromSeconds(value).toISODate()
+  }
+
   const modelName = modelInstance.constructor.name
 
   /**
@@ -67,6 +74,13 @@ function consumeDateColumn(value: any, attributeName: string, modelInstance: Luc
    */
   if (typeof value === 'string') {
     return DateTime.fromSQL(value)
+  }
+
+  /**
+   * Convert from number
+   */
+  if (typeof value === 'number') {
+    return DateTime.fromSeconds(value)
   }
 
   /**

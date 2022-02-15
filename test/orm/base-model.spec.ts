@@ -4936,6 +4936,33 @@ test.group('Base Model | date', (group) => {
     await user.save()
   })
 
+  test('format date instance from number before sending to the adapter', async (assert) => {
+    assert.plan(1)
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.date({ autoCreate: true })
+      public dob: DateTime
+    }
+
+    const user = new User()
+    const date = DateTime.now()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.deepEqual(attributes, { username: 'virk', dob: date.toISODate() })
+    })
+
+    user.username = 'virk'
+    user.dob = date.toSeconds() as any
+    await user.save()
+  })
+
   test('leave date untouched when it is defined as string', async (assert) => {
     assert.plan(1)
     const adapter = new FakeAdapter()
@@ -5007,7 +5034,7 @@ test.group('Base Model | date', (group) => {
     User.$adapter = adapter
 
     user.username = 'virk'
-    user.dob = 10 as any
+    user.dob = {} as any
     try {
       await user.save()
     } catch ({ message }) {
@@ -5311,6 +5338,33 @@ test.group('Base Model | datetime', (group) => {
     const localTime = DateTime.local().toISO()
     user.username = 'virk'
     user.dob = localTime as any
+    await user.save()
+  })
+
+  test('format datetime instance from number before sending to the adapter', async (assert) => {
+    assert.plan(1)
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({ autoCreate: true })
+      public dob: DateTime
+    }
+
+    const user = new User()
+    const date = DateTime.now()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.deepEqual(attributes, { username: 'virk', dob: date.toFormat(user.constructor.query(user.$options).client.dialect.dateTimeFormat) })
+    })
+
+    user.username = 'virk'
+    user.dob = date.toSeconds() as any
     await user.save()
   })
 
