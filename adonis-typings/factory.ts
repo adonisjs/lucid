@@ -8,7 +8,7 @@
  */
 
 declare module '@ioc:Adonis/Lucid/Factory' {
-  import faker from 'faker'
+  import faker from '@faker-js/faker'
   import {
     OneOrMany,
     QueryClientContract,
