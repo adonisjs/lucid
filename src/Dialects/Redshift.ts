@@ -46,6 +46,38 @@ export class RedshiftDialect implements DialectContract {
   }
 
   /**
+   * Returns an array of all views names for one or many schemas
+   *
+   * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
+   */
+  public async getAllViews(schemas: string[]) {
+    const views = await this.client
+      .query()
+      .from('pg_catalog.pg_views')
+      .select('viewname as view_name')
+      .whereIn('schemaname', schemas)
+      .orderBy('viewname', 'asc')
+
+    return views.map(({ view_name }) => view_name)
+  }
+
+  /**
+   * Returns an array of all types names
+   *
+   * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
+   */
+  public async getAllTypes(_schemas: string[]) {
+    const types = await this.client
+      .query()
+      .select('pg_type.typname')
+      .distinct()
+      .from('pg_type')
+      .innerJoin('pg_enum', 'pg_enum.enumtypid', 'pg_type.oid')
+
+    return types.map(({ typname }) => typname)
+  }
+
+  /**
    * Truncate redshift table with option to cascade and restart identity.
    *
    * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
@@ -64,6 +96,30 @@ export class RedshiftDialect implements DialectContract {
     if (!tables.length) return
 
     await this.client.rawQuery(`DROP table ${tables.join(',')} CASCADE;`)
+  }
+
+  /**
+   * Drop all views inside the database
+   *
+   * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
+   */
+  public async dropAllViews(schemas: string[]) {
+    const views = await this.getAllViews(schemas)
+    if (!views.length) return
+
+    await this.client.rawQuery(`DROP view ${views.join(',')} CASCADE;`)
+  }
+
+  /**
+   * Drop all types inside the database
+   *
+   * NOTE: ASSUMING FEATURE PARITY WITH POSTGRESQL HERE (NOT TESTED)
+   */
+  public async dropAllTypes(schemas: string[]) {
+    const types = await this.getAllTypes(schemas)
+    if (!types.length) return
+
+    await this.client.rawQuery(`DROP type ${types.join(',')};`)
   }
 
   /**

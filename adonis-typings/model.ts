@@ -94,7 +94,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
    */
   export type ExtractScopes<Model> = {
     [Scope in keyof PickProperties<Model, QueryScope<QueryScopeCallback>>]: (
-      ...args: OmitFirst<Model[Scope]>
+      ...args: any[]
     ) => ExtractScopes<Model>
   }
 

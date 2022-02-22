@@ -69,10 +69,38 @@ export class MysqlDialect implements DialectContract {
   }
 
   /**
+   * Returns an array of all views names
+   */
+  public async getAllViews(): Promise<string[]> {
+    const tables = await this.client
+      .query()
+      .from('information_schema.tables')
+      .select('table_name as table_name')
+      .where('TABLE_TYPE', 'VIEW')
+      .where('table_schema', new RawBuilder('database()'))
+      .orderBy('table_name', 'asc')
+
+    return tables.map(({ table_name }) => table_name)
+  }
+
+  /**
+   * Returns an array of all types names
+   */
+  public async getAllTypes(): Promise<string[]> {
+    throw new Error("MySQL doesn't support types")
+  }
+
+  /**
    * Drop all tables inside the database
    */
   public async dropAllTables() {
-    const tables = await this.getAllTables()
+    let tables = await this.getAllTables()
+
+    /**
+     * Add backquote around table names to avoid syntax errors
+     * in case of a table name with a reserved keyword
+     */
+    tables = tables.map((table) => '`' + table + '`')
 
     /**
      * Cascade and truncate
@@ -81,13 +109,29 @@ export class MysqlDialect implements DialectContract {
 
     try {
       await trx.rawQuery('SET FOREIGN_KEY_CHECKS=0;')
-      await trx.rawQuery(`DROP table ${tables.join(',')};`)
+      await trx.rawQuery(`DROP TABLE ${tables.join(',')};`)
       await trx.rawQuery('SET FOREIGN_KEY_CHECKS=1;')
       await trx.commit()
     } catch (error) {
       await trx.rollback()
       throw error
     }
+  }
+
+  /**
+   * Drop all views inside the database
+   */
+  public async dropAllViews(): Promise<void> {
+    const views = await this.getAllViews()
+
+    return this.client.rawQuery(`DROP VIEW ${views.join(',')};`)
+  }
+
+  /**
+   * Drop all custom types inside the database
+   */
+  public async dropAllTypes(): Promise<void> {
+    throw new Error("MySQL doesn't support types")
   }
 
   /**

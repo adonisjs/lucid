@@ -44,15 +44,22 @@ declare module '@ioc:Adonis/Lucid/Database' {
   }
 
   /**
-   * Dialect specfic methods
+   * Dialect specific methods
    */
   export interface DialectContract {
     readonly name: 'mssql' | 'mysql' | 'oracledb' | 'postgres' | 'redshift' | 'sqlite3'
     readonly version?: string
     readonly supportsAdvisoryLocks: boolean
     readonly dateTimeFormat: string
+
     getAllTables(schemas?: string[]): Promise<string[]>
+    getAllViews(schemas?: string[]): Promise<string[]>
+    getAllTypes(schemas?: string[]): Promise<string[]>
+
     dropAllTables(schemas?: string[]): Promise<void>
+    dropAllViews(schemas?: string[]): Promise<void>
+    dropAllTypes(schemas?: string[]): Promise<void>
+
     truncate(table: string, cascade?: boolean): Promise<void>
     getAdvisoryLock(key: string | number, timeout?: number): Promise<boolean>
     releaseAdvisoryLock(key: string | number): Promise<boolean>
@@ -180,9 +187,29 @@ declare module '@ioc:Adonis/Lucid/Database' {
     getAllTables(schemas?: string[]): Promise<string[]>
 
     /**
+     * Returns an array of all views names for one or many schemas
+     */
+    getAllViews(schemas?: string[]): Promise<string[]>
+
+    /**
+     * Returns an array of all types names
+     */
+    getAllTypes(schemas?: string[]): Promise<string[]>
+
+    /**
      * Drop all tables inside database
      */
     dropAllTables(schemas?: string[]): Promise<void>
+
+    /**
+     * Drop all views inside the database
+     */
+    dropAllViews(schemas?: string[]): Promise<void>
+
+    /**
+     * Drop all types inside the database
+     */
+    dropAllTypes(schemas?: string[]): Promise<void>
 
     /**
      * Same as `query()`, but also selects the table for the query. The `from` method
@@ -545,7 +572,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
 
     /**
      * Add a new connection to the list of managed connection. You must call
-     * connect seperately to instantiate a connection instance
+     * connect separately to instantiate a connection instance
      */
     add(connectionName: string, config: ConnectionConfig): void
 

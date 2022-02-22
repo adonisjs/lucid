@@ -127,10 +127,38 @@ export class QueryClient implements QueryClientContract {
   }
 
   /**
+   * Returns an array of all views names
+   */
+  public async getAllViews(schemas?: string[]): Promise<string[]> {
+    return this.dialect.getAllViews(schemas)
+  }
+
+  /**
+   * Returns an array of all types names
+   */
+  public async getAllTypes(schemas?: string[]): Promise<string[]> {
+    return this.dialect.getAllTypes(schemas)
+  }
+
+  /**
    * Drop all tables inside database
    */
   public async dropAllTables(schemas?: string[]): Promise<void> {
     return this.dialect.dropAllTables(schemas || ['public'])
+  }
+
+  /**
+   * Drop all views inside the database
+   */
+  public async dropAllViews(schemas?: string[]): Promise<void> {
+    return this.dialect.dropAllViews(schemas || ['public'])
+  }
+
+  /**
+   * Drop all custom types inside the database
+   */
+  public async dropAllTypes(schemas?: string[]): Promise<void> {
+    return this.dialect.dropAllTypes(schemas || ['public'])
   }
 
   /**

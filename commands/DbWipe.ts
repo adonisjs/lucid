@@ -2,7 +2,7 @@ import { BaseCommand, flags } from '@adonisjs/core/build/standalone'
 
 export default class DbWipe extends BaseCommand {
   public static commandName = 'db:wipe'
-  public static description = 'Drop all tables in database'
+  public static description = 'Drop all tables, views and types in database'
 
   /**
    * Choose a custom pre-defined connection. Otherwise, we use the
@@ -10,6 +10,18 @@ export default class DbWipe extends BaseCommand {
    */
   @flags.string({ description: 'Define a custom database connection', alias: 'c' })
   public connection: string
+
+  /**
+   * Drop all views in database
+   */
+  @flags.boolean({ description: 'Also drop all views in database' })
+  public dropViews: boolean
+
+  /**
+   * Drop all types in database
+   */
+  @flags.boolean({ description: 'Also drop all types in database ( Postgres only )' })
+  public dropTypes: boolean
 
   /**
    * Force command execution in production
@@ -48,8 +60,18 @@ export default class DbWipe extends BaseCommand {
       return
     }
 
+    if (this.dropViews) {
+      await db.connection().dropAllViews()
+      this.logger.info('All views dropped successfully')
+    }
+
     await db.connection().dropAllTables()
-    this.logger.success('All tables have been dropped successfully')
+    this.logger.info('All tables have been dropped successfully')
+
+    if (this.dropTypes) {
+      await db.connection().dropAllTypes()
+      this.logger.info('All types dropped successfully')
+    }
   }
 
   /**
