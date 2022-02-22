@@ -53,7 +53,7 @@
     "knex": "^0.95.11",
     "knex-dynamic-connection": "^2.1.1",
     "luxon": "^2.0.1",
-    "macroable": "^5.1.4",
+    "macroable": "^6.0.0",
     "pretty-hrtime": "^1.0.3",
     "qs": "^6.10.1",
     "slash": "^3.0.0"
