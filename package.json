@@ -50,7 +50,7 @@
     "@poppinss/utils": "^3.2.1",
     "fast-deep-equal": "^3.1.3",
     "igniculus": "^1.5.0",
-    "knex": "^0.95.11",
+    "knex": "^1.0.2",
     "knex-dynamic-connection": "^2.1.1",
     "luxon": "^2.0.1",
     "macroable": "^5.1.4",
