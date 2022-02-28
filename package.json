@@ -29,10 +29,11 @@
     "copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
     "build": "npm run compile",
     "commit": "git-cz",
-    "release": "np",
+    "release": "np --message=\"chore(release): %s\"",
     "version": "npm run build",
     "sync-labels": "github-label-sync --labels ./node_modules/@adonisjs/mrm-preset/gh-labels.json adonisjs/lucid",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -73,8 +74,10 @@
     "@types/pluralize": "0.0.29",
     "@types/qs": "^6.9.7",
     "chance": "^1.1.8",
+    "commitizen": "^4.2.4",
     "copyfiles": "^2.4.1",
     "cross-env": "^7.0.3",
+    "cz-conventional-changelog": "^3.3.0",
     "del-cli": "^4.0.1",
     "dotenv": "^16.0.0",
     "eslint": "^8.10.0",
@@ -136,5 +139,48 @@
     "contents": ".",
     "anyBranch": false,
     "yolo": true
+  },
+  "mrmConfig": {
+    "core": true,
+    "license": "MIT",
+    "services": [
+      "github-actions"
+    ],
+    "minNodeVersion": "14.15.4",
+    "probotApps": [
+      "stale",
+      "lock"
+    ],
+    "runGhActionsOnWindows": false
+  },
+  "eslintConfig": {
+    "extends": [
+      "plugin:adonis/typescriptPackage",
+      "prettier"
+    ],
+    "plugins": [
+      "prettier"
+    ],
+    "rules": {
+      "prettier/prettier": [
+        "error",
+        {
+          "endOfLine": "auto"
+        }
+      ]
+    }
+  },
+  "eslintIgnore": [
+    "build"
+  ],
+  "prettier": {
+    "trailingComma": "es5",
+    "semi": false,
+    "singleQuote": true,
+    "useTabs": false,
+    "quoteProps": "consistent",
+    "bracketSpacing": true,
+    "arrowParens": "always",
+    "printWidth": 100
   }
 }
