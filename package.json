@@ -57,7 +57,7 @@
     "macroable": "^6.0.1",
     "pretty-hrtime": "^1.0.3",
     "qs": "^6.10.3",
-    "slash": "^3.0.0"
+    "slash": "^4.0.0"
   },
   "peerDependencies": {
     "@adonisjs/core": "^5.1.0"
