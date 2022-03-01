@@ -67,7 +67,7 @@ test.group('Validator | exists', (group) => {
     assert.plan(2)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -79,7 +79,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .limit(1)
           .toSQL()
           .toNative()
@@ -97,7 +97,7 @@ test.group('Validator | exists', (group) => {
           }),
         ]),
       }),
-      data: { id: row.id },
+      data: { id: typeof row === 'number' ? row : row.id },
     })
   })
 
@@ -105,7 +105,7 @@ test.group('Validator | exists', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -117,7 +117,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .where('username', 'nikk')
           .limit(1)
           .toSQL()
@@ -140,7 +140,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -153,7 +153,7 @@ test.group('Validator | exists', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -165,7 +165,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .where('username', 'nikk')
           .limit(1)
           .toSQL()
@@ -193,7 +193,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -206,7 +206,7 @@ test.group('Validator | exists', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -218,7 +218,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .whereIn('username', ['nikk', 'romain'])
           .limit(1)
           .toSQL()
@@ -241,7 +241,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -254,7 +254,7 @@ test.group('Validator | exists', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -266,7 +266,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .whereIn('username', ['nikk', 'romain'])
           .limit(1)
           .toSQL()
@@ -294,7 +294,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -307,7 +307,7 @@ test.group('Validator | exists', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -319,7 +319,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .whereNot('username', 'virk')
           .limit(1)
           .toSQL()
@@ -342,7 +342,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -355,7 +355,7 @@ test.group('Validator | exists', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -367,7 +367,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .whereNot('username', 'virk')
           .limit(1)
           .toSQL()
@@ -395,7 +395,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -408,7 +408,7 @@ test.group('Validator | exists', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -420,7 +420,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .whereNotIn('username', ['virk', 'nikk'])
           .limit(1)
           .toSQL()
@@ -443,7 +443,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -456,7 +456,7 @@ test.group('Validator | exists', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -468,7 +468,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .whereNotIn('username', ['virk', 'nikk'])
           .limit(1)
           .toSQL()
@@ -496,7 +496,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -693,7 +693,7 @@ test.group('Validator | unique', (group) => {
     assert.plan(1)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -707,7 +707,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -734,7 +734,7 @@ test.group('Validator | unique', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -746,7 +746,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .where('username', 'virk')
           .limit(1)
           .toSQL()
@@ -769,7 +769,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -782,7 +782,7 @@ test.group('Validator | unique', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -794,7 +794,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .where('username', 'virk')
           .limit(1)
           .toSQL()
@@ -822,7 +822,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -835,7 +835,7 @@ test.group('Validator | unique', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -847,7 +847,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .whereIn('username', ['virk', 'nikk'])
           .limit(1)
           .toSQL()
@@ -870,7 +870,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -883,7 +883,7 @@ test.group('Validator | unique', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -895,7 +895,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .whereIn('username', ['virk', 'nikk'])
           .limit(1)
           .toSQL()
@@ -923,7 +923,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -936,7 +936,7 @@ test.group('Validator | unique', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -948,7 +948,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .whereNot('username', 'nikk')
           .limit(1)
           .toSQL()
@@ -971,7 +971,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -984,7 +984,7 @@ test.group('Validator | unique', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -996,7 +996,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .whereNot('username', 'nikk')
           .limit(1)
           .toSQL()
@@ -1024,7 +1024,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -1037,7 +1037,7 @@ test.group('Validator | unique', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk', country_id: 4 })
 
@@ -1049,7 +1049,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .whereNotIn('country_id', [1, 2])
           .limit(1)
           .toSQL()
@@ -1072,7 +1072,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -1085,7 +1085,7 @@ test.group('Validator | unique', (group) => {
     assert.plan(3)
 
     const [row] = await db
-      .table<{ id: string }>('users')
+      .table<{ id: string } | number>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk', country_id: 4 })
 
@@ -1097,7 +1097,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', row.id)
+          .where('id', typeof row === 'number' ? row : row.id)
           .whereNotIn('country_id', [1, 2])
           .limit(1)
           .toSQL()
@@ -1125,7 +1125,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: row.id },
+        data: { id: typeof row === 'number' ? row : row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {

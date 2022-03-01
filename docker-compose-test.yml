@@ -10,5 +10,5 @@ services:
       - mysql_replica_2
       - mysql
       - pg
-      - mssql
-    command: ['npm', 'run', 'test:docker']
+      - microsoftsql
+    command: ['/start.sh']

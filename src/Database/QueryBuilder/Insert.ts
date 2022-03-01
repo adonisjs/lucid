@@ -120,13 +120,6 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
    * Define returning columns for the insert query
    */
   public returning(column: any): any {
-    /**
-     * Do not chain `returning` in sqlite3 to avoid knex warnings
-     */
-    if (this.client && ['mysql'].includes(this.client.dialect.name)) {
-      return this
-    }
-
     this.knexQuery.returning(column)
     return this
   }

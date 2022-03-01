@@ -365,13 +365,6 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
    * Define returning columns
    */
   public returning(columns: any): this {
-    /**
-     * Do not chain `returning` in sqlite3 to avoid knex warnings
-     */
-    if (this.client && ['mysql'].includes(this.client.dialect.name)) {
-      return this
-    }
-
     columns = Array.isArray(columns)
       ? columns.map((column) => this.resolveKey(column))
       : this.resolveKey(columns)

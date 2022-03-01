@@ -528,7 +528,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
-      .table<{ id: number }>('users')
+      .table<{ id: number } | number>('users')
       .insert({ username: 'virk' })
       .returning('id')
 
@@ -536,8 +536,8 @@ test.group('Model | HasMany | bulk operations', (group) => {
       .table('posts')
       .multiInsert([
         { title: 'Adonis 101' },
-        { title: 'Adonis 101', user_id: row.id },
-        { title: 'Auth 101', user_id: row.id },
+        { title: 'Adonis 101', user_id: typeof row === 'number' ? row : row.id },
+        { title: 'Auth 101', user_id: typeof row === 'number' ? row : row.id },
       ])
 
     const user = await User.find(1)
@@ -4922,11 +4922,11 @@ test.group('Model | HasMany | paginate', (group) => {
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
-      .table<{ id: number }>('users')
+      .table<{ id: number } | number>('users')
       .insert({ username: 'virk' })
       .returning('id')
 
-    await db.table('posts').multiInsert(getPosts(18, row.id))
+    await db.table('posts').multiInsert(getPosts(18, typeof row === 'number' ? row : row.id))
 
     const user = await User.find(1)
     const posts = await user!.related('posts').query().paginate(1, 5)
@@ -5072,12 +5072,18 @@ test.group('Model | HasMany | scopes', (group) => {
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
-      .table<{ id: number }>('users')
+      .table<{ id: number } | number>('users')
       .insert({ username: 'virk' })
       .returning('id')
 
-    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Lucid 101' })
-    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Adonis 101' })
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert({ user_id: typeof row === 'number' ? row : row.id, title: 'Lucid 101' })
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert({ user_id: typeof row === 'number' ? row : row.id, title: 'Adonis 101' })
 
     const user = await User.query()
       .preload('posts', (query) => {
@@ -5117,12 +5123,18 @@ test.group('Model | HasMany | scopes', (group) => {
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
-      .table<{ id: number }>('users')
+      .table<{ id: number } | number>('users')
       .insert({ username: 'virk' })
       .returning('id')
 
-    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Lucid 101' })
-    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Adonis 101' })
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert({ user_id: typeof row === 'number' ? row : row.id, title: 'Lucid 101' })
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert({ user_id: typeof row === 'number' ? row : row.id, title: 'Adonis 101' })
 
     const user = await User.findOrFail(1)
 
@@ -5179,12 +5191,18 @@ test.group('Model | HasMany | onQuery', (group) => {
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
-      .table<{ id: number }>('users')
+      .table<{ id: number } | number>('users')
       .insert({ username: 'virk' })
       .returning('id')
 
-    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Lucid 101' })
-    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Adonis 101' })
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert({ user_id: typeof row === 'number' ? row : row.id, title: 'Lucid 101' })
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert({ user_id: typeof row === 'number' ? row : row.id, title: 'Adonis 101' })
 
     const user = await User.query().preload('posts').firstOrFail()
     assert.lengthOf(user.posts, 1)
@@ -5219,11 +5237,17 @@ test.group('Model | HasMany | onQuery', (group) => {
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
-      .table<{ id: number }>('users')
+      .table<{ id: number } | number>('users')
       .insert({ username: 'virk' })
       .returning('id')
-    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Lucid 101' })
-    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Adonis 101' })
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert({ user_id: typeof row === 'number' ? row : row.id, title: 'Lucid 101' })
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert({ user_id: typeof row === 'number' ? row : row.id, title: 'Adonis 101' })
 
     const user = await User.query()
       .preload('posts', (query) => query.where(() => {}))
@@ -5255,11 +5279,17 @@ test.group('Model | HasMany | onQuery', (group) => {
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
-      .table<{ id: number }>('users')
+      .table<{ id: number } | number>('users')
       .insert({ username: 'virk' })
       .returning('id')
-    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Lucid 101' })
-    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Adonis 101' })
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert({ user_id: typeof row === 'number' ? row : row.id, title: 'Lucid 101' })
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert({ user_id: typeof row === 'number' ? row : row.id, title: 'Adonis 101' })
 
     const user = await User.findOrFail(1)
 
@@ -5291,11 +5321,17 @@ test.group('Model | HasMany | onQuery', (group) => {
     User.$getRelation('posts')!.boot()
 
     const [row] = await db
-      .table<{ id: number }>('users')
+      .table<{ id: number } | number>('users')
       .insert({ username: 'virk' })
       .returning('id')
-    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Lucid 101' })
-    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Adonis 101' })
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert({ user_id: typeof row === 'number' ? row : row.id, title: 'Lucid 101' })
+    await db
+      .insertQuery()
+      .table('posts')
+      .insert({ user_id: typeof row === 'number' ? row : row.id, title: 'Adonis 101' })
 
     const user = await User.findOrFail(1)
 

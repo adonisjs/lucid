@@ -10,6 +10,8 @@ services:
       MYSQL_ROOT_PASSWORD: password
     ports:
       - '3306:3306'
+    expose:
+      - '3306'
   mysql_replica_1:
     platform: linux/x86_64
     image: mysql:5.7
@@ -20,6 +22,8 @@ services:
       MYSQL_ROOT_PASSWORD: password
     ports:
       - '3304:3306'
+    expose:
+      - '3306'
   mysql_replica_2:
     platform: linux/x86_64
     image: mysql:5.7
@@ -30,6 +34,8 @@ services:
       MYSQL_ROOT_PASSWORD: password
     ports:
       - '3303:3306'
+    expose:
+      - '3306'
   mysql:
     platform: linux/x86_64
     image: mysql:8.0
@@ -40,7 +46,9 @@ services:
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: password
     ports:
-      - '3307:3306'
+      - '3305:3306'
+    expose:
+      - '3306'
   pg:
     image: postgres:11
     environment:
@@ -49,10 +57,14 @@ services:
       POSTGRES_PASSWORD: password
     ports:
       - 5432:5432
-  mssql:
-    image: mcr.microsoft.com/mssql/server:2017-latest
+    expose:
+      - '5432'
+  microsoftsql:
+    image: mcr.microsoft.com/mssql/server:2019-latest
     ports:
-      - 1433:1433
+      - 21433:1433
+    expose:
+      - '1433'
     environment:
       SA_PASSWORD: 'arandom&233password'
-      ACCEPT_EULA: 'true'
+      ACCEPT_EULA: 'Y'

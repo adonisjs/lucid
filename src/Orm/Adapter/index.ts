@@ -12,6 +12,7 @@
 import { Exception } from '@poppinss/utils'
 import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import { LucidRow, LucidModel, AdapterContract, ModelAdapterOptions } from '@ioc:Adonis/Lucid/Orm'
+import { isObject } from '../../utils'
 
 /**
  * Adapter exposes the API to make database queries and constructor
@@ -65,7 +66,12 @@ export class Adapter implements AdapterContract {
     const result = await query.insert(attributes).reporterData({ model: Model.name })
 
     if (!Model.selfAssignPrimaryKey && Array.isArray(result) && result[0]) {
-      instance.$consumeAdapterResult(result[0])
+      if (isObject(result[0])) {
+        instance.$consumeAdapterResult(result[0])
+      } else {
+        const primaryKeyColumnName = this.getPrimaryKeyColumnName(Model)
+        instance.$consumeAdapterResult({ [primaryKeyColumnName]: result[0] })
+      }
     }
   }
 
