@@ -123,7 +123,7 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
     /**
      * Do not chain `returning` in sqlite3 to avoid knex warnings
      */
-    if (this.client && ['sqlite3', 'mysql'].includes(this.client.dialect.name)) {
+    if (this.client && ['mysql'].includes(this.client.dialect.name)) {
       return this
     }
 
