@@ -368,7 +368,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     /**
      * Do not chain `returning` in sqlite3 to avoid knex warnings
      */
-    if (this.client && ['sqlite3', 'mysql'].includes(this.client.dialect.name)) {
+    if (this.client && ['mysql'].includes(this.client.dialect.name)) {
       return this
     }
 

@@ -62,11 +62,10 @@ export class Adapter implements AdapterContract {
     const query = instance.$getQueryFor('insert', this.modelClient(instance))
 
     const Model = instance.constructor as LucidModel
-    const primaryKeyColumnName = this.getPrimaryKeyColumnName(Model)
-
     const result = await query.insert(attributes).reporterData({ model: Model.name })
-    if (!Model.selfAssignPrimaryKey) {
-      instance.$consumeAdapterResult({ [primaryKeyColumnName]: result[0] })
+
+    if (!Model.selfAssignPrimaryKey && Array.isArray(result) && result[0]) {
+      instance.$consumeAdapterResult(result[0])
     }
   }
 

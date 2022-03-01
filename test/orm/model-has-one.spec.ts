@@ -2526,10 +2526,13 @@ test.group('Model | HasOne | scopes', (group) => {
       public profile: HasOne<typeof Profile>
     }
 
-    const [userId] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
     await db
       .table('profiles')
-      .multiInsert([{ user_id: userId, display_name: 'virk', type: 'github' }])
+      .multiInsert([{ user_id: row.id, display_name: 'virk', type: 'github' }])
 
     const user = await User.query()
       .preload('profile', (query) => {
@@ -2569,10 +2572,13 @@ test.group('Model | HasOne | scopes', (group) => {
       public profile: HasOne<typeof Profile>
     }
 
-    const [userId] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
     await db
       .table('profiles')
-      .multiInsert([{ user_id: userId, display_name: 'virk', type: 'github' }])
+      .multiInsert([{ user_id: row.id, display_name: 'virk', type: 'github' }])
 
     const user = await User.findOrFail(1)
 
@@ -2631,10 +2637,13 @@ test.group('Model | HasOne | onQuery', (group) => {
       public profile: HasOne<typeof Profile>
     }
 
-    const [userId] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
     await db
       .table('profiles')
-      .multiInsert([{ user_id: userId, display_name: 'virk', type: 'github' }])
+      .multiInsert([{ user_id: row.id, display_name: 'virk', type: 'github' }])
 
     const user = await User.query().preload('profile').firstOrFail()
     assert.isNull(user.profile)
@@ -2670,10 +2679,13 @@ test.group('Model | HasOne | onQuery', (group) => {
       public profile: HasOne<typeof Profile>
     }
 
-    const [userId] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
     await db
       .table('profiles')
-      .multiInsert([{ user_id: userId, display_name: 'virk', type: 'github' }])
+      .multiInsert([{ user_id: row.id, display_name: 'virk', type: 'github' }])
 
     const user = await User.query()
       .preload('profile', (query) => query.where(() => {}))
@@ -2706,10 +2718,13 @@ test.group('Model | HasOne | onQuery', (group) => {
       public profile: HasOne<typeof Profile>
     }
 
-    const [userId] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
     await db
       .table('profiles')
-      .multiInsert([{ user_id: userId, display_name: 'virk', type: 'github' }])
+      .multiInsert([{ user_id: row.id, display_name: 'virk', type: 'github' }])
 
     const user = await User.findOrFail(1)
     const profile = await user.related('profile').query().first()
@@ -2741,10 +2756,13 @@ test.group('Model | HasOne | onQuery', (group) => {
       public profile: HasOne<typeof Profile>
     }
 
-    const [userId] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
     await db
       .table('profiles')
-      .multiInsert([{ user_id: userId, display_name: 'virk', type: 'github' }])
+      .multiInsert([{ user_id: row.id, display_name: 'virk', type: 'github' }])
 
     const user = await User.findOrFail(1)
     const { sql, bindings } = user

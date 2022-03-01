@@ -190,7 +190,6 @@ test.group('Model | BelongsTo | Options', (group) => {
     Profile.boot()
 
     Profile.$getRelation('user')!.boot()
-    console.log(Profile.$getRelation('user'))
 
     assert.deepEqual(Profile.$getRelation('user')!.relatedModel(), User)
     assert.deepEqual(Profile.$getRelation('user')!.model, Profile)
@@ -1754,6 +1753,9 @@ test.group('Model | BelongsTo | dissociate', (group) => {
 
     class Profile extends BaseModel {
       @column()
+      public id: number
+
+      @column()
       public userId: number
 
       @column()
@@ -1763,12 +1765,13 @@ test.group('Model | BelongsTo | dissociate', (group) => {
       public user: BelongsTo<typeof User>
     }
 
-    const [user] = await db
-      .insertQuery()
+    const [row] = await db
+      .insertQuery<{ id: number }>()
       .table('users')
       .insert({ username: 'virk' })
       .returning('id')
-    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: user.id })
+
+    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: row.id })
 
     const profile = await Profile.query().first()
     await profile!.related('user').dissociate()

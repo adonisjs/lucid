@@ -223,7 +223,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * The `table` method doesn't allow defining the return type and
      * one must use `insertQuery` to define that.
      */
-    table: (table: string) => InsertQueryBuilderContract<any>
+    table: <ReturnColumns = any>(table: string) => InsertQueryBuilderContract<ReturnColumns[]>
 
     /**
      * Get instance of transaction client

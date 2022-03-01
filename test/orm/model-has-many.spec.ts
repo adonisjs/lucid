@@ -527,13 +527,17 @@ test.group('Model | HasMany | bulk operations', (group) => {
     User.boot()
     User.$getRelation('posts')!.boot()
 
-    const [id] = await db.table('users').insert({ username: 'virk' }).returning('id')
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
+
     await db
       .table('posts')
       .multiInsert([
         { title: 'Adonis 101' },
-        { title: 'Adonis 101', user_id: id },
-        { title: 'Auth 101', user_id: id },
+        { title: 'Adonis 101', user_id: row.id },
+        { title: 'Auth 101', user_id: row.id },
       ])
 
     const user = await User.find(1)
@@ -4917,8 +4921,12 @@ test.group('Model | HasMany | paginate', (group) => {
     User.boot()
     User.$getRelation('posts')!.boot()
 
-    const [userId] = await db.table('users').insert({ username: 'virk' }).returning('id')
-    await db.table('posts').multiInsert(getPosts(18, userId))
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
+
+    await db.table('posts').multiInsert(getPosts(18, row.id))
 
     const user = await User.find(1)
     const posts = await user!.related('posts').query().paginate(1, 5)
@@ -5063,9 +5071,13 @@ test.group('Model | HasMany | scopes', (group) => {
     User.boot()
     User.$getRelation('posts')!.boot()
 
-    const [userId] = await db.table('users').insert({ username: 'virk' }).returning('id')
-    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Lucid 101' })
-    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Adonis 101' })
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
+
+    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Lucid 101' })
+    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Adonis 101' })
 
     const user = await User.query()
       .preload('posts', (query) => {
@@ -5104,9 +5116,13 @@ test.group('Model | HasMany | scopes', (group) => {
     User.boot()
     User.$getRelation('posts')!.boot()
 
-    const [userId] = await db.table('users').insert({ username: 'virk' }).returning('id')
-    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Lucid 101' })
-    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Adonis 101' })
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
+
+    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Lucid 101' })
+    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Adonis 101' })
 
     const user = await User.findOrFail(1)
 
@@ -5162,9 +5178,13 @@ test.group('Model | HasMany | onQuery', (group) => {
     User.boot()
     User.$getRelation('posts')!.boot()
 
-    const [userId] = await db.table('users').insert({ username: 'virk' }).returning('id')
-    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Lucid 101' })
-    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Adonis 101' })
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
+
+    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Lucid 101' })
+    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Adonis 101' })
 
     const user = await User.query().preload('posts').firstOrFail()
     assert.lengthOf(user.posts, 1)
@@ -5198,9 +5218,12 @@ test.group('Model | HasMany | onQuery', (group) => {
     User.boot()
     User.$getRelation('posts')!.boot()
 
-    const [userId] = await db.table('users').insert({ username: 'virk' }).returning('id')
-    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Lucid 101' })
-    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Adonis 101' })
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
+    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Lucid 101' })
+    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Adonis 101' })
 
     const user = await User.query()
       .preload('posts', (query) => query.where(() => {}))
@@ -5231,9 +5254,12 @@ test.group('Model | HasMany | onQuery', (group) => {
     User.boot()
     User.$getRelation('posts')!.boot()
 
-    const [userId] = await db.table('users').insert({ username: 'virk' }).returning('id')
-    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Lucid 101' })
-    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Adonis 101' })
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
+    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Lucid 101' })
+    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Adonis 101' })
 
     const user = await User.findOrFail(1)
 
@@ -5264,9 +5290,12 @@ test.group('Model | HasMany | onQuery', (group) => {
     User.boot()
     User.$getRelation('posts')!.boot()
 
-    const [userId] = await db.table('users').insert({ username: 'virk' }).returning('id')
-    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Lucid 101' })
-    await db.insertQuery().table('posts').insert({ user_id: userId, title: 'Adonis 101' })
+    const [row] = await db
+      .table<{ id: number }>('users')
+      .insert({ username: 'virk' })
+      .returning('id')
+    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Lucid 101' })
+    await db.insertQuery().table('posts').insert({ user_id: row.id, title: 'Adonis 101' })
 
     const user = await User.findOrFail(1)
 

@@ -66,8 +66,8 @@ test.group('Validator | exists', (group) => {
   test('work fine when row exists', async (assert) => {
     assert.plan(2)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -79,7 +79,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .limit(1)
           .toSQL()
           .toNative()
@@ -97,15 +97,15 @@ test.group('Validator | exists', (group) => {
           }),
         ]),
       }),
-      data: { id: userId },
+      data: { id: row.id },
     })
   })
 
   test('add where contraints', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -117,7 +117,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .where('username', 'nikk')
           .limit(1)
           .toSQL()
@@ -140,7 +140,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -152,8 +152,8 @@ test.group('Validator | exists', (group) => {
   test('add where contraints with refs', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -165,7 +165,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .where('username', 'nikk')
           .limit(1)
           .toSQL()
@@ -193,7 +193,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -205,8 +205,8 @@ test.group('Validator | exists', (group) => {
   test('add wherein contraints', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -218,7 +218,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .whereIn('username', ['nikk', 'romain'])
           .limit(1)
           .toSQL()
@@ -241,7 +241,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -253,8 +253,8 @@ test.group('Validator | exists', (group) => {
   test('add wherein contraints with refs', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -266,7 +266,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .whereIn('username', ['nikk', 'romain'])
           .limit(1)
           .toSQL()
@@ -294,7 +294,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -306,8 +306,8 @@ test.group('Validator | exists', (group) => {
   test('add where not constraints', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -319,7 +319,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .whereNot('username', 'virk')
           .limit(1)
           .toSQL()
@@ -342,7 +342,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -354,8 +354,8 @@ test.group('Validator | exists', (group) => {
   test('add where not constraints with refs', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -367,7 +367,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .whereNot('username', 'virk')
           .limit(1)
           .toSQL()
@@ -395,7 +395,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -407,8 +407,8 @@ test.group('Validator | exists', (group) => {
   test('add where not in constraints', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -420,7 +420,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .whereNotIn('username', ['virk', 'nikk'])
           .limit(1)
           .toSQL()
@@ -443,7 +443,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -455,8 +455,8 @@ test.group('Validator | exists', (group) => {
   test('add where not in constraints with refs', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -468,7 +468,7 @@ test.group('Validator | exists', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .whereNotIn('username', ['virk', 'nikk'])
           .limit(1)
           .toSQL()
@@ -496,7 +496,7 @@ test.group('Validator | exists', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -692,8 +692,8 @@ test.group('Validator | unique', (group) => {
   test('must fail when row already exists in the table', async (assert) => {
     assert.plan(1)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -707,7 +707,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -733,8 +733,8 @@ test.group('Validator | unique', (group) => {
   test('add where contraints', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -746,7 +746,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .where('username', 'virk')
           .limit(1)
           .toSQL()
@@ -769,7 +769,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -781,8 +781,8 @@ test.group('Validator | unique', (group) => {
   test('add where contraints with refs', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -794,7 +794,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .where('username', 'virk')
           .limit(1)
           .toSQL()
@@ -822,7 +822,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -834,8 +834,8 @@ test.group('Validator | unique', (group) => {
   test('add where in contraints', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -847,7 +847,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .whereIn('username', ['virk', 'nikk'])
           .limit(1)
           .toSQL()
@@ -870,7 +870,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -882,8 +882,8 @@ test.group('Validator | unique', (group) => {
   test('add where in contraints with refs', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -895,7 +895,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .whereIn('username', ['virk', 'nikk'])
           .limit(1)
           .toSQL()
@@ -923,7 +923,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -935,8 +935,8 @@ test.group('Validator | unique', (group) => {
   test('add whereNot contraints', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -948,7 +948,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .whereNot('username', 'nikk')
           .limit(1)
           .toSQL()
@@ -971,7 +971,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -983,8 +983,8 @@ test.group('Validator | unique', (group) => {
   test('add whereNot contraints with refs', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk' })
 
@@ -996,7 +996,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .whereNot('username', 'nikk')
           .limit(1)
           .toSQL()
@@ -1024,7 +1024,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -1036,8 +1036,8 @@ test.group('Validator | unique', (group) => {
   test('add whereNot in contraints', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk', country_id: 4 })
 
@@ -1049,7 +1049,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .whereNotIn('country_id', [1, 2])
           .limit(1)
           .toSQL()
@@ -1072,7 +1072,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
@@ -1084,8 +1084,8 @@ test.group('Validator | unique', (group) => {
   test('add whereNot in contraints with refs', async (assert) => {
     assert.plan(3)
 
-    const [userId] = await db
-      .table('users')
+    const [row] = await db
+      .table<{ id: string }>('users')
       .returning('id')
       .insert({ email: 'virk@adonisjs.com', username: 'virk', country_id: 4 })
 
@@ -1097,7 +1097,7 @@ test.group('Validator | unique', (group) => {
           .getReadClient()
           .select(1)
           .from('users')
-          .where('id', userId)
+          .where('id', row.id)
           .whereNotIn('country_id', [1, 2])
           .limit(1)
           .toSQL()
@@ -1125,7 +1125,7 @@ test.group('Validator | unique', (group) => {
             }),
           ]),
         }),
-        data: { id: userId },
+        data: { id: row.id },
       })
     } catch (error) {
       assert.deepEqual(error.messages, {
