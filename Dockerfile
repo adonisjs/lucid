@@ -1,4 +1,5 @@
-FROM node:14.17.6-alpine as build-deps
+FROM node:16.14.0-alpine as build-deps
+RUN apk add g++ make python
 
 RUN apk update && apk upgrade && \
 	apk add --update git && \
