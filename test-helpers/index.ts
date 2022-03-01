@@ -58,7 +58,7 @@ export function getConfig(): ConnectionConfig {
   switch (process.env.DB) {
     case 'sqlite':
       return {
-        client: 'sqlite',
+        client: 'sqlite3',
         connection: {
           filename: join(fs.basePath, 'db.sqlite'),
         },
