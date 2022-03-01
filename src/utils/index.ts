@@ -173,7 +173,8 @@ export async function managedTransaction<T>(
  * Returns the sql method for a DDL statement
  */
 export function getDDLMethod(sql: string) {
-  console.log({ sql })
+  sql = sql.toLowerCase()
+
   if (sql.startsWith('create')) {
     return 'create'
   }

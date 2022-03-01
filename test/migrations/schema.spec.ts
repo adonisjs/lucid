@@ -258,7 +258,6 @@ test.group('Schema', (group) => {
     const schema = new UsersSchema(trx, 'users.ts', false)
 
     app.container.use('Adonis/Core/Event').on('db:query', (query) => {
-      console.log(query)
       assert.property(query, 'sql')
       assert.isTrue(query.inTransaction)
       assert.equal(query.connection, 'primary')
