@@ -14,6 +14,8 @@ import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database
 export class PgDialect implements DialectContract {
   public readonly name = 'postgres'
   public readonly supportsAdvisoryLocks = true
+  public readonly supportsViews = true
+  public readonly supportsTypes = true
 
   /**
    * Reference to the database version. Knex.js fetches the version after

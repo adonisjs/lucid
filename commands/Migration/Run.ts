@@ -8,6 +8,7 @@
  */
 
 import { flags } from '@adonisjs/core/build/standalone'
+
 import MigrationsBase from './Base'
 
 /**

@@ -9,6 +9,7 @@
 
 import { flags } from '@adonisjs/core/build/standalone'
 import { MigrationListNode } from '@ioc:Adonis/Lucid/Migrator'
+
 import MigrationsBase from './Base'
 
 /**
