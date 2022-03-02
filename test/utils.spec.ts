@@ -9,11 +9,11 @@
 
 /// <reference path="../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { syncDiff } from '../src/utils'
 
 test.group('Utils | syncDiff', () => {
-  test('return ids to be added', (assert) => {
+  test('return ids to be added', ({ assert }) => {
     const dbRows = {
       1: {
         id: '1',
@@ -36,7 +36,7 @@ test.group('Utils | syncDiff', () => {
     })
   })
 
-  test('return ids to be updated when attributes are different', (assert) => {
+  test('return ids to be updated when attributes are different', ({ assert }) => {
     const dbRows = {
       1: {
         id: '1',
@@ -63,7 +63,7 @@ test.group('Utils | syncDiff', () => {
     })
   })
 
-  test('ignore rows whose attributes are same', (assert) => {
+  test('ignore rows whose attributes are same', ({ assert }) => {
     const dbRows = {
       1: {
         id: '1',

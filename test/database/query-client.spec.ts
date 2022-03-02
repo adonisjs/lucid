@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { resolveClientNameWithAliases } from 'knex/lib/util/helpers'
 
@@ -20,21 +20,21 @@ import { fs, getConfig, setup, cleanup, resetTables, setupApplication } from '..
 let app: ApplicationContract
 
 test.group('Query client', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get query client in dual mode', async (assert) => {
+  test('get query client in dual mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -43,7 +43,7 @@ test.group('Query client', (group) => {
     await connection.disconnect()
   })
 
-  test('get query client in read only mode', async (assert) => {
+  test('get query client in read only mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -52,7 +52,7 @@ test.group('Query client', (group) => {
     await connection.disconnect()
   })
 
-  test('get query client in write only mode', async (assert) => {
+  test('get query client in write only mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -64,7 +64,7 @@ test.group('Query client', (group) => {
   /**
    * We cannot rely on knexjs for this and have to write our own code
    */
-  test.skip('get query client dialect version', async (assert) => {
+  test('get query client dialect version', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -75,9 +75,9 @@ test.group('Query client', (group) => {
     assert.exists(client1.dialect.version)
 
     await connection.disconnect()
-  })
+  }).skip(true)
 
-  test('get columns info', async (assert) => {
+  test('get columns info', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -93,7 +93,7 @@ test.group('Query client', (group) => {
     assert.property(columns, 'updated_at')
   })
 
-  test('get single column info', async (assert) => {
+  test('get single column info', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -141,21 +141,21 @@ test.group('Query client', (group) => {
 })
 
 test.group('Query client | dual mode', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('perform select queries in dual mode', async (assert) => {
+  test('perform select queries in dual mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
     const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
@@ -167,7 +167,7 @@ test.group('Query client | dual mode', (group) => {
     await connection.disconnect()
   })
 
-  test('perform insert queries in dual mode', async (assert) => {
+  test('perform insert queries in dual mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
     const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
@@ -182,7 +182,7 @@ test.group('Query client | dual mode', (group) => {
     await connection.disconnect()
   })
 
-  test('perform raw queries in dual mode', async (assert) => {
+  test('perform raw queries in dual mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
     const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
@@ -191,8 +191,8 @@ test.group('Query client | dual mode', (group) => {
       process.env.DB === 'sqlite' || process.env.DB === 'better_sqlite'
         ? 'DELETE FROM users;'
         : process.env.DB === 'mssql'
-        ? 'TRUNCATE table users;'
-        : 'TRUNCATE users;'
+          ? 'TRUNCATE table users;'
+          : 'TRUNCATE users;'
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     await client.rawQuery(command).exec()
@@ -204,7 +204,7 @@ test.group('Query client | dual mode', (group) => {
     await connection.disconnect()
   })
 
-  test('perform queries inside a transaction in dual mode', async (assert) => {
+  test('perform queries inside a transaction in dual mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
     const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
@@ -223,21 +223,21 @@ test.group('Query client | dual mode', (group) => {
 })
 
 test.group('Query client | read mode', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('perform select queries in read mode', async (assert) => {
+  test('perform select queries in read mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
     const client = new QueryClient('read', connection, app.container.use('Adonis/Core/Event'))
@@ -249,18 +249,18 @@ test.group('Query client | read mode', (group) => {
     await connection.disconnect()
   })
 
-  test('raise error when attempting to perform insert in read mode', async (assert) => {
+  test('raise error when attempting to perform insert in read mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
     const client = new QueryClient('read', connection, app.container.use('Adonis/Core/Event'))
 
     const fn = () => client.insertQuery()
-    assert.throw(fn, 'Write client is not available for query client instantiated in read mode')
+    assert.throws(fn, 'Write client is not available for query client instantiated in read mode')
 
     await connection.disconnect()
   })
 
-  test('perform raw queries in read mode', async (assert) => {
+  test('perform raw queries in read mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
     const client = new QueryClient('read', connection, app.container.use('Adonis/Core/Event'))
@@ -271,7 +271,7 @@ test.group('Query client | read mode', (group) => {
     await connection.disconnect()
   })
 
-  test('raise error when attempting to get transaction in read mode', async (assert) => {
+  test('raise error when attempting to get transaction in read mode', async ({ assert }) => {
     assert.plan(1)
 
     const connection = new Connection('primary', getConfig(), app.logger)
@@ -292,21 +292,21 @@ test.group('Query client | read mode', (group) => {
 })
 
 test.group('Query client | write mode', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('perform select queries in write mode', async (assert) => {
+  test('perform select queries in write mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
     const client = new QueryClient('write', connection, app.container.use('Adonis/Core/Event'))
@@ -318,7 +318,7 @@ test.group('Query client | write mode', (group) => {
     await connection.disconnect()
   })
 
-  test('perform insert queries in write mode', async (assert) => {
+  test('perform insert queries in write mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
     const client = new QueryClient('write', connection, app.container.use('Adonis/Core/Event'))
@@ -333,7 +333,7 @@ test.group('Query client | write mode', (group) => {
     await connection.disconnect()
   })
 
-  test('perform raw queries in write mode', async (assert) => {
+  test('perform raw queries in write mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
     const client = new QueryClient('write', connection, app.container.use('Adonis/Core/Event'))
@@ -342,8 +342,8 @@ test.group('Query client | write mode', (group) => {
       process.env.DB === 'sqlite' || process.env.DB === 'better_sqlite'
         ? 'DELETE FROM users;'
         : process.env.DB === 'mssql'
-        ? 'TRUNCATE table users;'
-        : 'TRUNCATE users;'
+          ? 'TRUNCATE table users;'
+          : 'TRUNCATE users;'
 
     await client.insertQuery().table('users').insert({ username: 'virk' })
     await client.rawQuery(command).exec()
@@ -355,7 +355,7 @@ test.group('Query client | write mode', (group) => {
     await connection.disconnect()
   })
 
-  test('perform queries inside a transaction in write mode', async (assert) => {
+  test('perform queries inside a transaction in write mode', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
     const client = new QueryClient('write', connection, app.container.use('Adonis/Core/Event'))
@@ -375,21 +375,21 @@ test.group('Query client | write mode', (group) => {
 
 if (!['sqlite', 'mssql', 'better_sqlite'].includes(process.env.DB as string)) {
   test.group('Query client | advisory locks', (group) => {
-    group.before(async () => {
+    group.setup(async () => {
       app = await setupApplication()
       await setup()
     })
 
-    group.after(async () => {
+    group.teardown(async () => {
       await cleanup()
       await fs.cleanup()
     })
 
-    group.afterEach(async () => {
+    group.each.teardown(async () => {
       await resetTables()
     })
 
-    test('get advisory lock', async (assert) => {
+    test('get advisory lock', async ({ assert }) => {
       const connection = new Connection('primary', getConfig(), app.logger)
       connection.connect()
 
@@ -403,7 +403,7 @@ if (!['sqlite', 'mssql', 'better_sqlite'].includes(process.env.DB as string)) {
       await connection.disconnect()
     })
 
-    test('release advisory lock', async (assert) => {
+    test('release advisory lock', async ({ assert }) => {
       const connection = new Connection('primary', getConfig(), app.logger)
       connection.connect()
 
@@ -423,21 +423,21 @@ if (!['sqlite', 'mssql', 'better_sqlite'].includes(process.env.DB as string)) {
 }
 
 test.group('Query client | get tables', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get an array of tables', async (assert) => {
+  test('get an array of tables', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 

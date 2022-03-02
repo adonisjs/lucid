@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { join } from 'path'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
@@ -20,19 +20,19 @@ let app: ApplicationContract
 let db: ReturnType<typeof getDb>
 
 test.group('MigrationSource', (group) => {
-  group.beforeEach(async () => {
+  group.each.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     await setup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await db.manager.closeAll()
     await resetTables()
     await fs.cleanup()
   })
 
-  test('get list of migration files from database/migrations.js', async (assert) => {
+  test('get list of migration files from database/migrations.js', async ({ assert }) => {
     const migrationSource = new MigrationSource(db.getRawConnection('primary')!.config, app)
 
     await fs.add('database/migrations/foo.js', 'module.exports = class Foo {}')
@@ -57,7 +57,7 @@ test.group('MigrationSource', (group) => {
     )
   })
 
-  test('only use javascript files for migration', async (assert) => {
+  test('only use javascript files for migration', async ({ assert }) => {
     const migrationSource = new MigrationSource(db.getRawConnection('primary')!.config, app)
 
     await fs.add('database/migrations/foo.js', 'module.exports = class Foo {}')
@@ -78,7 +78,7 @@ test.group('MigrationSource', (group) => {
     )
   })
 
-  test('sort multiple migration directories seperately', async (assert) => {
+  test('sort multiple migration directories seperately', async ({ assert }) => {
     const config = Object.assign({}, db.getRawConnection('primary')!.config, {
       migrations: {
         paths: ['./database/secondary', './database/primary'],
@@ -120,7 +120,7 @@ test.group('MigrationSource', (group) => {
     )
   })
 
-  test('handle esm default exports properly', async (assert) => {
+  test('handle esm default exports properly', async ({ assert }) => {
     const migrationSource = new MigrationSource(db.getRawConnection('primary')!.config, app)
 
     await fs.add('database/migrations/foo.ts', 'export default class Foo {}')

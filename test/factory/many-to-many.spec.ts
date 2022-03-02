@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import type { ManyToMany } from '@ioc:Adonis/Lucid/Orm'
 import { FactoryManager } from '../../src/Factory/index'
 import { column, manyToMany } from '../../src/Orm/Decorators'
@@ -34,24 +34,24 @@ const FactoryModel = getFactoryModel()
 const factoryManager = new FactoryManager()
 
 test.group('Factory | ManyToMany | make', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('make model with relationship', async (assert) => {
+  test('make model with relationship', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -107,7 +107,7 @@ test.group('Factory | ManyToMany | make', (group) => {
     assert.isFalse(user.skills[0].$isPersisted)
   })
 
-  test('pass custom attributes to relationship', async (assert) => {
+  test('pass custom attributes to relationship', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -164,7 +164,7 @@ test.group('Factory | ManyToMany | make', (group) => {
     assert.equal(user.skills[0].name, 'Dancing')
   })
 
-  test('make many relationship', async (assert) => {
+  test('make many relationship', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -228,24 +228,24 @@ test.group('Factory | ManyToMany | make', (group) => {
 })
 
 test.group('Factory | ManyToMany | create', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create model with relationship', async (assert) => {
+  test('create model with relationship', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -306,7 +306,7 @@ test.group('Factory | ManyToMany | create', (group) => {
     assert.equal(skillUsers[0].skill_id, skills[0].id)
   })
 
-  test('pass custom attributes', async (assert) => {
+  test('pass custom attributes', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -361,7 +361,7 @@ test.group('Factory | ManyToMany | create', (group) => {
     assert.equal(user.skills[0].name, 'Dancing')
   })
 
-  test('create many relationships', async (assert) => {
+  test('create many relationships', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -420,7 +420,7 @@ test.group('Factory | ManyToMany | create', (group) => {
     assert.equal(user.skills[1].name, 'Programming')
   })
 
-  test('rollback changes on error', async (assert) => {
+  test('rollback changes on error', async ({ assert }) => {
     assert.plan(4)
 
     class Skill extends BaseModel {

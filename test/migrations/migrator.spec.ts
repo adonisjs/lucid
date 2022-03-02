@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { join, sep } from 'path'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
@@ -27,13 +27,13 @@ let db: ReturnType<typeof getDb>
 let app: ApplicationContract
 
 test.group('Migrator', (group) => {
-  group.beforeEach(async () => {
+  group.each.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     await setup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
     await db.manager.closeAll()
     await cleanup()
@@ -41,7 +41,7 @@ test.group('Migrator', (group) => {
     await fs.cleanup()
   })
 
-  test('create the schema table when there are no migrations', async (assert) => {
+  test('create the schema table when there are no migrations', async ({ assert }) => {
     await fs.fsExtra.ensureDir(join(fs.basePath, 'database/migrations'))
 
     const migrator = getMigrator(db, app, {
@@ -56,7 +56,7 @@ test.group('Migrator', (group) => {
     assert.equal(migrator.status, 'skipped')
   })
 
-  test('migrate database using schema files', async (assert) => {
+  test('migrate database using schema files', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -102,7 +102,7 @@ test.group('Migrator', (group) => {
     assert.equal(migrator.status, 'completed')
   })
 
-  test('do not migrate when schema up action fails', async (assert) => {
+  test('do not migrate when schema up action fails', async ({ assert }) => {
     assert.plan(8)
 
     await fs.add(
@@ -174,7 +174,7 @@ test.group('Migrator', (group) => {
     assert.equal(migrator.error!.message, 'table.badMethod is not a function')
   })
 
-  test('do not migrate when dryRun is true', async (assert) => {
+  test('do not migrate when dryRun is true', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -256,7 +256,7 @@ test.group('Migrator', (group) => {
     assert.equal(migrator.status, 'completed')
   })
 
-  test('catch and report errors in dryRun', async (assert) => {
+  test('catch and report errors in dryRun', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -325,7 +325,7 @@ test.group('Migrator', (group) => {
     assert.equal(migrator.status, 'error')
   })
 
-  test('do not migrate a schema file twice', async (assert) => {
+  test('do not migrate a schema file twice', async ({ assert }) => {
     await fs.add(
       'database/migrations/accounts.ts',
       `
@@ -380,7 +380,7 @@ test.group('Migrator', (group) => {
     assert.isTrue(hasUsersTable, 'Has users table')
   })
 
-  test('rollback database using schema files to a given batch', async (assert) => {
+  test('rollback database using schema files to a given batch', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -453,7 +453,7 @@ test.group('Migrator', (group) => {
     ])
   })
 
-  test('rollback database to the latest batch', async (assert) => {
+  test('rollback database to the latest batch', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -522,7 +522,7 @@ test.group('Migrator', (group) => {
     ])
   })
 
-  test('rollback all down to batch 0', async (assert) => {
+  test('rollback all down to batch 0', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -602,7 +602,7 @@ test.group('Migrator', (group) => {
     ])
   })
 
-  test('rollback multiple times must be a noop', async (assert) => {
+  test('rollback multiple times must be a noop', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -700,7 +700,7 @@ test.group('Migrator', (group) => {
     assert.deepEqual(migrator3Files, [])
   })
 
-  test('do not rollback in dryRun', async (assert) => {
+  test('do not rollback in dryRun', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -781,7 +781,7 @@ test.group('Migrator', (group) => {
     ])
   })
 
-  test('do not rollback when a schema file goes missing', async (assert) => {
+  test('do not rollback when a schema file goes missing', async ({ assert }) => {
     assert.plan(4)
 
     await fs.add(
@@ -846,7 +846,7 @@ test.group('Migrator', (group) => {
     )
   })
 
-  test('get list of migrated files', async (assert) => {
+  test('get list of migrated files', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -895,7 +895,7 @@ test.group('Migrator', (group) => {
     assert.equal(files[1].batch, 1)
   })
 
-  test('skip upcoming migrations after failure', async (assert) => {
+  test('skip upcoming migrations after failure', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -966,7 +966,7 @@ test.group('Migrator', (group) => {
     assert.equal(migrator.status, 'error')
   })
 
-  test('use a natural sort to order files when configured', async (assert) => {
+  test('use a natural sort to order files when configured', async ({ assert }) => {
     const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
 
     db.getRawConnection('primary')!.config.migrations = {
@@ -1018,7 +1018,7 @@ test.group('Migrator', (group) => {
     assert.equal(files[1].name, `database${sep}migrations${sep}12_users`)
   })
 
-  test('use a natural sort to order nested files when configured', async (assert) => {
+  test('use a natural sort to order nested files when configured', async ({ assert }) => {
     const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
 
     db.getRawConnection('primary')!.config.migrations = {
@@ -1070,7 +1070,7 @@ test.group('Migrator', (group) => {
     assert.equal(files[1].name, `database${sep}migrations${sep}12${sep}1_accounts`)
   })
 
-  test('raise exception when rollbacks in production are disabled', async (assert) => {
+  test('raise exception when rollbacks in production are disabled', async ({ assert }) => {
     app.nodeEnvironment = 'production'
     const originalConfig = Object.assign({}, db.getRawConnection('primary')!.config)
 
@@ -1140,7 +1140,7 @@ test.group('Migrator', (group) => {
     delete process.env.NODE_ENV
   })
 
-  test('upgrade old migration file name to new', async (assert) => {
+  test('upgrade old migration file name to new', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -1198,7 +1198,7 @@ test.group('Migrator', (group) => {
     assert.equal(migrator.status, 'skipped')
   })
 
-  test('upgrade file names also in dryRun', async (assert) => {
+  test('upgrade file names also in dryRun', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `

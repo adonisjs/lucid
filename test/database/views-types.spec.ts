@@ -1,6 +1,6 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { join } from 'path'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
@@ -11,19 +11,19 @@ import { fs, getConfig, setup, cleanup, setupApplication } from '../../test-help
 let app: ApplicationContract
 
 test.group('Query client | Views and types', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup(['temp_posts', 'temp_users'])
     await cleanup()
     await fs.cleanup()
   })
 
   if (['sqlite', 'mysql', 'pg'].includes(process.env.DB!)) {
-    test('Get all views', async (assert) => {
+    test('Get all views', async ({ assert }) => {
       await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
       const connection = new Connection('primary', getConfig(), app.logger)
       connection.connect()
@@ -45,7 +45,7 @@ test.group('Query client | Views and types', (group) => {
       await client.dropAllViews()
     })
 
-    test('Drop all views', async (assert) => {
+    test('Drop all views', async ({ assert }) => {
       await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
       const connection = new Connection('primary', getConfig(), app.logger)
       connection.connect()
@@ -72,7 +72,7 @@ test.group('Query client | Views and types', (group) => {
   }
 
   if (['pg'].includes(process.env.DB!)) {
-    test('Get all types', async (assert) => {
+    test('Get all types', async ({ assert }) => {
       await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
       const connection = new Connection('primary', getConfig(), app.logger)
       connection.connect()
@@ -87,7 +87,7 @@ test.group('Query client | Views and types', (group) => {
       await client.dropAllTypes()
     })
 
-    test('Drop all types', async (assert) => {
+    test('Drop all types', async ({ assert }) => {
       await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
       const connection = new Connection('primary', getConfig(), app.logger)
       connection.connect()

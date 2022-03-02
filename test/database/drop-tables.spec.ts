@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { join } from 'path'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
@@ -20,18 +20,18 @@ import { fs, getConfig, setup, cleanup, setupApplication } from '../../test-help
 let app: ApplicationContract
 
 test.group('Query client | drop tables', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup(['temp_posts', 'temp_users'])
     await cleanup()
     await fs.cleanup()
   })
 
-  test('drop all tables', async (assert) => {
+  test('drop all tables', async ({ assert }) => {
     await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
@@ -63,7 +63,7 @@ test.group('Query client | drop tables', (group) => {
     assert.isFalse(await connection.client!.schema.hasTable('identities'))
   })
 
-  test('dropAllTables should not throw when there are no tables', async (assert) => {
+  test('dropAllTables should not throw when there are no tables', async ({ assert }) => {
     await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()

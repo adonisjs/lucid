@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import type { HasMany } from '@ioc:Adonis/Lucid/Orm'
 import { FactoryManager } from '../../src/Factory/index'
 import { column, hasMany } from '../../src/Orm/Decorators'
@@ -34,24 +34,24 @@ const FactoryModel = getFactoryModel()
 const factoryManager = new FactoryManager()
 
 test.group('Factory | HasMany | make', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('make model with relationship', async (assert) => {
+  test('make model with relationship', async ({ assert }) => {
     class Post extends BaseModel {
       @column()
       public id: number
@@ -110,7 +110,7 @@ test.group('Factory | HasMany | make', (group) => {
     assert.equal(user.posts[0].userId, user.id)
   })
 
-  test('pass custom attributes to relationship', async (assert) => {
+  test('pass custom attributes to relationship', async ({ assert }) => {
     class Post extends BaseModel {
       @column()
       public userId: number
@@ -166,7 +166,7 @@ test.group('Factory | HasMany | make', (group) => {
     assert.equal(user.posts[0].title, 'Lucid 101')
   })
 
-  test('make many relationship', async (assert) => {
+  test('make many relationship', async ({ assert }) => {
     class Post extends BaseModel {
       @column()
       public userId: number
@@ -227,24 +227,24 @@ test.group('Factory | HasMany | make', (group) => {
 })
 
 test.group('Factory | HasMany | create', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create model with relationship', async (assert) => {
+  test('create model with relationship', async ({ assert }) => {
     class Post extends BaseModel {
       @column()
       public userId: number
@@ -304,7 +304,7 @@ test.group('Factory | HasMany | create', (group) => {
     assert.equal(posts[0].user_id, users[0].id)
   })
 
-  test('pass custom attributes to relationship', async (assert) => {
+  test('pass custom attributes to relationship', async ({ assert }) => {
     class Post extends BaseModel {
       @column()
       public userId: number
@@ -360,7 +360,7 @@ test.group('Factory | HasMany | create', (group) => {
     assert.equal(user.posts[0].title, 'Lucid 101')
   })
 
-  test('create many relationship', async (assert) => {
+  test('create many relationship', async ({ assert }) => {
     class Post extends BaseModel {
       @column()
       public userId: number
@@ -420,7 +420,7 @@ test.group('Factory | HasMany | create', (group) => {
     assert.equal(user.posts[1].title, 'Lucid 101')
   })
 
-  test('create relationship with custom foreign key', async (assert) => {
+  test('create relationship with custom foreign key', async ({ assert }) => {
     class Post extends BaseModel {
       @column({ columnName: 'user_id' })
       public authorId: number
@@ -476,7 +476,7 @@ test.group('Factory | HasMany | create', (group) => {
     assert.equal(user.posts[0].title, 'Lucid 101')
   })
 
-  test('rollback changes on error', async (assert) => {
+  test('rollback changes on error', async ({ assert }) => {
     assert.plan(3)
 
     class Post extends BaseModel {

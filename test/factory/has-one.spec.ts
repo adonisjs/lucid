@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import type { HasOne } from '@ioc:Adonis/Lucid/Orm'
 import { FactoryManager } from '../../src/Factory/index'
 import { column, hasOne } from '../../src/Orm/Decorators'
@@ -34,24 +34,24 @@ const FactoryModel = getFactoryModel()
 const factoryManager = new FactoryManager()
 
 test.group('Factory | HasOne | make', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('make model with relationship', async (assert) => {
+  test('make model with relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public id: number
@@ -109,7 +109,7 @@ test.group('Factory | HasOne | make', (group) => {
     assert.equal(user.profile.userId, user.id)
   })
 
-  test('pass custom attributes to relationship', async (assert) => {
+  test('pass custom attributes to relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public id: number
@@ -171,24 +171,24 @@ test.group('Factory | HasOne | make', (group) => {
 })
 
 test.group('Factory | HasOne | create', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create model with relationship', async (assert) => {
+  test('create model with relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -247,7 +247,7 @@ test.group('Factory | HasOne | create', (group) => {
     assert.equal(profiles[0].user_id, users[0].id)
   })
 
-  test('pass custom attributes to relationship', async (assert) => {
+  test('pass custom attributes to relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -302,7 +302,7 @@ test.group('Factory | HasOne | create', (group) => {
     assert.equal(user.profile.userId, user.id)
   })
 
-  test('create model with custom foreign key', async (assert) => {
+  test('create model with custom foreign key', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ columnName: 'user_id' })
       public authorId: number
@@ -354,7 +354,7 @@ test.group('Factory | HasOne | create', (group) => {
     assert.equal(user.profile.authorId, user.id)
   })
 
-  test('rollback changes on error', async (assert) => {
+  test('rollback changes on error', async ({ assert }) => {
     assert.plan(3)
 
     class Profile extends BaseModel {

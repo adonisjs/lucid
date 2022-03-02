@@ -7,23 +7,23 @@
  * file that was distributed with this source code.
  */
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { join } from 'path'
 
 import { SeedersSource } from '../../src/SeedsRunner/SeedersSource'
 import { getDb, setup, setupApplication, fs, cleanup } from '../../test-helpers'
 
 test.group('Seeds Source', (group) => {
-  group.beforeEach(async () => {
+  group.each.setup(async () => {
     await setup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  test('get list of seed files recursively', async (assert) => {
+  test('get list of seed files recursively', async ({ assert }) => {
     const app = await setupApplication()
     const db = getDb(app)
 
@@ -57,7 +57,7 @@ test.group('Seeds Source', (group) => {
     )
   })
 
-  test('only pick .ts/.js files', async (assert) => {
+  test('only pick .ts/.js files', async ({ assert }) => {
     const app = await setupApplication()
     const db = getDb(app)
     const seedsSource = new SeedersSource(db.getRawConnection('primary')!.config, app)
@@ -96,7 +96,7 @@ test.group('Seeds Source', (group) => {
     )
   })
 
-  test('sort multiple seeders directories seperately', async (assert) => {
+  test('sort multiple seeders directories seperately', async ({ assert }) => {
     const app = await setupApplication()
     const db = getDb(app)
 

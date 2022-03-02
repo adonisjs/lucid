@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { Connection } from '../../src/Connection'
 import { QueryRunner } from '../../src/QueryRunner'
 import { DatabaseQueryBuilder } from '../../src/Database/QueryBuilder/Database'
@@ -33,22 +33,22 @@ let app: ApplicationContract
 
 if (process.env.DB !== 'sqlite') {
   test.group('Query Builder | client', (group) => {
-    group.before(async () => {
+    group.setup(async () => {
       app = await setupApplication()
       await setup()
     })
 
-    group.after(async () => {
+    group.teardown(async () => {
       await cleanup()
       await fs.cleanup()
     })
 
-    group.afterEach(async () => {
+    group.each.teardown(async () => {
       app.container.use('Adonis/Core/Event').clearListeners('db:query')
       await resetTables()
     })
 
-    test('use read client when making select query', async (assert) => {
+    test('use read client when making select query', async ({ assert }) => {
       assert.plan(1)
       const connection = new Connection('primary', getConfig(), app.logger)
       connection.connect()
@@ -65,7 +65,7 @@ if (process.env.DB !== 'sqlite') {
       await connection.disconnect()
     })
 
-    test('use write client for update', async (assert) => {
+    test('use write client for update', async ({ assert }) => {
       assert.plan(1)
       const connection = new Connection('primary', getConfig(), app.logger)
       connection.connect()
@@ -84,7 +84,7 @@ if (process.env.DB !== 'sqlite') {
       await connection.disconnect()
     })
 
-    test('use write client for delete', async (assert) => {
+    test('use write client for delete', async ({ assert }) => {
       assert.plan(1)
       const connection = new Connection('primary', getConfig(), app.logger)
       connection.connect()
@@ -101,7 +101,7 @@ if (process.env.DB !== 'sqlite') {
       await connection.disconnect()
     })
 
-    test('use write client for inserts', async (assert) => {
+    test('use write client for inserts', async ({ assert }) => {
       assert.plan(1)
       const connection = new Connection('primary', getConfig(), app.logger)
       connection.connect()
@@ -198,22 +198,22 @@ if (process.env.DB !== 'sqlite') {
 }
 
 test.group('Query Builder | from', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define query table', async (assert) => {
+  test('define query table', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -226,7 +226,7 @@ test.group('Query Builder | from', (group) => {
     await connection.disconnect()
   })
 
-  test('define table alias', (assert) => {
+  test('define table alias', ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -240,22 +240,22 @@ test.group('Query Builder | from', (group) => {
 })
 
 test.group('Query Builder | select', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define columns as array', async (assert) => {
+  test('define columns as array', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -271,7 +271,7 @@ test.group('Query Builder | select', (group) => {
     await connection.disconnect()
   })
 
-  test('define columns with aliases', async (assert) => {
+  test('define columns with aliases', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -287,7 +287,7 @@ test.group('Query Builder | select', (group) => {
     await connection.disconnect()
   })
 
-  test('define columns as multiple arguments', async (assert) => {
+  test('define columns as multiple arguments', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -303,7 +303,7 @@ test.group('Query Builder | select', (group) => {
     await connection.disconnect()
   })
 
-  test('define columns as multiple arguments with aliases', async (assert) => {
+  test('define columns as multiple arguments with aliases', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -319,7 +319,7 @@ test.group('Query Builder | select', (group) => {
     await connection.disconnect()
   })
 
-  test('define columns as subqueries', async (assert) => {
+  test('define columns as subqueries', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -341,7 +341,7 @@ test.group('Query Builder | select', (group) => {
     await connection.disconnect()
   })
 
-  test('define columns as subqueries inside an array', async (assert) => {
+  test('define columns as subqueries inside an array', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -363,7 +363,7 @@ test.group('Query Builder | select', (group) => {
     await connection.disconnect()
   })
 
-  test('chain select calls', async (assert) => {
+  test('chain select calls', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -386,7 +386,7 @@ test.group('Query Builder | select', (group) => {
     await connection.disconnect()
   })
 
-  test('define columns as raw queries', async (assert) => {
+  test('define columns as raw queries', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -415,22 +415,22 @@ test.group('Query Builder | select', (group) => {
 })
 
 test.group('Query Builder | where', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add where clause', async (assert) => {
+  test('add where clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -465,7 +465,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where clause to its own group', async (assert) => {
+  test('wrap where clause to its own group', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -511,7 +511,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('add where clause as an object', async (assert) => {
+  test('add where clause as an object', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -544,7 +544,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('add where wrapped clause', async (assert) => {
+  test('add where wrapped clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -580,7 +580,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap already wrapped where clause', async (assert) => {
+  test('wrap already wrapped where clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -622,7 +622,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('add where clause with operator', async (assert) => {
+  test('add where clause with operator', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -655,7 +655,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where clause with operator', async (assert) => {
+  test('wrap where clause with operator', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -697,7 +697,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('add where clause as a raw query', async (assert) => {
+  test('add where clause as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -721,7 +721,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap raw query', async (assert) => {
+  test('wrap raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -750,7 +750,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('add where clause as a raw builder query', async (assert) => {
+  test('add where clause as a raw builder query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -770,7 +770,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap raw query builder query', async (assert) => {
+  test('wrap raw query builder query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -790,7 +790,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('add orWhere clause', async (assert) => {
+  test('add orWhere clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -827,7 +827,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap orWhere clause', async (assert) => {
+  test('wrap orWhere clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -870,7 +870,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('add orWhere wrapped clause', async (assert) => {
+  test('add orWhere wrapped clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -921,7 +921,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap orWhere wrapped clause', async (assert) => {
+  test('wrap orWhere wrapped clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -972,7 +972,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('add where clause using ref', async (assert) => {
+  test('add where clause using ref', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1007,7 +1007,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where clause using ref', async (assert) => {
+  test('wrap where clause using ref', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1051,7 +1051,7 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
-  test('allow raw query for the column name', async (assert) => {
+  test('allow raw query for the column name', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1075,22 +1075,22 @@ test.group('Query Builder | where', (group) => {
 })
 
 test.group('Query Builder | whereNot', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add where not clause', async (assert) => {
+  test('add where not clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1124,7 +1124,7 @@ test.group('Query Builder | whereNot', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where not clause', async (assert) => {
+  test('wrap where not clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1167,7 +1167,7 @@ test.group('Query Builder | whereNot', (group) => {
     await connection.disconnect()
   })
 
-  test('add where not clause as an object', async (assert) => {
+  test('add where not clause as an object', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1200,7 +1200,7 @@ test.group('Query Builder | whereNot', (group) => {
     await connection.disconnect()
   })
 
-  test('add where not wrapped clause', async (assert) => {
+  test('add where not wrapped clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1237,7 +1237,7 @@ test.group('Query Builder | whereNot', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where not wrapped clause', async (assert) => {
+  test('wrap where not wrapped clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1280,7 +1280,7 @@ test.group('Query Builder | whereNot', (group) => {
     await connection.disconnect()
   })
 
-  test('add where not clause with operator', async (assert) => {
+  test('add where not clause with operator', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1314,7 +1314,7 @@ test.group('Query Builder | whereNot', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where not clause with operator', async (assert) => {
+  test('wrap where not clause with operator', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1357,7 +1357,7 @@ test.group('Query Builder | whereNot', (group) => {
     await connection.disconnect()
   })
 
-  test('add where not clause as a raw query', async (assert) => {
+  test('add where not clause as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1402,7 +1402,7 @@ test.group('Query Builder | whereNot', (group) => {
     await connection.disconnect()
   })
 
-  test('add where not clause as a raw builder query', async (assert) => {
+  test('add where not clause as a raw builder query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1439,7 +1439,7 @@ test.group('Query Builder | whereNot', (group) => {
     await connection.disconnect()
   })
 
-  test('add orWhereNot clause', async (assert) => {
+  test('add orWhereNot clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1480,7 +1480,7 @@ test.group('Query Builder | whereNot', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap orWhereNot clause', async (assert) => {
+  test('wrap orWhereNot clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1523,7 +1523,7 @@ test.group('Query Builder | whereNot', (group) => {
     await connection.disconnect()
   })
 
-  test('add orWhereNot wrapped clause', async (assert) => {
+  test('add orWhereNot wrapped clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1576,22 +1576,22 @@ test.group('Query Builder | whereNot', (group) => {
 })
 
 test.group('Query Builder | whereIn', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add whereIn clause', async (assert) => {
+  test('add whereIn clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1624,7 +1624,7 @@ test.group('Query Builder | whereIn', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap whereIn clause', async (assert) => {
+  test('wrap whereIn clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1666,7 +1666,7 @@ test.group('Query Builder | whereIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add whereIn as a query callback', async (assert) => {
+  test('add whereIn as a query callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1710,7 +1710,7 @@ test.group('Query Builder | whereIn', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap whereIn as a query callback', async (assert) => {
+  test('wrap whereIn as a query callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1764,7 +1764,7 @@ test.group('Query Builder | whereIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add whereIn as a subquery', async (assert) => {
+  test('add whereIn as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1806,7 +1806,7 @@ test.group('Query Builder | whereIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add whereIn as a rawquery inside array', async (assert) => {
+  test('add whereIn as a rawquery inside array', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1857,7 +1857,7 @@ test.group('Query Builder | whereIn', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap whereIn as a rawquery inside array', async (assert) => {
+  test('wrap whereIn as a rawquery inside array', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1920,7 +1920,7 @@ test.group('Query Builder | whereIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add whereIn as a rawquery', async (assert) => {
+  test('add whereIn as a rawquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -1973,7 +1973,7 @@ test.group('Query Builder | whereIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add whereIn as a raw builder query', async (assert) => {
+  test('add whereIn as a raw builder query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2014,7 +2014,7 @@ test.group('Query Builder | whereIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add whereIn as a subquery with array of keys', async (assert) => {
+  test('add whereIn as a subquery with array of keys', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2067,7 +2067,7 @@ test.group('Query Builder | whereIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add whereIn as a 2d array', async (assert) => {
+  test('add whereIn as a 2d array', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2104,7 +2104,7 @@ test.group('Query Builder | whereIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add orWhereIn clause', async (assert) => {
+  test('add orWhereIn clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2145,7 +2145,7 @@ test.group('Query Builder | whereIn', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap orWhereIn clause', async (assert) => {
+  test('wrap orWhereIn clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2188,7 +2188,7 @@ test.group('Query Builder | whereIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add orWhereIn as a query callback', async (assert) => {
+  test('add orWhereIn as a query callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2247,22 +2247,22 @@ test.group('Query Builder | whereIn', (group) => {
 })
 
 test.group('Query Builder | whereNotIn', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add whereNotIn clause', async (assert) => {
+  test('add whereNotIn clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2295,7 +2295,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap whereNotIn clause', async (assert) => {
+  test('wrap whereNotIn clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2337,7 +2337,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add whereNotIn as a query callback', async (assert) => {
+  test('add whereNotIn as a query callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2381,7 +2381,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add whereNotIn as a sub query', async (assert) => {
+  test('add whereNotIn as a sub query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2423,7 +2423,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap whereNotIn as a sub query', async (assert) => {
+  test('wrap whereNotIn as a sub query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2475,7 +2475,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add whereNotIn as a 2d array', async (assert) => {
+  test('add whereNotIn as a 2d array', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2512,7 +2512,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add orWhereNotIn clause', async (assert) => {
+  test('add orWhereNotIn clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2553,7 +2553,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap orWhereNotIn clause', async (assert) => {
+  test('wrap orWhereNotIn clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2596,7 +2596,7 @@ test.group('Query Builder | whereNotIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add orWhereNotIn as a subquery', async (assert) => {
+  test('add orWhereNotIn as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2655,22 +2655,22 @@ test.group('Query Builder | whereNotIn', (group) => {
 })
 
 test.group('Query Builder | whereNull', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add where null clause', async (assert) => {
+  test('add where null clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2704,7 +2704,7 @@ test.group('Query Builder | whereNull', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where null clause', async (assert) => {
+  test('wrap where null clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2747,7 +2747,7 @@ test.group('Query Builder | whereNull', (group) => {
     await connection.disconnect()
   })
 
-  test('add or where null clause', async (assert) => {
+  test('add or where null clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2790,22 +2790,22 @@ test.group('Query Builder | whereNull', (group) => {
 })
 
 test.group('Query Builder | whereNotNull', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add where not null clause', async (assert) => {
+  test('add where not null clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2839,7 +2839,7 @@ test.group('Query Builder | whereNotNull', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where not null clause', async (assert) => {
+  test('wrap where not null clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2882,7 +2882,7 @@ test.group('Query Builder | whereNotNull', (group) => {
     await connection.disconnect()
   })
 
-  test('add or where not null clause', async (assert) => {
+  test('add or where not null clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2925,22 +2925,22 @@ test.group('Query Builder | whereNotNull', (group) => {
 })
 
 test.group('Query Builder | whereExists', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add where exists clause', async (assert) => {
+  test('add where exists clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2964,7 +2964,7 @@ test.group('Query Builder | whereExists', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where exists clause', async (assert) => {
+  test('wrap where exists clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -2993,7 +2993,7 @@ test.group('Query Builder | whereExists', (group) => {
     await connection.disconnect()
   })
 
-  test('add where exists clause as a subquery', async (assert) => {
+  test('add where exists clause as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3014,7 +3014,7 @@ test.group('Query Builder | whereExists', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where exists clause as a subquery', async (assert) => {
+  test('wrap where exists clause as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3038,7 +3038,7 @@ test.group('Query Builder | whereExists', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap subquery', async (assert) => {
+  test('wrap subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3073,7 +3073,7 @@ test.group('Query Builder | whereExists', (group) => {
     await connection.disconnect()
   })
 
-  test('add where exists clause as a raw query', async (assert) => {
+  test('add where exists clause as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3094,7 +3094,7 @@ test.group('Query Builder | whereExists', (group) => {
     await connection.disconnect()
   })
 
-  test('add or where exists clause', async (assert) => {
+  test('add or where exists clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3119,7 +3119,7 @@ test.group('Query Builder | whereExists', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap or where exists clause', async (assert) => {
+  test('wrap or where exists clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3155,7 +3155,7 @@ test.group('Query Builder | whereExists', (group) => {
     await connection.disconnect()
   })
 
-  test('add or where exists clause as a subquery', async (assert) => {
+  test('add or where exists clause as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3176,7 +3176,7 @@ test.group('Query Builder | whereExists', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap or where exists clause as a subquery', async (assert) => {
+  test('wrap or where exists clause as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3202,22 +3202,22 @@ test.group('Query Builder | whereExists', (group) => {
 })
 
 test.group('Query Builder | whereNotExists', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add where not exists clause', async (assert) => {
+  test('add where not exists clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3242,7 +3242,7 @@ test.group('Query Builder | whereNotExists', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where not exists clause', async (assert) => {
+  test('wrap where not exists clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3272,7 +3272,7 @@ test.group('Query Builder | whereNotExists', (group) => {
     await connection.disconnect()
   })
 
-  test('add where not exists clause as a subquery', async (assert) => {
+  test('add where not exists clause as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3293,7 +3293,7 @@ test.group('Query Builder | whereNotExists', (group) => {
     await connection.disconnect()
   })
 
-  test('add or where not exists clause', async (assert) => {
+  test('add or where not exists clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3318,7 +3318,7 @@ test.group('Query Builder | whereNotExists', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap or where not exists clause', async (assert) => {
+  test('wrap or where not exists clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3354,7 +3354,7 @@ test.group('Query Builder | whereNotExists', (group) => {
     await connection.disconnect()
   })
 
-  test('add or where not exists clause as a subquery', async (assert) => {
+  test('add or where not exists clause as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3377,22 +3377,22 @@ test.group('Query Builder | whereNotExists', (group) => {
 })
 
 test.group('Query Builder | whereBetween', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add where between clause', async (assert) => {
+  test('add where between clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3426,7 +3426,7 @@ test.group('Query Builder | whereBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where between clause', async (assert) => {
+  test('wrap where between clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3469,7 +3469,7 @@ test.group('Query Builder | whereBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('add where between clause as a raw query', async (assert) => {
+  test('add where between clause as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3518,7 +3518,7 @@ test.group('Query Builder | whereBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('add or where between clause', async (assert) => {
+  test('add or where between clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3552,7 +3552,7 @@ test.group('Query Builder | whereBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap or where between clause', async (assert) => {
+  test('wrap or where between clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3597,7 +3597,7 @@ test.group('Query Builder | whereBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('add or where between clause as a raw query', async (assert) => {
+  test('add or where between clause as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3648,22 +3648,22 @@ test.group('Query Builder | whereBetween', (group) => {
 })
 
 test.group('Query Builder | whereNotBetween', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add where not between clause', async (assert) => {
+  test('add where not between clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3697,7 +3697,7 @@ test.group('Query Builder | whereNotBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where not between clause', async (assert) => {
+  test('wrap where not between clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3740,7 +3740,7 @@ test.group('Query Builder | whereNotBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('add where not between clause as a raw query', async (assert) => {
+  test('add where not between clause as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3789,7 +3789,7 @@ test.group('Query Builder | whereNotBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('add or where not between clause', async (assert) => {
+  test('add or where not between clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3832,7 +3832,7 @@ test.group('Query Builder | whereNotBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('add or where not between clause as a raw query', async (assert) => {
+  test('add or where not between clause as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3883,22 +3883,22 @@ test.group('Query Builder | whereNotBetween', (group) => {
 })
 
 test.group('Query Builder | whereRaw', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add where raw clause', async (assert) => {
+  test('add where raw clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3916,7 +3916,7 @@ test.group('Query Builder | whereRaw', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap where raw clause', async (assert) => {
+  test('wrap where raw clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3940,7 +3940,7 @@ test.group('Query Builder | whereRaw', (group) => {
     await connection.disconnect()
   })
 
-  test('add where raw clause without bindings', async (assert) => {
+  test('add where raw clause without bindings', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3958,7 +3958,7 @@ test.group('Query Builder | whereRaw', (group) => {
     await connection.disconnect()
   })
 
-  test('add where raw clause with object of bindings', async (assert) => {
+  test('add where raw clause with object of bindings', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3975,7 +3975,7 @@ test.group('Query Builder | whereRaw', (group) => {
     await connection.disconnect()
   })
 
-  test('add where raw clause from a raw query', async (assert) => {
+  test('add where raw clause from a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -3996,7 +3996,7 @@ test.group('Query Builder | whereRaw', (group) => {
     await connection.disconnect()
   })
 
-  test('add or where raw clause', async (assert) => {
+  test('add or where raw clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4019,7 +4019,7 @@ test.group('Query Builder | whereRaw', (group) => {
     await connection.disconnect()
   })
 
-  test('wrap or where raw clause', async (assert) => {
+  test('wrap or where raw clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4045,22 +4045,22 @@ test.group('Query Builder | whereRaw', (group) => {
 })
 
 test.group('Query Builder | join', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add query join', async (assert) => {
+  test('add query join', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4081,7 +4081,7 @@ test.group('Query Builder | join', (group) => {
     await connection.disconnect()
   })
 
-  test('add query join with operator', async (assert) => {
+  test('add query join with operator', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4102,7 +4102,7 @@ test.group('Query Builder | join', (group) => {
     await connection.disconnect()
   })
 
-  test('add query join using join callback', async (assert) => {
+  test('add query join using join callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4127,7 +4127,7 @@ test.group('Query Builder | join', (group) => {
     await connection.disconnect()
   })
 
-  test('add query join as a raw query', async (assert) => {
+  test('add query join as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4152,7 +4152,7 @@ test.group('Query Builder | join', (group) => {
     await connection.disconnect()
   })
 
-  test('add query join as a raw builder query', async (assert) => {
+  test('add query join as a raw builder query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4175,22 +4175,22 @@ test.group('Query Builder | join', (group) => {
 })
 
 test.group('Query Builder | innerJoin', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add query innerJoin', async (assert) => {
+  test('add query innerJoin', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4211,7 +4211,7 @@ test.group('Query Builder | innerJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query innerJoin with operator', async (assert) => {
+  test('add query innerJoin with operator', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4232,7 +4232,7 @@ test.group('Query Builder | innerJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query innerJoin using join callback', async (assert) => {
+  test('add query innerJoin using join callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4257,7 +4257,7 @@ test.group('Query Builder | innerJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query innerJoin as a raw query', async (assert) => {
+  test('add query innerJoin as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4282,7 +4282,7 @@ test.group('Query Builder | innerJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query innerJoin as a raw query', async (assert) => {
+  test('add query innerJoin as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4305,22 +4305,22 @@ test.group('Query Builder | innerJoin', (group) => {
 })
 
 test.group('Query Builder | leftJoin', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add query leftJoin', async (assert) => {
+  test('add query leftJoin', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4341,7 +4341,7 @@ test.group('Query Builder | leftJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query leftJoin with operator', async (assert) => {
+  test('add query leftJoin with operator', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4362,7 +4362,7 @@ test.group('Query Builder | leftJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query leftJoin using join callback', async (assert) => {
+  test('add query leftJoin using join callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4387,7 +4387,7 @@ test.group('Query Builder | leftJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query leftJoin as a raw query', async (assert) => {
+  test('add query leftJoin as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4414,22 +4414,22 @@ test.group('Query Builder | leftJoin', (group) => {
 })
 
 test.group('Query Builder | leftOuterJoin', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add query leftOuterJoin', async (assert) => {
+  test('add query leftOuterJoin', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4450,7 +4450,7 @@ test.group('Query Builder | leftOuterJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query leftOuterJoin with operator', async (assert) => {
+  test('add query leftOuterJoin with operator', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4471,7 +4471,7 @@ test.group('Query Builder | leftOuterJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query leftOuterJoin using join callback', async (assert) => {
+  test('add query leftOuterJoin using join callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4496,7 +4496,7 @@ test.group('Query Builder | leftOuterJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query leftOuterJoin as a raw query', async (assert) => {
+  test('add query leftOuterJoin as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4523,22 +4523,22 @@ test.group('Query Builder | leftOuterJoin', (group) => {
 })
 
 test.group('Query Builder | rightJoin', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add query rightJoin', async (assert) => {
+  test('add query rightJoin', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4559,7 +4559,7 @@ test.group('Query Builder | rightJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query rightJoin with operator', async (assert) => {
+  test('add query rightJoin with operator', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4580,7 +4580,7 @@ test.group('Query Builder | rightJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query rightJoin using join callback', async (assert) => {
+  test('add query rightJoin using join callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4605,7 +4605,7 @@ test.group('Query Builder | rightJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query rightJoin as a raw query', async (assert) => {
+  test('add query rightJoin as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4632,22 +4632,22 @@ test.group('Query Builder | rightJoin', (group) => {
 })
 
 test.group('Query Builder | rightOuterJoin', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add query rightOuterJoin', async (assert) => {
+  test('add query rightOuterJoin', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4668,7 +4668,7 @@ test.group('Query Builder | rightOuterJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query rightOuterJoin with operator', async (assert) => {
+  test('add query rightOuterJoin with operator', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4689,7 +4689,7 @@ test.group('Query Builder | rightOuterJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query rightOuterJoin using join callback', async (assert) => {
+  test('add query rightOuterJoin using join callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4714,7 +4714,7 @@ test.group('Query Builder | rightOuterJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query rightOuterJoin as a raw query', async (assert) => {
+  test('add query rightOuterJoin as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4741,22 +4741,22 @@ test.group('Query Builder | rightOuterJoin', (group) => {
 })
 
 test.group('Query Builder | fullOuterJoin', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add query fullOuterJoin', async (assert) => {
+  test('add query fullOuterJoin', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4777,7 +4777,7 @@ test.group('Query Builder | fullOuterJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query fullOuterJoin with operator', async (assert) => {
+  test('add query fullOuterJoin with operator', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4798,7 +4798,7 @@ test.group('Query Builder | fullOuterJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query fullOuterJoin using join callback', async (assert) => {
+  test('add query fullOuterJoin using join callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4823,7 +4823,7 @@ test.group('Query Builder | fullOuterJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query fullOuterJoin as a raw query', async (assert) => {
+  test('add query fullOuterJoin as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4850,22 +4850,22 @@ test.group('Query Builder | fullOuterJoin', (group) => {
 })
 
 test.group('Query Builder | crossJoin', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add query crossJoin', async (assert) => {
+  test('add query crossJoin', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4886,7 +4886,7 @@ test.group('Query Builder | crossJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query crossJoin with operator', async (assert) => {
+  test('add query crossJoin with operator', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4907,7 +4907,7 @@ test.group('Query Builder | crossJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query crossJoin using join callback', async (assert) => {
+  test('add query crossJoin using join callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4932,7 +4932,7 @@ test.group('Query Builder | crossJoin', (group) => {
     await connection.disconnect()
   })
 
-  test('add query crossJoin as a raw query', async (assert) => {
+  test('add query crossJoin as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4959,22 +4959,22 @@ test.group('Query Builder | crossJoin', (group) => {
 })
 
 test.group('Query Builder | joinRaw', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add join as a raw join', async (assert) => {
+  test('add join as a raw join', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -4992,7 +4992,7 @@ test.group('Query Builder | joinRaw', (group) => {
     await connection.disconnect()
   })
 
-  test('add join as a raw join by passing the raw query output', async (assert) => {
+  test('add join as a raw join by passing the raw query output', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5015,22 +5015,22 @@ test.group('Query Builder | joinRaw', (group) => {
 })
 
 test.group('Query Builder | distinct', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define distinct columns', async (assert) => {
+  test('define distinct columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5066,23 +5066,23 @@ test.group('Query Builder | distinct', (group) => {
 })
 
 test.group('Query Builder | distinctOn', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
   if (process.env.DB === 'pg') {
-    test('define distinct columns', async (assert) => {
+    test('define distinct columns', async ({ assert }) => {
       const connection = new Connection('primary', getConfig(), app.logger)
       connection.connect()
 
@@ -5119,22 +5119,22 @@ test.group('Query Builder | distinctOn', (group) => {
 })
 
 test.group('Query Builder | groupBy', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define group by columns', async (assert) => {
+  test('define group by columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5170,22 +5170,22 @@ test.group('Query Builder | groupBy', (group) => {
 })
 
 test.group('Query Builder | groupByRaw', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define group by columns as a raw query', async (assert) => {
+  test('define group by columns as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5205,22 +5205,22 @@ test.group('Query Builder | groupByRaw', (group) => {
 })
 
 test.group('Query Builder | orderBy', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define order by columns', async (assert) => {
+  test('define order by columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5254,7 +5254,7 @@ test.group('Query Builder | orderBy', (group) => {
     await connection.disconnect()
   })
 
-  test('define order by columns with explicit direction', async (assert) => {
+  test('define order by columns with explicit direction', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5288,7 +5288,7 @@ test.group('Query Builder | orderBy', (group) => {
     await connection.disconnect()
   })
 
-  test('define order by columns as an array', async (assert) => {
+  test('define order by columns as an array', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5322,7 +5322,7 @@ test.group('Query Builder | orderBy', (group) => {
     await connection.disconnect()
   })
 
-  test('define order by columns as an array of objects', async (assert) => {
+  test('define order by columns as an array of objects', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5371,7 +5371,7 @@ test.group('Query Builder | orderBy', (group) => {
     await connection.disconnect()
   })
 
-  test('define order by columns as subquery', async (assert) => {
+  test('define order by columns as subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5402,7 +5402,7 @@ test.group('Query Builder | orderBy', (group) => {
     await connection.disconnect()
   })
 
-  test('define order by columns as an array of subqueries', async (assert) => {
+  test('define order by columns as an array of subqueries', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5441,22 +5441,22 @@ test.group('Query Builder | orderBy', (group) => {
 })
 
 test.group('Query Builder | orderByRaw', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define order by columns as a raw query', async (assert) => {
+  test('define order by columns as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5474,22 +5474,22 @@ test.group('Query Builder | orderByRaw', (group) => {
 })
 
 test.group('Query Builder | offset', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define select offset', async (assert) => {
+  test('define select offset', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5509,22 +5509,22 @@ test.group('Query Builder | offset', (group) => {
 })
 
 test.group('Query Builder | limit', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define results limit', async (assert) => {
+  test('define results limit', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5544,22 +5544,22 @@ test.group('Query Builder | limit', (group) => {
 })
 
 test.group('Query Builder | union', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define union query as a callback', async (assert) => {
+  test('define union query as a callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5584,7 +5584,7 @@ test.group('Query Builder | union', (group) => {
     await connection.disconnect()
   })
 
-  test('define union query as a subquery', async (assert) => {
+  test('define union query as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5605,7 +5605,7 @@ test.group('Query Builder | union', (group) => {
     await connection.disconnect()
   })
 
-  test('define union query as a raw query', async (assert) => {
+  test('define union query as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5631,7 +5631,7 @@ test.group('Query Builder | union', (group) => {
     await connection.disconnect()
   })
 
-  test('define union query as an array of callbacks', async (assert) => {
+  test('define union query as an array of callbacks', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5660,7 +5660,7 @@ test.group('Query Builder | union', (group) => {
     await connection.disconnect()
   })
 
-  test('define union query as an array of subqueries', async (assert) => {
+  test('define union query as an array of subqueries', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5683,7 +5683,7 @@ test.group('Query Builder | union', (group) => {
     await connection.disconnect()
   })
 
-  test('define union query as an array of raw queries', async (assert) => {
+  test('define union query as an array of raw queries', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5709,7 +5709,7 @@ test.group('Query Builder | union', (group) => {
     await connection.disconnect()
   })
 
-  test('add limit to union set', async (assert) => {
+  test('add limit to union set', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5764,7 +5764,7 @@ test.group('Query Builder | union', (group) => {
     await connection.disconnect()
   })
 
-  test('add limit to union subquery', async (assert) => {
+  test('add limit to union subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5823,7 +5823,7 @@ test.group('Query Builder | union', (group) => {
     await connection.disconnect()
   })
 
-  test('count union set', async (assert) => {
+  test('count union set', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5873,7 +5873,7 @@ test.group('Query Builder | union', (group) => {
     await connection.disconnect()
   })
 
-  test('count union set with limit on subquery', async (assert) => {
+  test('count union set with limit on subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5927,22 +5927,22 @@ test.group('Query Builder | union', (group) => {
 })
 
 test.group('Query Builder | unionAll', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define unionAll query as a callback', async (assert) => {
+  test('define unionAll query as a callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5967,7 +5967,7 @@ test.group('Query Builder | unionAll', (group) => {
     await connection.disconnect()
   })
 
-  test('define unionAll query as a subquery', async (assert) => {
+  test('define unionAll query as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -5990,7 +5990,7 @@ test.group('Query Builder | unionAll', (group) => {
     await connection.disconnect()
   })
 
-  test('define unionAll query as a raw query', async (assert) => {
+  test('define unionAll query as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6016,7 +6016,7 @@ test.group('Query Builder | unionAll', (group) => {
     await connection.disconnect()
   })
 
-  test('define unionAll query as an array of callbacks', async (assert) => {
+  test('define unionAll query as an array of callbacks', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6045,7 +6045,7 @@ test.group('Query Builder | unionAll', (group) => {
     await connection.disconnect()
   })
 
-  test('define unionAll query as an array of subqueries', async (assert) => {
+  test('define unionAll query as an array of subqueries', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6068,7 +6068,7 @@ test.group('Query Builder | unionAll', (group) => {
     await connection.disconnect()
   })
 
-  test('define unionAll query as an array of raw queries', async (assert) => {
+  test('define unionAll query as an array of raw queries', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6094,22 +6094,22 @@ test.group('Query Builder | unionAll', (group) => {
 })
 
 test.group('Query Builder | forUpdate', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define FOR UPDATE lock', async (assert) => {
+  test('define FOR UPDATE lock', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6127,7 +6127,7 @@ test.group('Query Builder | forUpdate', (group) => {
     await connection.disconnect()
   })
 
-  test('define FOR UPDATE lock with additional tables (pg only)', async (assert) => {
+  test('define FOR UPDATE lock with additional tables (pg only)', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6147,22 +6147,22 @@ test.group('Query Builder | forUpdate', (group) => {
 })
 
 test.group('Query Builder | forShare', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define FOR SHARE lock', async (assert) => {
+  test('define FOR SHARE lock', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6180,7 +6180,7 @@ test.group('Query Builder | forShare', (group) => {
     await connection.disconnect()
   })
 
-  test('define FOR SHARE lock with additional tables (pg only)', async (assert) => {
+  test('define FOR SHARE lock with additional tables (pg only)', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6201,20 +6201,20 @@ test.group('Query Builder | forShare', (group) => {
 
 if (['pg', 'mysql'].includes(process.env.DB!)) {
   test.group('Query Builder | noWait', (group) => {
-    group.before(async () => {
+    group.setup(async () => {
       await setup()
     })
 
-    group.after(async () => {
+    group.teardown(async () => {
       await cleanup()
     })
 
-    group.afterEach(async () => {
+    group.each.teardown(async () => {
       app.container.use('Adonis/Core/Event').clearListeners('db:query')
       await resetTables()
     })
 
-    test('add no wait instruction to the query', async (assert) => {
+    test('add no wait instruction to the query', async ({ assert }) => {
       const connection = new Connection('primary', getConfig(), app.logger)
       connection.connect()
 
@@ -6235,15 +6235,15 @@ if (['pg', 'mysql'].includes(process.env.DB!)) {
   })
 
   test.group('Query Builder | skipLocked', (group) => {
-    group.before(async () => {
+    group.setup(async () => {
       await setup()
     })
 
-    group.after(async () => {
+    group.teardown(async () => {
       await cleanup()
     })
 
-    test('add skip locked instruction to the query', async (assert) => {
+    test('add skip locked instruction to the query', async ({ assert }) => {
       const connection = new Connection('primary', getConfig(), app.logger)
       connection.connect()
 
@@ -6265,22 +6265,22 @@ if (['pg', 'mysql'].includes(process.env.DB!)) {
 }
 
 test.group('Query Builder | having', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add having clause', async (assert) => {
+  test('add having clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6314,7 +6314,7 @@ test.group('Query Builder | having', (group) => {
     await connection.disconnect()
   })
 
-  test('add having clause as a callback', async (assert) => {
+  test('add having clause as a callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6359,7 +6359,7 @@ test.group('Query Builder | having', (group) => {
     await connection.disconnect()
   })
 
-  test('add having clause value being a raw query', async (assert) => {
+  test('add having clause value being a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
     const ref = connection.client!.ref.bind(connection.client!)
@@ -6419,7 +6419,7 @@ test.group('Query Builder | having', (group) => {
     await connection.disconnect()
   })
 
-  test('add having clause value being a sub query', async (assert) => {
+  test('add having clause value being a sub query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6464,7 +6464,7 @@ test.group('Query Builder | having', (group) => {
     await connection.disconnect()
   })
 
-  test('add having clause as a raw query', async (assert) => {
+  test('add having clause as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6486,7 +6486,7 @@ test.group('Query Builder | having', (group) => {
     await connection.disconnect()
   })
 
-  test('add having clause as a raw query', async (assert) => {
+  test('add having clause as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6507,7 +6507,7 @@ test.group('Query Builder | having', (group) => {
     await connection.disconnect()
   })
 
-  test('add having clause as a raw builder query', async (assert) => {
+  test('add having clause as a raw builder query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6528,7 +6528,7 @@ test.group('Query Builder | having', (group) => {
     await connection.disconnect()
   })
 
-  test('add or having clause', async (assert) => {
+  test('add or having clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6571,22 +6571,22 @@ test.group('Query Builder | having', (group) => {
 })
 
 test.group('Query Builder | havingIn', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add having in clause', async (assert) => {
+  test('add having in clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6620,7 +6620,7 @@ test.group('Query Builder | havingIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add having in clause values as subqueries', async (assert) => {
+  test('add having in clause values as subqueries', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6661,7 +6661,7 @@ test.group('Query Builder | havingIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add having in clause values as raw queries', async (assert) => {
+  test('add having in clause values as raw queries', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6702,7 +6702,7 @@ test.group('Query Builder | havingIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add having in clause values as query callbacks', async (assert) => {
+  test('add having in clause values as query callbacks', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6743,7 +6743,7 @@ test.group('Query Builder | havingIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add or having in clause', async (assert) => {
+  test('add or having in clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6757,7 +6757,7 @@ test.group('Query Builder | havingIn', (group) => {
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
       .havingIn('id', [10, 20])
-      ['orHavingIn']('id', [10, 30])
+    ['orHavingIn']('id', [10, 30])
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -6775,7 +6775,7 @@ test.group('Query Builder | havingIn', (group) => {
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
       .havingIn('my_id', [10, 20])
-      ['orHavingIn']('my_id', [10, 30])
+    ['orHavingIn']('my_id', [10, 30])
       .toSQL()
 
     assert.equal(resolverSql, knexResolverSql)
@@ -6786,22 +6786,22 @@ test.group('Query Builder | havingIn', (group) => {
 })
 
 test.group('Query Builder | havingNotIn', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add not having in clause', async (assert) => {
+  test('add not having in clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6810,7 +6810,7 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingNotIn']('id', [10, 20])
+    ['havingNotIn']('id', [10, 20])
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -6826,7 +6826,7 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
-      ['havingNotIn']('my_id', [10, 20])
+    ['havingNotIn']('my_id', [10, 20])
       .toSQL()
 
     assert.equal(resolverSql, knexResolverSql)
@@ -6835,7 +6835,7 @@ test.group('Query Builder | havingNotIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add having in clause values as subqueries', async (assert) => {
+  test('add having in clause values as subqueries', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6849,7 +6849,7 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingNotIn']('id', [connection.client!.select('id').from('accounts') as any])
+    ['havingNotIn']('id', [connection.client!.select('id').from('accounts') as any])
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -6867,7 +6867,7 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
-      ['havingNotIn']('my_id', [connection.client!.select('id').from('accounts') as any])
+    ['havingNotIn']('my_id', [connection.client!.select('id').from('accounts') as any])
       .toSQL()
 
     assert.equal(resolverSql, knexResolverSql)
@@ -6876,7 +6876,7 @@ test.group('Query Builder | havingNotIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add having in clause values as raw queries', async (assert) => {
+  test('add having in clause values as raw queries', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6890,7 +6890,7 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingNotIn']('id', [connection.client!.raw('select id from accounts')])
+    ['havingNotIn']('id', [connection.client!.raw('select id from accounts')])
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -6908,7 +6908,7 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
-      ['havingNotIn']('my_id', [connection.client!.raw('select id from accounts')])
+    ['havingNotIn']('my_id', [connection.client!.raw('select id from accounts')])
       .toSQL()
 
     assert.equal(resolverSql, knexResolverSql)
@@ -6917,7 +6917,7 @@ test.group('Query Builder | havingNotIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add having in clause values as query callbacks', async (assert) => {
+  test('add having in clause values as query callbacks', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6930,7 +6930,7 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingNotIn']('id', fn as any)
+    ['havingNotIn']('id', fn as any)
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -6950,7 +6950,7 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
-      ['havingNotIn']('my_id', fnKnex as any)
+    ['havingNotIn']('my_id', fnKnex as any)
       .toSQL()
 
     assert.equal(resolverSql, knexResolverSql)
@@ -6959,7 +6959,7 @@ test.group('Query Builder | havingNotIn', (group) => {
     await connection.disconnect()
   })
 
-  test('add or having in clause', async (assert) => {
+  test('add or having in clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -6972,8 +6972,8 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingNotIn']('id', [10, 20])
-      ['orHavingNotIn']('id', [10, 30])
+    ['havingNotIn']('id', [10, 20])
+    ['orHavingNotIn']('id', [10, 30])
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -6990,8 +6990,8 @@ test.group('Query Builder | havingNotIn', (group) => {
 
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
-      ['havingNotIn']('my_id', [10, 20])
-      ['orHavingNotIn']('my_id', [10, 30])
+    ['havingNotIn']('my_id', [10, 20])
+    ['orHavingNotIn']('my_id', [10, 30])
       .toSQL()
 
     assert.equal(resolverSql, knexResolverSql)
@@ -7001,22 +7001,22 @@ test.group('Query Builder | havingNotIn', (group) => {
 })
 
 test.group('Query Builder | havingNull', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add having null clause', async (assert) => {
+  test('add having null clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7025,7 +7025,7 @@ test.group('Query Builder | havingNull', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingNull']('deleted_at')
+    ['havingNull']('deleted_at')
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -7041,7 +7041,7 @@ test.group('Query Builder | havingNull', (group) => {
 
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
-      ['havingNull']('my_deleted_at')
+    ['havingNull']('my_deleted_at')
       .toSQL()
 
     assert.equal(resolverSql, knexResolverSql)
@@ -7050,7 +7050,7 @@ test.group('Query Builder | havingNull', (group) => {
     await connection.disconnect()
   })
 
-  test('add or having null clause', async (assert) => {
+  test('add or having null clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7063,7 +7063,7 @@ test.group('Query Builder | havingNull', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingNull']('deleted_at')
+    ['havingNull']('deleted_at')
       .orHavingNull('updated_at')
       .toSQL()
 
@@ -7081,7 +7081,7 @@ test.group('Query Builder | havingNull', (group) => {
 
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
-      ['havingNull']('my_deleted_at')
+    ['havingNull']('my_deleted_at')
       .orHavingNull('my_updated_at')
       .toSQL()
 
@@ -7093,22 +7093,22 @@ test.group('Query Builder | havingNull', (group) => {
 })
 
 test.group('Query Builder | havingNotNull', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add having null clause', async (assert) => {
+  test('add having null clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7117,7 +7117,7 @@ test.group('Query Builder | havingNotNull', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingNotNull']('deleted_at')
+    ['havingNotNull']('deleted_at')
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -7133,7 +7133,7 @@ test.group('Query Builder | havingNotNull', (group) => {
 
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
-      ['havingNotNull']('my_deleted_at')
+    ['havingNotNull']('my_deleted_at')
       .toSQL()
 
     assert.equal(resolverSql, knexResolverSql)
@@ -7142,7 +7142,7 @@ test.group('Query Builder | havingNotNull', (group) => {
     await connection.disconnect()
   })
 
-  test('add or having not null clause', async (assert) => {
+  test('add or having not null clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7155,7 +7155,7 @@ test.group('Query Builder | havingNotNull', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingNotNull']('deleted_at')
+    ['havingNotNull']('deleted_at')
       .orHavingNotNull('updated_at')
       .toSQL()
 
@@ -7173,7 +7173,7 @@ test.group('Query Builder | havingNotNull', (group) => {
 
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
-      ['havingNotNull']('my_deleted_at')
+    ['havingNotNull']('my_deleted_at')
       .orHavingNotNull('my_updated_at')
       .toSQL()
 
@@ -7185,22 +7185,22 @@ test.group('Query Builder | havingNotNull', (group) => {
 })
 
 test.group('Query Builder | havingExists', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add having exists clause', async (assert) => {
+  test('add having exists clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7214,9 +7214,9 @@ test.group('Query Builder | havingExists', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingExists']((builder) => {
-        builder.select('*').from('accounts').whereRaw('users.account_id = accounts.id')
-      })
+    ['havingExists']((builder) => {
+      builder.select('*').from('accounts').whereRaw('users.account_id = accounts.id')
+    })
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -7224,7 +7224,7 @@ test.group('Query Builder | havingExists', (group) => {
     await connection.disconnect()
   })
 
-  test('add having exists clause as a subquery', async (assert) => {
+  test('add having exists clause as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7236,7 +7236,7 @@ test.group('Query Builder | havingExists', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingExists'](connection.client!.select('*').from('accounts'))
+    ['havingExists'](connection.client!.select('*').from('accounts'))
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -7245,7 +7245,7 @@ test.group('Query Builder | havingExists', (group) => {
     await connection.disconnect()
   })
 
-  test('add or having exists clause', async (assert) => {
+  test('add or having exists clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7262,9 +7262,9 @@ test.group('Query Builder | havingExists', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingExists']((builder) => {
-        builder.select('*').from('accounts')
-      })
+    ['havingExists']((builder) => {
+      builder.select('*').from('accounts')
+    })
       .orHavingExists((builder) => {
         builder.select('*').from('profiles')
       })
@@ -7278,22 +7278,22 @@ test.group('Query Builder | havingExists', (group) => {
 })
 
 test.group('Query Builder | havingNotExists', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add having not exists clause', async (assert) => {
+  test('add having not exists clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7307,9 +7307,9 @@ test.group('Query Builder | havingNotExists', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingNotExists']((builder) => {
-        builder.select('*').from('accounts').whereRaw('users.account_id = accounts.id')
-      })
+    ['havingNotExists']((builder) => {
+      builder.select('*').from('accounts').whereRaw('users.account_id = accounts.id')
+    })
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -7318,7 +7318,7 @@ test.group('Query Builder | havingNotExists', (group) => {
     await connection.disconnect()
   })
 
-  test('add having not exists clause as a subquery', async (assert) => {
+  test('add having not exists clause as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7332,7 +7332,7 @@ test.group('Query Builder | havingNotExists', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingNotExists'](connection.client!.select('*').from('accounts'))
+    ['havingNotExists'](connection.client!.select('*').from('accounts'))
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -7341,7 +7341,7 @@ test.group('Query Builder | havingNotExists', (group) => {
     await connection.disconnect()
   })
 
-  test('add or having not exists clause', async (assert) => {
+  test('add or having not exists clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7358,9 +7358,9 @@ test.group('Query Builder | havingNotExists', (group) => {
 
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
-      ['havingNotExists']((builder) => {
-        builder.select('*').from('accounts')
-      })
+    ['havingNotExists']((builder) => {
+      builder.select('*').from('accounts')
+    })
       .orHavingNotExists((builder) => {
         builder.select('*').from('profiles')
       })
@@ -7374,22 +7374,22 @@ test.group('Query Builder | havingNotExists', (group) => {
 })
 
 test.group('Query Builder | havingBetween', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add having between clause', async (assert) => {
+  test('add having between clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7423,7 +7423,7 @@ test.group('Query Builder | havingBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('add having between clause with raw values', async (assert) => {
+  test('add having between clause with raw values', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7472,7 +7472,7 @@ test.group('Query Builder | havingBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('add having between clause with subqueries', async (assert) => {
+  test('add having between clause with subqueries', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7521,7 +7521,7 @@ test.group('Query Builder | havingBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('add or having between clause', async (assert) => {
+  test('add or having between clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7564,22 +7564,22 @@ test.group('Query Builder | havingBetween', (group) => {
 })
 
 test.group('Query Builder | havingNotBetween', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add having not between clause', async (assert) => {
+  test('add having not between clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7613,7 +7613,7 @@ test.group('Query Builder | havingNotBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('add having not between clause with raw values', async (assert) => {
+  test('add having not between clause with raw values', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7662,7 +7662,7 @@ test.group('Query Builder | havingNotBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('add having not between clause with subqueries', async (assert) => {
+  test('add having not between clause with subqueries', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7711,7 +7711,7 @@ test.group('Query Builder | havingNotBetween', (group) => {
     await connection.disconnect()
   })
 
-  test('add or having not between clause', async (assert) => {
+  test('add or having not between clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7754,22 +7754,22 @@ test.group('Query Builder | havingNotBetween', (group) => {
 })
 
 test.group('Query Builder | havingRaw', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add having raw clause', async (assert) => {
+  test('add having raw clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7787,7 +7787,7 @@ test.group('Query Builder | havingRaw', (group) => {
     await connection.disconnect()
   })
 
-  test('add having raw clause without bindings', async (assert) => {
+  test('add having raw clause without bindings', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7804,7 +7804,7 @@ test.group('Query Builder | havingRaw', (group) => {
     await connection.disconnect()
   })
 
-  test('add having raw clause with object of bindings', async (assert) => {
+  test('add having raw clause with object of bindings', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7822,7 +7822,7 @@ test.group('Query Builder | havingRaw', (group) => {
     await connection.disconnect()
   })
 
-  test('add having raw clause from a raw query', async (assert) => {
+  test('add having raw clause from a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7843,7 +7843,7 @@ test.group('Query Builder | havingRaw', (group) => {
     await connection.disconnect()
   })
 
-  test('add or having raw clause', async (assert) => {
+  test('add or having raw clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7868,22 +7868,22 @@ test.group('Query Builder | havingRaw', (group) => {
 })
 
 test.group('Query Builder | clearSelect', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('clear selected columns', async (assert) => {
+  test('clear selected columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7904,22 +7904,22 @@ test.group('Query Builder | clearSelect', (group) => {
 })
 
 test.group('Query Builder | clearWhere', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('clear where clauses', async (assert) => {
+  test('clear where clauses', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7940,22 +7940,22 @@ test.group('Query Builder | clearWhere', (group) => {
 })
 
 test.group('Query Builder | clearOrder', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('clear order by columns', async (assert) => {
+  test('clear order by columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -7976,22 +7976,22 @@ test.group('Query Builder | clearOrder', (group) => {
 })
 
 test.group('Query Builder | clearHaving', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('clear having clause', async (assert) => {
+  test('clear having clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8012,22 +8012,22 @@ test.group('Query Builder | clearHaving', (group) => {
 })
 
 test.group('Query Builder | clearLimit', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('clear limit', async (assert) => {
+  test('clear limit', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8044,22 +8044,22 @@ test.group('Query Builder | clearLimit', (group) => {
 })
 
 test.group('Query Builder | clearOffset', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('clear offset', async (assert) => {
+  test('clear offset', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8076,22 +8076,22 @@ test.group('Query Builder | clearOffset', (group) => {
 })
 
 test.group('Query Builder | count', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('count all rows', async (assert) => {
+  test('count all rows', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8125,7 +8125,7 @@ test.group('Query Builder | count', (group) => {
     await connection.disconnect()
   })
 
-  test('count multiple rows', async (assert) => {
+  test('count multiple rows', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8159,7 +8159,7 @@ test.group('Query Builder | count', (group) => {
     await connection.disconnect()
   })
 
-  test('count by raw query', async (assert) => {
+  test('count by raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8214,7 +8214,7 @@ test.group('Query Builder | count', (group) => {
     await connection.disconnect()
   })
 
-  test('count by subquery', async (assert) => {
+  test('count by subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8265,7 +8265,7 @@ test.group('Query Builder | count', (group) => {
     await connection.disconnect()
   })
 
-  test('count by raw query on multiple columns', async (assert) => {
+  test('count by raw query on multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8322,7 +8322,7 @@ test.group('Query Builder | count', (group) => {
     await connection.disconnect()
   })
 
-  test('count by subquery on multiple columns', async (assert) => {
+  test('count by subquery on multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8377,22 +8377,22 @@ test.group('Query Builder | count', (group) => {
 })
 
 test.group('Query Builder | countDistinct', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('count all rows', async (assert) => {
+  test('count all rows', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8426,7 +8426,7 @@ test.group('Query Builder | countDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('count multiple rows', async (assert) => {
+  test('count multiple rows', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8460,7 +8460,7 @@ test.group('Query Builder | countDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('count by raw query', async (assert) => {
+  test('count by raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8515,7 +8515,7 @@ test.group('Query Builder | countDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('count by subquery', async (assert) => {
+  test('count by subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8566,7 +8566,7 @@ test.group('Query Builder | countDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('count by raw query on multiple columns', async (assert) => {
+  test('count by raw query on multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8623,7 +8623,7 @@ test.group('Query Builder | countDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('count by subquery on multiple columns', async (assert) => {
+  test('count by subquery on multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8678,22 +8678,22 @@ test.group('Query Builder | countDistinct', (group) => {
 })
 
 test.group('Query Builder | min', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('use min function', async (assert) => {
+  test('use min function', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8727,7 +8727,7 @@ test.group('Query Builder | min', (group) => {
     await connection.disconnect()
   })
 
-  test('use min function for multiple times', async (assert) => {
+  test('use min function for multiple times', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8761,7 +8761,7 @@ test.group('Query Builder | min', (group) => {
     await connection.disconnect()
   })
 
-  test('use raw queries to compute min', async (assert) => {
+  test('use raw queries to compute min', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8816,7 +8816,7 @@ test.group('Query Builder | min', (group) => {
     await connection.disconnect()
   })
 
-  test('use subqueries to compute min', async (assert) => {
+  test('use subqueries to compute min', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8867,7 +8867,7 @@ test.group('Query Builder | min', (group) => {
     await connection.disconnect()
   })
 
-  test('use raw query to compute min with multiple columns', async (assert) => {
+  test('use raw query to compute min with multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8924,7 +8924,7 @@ test.group('Query Builder | min', (group) => {
     await connection.disconnect()
   })
 
-  test('use subquery to compute min with multiple columns', async (assert) => {
+  test('use subquery to compute min with multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -8978,22 +8978,22 @@ test.group('Query Builder | min', (group) => {
 })
 
 test.group('Query Builder | max', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('use max function', async (assert) => {
+  test('use max function', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9027,7 +9027,7 @@ test.group('Query Builder | max', (group) => {
     await connection.disconnect()
   })
 
-  test('use max function for multiple times', async (assert) => {
+  test('use max function for multiple times', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9061,7 +9061,7 @@ test.group('Query Builder | max', (group) => {
     await connection.disconnect()
   })
 
-  test('use raw queries to compute max', async (assert) => {
+  test('use raw queries to compute max', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9116,7 +9116,7 @@ test.group('Query Builder | max', (group) => {
     await connection.disconnect()
   })
 
-  test('use subqueries to compute max', async (assert) => {
+  test('use subqueries to compute max', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9167,7 +9167,7 @@ test.group('Query Builder | max', (group) => {
     await connection.disconnect()
   })
 
-  test('use raw query to compute max with multiple columns', async (assert) => {
+  test('use raw query to compute max with multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9224,7 +9224,7 @@ test.group('Query Builder | max', (group) => {
     await connection.disconnect()
   })
 
-  test('use subquery to compute max with multiple columns', async (assert) => {
+  test('use subquery to compute max with multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9279,22 +9279,22 @@ test.group('Query Builder | max', (group) => {
 })
 
 test.group('Query Builder | sum', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('use sum function', async (assert) => {
+  test('use sum function', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9328,7 +9328,7 @@ test.group('Query Builder | sum', (group) => {
     await connection.disconnect()
   })
 
-  test('use sum function for multiple times', async (assert) => {
+  test('use sum function for multiple times', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9362,7 +9362,7 @@ test.group('Query Builder | sum', (group) => {
     await connection.disconnect()
   })
 
-  test('use raw queries to compute sum', async (assert) => {
+  test('use raw queries to compute sum', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9417,7 +9417,7 @@ test.group('Query Builder | sum', (group) => {
     await connection.disconnect()
   })
 
-  test('use subqueries to compute sum', async (assert) => {
+  test('use subqueries to compute sum', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9468,7 +9468,7 @@ test.group('Query Builder | sum', (group) => {
     await connection.disconnect()
   })
 
-  test('use raw query to compute sum with multiple columns', async (assert) => {
+  test('use raw query to compute sum with multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9525,7 +9525,7 @@ test.group('Query Builder | sum', (group) => {
     await connection.disconnect()
   })
 
-  test('use subquery to compute sum with multiple columns', async (assert) => {
+  test('use subquery to compute sum with multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9579,22 +9579,22 @@ test.group('Query Builder | sum', (group) => {
 })
 
 test.group('Query Builder | sumDistinct', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('use sumDistinct function', async (assert) => {
+  test('use sumDistinct function', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9628,7 +9628,7 @@ test.group('Query Builder | sumDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('use sumDistinct function for multiple times', async (assert) => {
+  test('use sumDistinct function for multiple times', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9662,7 +9662,7 @@ test.group('Query Builder | sumDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('use raw queries to compute sumDistinct', async (assert) => {
+  test('use raw queries to compute sumDistinct', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9717,7 +9717,7 @@ test.group('Query Builder | sumDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('use subqueries to compute sumDistinct', async (assert) => {
+  test('use subqueries to compute sumDistinct', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9768,7 +9768,7 @@ test.group('Query Builder | sumDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('use raw query to compute sumDistinct with multiple columns', async (assert) => {
+  test('use raw query to compute sumDistinct with multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9825,7 +9825,7 @@ test.group('Query Builder | sumDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('use subquery to compute sumDistinct with multiple columns', async (assert) => {
+  test('use subquery to compute sumDistinct with multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9880,22 +9880,22 @@ test.group('Query Builder | sumDistinct', (group) => {
 })
 
 test.group('Query Builder | avg', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('use avg function', async (assert) => {
+  test('use avg function', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9929,7 +9929,7 @@ test.group('Query Builder | avg', (group) => {
     await connection.disconnect()
   })
 
-  test('use avg function for multiple fields', async (assert) => {
+  test('use avg function for multiple fields', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -9963,7 +9963,7 @@ test.group('Query Builder | avg', (group) => {
     await connection.disconnect()
   })
 
-  test('use raw queries to compute avg', async (assert) => {
+  test('use raw queries to compute avg', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10018,7 +10018,7 @@ test.group('Query Builder | avg', (group) => {
     await connection.disconnect()
   })
 
-  test('use subqueries to compute avg', async (assert) => {
+  test('use subqueries to compute avg', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10069,7 +10069,7 @@ test.group('Query Builder | avg', (group) => {
     await connection.disconnect()
   })
 
-  test('use raw query to compute avg with multiple columns', async (assert) => {
+  test('use raw query to compute avg with multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10126,7 +10126,7 @@ test.group('Query Builder | avg', (group) => {
     await connection.disconnect()
   })
 
-  test('use subquery to compute avg with multiple columns', async (assert) => {
+  test('use subquery to compute avg with multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10181,22 +10181,22 @@ test.group('Query Builder | avg', (group) => {
 })
 
 test.group('Query Builder | avgDistinct', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('use avgDistinct function', async (assert) => {
+  test('use avgDistinct function', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10230,7 +10230,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('use avgDistinct function for multiple times', async (assert) => {
+  test('use avgDistinct function for multiple times', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10264,7 +10264,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('use raw queries to compute avgDistinct', async (assert) => {
+  test('use raw queries to compute avgDistinct', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10319,7 +10319,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('use subqueries to compute avgDistinct', async (assert) => {
+  test('use subqueries to compute avgDistinct', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10370,7 +10370,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('use raw query to compute avgDistinct with multiple columns', async (assert) => {
+  test('use raw query to compute avgDistinct with multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10427,7 +10427,7 @@ test.group('Query Builder | avgDistinct', (group) => {
     await connection.disconnect()
   })
 
-  test('use subquery to compute avgDistinct with multiple columns', async (assert) => {
+  test('use subquery to compute avgDistinct with multiple columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10482,22 +10482,22 @@ test.group('Query Builder | avgDistinct', (group) => {
 })
 
 test.group('Query Builder | paginate', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('paginate through rows', async (assert) => {
+  test('paginate through rows', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10532,7 +10532,7 @@ test.group('Query Builder | paginate', (group) => {
     await connection.disconnect()
   })
 
-  test('paginate through rows and select columns', async (assert) => {
+  test('paginate through rows and select columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10567,7 +10567,7 @@ test.group('Query Builder | paginate', (group) => {
     await connection.disconnect()
   })
 
-  test('paginate through rows when there is orderBy clause', async (assert) => {
+  test('paginate through rows when there is orderBy clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10601,7 +10601,7 @@ test.group('Query Builder | paginate', (group) => {
     await connection.disconnect()
   })
 
-  test('paginate through rows for the last page', async (assert) => {
+  test('paginate through rows for the last page', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10636,7 +10636,7 @@ test.group('Query Builder | paginate', (group) => {
     await connection.disconnect()
   })
 
-  test('paginate through rows with group by clause', async (assert) => {
+  test('paginate through rows with group by clause', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10676,7 +10676,7 @@ test.group('Query Builder | paginate', (group) => {
     await connection.disconnect()
   })
 
-  test('generate range of pagination urls', async (assert) => {
+  test('generate range of pagination urls', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10712,7 +10712,7 @@ test.group('Query Builder | paginate', (group) => {
     await connection.disconnect()
   })
 
-  test('loop over pagination rows', async (assert) => {
+  test('loop over pagination rows', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10727,7 +10727,7 @@ test.group('Query Builder | paginate', (group) => {
     await connection.disconnect()
   })
 
-  test('use custom strategy for pagination keys', async (assert) => {
+  test('use custom strategy for pagination keys', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10778,7 +10778,7 @@ test.group('Query Builder | paginate', (group) => {
     await connection.disconnect()
   })
 
-  test('use table aliases', async (assert) => {
+  test('use table aliases', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10820,22 +10820,22 @@ test.group('Query Builder | paginate', (group) => {
 })
 
 test.group('Query Builder | clone', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('clone query builder', async (assert) => {
+  test('clone query builder', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10846,7 +10846,7 @@ test.group('Query Builder | clone', (group) => {
     await connection.disconnect()
   })
 
-  test('clone query builder with where clauses', async (assert) => {
+  test('clone query builder with where clauses', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10865,7 +10865,7 @@ test.group('Query Builder | clone', (group) => {
     await connection.disconnect()
   })
 
-  test('deep clone where clauses', async (assert) => {
+  test('deep clone where clauses', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10895,7 +10895,7 @@ test.group('Query Builder | clone', (group) => {
     await connection.disconnect()
   })
 
-  test('copy internals to the cloned query builder', async (assert) => {
+  test('copy internals to the cloned query builder', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -10908,22 +10908,22 @@ test.group('Query Builder | clone', (group) => {
 })
 
 test.group('Query Builder | event', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('emit db:query event when debug globally enabled', async (assert, done) => {
+  test('emit db:query event when debug globally enabled', async ({ assert }, done) => {
     assert.plan(4)
 
     const config = Object.assign({}, getConfig(), { debug: true })
@@ -10943,7 +10943,7 @@ test.group('Query Builder | event', (group) => {
 
     await db.select('*').from('users')
     await connection.disconnect()
-  })
+  }).waitForDone()
 
   test('do not emit db:query event when debug not enabled', async () => {
     const config = Object.assign({}, getConfig(), { debug: false })
@@ -10961,7 +10961,7 @@ test.group('Query Builder | event', (group) => {
     await connection.disconnect()
   })
 
-  test('emit db:query event when enabled on a single query', async (assert, done) => {
+  test('emit db:query event when enabled on a single query', async ({ assert }, done) => {
     const config = Object.assign({}, getConfig(), { debug: false })
     const emitter = app.container.use('Adonis/Core/Event')
 
@@ -10979,26 +10979,26 @@ test.group('Query Builder | event', (group) => {
 
     await db.select('*').from('users').debug(true)
     await connection.disconnect()
-  })
+  }).waitForDone()
 })
 
 test.group('Query Builder | update', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('update columns by defining object', async (assert) => {
+  test('update columns by defining object', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11032,7 +11032,7 @@ test.group('Query Builder | update', (group) => {
     await connection.disconnect()
   })
 
-  test('update columns by defining key-value pair', async (assert) => {
+  test('update columns by defining key-value pair', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11066,7 +11066,7 @@ test.group('Query Builder | update', (group) => {
     await connection.disconnect()
   })
 
-  test('handle use case where update value is false or 0', async (assert) => {
+  test('handle use case where update value is false or 0', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11102,22 +11102,22 @@ test.group('Query Builder | update', (group) => {
 })
 
 test.group('Query Builder | whereColumn', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add where clause on another column', async (assert) => {
+  test('add where clause on another column', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11155,7 +11155,7 @@ test.group('Query Builder | whereColumn', (group) => {
     await connection.disconnect()
   })
 
-  test('add or where clause on another column', async (assert) => {
+  test('add or where clause on another column', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11197,7 +11197,7 @@ test.group('Query Builder | whereColumn', (group) => {
     await connection.disconnect()
   })
 
-  test('add where not clause on another column', async (assert) => {
+  test('add where not clause on another column', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11235,7 +11235,7 @@ test.group('Query Builder | whereColumn', (group) => {
     await connection.disconnect()
   })
 
-  test('add or where not clause on another column', async (assert) => {
+  test('add or where not clause on another column', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11279,22 +11279,22 @@ test.group('Query Builder | whereColumn', (group) => {
 })
 
 test.group('Query Builder | conditionals', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('add constraints to query using if condition', async (assert) => {
+  test('add constraints to query using if condition', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11319,7 +11319,7 @@ test.group('Query Builder | conditionals', (group) => {
     await connection.disconnect()
   })
 
-  test('define else block for the if condition', async (assert) => {
+  test('define else block for the if condition', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11347,7 +11347,7 @@ test.group('Query Builder | conditionals', (group) => {
     await connection.disconnect()
   })
 
-  test('add constraints to query using unless condition', async (assert) => {
+  test('add constraints to query using unless condition', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11372,7 +11372,7 @@ test.group('Query Builder | conditionals', (group) => {
     await connection.disconnect()
   })
 
-  test('define else block for the unless condition', async (assert) => {
+  test('define else block for the unless condition', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11400,7 +11400,7 @@ test.group('Query Builder | conditionals', (group) => {
     await connection.disconnect()
   })
 
-  test('invoke conditional function to find the conditional value', async (assert) => {
+  test('invoke conditional function to find the conditional value', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11431,7 +11431,7 @@ test.group('Query Builder | conditionals', (group) => {
     await connection.disconnect()
   })
 
-  test('define a match block with no else statement', async (assert) => {
+  test('define a match block with no else statement', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11454,7 +11454,7 @@ test.group('Query Builder | conditionals', (group) => {
     await connection.disconnect()
   })
 
-  test('define match conditionals as functions', async (assert) => {
+  test('define match conditionals as functions', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11477,7 +11477,7 @@ test.group('Query Builder | conditionals', (group) => {
     await connection.disconnect()
   })
 
-  test('use the first matching block', async (assert) => {
+  test('use the first matching block', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11500,7 +11500,7 @@ test.group('Query Builder | conditionals', (group) => {
     await connection.disconnect()
   })
 
-  test('use the else block when nothing matches', async (assert) => {
+  test('use the else block when nothing matches', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11526,22 +11526,22 @@ test.group('Query Builder | conditionals', (group) => {
 })
 
 test.group('Query Builder | wrapExisting', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('apply where clauses only once, when calling toSQL multiple times', async (assert) => {
+  test('apply where clauses only once, when calling toSQL multiple times', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11556,7 +11556,7 @@ test.group('Query Builder | wrapExisting', (group) => {
     await connection.disconnect()
   })
 
-  test('allow mutating query where clauses post toSQL call', async (assert) => {
+  test('allow mutating query where clauses post toSQL call', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11572,22 +11572,22 @@ test.group('Query Builder | wrapExisting', (group) => {
 })
 
 test.group('Query Builder | with', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define with clause as a raw query', async (assert) => {
+  test('define with clause as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11610,7 +11610,7 @@ test.group('Query Builder | with', (group) => {
     await connection.disconnect()
   })
 
-  test('define with clause as a callback', async (assert) => {
+  test('define with clause as a callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11633,7 +11633,7 @@ test.group('Query Builder | with', (group) => {
     await connection.disconnect()
   })
 
-  test('define with clause as a subquery', async (assert) => {
+  test('define with clause as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11658,22 +11658,22 @@ test.group('Query Builder | with', (group) => {
 })
 
 test.group('Query Builder | withRecursive', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     app.container.use('Adonis/Core/Event').clearListeners('db:query')
     await resetTables()
   })
 
-  test('define with clause as a raw query', async (assert) => {
+  test('define with clause as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11696,7 +11696,7 @@ test.group('Query Builder | withRecursive', (group) => {
     await connection.disconnect()
   })
 
-  test('define with clause as a callback', async (assert) => {
+  test('define with clause as a callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11719,7 +11719,7 @@ test.group('Query Builder | withRecursive', (group) => {
     await connection.disconnect()
   })
 
-  test('define with clause as a subquery', async (assert) => {
+  test('define with clause as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 

@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { column } from '../../src/Orm/Decorators'
 import { scope } from '../../src/Helpers/scope'
 import { ModelQueryBuilder } from '../../src/Orm/QueryBuilder'
@@ -30,24 +30,24 @@ let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
 
 test.group('Model query builder', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get instance of query builder for the given model', async (assert) => {
+  test('get instance of query builder for the given model', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -60,7 +60,7 @@ test.group('Model query builder', (group) => {
     assert.instanceOf(User.query(), ModelQueryBuilder)
   })
 
-  test('pre select the table for the query builder instance', async (assert) => {
+  test('pre select the table for the query builder instance', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -73,7 +73,7 @@ test.group('Model query builder', (group) => {
     assert.equal(User.query().knexQuery['_single'].table, 'users')
   })
 
-  test('execute select queries', async (assert) => {
+  test('execute select queries', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -94,7 +94,7 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
   })
 
-  test('pass custom connection to the model instance', async (assert) => {
+  test('pass custom connection to the model instance', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -116,7 +116,7 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(users[0].$options!.connection, 'secondary')
   })
 
-  test('pass sideloaded attributes to the model instance', async (assert) => {
+  test('pass sideloaded attributes to the model instance', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -141,7 +141,7 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(users[0].$sideloaded, { loggedInUser: { id: 1 } })
   })
 
-  test('pass custom profiler to the model instance', async (assert) => {
+  test('pass custom profiler to the model instance', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -164,7 +164,7 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(users[0].$options!.profiler, profiler)
   })
 
-  test('perform update using model query builder', async (assert) => {
+  test('perform update using model query builder', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -187,7 +187,7 @@ test.group('Model query builder', (group) => {
     assert.equal(user!.username, 'hvirk')
   })
 
-  test('perform increment using model query builder', async (assert) => {
+  test('perform increment using model query builder', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -210,7 +210,7 @@ test.group('Model query builder', (group) => {
     assert.equal(user!.points, 2)
   })
 
-  test('perform decrement using model query builder', async (assert) => {
+  test('perform decrement using model query builder', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -233,7 +233,7 @@ test.group('Model query builder', (group) => {
     assert.equal(user!.points, 2)
   })
 
-  test('delete in bulk', async (assert) => {
+  test('delete in bulk', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -256,7 +256,7 @@ test.group('Model query builder', (group) => {
     assert.isNull(user)
   })
 
-  test('clone query builder', async (assert) => {
+  test('clone query builder', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -272,7 +272,7 @@ test.group('Model query builder', (group) => {
     assert.instanceOf(clonedQuery, ModelQueryBuilder)
   })
 
-  test('clone query builder with internal flags', async (assert) => {
+  test('clone query builder with internal flags', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -288,7 +288,7 @@ test.group('Model query builder', (group) => {
     assert.isTrue(clonedQuery.hasGroupBy)
   })
 
-  test('pass sideloaded data to cloned query', async (assert) => {
+  test('pass sideloaded data to cloned query', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -308,7 +308,7 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(user.$sideloaded, { username: 'virk' })
   })
 
-  test('apply scopes', async (assert) => {
+  test('apply scopes', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -339,7 +339,7 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('apply scopes inside a sub query', async (assert) => {
+  test('apply scopes inside a sub query', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -370,7 +370,7 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('make aggregate queries with the model query builder', async (assert) => {
+  test('make aggregate queries with the model query builder', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number

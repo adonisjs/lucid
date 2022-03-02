@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import type { HasOne, BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 
 import { scope } from '../../src/Helpers/scope'
@@ -32,24 +32,24 @@ let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
 
 test.group('Model | HasOne | Options', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('raise error when localKey is missing', (assert) => {
+  test('raise error when localKey is missing', ({ assert }) => {
     assert.plan(1)
 
     try {
-      class Profile extends BaseModel {}
+      class Profile extends BaseModel { }
 
       class User extends BaseModel {
         @hasOne(() => Profile)
@@ -66,11 +66,11 @@ test.group('Model | HasOne | Options', (group) => {
     }
   })
 
-  test('raise error when foreignKey is missing', (assert) => {
+  test('raise error when foreignKey is missing', ({ assert }) => {
     assert.plan(1)
 
     try {
-      class Profile extends BaseModel {}
+      class Profile extends BaseModel { }
       Profile.boot()
 
       class User extends BaseModel {
@@ -91,7 +91,7 @@ test.group('Model | HasOne | Options', (group) => {
     }
   })
 
-  test('use primary key is as the local key', (assert) => {
+  test('use primary key is as the local key', ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -112,7 +112,7 @@ test.group('Model | HasOne | Options', (group) => {
     assert.equal(User.$getRelation('profile')!['localKey'], 'id')
   })
 
-  test('use custom defined local key', (assert) => {
+  test('use custom defined local key', ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -136,7 +136,7 @@ test.group('Model | HasOne | Options', (group) => {
     assert.equal(User.$getRelation('profile')!['localKey'], 'uid')
   })
 
-  test('compute foreign key from model name and primary key', (assert) => {
+  test('compute foreign key from model name and primary key', ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -157,7 +157,7 @@ test.group('Model | HasOne | Options', (group) => {
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userId')
   })
 
-  test('use pre defined foreign key', (assert) => {
+  test('use pre defined foreign key', ({ assert }) => {
     class Profile extends BaseModel {
       @column({ columnName: 'user_id' })
       public userUid: number
@@ -178,7 +178,7 @@ test.group('Model | HasOne | Options', (group) => {
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userUid')
   })
 
-  test('clone relationship instance with options', (assert) => {
+  test('clone relationship instance with options', ({ assert }) => {
     class Profile extends BaseModel {
       @column({ columnName: 'user_id' })
       public userUid: number
@@ -193,7 +193,7 @@ test.group('Model | HasOne | Options', (group) => {
       public profile: HasOne<typeof Profile>
     }
 
-    class User extends BaseUser {}
+    class User extends BaseUser { }
 
     User.boot()
     User.$getRelation('profile')!.boot()
@@ -204,20 +204,20 @@ test.group('Model | HasOne | Options', (group) => {
 })
 
 test.group('Model | HasOne | Set Relations', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('set related model instance', (assert) => {
+  test('set related model instance', ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -240,7 +240,7 @@ test.group('Model | HasOne | Set Relations', (group) => {
     assert.deepEqual(user.profile, profile)
   })
 
-  test('push related model instance', (assert) => {
+  test('push related model instance', ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -263,7 +263,7 @@ test.group('Model | HasOne | Set Relations', (group) => {
     assert.deepEqual(user.profile, profile)
   })
 
-  test('set many of related instances', (assert) => {
+  test('set many of related instances', ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -303,24 +303,24 @@ test.group('Model | HasOne | Set Relations', (group) => {
 })
 
 test.group('Model | HasOne | bulk operations', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sql for selecting related rows', async (assert) => {
+  test('generate correct sql for selecting related rows', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -360,7 +360,7 @@ test.group('Model | HasOne | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for selecting related many rows', async (assert) => {
+  test('generate correct sql for selecting related many rows', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -402,7 +402,7 @@ test.group('Model | HasOne | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for updating related row', async (assert) => {
+  test('generate correct sql for updating related row', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -448,7 +448,7 @@ test.group('Model | HasOne | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for deleting related row', async (assert) => {
+  test('generate correct sql for deleting related row', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -490,24 +490,24 @@ test.group('Model | HasOne | bulk operations', (group) => {
 })
 
 test.group('Model | HasOne | sub queries', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct subquery for selecting rows', async (assert) => {
+  test('generate correct subquery for selecting rows', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -545,7 +545,7 @@ test.group('Model | HasOne | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('create aggregate query', async (assert) => {
+  test('create aggregate query', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -588,7 +588,7 @@ test.group('Model | HasOne | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('allow selecting custom columns', async (assert) => {
+  test('allow selecting custom columns', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -631,7 +631,7 @@ test.group('Model | HasOne | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct self relationship subquery', async (assert) => {
+  test('generate correct self relationship subquery', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -666,7 +666,7 @@ test.group('Model | HasOne | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('raise exception when trying to execute the query', async (assert) => {
+  test('raise exception when trying to execute the query', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -700,15 +700,15 @@ test.group('Model | HasOne | sub queries', (group) => {
     const firstOrFail = () =>
       User.$getRelation('profile')!.subQuery(db.connection())['firstOrFail']()
 
-    assert.throw(exec, 'Cannot execute relationship subqueries')
-    assert.throw(paginate, 'Cannot execute relationship subqueries')
-    assert.throw(update, 'Cannot execute relationship subqueries')
-    assert.throw(del, 'Cannot execute relationship subqueries')
-    assert.throw(first, 'Cannot execute relationship subqueries')
-    assert.throw(firstOrFail, 'Cannot execute relationship subqueries')
+    assert.throws(exec, 'Cannot execute relationship subqueries')
+    assert.throws(paginate, 'Cannot execute relationship subqueries')
+    assert.throws(update, 'Cannot execute relationship subqueries')
+    assert.throws(del, 'Cannot execute relationship subqueries')
+    assert.throws(first, 'Cannot execute relationship subqueries')
+    assert.throws(firstOrFail, 'Cannot execute relationship subqueries')
   })
 
-  test('run onQuery method when defined', async (assert) => {
+  test('run onQuery method when defined', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -756,24 +756,24 @@ test.group('Model | HasOne | sub queries', (group) => {
 })
 
 test.group('Model | HasOne | preload', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('preload relationship', async (assert) => {
+  test('preload relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -822,7 +822,7 @@ test.group('Model | HasOne | preload', (group) => {
     assert.equal(users[1].profile.userId, users[1].id)
   })
 
-  test('set relationship property value to null when no related rows were found', async (assert) => {
+  test('set relationship property value to null when no related rows were found', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -856,7 +856,7 @@ test.group('Model | HasOne | preload', (group) => {
     assert.isNull(users[1].profile)
   })
 
-  test('preload nested relations', async (assert) => {
+  test('preload nested relations', async ({ assert }) => {
     class Identity extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -933,7 +933,7 @@ test.group('Model | HasOne | preload', (group) => {
     assert.instanceOf(user!.profile!.identity, Identity)
   })
 
-  test('preload self referenced relationship', async (assert) => {
+  test('preload self referenced relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -985,7 +985,7 @@ test.group('Model | HasOne | preload', (group) => {
     assert.deepEqual(users[1].profile.user.id, users[1].id)
   })
 
-  test('add constraints during preload', async (assert) => {
+  test('add constraints during preload', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1036,7 +1036,7 @@ test.group('Model | HasOne | preload', (group) => {
     assert.isNull(users[1].profile)
   })
 
-  test('cherry pick columns during preload', async (assert) => {
+  test('cherry pick columns during preload', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1087,7 +1087,7 @@ test.group('Model | HasOne | preload', (group) => {
     assert.deepEqual(users[1].profile.$extras, {})
   })
 
-  test('do not repeat fk when already defined', async (assert) => {
+  test('do not repeat fk when already defined', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1138,7 +1138,7 @@ test.group('Model | HasOne | preload', (group) => {
     assert.deepEqual(users[1].profile.$extras, {})
   })
 
-  test('pass sideloaded attributes to the relationship', async (assert) => {
+  test('pass sideloaded attributes to the relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1189,7 +1189,7 @@ test.group('Model | HasOne | preload', (group) => {
     assert.deepEqual(users[1].profile.$sideloaded, { id: 1 })
   })
 
-  test('preload using model instance', async (assert) => {
+  test('preload using model instance', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1239,7 +1239,7 @@ test.group('Model | HasOne | preload', (group) => {
     assert.equal(users[1].profile.userId, users[1].id)
   })
 
-  test('raise exception when local key is not selected', async (assert) => {
+  test('raise exception when local key is not selected', async ({ assert }) => {
     assert.plan(1)
 
     class Profile extends BaseModel {
@@ -1288,7 +1288,7 @@ test.group('Model | HasOne | preload', (group) => {
     }
   })
 
-  test('preload nested relations using model instance', async (assert) => {
+  test('preload nested relations using model instance', async ({ assert }) => {
     class Identity extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1374,7 +1374,7 @@ test.group('Model | HasOne | preload', (group) => {
     assert.instanceOf(users[1].profile!.identity, Identity)
   })
 
-  test('pass main query options down the chain', async (assert) => {
+  test('pass main query options down the chain', async ({ assert }) => {
     class Identity extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1455,7 +1455,7 @@ test.group('Model | HasOne | preload', (group) => {
     assert.equal(user!.profile.identity.$options!.connection, 'secondary')
   })
 
-  test('pass relationship metadata to the profiler', async (assert) => {
+  test('pass relationship metadata to the profiler', async ({ assert }) => {
     assert.plan(1)
 
     class Profile extends BaseModel {
@@ -1515,7 +1515,7 @@ test.group('Model | HasOne | preload', (group) => {
     await User.query({ profiler }).preload('profile')
   })
 
-  test('do not run preload query when parent rows are empty', async (assert) => {
+  test('do not run preload query when parent rows are empty', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1546,24 +1546,24 @@ test.group('Model | HasOne | preload', (group) => {
 })
 
 test.group('Model | HasOne | withCount', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get count of a relationship rows', async (assert) => {
+  test('get count of a relationship rows', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1612,7 +1612,7 @@ test.group('Model | HasOne | withCount', (group) => {
     assert.equal(users[1].$extras.profile_count, 1)
   })
 
-  test('allow cherry picking columns', async (assert) => {
+  test('allow cherry picking columns', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1664,7 +1664,7 @@ test.group('Model | HasOne | withCount', (group) => {
     assert.deepEqual(users[1].$attributes, { username: 'nikk' })
   })
 
-  test('lazy load related count', async (assert) => {
+  test('lazy load related count', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1712,7 +1712,7 @@ test.group('Model | HasOne | withCount', (group) => {
     assert.deepEqual(Number(user.$extras.profile_count), 1)
   })
 
-  test('lazy load count of self referenced relationship', async (assert) => {
+  test('lazy load count of self referenced relationship', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1739,24 +1739,24 @@ test.group('Model | HasOne | withCount', (group) => {
 })
 
 test.group('Model | HasOne | has', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async (assert) => {
+  test('limit rows to the existance of relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1805,24 +1805,24 @@ test.group('Model | HasOne | has', (group) => {
 })
 
 test.group('Model | HasOne | whereHas', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async (assert) => {
+  test('limit rows to the existance of relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1884,24 +1884,24 @@ test.group('Model | HasOne | whereHas', (group) => {
 })
 
 test.group('Model | HasOne | save', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('save related instance', async (assert) => {
+  test('save related instance', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1937,7 +1937,7 @@ test.group('Model | HasOne | save', (group) => {
     assert.equal(user.id, profile.userId)
   })
 
-  test('wrap save calls inside a managed transaction', async (assert) => {
+  test('wrap save calls inside a managed transaction', async ({ assert }) => {
     assert.plan(3)
 
     class Profile extends BaseModel {
@@ -1979,7 +1979,7 @@ test.group('Model | HasOne | save', (group) => {
     assert.lengthOf(profiles, 0)
   })
 
-  test('use parent model transaction when its defined', async (assert) => {
+  test('use parent model transaction when its defined', async ({ assert }) => {
     assert.plan(4)
 
     class Profile extends BaseModel {
@@ -2028,24 +2028,24 @@ test.group('Model | HasOne | save', (group) => {
 })
 
 test.group('Model | HasOne | create', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create related instance', async (assert) => {
+  test('create related instance', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2080,7 +2080,7 @@ test.group('Model | HasOne | create', (group) => {
     assert.equal(user.id, profile.userId)
   })
 
-  test('wrap create call inside a managed transaction', async (assert) => {
+  test('wrap create call inside a managed transaction', async ({ assert }) => {
     assert.plan(3)
 
     class Profile extends BaseModel {
@@ -2121,7 +2121,7 @@ test.group('Model | HasOne | create', (group) => {
     assert.lengthOf(profiles, 0)
   })
 
-  test('use parent model transaction during create', async (assert) => {
+  test('use parent model transaction during create', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2166,24 +2166,24 @@ test.group('Model | HasOne | create', (group) => {
 })
 
 test.group('Model | HasOne | firstOrCreate', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test("create related instance when there isn't any existing row", async (assert) => {
+  test("create related instance when there isn't any existing row", async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2223,7 +2223,7 @@ test.group('Model | HasOne | firstOrCreate', (group) => {
     assert.equal(profile.displayName, 'Hvirk')
   })
 
-  test('return the existing row vs creating a new one', async (assert) => {
+  test('return the existing row vs creating a new one', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2269,24 +2269,24 @@ test.group('Model | HasOne | firstOrCreate', (group) => {
 })
 
 test.group('Model | HasOne | updateOrCreate', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test("create related instance when there isn't any existing row", async (assert) => {
+  test("create related instance when there isn't any existing row", async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2330,7 +2330,7 @@ test.group('Model | HasOne | updateOrCreate', (group) => {
     assert.equal(profiles[0].display_name, 'Virk')
   })
 
-  test('update the existing row vs creating a new one', async (assert) => {
+  test('update the existing row vs creating a new one', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2377,24 +2377,24 @@ test.group('Model | HasOne | updateOrCreate', (group) => {
 })
 
 test.group('Model | HasOne | pagination', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('dis-allow pagination', async (assert) => {
+  test('dis-allow pagination', async ({ assert }) => {
     assert.plan(1)
 
     class Profile extends BaseModel {
@@ -2431,24 +2431,24 @@ test.group('Model | HasOne | pagination', (group) => {
 })
 
 test.group('Model | HasOne | clone', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('clone related query builder', async (assert) => {
+  test('clone related query builder', async ({ assert }) => {
     assert.plan(1)
 
     class Profile extends BaseModel {
@@ -2482,24 +2482,24 @@ test.group('Model | HasOne | clone', (group) => {
 })
 
 test.group('Model | HasOne | scopes', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply scopes during eagerload', async (assert) => {
+  test('apply scopes during eagerload', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2547,7 +2547,7 @@ test.group('Model | HasOne | scopes', (group) => {
     assert.instanceOf(userWithScopes.profile, Profile)
   })
 
-  test('apply scopes on related query', async (assert) => {
+  test('apply scopes on related query', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2599,24 +2599,24 @@ test.group('Model | HasOne | scopes', (group) => {
 })
 
 test.group('Model | HasOne | onQuery', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('invoke onQuery method when preloading relationship', async (assert) => {
+  test('invoke onQuery method when preloading relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2655,7 +2655,7 @@ test.group('Model | HasOne | onQuery', (group) => {
     assert.isNull(user.profile)
   })
 
-  test('do not invoke onQuery method on preloading subqueries', async (assert) => {
+  test('do not invoke onQuery method on preloading subqueries', async ({ assert }) => {
     assert.plan(2)
 
     class Profile extends BaseModel {
@@ -2696,12 +2696,12 @@ test.group('Model | HasOne | onQuery', (group) => {
       ])
 
     const user = await User.query()
-      .preload('profile', (query) => query.where(() => {}))
+      .preload('profile', (query) => query.where(() => { }))
       .firstOrFail()
     assert.isNull(user.profile)
   })
 
-  test('invoke onQuery method on related query builder', async (assert) => {
+  test('invoke onQuery method on related query builder', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2741,7 +2741,7 @@ test.group('Model | HasOne | onQuery', (group) => {
     assert.isNull(profile)
   })
 
-  test('do not invoke onQuery method on related query builder subqueries', async (assert) => {
+  test('do not invoke onQuery method on related query builder subqueries', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2803,24 +2803,24 @@ test.group('Model | HasOne | onQuery', (group) => {
 })
 
 test.group('Model | HasOne | delete', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('delete related instance', async (assert) => {
+  test('delete related instance', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number

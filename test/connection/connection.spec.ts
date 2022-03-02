@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { MysqlConfig } from '@ioc:Adonis/Lucid/Database'
 
 import { Connection } from '../../src/Connection'
@@ -20,17 +20,17 @@ let app: ApplicationContract
 
 if (process.env.DB !== 'sqlite') {
   test.group('Connection | config', (group) => {
-    group.before(async () => {
+    group.setup(async () => {
       app = await setupApplication()
       await setup()
     })
 
-    group.after(async () => {
+    group.teardown(async () => {
       await cleanup()
       await fs.cleanup()
     })
 
-    test('get write config by merging values from connection', (assert) => {
+    test('get write config by merging values from connection', ({ assert }) => {
       const config = getConfig()
       config.replicas! = {
         write: {
@@ -54,7 +54,7 @@ if (process.env.DB !== 'sqlite') {
       assert.equal(writeConfig.connection!['host'], '10.0.0.1')
     })
 
-    test('get read config by merging values from connection', (assert) => {
+    test('get read config by merging values from connection', ({ assert }) => {
       const config = getConfig()
       config.replicas! = {
         write: {
@@ -80,26 +80,27 @@ if (process.env.DB !== 'sqlite') {
 }
 
 test.group('Connection | setup', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('do not instantiate knex unless connect is called', (assert) => {
+  test('do not instantiate knex unless connect is called', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
+
     assert.isUndefined(connection.client)
   })
 
-  test('instantiate knex when connect is invoked', async (assert, done) => {
+  test('instantiate knex when connect is invoked', async ({ assert }, done) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.on('connect', async () => {
       assert.isDefined(connection.client!)
@@ -109,9 +110,9 @@ test.group('Connection | setup', (group) => {
     })
 
     connection.connect()
-  })
+  }).waitForDone()
 
-  test('on disconnect destroy knex', async (assert) => {
+  test('on disconnect destroy knex', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
     await connection.disconnect()
@@ -120,7 +121,7 @@ test.group('Connection | setup', (group) => {
     assert.isUndefined(connection['_readClient'])
   })
 
-  test('on disconnect emit disconnect event', async (assert, done) => {
+  test('on disconnect emit disconnect event', async ({ assert }, done) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -130,9 +131,9 @@ test.group('Connection | setup', (group) => {
     })
 
     await connection.disconnect()
-  })
+  }).waitForDone()
 
-  test('raise error when unable to make connection', (assert, done) => {
+  test('raise error when unable to make connection', ({ assert }, done) => {
     assert.plan(2)
 
     const connection = new Connection(
@@ -151,13 +152,13 @@ test.group('Connection | setup', (group) => {
     })
 
     const fn = () => connection.connect()
-    assert.throw(fn, /knex: Required configuration option/)
-  })
+    assert.throws(fn, /knex: Required configuration option/)
+  }).waitForDone()
 })
 
 if (process.env.DB === 'mysql') {
   test.group('Connection | setup mysql', () => {
-    test('pass user config to mysql driver', async (assert) => {
+    test('pass user config to mysql driver', async ({ assert }) => {
       const config = getConfig() as MysqlConfig
       config.connection!.charset = 'utf-8'
       config.connection!.typeCast = false
@@ -174,17 +175,17 @@ if (process.env.DB === 'mysql') {
 }
 
 test.group('Health Checks', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  test('get healthcheck report for healthy connection', async (assert) => {
+  test('get healthcheck report for healthy connection', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -199,7 +200,7 @@ test.group('Health Checks', (group) => {
   })
 
   if (!['sqlite', 'better_sqlite'].includes(process.env.DB!)) {
-    test('get healthcheck report for un-healthy connection', async (assert) => {
+    test('get healthcheck report for un-healthy connection', async ({ assert }) => {
       const connection = new Connection(
         'primary',
         Object.assign({}, getConfig(), {
@@ -218,7 +219,7 @@ test.group('Health Checks', (group) => {
       await connection.disconnect()
     }).timeout(0)
 
-    test('get healthcheck report for un-healthy read host', async (assert) => {
+    test('get healthcheck report for un-healthy read host', async ({ assert }) => {
       const connection = new Connection(
         'primary',
         Object.assign({}, getConfig(), {
