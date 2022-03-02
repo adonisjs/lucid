@@ -49,7 +49,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     assert.plan(1)
 
     try {
-      class User extends BaseModel { }
+      class User extends BaseModel {}
       User.boot()
 
       class Profile extends BaseModel {
@@ -186,7 +186,7 @@ test.group('Model | BelongsTo | Options', (group) => {
       public user: BelongsTo<typeof User>
     }
 
-    class Profile extends BaseProfile { }
+    class Profile extends BaseProfile {}
     Profile.boot()
 
     Profile.$getRelation('user')!.boot()
@@ -2067,7 +2067,7 @@ test.group('Model | BelongsTo | onQuery', (group) => {
 
     const profile = await Profile.query()
       .preload('user', (query) => {
-        query.where((_) => { })
+        query.where((_) => {})
       })
       .first()
 

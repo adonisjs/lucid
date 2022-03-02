@@ -52,7 +52,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.plan(1)
 
     try {
-      class Skill extends BaseModel { }
+      class Skill extends BaseModel {}
 
       class User extends BaseModel {
         @manyToMany(() => Skill)
@@ -117,7 +117,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.plan(1)
 
     try {
-      class Skill extends BaseModel { }
+      class Skill extends BaseModel {}
       Skill.boot()
 
       class User extends BaseModel {
@@ -273,7 +273,7 @@ test.group('Model | ManyToMany | Options', (group) => {
       public skills: ManyToMany<typeof Skill>
     }
 
-    class User extends BaseUser { }
+    class User extends BaseUser {}
     User.boot()
     User.$getRelation('skills')!.boot()
 
@@ -1312,7 +1312,9 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
   })
 
-  test('convert dates to luxon datetime instance when preload using model instance', async ({ assert }) => {
+  test('convert dates to luxon datetime instance when preload using model instance', async ({
+    assert,
+  }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3165,7 +3167,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
 
     const { sql, bindings } = query
       .where((builder) => builder.wherePivot('username', 'virk'))
-    ['toSQL']()
+      ['toSQL']()
 
     const { sql: knexSql, bindings: knexBindings } = db
       .connection()
@@ -4164,7 +4166,7 @@ test.group('Model | ManyToMany | whereNullPivot', (group) => {
 
     const { sql, bindings } = query
       .where((builder) => builder.whereNullPivot('deleted_at'))
-    ['toSQL']()
+      ['toSQL']()
 
     const { sql: knexSql, bindings: knexBindings } = db
       .connection()
@@ -4325,7 +4327,7 @@ test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
 
     const { sql, bindings } = query
       .where((builder) => builder.whereNotNullPivot('deleted_at'))
-    ['toSQL']()
+      ['toSQL']()
 
     const { sql: knexSql, bindings: knexBindings } = db
       .connection()
@@ -4631,7 +4633,9 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('attach duplicates when save is called more than once with with checkExisting = false', async ({ assert }) => {
+  test('attach duplicates when save is called more than once with with checkExisting = false', async ({
+    assert,
+  }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4682,7 +4686,9 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('attach duplicates with different pivot attributes and with checkExisting = false', async ({ assert }) => {
+  test('attach duplicates with different pivot attributes and with checkExisting = false', async ({
+    assert,
+  }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4739,7 +4745,9 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('attach when related pivot entry exists but for a different parent @sanityCheck', async ({ assert }) => {
+  test('attach when related pivot entry exists but for a different parent @sanityCheck', async ({
+    assert,
+  }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5376,7 +5384,9 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('attach duplicates when saveMany is called more than once with checkExisting = false', async ({ assert }) => {
+  test('attach duplicates when saveMany is called more than once with checkExisting = false', async ({
+    assert,
+  }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5435,7 +5445,9 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('attach when related pivot entry exists but for a different parent @sanityCheck', async ({ assert }) => {
+  test('attach when related pivot entry exists but for a different parent @sanityCheck', async ({
+    assert,
+  }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -7107,7 +7119,7 @@ test.group('Model | ManyToMany | onQuery', (group) => {
 
     const user = await User.query()
       .preload('skills', (query) => {
-        query.where(() => { })
+        query.where(() => {})
       })
       .firstOrFail()
 

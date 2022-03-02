@@ -51,7 +51,7 @@ test.group('Model | HasMany | Options', (group) => {
     assert.plan(1)
 
     try {
-      class Post extends BaseModel { }
+      class Post extends BaseModel {}
 
       class User extends BaseModel {
         @hasMany(() => Post)
@@ -72,7 +72,7 @@ test.group('Model | HasMany | Options', (group) => {
     assert.plan(1)
 
     try {
-      class Post extends BaseModel { }
+      class Post extends BaseModel {}
       Post.boot()
 
       class User extends BaseModel {
@@ -190,7 +190,7 @@ test.group('Model | HasMany | Options', (group) => {
       public posts: HasMany<typeof Post>
     }
 
-    class User extends BaseUser { }
+    class User extends BaseUser {}
 
     User.boot()
     User.$getRelation('posts')!.boot()
@@ -892,7 +892,9 @@ test.group('Model | HasMany | preload', (group) => {
     assert.equal(users[1].posts[0].userId, users[1].id)
   })
 
-  test('set relationship property value to empty array when no related rows have been found', async ({ assert }) => {
+  test('set relationship property value to empty array when no related rows have been found', async ({
+    assert,
+  }) => {
     class Post extends BaseModel {
       @column()
       public userId: number
@@ -5256,7 +5258,7 @@ test.group('Model | HasMany | onQuery', (group) => {
       .insert({ user_id: typeof row === 'number' ? row : row.id, title: 'Adonis 101' })
 
     const user = await User.query()
-      .preload('posts', (query) => query.where(() => { }))
+      .preload('posts', (query) => query.where(() => {}))
       .firstOrFail()
     assert.lengthOf(user.posts, 1)
     assert.equal(user.posts[0].title, 'Adonis 101')

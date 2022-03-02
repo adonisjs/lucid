@@ -49,7 +49,7 @@ test.group('Model | HasOne | Options', (group) => {
     assert.plan(1)
 
     try {
-      class Profile extends BaseModel { }
+      class Profile extends BaseModel {}
 
       class User extends BaseModel {
         @hasOne(() => Profile)
@@ -70,7 +70,7 @@ test.group('Model | HasOne | Options', (group) => {
     assert.plan(1)
 
     try {
-      class Profile extends BaseModel { }
+      class Profile extends BaseModel {}
       Profile.boot()
 
       class User extends BaseModel {
@@ -193,7 +193,7 @@ test.group('Model | HasOne | Options', (group) => {
       public profile: HasOne<typeof Profile>
     }
 
-    class User extends BaseUser { }
+    class User extends BaseUser {}
 
     User.boot()
     User.$getRelation('profile')!.boot()
@@ -822,7 +822,9 @@ test.group('Model | HasOne | preload', (group) => {
     assert.equal(users[1].profile.userId, users[1].id)
   })
 
-  test('set relationship property value to null when no related rows were found', async ({ assert }) => {
+  test('set relationship property value to null when no related rows were found', async ({
+    assert,
+  }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2696,7 +2698,7 @@ test.group('Model | HasOne | onQuery', (group) => {
       ])
 
     const user = await User.query()
-      .preload('profile', (query) => query.where(() => { }))
+      .preload('profile', (query) => query.where(() => {}))
       .firstOrFail()
     assert.isNull(user.profile)
   })

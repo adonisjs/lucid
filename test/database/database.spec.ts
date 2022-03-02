@@ -291,7 +291,7 @@ test.group('Database | extend', (group) => {
     const { sql, bindings } = db
       .insertQuery()
       .table('users')
-    ['returnId']()
+      ['returnId']()
       .insert({ id: 1 })
       .toSQL()
 

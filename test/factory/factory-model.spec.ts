@@ -74,7 +74,7 @@ test.group('Factory | Factory Model', (group) => {
       public username: string
     }
 
-    function stateFn() { }
+    function stateFn() {}
     const factory = new FactoryModel(User, () => new User(), factoryManager).state(
       'active',
       stateFn
@@ -101,7 +101,7 @@ test.group('Factory | Factory Model', (group) => {
     }
     User.boot()
 
-    function relatedFn() { }
+    function relatedFn() {}
     const factory = new FactoryModel(User, () => new User(), factoryManager).relation(
       'profile',
       relatedFn
@@ -119,7 +119,7 @@ test.group('Factory | Factory Model', (group) => {
       public username: string
     }
 
-    function stateFn() { }
+    function stateFn() {}
     const factory = new FactoryModel(User, () => new User(), factoryManager).state(
       'active',
       stateFn
@@ -176,7 +176,7 @@ test.group('Factory | Factory Model', (group) => {
   })
 
   test('raise exception when relation is not defined', async ({ assert }) => {
-    class Profile extends BaseModel { }
+    class Profile extends BaseModel {}
     Profile.boot()
 
     class User extends BaseModel {
@@ -207,7 +207,7 @@ test.group('Factory | Factory Model', (group) => {
     }
 
     const factory = () =>
-      new FactoryModel(User, () => new User(), factoryManager).relation('profile' as any, () => { })
+      new FactoryModel(User, () => new User(), factoryManager).relation('profile' as any, () => {})
     assert.throws(
       factory,
       'Cannot define "profile" relationship. The relationship must exist on the "User" model first'
@@ -215,7 +215,7 @@ test.group('Factory | Factory Model', (group) => {
   })
 
   test('build factory', async ({ assert }) => {
-    class Profile extends BaseModel { }
+    class Profile extends BaseModel {}
     Profile.boot()
 
     class User extends BaseModel {
@@ -242,7 +242,7 @@ test.group('Factory | Factory Model', (group) => {
   })
 
   test('return model instance from the factory callback', async ({ assert }) => {
-    class Profile extends BaseModel { }
+    class Profile extends BaseModel {}
     Profile.boot()
 
     class User extends BaseModel {

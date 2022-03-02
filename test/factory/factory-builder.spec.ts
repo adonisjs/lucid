@@ -161,7 +161,7 @@ test.group('Factory | Factory Builder | make', (group) => {
       },
       factoryManager
     )
-      .merge(() => { })
+      .merge(() => {})
       .build()
 
     const user = await factory.merge({ username: 'nikk' }).makeStubbed()
@@ -197,7 +197,7 @@ test.group('Factory | Factory Builder | make', (group) => {
         user.$extras = { invoked: true }
         return user
       })
-      .merge(() => { })
+      .merge(() => {})
       .build()
 
     const user = await factory.makeStubbed()

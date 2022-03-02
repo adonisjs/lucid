@@ -49,10 +49,10 @@ test.group('Model | Has Many Through | Options', (group) => {
     assert.plan(1)
 
     try {
-      class User extends BaseModel { }
+      class User extends BaseModel {}
       User.boot()
 
-      class Post extends BaseModel { }
+      class Post extends BaseModel {}
       Post.boot()
 
       class Country extends BaseModel {
@@ -74,10 +74,10 @@ test.group('Model | Has Many Through | Options', (group) => {
     assert.plan(1)
 
     try {
-      class User extends BaseModel { }
+      class User extends BaseModel {}
       User.boot()
 
-      class Post extends BaseModel { }
+      class Post extends BaseModel {}
       Post.boot()
 
       class Country extends BaseModel {
@@ -108,7 +108,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       }
       User.boot()
 
-      class Post extends BaseModel { }
+      class Post extends BaseModel {}
       Post.boot()
 
       class Country extends BaseModel {
@@ -142,7 +142,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       }
       User.boot()
 
-      class Post extends BaseModel { }
+      class Post extends BaseModel {}
       Post.boot()
 
       class Country extends BaseModel {
@@ -281,7 +281,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       public posts: HasManyThrough<typeof Post>
     }
 
-    class Country extends BaseCountry { }
+    class Country extends BaseCountry {}
     Country.boot()
 
     const relation = Country.$getRelation('posts')!

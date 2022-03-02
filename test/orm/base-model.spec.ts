@@ -176,7 +176,7 @@ test.group('Base model | boot', (group) => {
   })
 
   test('initiate all required static properties', async ({ assert }) => {
-    class User extends BaseModel { }
+    class User extends BaseModel {}
 
     User.boot()
     assert.deepEqual(mapToObj(User.$columnsDefinitions), {})
@@ -1237,7 +1237,9 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.isNull(user)
   })
 
-  test('create multiple model instance using $createMultipleFromAdapterResult', async ({ assert }) => {
+  test('create multiple model instance using $createMultipleFromAdapterResult', async ({
+    assert,
+  }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1528,7 +1530,9 @@ test.group('Base Model | serializeAttributes', () => {
     )
   })
 
-  test('ignore fields that has serializeAs = null, even when part of pick array', async ({ assert }) => {
+  test('ignore fields that has serializeAs = null, even when part of pick array', async ({
+    assert,
+  }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1767,7 +1771,9 @@ test.group('Base Model | serializeRelations', () => {
     })
   })
 
-  test('do not serialize relations with serializeAs is null when raw flag is on', async ({ assert }) => {
+  test('do not serialize relations with serializeAs is null when raw flag is on', async ({
+    assert,
+  }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1830,7 +1836,9 @@ test.group('Base Model | serializeRelations', () => {
     )
   })
 
-  test('select all fields when no custom fields are defined for a relationship', async ({ assert }) => {
+  test('select all fields when no custom fields are defined for a relationship', async ({
+    assert,
+  }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1866,7 +1874,9 @@ test.group('Base Model | serializeRelations', () => {
     )
   })
 
-  test('do not select any fields when relationship fields is an empty array', async ({ assert }) => {
+  test('do not select any fields when relationship fields is an empty array', async ({
+    assert,
+  }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -2459,7 +2469,9 @@ test.group('Base | apdater', (group) => {
     ])
   })
 
-  test('fill model instance with bulk attributes via column name is different', async ({ assert }) => {
+  test('fill model instance with bulk attributes via column name is different', async ({
+    assert,
+  }) => {
     const adapter = new FakeAdapter()
     class User extends BaseModel {
       @column({ columnName: 'first_name' })
@@ -2520,7 +2532,9 @@ test.group('Base Model | sideloaded', (group) => {
     assert.deepEqual(user.$sideloaded, { loggedInUser: { id: 1 } })
   })
 
-  test('define sideloaded properties using $createMultipleFromAdapterResult method', ({ assert }) => {
+  test('define sideloaded properties using $createMultipleFromAdapterResult method', ({
+    assert,
+  }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -3073,7 +3087,9 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(user!.userName, 'nikk')
   })
 
-  test('return the existing row when search criteria matches using firstOrNew', async ({ assert }) => {
+  test('return the existing row when search criteria matches using firstOrNew', async ({
+    assert,
+  }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3096,7 +3112,9 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(user!.$primaryKeyValue, 1)
   })
 
-  test("instantiate new row when search criteria doesn't match using firstOrNew", async ({ assert }) => {
+  test("instantiate new row when search criteria doesn't match using firstOrNew", async ({
+    assert,
+  }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3557,7 +3575,9 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 1)
   })
 
-  test('raise exception when value of unique key inside payload is undefined', async ({ assert }) => {
+  test('raise exception when value of unique key inside payload is undefined', async ({
+    assert,
+  }) => {
     assert.plan(2)
 
     class User extends BaseModel {
@@ -3861,7 +3881,9 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 1)
   })
 
-  test('wrap update calls inside a custom transaction using updateOrCreateMany', async ({ assert }) => {
+  test('wrap update calls inside a custom transaction using updateOrCreateMany', async ({
+    assert,
+  }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4853,7 +4875,9 @@ test.group('Base Model | date', (group) => {
     await user.save()
   })
 
-  test('do initiate date column values with current date when autoCreate is off', async ({ assert }) => {
+  test('do initiate date column values with current date when autoCreate is off', async ({
+    assert,
+  }) => {
     assert.plan(2)
 
     const adapter = new FakeAdapter()
@@ -6512,7 +6536,7 @@ test.group('Base model | inheritance', (group) => {
 
     class User extends MyBaseModel {
       @hasOne(() => Profile, {
-        onQuery() { },
+        onQuery() {},
       })
       public declare profile: HasOne<typeof Profile>
 
@@ -6532,8 +6556,8 @@ test.group('Base model | inheritance', (group) => {
   })
 
   test('inherting a model should copy hooks', async ({ assert }) => {
-    function hook1() { }
-    function hook2() { }
+    function hook1() {}
+    function hook2() {}
 
     class MyBaseModel extends BaseModel {
       public static boot() {

@@ -219,11 +219,11 @@ test.group('ConnectionManager', (group) => {
         healthCheck: true,
         connection: ['sqlite', 'better_sqlite'].includes(process.env.DB!)
           ? {
-            filename: join(fs.basePath, 'nested', 'db.sqlite'),
-          }
+              filename: join(fs.basePath, 'nested', 'db.sqlite'),
+            }
           : {
-            host: 'bad-host',
-          },
+              host: 'bad-host',
+            },
       })
     )
     manager.add('secondary-copy', Object.assign({}, getConfig(), { healthCheck: false }))
