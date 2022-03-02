@@ -84,12 +84,12 @@ export default class DbWipe extends BaseCommand {
     /**
      * Drop all tables
      */
-    await db.connection().dropAllTables()
+    await connection.dropAllTables()
     this.logger.success('Dropped tables successfully')
 
     if (this.dropTypes) {
       if (connection.dialect.supportsTypes) {
-        await db.connection().dropAllTypes()
+        await connection.dropAllTypes()
         this.logger.success('Dropped custom types successfully')
       } else {
         this.logger.warning(`Dropping types is not supported by "${connection.dialect.name}"`)
