@@ -37,7 +37,7 @@ test.group('Migrator', (group) => {
     await resetTables()
     await db.manager.closeAll()
     await cleanup()
-    await cleanup(['adonis_schema', 'schema_users', 'schema_accounts'])
+    await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
     await fs.cleanup()
   })
 
@@ -1138,5 +1138,122 @@ test.group('Migrator', (group) => {
     db.getRawConnection('primary')!.config = originalConfig
 
     delete process.env.NODE_ENV
+  })
+
+  test('upgrade old migration file name to new', async (assert) => {
+    await fs.add(
+      'database/migrations/users.ts',
+      `
+      import { Schema } from '../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      connectionName: 'primary',
+    })
+
+    if (!(await db.connection().schema.hasTable('adonis_schema'))) {
+      await db.connection().schema.createTable('adonis_schema', (table) => {
+        table.increments().notNullable()
+        table.string('name').notNullable()
+        table.integer('batch').notNullable()
+        table.timestamp('migration_time').defaultTo('now()')
+      })
+    }
+
+    await db.connection().table('adonis_schema').insert({
+      name: 'database\\migrations\\users',
+      batch: 1,
+    })
+
+    assert.isFalse(await db.connection().schema.hasTable('adonis_schema_versions'))
+
+    await migrator.run()
+
+    const migrated = await db.connection().from('adonis_schema').select('*')
+    const latestVersion = await db.connection().from('adonis_schema_versions').select('*')
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const migratedFiles = Object.keys(migrator.migratedFiles).map((file) => {
+      return {
+        status: migrator.migratedFiles[file].status,
+        file: file,
+        queries: migrator.migratedFiles[file].queries,
+      }
+    })
+
+    assert.lengthOf(migrated, 1)
+    assert.deepEqual(latestVersion, [{ version: 2 }])
+    assert.equal(migrated[0].name, 'database/migrations/users')
+    assert.equal(migrated[0].batch, 1)
+    assert.isFalse(hasUsersTable)
+    assert.deepEqual(migratedFiles, [])
+    assert.equal(migrator.status, 'skipped')
+  })
+
+  test('upgrade file names also in dryRun', async (assert) => {
+    await fs.add(
+      'database/migrations/users.ts',
+      `
+      import { Schema } from '../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    const migrator = getMigrator(db, app, {
+      direction: 'up',
+      dryRun: true,
+      connectionName: 'primary',
+    })
+
+    if (!(await db.connection().schema.hasTable('adonis_schema'))) {
+      await db.connection().schema.createTable('adonis_schema', (table) => {
+        table.increments().notNullable()
+        table.string('name').notNullable()
+        table.integer('batch').notNullable()
+        table.timestamp('migration_time').defaultTo('now()')
+      })
+    }
+
+    await db.connection().table('adonis_schema').insert({
+      name: 'database\\migrations\\users',
+      batch: 1,
+    })
+
+    assert.isFalse(await db.connection().schema.hasTable('adonis_schema_versions'))
+
+    await migrator.run()
+
+    const migrated = await db.connection().from('adonis_schema').select('*')
+    const latestVersion = await db.connection().from('adonis_schema_versions').select('*')
+    const hasUsersTable = await db.connection().schema.hasTable('schema_users')
+    const migratedFiles = Object.keys(migrator.migratedFiles).map((file) => {
+      return {
+        status: migrator.migratedFiles[file].status,
+        file: file,
+        queries: migrator.migratedFiles[file].queries,
+      }
+    })
+
+    assert.lengthOf(migrated, 1)
+    assert.deepEqual(latestVersion, [{ version: 2 }])
+    assert.equal(migrated[0].name, 'database/migrations/users')
+    assert.equal(migrated[0].batch, 1)
+    assert.isFalse(hasUsersTable)
+    assert.deepEqual(migratedFiles, [])
+    assert.equal(migrator.status, 'skipped')
   })
 })

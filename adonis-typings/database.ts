@@ -37,7 +37,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * implementation
    */
   export type FileNode<T> = {
-    filename?: string
     absPath: string
     name: string
     getSource: () => T

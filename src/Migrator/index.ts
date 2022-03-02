@@ -9,9 +9,12 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
+import slash from 'slash'
 import { EventEmitter } from 'events'
 import { Exception } from '@poppinss/utils'
+
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
 
 import {
   MigratorOptions,
@@ -27,7 +30,6 @@ import {
   TransactionClientContract,
 } from '@ioc:Adonis/Lucid/Database'
 
-import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
 import { MigrationSource } from './MigrationSource'
 
 /**
@@ -48,6 +50,12 @@ export class Migrator extends EventEmitter implements MigratorContract {
     },
     this.config.migrations
   )
+
+  /**
+   * Table names for storing schema files and schema versions
+   */
+  private schemaTableName = this.migrationsConfig.tableName
+  private schemaVersionsTableName = `${this.schemaTableName}_versions`
 
   /**
    * Whether or not the migrator has been booted
@@ -95,6 +103,13 @@ export class Migrator extends EventEmitter implements MigratorContract {
       ? 'completed'
       : 'skipped'
   }
+
+  /**
+   * Existing version of migrations. We use versioning to upgrade
+   * existing migrations if we are plan to make a breaking
+   * change.
+   */
+  public version: number = 2
 
   constructor(
     private db: DatabaseContract,
@@ -155,7 +170,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
       return
     }
 
-    await client.insertQuery().table(this.migrationsConfig.tableName).insert({
+    await client.insertQuery().table(this.schemaTableName).insert({
       name,
       batch: this.migratedFiles[name].batch,
     })
@@ -175,7 +190,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
       return
     }
 
-    await client.query().from(this.migrationsConfig.tableName).where({ name }).del()
+    await client.query().from(this.schemaTableName).where({ name }).del()
   }
 
   /**
@@ -196,11 +211,11 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * in case of failure
    */
   private async executeMigration(migration: FileNode<unknown>) {
-    const Source = this.getMigrationSource(migration)
-    const client = await this.getClient(Source.disableTransactions)
+    const Schema = this.getMigrationSource(migration)
+    const client = await this.getClient(Schema.disableTransactions)
 
     try {
-      const schema = new Source(client, migration.name, this.dryRun)
+      const schema = new Schema(client, migration.name, this.dryRun)
       this.emit('migration:start', this.migratedFiles[migration.name])
 
       if (this.direction === 'up') {
@@ -268,20 +283,91 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * execute and that cannot done without missing table.
    */
   private async makeMigrationsTable() {
-    const client = this.client
-
-    const hasTable = await client.schema.hasTable(this.migrationsConfig.tableName)
+    const hasTable = await this.client.schema.hasTable(this.schemaTableName)
     if (hasTable) {
       return
     }
 
     this.emit('create:schema:table')
-    await client.schema.createTable(this.migrationsConfig.tableName, (table) => {
+    await this.client.schema.createTable(this.schemaTableName, (table) => {
       table.increments().notNullable()
       table.string('name').notNullable()
       table.integer('batch').notNullable()
-      table.timestamp('migration_time').defaultTo(client.getWriteClient().fn.now())
+      table.timestamp('migration_time').defaultTo(this.client.getWriteClient().fn.now())
     })
+  }
+
+  /**
+   * Makes the migrations version table (if missing).
+   */
+  private async makeMigrationsVersionsTable() {
+    /**
+     * Return early when table already exists
+     */
+    const hasTable = await this.client.schema.hasTable(this.schemaVersionsTableName)
+    if (hasTable) {
+      return
+    }
+
+    /**
+     * Create table
+     */
+    this.emit('create:schema_versions:table')
+    await this.client.schema.createTable(this.schemaVersionsTableName, (table) => {
+      table.integer('version').notNullable()
+    })
+  }
+
+  /**
+   * Returns the latest migrations version. If no rows exists
+   * it inserts a new row for version 1
+   */
+  private async getLatestVersion() {
+    const rows = await this.client.from(this.schemaVersionsTableName).select('version').limit(1)
+
+    if (rows.length) {
+      return Number(rows[0].version)
+    } else {
+      await this.client.table(this.schemaVersionsTableName).insert({ version: 1 })
+      return 1
+    }
+  }
+
+  /**
+   * Upgrade migrations name from version 1 to version 2
+   */
+  private async upgradeFromOnetoTwo() {
+    const migrations = await this.getMigratedFilesTillBatch(0)
+    const client = await this.getClient(false)
+
+    try {
+      await Promise.all(
+        migrations.map((migration) => {
+          return client
+            .from(this.schemaTableName)
+            .where('id', migration.id)
+            .update({
+              name: slash(migration.name),
+            })
+        })
+      )
+
+      await client.from(this.schemaVersionsTableName).where('version', 1).update({ version: 2 })
+      await this.commit(client)
+    } catch (error) {
+      this.rollback(client)
+      throw error
+    }
+  }
+
+  /**
+   * Upgrade migrations version
+   */
+  private async upgradeVersion(latestVersion: number): Promise<void> {
+    if (latestVersion === 1) {
+      this.emit('upgrade:version', { from: 1, to: 2 })
+      await this.upgradeFromOnetoTwo()
+    }
   }
 
   /**
@@ -289,8 +375,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * table
    */
   private async getLatestBatch() {
-    const rows = await this.client.from(this.migrationsConfig.tableName).max('batch as batch')
-
+    const rows = await this.client.from(this.schemaTableName).max('batch as batch')
     return Number(rows[0].batch)
   }
 
@@ -300,7 +385,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
   private async getMigratedFiles() {
     const rows = await this.client
       .query<{ name: string }>()
-      .from(this.migrationsConfig.tableName)
+      .from(this.schemaTableName)
       .select('name')
 
     return new Set(rows.map(({ name }) => name))
@@ -312,9 +397,9 @@ export class Migrator extends EventEmitter implements MigratorContract {
    */
   private async getMigratedFilesTillBatch(batch: number) {
     return this.client
-      .query<{ name: string; batch: number; migration_time: Date }>()
-      .from(this.migrationsConfig.tableName)
-      .select('name', 'batch', 'migration_time')
+      .query<{ name: string; batch: number; migration_time: Date; id: number }>()
+      .from(this.schemaTableName)
+      .select('name', 'batch', 'migration_time', 'id')
       .where('batch', '>', batch)
       .orderBy('id', 'desc')
   }
@@ -416,6 +501,11 @@ export class Migrator extends EventEmitter implements MigratorContract {
   public on(event: 'acquire:lock', callback: () => void): this
   public on(event: 'release:lock', callback: () => void): this
   public on(event: 'create:schema:table', callback: () => void): this
+  public on(event: 'create:schema_versions:table', callback: () => void): this
+  public on(
+    event: 'upgrade:version',
+    callback: (payload: { from: number; to: number }) => void
+  ): this
   public on(event: 'migration:start', callback: (file: MigratedFileNode) => void): this
   public on(event: 'migration:completed', callback: (file: MigratedFileNode) => void): this
   public on(event: 'migration:error', callback: (file: MigratedFileNode) => void): this
@@ -474,6 +564,15 @@ export class Migrator extends EventEmitter implements MigratorContract {
   public async run() {
     try {
       await this.boot()
+
+      /**
+       * Upgrading migrations (if required)
+       */
+      await this.makeMigrationsVersionsTable()
+      const latestVersion = await this.getLatestVersion()
+      if (latestVersion < this.version) {
+        await this.upgradeVersion(latestVersion)
+      }
 
       if (this.direction === 'up') {
         await this.runUp()

@@ -53,6 +53,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
    */
   export interface MigratorContract extends EventEmitter {
     dryRun: boolean
+    version: number
     direction: 'up' | 'down'
     status: 'completed' | 'skipped' | 'pending' | 'error'
     error: null | Error
@@ -65,6 +66,8 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
     on(event: 'acquire:lock', callback: () => void): this
     on(event: 'release:lock', callback: () => void): this
     on(event: 'create:schema:table', callback: () => void): this
+    on(event: 'create:schema_versions:table', callback: () => void): this
+    on(event: 'upgrade:version', callback: (payload: { from: number; to: number }) => void): this
     on(event: 'migration:start', callback: (file: MigratedFileNode) => void): this
     on(event: 'migration:completed', callback: (file: MigratedFileNode) => void): this
     on(event: 'migration:error', callback: (file: MigratedFileNode) => void): this

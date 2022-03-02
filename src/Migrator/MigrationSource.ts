@@ -25,13 +25,11 @@ export class MigrationSource {
    * paths are resolved from the project root
    */
   private async getDirectoryFiles(directoryPath: string): Promise<FileNode<unknown>[]> {
-    let { files } = await sourceFiles(this.app.appRoot, directoryPath)
-
-    if (this.config.migrations?.naturalSort) {
-      files = files.sort((a, b) =>
-        a.filename!.localeCompare(b.filename!, undefined, { numeric: true, sensitivity: 'base' })
-      )
-    }
+    const { files } = await sourceFiles(
+      this.app.appRoot,
+      directoryPath,
+      this.config.migrations?.naturalSort || false
+    )
 
     return files
   }

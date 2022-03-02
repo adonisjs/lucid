@@ -9,6 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
+import slash from 'slash'
 import { join, extname } from 'path'
 import { Exception, esmRequire } from '@poppinss/utils'
 import { fsReadAll, resolveDir } from '@poppinss/utils/build/helpers'
@@ -213,19 +214,44 @@ export function normalizeCherryPickObject(fields: CherryPickFields) {
  */
 export function sourceFiles(
   fromLocation: string,
-  directory: string
+  directory: string,
+  naturalSort: boolean
 ): Promise<{ directory: string; files: FileNode<unknown>[] }> {
   return new Promise((resolve, reject) => {
-    const path = resolveDir(fromLocation, directory)
-    const files = fsReadAll(path)
+    const absDirectoryPath = resolveDir(fromLocation, directory)
+    let files = fsReadAll(absDirectoryPath)
+
+    /**
+     * Sort files
+     */
+    if (naturalSort) {
+      files = files.sort((a, b) =>
+        a!.localeCompare(b!, undefined, { numeric: true, sensitivity: 'base' })
+      )
+    } else {
+      files = files.sort()
+    }
+
     try {
       resolve({
         directory,
-        files: files.sort().map((file: string) => {
+        files: files.map((file: string) => {
+          const name = join(directory, file.replace(RegExp(`${extname(file)}$`), ''))
+
           return {
-            filename: file,
-            absPath: join(path, file),
-            name: join(directory, file.replace(RegExp(`${extname(file)}$`), '')),
+            /**
+             * Absolute path to the file. Needed to ready the schema source
+             */
+            absPath: join(absDirectoryPath, file),
+
+            /**
+             * Normalizing name to always have unix slashes.
+             */
+            name: slash(name),
+
+            /**
+             * Import schema file
+             */
             getSource() {
               return esmRequire(this.absPath)
             },

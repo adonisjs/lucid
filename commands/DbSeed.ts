@@ -115,8 +115,8 @@ export default class DbSeed extends BaseCommand {
     const files = await runner.getList()
 
     /**
-     * List of selected files. Initially, all files are selected and one can
-     * define cherry pick using the `--interactive` or `--files` flag.
+     * List of selected files. Initially, all files are selected and one
+     * can cherry pick using the `--interactive` or `--files` flag.
      */
     let selectedFileNames: string[] = files.map(({ name }) => name)
 
