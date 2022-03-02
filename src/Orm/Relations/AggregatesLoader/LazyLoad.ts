@@ -59,7 +59,7 @@ export class LazyLoadAggregates<Model extends LucidRow>
    * Execute query
    */
   public async exec() {
-    const result = await this.query.first()
+    const result = await this.query.pojo<any>().first()
     if (!result) {
       return
     }

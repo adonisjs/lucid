@@ -2044,6 +2044,9 @@ test.group('Model | HasMany | withCount', (group) => {
       @column({ isPrimary: true })
       public id: number
 
+      @column()
+      public username: string
+
       @hasMany(() => Post)
       public posts: HasMany<typeof Post>
     }
@@ -2071,8 +2074,11 @@ test.group('Model | HasMany | withCount', (group) => {
     User.boot()
 
     const user = await User.firstOrFail()
+    assert.equal(user.username, 'virk')
+
     await user.loadCount('posts')
 
+    assert.equal(user.username, 'virk')
     assert.deepEqual(Number(user.$extras.posts_count), 2)
   })
 
