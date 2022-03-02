@@ -96,6 +96,8 @@ export class MysqlDialect implements DialectContract {
   public async dropAllTables() {
     let tables = await this.getAllTables()
 
+    if (!tables.length) return
+
     /**
      * Add backquote around table names to avoid syntax errors
      * in case of a table name with a reserved keyword
