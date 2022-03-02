@@ -2,6 +2,8 @@ import { assert } from '@japa/assert'
 import { specReporter } from '@japa/spec-reporter'
 import { runFailedTests } from '@japa/run-failed-tests'
 import { processCliArgs, configure, run } from '@japa/runner'
+import { remove } from 'fs-extra'
+import { join } from 'path'
 
 /*
 |--------------------------------------------------------------------------
@@ -20,13 +22,13 @@ configure({
   ...processCliArgs(process.argv.slice(2)),
   ...{
     files: ['test/**/*.spec.ts', '!test/database/drop-table.spec.ts'],
-    plugins: [assert()],
+    plugins: [assert(), runFailedTests()],
     reporters: [specReporter()],
     importer: (filePath: string) => import(filePath),
     forceExit: true,
     teardown: [
-      async (runner) => {
-        await require('fs-extra').remove(require('path').join(__dirname, 'test-helpers', 'tmp'))
+      async () => {
+        await remove(join(__dirname, 'test-helpers', 'tmp'))
       },
     ],
   },
