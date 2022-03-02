@@ -24,7 +24,7 @@ test.group('db:wipe and migrate:fresh', (group) => {
 
   group.afterEach(async () => {
     await cleanup()
-    await cleanup(['adonis_schema', 'schema_users'])
+    await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users'])
     await fs.cleanup()
   })
 

@@ -30,7 +30,7 @@ test.group('DbSeed', (group) => {
 
   group.afterEach(async () => {
     await cleanup()
-    await cleanup(['adonis_schema', 'schema_users', 'schema_accounts'])
+    await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
     await fs.cleanup()
   })
 

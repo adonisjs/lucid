@@ -1165,7 +1165,7 @@ test.group('Migrator', (group) => {
         table.increments().notNullable()
         table.string('name').notNullable()
         table.integer('batch').notNullable()
-        table.timestamp('migration_time').defaultTo('now()')
+        table.timestamp('migration_time').defaultTo(db.connection().getWriteClient().fn.now())
       })
     }
 
@@ -1224,7 +1224,7 @@ test.group('Migrator', (group) => {
         table.increments().notNullable()
         table.string('name').notNullable()
         table.integer('batch').notNullable()
-        table.timestamp('migration_time').defaultTo('now()')
+        table.timestamp('migration_time').defaultTo(db.connection().getWriteClient().fn.now())
       })
     }
 

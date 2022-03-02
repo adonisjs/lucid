@@ -46,7 +46,7 @@ test.group('MakeMigration', (group) => {
 
   group.after(async () => {
     await cleanup()
-    await cleanup(['adonis_schema', 'schema_users', 'schema_accounts'])
+    await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
     await fs.cleanup()
   })
 
