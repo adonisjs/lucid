@@ -23,6 +23,7 @@ test.group('db:wipe and migrate:fresh', (group) => {
   })
 
   group.each.teardown(async () => {
+    await db.manager.closeAll()
     await cleanup()
     await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users'])
     await fs.cleanup()
@@ -46,11 +47,13 @@ test.group('db:wipe and migrate:fresh', (group) => {
     const kernel = new Kernel(app)
     const migrate = new Migrate(app, kernel)
     await migrate.run()
+    await db.manager.closeAll()
 
     db = getDb(app)
 
     const wipe = new DbWipe(app, kernel)
     await wipe.run()
+    await db.manager.closeAll()
 
     db = getDb(app)
     const tables = await db.connection().getAllTables(['public'])
@@ -96,10 +99,10 @@ test.group('db:wipe and migrate:fresh', (group) => {
     await fs.add(
       'database/seeders/user.ts',
       `export default class UserSeeder {
-				public async run () {
-					process.env.EXEC_USER_SEEDER = 'true'
-				}
-			}`
+  			public async run () {
+  				process.env.EXEC_USER_SEEDER = 'true'
+  			}
+  		}`
     )
 
     await fs.add(

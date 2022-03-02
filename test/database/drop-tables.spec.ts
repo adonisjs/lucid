@@ -61,6 +61,8 @@ test.group('Query client | drop tables', (group) => {
     assert.isFalse(await connection.client!.schema.hasTable('comments'))
     assert.isFalse(await connection.client!.schema.hasTable('profiles'))
     assert.isFalse(await connection.client!.schema.hasTable('identities'))
+
+    await connection.disconnect()
   })
 
   test('dropAllTables should not throw when there are no tables', async ({ assert }) => {
@@ -76,5 +78,7 @@ test.group('Query client | drop tables', (group) => {
     } catch (err) {
       assert.fail(err)
     }
+
+    await connection.disconnect()
   })
 })

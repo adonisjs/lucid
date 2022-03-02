@@ -193,6 +193,8 @@ if (process.env.DB !== 'sqlite') {
         trx.insertQuery().table('users').insert({ username: 'virk' }).knexQuery
       )
       await trx.commit()
+
+      await connection.disconnect()
     })
   })
 }

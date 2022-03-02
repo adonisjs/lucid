@@ -91,6 +91,8 @@ test.group('Query client', (group) => {
     assert.property(columns, 'joined_at')
     assert.property(columns, 'created_at')
     assert.property(columns, 'updated_at')
+
+    await connection.disconnect()
   })
 
   test('get single column info', async ({ assert }) => {
@@ -100,6 +102,8 @@ test.group('Query client', (group) => {
     const client = new QueryClient('write', connection, app.container.use('Adonis/Core/Event'))
     const column = await client.columnsInfo('users', 'id')
     assert.oneOf(column.type, ['integer', 'int'])
+
+    await connection.disconnect()
   })
 
   if (process.env.DB !== 'mssql') {
@@ -136,6 +140,8 @@ test.group('Query client', (group) => {
        */
       await connection.client?.schema.dropTable('test_profiles')
       await connection.client?.schema.dropTable('test_users')
+
+      await connection.disconnect()
     })
   }
 })
@@ -476,5 +482,7 @@ test.group('Query client | get tables', (group) => {
         'uuid_users',
       ])
     }
+
+    await connection.disconnect()
   })
 })

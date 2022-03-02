@@ -35,6 +35,7 @@ test.group('Migrate', (group) => {
   })
 
   group.each.teardown(async () => {
+    await db.manager.closeAll()
     await cleanup()
     await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
     await fs.cleanup()
@@ -348,10 +349,10 @@ test.group('Migrate', (group) => {
     await fs.add(
       'database/seeders/user.ts',
       `export default class UserSeeder {
-				public async run () {
-					process.env.EXEC_USER_SEEDER = 'true'
-				}
-			}`
+  			public async run () {
+  				process.env.EXEC_USER_SEEDER = 'true'
+  			}
+  		}`
     )
 
     await fs.add(

@@ -361,6 +361,8 @@ test.group('Model options | Model.findOrFail', (group) => {
 
     const user = await User.findOrFail(1, { profiler })
     assert.deepEqual(user.$options!.profiler, profiler)
+
+    await customDb.manager.closeAll()
   })
 
   test('define custom query client', async ({ assert }) => {

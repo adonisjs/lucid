@@ -43,6 +43,7 @@ test.group('Query client | Views and types', (group) => {
       assert.deepEqual(allViews.sort(), ['users_view', 'follows_view'].sort())
 
       await client.dropAllViews()
+      await connection.disconnect()
     })
 
     test('Drop all views', async ({ assert }) => {
@@ -68,6 +69,8 @@ test.group('Query client | Views and types', (group) => {
 
       allViews = await client.getAllViews(['public'])
       assert.equal(allViews.length, 0)
+
+      await connection.disconnect()
     })
   }
 
@@ -85,6 +88,7 @@ test.group('Query client | Views and types', (group) => {
       assert.equal(types[0], 'user_type')
 
       await client.dropAllTypes()
+      await connection.disconnect()
     })
 
     test('Drop all types', async ({ assert }) => {
@@ -98,6 +102,7 @@ test.group('Query client | Views and types', (group) => {
       const types = await client.getAllTypes()
 
       assert.equal(types.length, 0)
+      await connection.disconnect()
     })
   }
 })

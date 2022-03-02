@@ -25,7 +25,6 @@ configure({
     plugins: [assert(), runFailedTests()],
     reporters: [specReporter()],
     importer: (filePath: string) => import(filePath),
-    forceExit: true,
     teardown: [
       async () => {
         await remove(join(__dirname, 'test-helpers', 'tmp'))

@@ -208,6 +208,8 @@ test.group('ConnectionManager', (group) => {
       report.meta.map(({ connection }) => connection),
       ['primary', 'secondary']
     )
+
+    await manager.closeAll()
   })
 
   test('get health check report when one of the connection is unhealthy', async ({ assert }) => {
@@ -236,5 +238,6 @@ test.group('ConnectionManager', (group) => {
       report.meta.map(({ connection }) => connection),
       ['primary', 'secondary']
     )
+    await manager.closeAll()
   }).timeout(0)
 })
