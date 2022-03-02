@@ -15,6 +15,7 @@ import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { Connection } from '../../src/Connection'
 import { ConnectionManager } from '../../src/Connection/Manager'
 import { fs, getConfig, setup, cleanup, mapToObj, setupApplication } from '../../test-helpers'
+import { join } from 'path'
 
 let app: ApplicationContract
 
@@ -159,7 +160,7 @@ test.group('ConnectionManager', (group) => {
         assert.equal(manager['orphanConnections'].size, 0)
         assert.deepEqual(mapToObj(manager.connections), {
           primary: {
-            config: connection.config,
+            config: connections[1].config,
             name: 'primary',
             state: 'open',
             connection: connections[1],
@@ -212,7 +213,13 @@ test.group('ConnectionManager', (group) => {
       'secondary',
       Object.assign({}, getConfig(), {
         healthCheck: true,
-        connection: { host: 'bad-host' },
+        connection: ['sqlite', 'better_sqlite'].includes(process.env.DB!)
+          ? {
+              filename: join(fs.basePath, 'nested', 'db.sqlite'),
+            }
+          : {
+              host: 'bad-host',
+            },
       })
     )
     manager.add('secondary-copy', Object.assign({}, getConfig(), { healthCheck: false }))

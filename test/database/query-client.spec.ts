@@ -188,7 +188,7 @@ test.group('Query client | dual mode', (group) => {
     const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
 
     const command =
-      process.env.DB === 'sqlite'
+      process.env.DB === 'sqlite' || process.env.DB === 'better_sqlite'
         ? 'DELETE FROM users;'
         : process.env.DB === 'mssql'
         ? 'TRUNCATE table users;'
@@ -339,7 +339,7 @@ test.group('Query client | write mode', (group) => {
     const client = new QueryClient('write', connection, app.container.use('Adonis/Core/Event'))
 
     const command =
-      process.env.DB === 'sqlite'
+      process.env.DB === 'sqlite' || process.env.DB === 'better_sqlite'
         ? 'DELETE FROM users;'
         : process.env.DB === 'mssql'
         ? 'TRUNCATE table users;'
@@ -373,7 +373,7 @@ test.group('Query client | write mode', (group) => {
   })
 })
 
-if (!['sqlite', 'mssql'].includes(process.env.DB as string)) {
+if (!['sqlite', 'mssql', 'better_sqlite'].includes(process.env.DB as string)) {
   test.group('Query client | advisory locks', (group) => {
     group.before(async () => {
       app = await setupApplication()

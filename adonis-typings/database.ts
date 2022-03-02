@@ -47,7 +47,14 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Dialect specific methods
    */
   export interface DialectContract {
-    readonly name: 'mssql' | 'mysql' | 'oracledb' | 'postgres' | 'redshift' | 'sqlite3'
+    readonly name:
+      | 'mssql'
+      | 'mysql'
+      | 'oracledb'
+      | 'postgres'
+      | 'redshift'
+      | 'sqlite3'
+      | 'better-sqlite3'
     readonly version?: string
     readonly supportsAdvisoryLocks: boolean
     readonly dateTimeFormat: string
@@ -355,7 +362,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * free to define them (let us know, in case any options are missing)
    */
   export type SqliteConfig = SharedConfigNode & {
-    client: 'sqlite' | 'sqlite3'
+    client: 'sqlite' | 'sqlite3' | 'better-sqlite3'
     connection: {
       filename: string
       flags?: string[]

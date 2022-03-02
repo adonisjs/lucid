@@ -13,13 +13,15 @@ import { MssqlDialect } from './Mssql'
 import { SqliteDialect } from './Sqlite'
 import { OracleDialect } from './Oracle'
 import { RedshiftDialect } from './Redshift'
+import { BetterSqliteDialect } from './BetterSqlite'
 
 export const dialects = {
-  mssql: MssqlDialect,
-  mysql: MysqlDialect,
-  mysql2: MysqlDialect,
-  oracledb: OracleDialect,
-  postgres: PgDialect,
-  redshift: RedshiftDialect,
-  sqlite3: SqliteDialect,
+  'mssql': MssqlDialect,
+  'mysql': MysqlDialect,
+  'mysql2': MysqlDialect,
+  'oracledb': OracleDialect,
+  'postgres': PgDialect,
+  'redshift': RedshiftDialect,
+  'sqlite3': SqliteDialect,
+  'better-sqlite3': BetterSqliteDialect,
 }

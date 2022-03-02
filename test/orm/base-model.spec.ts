@@ -51,6 +51,7 @@ import {
   FakeAdapter,
   getBaseModel,
   setupApplication,
+  sleep,
 } from '../../test-helpers'
 import { ModelPaginator } from '../../src/Orm/Paginator'
 import { SimplePaginator } from '../../src/Database/Paginator/SimplePaginator'
@@ -5482,9 +5483,11 @@ test.group('Base Model | datetime', (group) => {
     await user.save()
 
     const originalDateTimeString = user.joinedAt.toString()
+
+    await sleep(1000)
     await user.save()
     assert.notEqual(originalDateTimeString, user.joinedAt.toString())
-  }).retry(3)
+  })
 
   test('convert datetime to toISO during serialize', async (assert) => {
     class User extends BaseModel {

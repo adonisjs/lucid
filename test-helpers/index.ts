@@ -47,6 +47,7 @@ import { FactoryModel } from '../src/Factory/FactoryModel'
 import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
 import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
 import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
+import { time } from 'console'
 
 export const fs = new Filesystem(join(__dirname, 'tmp'))
 dotenv.config()
@@ -64,6 +65,21 @@ export function getConfig(): ConnectionConfig {
         },
         useNullAsDefault: true,
         debug: !!process.env.DEBUG,
+      }
+    case 'better_sqlite':
+      return {
+        client: 'better-sqlite3',
+        connection: {
+          filename: join(fs.basePath, 'better-sqlite-db.sqlite'),
+        },
+        useNullAsDefault: true,
+        debug: !!process.env.DEBUG,
+        pool: {
+          afterCreate(connection, done) {
+            connection.unsafeMode(true)
+            done()
+          },
+        },
       }
     case 'mysql':
       return {
@@ -131,7 +147,7 @@ export function getConfig(): ConnectionConfig {
  * Does base setup by creating databases
  */
 export async function setup(destroyDb: boolean = true) {
-  if (process.env.DB === 'sqlite') {
+  if (['sqlite', 'better_sqlite'].includes(process.env.DB!)) {
     await fs.ensureRoot()
   }
 
@@ -647,4 +663,8 @@ export async function setupReplicaDb(connection: Knex, datatoInsert: { username:
 
 export async function cleanupReplicaDb(connection: Knex) {
   await connection.schema.dropTable('replica_users')
+}
+
+export function sleep(timeout: number) {
+  return new Promise((resolve) => setTimeout(resolve, timeout))
 }

@@ -10,6 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import test from 'japa'
+import { randomUUID } from 'crypto'
 import { column } from '../../src/Orm/Decorators'
 import { FactoryManager } from '../../src/Factory/index'
 import { FactoryContext } from '../../src/Factory/FactoryContext'
@@ -952,7 +953,7 @@ test.group('Factory | Factory Builder | createMany', (group) => {
       User,
       () => {
         return {
-          username: `u-${new Date().getTime()}`,
+          username: randomUUID(),
           points: 0,
         }
       },

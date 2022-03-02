@@ -198,7 +198,7 @@ test.group('Health Checks', (group) => {
     await connection.disconnect()
   })
 
-  if (process.env.DB !== 'sqlite') {
+  if (!['sqlite', 'better_sqlite'].includes(process.env.DB!)) {
     test('get healthcheck report for un-healthy connection', async (assert) => {
       const connection = new Connection(
         'primary',
