@@ -39,7 +39,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   export type FileNode<T> = {
     absPath: string
     name: string
-    getSource: () => T
+    getSource: () => T | Promise<T>
   }
 
   /**

@@ -98,4 +98,21 @@ test.group('Database Provider', (group) => {
     assert.property(Repl['customMethods'], 'loadModels')
     assert.property(Repl['customMethods'], 'loadDb')
   })
+
+  test('register test utils', async ({ assert }) => {
+    const app = await setupApplication(
+      {
+        connection: 'sqlite',
+        connections: {
+          sqlite: {
+            healthCheck: true,
+          },
+        },
+      },
+      ['../../providers/DatabaseProvider']
+    )
+
+    const TestUtils = app.container.use('Adonis/Core/TestUtils')
+    assert.properties(TestUtils.db, ['seed', 'migrate'])
+  })
 })

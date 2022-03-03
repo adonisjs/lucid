@@ -197,8 +197,10 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Returns the migration source by ensuring value is a class constructor and
    * has disableTransactions property.
    */
-  private getMigrationSource(migration: FileNode<unknown>): SchemaConstructorContract {
-    const source = migration.getSource()
+  private async getMigrationSource(
+    migration: FileNode<unknown>
+  ): Promise<SchemaConstructorContract> {
+    const source = await migration.getSource()
     if (typeof source === 'function' && 'disableTransactions' in source) {
       return source
     }
@@ -211,7 +213,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * in case of failure
    */
   private async executeMigration(migration: FileNode<unknown>) {
-    const Schema = this.getMigrationSource(migration)
+    const Schema = await this.getMigrationSource(migration)
     const client = await this.getClient(Schema.disableTransactions)
 
     try {

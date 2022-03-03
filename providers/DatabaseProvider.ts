@@ -156,6 +156,19 @@ export default class DatabaseServiceProvider {
   }
 
   /**
+   * Define test utilities for database
+   */
+  private defineTestUtils() {
+    this.app.container.withBindings(
+      ['Adonis/Core/TestUtils', 'Adonis/Lucid/Database'],
+      (testUtils, Db) => {
+        const { defineTestUtils } = require('../src/Bindings/TestUtils')
+        return new defineTestUtils(testUtils, Db, this.app)
+      }
+    )
+  }
+
+  /**
    * Called when registering providers
    */
   public register(): void {
@@ -174,6 +187,7 @@ export default class DatabaseServiceProvider {
     this.registerHealthChecker()
     this.defineValidationRules()
     this.defineReplBindings()
+    this.defineTestUtils()
   }
 
   /**

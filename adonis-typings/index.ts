@@ -19,3 +19,4 @@
 /// <reference path="./validator.ts" />
 /// <reference path="./seeder.ts" />
 /// <reference path="./container.ts" />
+/// <reference path="./test-utils.ts" />

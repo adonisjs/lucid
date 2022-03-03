@@ -30,8 +30,8 @@ export class SeedsRunner {
   /**
    * Returns the seeder source by ensuring value is a class constructor
    */
-  private getSeederSource(file: FileNode<unknown>): SeederConstructorContract {
-    const source = file.getSource()
+  private async getSeederSource(file: FileNode<unknown>): Promise<SeederConstructorContract> {
+    const source = await file.getSource()
     if (typeof source === 'function') {
       return source as SeederConstructorContract
     }
@@ -50,7 +50,7 @@ export class SeedsRunner {
    * Executes the seeder
    */
   public async run(file: FileNode<unknown>): Promise<SeederFileNode> {
-    const Source = this.getSeederSource(file)
+    const Source = await this.getSeederSource(file)
 
     const seeder: SeederFileNode = {
       status: 'pending',
