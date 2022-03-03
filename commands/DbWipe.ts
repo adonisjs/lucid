@@ -1,3 +1,12 @@
+/*
+ * @adonisjs/lucid
+ *
+ * (c) Harminder Virk <virk@adonisjs.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 import { BaseCommand, flags } from '@adonisjs/core/build/standalone'
 
 export default class DbWipe extends BaseCommand {
@@ -14,13 +23,13 @@ export default class DbWipe extends BaseCommand {
   /**
    * Drop all views in database
    */
-  @flags.boolean({ description: 'Also drop all views in database' })
+  @flags.boolean({ description: 'Drop all views' })
   public dropViews: boolean
 
   /**
    * Drop all types in database
    */
-  @flags.boolean({ description: 'Also drop all types in database ( Postgres only )' })
+  @flags.boolean({ description: 'Drop all custom types ( Postgres only )' })
   public dropTypes: boolean
 
   /**
@@ -60,17 +69,31 @@ export default class DbWipe extends BaseCommand {
       return
     }
 
+    /**
+     * Drop views
+     */
     if (this.dropViews) {
-      await db.connection().dropAllViews()
-      this.logger.info('All views dropped successfully')
+      if (connection.dialect.supportsViews) {
+        await connection.dropAllViews()
+        this.logger.success('Dropped views successfully')
+      } else {
+        this.logger.warning(`Dropping views is not supported by "${connection.dialect.name}"`)
+      }
     }
 
-    await db.connection().dropAllTables()
-    this.logger.info('All tables have been dropped successfully')
+    /**
+     * Drop all tables
+     */
+    await connection.dropAllTables()
+    this.logger.success('Dropped tables successfully')
 
     if (this.dropTypes) {
-      await db.connection().dropAllTypes()
-      this.logger.info('All types dropped successfully')
+      if (connection.dialect.supportsTypes) {
+        await connection.dropAllTypes()
+        this.logger.success('Dropped custom types successfully')
+      } else {
+        this.logger.warning(`Dropping types is not supported by "${connection.dialect.name}"`)
+      }
     }
   }
 

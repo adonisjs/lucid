@@ -1,8 +1,18 @@
+/*
+ * @adonisjs/lucid
+ *
+ * (c) Harminder Virk <virk@adonisjs.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 import { flags } from '@adonisjs/core/build/standalone'
+
+import Run from './Run'
+import Reset from './Reset'
 import DbSeed from '../DbSeed'
 import MigrationsBase from './Base'
-import Reset from './Reset'
-import Run from './Run'
 
 /**
  * This command reset the database by rolling back to batch 0 and then
@@ -33,7 +43,7 @@ export default class Refresh extends MigrationsBase {
   /**
    * Run seeders
    */
-  @flags.boolean({ description: 'Indicates if the seed task should run.' })
+  @flags.boolean({ description: 'Run seeders' })
   public seed: boolean
 
   /**

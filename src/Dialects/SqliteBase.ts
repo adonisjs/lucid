@@ -14,6 +14,8 @@ import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database
 export abstract class BaseSqliteDialect implements DialectContract {
   public abstract readonly name: 'sqlite3' | 'better-sqlite3'
   public readonly supportsAdvisoryLocks = false
+  public readonly supportsViews = true
+  public readonly supportsTypes = false
 
   /**
    * Reference to the database version. Knex.js fetches the version after

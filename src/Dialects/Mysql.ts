@@ -15,6 +15,8 @@ import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database
 export class MysqlDialect implements DialectContract {
   public readonly name = 'mysql'
   public readonly supportsAdvisoryLocks = true
+  public readonly supportsViews = true
+  public readonly supportsTypes = false
 
   /**
    * Reference to the database version. Knex.js fetches the version after

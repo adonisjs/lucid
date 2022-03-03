@@ -11,8 +11,8 @@ import prettyHrTime from 'pretty-hrtime'
 import { BaseCommand } from '@adonisjs/core/build/standalone'
 import { MigratedFileNode, MigratorContract } from '@ioc:Adonis/Lucid/Migrator'
 
-import { prettyPrint } from '../../src/Helpers/prettyPrint'
 import { getDDLMethod } from '../../src/utils'
+import { prettyPrint } from '../../src/Helpers/prettyPrint'
 
 /**
  * Base class to execute migrations and print logs

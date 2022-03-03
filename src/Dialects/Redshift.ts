@@ -14,6 +14,8 @@ import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database
 export class RedshiftDialect implements DialectContract {
   public readonly name = 'redshift'
   public readonly supportsAdvisoryLocks = false
+  public readonly supportsViews = true
+  public readonly supportsTypes = true
 
   /**
    * Reference to the database version. Knex.js fetches the version after

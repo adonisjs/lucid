@@ -56,17 +56,21 @@ declare module '@ioc:Adonis/Lucid/Database' {
       | 'better-sqlite3'
     readonly version?: string
     readonly supportsAdvisoryLocks: boolean
+    readonly supportsViews: boolean
+    readonly supportsTypes: boolean
     readonly dateTimeFormat: string
 
     getAllTables(schemas?: string[]): Promise<string[]>
-    getAllViews(schemas?: string[]): Promise<string[]>
-    getAllTypes(schemas?: string[]): Promise<string[]>
-
     dropAllTables(schemas?: string[]): Promise<void>
+
+    getAllViews(schemas?: string[]): Promise<string[]>
     dropAllViews(schemas?: string[]): Promise<void>
+
+    getAllTypes(schemas?: string[]): Promise<string[]>
     dropAllTypes(schemas?: string[]): Promise<void>
 
     truncate(table: string, cascade?: boolean): Promise<void>
+
     getAdvisoryLock(key: string | number, timeout?: number): Promise<boolean>
     releaseAdvisoryLock(key: string | number): Promise<boolean>
   }
