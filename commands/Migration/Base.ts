@@ -137,6 +137,13 @@ export default abstract class MigrationsBase extends BaseCommand {
       this.logger.logUpdatePersist()
     })
 
+    /**
+     * Migration completed
+     */
+    migrator.on('upgrade:version', ({ from, to }) => {
+      this.logger.info(`Upgrading migrations version from "${from}" to "${to}"`)
+    })
+
     migrator.on('start', () => (start = process.hrtime()))
     migrator.on('end', () => (duration = process.hrtime(start)))
 
