@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import type { BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
@@ -32,20 +32,20 @@ let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
 
 test.group('Model | BelongsTo | Options', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('raise error when localKey is missing', (assert) => {
+  test('raise error when localKey is missing', ({ assert }) => {
     assert.plan(1)
 
     try {
@@ -67,7 +67,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     }
   })
 
-  test('raise error when foreignKey is missing', (assert) => {
+  test('raise error when foreignKey is missing', ({ assert }) => {
     assert.plan(1)
 
     try {
@@ -93,7 +93,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     }
   })
 
-  test('use primary key is as the local key', (assert) => {
+  test('use primary key is as the local key', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -112,7 +112,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     assert.equal(Profile.$getRelation('user')!['localKey'], 'id')
   })
 
-  test('use custom defined local key', (assert) => {
+  test('use custom defined local key', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -134,7 +134,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     assert.equal(Profile.$getRelation('user')!['localKey'], 'uid')
   })
 
-  test('compute foreign key from model name and primary key', (assert) => {
+  test('compute foreign key from model name and primary key', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -153,7 +153,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userId')
   })
 
-  test('use pre defined foreign key', (assert) => {
+  test('use pre defined foreign key', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -172,7 +172,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userUid')
   })
 
-  test('clone relationship instance with options', (assert) => {
+  test('clone relationship instance with options', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -198,20 +198,20 @@ test.group('Model | BelongsTo | Options', (group) => {
 })
 
 test.group('Model | BelongsTo | Set Relations', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('set related model instance', (assert) => {
+  test('set related model instance', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -237,7 +237,7 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
     assert.deepEqual(profile.user, user)
   })
 
-  test('push related model instance', (assert) => {
+  test('push related model instance', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -270,7 +270,7 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
     assert.deepEqual(profile.user, user1)
   })
 
-  test('set many of related instances', (assert) => {
+  test('set many of related instances', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -309,24 +309,24 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
 })
 
 test.group('Model | BelongsTo | bulk operations', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sql for selecting related rows', async (assert) => {
+  test('generate correct sql for selecting related rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -357,7 +357,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for selecting many related rows', async (assert) => {
+  test('generate correct sql for selecting many related rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -393,7 +393,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for updating related row', async (assert) => {
+  test('generate correct sql for updating related row', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -430,7 +430,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for deleting related row', async (assert) => {
+  test('generate correct sql for deleting related row', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -463,24 +463,24 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
 })
 
 test.group('Model | BelongsTo | sub queries', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sub query for selecting rows', async (assert) => {
+  test('generate correct sub query for selecting rows', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -518,7 +518,7 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('create aggregate query', async (assert) => {
+  test('create aggregate query', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -561,7 +561,7 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('allow selecting custom columns', async (assert) => {
+  test('allow selecting custom columns', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -604,7 +604,7 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct self relationship subquery', async (assert) => {
+  test('generate correct self relationship subquery', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -639,7 +639,7 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('raise exception when trying to execute the query', async (assert) => {
+  test('raise exception when trying to execute the query', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -673,15 +673,15 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     const firstOrFail = () =>
       Profile.$getRelation('user')!.subQuery(db.connection())['firstOrFail']()
 
-    assert.throw(exec, 'Cannot execute relationship subqueries')
-    assert.throw(paginate, 'Cannot execute relationship subqueries')
-    assert.throw(update, 'Cannot execute relationship subqueries')
-    assert.throw(del, 'Cannot execute relationship subqueries')
-    assert.throw(first, 'Cannot execute relationship subqueries')
-    assert.throw(firstOrFail, 'Cannot execute relationship subqueries')
+    assert.throws(exec, 'Cannot execute relationship subqueries')
+    assert.throws(paginate, 'Cannot execute relationship subqueries')
+    assert.throws(update, 'Cannot execute relationship subqueries')
+    assert.throws(del, 'Cannot execute relationship subqueries')
+    assert.throws(first, 'Cannot execute relationship subqueries')
+    assert.throws(firstOrFail, 'Cannot execute relationship subqueries')
   })
 
-  test('run onQuery method when defined', async (assert) => {
+  test('run onQuery method when defined', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -729,24 +729,24 @@ test.group('Model | BelongsTo | sub queries', (group) => {
 })
 
 test.group('Model | BelongsTo | preload', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('preload relationship', async (assert) => {
+  test('preload relationship', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -771,7 +771,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.equal(profiles[0].user.id, profiles[0].userId)
   })
 
-  test('set property value to null when no preload rows were found', async (assert) => {
+  test('set property value to null when no preload rows were found', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -795,7 +795,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.isNull(profiles[0].user)
   })
 
-  test('set value to null when serializing', async (assert) => {
+  test('set value to null when serializing', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -819,7 +819,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.isNull(profiles[0].toJSON().user)
   })
 
-  test('preload relationship for many rows', async (assert) => {
+  test('preload relationship for many rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -856,7 +856,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.equal(profiles[1].user.id, profiles[1].userId)
   })
 
-  test('add runtime constraints to related query', async (assert) => {
+  test('add runtime constraints to related query', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -895,7 +895,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.isNull(profiles[1].user)
   })
 
-  test('cherry pick columns during preload', async (assert) => {
+  test('cherry pick columns during preload', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -938,7 +938,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.deepEqual(profiles[1].user.$extras, {})
   })
 
-  test('do not repeat fk when already defined', async (assert) => {
+  test('do not repeat fk when already defined', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -981,7 +981,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.deepEqual(profiles[1].user.$extras, {})
   })
 
-  test('raise exception when local key is not selected', async (assert) => {
+  test('raise exception when local key is not selected', async ({ assert }) => {
     assert.plan(1)
 
     class User extends BaseModel {
@@ -1030,7 +1030,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     }
   })
 
-  test('preload using model instance', async (assert) => {
+  test('preload using model instance', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1077,7 +1077,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.equal(profile.user.id, profile.userId)
   })
 
-  test('preload nested relations', async (assert) => {
+  test('preload nested relations', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1152,7 +1152,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.instanceOf(identity!.profile!.user, User)
   })
 
-  test('preload nested relations using model instance', async (assert) => {
+  test('preload nested relations using model instance', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1227,7 +1227,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.instanceOf(identity!.profile!.user, User)
   })
 
-  test('pass main query options down the chain', async (assert) => {
+  test('pass main query options down the chain', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1306,7 +1306,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.equal(identity!.profile.user.$options!.connection, 'secondary')
   })
 
-  test('pass relationship metadata to the profiler', async (assert) => {
+  test('pass relationship metadata to the profiler', async ({ assert }) => {
     assert.plan(1)
 
     class User extends BaseModel {
@@ -1342,7 +1342,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await Profile.query({ profiler }).preload('user')
   })
 
-  test('work fine when foreign key is null', async (assert) => {
+  test('work fine when foreign key is null', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1366,7 +1366,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.isNull(profiles[0].user)
   })
 
-  test('work fine during lazy load when foreign key is null', async (assert) => {
+  test('work fine during lazy load when foreign key is null', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1391,7 +1391,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.isNull(profiles[0].user)
   })
 
-  test('do not run preload query when parent rows are empty', async (assert) => {
+  test('do not run preload query when parent rows are empty', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1415,24 +1415,24 @@ test.group('Model | BelongsTo | preload', (group) => {
 })
 
 test.group('Model | BelongsTo | withCount', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get count of a relationship rows', async (assert) => {
+  test('get count of a relationship rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1457,7 +1457,7 @@ test.group('Model | BelongsTo | withCount', (group) => {
     assert.equal(profiles[0].$extras.user_count, 1)
   })
 
-  test('allow cherry picking columns', async (assert) => {
+  test('allow cherry picking columns', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1485,7 +1485,7 @@ test.group('Model | BelongsTo | withCount', (group) => {
     assert.deepEqual(profiles[0].$attributes, { displayName: 'Hvirk' })
   })
 
-  test('lazy load relationship row', async (assert) => {
+  test('lazy load relationship row', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1515,24 +1515,24 @@ test.group('Model | BelongsTo | withCount', (group) => {
 })
 
 test.group('Model | BelongsTo | has', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async (assert) => {
+  test('limit rows to the existance of relationship', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1564,24 +1564,24 @@ test.group('Model | BelongsTo | has', (group) => {
 })
 
 test.group('Model | BelongsTo | whereHas', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async (assert) => {
+  test('limit rows to the existance of relationship', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1631,24 +1631,24 @@ test.group('Model | BelongsTo | whereHas', (group) => {
 })
 
 test.group('Model | BelongsTo | associate', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('associate related instance', async (assert) => {
+  test('associate related instance', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1684,7 +1684,7 @@ test.group('Model | BelongsTo | associate', (group) => {
     assert.equal(profiles[0].user_id, user.id)
   })
 
-  test('wrap associate call inside transaction', async (assert) => {
+  test('wrap associate call inside transaction', async ({ assert }) => {
     assert.plan(3)
 
     class User extends BaseModel {
@@ -1725,24 +1725,24 @@ test.group('Model | BelongsTo | associate', (group) => {
 })
 
 test.group('Model | BelongsTo | dissociate', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('dissociate relation', async (assert) => {
+  test('dissociate relation', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1786,24 +1786,24 @@ test.group('Model | BelongsTo | dissociate', (group) => {
 })
 
 test.group('Model | BelongsTo | bulk operations', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('disallow pagination', async (assert) => {
+  test('disallow pagination', async ({ assert }) => {
     assert.plan(1)
 
     class User extends BaseModel {
@@ -1831,24 +1831,24 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
 })
 
 test.group('Model | BelongsTo | clone', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('clone related query builder', async (assert) => {
+  test('clone related query builder', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1881,24 +1881,24 @@ test.group('Model | BelongsTo | clone', (group) => {
 })
 
 test.group('Model | BelongsTo | scopes', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply scopes during eagerload', async (assert) => {
+  test('apply scopes during eagerload', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1938,7 +1938,7 @@ test.group('Model | BelongsTo | scopes', (group) => {
     assert.instanceOf(profileWithoutScope?.user, User)
   })
 
-  test('apply scopes on related query', async (assert) => {
+  test('apply scopes on related query', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1983,24 +1983,24 @@ test.group('Model | BelongsTo | scopes', (group) => {
 })
 
 test.group('Model | BelongsTo | onQuery', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('invoke onQuery method when preloading relationship', async (assert) => {
+  test('invoke onQuery method when preloading relationship', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2033,7 +2033,7 @@ test.group('Model | BelongsTo | onQuery', (group) => {
     assert.isNull(profile?.user)
   })
 
-  test('do not run onQuery hook on subqueries', async (assert) => {
+  test('do not run onQuery hook on subqueries', async ({ assert }) => {
     assert.plan(2)
 
     class User extends BaseModel {
@@ -2074,7 +2074,7 @@ test.group('Model | BelongsTo | onQuery', (group) => {
     assert.isNull(profile?.user)
   })
 
-  test('invoke onQuery method on related query builder', async (assert) => {
+  test('invoke onQuery method on related query builder', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2107,7 +2107,7 @@ test.group('Model | BelongsTo | onQuery', (group) => {
     assert.isNull(user)
   })
 
-  test('do not run onQuery hook on related query builder subqueries', async (assert) => {
+  test('do not run onQuery hook on related query builder subqueries', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number

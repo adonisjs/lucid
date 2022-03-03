@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 
 import type { HasOne } from '@ioc:Adonis/Lucid/Orm'
 import { column, hasOne } from '../../src/Orm/Decorators'
@@ -35,24 +35,24 @@ let BaseModel: ReturnType<typeof getBaseModel>
 const factoryManager = new FactoryManager()
 
 test.group('Factory | Factory Model', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('define model factory', async (assert) => {
+  test('define model factory', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -65,7 +65,7 @@ test.group('Factory | Factory Model', (group) => {
     assert.instanceOf(factory, FactoryModel)
   })
 
-  test('define factory state', async (assert) => {
+  test('define factory state', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -82,7 +82,7 @@ test.group('Factory | Factory Model', (group) => {
     assert.deepEqual(factory.states, { active: stateFn })
   })
 
-  test('define factory relation', async (assert) => {
+  test('define factory relation', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -110,7 +110,7 @@ test.group('Factory | Factory Model', (group) => {
     assert.instanceOf(factory.relations.profile, FactoryHasOne)
   })
 
-  test('get pre-registered state', async (assert) => {
+  test('get pre-registered state', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -127,7 +127,7 @@ test.group('Factory | Factory Model', (group) => {
     assert.deepEqual(factory.getState('active'), stateFn)
   })
 
-  test('raise exception when state is not registered', async (assert) => {
+  test('raise exception when state is not registered', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -137,13 +137,13 @@ test.group('Factory | Factory Model', (group) => {
     }
 
     const factory = new FactoryModel(User, () => new User(), factoryManager)
-    assert.throw(
+    assert.throws(
       () => factory.getState('active'),
       'Cannot apply undefined state "active". Double check the model factory'
     )
   })
 
-  test('get pre-registered relationship', async (assert) => {
+  test('get pre-registered relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -175,7 +175,7 @@ test.group('Factory | Factory Model', (group) => {
     assert.deepEqual(factory.getRelation('profile').relation, User.$getRelation('profile')!)
   })
 
-  test('raise exception when relation is not defined', async (assert) => {
+  test('raise exception when relation is not defined', async ({ assert }) => {
     class Profile extends BaseModel {}
     Profile.boot()
 
@@ -191,13 +191,13 @@ test.group('Factory | Factory Model', (group) => {
     }
 
     const factory = new FactoryModel(User, () => new User(), factoryManager)
-    assert.throw(
+    assert.throws(
       () => factory.getRelation('profile'),
       'Cannot setup undefined relationship "profile". Double check the model factory'
     )
   })
 
-  test('do not allow registering relationships not defined on the model', async (assert) => {
+  test('do not allow registering relationships not defined on the model', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -208,13 +208,13 @@ test.group('Factory | Factory Model', (group) => {
 
     const factory = () =>
       new FactoryModel(User, () => new User(), factoryManager).relation('profile' as any, () => {})
-    assert.throw(
+    assert.throws(
       factory,
       'Cannot define "profile" relationship. The relationship must exist on the "User" model first'
     )
   })
 
-  test('build factory', async (assert) => {
+  test('build factory', async ({ assert }) => {
     class Profile extends BaseModel {}
     Profile.boot()
 
@@ -241,7 +241,7 @@ test.group('Factory | Factory Model', (group) => {
     assert.instanceOf(user, User)
   })
 
-  test('return model instance from the factory callback', async (assert) => {
+  test('return model instance from the factory callback', async ({ assert }) => {
     class Profile extends BaseModel {}
     Profile.boot()
 

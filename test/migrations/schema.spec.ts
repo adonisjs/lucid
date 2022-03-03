@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import { setup, cleanup, getDb, getBaseSchema, setupApplication, fs } from '../../test-helpers'
 
@@ -15,19 +15,19 @@ let db: ReturnType<typeof getDb>
 let app: ApplicationContract
 
 test.group('Schema', (group) => {
-  group.beforeEach(async () => {
+  group.each.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     await setup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('get schema queries defined inside the up method in dry run', async (assert) => {
+  test('get schema queries defined inside the up method in dry run', async ({ assert }) => {
     class UsersSchema extends getBaseSchema() {
       public up() {
         this.schema.createTable('users', (table) => {
@@ -51,7 +51,7 @@ test.group('Schema', (group) => {
     assert.deepEqual(queries, [knexSchema])
   })
 
-  test('get schema queries defined inside the down method in dry run', async (assert) => {
+  test('get schema queries defined inside the down method in dry run', async ({ assert }) => {
     class UsersSchema extends getBaseSchema() {
       public down() {
         this.schema.dropTable('users')
@@ -65,7 +65,7 @@ test.group('Schema', (group) => {
     assert.deepEqual(queries, [knexSchema])
   })
 
-  test('get knex raw query builder using now method', async (assert) => {
+  test('get knex raw query builder using now method', async ({ assert }) => {
     class UsersSchema extends getBaseSchema() {
       public up() {
         this.schema.createTable('users', (table) => {
@@ -79,7 +79,7 @@ test.group('Schema', (group) => {
     assert.equal(schema.now().toQuery(), 'CURRENT_TIMESTAMP')
   })
 
-  test('do not execute defer calls in dry run', async (assert) => {
+  test('do not execute defer calls in dry run', async ({ assert }) => {
     assert.plan(1)
 
     class UsersSchema extends getBaseSchema() {
@@ -95,7 +95,7 @@ test.group('Schema', (group) => {
     await schema.execUp()
   })
 
-  test('execute up method queries on a given connection', async (assert) => {
+  test('execute up method queries on a given connection', async ({ assert }) => {
     class UsersSchema extends getBaseSchema() {
       public up() {
         this.schema.createTable('schema_users', (table) => {
@@ -130,7 +130,7 @@ test.group('Schema', (group) => {
     assert.isTrue(hasAccounts)
   })
 
-  test('execute up method deferred actions in correct sequence', async (assert) => {
+  test('execute up method deferred actions in correct sequence', async ({ assert }) => {
     class UsersSchema extends getBaseSchema() {
       public up() {
         this.schema.createTable('schema_users', (table) => {
@@ -166,7 +166,7 @@ test.group('Schema', (group) => {
     await db.connection().schema.dropTable('schema_users')
   })
 
-  test('execute down method queries on a given connection', async (assert) => {
+  test('execute down method queries on a given connection', async ({ assert }) => {
     class UsersSchema extends getBaseSchema() {
       public up() {
         this.schema.createTable('schema_users', (table) => {
@@ -212,7 +212,7 @@ test.group('Schema', (group) => {
     assert.isFalse(hasAccounts)
   })
 
-  test('use now helper to define default timestamp', async (assert) => {
+  test('use now helper to define default timestamp', async ({ assert }) => {
     class UsersSchema extends getBaseSchema() {
       public up() {
         this.schema.createTable('users', (table) => {
@@ -236,7 +236,7 @@ test.group('Schema', (group) => {
     assert.deepEqual(queries, [knexSchema])
   })
 
-  test('emit db:query event when schema instructions are executed', async (assert) => {
+  test('emit db:query event when schema instructions are executed', async ({ assert }) => {
     assert.plan(10)
 
     class UsersSchema extends getBaseSchema() {
@@ -310,7 +310,7 @@ test.group('Schema', (group) => {
     await db.connection().schema.dropTable('schema_users')
   })
 
-  test('emit db:query when enabled on the schema', async (assert) => {
+  test('emit db:query when enabled on the schema', async ({ assert }) => {
     assert.plan(10)
 
     class UsersSchema extends getBaseSchema() {

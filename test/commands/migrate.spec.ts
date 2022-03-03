@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import 'reflect-metadata'
 import { join } from 'path'
 import { Kernel } from '@adonisjs/core/build/standalone'
@@ -26,7 +26,7 @@ let db: ReturnType<typeof getDb>
 let app: ApplicationContract
 
 test.group('Migrate', (group) => {
-  group.beforeEach(async () => {
+  group.each.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     app.container.bind('Adonis/Lucid/Database', () => db)
@@ -34,13 +34,14 @@ test.group('Migrate', (group) => {
     await setup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
+    await db.manager.closeAll()
     await cleanup()
     await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
     await fs.cleanup()
   })
 
-  test('run migrations from default directory', async (assert) => {
+  test('run migrations from default directory', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -73,7 +74,7 @@ test.group('Migrate', (group) => {
     assert.equal(migrated[0].batch, 1)
   })
 
-  test('skip migrations when already up to date', async (assert) => {
+  test('skip migrations when already up to date', async ({ assert }) => {
     await fs.fsExtra.ensureDir(join(fs.basePath, 'database/migrations'))
 
     const migrate = new Migrate(app, new Kernel(app))
@@ -88,7 +89,7 @@ test.group('Migrate', (group) => {
     assert.lengthOf(migrated, 0)
   })
 
-  test('print sql queries in dryRun', async (assert) => {
+  test('print sql queries in dryRun', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -117,7 +118,7 @@ test.group('Migrate', (group) => {
     assert.lengthOf(migrated, 0)
   })
 
-  test('prompt during migrations in production without force flag', async (assert) => {
+  test('prompt during migrations in production without force flag', async ({ assert }) => {
     assert.plan(1)
     app.nodeEnvironment = 'production'
 
@@ -176,7 +177,7 @@ test.group('Migrate', (group) => {
     delete process.env.NODE_ENV
   })
 
-  test('prompt during rollback in production without force flag', async (assert) => {
+  test('prompt during rollback in production without force flag', async ({ assert }) => {
     assert.plan(1)
     app.nodeEnvironment = 'production'
 
@@ -228,7 +229,7 @@ test.group('Migrate', (group) => {
     delete process.env.NODE_ENV
   })
 
-  test('migration:reset should rollback to batch 0', async (assert) => {
+  test('migration:reset should rollback to batch 0', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -284,7 +285,9 @@ test.group('Migrate', (group) => {
     assert.isFalse(hasAccountsTable)
   })
 
-  test('migration:refresh should rollback to batch 0 then run all migrations', async (assert) => {
+  test('migration:refresh should rollback to batch 0 then run all migrations', async ({
+    assert,
+  }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -340,14 +343,16 @@ test.group('Migrate', (group) => {
     assert.isTrue(hasAccountsTable)
   })
 
-  test('migration:refresh --seed should rollback to batch 0, run all migrations then run seeders', async (assert) => {
+  test('migration:refresh --seed should rollback to batch 0, run all migrations then run seeders', async ({
+    assert,
+  }) => {
     await fs.add(
       'database/seeders/user.ts',
       `export default class UserSeeder {
-				public async run () {
-					process.env.EXEC_USER_SEEDER = 'true'
-				}
-			}`
+  			public async run () {
+  				process.env.EXEC_USER_SEEDER = 'true'
+  			}
+  		}`
     )
 
     await fs.add(

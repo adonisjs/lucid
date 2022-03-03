@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import test from 'japa'
+import { test } from '@japa/runner'
 
 import { Connection } from '../../src/Connection'
 import {
@@ -27,17 +27,17 @@ import {
 let app: ApplicationContract
 
 test.group('Query Builder | insert', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  test('perform insert', async (assert) => {
+  test('perform insert', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -55,7 +55,7 @@ test.group('Query Builder | insert', (group) => {
     await connection.disconnect()
   })
 
-  test('perform multi insert', async (assert) => {
+  test('perform multi insert', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -76,7 +76,7 @@ test.group('Query Builder | insert', (group) => {
     await connection.disconnect()
   })
 
-  test('define returning columns', async (assert) => {
+  test('define returning columns', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -98,7 +98,7 @@ test.group('Query Builder | insert', (group) => {
     await connection.disconnect()
   })
 
-  test('derive key value from raw query', async (assert) => {
+  test('derive key value from raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 

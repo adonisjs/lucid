@@ -1,6 +1,6 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import 'reflect-metadata'
 import { Kernel } from '@adonisjs/core/build/standalone'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
@@ -14,7 +14,7 @@ let app: ApplicationContract
 let db: ReturnType<typeof getDb>
 
 test.group('db:wipe and migrate:fresh', (group) => {
-  group.beforeEach(async () => {
+  group.each.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     app.container.bind('Adonis/Lucid/Database', () => db)
@@ -22,13 +22,14 @@ test.group('db:wipe and migrate:fresh', (group) => {
     await setup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
+    await db.manager.closeAll()
     await cleanup()
     await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users'])
     await fs.cleanup()
   })
 
-  test('db:wipe should drop all tables', async (assert) => {
+  test('db:wipe should drop all tables', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -46,18 +47,20 @@ test.group('db:wipe and migrate:fresh', (group) => {
     const kernel = new Kernel(app)
     const migrate = new Migrate(app, kernel)
     await migrate.run()
+    await db.manager.closeAll()
 
     db = getDb(app)
 
     const wipe = new DbWipe(app, kernel)
     await wipe.run()
+    await db.manager.closeAll()
 
     db = getDb(app)
     const tables = await db.connection().getAllTables(['public'])
     assert.lengthOf(tables, 0)
   })
 
-  test('migration:fresh should drop all tables and run migrations', async (assert) => {
+  test('migration:fresh should drop all tables and run migrations', async ({ assert }) => {
     await fs.add(
       'database/migrations/users.ts',
       `
@@ -92,14 +95,14 @@ test.group('db:wipe and migrate:fresh', (group) => {
     assert.equal(migrated[0].batch, 1)
   })
 
-  test('migration:fresh --seed should run seeders', async (assert) => {
+  test('migration:fresh --seed should run seeders', async ({ assert }) => {
     await fs.add(
       'database/seeders/user.ts',
       `export default class UserSeeder {
-				public async run () {
-					process.env.EXEC_USER_SEEDER = 'true'
-				}
-			}`
+  			public async run () {
+  				process.env.EXEC_USER_SEEDER = 'true'
+  			}
+  		}`
     )
 
     await fs.add(

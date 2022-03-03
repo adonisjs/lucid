@@ -7,22 +7,22 @@
  * file that was distributed with this source code.
  */
 
-import test from 'japa'
+import { test } from '@japa/runner'
 
 import { SeedsRunner } from '../../src/SeedsRunner'
 import { getDb, setup, cleanup, setupApplication, fs } from '../../test-helpers'
 
 test.group('Seeds Runner', (group) => {
-  group.beforeEach(async () => {
+  group.each.setup(async () => {
     await setup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  test('run a seeder file', async (assert) => {
+  test('run a seeder file', async ({ assert }) => {
     const app = await setupApplication()
     const db = getDb(app)
     const runner = new SeedsRunner(db, app)
@@ -46,7 +46,7 @@ test.group('Seeds Runner', (group) => {
     await db.manager.closeAll()
   })
 
-  test('catch and return seeder errors', async (assert) => {
+  test('catch and return seeder errors', async ({ assert }) => {
     const app = await setupApplication()
     const db = getDb(app)
     const runner = new SeedsRunner(db, app)
@@ -68,7 +68,9 @@ test.group('Seeds Runner', (group) => {
     await db.manager.closeAll()
   })
 
-  test('mark file as ignored when "developmentOnly = true" and not running in development mode', async (assert) => {
+  test('mark file as ignored when "developmentOnly = true" and not running in development mode', async ({
+    assert,
+  }) => {
     process.env.NODE_ENV = 'production'
 
     const app = await setupApplication()

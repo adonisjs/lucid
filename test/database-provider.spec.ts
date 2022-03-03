@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import test from 'japa'
+import { test } from '@japa/runner'
 
 import { Database } from '../src/Database'
 import { scope } from '../src/Helpers/scope'
@@ -21,11 +21,11 @@ import { SnakeCaseNamingStrategy } from '../src/Orm/NamingStrategies/SnakeCase'
 import { setupApplication, fs } from '../test-helpers'
 
 test.group('Database Provider', (group) => {
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await fs.cleanup()
   })
 
-  test('register database provider', async (assert) => {
+  test('register database provider', async ({ assert }) => {
     const app = await setupApplication(
       {
         connection: 'sqlite',
@@ -49,7 +49,7 @@ test.group('Database Provider', (group) => {
     assert.deepEqual(app.container.use('Adonis/Lucid/Seeder'), BaseSeeder)
   })
 
-  test('register health checker', async (assert) => {
+  test('register health checker', async ({ assert }) => {
     const app = await setupApplication(
       {
         connection: 'sqlite',
@@ -66,7 +66,7 @@ test.group('Database Provider', (group) => {
     assert.equal(HealthCheck['healthCheckers']['lucid'], 'Adonis/Lucid/Database')
   })
 
-  test('register validator rules', async (assert) => {
+  test('register validator rules', async ({ assert }) => {
     const app = await setupApplication(
       {
         connection: 'sqlite',
@@ -82,7 +82,7 @@ test.group('Database Provider', (group) => {
     assert.property(Validator['rules'], 'exists')
   })
 
-  test('register repl bindings in repl environment', async (assert) => {
+  test('register repl bindings in repl environment', async ({ assert }) => {
     const app = await setupApplication(
       {
         connection: 'sqlite',

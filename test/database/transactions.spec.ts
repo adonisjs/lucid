@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { Connection } from '../../src/Connection'
@@ -20,21 +20,21 @@ import { fs, setup, cleanup, getConfig, resetTables, setupApplication } from '..
 let app: ApplicationContract
 
 test.group('Transaction | query', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('perform select query under a transaction', async (assert) => {
+  test('perform select query under a transaction', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -52,7 +52,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('commit insert', async (assert) => {
+  test('commit insert', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -78,7 +78,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('rollback insert', async (assert) => {
+  test('rollback insert', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -103,7 +103,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('perform nested transactions with save points', async (assert) => {
+  test('perform nested transactions with save points', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -147,7 +147,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('emit after commit event', async (assert) => {
+  test('emit after commit event', async ({ assert }) => {
     const stack: string[] = []
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
@@ -173,7 +173,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('emit after rollback event', async (assert) => {
+  test('emit after rollback event', async ({ assert }) => {
     const stack: string[] = []
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
@@ -198,7 +198,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('commit insert inside a self managed transaction', async (assert) => {
+  test('commit insert inside a self managed transaction', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -222,7 +222,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('rollback insert inside a self managed transaction', async (assert) => {
+  test('rollback insert inside a self managed transaction', async ({ assert }) => {
     assert.plan(3)
 
     const connection = new Connection('primary', getConfig(), app.logger)
@@ -252,7 +252,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('perform nested managed transactions', async (assert) => {
+  test('perform nested managed transactions', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -291,7 +291,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('nest transaction queries inside profiler row', async (assert) => {
+  test('nest transaction queries inside profiler row', async ({ assert }) => {
     const stack: { id: string; parentId: string | undefined; label: string; data: any }[] = []
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
@@ -317,7 +317,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('nest save points queries inside profiler row', async (assert) => {
+  test('nest save points queries inside profiler row', async ({ assert }) => {
     const stack: { id: string; parentId: string | undefined; label: string; data: any }[] = []
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
@@ -348,7 +348,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('nest transaction queries inside managed transaction', async (assert) => {
+  test('nest transaction queries inside managed transaction', async ({ assert }) => {
     const stack: { id: string; parentId: string | undefined; label: string; data: any }[] = []
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
@@ -374,7 +374,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('execute after commit hook', async (assert) => {
+  test('execute after commit hook', async ({ assert }) => {
     const stack: string[] = []
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
@@ -396,7 +396,7 @@ test.group('Transaction | query', (group) => {
     await connection.disconnect()
   })
 
-  test('execute after rollback hook', async (assert) => {
+  test('execute after rollback hook', async ({ assert }) => {
     const stack: string[] = []
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()

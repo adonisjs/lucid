@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { column } from '../../src/Orm/Decorators'
@@ -29,20 +29,20 @@ let BaseModel: ReturnType<typeof getBaseModel>
 let app: ApplicationContract
 
 test.group('Adapter', (group) => {
-  group.beforeEach(async () => {
+  group.each.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('make insert call using a model', async (assert) => {
+  test('make insert call using a model', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -65,7 +65,7 @@ test.group('Adapter', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('make update call using a model', async (assert) => {
+  test('make update call using a model', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -93,7 +93,7 @@ test.group('Adapter', (group) => {
     await user.save()
   })
 
-  test('make delete call using a model', async (assert) => {
+  test('make delete call using a model', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -121,7 +121,7 @@ test.group('Adapter', (group) => {
     assert.lengthOf(users, 0)
   })
 
-  test('get array of model instances using the all call', async (assert) => {
+  test('get array of model instances using the all call', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -151,7 +151,7 @@ test.group('Adapter', (group) => {
     assert.deepEqual(users[1].$attributes, { id: 1, username: 'virk' })
   })
 
-  test('use transaction client set on the model for the insert', async (assert) => {
+  test('use transaction client set on the model for the insert', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -181,7 +181,7 @@ test.group('Adapter', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('do not insert when transaction rollbacks', async (assert) => {
+  test('do not insert when transaction rollbacks', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -211,7 +211,7 @@ test.group('Adapter', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('cleanup old trx event listeners when transaction is updated', async (assert) => {
+  test('cleanup old trx event listeners when transaction is updated', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -236,7 +236,7 @@ test.group('Adapter', (group) => {
     await trx.rollback()
   })
 
-  test('use transaction client set on the model for the update', async (assert) => {
+  test('use transaction client set on the model for the update', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -268,7 +268,7 @@ test.group('Adapter', (group) => {
     assert.equal(users[0].username, 'virk')
   })
 
-  test('use transaction client set on the model for the delete', async (assert) => {
+  test('use transaction client set on the model for the delete', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -299,7 +299,9 @@ test.group('Adapter', (group) => {
     assert.lengthOf(users, 1)
   })
 
-  test('set primary key value when colun name is different from attribute name', async (assert) => {
+  test('set primary key value when colun name is different from attribute name', async ({
+    assert,
+  }) => {
     class User extends BaseModel {
       public static $table = 'users'
 

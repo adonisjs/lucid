@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
 import { lodash } from '@poppinss/utils'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
@@ -62,20 +62,20 @@ let BaseModel: ReturnType<typeof getBaseModel>
 let app: ApplicationContract
 
 test.group('Base model | boot', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('ensure save method is chainable', async (assert) => {
+  test('ensure save method is chainable', async ({ assert }) => {
     const adapter = new FakeAdapter()
     class User extends BaseModel {
       @column()
@@ -94,7 +94,7 @@ test.group('Base model | boot', (group) => {
     assert.instanceOf(chained, User)
   })
 
-  test('ensure fill method is chainable', async (assert) => {
+  test('ensure fill method is chainable', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -112,7 +112,7 @@ test.group('Base model | boot', (group) => {
     assert.instanceOf(chained, User)
   })
 
-  test('ensure merge method is chainable', async (assert) => {
+  test('ensure merge method is chainable', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -130,7 +130,7 @@ test.group('Base model | boot', (group) => {
     assert.instanceOf(chained, User)
   })
 
-  test('ensure refresh method is chainable', async (assert) => {
+  test('ensure refresh method is chainable', async ({ assert }) => {
     const adapter = new FakeAdapter()
     class User extends BaseModel {
       @column()
@@ -147,7 +147,7 @@ test.group('Base model | boot', (group) => {
     assert.instanceOf(chained, User)
   })
 
-  test('compute table name from model name', async (assert) => {
+  test('compute table name from model name', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -160,7 +160,7 @@ test.group('Base model | boot', (group) => {
     assert.equal(User.table, 'users')
   })
 
-  test('allow overriding table name', async (assert) => {
+  test('allow overriding table name', async ({ assert }) => {
     class User extends BaseModel {
       public static table = 'my_users'
 
@@ -175,7 +175,7 @@ test.group('Base model | boot', (group) => {
     assert.equal(User.table, 'my_users')
   })
 
-  test('initiate all required static properties', async (assert) => {
+  test('initiate all required static properties', async ({ assert }) => {
     class User extends BaseModel {}
 
     User.boot()
@@ -184,7 +184,7 @@ test.group('Base model | boot', (group) => {
     assert.deepEqual(mapToObj(User.$computedDefinitions), {})
   })
 
-  test('resolve column name from attribute name', async (assert) => {
+  test('resolve column name from attribute name', async ({ assert }) => {
     class User extends BaseModel {
       public static $increments = false
 
@@ -199,7 +199,7 @@ test.group('Base model | boot', (group) => {
     assert.deepEqual(User.$keys.attributesToColumns.get('userName'), 'user_name')
   })
 
-  test('resolve serializeAs name from the attribute name', async (assert) => {
+  test('resolve serializeAs name from the attribute name', async ({ assert }) => {
     class User extends BaseModel {
       public static $increments = false
 
@@ -214,7 +214,7 @@ test.group('Base model | boot', (group) => {
     assert.deepEqual(User.$keys.attributesToSerialized.get('userName'), 'user_name')
   })
 
-  test('resolve attribute name from column name', async (assert) => {
+  test('resolve attribute name from column name', async ({ assert }) => {
     class User extends BaseModel {
       public static $increments = false
 
@@ -229,7 +229,7 @@ test.group('Base model | boot', (group) => {
     assert.deepEqual(User.$keys.columnsToAttributes.get('user_name'), 'userName')
   })
 
-  test('resolve serializeAs name from column name', async (assert) => {
+  test('resolve serializeAs name from column name', async ({ assert }) => {
     class User extends BaseModel {
       public static $increments = false
 
@@ -244,7 +244,7 @@ test.group('Base model | boot', (group) => {
     assert.deepEqual(User.$keys.columnsToSerialized.get('user_name'), 'user_name')
   })
 
-  test('resolve attribute name from serializeAs name', async (assert) => {
+  test('resolve attribute name from serializeAs name', async ({ assert }) => {
     class User extends BaseModel {
       public static $increments = false
 
@@ -259,7 +259,7 @@ test.group('Base model | boot', (group) => {
     assert.deepEqual(User.$keys.serializedToAttributes.get('user_name'), 'userName')
   })
 
-  test('resolve column name from serializeAs name', async (assert) => {
+  test('resolve column name from serializeAs name', async ({ assert }) => {
     class User extends BaseModel {
       public static $increments = false
 
@@ -276,20 +276,20 @@ test.group('Base model | boot', (group) => {
 })
 
 test.group('Base Model | options', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('set connection using useConnection method', (assert) => {
+  test('set connection using useConnection method', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -302,7 +302,7 @@ test.group('Base Model | options', (group) => {
     assert.deepEqual(user.$options, { connection: 'foo' })
   })
 
-  test('set connection do not overwrite profiler from the options', (assert) => {
+  test('set connection do not overwrite profiler from the options', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -320,20 +320,20 @@ test.group('Base Model | options', (group) => {
 })
 
 test.group('Base Model | getter-setters', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('set property on $attributes when defined on model instance', (assert) => {
+  test('set property on $attributes when defined on model instance', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -345,7 +345,7 @@ test.group('Base Model | getter-setters', (group) => {
     assert.deepEqual(user.$attributes, { username: 'virk' })
   })
 
-  test('pass value to setter when defined', (assert) => {
+  test('pass value to setter when defined', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public set username(value: any) {
@@ -359,7 +359,7 @@ test.group('Base Model | getter-setters', (group) => {
     assert.deepEqual(user.$attributes, { username: 'VIRK' })
   })
 
-  test('set value on model instance when is not a column', (assert) => {
+  test('set value on model instance when is not a column', ({ assert }) => {
     class User extends BaseModel {
       public username: string
     }
@@ -372,7 +372,7 @@ test.group('Base Model | getter-setters', (group) => {
     assert.equal(user.username, 'virk')
   })
 
-  test('get value from attributes', (assert) => {
+  test('get value from attributes', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -384,7 +384,7 @@ test.group('Base Model | getter-setters', (group) => {
     assert.equal(user.username, 'virk')
   })
 
-  test('rely on getter when column is defined as a getter', (assert) => {
+  test('rely on getter when column is defined as a getter', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public get username() {
@@ -398,7 +398,7 @@ test.group('Base Model | getter-setters', (group) => {
     assert.equal(user.username, 'VIRK')
   })
 
-  test('get value from model instance when is not a column', (assert) => {
+  test('get value from model instance when is not a column', ({ assert }) => {
     class User extends BaseModel {
       public username = 'virk'
     }
@@ -408,7 +408,7 @@ test.group('Base Model | getter-setters', (group) => {
     assert.equal(user.username, 'virk')
   })
 
-  test('get value for primary key', (assert) => {
+  test('get value for primary key', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -423,7 +423,7 @@ test.group('Base Model | getter-setters', (group) => {
     assert.deepEqual(user.$primaryKeyValue, 1)
   })
 
-  test('invoke getter when accessing value using primaryKeyValue', (assert) => {
+  test('invoke getter when accessing value using primaryKeyValue', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public get id() {
@@ -440,7 +440,7 @@ test.group('Base Model | getter-setters', (group) => {
     assert.deepEqual(user.$primaryKeyValue, '1')
   })
 
-  test('invoke column serialize method when serializing model', (assert) => {
+  test('invoke column serialize method when serializing model', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public get id() {
@@ -461,7 +461,7 @@ test.group('Base Model | getter-setters', (group) => {
     assert.equal(user.toJSON().username, 'VIRK')
   })
 
-  test('implement custom merge strategies using getters and setters', (assert) => {
+  test('implement custom merge strategies using getters and setters', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public get preferences(): object {
@@ -505,20 +505,20 @@ test.group('Base Model | getter-setters', (group) => {
 })
 
 test.group('Base Model | dirty', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('get dirty properties on a fresh model', (assert) => {
+  test('get dirty properties on a fresh model', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -531,7 +531,7 @@ test.group('Base Model | dirty', (group) => {
     assert.isTrue(user.$isDirty)
   })
 
-  test('get empty object when model is not dirty', (assert) => {
+  test('get empty object when model is not dirty', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -547,7 +547,7 @@ test.group('Base Model | dirty', (group) => {
     assert.isFalse(user.$isDirty)
   })
 
-  test('get empty object when model is not dirty with null values', (assert) => {
+  test('get empty object when model is not dirty with null values', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -563,7 +563,7 @@ test.group('Base Model | dirty', (group) => {
     assert.isFalse(user.$isDirty)
   })
 
-  test('get empty object when model is not dirty with false values', (assert) => {
+  test('get empty object when model is not dirty with false values', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -579,7 +579,7 @@ test.group('Base Model | dirty', (group) => {
     assert.isFalse(user.$isDirty)
   })
 
-  test('get values removed as a side-effect of fill as dirty', async (assert) => {
+  test('get values removed as a side-effect of fill as dirty', async ({ assert }) => {
     const adapter = new FakeAdapter()
     class User extends BaseModel {
       @column()
@@ -605,24 +605,24 @@ test.group('Base Model | dirty', (group) => {
 })
 
 test.group('Base Model | persist', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('persist model with the column name', async (assert) => {
+  test('persist model with the column name', async ({ assert }) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -661,7 +661,7 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(user.$original, { username: 'virk', fullName: 'H virk', id: 1 })
   })
 
-  test('merge adapter insert return value with attributes', async (assert) => {
+  test('merge adapter insert return value with attributes', async ({ assert }) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -695,7 +695,7 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(user.$original, { username: 'virk', id: 1 })
   })
 
-  test('do not merge adapter results when not part of model columns', async (assert) => {
+  test('do not merge adapter results when not part of model columns', async ({ assert }) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -726,7 +726,7 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(user.$original, { username: 'virk' })
   })
 
-  test('issue update when model has already been persisted', async (assert) => {
+  test('issue update when model has already been persisted', async ({ assert }) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -755,7 +755,7 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(user.$original, { username: 'virk' })
   })
 
-  test('merge return values from update', async (assert) => {
+  test('merge return values from update', async ({ assert }) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -791,7 +791,7 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(user.$original, { username: 'virk', updatedAt: '2019-11-20' })
   })
 
-  test('do not issue update when model is not dirty', async (assert) => {
+  test('do not issue update when model is not dirty', async ({ assert }) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -815,7 +815,7 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(user.$original, {})
   })
 
-  test('refresh model instance', async (assert) => {
+  test('refresh model instance', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -844,7 +844,7 @@ test.group('Base Model | persist', (group) => {
     assert.isDefined(user.updatedAt)
   })
 
-  test('refresh model instance inside a transaction', async (assert) => {
+  test('refresh model instance inside a transaction', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -889,7 +889,7 @@ test.group('Base Model | persist', (group) => {
     assert.equal(user.username, 'virk')
   })
 
-  test('raise exception when attempted to refresh deleted row', async (assert) => {
+  test('raise exception when attempted to refresh deleted row', async ({ assert }) => {
     assert.plan(4)
 
     class User extends BaseModel {
@@ -923,7 +923,7 @@ test.group('Base Model | persist', (group) => {
     }
   })
 
-  test('invoke column prepare method before passing values to the adapter', async (assert) => {
+  test('invoke column prepare method before passing values to the adapter', async ({ assert }) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -955,7 +955,7 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(user.$original, { username: 'virk', fullName: 'H virk' })
   })
 
-  test('send values mutated by the hooks to the adapter', async (assert) => {
+  test('send values mutated by the hooks to the adapter', async ({ assert }) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -987,7 +987,7 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(user.$original, { fullName: 'Foo' })
   })
 
-  test('allow datetime column value to be null', async (assert) => {
+  test('allow datetime column value to be null', async ({ assert }) => {
     assert.plan(3)
     const adapter = new FakeAdapter()
 
@@ -1017,7 +1017,7 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(user.$original, { createdAt: null })
   })
 
-  test('assign local id to the model', async (assert) => {
+  test('assign local id to the model', async ({ assert }) => {
     class User extends BaseModel {
       public static table = 'uuid_users'
       public static selfAssignPrimaryKey = true
@@ -1056,7 +1056,7 @@ test.group('Base Model | persist', (group) => {
     assert.equal(user.id.toLocaleLowerCase(), uuid)
   })
 
-  test('perform update query when local primary key is updated', async (assert) => {
+  test('perform update query when local primary key is updated', async ({ assert }) => {
     class User extends BaseModel {
       public static table = 'uuid_users'
       public static selfAssignPrimaryKey = true
@@ -1094,7 +1094,7 @@ test.group('Base Model | persist', (group) => {
 })
 
 test.group('Self assign primary key', () => {
-  test('send primary value during insert to the adapter', async (assert) => {
+  test('send primary value during insert to the adapter', async ({ assert }) => {
     assert.plan(1)
     const adapter = new FakeAdapter()
 
@@ -1128,7 +1128,7 @@ test.group('Self assign primary key', () => {
     await user.save()
   })
 
-  test('update primary key when changed', async (assert) => {
+  test('update primary key when changed', async ({ assert }) => {
     assert.plan(3)
     const adapter = new FakeAdapter()
 
@@ -1173,20 +1173,20 @@ test.group('Self assign primary key', () => {
 })
 
 test.group('Base Model | create from adapter results', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('create model instance using $createFromAdapterResult method', async (assert) => {
+  test('create model instance using $createFromAdapterResult method', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1205,7 +1205,7 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.deepEqual(user!.$original, { username: 'virk' })
   })
 
-  test('set options on model instance passed to $createFromAdapterResult', async (assert) => {
+  test('set options on model instance passed to $createFromAdapterResult', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1224,7 +1224,7 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.deepEqual(user!.$original, { username: 'virk' })
   })
 
-  test('return null from $createFromAdapterResult when input is not object', (assert) => {
+  test('return null from $createFromAdapterResult when input is not object', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1237,7 +1237,9 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.isNull(user)
   })
 
-  test('create multiple model instance using $createMultipleFromAdapterResult', async (assert) => {
+  test('create multiple model instance using $createMultipleFromAdapterResult', async ({
+    assert,
+  }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1265,7 +1267,7 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.deepEqual(users[1].$original, { username: 'prasan' })
   })
 
-  test('pass model options via $createMultipleFromAdapterResult', async (assert) => {
+  test('pass model options via $createMultipleFromAdapterResult', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1297,7 +1299,7 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.deepEqual(users[1].$original, { username: 'prasan' })
   })
 
-  test('skip rows that are not valid objects inside array', async (assert) => {
+  test('skip rows that are not valid objects inside array', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1319,7 +1321,7 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.deepEqual(users[0].$original, { username: 'virk', fullName: 'H virk' })
   })
 
-  test('invoke column consume method', async (assert) => {
+  test('invoke column consume method', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1339,7 +1341,7 @@ test.group('Base Model | create from adapter results', (group) => {
     assert.deepEqual(user!.$original, { fullName: 'VIRK' })
   })
 
-  test('original and attributes should not be shared', async (assert) => {
+  test('original and attributes should not be shared', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public user: {
@@ -1363,20 +1365,20 @@ test.group('Base Model | create from adapter results', (group) => {
 })
 
 test.group('Base Model | delete', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('delete model instance using adapter', async (assert) => {
+  test('delete model instance using adapter', async ({ assert }) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -1398,7 +1400,7 @@ test.group('Base Model | delete', (group) => {
     assert.isTrue(user.$isDeleted)
   })
 
-  test('raise exception when trying to mutate model after deletion', async (assert) => {
+  test('raise exception when trying to mutate model after deletion', async ({ assert }) => {
     const adapter = new FakeAdapter()
     assert.plan(1)
 
@@ -1421,7 +1423,7 @@ test.group('Base Model | delete', (group) => {
 })
 
 test.group('Base Model | serializeAttributes', () => {
-  test('serialize attributes', async (assert) => {
+  test('serialize attributes', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1433,7 +1435,7 @@ test.group('Base Model | serializeAttributes', () => {
     assert.deepEqual(user.serializeAttributes(), { username: 'virk' })
   })
 
-  test('invoke custom serialize method when serializing attributes', async (assert) => {
+  test('invoke custom serialize method when serializing attributes', async ({ assert }) => {
     class User extends BaseModel {
       @column({ serialize: (value) => value.toUpperCase() })
       public username: string
@@ -1445,7 +1447,7 @@ test.group('Base Model | serializeAttributes', () => {
     assert.deepEqual(user.serializeAttributes(), { username: 'VIRK' })
   })
 
-  test('use custom serializeAs key', async (assert) => {
+  test('use custom serializeAs key', async ({ assert }) => {
     class User extends BaseModel {
       @column({ serializeAs: 'uname' })
       public username: string
@@ -1457,7 +1459,7 @@ test.group('Base Model | serializeAttributes', () => {
     assert.deepEqual(user.serializeAttributes(), { uname: 'virk' })
   })
 
-  test('do not serialize when serializeAs key is null', async (assert) => {
+  test('do not serialize when serializeAs key is null', async ({ assert }) => {
     class User extends BaseModel {
       @column({ serializeAs: null })
       public username: string
@@ -1469,7 +1471,7 @@ test.group('Base Model | serializeAttributes', () => {
     assert.deepEqual(user.serializeAttributes(), {})
   })
 
-  test('pick fields during serialization', async (assert) => {
+  test('pick fields during serialization', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1485,7 +1487,7 @@ test.group('Base Model | serializeAttributes', () => {
     assert.deepEqual(user.serializeAttributes(['id']), { id: '1' })
   })
 
-  test('ignore fields under omit', async (assert) => {
+  test('ignore fields under omit', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1506,7 +1508,7 @@ test.group('Base Model | serializeAttributes', () => {
     )
   })
 
-  test('use omit and pick together', async (assert) => {
+  test('use omit and pick together', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1528,7 +1530,9 @@ test.group('Base Model | serializeAttributes', () => {
     )
   })
 
-  test('ignore fields that has serializeAs = null, even when part of pick array', async (assert) => {
+  test('ignore fields that has serializeAs = null, even when part of pick array', async ({
+    assert,
+  }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1544,7 +1548,7 @@ test.group('Base Model | serializeAttributes', () => {
     assert.deepEqual(user.serializeAttributes(['id']), {})
   })
 
-  test('do not invoke custom serialize method when raw flag is on', async (assert) => {
+  test('do not invoke custom serialize method when raw flag is on', async ({ assert }) => {
     class User extends BaseModel {
       @column({ serialize: (value) => value.toUpperCase() })
       public username: string
@@ -1556,7 +1560,7 @@ test.group('Base Model | serializeAttributes', () => {
     assert.deepEqual(user.serializeAttributes(undefined, true), { username: 'virk' })
   })
 
-  test('use custom serializeAs key when raw flag is on', async (assert) => {
+  test('use custom serializeAs key when raw flag is on', async ({ assert }) => {
     class User extends BaseModel {
       @column({ serializeAs: 'uname' })
       public username: string
@@ -1568,7 +1572,7 @@ test.group('Base Model | serializeAttributes', () => {
     assert.deepEqual(user.serializeAttributes(undefined, true), { uname: 'virk' })
   })
 
-  test('do not serialize with serializeAs = null, when raw flag is on', async (assert) => {
+  test('do not serialize with serializeAs = null, when raw flag is on', async ({ assert }) => {
     class User extends BaseModel {
       @column({ serializeAs: null })
       public username: string
@@ -1580,7 +1584,7 @@ test.group('Base Model | serializeAttributes', () => {
     assert.deepEqual(user.serializeAttributes(undefined, true), {})
   })
 
-  test('cherry pick fields in raw mode', async (assert) => {
+  test('cherry pick fields in raw mode', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1596,7 +1600,7 @@ test.group('Base Model | serializeAttributes', () => {
     assert.deepEqual(user.serializeAttributes(['id'], true), { id: '1' })
   })
 
-  test('ignore fields under omit array in raw mode', async (assert) => {
+  test('ignore fields under omit array in raw mode', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1623,7 +1627,7 @@ test.group('Base Model | serializeAttributes', () => {
 })
 
 test.group('Base Model | serializeRelations', () => {
-  test('serialize relations', async (assert) => {
+  test('serialize relations', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1654,7 +1658,7 @@ test.group('Base Model | serializeRelations', () => {
     })
   })
 
-  test('use custom serializeAs key when raw flag is on', async (assert) => {
+  test('use custom serializeAs key when raw flag is on', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1685,7 +1689,7 @@ test.group('Base Model | serializeRelations', () => {
     })
   })
 
-  test('do not serialize relations when serializeAs is null', async (assert) => {
+  test('do not serialize relations when serializeAs is null', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1711,7 +1715,7 @@ test.group('Base Model | serializeRelations', () => {
     assert.deepEqual(user.serializeRelations(), {})
   })
 
-  test('do not recursively serialize relations when raw is true', async (assert) => {
+  test('do not recursively serialize relations when raw is true', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1739,7 +1743,7 @@ test.group('Base Model | serializeRelations', () => {
     })
   })
 
-  test('use custom serializeAs key when raw flag is on', async (assert) => {
+  test('use custom serializeAs key when raw flag is on', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1767,7 +1771,9 @@ test.group('Base Model | serializeRelations', () => {
     })
   })
 
-  test('do not serialize relations with serializeAs is null when raw flag is on', async (assert) => {
+  test('do not serialize relations with serializeAs is null when raw flag is on', async ({
+    assert,
+  }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1793,7 +1799,7 @@ test.group('Base Model | serializeRelations', () => {
     assert.deepEqual(user.serializeRelations(undefined, true), {})
   })
 
-  test('cherry pick relationship fields', async (assert) => {
+  test('cherry pick relationship fields', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1830,7 +1836,9 @@ test.group('Base Model | serializeRelations', () => {
     )
   })
 
-  test('select all fields when no custom fields are defined for a relationship', async (assert) => {
+  test('select all fields when no custom fields are defined for a relationship', async ({
+    assert,
+  }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1866,7 +1874,9 @@ test.group('Base Model | serializeRelations', () => {
     )
   })
 
-  test('do not select any fields when relationship fields is an empty array', async (assert) => {
+  test('do not select any fields when relationship fields is an empty array', async ({
+    assert,
+  }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -1903,20 +1913,20 @@ test.group('Base Model | serializeRelations', () => {
 })
 
 test.group('Base Model | toJSON', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('convert model to its JSON representation', async (assert) => {
+  test('convert model to its JSON representation', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1928,7 +1938,7 @@ test.group('Base Model | toJSON', (group) => {
     assert.deepEqual(user.toJSON(), { username: 'virk' })
   })
 
-  test('use serializeAs key when converting model to JSON', async (assert) => {
+  test('use serializeAs key when converting model to JSON', async ({ assert }) => {
     class User extends BaseModel {
       @column({ serializeAs: 'theUsername' })
       public username: string
@@ -1940,7 +1950,7 @@ test.group('Base Model | toJSON', (group) => {
     assert.deepEqual(user.toJSON(), { theUsername: 'virk' })
   })
 
-  test('do not serialize when serializeAs is set to null', async (assert) => {
+  test('do not serialize when serializeAs is set to null', async ({ assert }) => {
     class User extends BaseModel {
       @column({ serializeAs: null })
       public username: string
@@ -1952,7 +1962,7 @@ test.group('Base Model | toJSON', (group) => {
     assert.deepEqual(user.toJSON(), {})
   })
 
-  test('add computed properties to toJSON result', async (assert) => {
+  test('add computed properties to toJSON result', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1969,7 +1979,7 @@ test.group('Base Model | toJSON', (group) => {
     assert.deepEqual(user.toJSON(), { username: 'virk', fullName: 'VIRK' })
   })
 
-  test('do not add computed property when it returns undefined', async (assert) => {
+  test('do not add computed property when it returns undefined', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -1986,7 +1996,7 @@ test.group('Base Model | toJSON', (group) => {
     assert.deepEqual(user.toJSON(), { username: 'virk' })
   })
 
-  test('cherry pick keys during serialization', async (assert) => {
+  test('cherry pick keys during serialization', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2008,7 +2018,7 @@ test.group('Base Model | toJSON', (group) => {
     )
   })
 
-  test('serialize extras', async (assert) => {
+  test('serialize extras', async ({ assert }) => {
     class User extends BaseModel {
       public serializeExtras = true
 
@@ -2034,7 +2044,7 @@ test.group('Base Model | toJSON', (group) => {
     })
   })
 
-  test('define serialize extras as a function', async (assert) => {
+  test('define serialize extras as a function', async ({ assert }) => {
     class User extends BaseModel {
       public serializeExtras() {
         return {
@@ -2066,7 +2076,7 @@ test.group('Base Model | toJSON', (group) => {
     })
   })
 
-  test('do not serialize undefined values', async (assert) => {
+  test('do not serialize undefined values', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2081,7 +2091,7 @@ test.group('Base Model | toJSON', (group) => {
     assert.deepEqual(user.toJSON(), { username: 'virk' })
   })
 
-  test('serialize null values', async (assert) => {
+  test('serialize null values', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2099,20 +2109,20 @@ test.group('Base Model | toJSON', (group) => {
 })
 
 test.group('BaseModel | cache', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('cache getter value', (assert) => {
+  test('cache getter value', ({ assert }) => {
     let invokedCounter = 0
 
     class User extends BaseModel {
@@ -2136,7 +2146,7 @@ test.group('BaseModel | cache', (group) => {
     assert.equal(invokedCounter, 1)
   })
 
-  test('re-call getter function when attribute value changes', (assert) => {
+  test('re-call getter function when attribute value changes', ({ assert }) => {
     let invokedCounter = 0
 
     class User extends BaseModel {
@@ -2165,20 +2175,20 @@ test.group('BaseModel | cache', (group) => {
 })
 
 test.group('BaseModel | fill/merge', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('fill model instance with bulk attributes', (assert) => {
+  test('fill model instance with bulk attributes', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2189,7 +2199,7 @@ test.group('BaseModel | fill/merge', (group) => {
     assert.deepEqual(user.$attributes, { username: 'virk' })
   })
 
-  test('raise error when extra properties are defined', (assert) => {
+  test('raise error when extra properties are defined', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2197,13 +2207,13 @@ test.group('BaseModel | fill/merge', (group) => {
 
     const user = new User()
     const fn = () => user.fill({ username: 'virk', isAdmin: true } as any)
-    assert.throw(
+    assert.throws(
       fn,
       'Cannot define "isAdmin" on "User" model, since it is not defined as a model property'
     )
   })
 
-  test('set extra properties via fill when allowExtraProperties is true', (assert) => {
+  test('set extra properties via fill when allowExtraProperties is true', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2215,7 +2225,7 @@ test.group('BaseModel | fill/merge', (group) => {
     assert.deepEqual(user.$extras, { isAdmin: true })
   })
 
-  test('overwrite existing values when using fill', (assert) => {
+  test('overwrite existing values when using fill', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2232,7 +2242,7 @@ test.group('BaseModel | fill/merge', (group) => {
     assert.deepEqual(user.$attributes, { username: 'virk' })
   })
 
-  test('merge to existing when using merge instead of fill', (assert) => {
+  test('merge to existing when using merge instead of fill', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2249,7 +2259,7 @@ test.group('BaseModel | fill/merge', (group) => {
     assert.deepEqual(user.$attributes, { username: 'virk', age: 22 })
   })
 
-  test('set properties with explicit undefined values', (assert) => {
+  test('set properties with explicit undefined values', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2266,7 +2276,7 @@ test.group('BaseModel | fill/merge', (group) => {
     assert.deepEqual(user.$attributes, { username: 'virk', age: undefined })
   })
 
-  test('invoke setter when using fill', (assert) => {
+  test('invoke setter when using fill', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2289,7 +2299,7 @@ test.group('BaseModel | fill/merge', (group) => {
     assert.deepEqual(user.$attributes, { username: 'virk', age: 23 })
   })
 
-  test('fill using the column name', (assert) => {
+  test('fill using the column name', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public firstName: string
@@ -2300,7 +2310,7 @@ test.group('BaseModel | fill/merge', (group) => {
     assert.deepEqual(user.$attributes, { firstName: 'virk' })
   })
 
-  test('invoke setter during fill when using column name', (assert) => {
+  test('invoke setter during fill when using column name', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2320,7 +2330,7 @@ test.group('BaseModel | fill/merge', (group) => {
     assert.deepEqual(user.$attributes, { age: 23 })
   })
 
-  test('merge set non-column model properties', (assert) => {
+  test('merge set non-column model properties', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2340,7 +2350,7 @@ test.group('BaseModel | fill/merge', (group) => {
     assert.equal(user.foo, 'bar')
   })
 
-  test('merge set non-column model properties with inheritance', (assert) => {
+  test('merge set non-column model properties with inheritance', ({ assert }) => {
     class Super extends BaseModel {
       public foo: string
     }
@@ -2364,20 +2374,20 @@ test.group('BaseModel | fill/merge', (group) => {
 })
 
 test.group('Base | apdater', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('pass model instance with attributes to the adapter insert method', async (assert) => {
+  test('pass model instance with attributes to the adapter insert method', async ({ assert }) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -2400,7 +2410,7 @@ test.group('Base | apdater', (group) => {
     ])
   })
 
-  test('pass model instance with attributes to the adapter update method', async (assert) => {
+  test('pass model instance with attributes to the adapter update method', async ({ assert }) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -2431,7 +2441,7 @@ test.group('Base | apdater', (group) => {
     ])
   })
 
-  test('pass model instance to the adapter delete method', async (assert) => {
+  test('pass model instance to the adapter delete method', async ({ assert }) => {
     const adapter = new FakeAdapter()
 
     class User extends BaseModel {
@@ -2459,7 +2469,9 @@ test.group('Base | apdater', (group) => {
     ])
   })
 
-  test('fill model instance with bulk attributes via column name is different', async (assert) => {
+  test('fill model instance with bulk attributes via column name is different', async ({
+    assert,
+  }) => {
     const adapter = new FakeAdapter()
     class User extends BaseModel {
       @column({ columnName: 'first_name' })
@@ -2483,20 +2495,20 @@ test.group('Base | apdater', (group) => {
 })
 
 test.group('Base Model | sideloaded', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('define sideloaded properties using $consumeAdapterResults method', (assert) => {
+  test('define sideloaded properties using $consumeAdapterResults method', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2509,7 +2521,7 @@ test.group('Base Model | sideloaded', (group) => {
     assert.deepEqual(user.$sideloaded, { loggedInUser: { id: 1 } })
   })
 
-  test('define sideloaded properties using $createFromAdapterResult method', (assert) => {
+  test('define sideloaded properties using $createFromAdapterResult method', ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2520,7 +2532,9 @@ test.group('Base Model | sideloaded', (group) => {
     assert.deepEqual(user.$sideloaded, { loggedInUser: { id: 1 } })
   })
 
-  test('define sideloaded properties using $createMultipleFromAdapterResult method', (assert) => {
+  test('define sideloaded properties using $createMultipleFromAdapterResult method', ({
+    assert,
+  }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -2542,20 +2556,20 @@ test.group('Base Model | sideloaded', (group) => {
 })
 
 test.group('Base Model | relations', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('set hasOne relation', async (assert) => {
+  test('set hasOne relation', async ({ assert }) => {
     const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
@@ -2582,7 +2596,7 @@ test.group('Base Model | relations', (group) => {
     assert.instanceOf(user.$preloaded.profile, Profile)
   })
 
-  test('return undefined when relation is not preloaded', (assert) => {
+  test('return undefined when relation is not preloaded', ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -2608,7 +2622,7 @@ test.group('Base Model | relations', (group) => {
     assert.deepEqual(user.$preloaded, {})
   })
 
-  test('serialize relation toJSON', async (assert) => {
+  test('serialize relation toJSON', async ({ assert }) => {
     const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
@@ -2639,7 +2653,7 @@ test.group('Base Model | relations', (group) => {
     })
   })
 
-  test('cherry pick relationship keys during serialize', async (assert) => {
+  test('cherry pick relationship keys during serialize', async ({ assert }) => {
     const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
@@ -2683,7 +2697,7 @@ test.group('Base Model | relations', (group) => {
     )
   })
 
-  test('cherry pick nested relationship keys during serialize', async (assert) => {
+  test('cherry pick nested relationship keys during serialize', async ({ assert }) => {
     const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
@@ -2746,7 +2760,7 @@ test.group('Base Model | relations', (group) => {
     )
   })
 
-  test('serialize relation toJSON with custom serializeAs key', async (assert) => {
+  test('serialize relation toJSON with custom serializeAs key', async ({ assert }) => {
     const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
@@ -2777,7 +2791,7 @@ test.group('Base Model | relations', (group) => {
     })
   })
 
-  test('push relationship', async (assert) => {
+  test('push relationship', async ({ assert }) => {
     const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
@@ -2810,7 +2824,7 @@ test.group('Base Model | relations', (group) => {
     })
   })
 
-  test('push relationship to existing list', async (assert) => {
+  test('push relationship to existing list', async ({ assert }) => {
     const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
@@ -2847,7 +2861,7 @@ test.group('Base Model | relations', (group) => {
     })
   })
 
-  test('push an array of relationships', async (assert) => {
+  test('push an array of relationships', async ({ assert }) => {
     const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
@@ -2886,7 +2900,7 @@ test.group('Base Model | relations', (group) => {
     })
   })
 
-  test('raise error when pushing an array of relationships for hasOne', async (assert) => {
+  test('raise error when pushing an array of relationships for hasOne', async ({ assert }) => {
     const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
@@ -2912,10 +2926,10 @@ test.group('Base Model | relations', (group) => {
     const profile1 = await Profile.create({ username: 'virk' })
 
     const fn = () => user.$pushRelated('profile', [profile, profile1] as any)
-    assert.throw(fn, '"User.profile" cannot reference more than one instance of "Profile" model')
+    assert.throws(fn, '"User.profile" cannot reference more than one instance of "Profile" model')
   })
 
-  test('raise error when setting single relationships for hasMany', async (assert) => {
+  test('raise error when setting single relationships for hasMany', async ({ assert }) => {
     const adapter = new FakeAdapter()
     class Profile extends BaseModel {
       @column()
@@ -2940,29 +2954,29 @@ test.group('Base Model | relations', (group) => {
     const profile = await Profile.create({ username: 'virk' })
 
     const fn = () => user.$setRelated('profiles', profile as any)
-    assert.throw(fn, '"User.profiles" must be an array when setting "hasMany" relationship')
+    assert.throws(fn, '"User.profiles" must be an array when setting "hasMany" relationship')
   })
 })
 
 test.group('Base Model | fetch', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('find using the primary key', async (assert) => {
+  test('find using the primary key', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2981,7 +2995,7 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(user!.$primaryKeyValue, 1)
   })
 
-  test('raise exception when row is not found', async (assert) => {
+  test('raise exception when row is not found', async ({ assert }) => {
     assert.plan(1)
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -3001,7 +3015,7 @@ test.group('Base Model | fetch', (group) => {
     }
   })
 
-  test('find many using the primary key', async (assert) => {
+  test('find many using the primary key', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3024,7 +3038,7 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(users[1].$primaryKeyValue, 1)
   })
 
-  test('return the existing row when search criteria matches', async (assert) => {
+  test('return the existing row when search criteria matches', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3047,7 +3061,7 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(user!.$primaryKeyValue, 1)
   })
 
-  test("create new row when search criteria doesn't match", async (assert) => {
+  test("create new row when search criteria doesn't match", async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3073,7 +3087,9 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(user!.userName, 'nikk')
   })
 
-  test('return the existing row when search criteria matches using firstOrNew', async (assert) => {
+  test('return the existing row when search criteria matches using firstOrNew', async ({
+    assert,
+  }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3096,7 +3112,9 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(user!.$primaryKeyValue, 1)
   })
 
-  test("instantiate new row when search criteria doesn't match using firstOrNew", async (assert) => {
+  test("instantiate new row when search criteria doesn't match using firstOrNew", async ({
+    assert,
+  }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3122,7 +3140,7 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(user!.userName, 'nikk')
   })
 
-  test('update the existing row when search criteria matches', async (assert) => {
+  test('update the existing row when search criteria matches', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3149,7 +3167,7 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(users[0].points, 20)
   })
 
-  test('lock row for update to handle concurrent requests', async (assert) => {
+  test('lock row for update to handle concurrent requests', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3200,7 +3218,7 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(users[0].points, 22)
   })
 
-  test('execute updateOrCreate update action inside a transaction', async (assert) => {
+  test('execute updateOrCreate update action inside a transaction', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3233,7 +3251,7 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(users[0].points, 0)
   })
 
-  test('create a new row when search criteria fails', async (assert) => {
+  test('create a new row when search criteria fails', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3265,7 +3283,7 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(users[1].points, 20)
   })
 
-  test('execute updateOrCreate create action inside a transaction', async (assert) => {
+  test('execute updateOrCreate create action inside a transaction', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3298,7 +3316,7 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(users[0].points, 0)
   })
 
-  test('persist records to db when find call returns zero rows', async (assert) => {
+  test('persist records to db when find call returns zero rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3345,7 +3363,7 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 3)
   })
 
-  test('sync records by avoiding duplicates', async (assert) => {
+  test('sync records by avoiding duplicates', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3401,7 +3419,7 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 3)
   })
 
-  test('wrap create calls inside a transaction', async (assert) => {
+  test('wrap create calls inside a transaction', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3450,7 +3468,7 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 1)
   })
 
-  test('handle columns with different cast key name', async (assert) => {
+  test('handle columns with different cast key name', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3506,7 +3524,7 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 3)
   })
 
-  test('raise exception when one or more rows fails', async (assert) => {
+  test('raise exception when one or more rows fails', async ({ assert }) => {
     assert.plan(2)
 
     class User extends BaseModel {
@@ -3557,7 +3575,9 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 1)
   })
 
-  test('raise exception when value of unique key inside payload is undefined', async (assert) => {
+  test('raise exception when value of unique key inside payload is undefined', async ({
+    assert,
+  }) => {
     assert.plan(2)
 
     class User extends BaseModel {
@@ -3601,7 +3621,7 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 1)
   })
 
-  test('raise exception when key is not defined on the model', async (assert) => {
+  test('raise exception when key is not defined on the model', async ({ assert }) => {
     assert.plan(2)
 
     class User extends BaseModel {
@@ -3642,7 +3662,7 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 1)
   })
 
-  test('persist records to db when find call returns zero rows', async (assert) => {
+  test('persist records to db when find call returns zero rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3689,7 +3709,7 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 3)
   })
 
-  test('update records and avoid duplicates', async (assert) => {
+  test('update records and avoid duplicates', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3746,7 +3766,7 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 3)
   })
 
-  test('use multiple keys to predicate a row as unique', async (assert) => {
+  test('use multiple keys to predicate a row as unique', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3812,7 +3832,7 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 4)
   })
 
-  test('wrap create calls inside a transaction using updateOrCreateMany', async (assert) => {
+  test('wrap create calls inside a transaction using updateOrCreateMany', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3861,7 +3881,9 @@ test.group('Base Model | fetch', (group) => {
     assert.lengthOf(usersList, 1)
   })
 
-  test('wrap update calls inside a custom transaction using updateOrCreateMany', async (assert) => {
+  test('wrap update calls inside a custom transaction using updateOrCreateMany', async ({
+    assert,
+  }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3912,7 +3934,7 @@ test.group('Base Model | fetch', (group) => {
     assert.equal(usersList[0].points, 10)
   })
 
-  test('handle concurrent update calls using updateOrCreateMany', async (assert) => {
+  test('handle concurrent update calls using updateOrCreateMany', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3966,24 +3988,24 @@ test.group('Base Model | fetch', (group) => {
 })
 
 test.group('Base Model | hooks', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('invoke before and after create hooks', async (assert) => {
+  test('invoke before and after create hooks', async ({ assert }) => {
     assert.plan(9)
     const stack: string[] = []
 
@@ -4037,7 +4059,7 @@ test.group('Base Model | hooks', (group) => {
     ])
   })
 
-  test('abort create when before hook raises exception', async (assert) => {
+  test('abort create when before hook raises exception', async ({ assert }) => {
     assert.plan(3)
 
     class User extends BaseModel {
@@ -4090,7 +4112,7 @@ test.group('Base Model | hooks', (group) => {
     }
   })
 
-  test('listen for trx on after save commit', async (assert) => {
+  test('listen for trx on after save commit', async ({ assert }) => {
     assert.plan(1)
 
     class User extends BaseModel {
@@ -4123,7 +4145,7 @@ test.group('Base Model | hooks', (group) => {
     await trx.commit()
   })
 
-  test('listen for trx on after save rollback', async (assert) => {
+  test('listen for trx on after save rollback', async ({ assert }) => {
     assert.plan(1)
 
     class User extends BaseModel {
@@ -4156,7 +4178,7 @@ test.group('Base Model | hooks', (group) => {
     await trx.rollback()
   })
 
-  test('invoke before and after update hooks', async (assert) => {
+  test('invoke before and after update hooks', async ({ assert }) => {
     assert.plan(10)
 
     class User extends BaseModel {
@@ -4205,7 +4227,7 @@ test.group('Base Model | hooks', (group) => {
     assert.equal(users[0].username, 'nikk')
   })
 
-  test('abort update when before hook raises exception', async (assert) => {
+  test('abort update when before hook raises exception', async ({ assert }) => {
     assert.plan(5)
 
     class User extends BaseModel {
@@ -4264,7 +4286,7 @@ test.group('Base Model | hooks', (group) => {
     assert.equal(users[0].username, 'virk')
   })
 
-  test('invoke before and after delete hooks', async (assert) => {
+  test('invoke before and after delete hooks', async ({ assert }) => {
     assert.plan(3)
 
     class User extends BaseModel {
@@ -4296,7 +4318,7 @@ test.group('Base Model | hooks', (group) => {
     assert.equal(usersCount[0].total, 0)
   })
 
-  test('abort delete when before hook raises exception', async (assert) => {
+  test('abort delete when before hook raises exception', async ({ assert }) => {
     assert.plan(3)
 
     class User extends BaseModel {
@@ -4340,7 +4362,7 @@ test.group('Base Model | hooks', (group) => {
     assert.equal(usersCount[0].total, 1)
   })
 
-  test('invoke before and after fetch hooks', async (assert) => {
+  test('invoke before and after fetch hooks', async ({ assert }) => {
     assert.plan(3)
 
     class User extends BaseModel {
@@ -4421,7 +4443,7 @@ test.group('Base Model | hooks', (group) => {
     await User.query().del()
   })
 
-  test('invoke before and after find hooks', async (assert) => {
+  test('invoke before and after find hooks', async ({ assert }) => {
     assert.plan(2)
 
     class User extends BaseModel {
@@ -4449,7 +4471,7 @@ test.group('Base Model | hooks', (group) => {
     await User.find(1)
   })
 
-  test('invoke before and after find hooks when .first method is used', async (assert) => {
+  test('invoke before and after find hooks when .first method is used', async ({ assert }) => {
     assert.plan(2)
 
     class User extends BaseModel {
@@ -4477,7 +4499,7 @@ test.group('Base Model | hooks', (group) => {
     await User.query().where('id', 1).first()
   })
 
-  test('invoke before and after paginate hooks', async (assert) => {
+  test('invoke before and after paginate hooks', async ({ assert }) => {
     assert.plan(5)
 
     class User extends BaseModel {
@@ -4511,7 +4533,7 @@ test.group('Base Model | hooks', (group) => {
     await User.query().paginate(1)
   })
 
-  test('invoke before and after fetch hooks on paginate', async (assert) => {
+  test('invoke before and after fetch hooks on paginate', async ({ assert }) => {
     assert.plan(2)
 
     class User extends BaseModel {
@@ -4565,7 +4587,7 @@ test.group('Base Model | hooks', (group) => {
     await User.query().pojo().paginate(1)
   })
 
-  test('@regression resolve update keys when an object is passed', async (assert) => {
+  test('@regression resolve update keys when an object is passed', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4584,7 +4606,7 @@ test.group('Base Model | hooks', (group) => {
     assert.equal(users[0].username, 'nikk')
   })
 
-  test('@regression resolve update keys when a key value pair is passed', async (assert) => {
+  test('@regression resolve update keys when a key value pair is passed', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4605,20 +4627,20 @@ test.group('Base Model | hooks', (group) => {
 })
 
 test.group('Base model | extend', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('extend model query builder', async (assert) => {
+  test('extend model query builder', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4644,7 +4666,7 @@ test.group('Base model | extend', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('extend model insert query builder', async (assert) => {
+  test('extend model insert query builder', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4680,24 +4702,24 @@ test.group('Base model | extend', (group) => {
 })
 
 test.group('Base Model | aggregates', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('count *', async (assert) => {
+  test('count *', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4724,7 +4746,7 @@ test.group('Base Model | aggregates', (group) => {
     )
   })
 
-  test('count * distinct', async (assert) => {
+  test('count * distinct', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4753,24 +4775,24 @@ test.group('Base Model | aggregates', (group) => {
 })
 
 test.group('Base Model | date', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('define date column', async (assert) => {
+  test('define date column', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4789,7 +4811,7 @@ test.group('Base Model | date', (group) => {
     })
   })
 
-  test('define date column and turn on autoCreate flag', async (assert) => {
+  test('define date column and turn on autoCreate flag', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4808,7 +4830,7 @@ test.group('Base Model | date', (group) => {
     })
   })
 
-  test('define date column and turn on autoUpdate flag', async (assert) => {
+  test('define date column and turn on autoUpdate flag', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4827,7 +4849,7 @@ test.group('Base Model | date', (group) => {
     })
   })
 
-  test('initiate date column values with current date when missing', async (assert) => {
+  test('initiate date column values with current date when missing', async ({ assert }) => {
     assert.plan(1)
 
     const adapter = new FakeAdapter()
@@ -4853,7 +4875,9 @@ test.group('Base Model | date', (group) => {
     await user.save()
   })
 
-  test('do initiate date column values with current date when autoCreate is off', async (assert) => {
+  test('do initiate date column values with current date when autoCreate is off', async ({
+    assert,
+  }) => {
     assert.plan(2)
 
     const adapter = new FakeAdapter()
@@ -4883,7 +4907,7 @@ test.group('Base Model | date', (group) => {
     await user.save()
   })
 
-  test('always update date column value when autoUpdate is on', async (assert) => {
+  test('always update date column value when autoUpdate is on', async ({ assert }) => {
     assert.plan(1)
 
     const adapter = new FakeAdapter()
@@ -4912,7 +4936,7 @@ test.group('Base Model | date', (group) => {
     await user.save()
   })
 
-  test('format date instance to string before sending to the adapter', async (assert) => {
+  test('format date instance to string before sending to the adapter', async ({ assert }) => {
     assert.plan(1)
     const adapter = new FakeAdapter()
 
@@ -4937,7 +4961,7 @@ test.group('Base Model | date', (group) => {
     await user.save()
   })
 
-  test('leave date untouched when it is defined as string', async (assert) => {
+  test('leave date untouched when it is defined as string', async ({ assert }) => {
     assert.plan(1)
     const adapter = new FakeAdapter()
 
@@ -4963,7 +4987,7 @@ test.group('Base Model | date', (group) => {
     await user.save()
   })
 
-  test('do not attempt to format undefined values', async (assert) => {
+  test('do not attempt to format undefined values', async ({ assert }) => {
     assert.plan(1)
     const adapter = new FakeAdapter()
 
@@ -4988,7 +5012,7 @@ test.group('Base Model | date', (group) => {
     await user.save()
   })
 
-  test('raise error when date column value is unprocessable', async (assert) => {
+  test('raise error when date column value is unprocessable', async ({ assert }) => {
     assert.plan(1)
 
     const adapter = new FakeAdapter()
@@ -5019,7 +5043,7 @@ test.group('Base Model | date', (group) => {
     }
   })
 
-  test('raise error when datetime is invalid', async (assert) => {
+  test('raise error when datetime is invalid', async ({ assert }) => {
     assert.plan(1)
 
     const adapter = new FakeAdapter()
@@ -5047,7 +5071,7 @@ test.group('Base Model | date', (group) => {
     }
   })
 
-  test('allow overriding prepare method', async (assert) => {
+  test('allow overriding prepare method', async ({ assert }) => {
     assert.plan(1)
     const adapter = new FakeAdapter()
 
@@ -5075,7 +5099,7 @@ test.group('Base Model | date', (group) => {
     await user.save()
   })
 
-  test('convert date to datetime instance during fetch', async (assert) => {
+  test('convert date to datetime instance during fetch', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5092,7 +5116,7 @@ test.group('Base Model | date', (group) => {
     assert.instanceOf(user!.createdAt, DateTime)
   })
 
-  test('ignore null or empty values during fetch', async (assert) => {
+  test('ignore null or empty values during fetch', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5109,7 +5133,7 @@ test.group('Base Model | date', (group) => {
     assert.isNull(user!.updatedAt)
   })
 
-  test('convert date to toISODate during serialize', async (assert) => {
+  test('convert date to toISODate during serialize', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5129,7 +5153,7 @@ test.group('Base Model | date', (group) => {
     assert.match(user!.toJSON().created_at, /\d{4}-\d{2}-\d{2}/)
   })
 
-  test('do not attempt to serialize, when already a string', async (assert) => {
+  test('do not attempt to serialize, when already a string', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5156,24 +5180,24 @@ test.group('Base Model | date', (group) => {
 })
 
 test.group('Base Model | datetime', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('define datetime column', async (assert) => {
+  test('define datetime column', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5192,7 +5216,7 @@ test.group('Base Model | datetime', (group) => {
     })
   })
 
-  test('define datetime column and turn on autoCreate flag', async (assert) => {
+  test('define datetime column and turn on autoCreate flag', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5211,7 +5235,7 @@ test.group('Base Model | datetime', (group) => {
     })
   })
 
-  test('define datetime column and turn on autoUpdate flag', async (assert) => {
+  test('define datetime column and turn on autoUpdate flag', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5230,7 +5254,7 @@ test.group('Base Model | datetime', (group) => {
     })
   })
 
-  test('initiate datetime column values with current date when missing', async (assert) => {
+  test('initiate datetime column values with current date when missing', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5261,7 +5285,7 @@ test.group('Base Model | datetime', (group) => {
     )
   })
 
-  test('ignore undefined values', async (assert) => {
+  test('ignore undefined values', async ({ assert }) => {
     assert.plan(1)
 
     const adapter = new FakeAdapter()
@@ -5287,7 +5311,7 @@ test.group('Base Model | datetime', (group) => {
     await user.save()
   })
 
-  test('ignore string values', async (assert) => {
+  test('ignore string values', async ({ assert }) => {
     assert.plan(1)
 
     const adapter = new FakeAdapter()
@@ -5315,7 +5339,7 @@ test.group('Base Model | datetime', (group) => {
     await user.save()
   })
 
-  test('raise error when datetime column value is unprocessable', async (assert) => {
+  test('raise error when datetime column value is unprocessable', async ({ assert }) => {
     assert.plan(1)
 
     const adapter = new FakeAdapter()
@@ -5346,7 +5370,7 @@ test.group('Base Model | datetime', (group) => {
     }
   })
 
-  test('allow overriding prepare method', async (assert) => {
+  test('allow overriding prepare method', async ({ assert }) => {
     assert.plan(1)
     const adapter = new FakeAdapter()
 
@@ -5374,7 +5398,7 @@ test.group('Base Model | datetime', (group) => {
     await user.save()
   })
 
-  test('convert timestamp to datetime instance during fetch', async (assert) => {
+  test('convert timestamp to datetime instance during fetch', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5391,7 +5415,7 @@ test.group('Base Model | datetime', (group) => {
     assert.instanceOf(user!.createdAt, DateTime)
   })
 
-  test('ignore null or empty values during fetch', async (assert) => {
+  test('ignore null or empty values during fetch', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5408,7 +5432,7 @@ test.group('Base Model | datetime', (group) => {
     assert.isNull(user!.updatedAt)
   })
 
-  test('always set datetime value when autoUpdate is true', async (assert) => {
+  test('always set datetime value when autoUpdate is true', async ({ assert }) => {
     assert.plan(2)
     const adapter = new FakeAdapter()
 
@@ -5437,7 +5461,7 @@ test.group('Base Model | datetime', (group) => {
     await user.save()
   })
 
-  test('do not set autoUpdate field datetime when model is not dirty', async (assert) => {
+  test('do not set autoUpdate field datetime when model is not dirty', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5458,7 +5482,7 @@ test.group('Base Model | datetime', (group) => {
     assert.equal(originalDateTimeString, user.joinedAt.toString())
   })
 
-  test('set datetime when model is dirty but after invoking a hook', async (assert) => {
+  test('set datetime when model is dirty but after invoking a hook', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5489,7 +5513,7 @@ test.group('Base Model | datetime', (group) => {
     assert.notEqual(originalDateTimeString, user.joinedAt.toString())
   })
 
-  test('convert datetime to toISO during serialize', async (assert) => {
+  test('convert datetime to toISO during serialize', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5516,7 +5540,7 @@ test.group('Base Model | datetime', (group) => {
     )
   })
 
-  test('do not attempt to serialize, when already a string', async (assert) => {
+  test('do not attempt to serialize, when already a string', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5547,24 +5571,24 @@ test.group('Base Model | datetime', (group) => {
 })
 
 test.group('Base Model | paginate', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('paginate through rows', async (assert) => {
+  test('paginate through rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5605,7 +5629,7 @@ test.group('Base Model | paginate', (group) => {
     })
   })
 
-  test('serialize from model paginator', async (assert) => {
+  test('serialize from model paginator', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5643,7 +5667,7 @@ test.group('Base Model | paginate', (group) => {
     })
   })
 
-  test('return simple paginator instance when using pojo', async (assert) => {
+  test('return simple paginator instance when using pojo', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5684,7 +5708,7 @@ test.group('Base Model | paginate', (group) => {
     })
   })
 
-  test('use model naming strategy for pagination properties', async (assert) => {
+  test('use model naming strategy for pagination properties', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5738,7 +5762,7 @@ test.group('Base Model | paginate', (group) => {
     })
   })
 
-  test('use table aliases', async (assert) => {
+  test('use table aliases', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5787,20 +5811,20 @@ test.group('Base Model | paginate', (group) => {
 })
 
 test.group('Base Model | toObject', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('convert model to its object representation', async (assert) => {
+  test('convert model to its object representation', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -5812,7 +5836,7 @@ test.group('Base Model | toObject', (group) => {
     assert.deepEqual(user.toObject(), { username: 'virk', $extras: {} })
   })
 
-  test('use model property key when converting model to object', async (assert) => {
+  test('use model property key when converting model to object', async ({ assert }) => {
     class User extends BaseModel {
       @column({ serializeAs: 'theUserName', columnName: 'user_name' })
       public username: string
@@ -5824,7 +5848,7 @@ test.group('Base Model | toObject', (group) => {
     assert.deepEqual(user.toObject(), { username: 'virk', $extras: {} })
   })
 
-  test('add computed properties to toObject result', async (assert) => {
+  test('add computed properties to toObject result', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -5841,7 +5865,7 @@ test.group('Base Model | toObject', (group) => {
     assert.deepEqual(user.toObject(), { username: 'virk', fullName: 'VIRK', $extras: {} })
   })
 
-  test('do not add computed property when it returns undefined', async (assert) => {
+  test('do not add computed property when it returns undefined', async ({ assert }) => {
     class User extends BaseModel {
       @column()
       public username: string
@@ -5858,7 +5882,7 @@ test.group('Base Model | toObject', (group) => {
     assert.deepEqual(user.toObject(), { username: 'virk', $extras: {} })
   })
 
-  test('add preloaded hasOne relationship to toObject result', async (assert) => {
+  test('add preloaded hasOne relationship to toObject result', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public username: string
@@ -5891,7 +5915,7 @@ test.group('Base Model | toObject', (group) => {
     })
   })
 
-  test('add preloaded hasMany relationship to toObject result', async (assert) => {
+  test('add preloaded hasMany relationship to toObject result', async ({ assert }) => {
     class Comment extends BaseModel {
       @column()
       public body: string
@@ -5954,20 +5978,20 @@ test.group('Base Model | toObject', (group) => {
 })
 
 test.group('Base model | inheritance', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('inherit primary key from the base model', async (assert) => {
+  test('inherit primary key from the base model', async ({ assert }) => {
     class MyBaseModel extends BaseModel {
       public static primaryKey = 'user_id'
     }
@@ -5986,7 +6010,7 @@ test.group('Base model | inheritance', (group) => {
     assert.equal(User.primaryKey, 'user_id')
   })
 
-  test('use explicitly defined primary key', async (assert) => {
+  test('use explicitly defined primary key', async ({ assert }) => {
     class MyBaseModel extends BaseModel {
       public static primaryKey = 'user_id'
     }
@@ -6007,7 +6031,7 @@ test.group('Base model | inheritance', (group) => {
     assert.equal(User.primaryKey, 'the_user_id')
   })
 
-  test('do not inherit table from the base model', async (assert) => {
+  test('do not inherit table from the base model', async ({ assert }) => {
     class MyBaseModel extends BaseModel {
       public static table = 'foo'
     }
@@ -6026,7 +6050,7 @@ test.group('Base model | inheritance', (group) => {
     assert.equal(User.table, 'users')
   })
 
-  test('inherting a model should copy columns', async (assert) => {
+  test('inherting a model should copy columns', async ({ assert }) => {
     class MyBaseModel extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6122,7 +6146,7 @@ test.group('Base model | inheritance', (group) => {
     })
   })
 
-  test('allow overwriting column', async (assert) => {
+  test('allow overwriting column', async ({ assert }) => {
     class MyBaseModel extends BaseModel {
       @column({ isPrimary: true })
       public userId: string
@@ -6221,7 +6245,7 @@ test.group('Base model | inheritance', (group) => {
     })
   })
 
-  test('inherting a model should copy computed properties', async (assert) => {
+  test('inherting a model should copy computed properties', async ({ assert }) => {
     class MyBaseModel extends BaseModel {
       @computed()
       public fullName: string
@@ -6316,7 +6340,7 @@ test.group('Base model | inheritance', (group) => {
     assert.deepEqual(MyBaseModel.$keys.attributesToColumns.all(), {})
   })
 
-  test('allow overwriting computed properties', async (assert) => {
+  test('allow overwriting computed properties', async ({ assert }) => {
     class MyBaseModel extends BaseModel {
       @computed()
       public fullName: string
@@ -6404,7 +6428,7 @@ test.group('Base model | inheritance', (group) => {
     assert.deepEqual(MyBaseModel.$keys.attributesToColumns.all(), {})
   })
 
-  test('inherting a model should copy relationships', async (assert) => {
+  test('inherting a model should copy relationships', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -6439,7 +6463,7 @@ test.group('Base model | inheritance', (group) => {
     assert.isFalse(MyBaseModel.$relationsDefinitions.has('emails'))
   })
 
-  test('overwrite relationship during relationsip', async (assert) => {
+  test('overwrite relationship during relationsip', async ({ assert }) => {
     class SocialProfile extends BaseModel {
       @column()
       public socialParentId: number
@@ -6488,7 +6512,7 @@ test.group('Base model | inheritance', (group) => {
     assert.deepEqual(MyBaseModel.$getRelation('profile').model, MyBaseModel)
   })
 
-  test('allow overwriting relationships', async (assert) => {
+  test('allow overwriting relationships', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -6531,7 +6555,7 @@ test.group('Base model | inheritance', (group) => {
     assert.isUndefined(MyBaseModel.$relationsDefinitions.get('profile')!['onQueryHook'])
   })
 
-  test('inherting a model should copy hooks', async (assert) => {
+  test('inherting a model should copy hooks', async ({ assert }) => {
     function hook1() {}
     function hook2() {}
 

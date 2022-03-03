@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import 'reflect-metadata'
 import { join } from 'path'
 import { Kernel } from '@adonisjs/core/build/standalone'
@@ -21,12 +21,12 @@ import MakeModel from '../../commands/MakeModel'
 const templatesFs = new Filesystem(join(__dirname, '..', '..', 'templates'))
 
 test.group('MakeModel', (group) => {
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     delete process.env.ADONIS_ACE_CWD
     await fs.cleanup()
   })
 
-  test('make a model inside the default directory', async (assert) => {
+  test('make a model inside the default directory', async ({ assert }) => {
     const app = await setupApplication()
 
     const makeModel = new MakeModel(app, new Kernel(app))
@@ -42,7 +42,7 @@ test.group('MakeModel', (group) => {
     )
   })
 
-  test('make a model inside a custom directory', async (assert) => {
+  test('make a model inside a custom directory', async ({ assert }) => {
     const app = await setupApplication()
     app.rcFile.namespaces.models = 'App'
 

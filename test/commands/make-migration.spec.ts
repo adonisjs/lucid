@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import 'reflect-metadata'
 import { join } from 'path'
 import { Kernel } from '@adonisjs/core/build/standalone'
@@ -34,27 +34,27 @@ let app: ApplicationContract
 const templatesFs = new Filesystem(join(__dirname, '..', '..', 'templates'))
 
 test.group('MakeMigration', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     await setup()
   })
 
-  group.beforeEach(() => {
+  group.each.setup(() => {
     app.container.bind('Adonis/Lucid/Database', () => db)
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create migration in the default migrations directory', async (assert) => {
+  test('create migration in the default migrations directory', async ({ assert }) => {
     const makeMigration = new MakeMigration(app, new Kernel(app))
     makeMigration.name = 'users'
     await makeMigration.run()
@@ -75,7 +75,7 @@ test.group('MakeMigration', (group) => {
     )
   })
 
-  test('create migration for alter table', async (assert) => {
+  test('create migration for alter table', async ({ assert }) => {
     const makeMigration = new MakeMigration(app, new Kernel(app))
     makeMigration.name = 'users'
     makeMigration.table = 'my_users'
@@ -98,7 +98,7 @@ test.group('MakeMigration', (group) => {
     )
   })
 
-  test('create migration for make table with custom table name', async (assert) => {
+  test('create migration for make table with custom table name', async ({ assert }) => {
     const makeMigration = new MakeMigration(app, new Kernel(app))
     makeMigration.name = 'users'
     makeMigration.create = 'my_users'
@@ -121,7 +121,7 @@ test.group('MakeMigration', (group) => {
     )
   })
 
-  test('create nested migration file', async (assert) => {
+  test('create nested migration file', async ({ assert }) => {
     const makeMigration = new MakeMigration(app, new Kernel(app))
     makeMigration.name = 'profile/users'
 
@@ -143,7 +143,7 @@ test.group('MakeMigration', (group) => {
     )
   })
 
-  test('raise error when defined connection is invalid', async (assert) => {
+  test('raise error when defined connection is invalid', async ({ assert }) => {
     const makeMigration = new MakeMigration(app, new Kernel(app))
     makeMigration.name = 'profile/users'
     makeMigration.connection = 'foo'
@@ -158,7 +158,7 @@ test.group('MakeMigration', (group) => {
     ])
   })
 
-  test('prompt for migration paths when multiple paths are defined', async (assert) => {
+  test('prompt for migration paths when multiple paths are defined', async ({ assert }) => {
     const config = {
       connection: 'primary',
       connections: {
@@ -206,7 +206,7 @@ test.group('MakeMigration', (group) => {
     await customDb.manager.closeAll()
   })
 
-  test('use custom directory when defined', async (assert) => {
+  test('use custom directory when defined', async ({ assert }) => {
     const config = {
       connection: 'primary',
       connections: {

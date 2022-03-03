@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import 'reflect-metadata'
 import { Kernel } from '@adonisjs/core/build/standalone'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
@@ -21,20 +21,20 @@ let app: ApplicationContract
 let db: ReturnType<typeof getDb>
 
 test.group('DbSeed', (group) => {
-  group.beforeEach(async () => {
+  group.each.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     app.container.bind('Adonis/Lucid/Database', () => db)
     await setup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await cleanup()
     await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
     await fs.cleanup()
   })
 
-  test('run seeds', async (assert) => {
+  test('run seeds', async ({ assert }) => {
     await fs.add(
       'database/seeders/user.ts',
       `export default class UserSeeder {
@@ -51,7 +51,7 @@ test.group('DbSeed', (group) => {
     delete process.env.EXEC_USER_SEEDER
   })
 
-  test('run custom files', async (assert) => {
+  test('run custom files', async ({ assert }) => {
     await fs.add(
       'database/seeders/user.ts',
       `export default class UserSeeder {

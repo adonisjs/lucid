@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import type { HasOne } from '@ioc:Adonis/Lucid/Orm'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
@@ -30,24 +30,24 @@ let BaseModel: ReturnType<typeof getBaseModel>
 let app: ApplicationContract
 
 test.group('Model options | QueryBuilder', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
     await db.manager.closeAll()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('query builder set model options from the query client', async (assert) => {
+  test('query builder set model options from the query client', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -67,7 +67,7 @@ test.group('Model options | QueryBuilder', (group) => {
     assert.deepEqual(users[0].$options!.profiler, app.profiler)
   })
 
-  test('query builder set model options when only one row is fetched', async (assert) => {
+  test('query builder set model options when only one row is fetched', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -86,7 +86,7 @@ test.group('Model options | QueryBuilder', (group) => {
     assert.deepEqual(user!.$options!.profiler, app.profiler)
   })
 
-  test('query builder use transaction when updating rows', async (assert) => {
+  test('query builder use transaction when updating rows', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -112,7 +112,7 @@ test.group('Model options | QueryBuilder', (group) => {
     assert.equal(usersFresh[0].username, 'virk')
   })
 
-  test('cleanup transaction reference after commit or rollback', async (assert) => {
+  test('cleanup transaction reference after commit or rollback', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -140,24 +140,24 @@ test.group('Model options | QueryBuilder', (group) => {
 })
 
 test.group('Model options | Adapter', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
     await db.manager.closeAll()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('use correct client when custom connection is defined', async (assert) => {
+  test('use correct client when custom connection is defined', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -175,7 +175,7 @@ test.group('Model options | Adapter', (group) => {
     assert.deepEqual(user!.$options!.profiler, app.profiler)
   })
 
-  test('pass profiler to the client when defined explicitly', async (assert) => {
+  test('pass profiler to the client when defined explicitly', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -194,7 +194,7 @@ test.group('Model options | Adapter', (group) => {
     assert.deepEqual(user!.$options!.profiler, profiler)
   })
 
-  test('pass custom client to query builder', async (assert) => {
+  test('pass custom client to query builder', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -213,7 +213,7 @@ test.group('Model options | Adapter', (group) => {
     assert.equal(user!.$options!.connection, 'primary')
   })
 
-  test('pass transaction client to query builder', async (assert) => {
+  test('pass transaction client to query builder', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -235,24 +235,24 @@ test.group('Model options | Adapter', (group) => {
 })
 
 test.group('Model options | Model.find', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
     await db.manager.closeAll()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('define custom connection', async (assert) => {
+  test('define custom connection', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -270,7 +270,7 @@ test.group('Model options | Model.find', (group) => {
     assert.deepEqual(user!.$options!.profiler, app.profiler)
   })
 
-  test('define custom profiler', async (assert) => {
+  test('define custom profiler', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -288,7 +288,7 @@ test.group('Model options | Model.find', (group) => {
     assert.deepEqual(user!.$options!.profiler, profiler)
   })
 
-  test('define custom query client', async (assert) => {
+  test('define custom query client', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -309,24 +309,24 @@ test.group('Model options | Model.find', (group) => {
 })
 
 test.group('Model options | Model.findOrFail', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
     await db.manager.closeAll()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('define custom connection', async (assert) => {
+  test('define custom connection', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -344,7 +344,7 @@ test.group('Model options | Model.findOrFail', (group) => {
     assert.deepEqual(user.$options!.profiler, app.profiler)
   })
 
-  test('define custom profiler', async (assert) => {
+  test('define custom profiler', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -361,9 +361,11 @@ test.group('Model options | Model.findOrFail', (group) => {
 
     const user = await User.findOrFail(1, { profiler })
     assert.deepEqual(user.$options!.profiler, profiler)
+
+    await customDb.manager.closeAll()
   })
 
-  test('define custom query client', async (assert) => {
+  test('define custom query client', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -384,24 +386,24 @@ test.group('Model options | Model.findOrFail', (group) => {
 })
 
 test.group('Model options | Model.findMany', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
     await db.manager.closeAll()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('define custom connection', async (assert) => {
+  test('define custom connection', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -419,7 +421,7 @@ test.group('Model options | Model.findMany', (group) => {
     assert.deepEqual(users[0].$options!.profiler, app.profiler)
   })
 
-  test('define custom profiler', async (assert) => {
+  test('define custom profiler', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -437,7 +439,7 @@ test.group('Model options | Model.findMany', (group) => {
     assert.deepEqual(users[0].$options!.profiler, profiler)
   })
 
-  test('define custom query client', async (assert) => {
+  test('define custom query client', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -458,24 +460,24 @@ test.group('Model options | Model.findMany', (group) => {
 })
 
 test.group('Model options | Model.firstOrCreate', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
     await db.manager.closeAll()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('define custom connection', async (assert) => {
+  test('define custom connection', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -498,7 +500,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     assert.deepEqual(user.$options!.profiler, app.profiler)
   })
 
-  test('define custom connection when search fails', async (assert) => {
+  test('define custom connection when search fails', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -521,7 +523,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     assert.deepEqual(user.$options!.profiler, app.profiler)
   })
 
-  test('define custom profiler', async (assert) => {
+  test('define custom profiler', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -543,7 +545,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     assert.deepEqual(user.$options!.profiler, profiler)
   })
 
-  test('define custom profiler when search fails', async (assert) => {
+  test('define custom profiler when search fails', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -564,7 +566,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     assert.deepEqual(user.$options!.profiler, profiler)
   })
 
-  test('define custom client', async (assert) => {
+  test('define custom client', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -586,7 +588,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     assert.deepEqual(user.$options!.connection, client.connectionName)
   })
 
-  test('define custom client when search fails', async (assert) => {
+  test('define custom client when search fails', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -608,7 +610,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     assert.deepEqual(user.$options!.connection, client.connectionName)
   })
 
-  test('use transaction', async (assert) => {
+  test('use transaction', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -632,7 +634,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     assert.deepEqual(user.$options!.connection, client.connectionName)
   })
 
-  test('use transaction to save when search fails', async (assert) => {
+  test('use transaction to save when search fails', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -657,24 +659,24 @@ test.group('Model options | Model.firstOrCreate', (group) => {
 })
 
 test.group('Model options | Model.fetchOrCreateMany', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
     await db.manager.closeAll()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('define custom connection', async (assert) => {
+  test('define custom connection', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -698,7 +700,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     assert.deepEqual(user.$options!.profiler, app.profiler)
   })
 
-  test('define custom connection when search fails', async (assert) => {
+  test('define custom connection when search fails', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -720,7 +722,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     assert.deepEqual(user.$options!.profiler, app.profiler)
   })
 
-  test('define custom profiler', async (assert) => {
+  test('define custom profiler', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -743,7 +745,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     assert.deepEqual(user.$options!.profiler, profiler)
   })
 
-  test('define custom profiler when search fails', async (assert) => {
+  test('define custom profiler when search fails', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -764,7 +766,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     assert.deepEqual(user.$options!.profiler, profiler)
   })
 
-  test('define custom client', async (assert) => {
+  test('define custom client', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -787,7 +789,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     assert.deepEqual(user.$options!.connection, client.connectionName)
   })
 
-  test('define custom client when search fails', async (assert) => {
+  test('define custom client when search fails', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -809,7 +811,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     assert.deepEqual(user.$options!.connection, client.connectionName)
   })
 
-  test('wrap create many calls inside a transaction', async (assert) => {
+  test('wrap create many calls inside a transaction', async ({ assert }) => {
     assert.plan(2)
 
     class User extends BaseModel {
@@ -839,7 +841,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     assert.equal(total[0].total, 0)
   })
 
-  test('use existing transaction when passed', async (assert) => {
+  test('use existing transaction when passed', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -871,24 +873,24 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
 })
 
 test.group('Model options | Model.updateOrCreateMany', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
     await db.manager.closeAll()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('define custom connection', async (assert) => {
+  test('define custom connection', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -913,7 +915,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     assert.isUndefined(user.$trx)
   })
 
-  test('define custom connection when search fails', async (assert) => {
+  test('define custom connection when search fails', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -936,7 +938,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     assert.isUndefined(user.$trx)
   })
 
-  test('define custom profiler', async (assert) => {
+  test('define custom profiler', async ({ assert }) => {
     assert.plan(4)
 
     class User extends BaseModel {
@@ -966,7 +968,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     assert.isUndefined(user.$trx)
   })
 
-  test('define custom profiler when search fails', async (assert) => {
+  test('define custom profiler when search fails', async ({ assert }) => {
     assert.plan(4)
 
     class User extends BaseModel {
@@ -995,7 +997,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     assert.isUndefined(user.$trx)
   })
 
-  test('define custom client', async (assert) => {
+  test('define custom client', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -1018,7 +1020,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     assert.deepEqual(user.$options!.connection, client.connectionName)
   })
 
-  test('define custom client when search fails', async (assert) => {
+  test('define custom client when search fails', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -1040,7 +1042,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     assert.deepEqual(user.$options!.connection, client.connectionName)
   })
 
-  test('wrap update many calls inside a transaction', async (assert) => {
+  test('wrap update many calls inside a transaction', async ({ assert }) => {
     assert.plan(2)
 
     class User extends BaseModel {
@@ -1070,7 +1072,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     assert.equal(total[0].total, 0)
   })
 
-  test('use existing transaction when passed', async (assert) => {
+  test('use existing transaction when passed', async ({ assert }) => {
     class User extends BaseModel {
       public static $table = 'users'
 
@@ -1102,24 +1104,24 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
 })
 
 test.group('Model options | Query Builder Preloads', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
     await db.manager.closeAll()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('pass query options to preloaded models', async (assert) => {
+  test('pass query options to preloaded models', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1155,7 +1157,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
     assert.deepEqual(users[0].profile.$options!.profiler, app.profiler)
   })
 
-  test('use transaction client to execute preload queries', async (assert) => {
+  test('use transaction client to execute preload queries', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1194,7 +1196,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
     assert.deepEqual(users[0].profile.$options!.profiler, trx.profiler)
   })
 
-  test('pass profiler to preload models', async (assert) => {
+  test('pass profiler to preload models', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1232,7 +1234,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
     assert.deepEqual(users[0].profile.$options!.profiler, profiler)
   })
 
-  test('pass sideloaded data to preloads', async (assert) => {
+  test('pass sideloaded data to preloads', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1267,7 +1269,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
     assert.deepEqual(users[0].profile.$sideloaded, { id: 1 })
   })
 
-  test('custom sideloaded data on preload query must win', async (assert) => {
+  test('custom sideloaded data on preload query must win', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1307,7 +1309,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
     assert.deepEqual(users[0].profile.$sideloaded, { id: 2 })
   })
 
-  test('use transaction client to update preloaded rows', async (assert) => {
+  test('use transaction client to update preloaded rows', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1348,7 +1350,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
     assert.equal(profiles[0].displayName, 'Virk')
   })
 
-  test('cleanup transaction reference after commit or rollback', async (assert) => {
+  test('cleanup transaction reference after commit or rollback', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1393,24 +1395,24 @@ test.group('Model options | Query Builder Preloads', (group) => {
 })
 
 test.group('Model options | Model Preloads', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
     await db.manager.closeAll()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('pass query options to preloaded models', async (assert) => {
+  test('pass query options to preloaded models', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1445,7 +1447,7 @@ test.group('Model options | Model Preloads', (group) => {
     assert.deepEqual(user.profile.$options!.profiler, app.profiler)
   })
 
-  test('pass profiler to preload models', async (assert) => {
+  test('pass profiler to preload models', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1483,7 +1485,7 @@ test.group('Model options | Model Preloads', (group) => {
     assert.deepEqual(user.profile.$options!.profiler, profiler)
   })
 
-  test('pass sideloaded data to preloads', async (assert) => {
+  test('pass sideloaded data to preloads', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1516,7 +1518,7 @@ test.group('Model options | Model Preloads', (group) => {
     assert.deepEqual(user.profile.$sideloaded, { id: 1 })
   })
 
-  test('custom sideloaded data on preload query must win', async (assert) => {
+  test('custom sideloaded data on preload query must win', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ isPrimary: true })
       public id: number

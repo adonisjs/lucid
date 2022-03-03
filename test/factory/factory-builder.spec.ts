@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { randomUUID } from 'crypto'
 import { column } from '../../src/Orm/Decorators'
 import { FactoryManager } from '../../src/Factory/index'
@@ -36,24 +36,24 @@ const FactoryModel = getFactoryModel()
 const factoryManager = new FactoryManager()
 
 test.group('Factory | Factory Builder | make', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply factory model state', async (assert) => {
+  test('apply factory model state', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -81,7 +81,7 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('applying a state twice must be a noop', async (assert) => {
+  test('applying a state twice must be a noop', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -112,7 +112,7 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('merge custom attributes', async (assert) => {
+  test('merge custom attributes', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -140,7 +140,7 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('define custom merge function', async (assert) => {
+  test('define custom merge function', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -170,7 +170,7 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('define custom newUp function', async (assert) => {
+  test('define custom newUp function', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -207,7 +207,7 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('use 0 index elements when attributes are defined as an array', async (assert) => {
+  test('use 0 index elements when attributes are defined as an array', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -235,7 +235,7 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('invoke after make hook', async (assert) => {
+  test('invoke after make hook', async ({ assert }) => {
     assert.plan(6)
 
     class User extends BaseModel {
@@ -271,7 +271,7 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('invoke after makeStubbed hook', async (assert) => {
+  test('invoke after makeStubbed hook', async ({ assert }) => {
     assert.plan(6)
 
     class User extends BaseModel {
@@ -307,7 +307,7 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('define custom id inside make hook', async (assert) => {
+  test('define custom id inside make hook', async ({ assert }) => {
     assert.plan(3)
 
     class User extends BaseModel {
@@ -345,24 +345,24 @@ test.group('Factory | Factory Builder | make', (group) => {
 })
 
 test.group('Factory | Factory Builder | makeMany', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply factory model state', async (assert) => {
+  test('apply factory model state', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -395,7 +395,7 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.isFalse(users[1].$isPersisted)
   })
 
-  test('applying a state twice must be a noop', async (assert) => {
+  test('applying a state twice must be a noop', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -429,7 +429,7 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.isFalse(users[1].$isPersisted)
   })
 
-  test('define custom attributes accepted by the newUp method', async (assert) => {
+  test('define custom attributes accepted by the newUp method', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -463,7 +463,7 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.isFalse(users[1].$isPersisted)
   })
 
-  test('define index specific attributes for makeMany', async (assert) => {
+  test('define index specific attributes for makeMany', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -499,7 +499,7 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.isFalse(users[1].$isPersisted)
   })
 
-  test('run makeStubbed hook for all the model instances', async (assert) => {
+  test('run makeStubbed hook for all the model instances', async ({ assert }) => {
     assert.plan(15)
 
     class User extends BaseModel {
@@ -540,7 +540,7 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.isFalse(users[1].$isPersisted)
   })
 
-  test('run make hook for all the model instances', async (assert) => {
+  test('run make hook for all the model instances', async ({ assert }) => {
     assert.plan(15)
 
     class User extends BaseModel {
@@ -583,24 +583,24 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
 })
 
 test.group('Factory | Factory Builder | create', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply factory model state', async (assert) => {
+  test('apply factory model state', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -627,7 +627,7 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('applying a state twice must be a noop', async (assert) => {
+  test('applying a state twice must be a noop', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -654,7 +654,7 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('define custom attributes accepted by the newUp method', async (assert) => {
+  test('define custom attributes accepted by the newUp method', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -681,7 +681,7 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('use index 0 elements when attributes are defined as an array', async (assert) => {
+  test('use index 0 elements when attributes are defined as an array', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -708,7 +708,7 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('invoke before and after create hook', async (assert) => {
+  test('invoke before and after create hook', async ({ assert }) => {
     assert.plan(4)
 
     class User extends BaseModel {
@@ -743,7 +743,7 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('invoke after make hook', async (assert) => {
+  test('invoke after make hook', async ({ assert }) => {
     assert.plan(6)
     const stack: string[] = []
 
@@ -786,7 +786,7 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.deepEqual(stack, ['afterMake', 'beforeCreate', 'afterCreate'])
   })
 
-  test('define custom connection', async (assert) => {
+  test('define custom connection', async ({ assert }) => {
     assert.plan(3)
 
     class User extends BaseModel {
@@ -821,7 +821,7 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('define custom query client', async (assert) => {
+  test('define custom query client', async ({ assert }) => {
     assert.plan(3)
 
     class User extends BaseModel {
@@ -860,24 +860,24 @@ test.group('Factory | Factory Builder | create', (group) => {
 })
 
 test.group('Factory | Factory Builder | createMany', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply factory model state', async (assert) => {
+  test('apply factory model state', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -907,7 +907,7 @@ test.group('Factory | Factory Builder | createMany', (group) => {
     assert.isTrue(users[1].$isPersisted)
   })
 
-  test('applying a state twice must be a noop', async (assert) => {
+  test('applying a state twice must be a noop', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -937,7 +937,7 @@ test.group('Factory | Factory Builder | createMany', (group) => {
     assert.isTrue(users[1].$isPersisted)
   })
 
-  test('define custom attributes accepted by the newUp method', async (assert) => {
+  test('define custom attributes accepted by the newUp method', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -968,7 +968,7 @@ test.group('Factory | Factory Builder | createMany', (group) => {
     assert.isTrue(users[1].$isPersisted)
   })
 
-  test('define index specific attributes for makeMany', async (assert) => {
+  test('define index specific attributes for makeMany', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number

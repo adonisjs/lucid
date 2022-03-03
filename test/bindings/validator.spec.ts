@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { rules } from '@adonisjs/validator/build/src/Rules'
 import { schema } from '@adonisjs/validator/build/src/Schema'
 import { extendValidator } from '../../src/Bindings/Validator'
@@ -23,25 +23,25 @@ let app: ApplicationContract
 let db: ReturnType<typeof getDb>
 
 test.group('Validator | exists', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     await setup()
     extendValidator(validator, db, app.logger)
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
-    await fs.cleanup()
     await db.manager.closeAll()
+    await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
     db.connection().getReadClient().removeAllListeners()
   })
 
-  test("must fail when row doesn't exists in the table", async (assert) => {
+  test("must fail when row doesn't exists in the table", async ({ assert }) => {
     assert.plan(1)
 
     try {
@@ -63,7 +63,7 @@ test.group('Validator | exists', (group) => {
     }
   })
 
-  test('work fine when row exists', async (assert) => {
+  test('work fine when row exists', async ({ assert }) => {
     assert.plan(2)
 
     const [row] = await db
@@ -101,7 +101,7 @@ test.group('Validator | exists', (group) => {
     })
   })
 
-  test('add where contraints', async (assert) => {
+  test('add where contraints', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -149,7 +149,7 @@ test.group('Validator | exists', (group) => {
     }
   })
 
-  test('add where contraints with refs', async (assert) => {
+  test('add where contraints with refs', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -202,7 +202,7 @@ test.group('Validator | exists', (group) => {
     }
   })
 
-  test('add wherein contraints', async (assert) => {
+  test('add wherein contraints', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -250,7 +250,7 @@ test.group('Validator | exists', (group) => {
     }
   })
 
-  test('add wherein contraints with refs', async (assert) => {
+  test('add wherein contraints with refs', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -303,7 +303,7 @@ test.group('Validator | exists', (group) => {
     }
   })
 
-  test('add where not constraints', async (assert) => {
+  test('add where not constraints', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -351,7 +351,7 @@ test.group('Validator | exists', (group) => {
     }
   })
 
-  test('add where not constraints with refs', async (assert) => {
+  test('add where not constraints with refs', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -404,7 +404,7 @@ test.group('Validator | exists', (group) => {
     }
   })
 
-  test('add where not in constraints', async (assert) => {
+  test('add where not in constraints', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -452,7 +452,7 @@ test.group('Validator | exists', (group) => {
     }
   })
 
-  test('add where not in constraints with refs', async (assert) => {
+  test('add where not in constraints with refs', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -505,7 +505,7 @@ test.group('Validator | exists', (group) => {
     }
   })
 
-  test('perform case-insensitive query', async (assert) => {
+  test('perform case-insensitive query', async ({ assert }) => {
     assert.plan(2)
 
     await db.table('users').returning('id').insert({ email: 'virk@adonisjs.com', username: 'virk' })
@@ -541,7 +541,7 @@ test.group('Validator | exists', (group) => {
     })
   })
 
-  test('do not report SQL errors to the validator', async (assert) => {
+  test('do not report SQL errors to the validator', async ({ assert }) => {
     assert.plan(1)
 
     try {
@@ -564,7 +564,7 @@ test.group('Validator | exists', (group) => {
     }
   })
 
-  test('make correct sql query schema field is of date type', async (assert) => {
+  test('make correct sql query schema field is of date type', async ({ assert }) => {
     assert.plan(3)
 
     let sql: any
@@ -618,7 +618,7 @@ test.group('Validator | exists', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('define custom format datetime values', async (assert) => {
+  test('define custom format datetime values', async ({ assert }) => {
     assert.plan(3)
 
     let sql: any
@@ -671,25 +671,25 @@ test.group('Validator | exists', (group) => {
 })
 
 test.group('Validator | unique', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     await setup()
     extendValidator(validator, db, app.logger)
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
-    await fs.cleanup()
     await db.manager.closeAll()
+    await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
     db.connection().getReadClient().removeAllListeners()
   })
 
-  test('must fail when row already exists in the table', async (assert) => {
+  test('must fail when row already exists in the table', async ({ assert }) => {
     assert.plan(1)
 
     const [row] = await db
@@ -730,7 +730,7 @@ test.group('Validator | unique', (group) => {
     })
   })
 
-  test('add where contraints', async (assert) => {
+  test('add where contraints', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -778,7 +778,7 @@ test.group('Validator | unique', (group) => {
     }
   })
 
-  test('add where contraints with refs', async (assert) => {
+  test('add where contraints with refs', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -831,7 +831,7 @@ test.group('Validator | unique', (group) => {
     }
   })
 
-  test('add where in contraints', async (assert) => {
+  test('add where in contraints', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -879,7 +879,7 @@ test.group('Validator | unique', (group) => {
     }
   })
 
-  test('add where in contraints with refs', async (assert) => {
+  test('add where in contraints with refs', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -932,7 +932,7 @@ test.group('Validator | unique', (group) => {
     }
   })
 
-  test('add whereNot contraints', async (assert) => {
+  test('add whereNot contraints', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -980,7 +980,7 @@ test.group('Validator | unique', (group) => {
     }
   })
 
-  test('add whereNot contraints with refs', async (assert) => {
+  test('add whereNot contraints with refs', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -1033,7 +1033,7 @@ test.group('Validator | unique', (group) => {
     }
   })
 
-  test('add whereNot in contraints', async (assert) => {
+  test('add whereNot in contraints', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -1081,7 +1081,7 @@ test.group('Validator | unique', (group) => {
     }
   })
 
-  test('add whereNot in contraints with refs', async (assert) => {
+  test('add whereNot in contraints with refs', async ({ assert }) => {
     assert.plan(3)
 
     const [row] = await db
@@ -1134,7 +1134,7 @@ test.group('Validator | unique', (group) => {
     }
   })
 
-  test('perform case-insensitive check', async (assert) => {
+  test('perform case-insensitive check', async ({ assert }) => {
     assert.plan(3)
 
     await db.table('users').returning('id').insert({ email: 'virk@adonisjs.com', username: 'virk' })
@@ -1175,7 +1175,7 @@ test.group('Validator | unique', (group) => {
     }
   })
 
-  test('do not report SQL errors to the validator', async (assert) => {
+  test('do not report SQL errors to the validator', async ({ assert }) => {
     assert.plan(1)
 
     try {
@@ -1198,7 +1198,7 @@ test.group('Validator | unique', (group) => {
     }
   })
 
-  test('make correct sql query schema field is of date type', async (assert) => {
+  test('make correct sql query schema field is of date type', async ({ assert }) => {
     assert.plan(3)
 
     await db
@@ -1256,7 +1256,7 @@ test.group('Validator | unique', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('define custom format datetime values', async (assert) => {
+  test('define custom format datetime values', async ({ assert }) => {
     assert.plan(3)
 
     await db

@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import type { ManyToMany } from '@ioc:Adonis/Lucid/Orm'
 
 import { scope } from '../../src/Helpers/scope'
@@ -35,20 +35,20 @@ let BaseModel: ReturnType<typeof getBaseModel>
 const sleep = (time: number) => new Promise<void>((resolve) => setTimeout(resolve, time))
 
 test.group('Model | ManyToMany | Options', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('raise error when localKey is missing', (assert) => {
+  test('raise error when localKey is missing', ({ assert }) => {
     assert.plan(1)
 
     try {
@@ -69,7 +69,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     }
   })
 
-  test('use primary key as the local key', (assert) => {
+  test('use primary key as the local key', ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -89,7 +89,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['localKeyColumnName'], 'id')
   })
 
-  test('use custom defined local key', (assert) => {
+  test('use custom defined local key', ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -113,7 +113,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['localKeyColumnName'], 'uid')
   })
 
-  test('raise error when relatedKey is missing', (assert) => {
+  test('raise error when relatedKey is missing', ({ assert }) => {
     assert.plan(1)
 
     try {
@@ -138,7 +138,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     }
   })
 
-  test('use related model primary key as the related key', (assert) => {
+  test('use related model primary key as the related key', ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -158,7 +158,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['relatedKeyColumnName'], 'id')
   })
 
-  test('use custom defined related key', (assert) => {
+  test('use custom defined related key', ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -181,7 +181,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['relatedKeyColumnName'], 'uid')
   })
 
-  test('compute pivotForeignKey from table name + primary key', (assert) => {
+  test('compute pivotForeignKey from table name + primary key', ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -200,7 +200,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['pivotForeignKey'], 'user_id')
   })
 
-  test('use custom defined pivotForeignKey', (assert) => {
+  test('use custom defined pivotForeignKey', ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -219,7 +219,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['pivotForeignKey'], 'user_uid')
   })
 
-  test('compute relatedPivotForeignKey from related model name + primary key', (assert) => {
+  test('compute relatedPivotForeignKey from related model name + primary key', ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -239,7 +239,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['pivotRelatedForeignKey'], 'skill_id')
   })
 
-  test('use custom defined relatedPivotForeignKey', (assert) => {
+  test('use custom defined relatedPivotForeignKey', ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -259,7 +259,7 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['pivotRelatedForeignKey'], 'skill_uid')
   })
 
-  test('clone relationship instance with options', (assert) => {
+  test('clone relationship instance with options', ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -283,20 +283,20 @@ test.group('Model | ManyToMany | Options', (group) => {
 })
 
 test.group('Model | ManyToMany | Set Relations', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('set related model instance', (assert) => {
+  test('set related model instance', ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -318,7 +318,7 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
     assert.deepEqual(user.skills, [skill])
   })
 
-  test('push related model instance', (assert) => {
+  test('push related model instance', ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -343,7 +343,7 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
     assert.deepEqual(user.skills, [skill, skill1])
   })
 
-  test('set many of related instances', (assert) => {
+  test('set many of related instances', ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -395,24 +395,24 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
 })
 
 test.group('Model | ManyToMany | bulk operations', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sql for selecting related rows', async (assert) => {
+  test('generate correct sql for selecting related rows', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -448,7 +448,7 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for selecting related for many rows', async (assert) => {
+  test('generate correct sql for selecting related for many rows', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -487,7 +487,7 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('select extra columns', async (assert) => {
+  test('select extra columns', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -526,7 +526,7 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('select extra columns at runtime', async (assert) => {
+  test('select extra columns at runtime', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -563,7 +563,7 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for updating rows', async (assert) => {
+  test('generate correct sql for updating rows', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -596,7 +596,7 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for deleting rows', async (assert) => {
+  test('generate correct sql for deleting rows', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -627,7 +627,7 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('convert timestamps instance of Luxon', async (assert) => {
+  test('convert timestamps instance of Luxon', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -679,24 +679,24 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
 })
 
 test.group('Model | ManyToMany | sub queries', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sub query for selecting rows', async (assert) => {
+  test('generate correct sub query for selecting rows', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -726,7 +726,7 @@ test.group('Model | ManyToMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('create aggregate query', async (assert) => {
+  test('create aggregate query', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -761,7 +761,7 @@ test.group('Model | ManyToMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('allow selecting custom columns', async (assert) => {
+  test('allow selecting custom columns', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -796,7 +796,7 @@ test.group('Model | ManyToMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct self relationship subquery', async (assert) => {
+  test('generate correct self relationship subquery', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -826,7 +826,7 @@ test.group('Model | ManyToMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where pivot clause when self relationship subQuery', async (assert) => {
+  test('add where pivot clause when self relationship subQuery', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -864,7 +864,7 @@ test.group('Model | ManyToMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('allow selecting custom pivot columns', async (assert) => {
+  test('allow selecting custom pivot columns', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -899,7 +899,7 @@ test.group('Model | ManyToMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('run onQuery method when defined', async (assert) => {
+  test('run onQuery method when defined', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -939,24 +939,24 @@ test.group('Model | ManyToMany | sub queries', (group) => {
 })
 
 test.group('Model | Many To Many | aggregates', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get total of all related rows', async (assert) => {
+  test('get total of all related rows', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -986,7 +986,7 @@ test.group('Model | Many To Many | aggregates', (group) => {
     assert.deepEqual(Number(total[0].$extras.total), 2)
   })
 
-  test('select extra columns with count', async (assert) => {
+  test('select extra columns with count', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1027,7 +1027,7 @@ test.group('Model | Many To Many | aggregates', (group) => {
     assert.equal(Number(total[1].$extras.total), 1)
   })
 
-  test('select extra pivot columns with count', async (assert) => {
+  test('select extra pivot columns with count', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1071,24 +1071,24 @@ test.group('Model | Many To Many | aggregates', (group) => {
 })
 
 test.group('Model | ManyToMany | preload', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('preload relation', async (assert) => {
+  test('preload relation', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1132,7 +1132,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
   })
 
-  test('convert dates to luxon datetime instance during preload', async (assert) => {
+  test('convert dates to luxon datetime instance during preload', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1182,7 +1182,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime)
   })
 
-  test('preload relation for many', async (assert) => {
+  test('preload relation for many', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1245,7 +1245,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
   })
 
-  test('preload relation using model instance', async (assert) => {
+  test('preload relation using model instance', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1312,7 +1312,9 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
   })
 
-  test('convert dates to luxon datetime instance when preload using model instance', async (assert) => {
+  test('convert dates to luxon datetime instance when preload using model instance', async ({
+    assert,
+  }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1364,7 +1366,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime)
   })
 
-  test('select extra pivot columns', async (assert) => {
+  test('select extra pivot columns', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1436,7 +1438,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
   })
 
-  test('select extra pivot columns at runtime', async (assert) => {
+  test('select extra pivot columns at runtime', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1511,7 +1513,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
   })
 
-  test('cherry pick columns during preload', async (assert) => {
+  test('cherry pick columns during preload', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1557,7 +1559,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.deepEqual(users[0].skills[0].$extras, { pivot_user_id: 1, pivot_skill_id: 1 })
   })
 
-  test('raise error when local key is not selected', async (assert) => {
+  test('raise error when local key is not selected', async ({ assert }) => {
     assert.plan(1)
 
     class Skill extends BaseModel {
@@ -1611,7 +1613,7 @@ test.group('Model | ManyToMany | preload', (group) => {
     }
   })
 
-  test('do not run preload query when parent rows are empty', async (assert) => {
+  test('do not run preload query when parent rows are empty', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1638,24 +1640,24 @@ test.group('Model | ManyToMany | preload', (group) => {
 })
 
 test.group('Model | ManyToMany | withCount', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get count of a relationship rows', async (assert) => {
+  test('get count of a relationship rows', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1708,7 +1710,7 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[1].$extras.skills_count), 1)
   })
 
-  test('apply constraints to the withCount subquery', async (assert) => {
+  test('apply constraints to the withCount subquery', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1765,7 +1767,7 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[1].$extras.skills_count), 0)
   })
 
-  test('allow subquery to have custom aggregates', async (assert) => {
+  test('allow subquery to have custom aggregates', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1822,7 +1824,7 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[1].$extras.skillsCount), 1)
   })
 
-  test('allow cherry picking columns', async (assert) => {
+  test('allow cherry picking columns', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1878,7 +1880,7 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(users[1].$attributes, { username: 'nikk' })
   })
 
-  test('get count of self relationship', async (assert) => {
+  test('get count of self relationship', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1930,7 +1932,7 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[3].$extras.follows_count), 0)
   })
 
-  test('define custom alias for the count', async (assert) => {
+  test('define custom alias for the count', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1991,7 +1993,7 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[1].$extras.mySkills), 1)
   })
 
-  test('get count of a nested relationship rows', async (assert) => {
+  test('get count of a nested relationship rows', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2100,7 +2102,7 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[1].$extras.skills_count), 1)
   })
 
-  test('lazy load count of relationship rows', async (assert) => {
+  test('lazy load count of relationship rows', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2148,7 +2150,7 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(user.$extras.skills_count), 2)
   })
 
-  test('apply constraints to the loadCount subquery', async (assert) => {
+  test('apply constraints to the loadCount subquery', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2200,24 +2202,24 @@ test.group('Model | ManyToMany | withCount', (group) => {
 })
 
 test.group('Model | ManyToMany | has', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async (assert) => {
+  test('limit rows to the existance of relationship', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2267,7 +2269,7 @@ test.group('Model | ManyToMany | has', (group) => {
     assert.deepEqual(users[0].username, 'virk')
   })
 
-  test('define expected number of rows', async (assert) => {
+  test('define expected number of rows', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2323,24 +2325,24 @@ test.group('Model | ManyToMany | has', (group) => {
 })
 
 test.group('Model | ManyToMany | whereHas', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async (assert) => {
+  test('limit rows to the existance of relationship', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2402,7 +2404,7 @@ test.group('Model | ManyToMany | whereHas', (group) => {
     assert.deepEqual(users[0].username, 'virk')
   })
 
-  test('define expected number of rows', async (assert) => {
+  test('define expected number of rows', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2471,24 +2473,24 @@ test.group('Model | ManyToMany | whereHas', (group) => {
 
 if (process.env.DB !== 'mysql_legacy') {
   test.group('Model | ManyToMany | Group Limit', (group) => {
-    group.before(async () => {
+    group.setup(async () => {
       app = await setupApplication()
       db = getDb(app)
       BaseModel = getBaseModel(ormAdapter(db), app)
       await setup()
     })
 
-    group.after(async () => {
+    group.teardown(async () => {
       await db.manager.closeAll()
       await cleanup()
       await fs.cleanup()
     })
 
-    group.afterEach(async () => {
+    group.each.teardown(async () => {
       await resetTables()
     })
 
-    test('apply group limit', async (assert) => {
+    test('apply group limit', async ({ assert }) => {
       class Skill extends BaseModel {
         @column({ isPrimary: true })
         public id: number
@@ -2567,7 +2569,7 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(users[1].skills[1].$extras.pivot_skill_id, 4)
     })
 
-    test('apply group limit with extra constraints', async (assert) => {
+    test('apply group limit with extra constraints', async ({ assert }) => {
       class Skill extends BaseModel {
         @column({ isPrimary: true })
         public id: number
@@ -2690,7 +2692,7 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(users[1].skills[1].$extras.pivot_skill_id, 3)
     })
 
-    test('apply group limit and select custom columns', async (assert) => {
+    test('apply group limit and select custom columns', async ({ assert }) => {
       class Skill extends BaseModel {
         @column({ isPrimary: true })
         public id: number
@@ -2821,7 +2823,7 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(users[1].skills[1].$extras.pivot_proficiency, 'Master')
     })
 
-    test('define custom order by clause', async (assert) => {
+    test('define custom order by clause', async ({ assert }) => {
       class Skill extends BaseModel {
         @column({ isPrimary: true })
         public id: number
@@ -2953,7 +2955,7 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(users[1].skills[1].$extras.pivot_proficiency, 'Master')
     })
 
-    test('apply standard limit when not eagerloading', async (assert) => {
+    test('apply standard limit when not eagerloading', async ({ assert }) => {
       class Skill extends BaseModel {
         @column({ isPrimary: true })
         public id: number
@@ -3020,7 +3022,7 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.deepEqual(bindings, knexBindings)
     })
 
-    test('apply standard order by when not eagerloading', async (assert) => {
+    test('apply standard order by when not eagerloading', async ({ assert }) => {
       class Skill extends BaseModel {
         @column({ isPrimary: true })
         public id: number
@@ -3097,20 +3099,20 @@ if (process.env.DB !== 'mysql_legacy') {
 }
 
 test.group('Model | ManyToMany | wherePivot', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('add where clause', async (assert) => {
+  test('add where clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3143,7 +3145,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where wrapped clause', async (assert) => {
+  test('add where wrapped clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3178,7 +3180,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where clause with operator', async (assert) => {
+  test('add where clause with operator', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3211,7 +3213,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where clause as a raw query', async (assert) => {
+  test('add where clause as a raw query', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3250,7 +3252,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhere clause', async (assert) => {
+  test('add orWhere clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3284,7 +3286,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhere wrapped clause', async (assert) => {
+  test('add orWhere wrapped clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3325,7 +3327,7 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('pass relationship metadata to the profiler', async (assert) => {
+  test('pass relationship metadata to the profiler', async ({ assert }) => {
     assert.plan(1)
 
     class Skill extends BaseModel {
@@ -3383,20 +3385,20 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
 })
 
 test.group('Model | ManyToMany | whereNotPivot', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('add where no clause', async (assert) => {
+  test('add where no clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3428,7 +3430,7 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where not clause with operator', async (assert) => {
+  test('add where not clause with operator', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3461,7 +3463,7 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where not clause as a raw query', async (assert) => {
+  test('add where not clause as a raw query', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3500,7 +3502,7 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhereNot clause', async (assert) => {
+  test('add orWhereNot clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3536,20 +3538,20 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
 })
 
 test.group('Model | ManyToMany | whereInPivot', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('add whereIn clause', async (assert) => {
+  test('add whereIn clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3582,7 +3584,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereIn as a query callback', async (assert) => {
+  test('add whereIn as a query callback', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3621,7 +3623,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereIn as a subquery', async (assert) => {
+  test('add whereIn as a subquery', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3659,7 +3661,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereIn as a rawquery', async (assert) => {
+  test('add whereIn as a rawquery', async ({ assert }) => {
     const ref = db.connection().getWriteClient().ref.bind(db.connection().getWriteClient())
 
     class Skill extends BaseModel {
@@ -3701,7 +3703,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereIn as a subquery with array of keys', async (assert) => {
+  test('add whereIn as a subquery with array of keys', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3739,7 +3741,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereIn as a 2d array', async (assert) => {
+  test('add whereIn as a 2d array', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3772,7 +3774,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhereIn clause', async (assert) => {
+  test('add orWhereIn clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3809,7 +3811,7 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhereIn as a query callback', async (assert) => {
+  test('add orWhereIn as a query callback', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3856,20 +3858,20 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
 })
 
 test.group('Model | ManyToMany | whereNotInPivot', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('add whereNotIn clause', async (assert) => {
+  test('add whereNotIn clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3902,7 +3904,7 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereNotIn as a query callback', async (assert) => {
+  test('add whereNotIn as a query callback', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3941,7 +3943,7 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereNotIn as a sub query', async (assert) => {
+  test('add whereNotIn as a sub query', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3979,7 +3981,7 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereNotIn as a 2d array', async (assert) => {
+  test('add whereNotIn as a 2d array', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4012,7 +4014,7 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhereNotIn clause', async (assert) => {
+  test('add orWhereNotIn clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4049,7 +4051,7 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhereNotIn as a subquery', async (assert) => {
+  test('add orWhereNotIn as a subquery', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4096,20 +4098,20 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
 })
 
 test.group('Model | ManyToMany | whereNullPivot', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('add where null clause', async (assert) => {
+  test('add where null clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4142,7 +4144,7 @@ test.group('Model | ManyToMany | whereNullPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where null wrapped clause', async (assert) => {
+  test('add where null wrapped clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4177,7 +4179,7 @@ test.group('Model | ManyToMany | whereNullPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhere null clause', async (assert) => {
+  test('add orWhere null clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4214,7 +4216,7 @@ test.group('Model | ManyToMany | whereNullPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhere null wrapped clause', async (assert) => {
+  test('add orWhere null wrapped clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4257,20 +4259,20 @@ test.group('Model | ManyToMany | whereNullPivot', (group) => {
 })
 
 test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('add where not null clause', async (assert) => {
+  test('add where not null clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4303,7 +4305,7 @@ test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where not null wrapped clause', async (assert) => {
+  test('add where not null wrapped clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4338,7 +4340,7 @@ test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhere not null clause', async (assert) => {
+  test('add orWhere not null clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4375,7 +4377,7 @@ test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhere not null wrapped clause', async (assert) => {
+  test('add orWhere not null wrapped clause', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4418,24 +4420,24 @@ test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
 })
 
 test.group('Model | ManyToMany | save', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('save related instance', async (assert) => {
+  test('save related instance', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4481,7 +4483,7 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('save related instance with pivot attributes', async (assert) => {
+  test('save related instance with pivot attributes', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4530,7 +4532,7 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('do not attach duplicates when save is called more than once', async (assert) => {
+  test('do not attach duplicates when save is called more than once', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4578,7 +4580,7 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('perform update with different pivot attributes', async (assert) => {
+  test('perform update with different pivot attributes', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4631,7 +4633,9 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('attach duplicates when save is called more than once with with checkExisting = false', async (assert) => {
+  test('attach duplicates when save is called more than once with with checkExisting = false', async ({
+    assert,
+  }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4682,7 +4686,9 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('attach duplicates with different pivot attributes and with checkExisting = false', async (assert) => {
+  test('attach duplicates with different pivot attributes and with checkExisting = false', async ({
+    assert,
+  }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4739,7 +4745,9 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('attach when related pivot entry exists but for a different parent @sanityCheck', async (assert) => {
+  test('attach when related pivot entry exists but for a different parent @sanityCheck', async ({
+    assert,
+  }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4794,7 +4802,7 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('save related instance with timestamps', async (assert) => {
+  test('save related instance with timestamps', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4845,7 +4853,7 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('do not set created_at on update', async (assert) => {
+  test('do not set created_at on update', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4901,7 +4909,7 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('do not set updated_at when disabled', async (assert) => {
+  test('do not set updated_at when disabled', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -4954,7 +4962,7 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('do not set created_at when disabled', async (assert) => {
+  test('do not set created_at when disabled', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5007,7 +5015,7 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('do not set timestamps when disabled', async (assert) => {
+  test('do not set timestamps when disabled', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5057,24 +5065,24 @@ test.group('Model | ManyToMany | save', (group) => {
 })
 
 test.group('Model | ManyToMany | saveMany', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('save many of related instance', async (assert) => {
+  test('save many of related instance', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5127,7 +5135,7 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('save many of related instance with pivot attributes', async (assert) => {
+  test('save many of related instance with pivot attributes', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5190,7 +5198,7 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('allow pivot rows without custom pivot attributes', async (assert) => {
+  test('allow pivot rows without custom pivot attributes', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5251,7 +5259,7 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('do not attach duplicates when saveMany is called more than once', async (assert) => {
+  test('do not attach duplicates when saveMany is called more than once', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5305,7 +5313,7 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('update pivot row when saveMany is called more than once', async (assert) => {
+  test('update pivot row when saveMany is called more than once', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5376,7 +5384,9 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('attach duplicates when saveMany is called more than once with checkExisting = false', async (assert) => {
+  test('attach duplicates when saveMany is called more than once with checkExisting = false', async ({
+    assert,
+  }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5435,7 +5445,9 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('attach when related pivot entry exists but for a different parent @sanityCheck', async (assert) => {
+  test('attach when related pivot entry exists but for a different parent @sanityCheck', async ({
+    assert,
+  }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5498,7 +5510,7 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('wrap saveMany inside a custom transaction', async (assert) => {
+  test('wrap saveMany inside a custom transaction', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5555,24 +5567,24 @@ test.group('Model | ManyToMany | saveMany', (group) => {
 })
 
 test.group('Model | ManyToMany | create', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create related instance', async (assert) => {
+  test('create related instance', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5615,7 +5627,7 @@ test.group('Model | ManyToMany | create', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('create related instance with pivot attributes', async (assert) => {
+  test('create related instance with pivot attributes', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5664,7 +5676,7 @@ test.group('Model | ManyToMany | create', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('wrap create inside a custom transaction', async (assert) => {
+  test('wrap create inside a custom transaction', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5714,24 +5726,24 @@ test.group('Model | ManyToMany | create', (group) => {
 })
 
 test.group('Model | ManyToMany | createMany', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create many of related instance', async (assert) => {
+  test('create many of related instance', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5782,7 +5794,7 @@ test.group('Model | ManyToMany | createMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('create many of related instance with pivot attributes', async (assert) => {
+  test('create many of related instance with pivot attributes', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5838,7 +5850,7 @@ test.group('Model | ManyToMany | createMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('allow pivot entries without custom attributes', async (assert) => {
+  test('allow pivot entries without custom attributes', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5894,7 +5906,7 @@ test.group('Model | ManyToMany | createMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('wrap create many inside a custom transaction', async (assert) => {
+  test('wrap create many inside a custom transaction', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -5942,24 +5954,24 @@ test.group('Model | ManyToMany | createMany', (group) => {
 })
 
 test.group('Model | ManyToMany | attach', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('attach one or more ids to the pivot table', async (assert) => {
+  test('attach one or more ids to the pivot table', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6002,7 +6014,7 @@ test.group('Model | ManyToMany | attach', (group) => {
     assert.equal(skillUsers[1].skill_id, 2)
   })
 
-  test('attach with extra attributes', async (assert) => {
+  test('attach with extra attributes', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6056,24 +6068,24 @@ test.group('Model | ManyToMany | attach', (group) => {
 })
 
 test.group('Model | ManyToMany | detach', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('detach one or more ids from the pivot table', async (assert) => {
+  test('detach one or more ids from the pivot table', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6127,7 +6139,7 @@ test.group('Model | ManyToMany | detach', (group) => {
     assert.equal(skillUsers[0].skill_id, 2)
   })
 
-  test('scope detach self to @sanityCheck', async (assert) => {
+  test('scope detach self to @sanityCheck', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6186,24 +6198,24 @@ test.group('Model | ManyToMany | detach', (group) => {
 })
 
 test.group('Model | ManyToMany | sync', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test("sync ids by dropping only the missing one's", async (assert) => {
+  test("sync ids by dropping only the missing one's", async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6267,7 +6279,7 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[1].skill_id, 1)
   })
 
-  test('keep duplicates of the id under sync', async (assert) => {
+  test('keep duplicates of the id under sync', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6331,7 +6343,7 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[1].skill_id, 1)
   })
 
-  test('update pivot rows when additional properties are changed', async (assert) => {
+  test('update pivot rows when additional properties are changed', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6401,7 +6413,7 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[1].proficiency, 'Master')
   })
 
-  test('do not update pivot row when no extra properties are defined', async (assert) => {
+  test('do not update pivot row when no extra properties are defined', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6467,7 +6479,7 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[1].proficiency, 'Master')
   })
 
-  test('do not remove rows when detach = false', async (assert) => {
+  test('do not remove rows when detach = false', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6538,7 +6550,7 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[2].proficiency, 'Master')
   })
 
-  test('do not remove rows when nothing has changed', async (assert) => {
+  test('do not remove rows when nothing has changed', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6609,7 +6621,7 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[2].proficiency, 'Master')
   })
 
-  test('use custom transaction', async (assert) => {
+  test('use custom transaction', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6696,24 +6708,24 @@ test.group('Model | ManyToMany | sync', (group) => {
 })
 
 test.group('Model | ManyToMany | pagination', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('paginate using related model query builder instance', async (assert) => {
+  test('paginate using related model query builder instance', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6775,7 +6787,7 @@ test.group('Model | ManyToMany | pagination', (group) => {
     })
   })
 
-  test('disallow paginate during preload', async (assert) => {
+  test('disallow paginate during preload', async ({ assert }) => {
     assert.plan(1)
 
     class Skill extends BaseModel {
@@ -6821,24 +6833,24 @@ test.group('Model | ManyToMany | pagination', (group) => {
 })
 
 test.group('Model | ManyToMany | clone', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('clone related model query builder', async (assert) => {
+  test('clone related model query builder', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6878,24 +6890,24 @@ test.group('Model | ManyToMany | clone', (group) => {
 })
 
 test.group('Model | ManyToMany | scopes', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply scopes during eagerload', async (assert) => {
+  test('apply scopes during eagerload', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -6948,7 +6960,7 @@ test.group('Model | ManyToMany | scopes', (group) => {
     assert.equal(user.skills[0].name, 'Programming')
   })
 
-  test('apply scopes on related query', async (assert) => {
+  test('apply scopes on related query', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -7002,24 +7014,24 @@ test.group('Model | ManyToMany | scopes', (group) => {
 })
 
 test.group('Model | ManyToMany | onQuery', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('invoke onQuery method when preloading relationship', async (assert) => {
+  test('invoke onQuery method when preloading relationship', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -7062,7 +7074,7 @@ test.group('Model | ManyToMany | onQuery', (group) => {
     assert.equal(user.skills[0].name, 'Programming')
   })
 
-  test('do not invoke onQuery method during preloading subqueries', async (assert) => {
+  test('do not invoke onQuery method during preloading subqueries', async ({ assert }) => {
     assert.plan(3)
 
     class Skill extends BaseModel {
@@ -7115,7 +7127,7 @@ test.group('Model | ManyToMany | onQuery', (group) => {
     assert.equal(user.skills[0].name, 'Programming')
   })
 
-  test('invoke onQuery method on related query builder', async (assert) => {
+  test('invoke onQuery method on related query builder', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -7159,7 +7171,7 @@ test.group('Model | ManyToMany | onQuery', (group) => {
     assert.equal(skills[0].name, 'Programming')
   })
 
-  test('invoke onQuery method on pivot query builder', async (assert) => {
+  test('invoke onQuery method on pivot query builder', async ({ assert }) => {
     assert.plan(4)
 
     class Skill extends BaseModel {
@@ -7212,24 +7224,24 @@ test.group('Model | ManyToMany | onQuery', (group) => {
 })
 
 test.group('Model | ManyToMany | delete', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('delete related instance', async (assert) => {
+  test('delete related instance', async ({ assert }) => {
     class Skill extends BaseModel {
       @column({ isPrimary: true })
       public id: number

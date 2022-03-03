@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
@@ -35,24 +35,24 @@ const FactoryModel = getFactoryModel()
 const factoryManager = new FactoryManager()
 
 test.group('Factory | BelongTo | make', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('make model with relationship', async (assert) => {
+  test('make model with relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public id: number
@@ -109,7 +109,7 @@ test.group('Factory | BelongTo | make', (group) => {
     assert.equal(profile.user.id, profile.userId)
   })
 
-  test('pass custom attributes to the relationship', async (assert) => {
+  test('pass custom attributes to the relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public id: number
@@ -172,7 +172,7 @@ test.group('Factory | BelongTo | make', (group) => {
     assert.equal(profile.user.points, 10)
   })
 
-  test('invoke make hook on the related factory', async (assert) => {
+  test('invoke make hook on the related factory', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public id: number
@@ -243,24 +243,24 @@ test.group('Factory | BelongTo | make', (group) => {
 })
 
 test.group('Factory | BelongTo | create', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create model with relationship', async (assert) => {
+  test('create model with relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -319,7 +319,7 @@ test.group('Factory | BelongTo | create', (group) => {
     assert.equal(profiles[0].user_id, users[0].id)
   })
 
-  test('pass custom attributes to the relationship', async (assert) => {
+  test('pass custom attributes to the relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public userId: number
@@ -376,7 +376,7 @@ test.group('Factory | BelongTo | create', (group) => {
     assert.equal(profile.user.points, 10)
   })
 
-  test('create model with custom foreign key', async (assert) => {
+  test('create model with custom foreign key', async ({ assert }) => {
     class Profile extends BaseModel {
       @column({ columnName: 'user_id' })
       public authorId: number
@@ -433,7 +433,7 @@ test.group('Factory | BelongTo | create', (group) => {
     assert.equal(profile.user.points, 10)
   })
 
-  test('rollback changes on error', async (assert) => {
+  test('rollback changes on error', async ({ assert }) => {
     assert.plan(3)
 
     class Profile extends BaseModel {

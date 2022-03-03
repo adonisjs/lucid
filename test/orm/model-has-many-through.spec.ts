@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import type { HasManyThrough } from '@ioc:Adonis/Lucid/Orm'
 
 import { scope } from '../../src/Helpers/scope'
@@ -32,20 +32,20 @@ let app: ApplicationContract
 let BaseModel: ReturnType<typeof getBaseModel>
 
 test.group('Model | Has Many Through | Options', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('raise error when localKey is missing', (assert) => {
+  test('raise error when localKey is missing', ({ assert }) => {
     assert.plan(1)
 
     try {
@@ -70,7 +70,7 @@ test.group('Model | Has Many Through | Options', (group) => {
     }
   })
 
-  test('raise error when foreignKey is missing', (assert) => {
+  test('raise error when foreignKey is missing', ({ assert }) => {
     assert.plan(1)
 
     try {
@@ -98,7 +98,7 @@ test.group('Model | Has Many Through | Options', (group) => {
     }
   })
 
-  test('raise error when through local key is missing', (assert) => {
+  test('raise error when through local key is missing', ({ assert }) => {
     assert.plan(1)
 
     try {
@@ -129,7 +129,7 @@ test.group('Model | Has Many Through | Options', (group) => {
     }
   })
 
-  test('raise error when through foreign key is missing', (assert) => {
+  test('raise error when through foreign key is missing', ({ assert }) => {
     assert.plan(1)
 
     try {
@@ -163,7 +163,7 @@ test.group('Model | Has Many Through | Options', (group) => {
     }
   })
 
-  test('compute all required keys', (assert) => {
+  test('compute all required keys', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -205,7 +205,7 @@ test.group('Model | Has Many Through | Options', (group) => {
     assert.equal(relation['throughForeignKeyColumnName'], 'user_id')
   })
 
-  test('compute custom keys', (assert) => {
+  test('compute custom keys', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public uid: number
@@ -252,7 +252,7 @@ test.group('Model | Has Many Through | Options', (group) => {
     assert.equal(relation['throughForeignKeyColumnName'], 'user_uid')
   })
 
-  test('clone relationship instance with options', (assert) => {
+  test('clone relationship instance with options', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public uid: number
@@ -304,20 +304,20 @@ test.group('Model | Has Many Through | Options', (group) => {
 })
 
 test.group('Model | Has Many Through | Set Relations', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  test('set related model instance', (assert) => {
+  test('set related model instance', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -351,7 +351,7 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
     assert.deepEqual(country.posts, [post])
   })
 
-  test('push related model instance', (assert) => {
+  test('push related model instance', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -387,7 +387,7 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
     assert.deepEqual(country.posts, [post, post1])
   })
 
-  test('set many of related instances', (assert) => {
+  test('set many of related instances', ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -452,24 +452,24 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
 })
 
 test.group('Model | Has Many Through | bulk operations', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sql for selecting related rows', async (assert) => {
+  test('generate correct sql for selecting related rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -512,7 +512,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for selecting many related rows', async (assert) => {
+  test('generate correct sql for selecting many related rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -558,7 +558,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for updating related rows', async (assert) => {
+  test('generate correct sql for updating related rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -610,7 +610,7 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for deleting related rows', async (assert) => {
+  test('generate correct sql for deleting related rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -656,24 +656,24 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
 })
 
 test.group('Model | HasMany | sub queries', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sub query for selecting rows', async (assert) => {
+  test('generate correct sub query for selecting rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -713,7 +713,7 @@ test.group('Model | HasMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('create aggregate query', async (assert) => {
+  test('create aggregate query', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -758,7 +758,7 @@ test.group('Model | HasMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('allow selecting custom columns', async (assert) => {
+  test('allow selecting custom columns', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -803,7 +803,7 @@ test.group('Model | HasMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct self relationship subquery', async (assert) => {
+  test('generate correct self relationship subquery', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -848,7 +848,7 @@ test.group('Model | HasMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('raise exception when trying to execute the query', async (assert) => {
+  test('raise exception when trying to execute the query', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -883,15 +883,15 @@ test.group('Model | HasMany | sub queries', (group) => {
     const firstOrFail = () =>
       Country.$getRelation('posts')!.subQuery(db.connection())['firstOrFail']()
 
-    assert.throw(exec, 'Cannot execute relationship subqueries')
-    assert.throw(paginate, 'Cannot execute relationship subqueries')
-    assert.throw(update, 'Cannot execute relationship subqueries')
-    assert.throw(del, 'Cannot execute relationship subqueries')
-    assert.throw(first, 'Cannot execute relationship subqueries')
-    assert.throw(firstOrFail, 'Cannot execute relationship subqueries')
+    assert.throws(exec, 'Cannot execute relationship subqueries')
+    assert.throws(paginate, 'Cannot execute relationship subqueries')
+    assert.throws(update, 'Cannot execute relationship subqueries')
+    assert.throws(del, 'Cannot execute relationship subqueries')
+    assert.throws(first, 'Cannot execute relationship subqueries')
+    assert.throws(firstOrFail, 'Cannot execute relationship subqueries')
   })
 
-  test('run onQuery method when defined', async (assert) => {
+  test('run onQuery method when defined', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -939,24 +939,24 @@ test.group('Model | HasMany | sub queries', (group) => {
 })
 
 test.group('Model | Has Many Through | aggregates', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get total of all related rows', async (assert) => {
+  test('get total of all related rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1007,7 +1007,7 @@ test.group('Model | Has Many Through | aggregates', (group) => {
     assert.deepEqual(Number(total[0].$extras.total), 2)
   })
 
-  test('select extra columns with count', async (assert) => {
+  test('select extra columns with count', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1070,24 +1070,24 @@ test.group('Model | Has Many Through | aggregates', (group) => {
 })
 
 test.group('Model | Has Many Through | preload', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('preload through relationships', async (assert) => {
+  test('preload through relationships', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1153,7 +1153,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.equal(countries[0].posts[2].$extras.through_country_id, 1)
   })
 
-  test('preload many relationships', async (assert) => {
+  test('preload many relationships', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1221,7 +1221,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
   })
 
-  test('preload many relationships using model instance', async (assert) => {
+  test('preload many relationships using model instance', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1293,7 +1293,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
   })
 
-  test('cherry pick columns during preload', async (assert) => {
+  test('cherry pick columns during preload', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1364,7 +1364,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.deepEqual(countries[1].posts[0].$extras, { through_country_id: 2 })
   })
 
-  test('raise error when local key is not selected', async (assert) => {
+  test('raise error when local key is not selected', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1424,7 +1424,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     }
   })
 
-  test('pass relationship metadata to the profiler', async (assert) => {
+  test('pass relationship metadata to the profiler', async ({ assert }) => {
     assert.plan(1)
 
     class User extends BaseModel {
@@ -1497,7 +1497,7 @@ test.group('Model | Has Many Through | preload', (group) => {
     await Country.query({ profiler }).preload('posts')
   })
 
-  test('do not run preload query when parent rows are empty', async (assert) => {
+  test('do not run preload query when parent rows are empty', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1536,24 +1536,24 @@ test.group('Model | Has Many Through | preload', (group) => {
 })
 
 test.group('Model | Has Many Through | withCount', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get count of a relationship rows', async (assert) => {
+  test('get count of a relationship rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1617,7 +1617,7 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.equal(countries[1].$extras.posts_count, 2)
   })
 
-  test('apply constraints to the withCount subquery', async (assert) => {
+  test('apply constraints to the withCount subquery', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1685,7 +1685,7 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.equal(countries[1].$extras.posts_count, 1)
   })
 
-  test('allow subquery to have custom aggregates', async (assert) => {
+  test('allow subquery to have custom aggregates', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1753,7 +1753,7 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.equal(countries[1].$extras.postsCount, 2)
   })
 
-  test('allow cherry picking columns', async (assert) => {
+  test('allow cherry picking columns', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1820,7 +1820,7 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.deepEqual(countries[1].$attributes, { name: 'Switzerland' })
   })
 
-  test('define custom alias for the count', async (assert) => {
+  test('define custom alias for the count', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1892,7 +1892,7 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.deepEqual(Number(countries[1].$extras.countryPosts), 2)
   })
 
-  test('lazy load relationship rows', async (assert) => {
+  test('lazy load relationship rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -1953,7 +1953,7 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.equal(Number(country.$extras.posts_count), 3)
   })
 
-  test('apply constraints to the loadCount subquery', async (assert) => {
+  test('apply constraints to the loadCount subquery', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2018,24 +2018,24 @@ test.group('Model | Has Many Through | withCount', (group) => {
 })
 
 test.group('Model | Has Many Through | has', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async (assert) => {
+  test('limit rows to the existance of relationship', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2099,7 +2099,7 @@ test.group('Model | Has Many Through | has', (group) => {
     assert.equal(countries[0].name, 'India')
   })
 
-  test('define expected number of rows', async (assert) => {
+  test('define expected number of rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2167,24 +2167,24 @@ test.group('Model | Has Many Through | has', (group) => {
 })
 
 test.group('Model | Has Many Through | whereHas', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async (assert) => {
+  test('limit rows to the existance of relationship', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2254,7 +2254,7 @@ test.group('Model | Has Many Through | whereHas', (group) => {
     assert.equal(countries[0].name, 'India')
   })
 
-  test('define expected number of rows', async (assert) => {
+  test('define expected number of rows', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2332,24 +2332,24 @@ test.group('Model | Has Many Through | whereHas', (group) => {
 
 if (process.env.DB !== 'mysql_legacy') {
   test.group('Model | Has Many Through | Group Limit', (group) => {
-    group.before(async () => {
+    group.setup(async () => {
       app = await setupApplication()
       db = getDb(app)
       BaseModel = getBaseModel(ormAdapter(db), app)
       await setup()
     })
 
-    group.after(async () => {
+    group.teardown(async () => {
       await db.manager.closeAll()
       await cleanup()
       await fs.cleanup()
     })
 
-    group.afterEach(async () => {
+    group.each.teardown(async () => {
       await resetTables()
     })
 
-    test('apply group limit', async (assert) => {
+    test('apply group limit', async ({ assert }) => {
       class User extends BaseModel {
         @column({ isPrimary: true })
         public id: number
@@ -2438,7 +2438,7 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(countries[1].posts[1].$extras.through_country_id, 2)
     })
 
-    test('apply group limit with custom constraints', async (assert) => {
+    test('apply group limit with custom constraints', async ({ assert }) => {
       class User extends BaseModel {
         @column({ isPrimary: true })
         public id: number
@@ -2529,7 +2529,7 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(countries[1].posts[1].$extras.through_country_id, 2)
     })
 
-    test('apply group limit and cherry pick fields', async (assert) => {
+    test('apply group limit and cherry pick fields', async ({ assert }) => {
       class User extends BaseModel {
         @column({ isPrimary: true })
         public id: number
@@ -2627,7 +2627,7 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(countries[1].posts[1].$extras.through_country_id, 2)
     })
 
-    test('apply group limit with custom order', async (assert) => {
+    test('apply group limit with custom order', async ({ assert }) => {
       class User extends BaseModel {
         @column({ isPrimary: true })
         public id: number
@@ -2725,7 +2725,7 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(countries[1].posts[1].$extras.through_country_id, 2)
     })
 
-    test('apply standard limit when not eagerloading', async (assert) => {
+    test('apply standard limit when not eagerloading', async ({ assert }) => {
       class User extends BaseModel {
         @column({ isPrimary: true })
         public id: number
@@ -2798,7 +2798,7 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.deepEqual(bindings, knexBindings)
     })
 
-    test('apply standard order by when not eagerloading', async (assert) => {
+    test('apply standard order by when not eagerloading', async ({ assert }) => {
       class User extends BaseModel {
         @column({ isPrimary: true })
         public id: number
@@ -2881,24 +2881,24 @@ if (process.env.DB !== 'mysql_legacy') {
 }
 
 test.group('Model | Has Many Through | pagination', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('paginate using related model query builder instance', async (assert) => {
+  test('paginate using related model query builder instance', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -2986,7 +2986,7 @@ test.group('Model | Has Many Through | pagination', (group) => {
     })
   })
 
-  test('disallow paginate during preload', async (assert) => {
+  test('disallow paginate during preload', async ({ assert }) => {
     assert.plan(1)
 
     class User extends BaseModel {
@@ -3024,24 +3024,24 @@ test.group('Model | Has Many Through | pagination', (group) => {
 })
 
 test.group('Model | Has Many Through | clone', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('clone related model query builder', async (assert) => {
+  test('clone related model query builder', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3108,24 +3108,24 @@ test.group('Model | Has Many Through | clone', (group) => {
 })
 
 test.group('Model | Has Many Through | scopes', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply scopes during eagerload', async (assert) => {
+  test('apply scopes during eagerload', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3206,7 +3206,7 @@ test.group('Model | Has Many Through | scopes', (group) => {
     assert.equal(country.posts[0].title, 'Adonis 101')
   })
 
-  test('apply scopes on related query', async (assert) => {
+  test('apply scopes on related query', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3287,24 +3287,24 @@ test.group('Model | Has Many Through | scopes', (group) => {
 })
 
 test.group('Model | Has Many Through | onQuery', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     db = getDb(app)
     BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await db.manager.closeAll()
     await cleanup()
     await fs.cleanup()
   })
 
-  group.afterEach(async () => {
+  group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('invoke onQuery method when preloading relationship', async (assert) => {
+  test('invoke onQuery method when preloading relationship', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3374,7 +3374,7 @@ test.group('Model | Has Many Through | onQuery', (group) => {
     assert.equal(country.posts[0].title, 'Adonis 101')
   })
 
-  test('do not invoke onQuery method on preloading subqueries', async (assert) => {
+  test('do not invoke onQuery method on preloading subqueries', async ({ assert }) => {
     assert.plan(3)
 
     class User extends BaseModel {
@@ -3453,7 +3453,7 @@ test.group('Model | Has Many Through | onQuery', (group) => {
     assert.equal(country.posts[0].title, 'Adonis 101')
   })
 
-  test('invoke onQuery method on related query builder', async (assert) => {
+  test('invoke onQuery method on related query builder', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number
@@ -3525,7 +3525,7 @@ test.group('Model | Has Many Through | onQuery', (group) => {
     assert.equal(posts[0].title, 'Adonis 101')
   })
 
-  test('do not invoke onQuery method on related query builder subqueries', async (assert) => {
+  test('do not invoke onQuery method on related query builder subqueries', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
       public id: number

@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import test from 'japa'
+import { test } from '@japa/runner'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { Database } from '../../src/Database'
@@ -18,17 +18,17 @@ import { fs, getConfig, setup, cleanup, getDb, setupApplication } from '../../te
 let app: ApplicationContract
 
 test.group('Database', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  test('register all connections with the manager', (assert) => {
+  test('register all connections with the manager', ({ assert }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
@@ -46,7 +46,7 @@ test.group('Database', (group) => {
     assert.isUndefined(db.manager.connections.get('primary')!.connection)
   })
 
-  test('make connection when db.connection is called', async (assert, done) => {
+  test('make connection when db.connection is called', async ({ assert }, done) => {
     assert.plan(1)
 
     const config = {
@@ -63,9 +63,9 @@ test.group('Database', (group) => {
 
     db.connection()
     await db.manager.closeAll()
-  })
+  }).waitForDone()
 
-  test('make connection to a named connection', async (assert, done) => {
+  test('make connection to a named connection', async ({ assert }, done) => {
     assert.plan(1)
 
     const config = {
@@ -82,9 +82,9 @@ test.group('Database', (group) => {
 
     db.connection('primary')
     await db.manager.closeAll()
-  })
+  }).waitForDone()
 
-  test('make connection to a named connection in write mode', async (assert) => {
+  test('make connection to a named connection in write mode', async ({ assert }) => {
     assert.plan(1)
 
     const config = {
@@ -104,7 +104,7 @@ test.group('Database', (group) => {
     await db.manager.closeAll()
   })
 
-  test('make connection to a named connection in read mode', async (assert) => {
+  test('make connection to a named connection in read mode', async ({ assert }) => {
     assert.plan(1)
 
     const config = {
@@ -124,7 +124,7 @@ test.group('Database', (group) => {
     await db.manager.closeAll()
   })
 
-  test('get transaction instance', async (assert) => {
+  test('get transaction instance', async ({ assert }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
@@ -145,7 +145,7 @@ test.group('Database', (group) => {
     await db.manager.closeAll()
   })
 
-  test('get raw query builder instance', async (assert) => {
+  test('get raw query builder instance', async ({ assert }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
@@ -162,7 +162,7 @@ test.group('Database', (group) => {
     await db.manager.closeAll()
   })
 
-  test('get raw query builder instance in read mode', async (assert) => {
+  test('get raw query builder instance in read mode', async ({ assert }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
@@ -179,7 +179,7 @@ test.group('Database', (group) => {
     await db.manager.closeAll()
   })
 
-  test('get raw query builder instance in write mode', async (assert) => {
+  test('get raw query builder instance in write mode', async ({ assert }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
@@ -196,7 +196,7 @@ test.group('Database', (group) => {
     await db.manager.closeAll()
   })
 
-  test('pass profiler to query client', async (assert) => {
+  test('pass profiler to query client', async ({ assert }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
@@ -210,7 +210,7 @@ test.group('Database', (group) => {
     await db.manager.closeAll()
   })
 
-  test('pass custom profiler to query client', async (assert) => {
+  test('pass custom profiler to query client', async ({ assert }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
@@ -226,7 +226,9 @@ test.group('Database', (group) => {
     await db.manager.closeAll()
   })
 
-  test('set hasHealthChecks enabled flag to true, when one ore more connections are using health checks', async (assert) => {
+  test('set hasHealthChecks enabled flag to true, when one ore more connections are using health checks', async ({
+    assert,
+  }) => {
     const config = {
       connection: 'primary',
       connections: { primary: Object.assign({}, getConfig(), { healthCheck: true }) },
@@ -244,17 +246,17 @@ test.group('Database', (group) => {
 })
 
 test.group('Database | extend', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  test('extend database query builder by adding macros', async (assert) => {
+  test('extend database query builder by adding macros', async ({ assert }) => {
     const db = getDb(app)
 
     db.DatabaseQueryBuilder.macro('whereActive', function whereActive() {
@@ -276,7 +278,7 @@ test.group('Database | extend', (group) => {
     await db.manager.closeAll()
   })
 
-  test('extend insert query builder by adding macros', async (assert) => {
+  test('extend insert query builder by adding macros', async ({ assert }) => {
     const db = getDb(app)
 
     db.InsertQueryBuilder.macro('returnId', function whereActive() {
@@ -307,17 +309,17 @@ test.group('Database | extend', (group) => {
 })
 
 test.group('Database | global transaction', (group) => {
-  group.before(async () => {
+  group.setup(async () => {
     app = await setupApplication()
     await setup()
   })
 
-  group.after(async () => {
+  group.teardown(async () => {
     await cleanup()
     await fs.cleanup()
   })
 
-  test('perform queries inside a global transaction', async (assert) => {
+  test('perform queries inside a global transaction', async ({ assert }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
@@ -341,7 +343,7 @@ test.group('Database | global transaction', (group) => {
     await db.manager.closeAll()
   })
 
-  test('create transactions inside a global transaction', async (assert) => {
+  test('create transactions inside a global transaction', async ({ assert }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
@@ -368,7 +370,7 @@ test.group('Database | global transaction', (group) => {
     await db.manager.closeAll()
   })
 
-  test('multiple calls to beginGlobalTransaction must be a noop', async (assert) => {
+  test('multiple calls to beginGlobalTransaction must be a noop', async ({ assert }) => {
     const config = {
       connection: 'primary',
       connections: { primary: getConfig() },
