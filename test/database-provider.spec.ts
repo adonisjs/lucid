@@ -113,6 +113,6 @@ test.group('Database Provider', (group) => {
     )
 
     const TestUtils = app.container.use('Adonis/Core/TestUtils')
-    assert.properties(TestUtils.db, ['seed', 'migrate'])
-  }).skip(true)
+    assert.properties(TestUtils.db(), ['seed', 'migrate'])
+  })
 })

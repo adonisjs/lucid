@@ -7,24 +7,31 @@
  * file that was distributed with this source code.
  */
 
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
+import type Ace from '@ioc:Adonis/Core/Ace'
 
-import { SeedsRunner } from '../SeedsRunner'
-
+/**
+ * Seeder class to be used for testing
+ */
 export class TestsSeeder {
-  constructor(
-    private Db: DatabaseContract,
-    private connectionName: string,
-    private application: ApplicationContract
-  ) {}
+  constructor(private ace: typeof Ace, private connectionName?: string) {}
 
-  public async seed() {
-    const runner = new SeedsRunner(this.Db, this.application, this.connectionName)
-    const seeders = await runner.getList()
-
-    for (let seeder of seeders) {
-      await runner.run(seeder)
+  private async runCommand(commandName: string) {
+    const args: string[] = []
+    if (this.connectionName) {
+      args.push(`--connection="${this.connectionName}"`)
     }
+
+    const command = await this.ace.exec(commandName, args)
+    if (command.exitCode) {
+      if (command.error) {
+        throw command.error
+      } else {
+        throw new Error(`"${commandName}" failed`)
+      }
+    }
+  }
+
+  public async run() {
+    await this.runCommand('db:seed')
   }
 }
