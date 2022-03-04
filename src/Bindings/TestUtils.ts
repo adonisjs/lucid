@@ -7,28 +7,24 @@
  * file that was distributed with this source code.
  */
 
-import type { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
 import type { TestUtilsContract } from '@ioc:Adonis/Core/TestUtils'
-import type { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
-import { TestsMigrator } from '../TestUtils/Migration'
+import type Ace from '@ioc:Adonis/Core/Ace'
+
 import { TestsSeeder } from '../TestUtils/Seeder'
+import { TestsMigrator } from '../TestUtils/Migration'
 
 /**
  * Define database testing utilities
  */
-export function defineTestUtils(
-  testUtils: TestUtilsContract,
-  db: DatabaseContract,
-  application: ApplicationContract
-) {
+export function defineTestUtils(testUtils: TestUtilsContract, ace: typeof Ace) {
   testUtils.constructor.macro('db', (connectionName?: string) => {
     return {
       migrate() {
-        return new TestsMigrator(db, connectionName || db.primaryConnectionName, application).run()
+        return new TestsMigrator(ace, connectionName).run()
       },
       seed() {
-        return new TestsSeeder(db, connectionName || db.primaryConnectionName, application).seed()
+        return new TestsSeeder(ace, connectionName).run()
       },
     }
   })

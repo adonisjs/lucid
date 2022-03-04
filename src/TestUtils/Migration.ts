@@ -7,39 +7,32 @@
  * file that was distributed with this source code.
  */
 
-import type { DatabaseContract } from '@ioc:Adonis/Lucid/Database'
-import type { ApplicationContract } from '@ioc:Adonis/Core/Application'
-
-import { Migrator } from '../Migrator'
+import type Ace from '@ioc:Adonis/Core/Ace'
 
 /**
  * Migrator class to be used for testing.
  */
 export class TestsMigrator {
-  constructor(
-    private Db: DatabaseContract,
-    private connectionName: string,
-    private application: ApplicationContract
-  ) {}
+  constructor(private ace: typeof Ace, private connectionName?: string) {}
 
-  private async rollback() {
-    const migrator = new Migrator(this.Db, this.application, {
-      direction: 'down',
-      connectionName: this.connectionName,
-      dryRun: false,
-    })
+  private async runCommand(commandName: string) {
+    const args: string[] = []
+    if (this.connectionName) {
+      args.push(`--connection="${this.connectionName}"`)
+    }
 
-    migrator.run()
+    const command = await this.ace.exec(commandName, args)
+    if (command.exitCode) {
+      if (command.error) {
+        throw command.error
+      } else {
+        throw new Error(`"${commandName}" failed`)
+      }
+    }
   }
 
   public async run() {
-    const migrator = new Migrator(this.Db, this.application, {
-      direction: 'up',
-      connectionName: this.connectionName,
-      dryRun: false,
-    })
-
-    await migrator.run()
-    return () => this.rollback()
+    await this.runCommand('migration:run')
+    return () => this.runCommand('migration:rollback')
   }
 }

@@ -160,10 +160,10 @@ export default class DatabaseServiceProvider {
    */
   private defineTestUtils() {
     this.app.container.withBindings(
-      ['Adonis/Core/TestUtils', 'Adonis/Lucid/Database'],
-      (testUtils, Db) => {
+      ['Adonis/Core/TestUtils', 'Adonis/Core/Ace'],
+      (testUtils, ace) => {
         const { defineTestUtils } = require('../src/Bindings/TestUtils')
-        return new defineTestUtils(testUtils, Db, this.app)
+        return new defineTestUtils(testUtils, ace)
       }
     )
   }
