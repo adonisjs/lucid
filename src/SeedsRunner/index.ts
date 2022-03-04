@@ -81,4 +81,11 @@ export class SeedsRunner {
 
     return seeder
   }
+
+  /**
+   * Close database connections
+   */
+  public async close() {
+    await this.db.manager.closeAll(true)
+  }
 }

@@ -22,15 +22,13 @@ export function defineTestUtils(
   db: DatabaseContract,
   application: ApplicationContract
 ) {
-  testUtils.constructor.getter('db', () => {
+  testUtils.constructor.macro('db', (connectionName?: string) => {
     return {
-      migrate(connectionName?: string) {
-        return () =>
-          new TestsMigrator(db, connectionName || db.primaryConnectionName, application).run()
+      migrate() {
+        return new TestsMigrator(db, connectionName || db.primaryConnectionName, application).run()
       },
-      seed(connectionName?: string) {
-        return () =>
-          new TestsSeeder(db, connectionName || db.primaryConnectionName, application).seed()
+      seed() {
+        return new TestsSeeder(db, connectionName || db.primaryConnectionName, application).seed()
       },
     }
   })

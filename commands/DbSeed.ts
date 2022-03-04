@@ -9,12 +9,20 @@
 
 import slash from 'slash'
 import { extname } from 'path'
+import { FileNode } from '@ioc:Adonis/Lucid/Database'
 import { SeederFileNode } from '@ioc:Adonis/Lucid/Seeder'
 import { BaseCommand, flags } from '@adonisjs/core/build/standalone'
 
+import type { SeedsRunner } from '../src/SeedsRunner'
+
 export default class DbSeed extends BaseCommand {
   public static commandName = 'db:seed'
-  public static description = 'Execute database seeder files'
+  public static description = 'Execute database seeders'
+  public static settings = {
+    loadApp: true,
+  }
+
+  private seeder: SeedsRunner
 
   /**
    * Track if one or more seeders have failed
@@ -40,14 +48,6 @@ export default class DbSeed extends BaseCommand {
    */
   @flags.array({ description: 'Define a custom set of seeders files names to run', alias: 'f' })
   public files: string[] = []
-
-  /**
-   * This command loads the application, since we need the runtime
-   * to find the migration directories for a given connection
-   */
-  public static settings = {
-    loadApp: true,
-  }
 
   /**
    * Print log message to the console
@@ -87,88 +87,139 @@ export default class DbSeed extends BaseCommand {
   }
 
   /**
-   * Execute command
+   * Not a valid connection
    */
-  public async run(): Promise<void> {
-    const db = this.application.container.use('Adonis/Lucid/Database')
+  private printNotAValidConnection(connection: string) {
+    this.logger.error(
+      `"${connection}" is not a valid connection name. Double check "config/database" file`
+    )
+  }
 
-    this.connection = this.connection || db.primaryConnectionName
-    const connection = db.getRawConnection(this.connection)
+  /**
+   * Print log that the selected seeder file is invalid
+   */
+  private printNotAValidFile(fileName: string) {
+    this.printLogMessage({
+      file: {
+        name: fileName,
+        absPath: fileName,
+        getSource: () => {},
+      },
+      status: 'failed',
+      error: new Error('Invalid file path. Pass relative path from the application root'),
+    })
+  }
 
-    /**
-     * Ensure the define connection name does exists in the
-     * config file
-     */
-    if (!connection) {
-      this.logger.error(
-        `"${connection}" is not a valid connection name. Double check config/database file`
-      )
-      return
-    }
-
-    const { SeedsRunner } = await import('../src/SeedsRunner')
-    const runner = new SeedsRunner(db, this.application, this.connection)
-
-    /**
-     * List of available files
-     */
-    const files = await runner.getList()
-
-    /**
-     * List of selected files. Initially, all files are selected and one
-     * can cherry pick using the `--interactive` or `--files` flag.
-     */
-    let selectedFileNames: string[] = files.map(({ name }) => name)
-
+  /**
+   * Get files cherry picked using either "--interactive" or the
+   * "--files" flag
+   */
+  private async getCherryPickedFiles(seedersFiles: FileNode<unknown>[]): Promise<string[]> {
     if (this.files.length) {
-      selectedFileNames = this.files.map((file) => {
+      return this.files.map((file) => {
         const fileExt = extname(file)
         return (fileExt ? file.replace(fileExt, '') : file).replace(/^\.\/|^\.\\\\/, '')
       })
-
-      if (this.interactive) {
-        this.logger.warning(
-          'Cannot use "--interactive" and "--files" together. Ignoring "--interactive"'
-        )
-      }
     } else if (this.interactive) {
-      selectedFileNames = await this.prompt.multiple(
+      return await this.prompt.multiple(
         'Select files to run',
-        files.map((file) => {
+        seedersFiles.map((file) => {
           return { name: file.name }
         })
       )
     }
 
+    return seedersFiles.map((file) => file.name)
+  }
+
+  /**
+   * Instantiate seeders runner
+   */
+  private async instantiateSeeder() {
+    const db = this.application.container.use('Adonis/Lucid/Database')
+    const { SeedsRunner } = await import('../src/SeedsRunner')
+    this.seeder = new SeedsRunner(db, this.application, this.connection)
+  }
+
+  /**
+   * Run as a subcommand. Never close database connection or exit
+   * process here
+   */
+  private async runAsSubCommand() {
+    const db = this.application.container.use('Adonis/Lucid/Database')
+    this.connection = this.connection || db.primaryConnectionName
+
+    /**
+     * Invalid database connection
+     */
+    if (!db.manager.has(this.connection)) {
+      this.printNotAValidConnection(this.connection)
+      this.exitCode = 1
+      return
+    }
+
+    /**
+     * Cannot use --files and --interactive together
+     */
+    if (this.files && this.interactive) {
+      this.logger.warning(
+        'Cannot use "--interactive" and "--files" together. Ignoring "--interactive"'
+      )
+    }
+
+    await this.instantiateSeeder()
+    const files = await this.seeder.getList()
+    const cherryPickedFiles = await this.getCherryPickedFiles(files)
+
     /**
      * Execute selected seeders
      */
-    for (let fileName of selectedFileNames) {
-      const sourceFile = files.find(({ name }) => {
-        return slash(fileName) === slash(name)
-      })
+    for (let fileName of cherryPickedFiles) {
+      const sourceFile = files.find(({ name }) => slash(fileName) === slash(name))
+
       if (!sourceFile) {
-        this.printLogMessage({
-          file: {
-            name: fileName,
-            absPath: fileName,
-            getSource: () => {},
-          },
-          status: 'failed',
-          error: new Error('Invalid file path. Pass relative path from the application root'),
-        })
+        this.printNotAValidFile(fileName)
         this.hasError = true
       } else {
-        const response = await runner.run(sourceFile)
+        const response = await this.seeder.run(sourceFile)
         if (response.status === 'failed') {
           this.hasError = true
         }
-
         this.printLogMessage(response)
       }
     }
 
     this.exitCode = this.hasError ? 1 : 0
-    await db.manager.closeAll(true)
+  }
+
+  /**
+   * Branching out, so that if required we can implement
+   * "runAsMain" separately from "runAsSubCommand".
+   *
+   * For now, they both are the same
+   */
+  private async runAsMain() {
+    await this.runAsSubCommand()
+  }
+
+  /**
+   * Handle command
+   */
+  public async run(): Promise<void> {
+    if (this.isMain) {
+      await this.runAsMain()
+    } else {
+      await this.runAsSubCommand()
+    }
+  }
+
+  /**
+   * Lifecycle method invoked by ace after the "run"
+   * method.
+   */
+  public async completed() {
+    if (this.seeder && this.isMain) {
+      await this.seeder.close()
+    }
   }
 }

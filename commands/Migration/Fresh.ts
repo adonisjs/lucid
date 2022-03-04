@@ -7,20 +7,18 @@
  * file that was distributed with this source code.
  */
 
-import { flags } from '@adonisjs/core/build/standalone'
-
-import Run from './Run'
-import DbSeed from '../DbSeed'
-import DbWipe from '../DbWipe'
-import MigrationsBase from './Base'
+import { flags, BaseCommand } from '@adonisjs/core/build/standalone'
 
 /**
  * This command reset the database by rolling back to batch 0 and then
  * re-run all migrations.
  */
-export default class Refresh extends MigrationsBase {
+export default class Refresh extends BaseCommand {
   public static commandName = 'migration:fresh'
-  public static description = 'Drop all tables and re-run all migrations.'
+  public static description = 'Drop all tables and re-migrate the database'
+  public static settings = {
+    loadApp: true,
+  }
 
   /**
    * Custom connection for running migrations.
@@ -33,12 +31,6 @@ export default class Refresh extends MigrationsBase {
    */
   @flags.boolean({ description: 'Explicitly force command to run in production' })
   public force: boolean
-
-  /**
-   * Perform dry run
-   */
-  @flags.boolean({ description: 'Only print SQL queries instead of executing them' })
-  public dryRun: boolean
 
   /**
    * Run seeders
@@ -55,93 +47,89 @@ export default class Refresh extends MigrationsBase {
   /**
    * Drop all types in database
    */
-  @flags.boolean({ description: 'Drop all custom types ( Postgres only )' })
+  @flags.boolean({ description: 'Drop all custom types (Postgres only)' })
   public dropTypes: boolean
 
   /**
-   * This command loads the application, since we need the runtime
-   * to find the migration directories for a given connection
+   * Converting command properties to arguments
    */
-  public static settings = {
-    loadApp: true,
+  private getArgs() {
+    const args: string[] = []
+    if (this.force) {
+      args.push('--force')
+    }
+
+    if (this.connection) {
+      args.push(`--connection="${this.connection}"`)
+    }
+
+    return args
+  }
+
+  /**
+   * Converting command properties to db:wipe arguments
+   */
+  private getWipeArgs() {
+    const args: string[] = this.getArgs()
+    if (this.dropTypes) {
+      args.push('--drop-types')
+    }
+
+    if (this.dropViews) {
+      args.push('--drop-views')
+    }
+
+    return args
+  }
+
+  /**
+   * Wipe the database
+   */
+  private async runDbWipe() {
+    const dbWipe = await this.kernel.exec('db:wipe', this.getWipeArgs())
+    this.exitCode = dbWipe.exitCode
+    this.error = dbWipe.error
+  }
+
+  /**
+   * Run migrations
+   */
+  private async runMigrations() {
+    const migrate = await this.kernel.exec('migration:run', this.getArgs())
+    this.exitCode = migrate.exitCode
+    this.error = migrate.error
+  }
+
+  /**
+   * Run seeders
+   */
+  private async runDbSeed() {
+    const args: string[] = []
+    if (this.connection) {
+      args.push(`--connection="${this.connection}"`)
+    }
+
+    const dbSeed = await this.kernel.exec('db:seed', args)
+    this.exitCode = dbSeed.exitCode
+    this.error = dbSeed.error
   }
 
   /**
    * Handle command
    */
   public async run(): Promise<void> {
-    const db = this.application.container.use('Adonis/Lucid/Database')
-    this.connection = this.connection || db.primaryConnectionName
-
-    const continueMigrations =
-      !this.application.inProduction || this.force || (await this.takeProductionConstent())
-
-    /**
-     * Prompt cancelled or rejected and hence do not continue
-     */
-    if (!continueMigrations) {
-      return
-    }
-
-    const connection = db.getRawConnection(this.connection)
-
-    /**
-     * Ensure the define connection name does exists in the
-     * config file
-     */
-    if (!connection) {
-      this.printNotAValidConnection(this.connection)
-      this.exitCode = 1
-      return
-    }
-
     await this.runDbWipe()
-    await this.runMigrationRun()
+    if (this.exitCode) {
+      return
+    }
+
+    await this.runMigrations()
+    if (this.exitCode) {
+      return
+    }
 
     if (this.seed) {
-      await this.runSeeders()
+      await this.runDbSeed()
     }
-
-    /**
-     * Close the connection after the migrations since we gave
-     * the order to not close after previous Migrator operations
-     */
-    db.manager.closeAll(true)
-  }
-
-  /**
-   * Run the db:wipe command
-   */
-  public async runDbWipe(): Promise<void> {
-    const resetCmd = new DbWipe(this.application, this.kernel)
-    resetCmd.connection = this.connection
-    resetCmd.force = true
-    resetCmd.dropTypes = this.dropTypes
-    resetCmd.dropViews = this.dropViews
-
-    await resetCmd.run()
-  }
-
-  /**
-   * Run the migration:run command
-   */
-  public async runMigrationRun(): Promise<void> {
-    const migrateRunCmd = new Run(this.application, this.kernel)
-    migrateRunCmd.connection = this.connection
-    migrateRunCmd.force = true
-    migrateRunCmd.dryRun = this.dryRun
-    migrateRunCmd.shouldCloseConnectionAfterMigrations = false
-
-    await migrateRunCmd.run()
-  }
-
-  /**
-   * Run the seeders
-   */
-  public async runSeeders(): Promise<void> {
-    const seedCmd = new DbSeed(this.application, this.kernel)
-    seedCmd.connection = this.connection
-
-    await seedCmd.run()
   }
 }

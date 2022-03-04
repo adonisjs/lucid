@@ -24,7 +24,7 @@ export class TestsSeeder {
     const seeders = await runner.getList()
 
     for (let seeder of seeders) {
-      runner.run(seeder)
+      await runner.run(seeder)
     }
   }
 }

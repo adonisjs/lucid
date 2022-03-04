@@ -9,8 +9,8 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { test } from '@japa/runner'
 import { join } from 'path'
+import { test } from '@japa/runner'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { MigrationSource } from '../../src/Migrator/MigrationSource'

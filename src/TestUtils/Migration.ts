@@ -23,20 +23,23 @@ export class TestsMigrator {
   ) {}
 
   private async rollback() {
-    await new Migrator(this.Db, this.application, {
+    const migrator = new Migrator(this.Db, this.application, {
       direction: 'down',
       connectionName: this.connectionName,
       dryRun: false,
-    }).run()
+    })
+
+    migrator.run()
   }
 
   public async run() {
-    await new Migrator(this.Db, this.application, {
+    const migrator = new Migrator(this.Db, this.application, {
       direction: 'up',
       connectionName: this.connectionName,
       dryRun: false,
-    }).run()
+    })
 
+    await migrator.run()
     return () => this.rollback()
   }
 }

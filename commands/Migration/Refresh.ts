@@ -7,20 +7,18 @@
  * file that was distributed with this source code.
  */
 
-import { flags } from '@adonisjs/core/build/standalone'
-
-import Run from './Run'
-import Reset from './Reset'
-import DbSeed from '../DbSeed'
-import MigrationsBase from './Base'
+import { flags, BaseCommand } from '@adonisjs/core/build/standalone'
 
 /**
  * This command reset the database by rolling back to batch 0 and then
  * re-run all migrations.
  */
-export default class Refresh extends MigrationsBase {
+export default class Refresh extends BaseCommand {
   public static commandName = 'migration:refresh'
-  public static description = 'Reset and re-run all migrations.'
+  public static description = 'Rollback and migrate database'
+  public static settings = {
+    loadApp: true,
+  }
 
   /**
    * Custom connection for running migrations.
@@ -37,7 +35,7 @@ export default class Refresh extends MigrationsBase {
   /**
    * Perform dry run
    */
-  @flags.boolean({ description: 'Only print SQL queries instead of executing them' })
+  @flags.boolean({ description: 'Do not run actual queries. Instead view the SQL output' })
   public dryRun: boolean
 
   /**
@@ -47,89 +45,73 @@ export default class Refresh extends MigrationsBase {
   public seed: boolean
 
   /**
-   * This command loads the application, since we need the runtime
-   * to find the migration directories for a given connection
+   * Converting command properties to arguments
    */
-  public static settings = {
-    loadApp: true,
+  private getArgs() {
+    const args: string[] = []
+    if (this.force) {
+      args.push('--force')
+    }
+
+    if (this.connection) {
+      args.push(`--connection="${this.connection}"`)
+    }
+
+    if (this.dryRun) {
+      args.push('--dry-run')
+    }
+
+    return args
+  }
+
+  /**
+   * Reset all migrations
+   */
+  private async resetMigrations() {
+    const reset = await this.kernel.exec('migration:reset', this.getArgs())
+    this.exitCode = reset.exitCode
+    this.error = reset.error
+  }
+
+  /**
+   * Run migrations
+   */
+  private async runMigrations() {
+    const migrate = await this.kernel.exec('migration:run', this.getArgs())
+    this.exitCode = migrate.exitCode
+    this.error = migrate.error
+  }
+
+  /**
+   * Run seeders
+   */
+  private async runDbSeed() {
+    const args: string[] = []
+    if (this.connection) {
+      args.push(`--connection="${this.connection}"`)
+    }
+
+    const dbSeed = await this.kernel.exec('db:seed', args)
+    this.exitCode = dbSeed.exitCode
+    this.error = dbSeed.error
   }
 
   /**
    * Handle command
    */
   public async run(): Promise<void> {
-    const db = this.application.container.use('Adonis/Lucid/Database')
-    this.connection = this.connection || db.primaryConnectionName
-
-    const continueMigrations =
-      !this.application.inProduction || this.force || (await this.takeProductionConstent())
-
-    /**
-     * Prompt cancelled or rejected and hence do not continue
-     */
-    if (!continueMigrations) {
+    await this.resetMigrations()
+    if (this.exitCode) {
       return
     }
 
-    const connection = db.getRawConnection(this.connection)
-
-    /**
-     * Ensure the define connection name does exists in the
-     * config file
-     */
-    if (!connection) {
-      this.printNotAValidConnection(this.connection)
-      this.exitCode = 1
+    await this.runMigrations()
+    if (this.exitCode) {
       return
     }
-
-    await this.runDbReset()
-    await this.runMigrationRun()
 
     if (this.seed) {
-      await this.runSeeders()
+      await this.runDbSeed()
     }
-
-    /**
-     * Close the connection after the migrations since we gave
-     * the order to not close after previous Migrator operations
-     */
-    db.manager.closeAll(true)
-  }
-
-  /**
-   * Run the migration:reset command
-   */
-  public async runDbReset(): Promise<void> {
-    const resetCmd = new Reset(this.application, this.kernel)
-    resetCmd.connection = this.connection
-    resetCmd.force = true
-    resetCmd.dryRun = this.dryRun
-    resetCmd.shouldCloseConnectionAfterMigrations = false
-
-    await resetCmd.run()
-  }
-
-  /**
-   * Run the migration:run command
-   */
-  public async runMigrationRun(): Promise<void> {
-    const migrateRunCmd = new Run(this.application, this.kernel)
-    migrateRunCmd.connection = this.connection
-    migrateRunCmd.force = true
-    migrateRunCmd.dryRun = this.dryRun
-    migrateRunCmd.shouldCloseConnectionAfterMigrations = false
-
-    await migrateRunCmd.run()
-  }
-
-  /**
-   * Run the seeders
-   */
-  public async runSeeders(): Promise<void> {
-    const seedCmd = new DbSeed(this.application, this.kernel)
-    seedCmd.connection = this.connection
-
-    await seedCmd.run()
   }
 }

@@ -9,11 +9,12 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { test } from '@japa/runner'
 import 'reflect-metadata'
 import { join } from 'path'
-import { Kernel } from '@adonisjs/core/build/standalone'
+import { test } from '@japa/runner'
 import { Filesystem } from '@poppinss/dev-utils'
+import { Kernel } from '@adonisjs/core/build/standalone'
+import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { Database } from '../../src/Database'
 import MakeMigration from '../../commands/MakeMigration'
@@ -23,41 +24,36 @@ import {
   getDb,
   cleanup,
   getConfig,
-  resetTables,
-  setupApplication,
   toNewlineArray,
+  setupApplication,
 } from '../../test-helpers'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 let db: ReturnType<typeof getDb>
 let app: ApplicationContract
 const templatesFs = new Filesystem(join(__dirname, '..', '..', 'templates'))
 
 test.group('MakeMigration', (group) => {
-  group.setup(async () => {
+  group.each.setup(async () => {
     app = await setupApplication()
+    return () => fs.cleanup()
+  })
+
+  group.each.setup(async () => {
     db = getDb(app)
-    await setup()
-  })
-
-  group.each.setup(() => {
     app.container.bind('Adonis/Lucid/Database', () => db)
-  })
+    await setup()
 
-  group.teardown(async () => {
-    await cleanup()
-    await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
-    await fs.cleanup()
-  })
-
-  group.each.teardown(async () => {
-    await resetTables()
+    return async () => {
+      await cleanup()
+      await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
+      await db.manager.closeAll(true)
+    }
   })
 
   test('create migration in the default migrations directory', async ({ assert }) => {
-    const makeMigration = new MakeMigration(app, new Kernel(app))
-    makeMigration.name = 'users'
-    await makeMigration.run()
+    const kernel = new Kernel(app)
+    kernel.register([MakeMigration])
+    const makeMigration = await kernel.exec('make:migration', ['user'])
 
     assert.lengthOf(makeMigration.ui.testingRenderer.logs, 1)
     const successLog = makeMigration.ui.testingRenderer.logs[0]
@@ -76,11 +72,9 @@ test.group('MakeMigration', (group) => {
   })
 
   test('create migration for alter table', async ({ assert }) => {
-    const makeMigration = new MakeMigration(app, new Kernel(app))
-    makeMigration.name = 'users'
-    makeMigration.table = 'my_users'
-
-    await makeMigration.run()
+    const kernel = new Kernel(app)
+    kernel.register([MakeMigration])
+    const makeMigration = await kernel.exec('make:migration', ['user', '--table=my_users'])
 
     assert.lengthOf(makeMigration.ui.testingRenderer.logs, 1)
     const successLog = makeMigration.ui.testingRenderer.logs[0]
@@ -99,11 +93,9 @@ test.group('MakeMigration', (group) => {
   })
 
   test('create migration for make table with custom table name', async ({ assert }) => {
-    const makeMigration = new MakeMigration(app, new Kernel(app))
-    makeMigration.name = 'users'
-    makeMigration.create = 'my_users'
-
-    await makeMigration.run()
+    const kernel = new Kernel(app)
+    kernel.register([MakeMigration])
+    const makeMigration = await kernel.exec('make:migration', ['user', '--create=my_users'])
 
     assert.lengthOf(makeMigration.ui.testingRenderer.logs, 1)
     const successLog = makeMigration.ui.testingRenderer.logs[0]
@@ -121,11 +113,10 @@ test.group('MakeMigration', (group) => {
     )
   })
 
-  test('create nested migration file', async ({ assert }) => {
-    const makeMigration = new MakeMigration(app, new Kernel(app))
-    makeMigration.name = 'profile/users'
-
-    await makeMigration.run()
+  test('create migration file inside a sub-folder', async ({ assert }) => {
+    const kernel = new Kernel(app)
+    kernel.register([MakeMigration])
+    const makeMigration = await kernel.exec('make:migration', ['profile/users', '--create=users'])
 
     assert.lengthOf(makeMigration.ui.testingRenderer.logs, 1)
     const successLog = makeMigration.ui.testingRenderer.logs[0]
@@ -144,110 +135,64 @@ test.group('MakeMigration', (group) => {
   })
 
   test('raise error when defined connection is invalid', async ({ assert }) => {
-    const makeMigration = new MakeMigration(app, new Kernel(app))
-    makeMigration.name = 'profile/users'
-    makeMigration.connection = 'foo'
+    const kernel = new Kernel(app)
+    kernel.register([MakeMigration])
+    const makeMigration = await kernel.exec('make:migration', ['profile/users', '--connection=foo'])
 
-    await makeMigration.run()
+    assert.equal(makeMigration.exitCode, 1)
     assert.deepEqual(makeMigration.ui.testingRenderer.logs, [
       {
         stream: 'stderr',
         message:
-          '[ red(error) ]  foo is not a valid connection name. Double check config/database file',
+          '[ red(error) ]  "foo" is not a valid connection name. Double check "config/database" file',
       },
     ])
   })
 
-  test('prompt for migration paths when multiple paths are defined', async ({ assert }) => {
-    const config = {
-      connection: 'primary',
-      connections: {
-        primary: Object.assign(
-          {
-            migrations: {
-              paths: ['database/a', 'database/b'],
+  test('use custom directory when defined')
+    .setup(() => {
+      const config = {
+        connection: 'primary',
+        connections: {
+          primary: Object.assign(
+            {
+              migrations: {
+                paths: ['database/a', 'database/b'],
+              },
             },
-          },
-          getConfig()
-        ),
-      },
-    }
+            getConfig()
+          ),
+        },
+      }
 
-    const customDb = new Database(
-      config,
-      app.logger,
-      app.profiler,
-      app.container.use('Adonis/Core/Event')
-    )
+      const customDb = new Database(
+        config,
+        app.logger,
+        app.profiler,
+        app.container.use('Adonis/Core/Event')
+      )
 
-    app.container.bind('Adonis/Lucid/Database', () => customDb)
-    const makeMigration = new MakeMigration(app, new Kernel(app))
-    makeMigration.name = 'users'
-
-    makeMigration.prompt.on('prompt', (prompt) => {
-      prompt.select(1)
+      app.container.bind('Adonis/Lucid/Database', () => customDb)
+      return () => customDb.manager.closeAll()
     })
+    .run(async ({ assert }) => {
+      const kernel = new Kernel(app)
+      kernel.register([MakeMigration])
+      const makeMigration = await kernel.exec('make:migration', ['users', '--folder=database/c'])
 
-    await makeMigration.run()
-    const successLog = makeMigration.ui.testingRenderer.logs[0]
-    const userSchema = await fs.get(successLog.message.replace('green(CREATE:)', '').trim())
+      const successLog = makeMigration.ui.testingRenderer.logs[0].message
+      const userSchema = await fs.get(successLog.replace('green(CREATE:)', '').trim())
+      const schemaTemplate = await templatesFs.get('migration-make.txt')
 
-    const schemaTemplate = await templatesFs.get('migration-make.txt')
-    assert.isTrue(successLog.message.startsWith('green(CREATE:) database/b'))
+      assert.isTrue(successLog.startsWith('green(CREATE:) database/c'))
 
-    assert.deepEqual(
-      toNewlineArray(userSchema),
-      toNewlineArray(
-        schemaTemplate
-          .replace('{{#toClassName}}{{ filename }}{{/toClassName}}', 'Users')
-          .replace('{{#toTableName}}{{ filename }}{{/toTableName}}', 'users')
+      assert.deepEqual(
+        toNewlineArray(userSchema),
+        toNewlineArray(
+          schemaTemplate
+            .replace('{{#toClassName}}{{ filename }}{{/toClassName}}', 'Users')
+            .replace('{{#toTableName}}{{ filename }}{{/toTableName}}', 'users')
+        )
       )
-    )
-    await customDb.manager.closeAll()
-  })
-
-  test('use custom directory when defined', async ({ assert }) => {
-    const config = {
-      connection: 'primary',
-      connections: {
-        primary: Object.assign(
-          {
-            migrations: {
-              paths: ['database/a', 'database/b'],
-            },
-          },
-          getConfig()
-        ),
-      },
-    }
-
-    const customDb = new Database(
-      config,
-      app.logger,
-      app.profiler,
-      app.container.use('Adonis/Core/Event')
-    )
-
-    app.container.bind('Adonis/Lucid/Database', () => customDb)
-    const makeMigration = new MakeMigration(app, new Kernel(app))
-    makeMigration.name = 'users'
-    makeMigration.folder = 'database/c'
-
-    await makeMigration.run()
-    const successLog = makeMigration.ui.testingRenderer.logs[0].message
-    const userSchema = await fs.get(successLog.replace('green(CREATE:)', '').trim())
-    const schemaTemplate = await templatesFs.get('migration-make.txt')
-
-    assert.isTrue(successLog.startsWith('green(CREATE:) database/c'))
-
-    assert.deepEqual(
-      toNewlineArray(userSchema),
-      toNewlineArray(
-        schemaTemplate
-          .replace('{{#toClassName}}{{ filename }}{{/toClassName}}', 'Users')
-          .replace('{{#toTableName}}{{ filename }}{{/toTableName}}', 'users')
-      )
-    )
-    await customDb.manager.closeAll()
-  })
+    })
 })

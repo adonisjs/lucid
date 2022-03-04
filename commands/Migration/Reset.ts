@@ -7,16 +7,18 @@
  * file that was distributed with this source code.
  */
 
-import { flags } from '@adonisjs/core/build/standalone'
-
-import MigrationsBase from './Base'
+import { BaseCommand, flags } from '@adonisjs/core/build/standalone'
 
 /**
- * This command reset the database by rolling back to batch 0
+ * This command resets the database by rolling back to batch 0. Same
+ * as calling "migration:rollback --batch=0"
  */
-export default class Reset extends MigrationsBase {
+export default class Reset extends BaseCommand {
   public static commandName = 'migration:reset'
-  public static description = 'Reset migrations to initial state'
+  public static description = 'Rollback all migrations'
+  public static settings = {
+    loadApp: true,
+  }
 
   /**
    * Custom connection for running migrations.
@@ -33,57 +35,35 @@ export default class Reset extends MigrationsBase {
   /**
    * Perform dry run
    */
-  @flags.boolean({ description: 'Only print SQL queries instead of executing them' })
+  @flags.boolean({ description: 'Do not run actual queries. Instead view the SQL output' })
   public dryRun: boolean
 
   /**
-   * This command loads the application, since we need the runtime
-   * to find the migration directories for a given connection
+   * Converting command properties to arguments
    */
-  public static settings = {
-    loadApp: true,
+  private getArgs() {
+    const args: string[] = ['--batch=0']
+    if (this.force) {
+      args.push('--force')
+    }
+
+    if (this.connection) {
+      args.push(`--connection="${this.connection}"`)
+    }
+
+    if (this.dryRun) {
+      args.push('--dry-run')
+    }
+
+    return args
   }
 
   /**
    * Handle command
    */
   public async run(): Promise<void> {
-    const db = this.application.container.use('Adonis/Lucid/Database')
-    this.connection = this.connection || db.primaryConnectionName
-
-    const continueMigrations =
-      !this.application.inProduction || this.force || (await this.takeProductionConstent())
-
-    /**
-     * Prompt cancelled or rejected and hence do not continue
-     */
-    if (!continueMigrations) {
-      return
-    }
-
-    const connection = db.getRawConnection(this.connection)
-
-    /**
-     * Ensure the define connection name does exists in the
-     * config file
-     */
-    if (!connection) {
-      this.printNotAValidConnection(this.connection)
-      this.exitCode = 1
-      return
-    }
-
-    /**
-     * New down migrator
-     */
-    const { Migrator } = await import('../../src/Migrator')
-    const migrator = new Migrator(db, this.application, {
-      direction: 'down',
-      batch: 0,
-      connectionName: this.connection,
-      dryRun: this.dryRun,
-    })
-
-    await this.runMigrations(migrator, this.connection)
+    const rollback = await this.kernel.exec('migration:rollback', this.getArgs())
+    this.exitCode = rollback.exitCode
+    this.error = rollback.error
   }
 }

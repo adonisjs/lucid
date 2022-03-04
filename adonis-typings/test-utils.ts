@@ -12,9 +12,9 @@ declare module '@ioc:Adonis/Core/TestUtils' {
   type HookCallback = () => Promise<HookCleanupHandler> | Promise<void>
 
   export interface TestUtilsContract {
-    db: {
-      seed(connectionName?: string): HookCallback
-      migrate(connectionName?: string): HookCallback
+    db(connectionName?: string): {
+      seed: HookCallback
+      migrate: HookCallback
     }
   }
 }
