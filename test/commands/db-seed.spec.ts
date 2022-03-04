@@ -9,8 +9,8 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { test } from '@japa/runner'
 import 'reflect-metadata'
+import { test } from '@japa/runner'
 import { Kernel } from '@adonisjs/core/build/standalone'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
@@ -23,56 +23,61 @@ let db: ReturnType<typeof getDb>
 test.group('DbSeed', (group) => {
   group.each.setup(async () => {
     app = await setupApplication()
+    return () => fs.cleanup()
+  })
+
+  group.each.setup(async () => {
     db = getDb(app)
     app.container.bind('Adonis/Lucid/Database', () => db)
     await setup()
+
+    return async () => {
+      await cleanup()
+      await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
+      await db.manager.closeAll(true)
+    }
   })
 
-  group.each.teardown(async () => {
-    await cleanup()
-    await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
-    await fs.cleanup()
-  })
-
-  test('run seeds', async ({ assert }) => {
+  test('run seeders', async ({ assert }) => {
     await fs.add(
       'database/seeders/user.ts',
       `export default class UserSeeder {
-				public async run () {
-					process.env.EXEC_USER_SEEDER = 'true'
-				}
-			}`
+        public async run () {
+          process.env.EXEC_USER_SEEDER = 'true'
+        }
+      }`
     )
 
-    const seed = new DbSeed(app, new Kernel(app))
-    await seed.run()
+    const kernel = new Kernel(app)
+    kernel.register([DbSeed])
+    await kernel.exec('db:seed', [])
 
     assert.equal(process.env.EXEC_USER_SEEDER, 'true')
     delete process.env.EXEC_USER_SEEDER
   })
 
-  test('run custom files', async ({ assert }) => {
+  test('cherry pick files', async ({ assert }) => {
     await fs.add(
       'database/seeders/user.ts',
       `export default class UserSeeder {
-				public async run () {
-					process.env.EXEC_USER_SEEDER = 'true'
-				}
-			}`
+        public async run () {
+          process.env.EXEC_USER_SEEDER = 'true'
+        }
+      }`
     )
 
     await fs.add(
       'database/seeders/post.ts',
       `export default class PostSeeder {
-				public async run () {
-					process.env.EXEC_POST_SEEDER = 'true'
-				}
-			}`
+        public async run () {
+          process.env.EXEC_POST_SEEDER = 'true'
+        }
+      }`
     )
 
-    const seed = new DbSeed(app, new Kernel(app))
-    seed.files = ['./database/seeders/post.ts']
-    await seed.run()
+    const kernel = new Kernel(app)
+    kernel.register([DbSeed])
+    await kernel.exec('db:seed', ['--files', './database/seeders/post.ts'])
 
     assert.isUndefined(process.env.EXEC_USER_SEEDER)
     assert.equal(process.env.EXEC_POST_SEEDER, 'true')

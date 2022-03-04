@@ -19,17 +19,11 @@ import { prettyPrint } from '../../src/Helpers/prettyPrint'
  */
 export default abstract class MigrationsBase extends BaseCommand {
   /**
-   * Whether to close the connection after migrations are run
-   * Useful if the Migrator have to be used several times in a row.
-   */
-  public shouldCloseConnectionAfterMigrations: boolean = true
-
-  /**
-   * Not a valid message
+   * Not a valid connection
    */
   protected printNotAValidConnection(connection: string) {
     this.logger.error(
-      `"${connection}" is not a valid connection name. Double check config/database file`
+      `"${connection}" is not a valid connection name. Double check "config/database" file`
     )
   }
 
@@ -37,10 +31,16 @@ export default abstract class MigrationsBase extends BaseCommand {
    * Prompts to take consent for running migrations in production
    */
   protected async takeProductionConstent(): Promise<boolean> {
+    /**
+     * Do not prompt when CLI is not interactive
+     */
+    if (!this.isInteractive) {
+      return false
+    }
+
     const question = 'You are in production environment. Want to continue running migrations?'
     try {
-      const continueMigrations = await this.prompt.confirm(question)
-      return continueMigrations
+      return await this.prompt.confirm(question)
     } catch (error) {
       return false
     }
@@ -95,10 +95,6 @@ export default abstract class MigrationsBase extends BaseCommand {
     if (migrator.dryRun) {
       await migrator.run()
 
-      if (this.shouldCloseConnectionAfterMigrations) {
-        await migrator.close()
-      }
-
       Object.keys(migrator.migratedFiles).forEach((file) => {
         this.prettyPrintSql(migrator.migratedFiles[file], connectionName)
       })
@@ -148,12 +144,9 @@ export default abstract class MigrationsBase extends BaseCommand {
     migrator.on('end', () => (duration = process.hrtime(start)))
 
     /**
-     * Run and close db connection
+     * Run migrations
      */
     await migrator.run()
-    if (this.shouldCloseConnectionAfterMigrations) {
-      await migrator.close()
-    }
 
     /**
      * Log all pending files. This will happen, when one of the migration

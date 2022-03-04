@@ -14,6 +14,9 @@ import { BaseCommand, args, flags } from '@adonisjs/core/build/standalone'
 export default class MakeMigration extends BaseCommand {
   public static commandName = 'make:migration'
   public static description = 'Make a new migration file'
+  public static settings = {
+    loadApp: true,
+  }
 
   /**
    * The name of the migration file. We use this to create the migration
@@ -51,11 +54,12 @@ export default class MakeMigration extends BaseCommand {
   public table: string
 
   /**
-   * This command loads the application, since we need the runtime
-   * to find the migration directories for a given connection
+   * Not a valid connection
    */
-  public static settings = {
-    loadApp: true,
+  private printNotAValidConnection(connection: string) {
+    this.logger.error(
+      `"${connection}" is not a valid connection name. Double check "config/database" file`
+    )
   }
 
   /**
@@ -66,8 +70,7 @@ export default class MakeMigration extends BaseCommand {
       return this.folder
     }
 
-    let directories =
-      migrationPaths && migrationPaths.length ? migrationPaths : ['database/migrations']
+    let directories = migrationPaths?.length ? migrationPaths : ['database/migrations']
     if (directories.length === 1) {
       return directories[0]
     }
@@ -80,16 +83,15 @@ export default class MakeMigration extends BaseCommand {
    */
   public async run(): Promise<void> {
     const db = this.application.container.use('Adonis/Lucid/Database')
+    this.connection = this.connection || db.primaryConnectionName
     const connection = db.getRawConnection(this.connection || db.primaryConnectionName)
 
     /**
-     * Ensure the define connection name does exists in the
-     * config file
+     * Invalid database connection
      */
     if (!connection) {
-      this.logger.error(
-        `${this.connection} is not a valid connection name. Double check config/database file`
-      )
+      this.printNotAValidConnection(this.connection)
+      this.exitCode = 1
       return
     }
 

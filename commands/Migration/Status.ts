@@ -7,18 +7,21 @@
  * file that was distributed with this source code.
  */
 
-import { flags } from '@adonisjs/core/build/standalone'
-import { MigrationListNode } from '@ioc:Adonis/Lucid/Migrator'
-
-import MigrationsBase from './Base'
+import { flags, BaseCommand } from '@adonisjs/core/build/standalone'
+import { MigrationListNode, MigratorContract } from '@ioc:Adonis/Lucid/Migrator'
 
 /**
  * The command is meant to migrate the database by execute migrations
  * in `up` direction.
  */
-export default class Status extends MigrationsBase {
+export default class Status extends BaseCommand {
   public static commandName = 'migration:status'
-  public static description = 'Check migrations current status.'
+  public static description = 'View migrations status'
+  public static settings = {
+    loadApp: true,
+  }
+
+  private migrator: MigratorContract
 
   /**
    * Define custom connection
@@ -27,11 +30,12 @@ export default class Status extends MigrationsBase {
   public connection: string
 
   /**
-   * This command loads the application, since we need the runtime
-   * to find the migration directories for a given connection
+   * Not a valid connection
    */
-  public static settings = {
-    loadApp: true,
+  protected printNotAValidConnection(connection: string) {
+    this.logger.error(
+      `"${connection}" is not a valid connection name. Double check "config/database" file`
+    )
   }
 
   /**
@@ -49,33 +53,22 @@ export default class Status extends MigrationsBase {
   }
 
   /**
-   * Handle command
+   * Instantiating the migrator instance
    */
-  public async run(): Promise<void> {
+  private instantiateMigrator() {
     const db = this.application.container.use('Adonis/Lucid/Database')
-
-    this.connection = this.connection || db.primaryConnectionName
-    const connection = db.getRawConnection(this.connection)
-
-    /**
-     * Ensure the define connection name does exists in the
-     * config file
-     */
-    if (!connection) {
-      this.printNotAValidConnection(this.connection)
-      this.exitCode = 1
-      return
-    }
-
     const Migrator = this.application.container.resolveBinding('Adonis/Lucid/Migrator')
-    const migrator = new Migrator(db, this.application, {
+
+    this.migrator = new Migrator(db, this.application, {
       direction: 'up',
       connectionName: this.connection,
     })
+  }
 
-    const list = await migrator.getList()
-    await migrator.close()
-
+  /**
+   * Render list inside a table
+   */
+  private renderList(list: MigrationListNode[]) {
     const table = this.ui.table()
     table.head(['Name', 'Status', 'Batch', 'Message'])
 
@@ -86,11 +79,63 @@ export default class Status extends MigrationsBase {
       table.row([
         node.name,
         this.colorizeStatus(node.status),
-        node.batch || 'NA',
+        node.batch ? String(node.batch) : 'NA',
         node.status === 'corrupt' ? 'The migration file is missing on filesystem' : '',
-      ] as any)
+      ])
     })
 
     table.render()
+  }
+
+  /**
+   * Run as a subcommand. Never close database connections or exit
+   * process inside this method
+   */
+  private async runAsSubCommand() {
+    const db = this.application.container.use('Adonis/Lucid/Database')
+    this.connection = this.connection || db.primaryConnectionName
+
+    /**
+     * Not a valid connection
+     */
+    if (!db.manager.has(this.connection)) {
+      this.printNotAValidConnection(this.connection)
+      this.exitCode = 1
+      return
+    }
+
+    this.instantiateMigrator()
+    this.renderList(await this.migrator.getList())
+  }
+
+  /**
+   * Branching out, so that if required we can implement
+   * "runAsMain" separately from "runAsSubCommand".
+   *
+   * For now, they both are the same
+   */
+  private async runAsMain() {
+    await this.runAsSubCommand()
+  }
+
+  /**
+   * Handle command
+   */
+  public async run(): Promise<void> {
+    if (this.isMain) {
+      await this.runAsMain()
+    } else {
+      await this.runAsSubCommand()
+    }
+  }
+
+  /**
+   * Lifecycle method invoked by ace after the "run"
+   * method.
+   */
+  public async completed() {
+    if (this.migrator && this.isMain) {
+      await this.migrator.close()
+    }
   }
 }
