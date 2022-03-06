@@ -78,7 +78,7 @@ test.group('migration:reset', (group) => {
       `
     )
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([Migrate, Rollback, Reset])
 
     await kernel.exec('migration:run', [])

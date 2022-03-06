@@ -29,7 +29,7 @@ test.group('MakeModel', (group) => {
   test('make a model inside the default directory', async ({ assert }) => {
     const app = await setupApplication()
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([MakeModel])
     await kernel.exec('make:model', ['user'])
 
@@ -46,7 +46,7 @@ test.group('MakeModel', (group) => {
     const app = await setupApplication()
     app.rcFile.namespaces.models = 'App'
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([MakeModel])
     await kernel.exec('make:model', ['user'])
 

@@ -51,7 +51,7 @@ test.group('MakeMigration', (group) => {
   })
 
   test('create migration in the default migrations directory', async ({ assert }) => {
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([MakeMigration])
     const makeMigration = await kernel.exec('make:migration', ['user'])
 
@@ -72,7 +72,7 @@ test.group('MakeMigration', (group) => {
   })
 
   test('create migration for alter table', async ({ assert }) => {
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([MakeMigration])
     const makeMigration = await kernel.exec('make:migration', ['user', '--table=my_users'])
 
@@ -93,7 +93,7 @@ test.group('MakeMigration', (group) => {
   })
 
   test('create migration for make table with custom table name', async ({ assert }) => {
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([MakeMigration])
     const makeMigration = await kernel.exec('make:migration', ['user', '--create=my_users'])
 
@@ -114,7 +114,7 @@ test.group('MakeMigration', (group) => {
   })
 
   test('create migration file inside a sub-folder', async ({ assert }) => {
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([MakeMigration])
     const makeMigration = await kernel.exec('make:migration', ['profile/users', '--create=users'])
 
@@ -135,7 +135,7 @@ test.group('MakeMigration', (group) => {
   })
 
   test('raise error when defined connection is invalid', async ({ assert }) => {
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([MakeMigration])
     const makeMigration = await kernel.exec('make:migration', ['profile/users', '--connection=foo'])
 
@@ -176,7 +176,7 @@ test.group('MakeMigration', (group) => {
       return () => customDb.manager.closeAll()
     })
     .run(async ({ assert }) => {
-      const kernel = new Kernel(app)
+      const kernel = new Kernel(app).mockConsoleOutput()
       kernel.register([MakeMigration])
       const makeMigration = await kernel.exec('make:migration', ['users', '--folder=database/c'])
 

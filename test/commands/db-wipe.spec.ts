@@ -56,7 +56,7 @@ test.group('db:wipe and migrate:fresh', (group) => {
     `
     )
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([Migrate, DbWipe])
 
     await kernel.exec('migration:run', [])

@@ -55,7 +55,7 @@ test.group('migration:run', (group) => {
     `
     )
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([Migrate])
     await kernel.exec('migration:run', [])
 
@@ -71,7 +71,7 @@ test.group('migration:run', (group) => {
   test('skip migrations when already up to date', async ({ assert }) => {
     await fs.fsExtra.ensureDir(join(fs.basePath, 'database/migrations'))
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([Migrate])
     await kernel.exec('migration:run', [])
 
@@ -94,7 +94,7 @@ test.group('migration:run', (group) => {
     `
     )
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([Migrate])
     await kernel.exec('migration:run', ['--dry-run'])
 
@@ -120,7 +120,7 @@ test.group('migration:run', (group) => {
     `
     )
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([Migrate]).interactive(false)
     await kernel.exec('migration:run', [])
 
@@ -144,7 +144,7 @@ test.group('migration:run', (group) => {
     `
     )
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([Migrate]).interactive(false)
     await kernel.exec('migration:run', ['--force'])
 

@@ -48,7 +48,7 @@ test.group('DbSeed', (group) => {
       }`
     )
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([DbSeed])
     await kernel.exec('db:seed', [])
 
@@ -75,7 +75,7 @@ test.group('DbSeed', (group) => {
       }`
     )
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([DbSeed])
     await kernel.exec('db:seed', ['--files', './database/seeders/post.ts'])
 

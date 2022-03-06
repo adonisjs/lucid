@@ -58,7 +58,7 @@ test.group('migrate:fresh', (group) => {
     `
     )
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([Migrate, Fresh, DbWipe])
 
     await kernel.exec('migration:run', [])
@@ -97,7 +97,7 @@ test.group('migrate:fresh', (group) => {
     `
     )
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([Migrate, Fresh, DbSeed, DbWipe])
 
     await kernel.exec('migration:run', [])

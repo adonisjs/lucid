@@ -80,7 +80,7 @@ test.group('migration:refresh', (group) => {
       `
     )
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([Migrate, Rollback, Reset, Refresh])
 
     await kernel.exec('migration:run', [])
@@ -141,7 +141,7 @@ test.group('migration:refresh', (group) => {
       `
     )
 
-    const kernel = new Kernel(app)
+    const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([Migrate, Rollback, Reset, Refresh, DbSeed])
 
     await kernel.exec('migration:run', [])
