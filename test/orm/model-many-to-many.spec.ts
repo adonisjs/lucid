@@ -4848,7 +4848,6 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.equal(skillUsers[0].skill_id, skill.id)
     assert.isNotNull(skillUsers[0].created_at)
     assert.isNotNull(skillUsers[0].updated_at)
-    assert.isAtLeast(skillUsers[0].updated_at, skillUsers[0].created_at)
     assert.isUndefined(user.$trx)
     assert.isUndefined(skill.$trx)
   })
