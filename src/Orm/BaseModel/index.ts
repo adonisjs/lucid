@@ -174,7 +174,7 @@ export class BaseModel implements LucidRow {
     allowExtraProperties?: boolean
   ) {
     const row = new this()
-    row.fill(payload, allowExtraProperties)
+    row.merge(payload, allowExtraProperties)
 
     /**
      * Pass client options to the newly created row. If row was found
