@@ -22,6 +22,7 @@ import {
 import { Chainable } from './Chainable'
 import { QueryRunner } from '../../QueryRunner'
 import { SimplePaginator } from '../Paginator/SimplePaginator'
+import { isReturningAvailable } from '../../utils'
 
 /**
  * Wrapping the user function for a query callback and give them
@@ -140,7 +141,9 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
       ? columns.map((column) => this.resolveKey(column))
       : this.resolveKey(columns)
 
-    this.knexQuery.returning(columns)
+    if (isReturningAvailable(this.client)) {
+      this.knexQuery.returning(columns)
+    }
     return this
   }
 

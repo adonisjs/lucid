@@ -55,6 +55,7 @@ import {
   ensureRelation,
   managedTransaction,
   normalizeCherryPickObject,
+  isReturningAvailable,
 } from '../../utils'
 import { SnakeCaseNamingStrategy } from '../NamingStrategies/SnakeCase'
 import { LazyLoadAggregates } from '../Relations/AggregatesLoader/LazyLoad'
@@ -1955,7 +1956,9 @@ export class BaseModel implements LucidRow {
      */
     if (action === 'insert') {
       const insertQuery = client.insertQuery().table(modelConstructor.table)
-      insertQuery.returning(primaryKeyColumn)
+      if (isReturningAvailable(client)) {
+        insertQuery.returning(primaryKeyColumn)
+      }
       return insertQuery
     }
 

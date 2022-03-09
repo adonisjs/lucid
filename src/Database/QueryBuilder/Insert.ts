@@ -22,6 +22,7 @@ import { RawQueryBuilder } from './Raw'
 import { QueryRunner } from '../../QueryRunner'
 import { RawBuilder } from '../StaticBuilder/Raw'
 import { ReferenceBuilder } from '../StaticBuilder/Reference'
+import { isReturningAvailable } from '../../utils'
 
 /**
  * Exposes the API for performing SQL inserts
@@ -120,7 +121,9 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
    * Define returning columns for the insert query
    */
   public returning(column: any): any {
-    this.knexQuery.returning(column)
+    if (isReturningAvailable(this.client)) {
+      this.knexQuery.returning(column)
+    }
     return this
   }
 
