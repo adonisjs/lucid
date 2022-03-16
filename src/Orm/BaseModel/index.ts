@@ -1956,9 +1956,7 @@ export class BaseModel implements LucidRow {
      */
     if (action === 'insert') {
       const insertQuery = client.insertQuery().table(modelConstructor.table)
-      if (isReturningAvailable(client)) {
-        insertQuery.returning(primaryKeyColumn)
-      }
+      insertQuery.returning(primaryKeyColumn)
       return insertQuery
     }
 
