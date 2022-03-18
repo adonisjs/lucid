@@ -30,7 +30,7 @@ import {
   TransactionClientContract,
 } from '@ioc:Adonis/Lucid/Database'
 
-import { isObject } from '../../utils'
+import { isObject, isReturningAvailable } from '../../utils'
 import { Preloader } from '../Preloader'
 import { ModelPaginator } from '../Paginator'
 import { QueryRunner } from '../../QueryRunner'
@@ -369,7 +369,9 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
       ? columns.map((column) => this.resolveKey(column))
       : this.resolveKey(columns)
 
-    this.knexQuery.returning(columns)
+    if (isReturningAvailable(this.client)) {
+      this.knexQuery.returning(columns)
+    }
     return this
   }
 

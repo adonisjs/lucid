@@ -263,3 +263,12 @@ export function sourceFiles(
     }
   })
 }
+
+/**
+ * Verify if current client supports Knex returning
+ */
+export function isReturningAvailable(client: QueryClientContract): boolean {
+  const returningClients = ['pg', 'mssql', 'oracledb']
+
+  return returningClients.includes(client.connectionName)
+}
