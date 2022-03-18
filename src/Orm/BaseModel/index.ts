@@ -55,7 +55,6 @@ import {
   ensureRelation,
   managedTransaction,
   normalizeCherryPickObject,
-  isReturningAvailable,
 } from '../../utils'
 import { SnakeCaseNamingStrategy } from '../NamingStrategies/SnakeCase'
 import { LazyLoadAggregates } from '../Relations/AggregatesLoader/LazyLoad'
