@@ -89,7 +89,7 @@ export class PgDialect implements DialectContract {
     const tables = await this.getAllTables(schemas)
     if (!tables.length) return
 
-    await this.client.rawQuery(`DROP table ${tables.join(',')} CASCADE;`)
+    await this.client.rawQuery('DROP TABLE IF EXISTS "' + tables.join('", "') + '" CASCADE;')
   }
 
   /**
@@ -99,7 +99,7 @@ export class PgDialect implements DialectContract {
     const views = await this.getAllViews(schemas)
     if (!views.length) return
 
-    await this.client.rawQuery(`DROP view ${views.join(',')} CASCADE;`)
+    await this.client.rawQuery('DROP VIEW IF EXISTS "' + views.join('", "') + '" CASCADE;')
   }
 
   /**
@@ -109,7 +109,7 @@ export class PgDialect implements DialectContract {
     const types = await this.getAllTypes(schemas)
     if (!types.length) return
 
-    await this.client.rawQuery(`DROP type ${types.join(',')};`)
+    await this.client.rawQuery('DROP TYPE IF EXISTS "' + types.join('", "') + '" CASCADE;')
   }
 
   /**
