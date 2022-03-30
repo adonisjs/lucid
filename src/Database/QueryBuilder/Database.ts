@@ -136,11 +136,14 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
    * Define returning columns
    */
   public returning(columns: any): this {
-    columns = Array.isArray(columns)
-      ? columns.map((column) => this.resolveKey(column))
-      : this.resolveKey(columns)
+    if (this.client.dialect.supportsReturningStatement) {
+      columns = Array.isArray(columns)
+        ? columns.map((column) => this.resolveKey(column))
+        : this.resolveKey(columns)
 
-    this.knexQuery.returning(columns)
+      this.knexQuery.returning(columns)
+    }
+
     return this
   }
 

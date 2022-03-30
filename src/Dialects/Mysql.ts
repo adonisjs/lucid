@@ -17,6 +17,7 @@ export class MysqlDialect implements DialectContract {
   public readonly supportsAdvisoryLocks = true
   public readonly supportsViews = true
   public readonly supportsTypes = false
+  public readonly supportsReturningStatement = false
 
   /**
    * Reference to the database version. Knex.js fetches the version after

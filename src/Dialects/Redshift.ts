@@ -16,6 +16,7 @@ export class RedshiftDialect implements DialectContract {
   public readonly supportsAdvisoryLocks = false
   public readonly supportsViews = true
   public readonly supportsTypes = true
+  public readonly supportsReturningStatement = true
 
   /**
    * Reference to the database version. Knex.js fetches the version after

@@ -16,6 +16,7 @@ export abstract class BaseSqliteDialect implements DialectContract {
   public readonly supportsAdvisoryLocks = false
   public readonly supportsViews = true
   public readonly supportsTypes = false
+  public readonly supportsReturningStatement = false
 
   /**
    * Reference to the database version. Knex.js fetches the version after

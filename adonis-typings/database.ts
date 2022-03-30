@@ -54,11 +54,13 @@ declare module '@ioc:Adonis/Lucid/Database' {
       | 'redshift'
       | 'sqlite3'
       | 'better-sqlite3'
+    readonly dateTimeFormat: string
+
     readonly version?: string
     readonly supportsAdvisoryLocks: boolean
     readonly supportsViews: boolean
     readonly supportsTypes: boolean
-    readonly dateTimeFormat: string
+    readonly supportsReturningStatement: boolean
 
     getAllTables(schemas?: string[]): Promise<string[]>
     dropAllTables(schemas?: string[]): Promise<void>

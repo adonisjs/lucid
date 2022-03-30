@@ -17,6 +17,7 @@ export class MssqlDialect implements DialectContract {
   public readonly supportsAdvisoryLocks = false
   public readonly supportsViews = false
   public readonly supportsTypes = false
+  public readonly supportsReturningStatement = true
 
   /**
    * Reference to the database version. Knex.js fetches the version after

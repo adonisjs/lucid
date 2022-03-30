@@ -16,6 +16,7 @@ export class PgDialect implements DialectContract {
   public readonly supportsAdvisoryLocks = true
   public readonly supportsViews = true
   public readonly supportsTypes = true
+  public readonly supportsReturningStatement = true
 
   /**
    * Reference to the database version. Knex.js fetches the version after
