@@ -120,7 +120,9 @@ export class InsertQueryBuilder extends Macroable implements InsertQueryBuilderC
    * Define returning columns for the insert query
    */
   public returning(column: any): any {
-    this.knexQuery.returning(column)
+    if (this.client.dialect.supportsReturningStatement) {
+      this.knexQuery.returning(column)
+    }
     return this
   }
 
