@@ -282,7 +282,7 @@ test.group('Database | extend', (group) => {
     const db = getDb(app)
 
     db.InsertQueryBuilder.macro('returnId', function whereActive() {
-      this.returning('id')
+      this.knexQuery.returning('id')
       return this
     })
 

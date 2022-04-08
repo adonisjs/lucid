@@ -4681,7 +4681,7 @@ test.group('Base model | extend', (group) => {
     User.boot()
 
     db.InsertQueryBuilder.macro('withId', function () {
-      this.returning('id')
+      this.knexQuery.returning('id')
       return this
     })
 

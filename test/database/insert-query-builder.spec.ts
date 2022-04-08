@@ -81,15 +81,20 @@ test.group('Query Builder | insert', (group) => {
     connection.connect()
 
     const db = getInsertBuilder(getQueryClient(connection, app))
+    const canReturnColumns = db.table('users').client.dialect.supportsReturningStatement
+
     const { sql, bindings } = db
       .table('users')
       .returning(['id', 'username'])
       .multiInsert([{ username: 'virk' }, { username: 'nikk' }])
       .toSQL()
 
-    const { sql: knexSql, bindings: knexBindings } = connection
-      .client!.from('users')
-      .returning(['id', 'username'])
+    const knexQuery = connection.client!.from('users')
+    if (canReturnColumns) {
+      knexQuery.returning(['id', 'username'])
+    }
+
+    const { sql: knexSql, bindings: knexBindings } = knexQuery
       .insert([{ username: 'virk' }, { username: 'nikk' }])
       .toSQL()
 
