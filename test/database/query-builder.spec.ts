@@ -11657,6 +11657,29 @@ test.group('Query Builder | with', (group) => {
 
     await connection.disconnect()
   })
+
+  test('define with clause and column list', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const client = getQueryClient(connection, app)
+    let db = getQueryBuilder(client)
+
+    const { sql, bindings } = db
+      .from('users')
+      .with('with_alias', client.raw(`SELECT * FROM "users"`), ['id'])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .with('with_alias', ['id'], connection.client!.raw(`SELECT * FROM "users"`))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
 })
 
 test.group('Query Builder | withRecursive', (group) => {
@@ -11675,7 +11698,7 @@ test.group('Query Builder | withRecursive', (group) => {
     await resetTables()
   })
 
-  test('define with clause as a raw query', async ({ assert }) => {
+  test('define with recursive clause as a raw query', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11698,7 +11721,7 @@ test.group('Query Builder | withRecursive', (group) => {
     await connection.disconnect()
   })
 
-  test('define with clause as a callback', async ({ assert }) => {
+  test('define with recursive clause as a callback', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11721,7 +11744,7 @@ test.group('Query Builder | withRecursive', (group) => {
     await connection.disconnect()
   })
 
-  test('define with clause as a subquery', async ({ assert }) => {
+  test('define with recursive clause as a subquery', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
 
@@ -11736,6 +11759,29 @@ test.group('Query Builder | withRecursive', (group) => {
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
       .withRecursive('with_alias', connection.client!.from('users').select('*'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define with recursive clause and column list', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const client = getQueryClient(connection, app)
+    let db = getQueryBuilder(client)
+
+    const { sql, bindings } = db
+      .from('users')
+      .withRecursive('with_alias', client.raw(`SELECT * FROM "users"`), ['id'])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .withRecursive('with_alias', ['id'], connection.client!.raw(`SELECT * FROM "users"`))
       .toSQL()
 
     assert.equal(sql, knexSql)
