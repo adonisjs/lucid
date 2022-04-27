@@ -380,7 +380,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Possible signatures of `with` CTE
    */
   interface With<Builder extends ChainableContract> {
-    (alias: string, query: RawQuery | ChainableContract | QueryCallback<Builder>): Builder
+    (
+      alias: string,
+      query: RawQuery | ChainableContract | QueryCallback<Builder>,
+      columns?: string[]
+    ): Builder
   }
 
   /**
