@@ -27,7 +27,7 @@
       Guides
     </a>
     <span> | </span>
-    <a href="CONTRIBUTING.md">
+    <a href=".github/CONTRIBUTING.md">
       Contributing
     </a>
   </h3>
