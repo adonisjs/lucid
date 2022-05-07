@@ -21,6 +21,7 @@ declare module '@ioc:Adonis/Lucid/Factory' {
     ModelAdapterOptions,
     RelationshipsContract,
     ExtractModelRelations,
+    ModelObject,
   } from '@ioc:Adonis/Lucid/Orm'
 
   /**
@@ -150,6 +151,12 @@ declare module '@ioc:Adonis/Lucid/Factory' {
     relation: RelationshipsContract
 
     /**
+     * Define custom pivot attributes for many to many
+     * relationship
+     */
+    pivotAttributes?(attributes: ModelObject | ModelObject[]): this
+
+    /**
      * Pass context to the relationship. Must be done everytime, so that
      * relationships uses the same transaction as the parent model
      */
@@ -212,6 +219,13 @@ declare module '@ioc:Adonis/Lucid/Factory' {
           : never
       ) => void
     ): this
+
+    /**
+     * Define pivot attributes when persisting a many to many
+     * relationship. Results in a noop, when not called
+     * for a many to many relationship
+     */
+    pivotAttributes(attributes: ModelObject | ModelObject[]): this
 
     /**
      * Merge custom set of attributes. They are passed to the merge method of
@@ -287,7 +301,10 @@ declare module '@ioc:Adonis/Lucid/Factory' {
   export interface FactoryBuilderQueryContract<
     FactoryModel extends FactoryModelContract<LucidModel>
   > extends FactoryBuilderContract<FactoryModel> {
-    query(options?: ModelAdapterOptions): FactoryBuilderContract<FactoryModel>
+    query(
+      options?: ModelAdapterOptions,
+      viaRelation?: FactoryRelationContract
+    ): FactoryBuilderContract<FactoryModel>
   }
 
   /**

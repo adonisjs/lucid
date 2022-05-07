@@ -214,8 +214,8 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
      */
     const builder = {
       factory: this,
-      query(options?: ModelAdapterOptions) {
-        return new FactoryBuilder(this.factory, options)
+      query(options?: ModelAdapterOptions, viaRelation?: FactoryRelationContract) {
+        return new FactoryBuilder(this.factory, options, viaRelation)
       },
       tap(callback) {
         return this.query().tap(callback)

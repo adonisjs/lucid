@@ -33,7 +33,7 @@ export class HasOne extends BaseRelation implements FactoryRelationContract {
    * Make relationship and set it on the parent model instance
    */
   public async make(parent: LucidRow, callback?: RelationCallback) {
-    const factory = this.compile(callback)
+    const factory = this.compile(this, callback)
     const customAttributes = {}
     this.relation.hydrateForPersistance(parent, customAttributes)
 
@@ -45,7 +45,7 @@ export class HasOne extends BaseRelation implements FactoryRelationContract {
    * Persist relationship and set it on the parent model instance
    */
   public async create(parent: LucidRow, callback?: RelationCallback) {
-    const factory = this.compile(callback)
+    const factory = this.compile(this, callback)
 
     const customAttributes = {}
     this.relation.hydrateForPersistance(parent, customAttributes)

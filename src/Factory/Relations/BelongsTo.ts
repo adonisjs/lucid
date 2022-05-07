@@ -33,7 +33,7 @@ export class BelongsTo extends BaseRelation implements FactoryRelationContract {
    * Make relationship and set it on the parent model instance
    */
   public async make(parent: LucidRow, callback?: RelationCallback) {
-    const factory = this.compile(callback)
+    const factory = this.compile(this, callback)
     const related = await factory.makeStubbed()
 
     this.relation.hydrateForPersistance(parent, related)
@@ -44,7 +44,7 @@ export class BelongsTo extends BaseRelation implements FactoryRelationContract {
    * Persist relationship and set it on the parent model instance
    */
   public async create(parent: LucidRow, callback?: RelationCallback) {
-    const factory = this.compile(callback)
+    const factory = this.compile(this, callback)
     const related = await factory.create()
 
     this.relation.hydrateForPersistance(parent, related)

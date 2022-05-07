@@ -478,4 +478,73 @@ test.group('Factory | ManyToMany | create', (group) => {
     assert.lengthOf(skills, 0)
     assert.lengthOf(userSkills, 0)
   })
+
+  test('define pivot attributes for the pivot table', async ({ assert }) => {
+    class Skill extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public name: string
+    }
+    Skill.boot()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number = 0
+
+      @manyToMany(() => Skill)
+      public skills: ManyToMany<typeof Skill>
+    }
+
+    const postFactory = new FactoryModel(
+      Skill,
+      () => {
+        return {
+          name: 'Programming',
+        }
+      },
+      factoryManager
+    ).build()
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {}
+      },
+      factoryManager
+    )
+      .relation('skills', () => postFactory)
+      .build()
+
+    const user = await factory
+      .with('skills', 2, (related) => {
+        related
+          .merge([{ name: 'Dancing' }, { name: 'Programming' }])
+          .pivotAttributes({ proficiency: 'master' })
+      })
+      .create()
+
+    assert.isTrue(user.$isPersisted)
+    assert.lengthOf(user.skills, 2)
+    assert.instanceOf(user.skills[0], Skill)
+    assert.isTrue(user.skills[0].$isPersisted)
+    assert.equal(user.skills[0].name, 'Dancing')
+
+    assert.instanceOf(user.skills[1], Skill)
+    assert.isTrue(user.skills[1].$isPersisted)
+    assert.equal(user.skills[1].name, 'Programming')
+
+    const skills = await user.related('skills').query().pivotColumns(['proficiency'])
+    assert.containsSubset(skills, [
+      { $extras: { pivot_proficiency: 'master' } },
+      { $extras: { pivot_proficiency: 'master' } },
+    ])
+  })
 })

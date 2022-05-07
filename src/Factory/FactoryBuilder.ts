@@ -8,11 +8,12 @@
  */
 
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { LucidRow, LucidModel, ModelAdapterOptions } from '@ioc:Adonis/Lucid/Orm'
+import { LucidRow, LucidModel, ModelAdapterOptions, ModelObject } from '@ioc:Adonis/Lucid/Orm'
 import {
   FactoryModelContract,
   FactoryContextContract,
   FactoryBuilderContract,
+  FactoryRelationContract,
 } from '@ioc:Adonis/Lucid/Factory'
 
 import { FactoryModel } from './FactoryModel'
@@ -58,7 +59,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   /**
    * Custom attributes to pass to model merge method
    */
-  private attributes: any
+  private attributes: any = {}
 
   /**
    * States to apply. One state can be applied only once and hence
@@ -73,12 +74,24 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   private ctx?: FactoryContextContract
 
   /**
+   * Pivot attributes for a many to many relationship
+   */
+  private attributesForPivotTable?: ModelObject | ModelObject[]
+
+  /**
    * Instead of relying on the `FactoryModelContract`, we rely on the
    * `FactoryModel`, since it exposes certain API's required for
    * the runtime operations and those API's are not exposed
    * on the interface to keep the API clean
    */
-  constructor(public factory: FactoryModel<LucidModel>, private options?: ModelAdapterOptions) {}
+  constructor(
+    public factory: FactoryModel<LucidModel>,
+    private options?: ModelAdapterOptions,
+    /**
+     * The relationship via which this factory builder was
+     * created
+     */ private viaRelation?: FactoryRelationContract
+  ) {}
 
   /**
    * Returns factory state
@@ -162,6 +175,14 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
        * Invoke tap callbacks as the last step
        */
       this.invokeTapCallback(modelInstance, ctx)
+
+      /**
+       * Pass pivot attributes to the relationship instance
+       */
+      if (this.viaRelation && this.viaRelation.pivotAttributes) {
+        this.viaRelation.pivotAttributes(this.attributesForPivotTable || {})
+      }
+
       return modelInstance
     } catch (error) {
       if (!this.ctx && ctx.$trx) {
@@ -305,6 +326,16 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    */
   public merge(attributes: any) {
     this.attributes = attributes
+    return this
+  }
+
+  /**
+   * Define pivot attributes when persisting a many to many
+   * relationship. Results in a noop, when not called
+   * for a many to many relationship
+   */
+  public pivotAttributes(attributes: ModelObject | ModelObject[]): this {
+    this.attributesForPivotTable = attributes
     return this
   }
 
