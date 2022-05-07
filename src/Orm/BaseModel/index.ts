@@ -1240,6 +1240,8 @@ export class BaseModel implements LucidRow {
 
       if (DateTime.isDateTime(value) || DateTime.isDateTime(originalValue)) {
         isEqual = value === originalValue
+      } else if (isObject(value) && 'isDirty' in value) {
+        isEqual = !value.isDirty
       } else {
         isEqual = equal(originalValue, value)
       }

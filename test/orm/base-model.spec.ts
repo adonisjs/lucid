@@ -602,6 +602,66 @@ test.group('Base Model | dirty', (group) => {
     user.fill({ username: 'virk' })
     assert.deepEqual(user.$dirty, { age: null })
   })
+
+  test('compute diff for properties represented as objects', async ({ assert }) => {
+    const adapter = new FakeAdapter()
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public age: number
+
+      @column()
+      public location: any
+    }
+    User.$adapter = adapter
+
+    const user = new User()
+    user.username = 'virk'
+    user.location = { state: 'haryana', country: 'India' }
+    await user.save()
+
+    assert.deepEqual(user.$dirty, {})
+    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.$isPersisted)
+
+    user.location.state = 'goa'
+    assert.deepEqual(user.$dirty, { location: { state: 'goa', country: 'India' } })
+  })
+
+  test('compute diff for properties represented as classes', async ({ assert }) => {
+    class Location {
+      public isDirty = false
+      constructor(public state: string, public country: string) {}
+    }
+
+    const adapter = new FakeAdapter()
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column()
+      public age: number
+
+      @column()
+      public location: any
+    }
+    User.$adapter = adapter
+
+    const user = new User()
+    user.username = 'virk'
+    user.location = new Location('haryana', 'India')
+    await user.save()
+
+    assert.deepEqual(user.$dirty, {})
+    assert.isFalse(user.$isDirty)
+    assert.isTrue(user.$isPersisted)
+
+    user.location.state = 'goa'
+    user.location.isDirty = true
+    assert.deepEqual(user.$dirty, { location: { state: 'goa', country: 'India', isDirty: true } })
+  })
 })
 
 test.group('Base Model | persist', (group) => {
