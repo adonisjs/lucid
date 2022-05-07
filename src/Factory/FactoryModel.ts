@@ -217,6 +217,9 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
       query(options?: ModelAdapterOptions) {
         return new FactoryBuilder(this.factory, options)
       },
+      tap(callback) {
+        return this.query().tap(callback)
+      },
       client(...args: any[]) {
         return this.query().client(...args)
       },

@@ -51,7 +51,7 @@ test.group('Factory | HasMany | make', (group) => {
     await resetTables()
   })
 
-  test('make model with relationship', async ({ assert }) => {
+  test('makeStubbed model with relationship', async ({ assert }) => {
     class Post extends BaseModel {
       @column()
       public id: number

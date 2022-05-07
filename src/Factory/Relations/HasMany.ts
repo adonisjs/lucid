@@ -37,9 +37,12 @@ export class HasMany extends BaseRelation implements FactoryRelationContract {
 
     const customAttributes = {}
     this.relation.hydrateForPersistance(parent, customAttributes)
-    const instances = await factory.makeStubbedMany(count || 1, (related) => {
-      related.merge(customAttributes)
-    })
+
+    const instances = await factory
+      .tap((related) => {
+        related.merge(customAttributes)
+      })
+      .makeStubbedMany(count || 1)
 
     parent.$setRelated(this.relation.relationName, instances)
   }
@@ -53,9 +56,11 @@ export class HasMany extends BaseRelation implements FactoryRelationContract {
     const customAttributes = {}
     this.relation.hydrateForPersistance(parent, customAttributes)
 
-    const instance = await factory.createMany(count || 1, (related) => {
-      related.merge(customAttributes)
-    })
+    const instance = await factory
+      .tap((related) => {
+        related.merge(customAttributes)
+      })
+      .createMany(count || 1)
 
     parent.$setRelated(this.relation.relationName, instance)
   }

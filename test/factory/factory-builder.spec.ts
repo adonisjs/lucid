@@ -481,6 +481,131 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.equal(user.id, 100)
     assert.isFalse(user.$isPersisted)
   })
+
+  test('tap into model persistence before makeStubbed', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {
+          username: 'virk',
+        }
+      },
+      factoryManager
+    ).build()
+
+    const user = await factory
+      .tap(($user, ctx) => {
+        if (ctx.isStubbed) {
+          $user.id = 100
+        }
+      })
+      .makeStubbed()
+
+    assert.equal(user.username, 'virk')
+    assert.equal(user.id, 100)
+    assert.isFalse(user.$isPersisted)
+  })
+
+  test('tap into model persistence before make', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {
+          username: 'virk',
+        }
+      },
+      factoryManager
+    ).build()
+
+    const user = await factory
+      .tap(($user) => {
+        $user.username = 'tapped'
+      })
+      .make()
+
+    assert.equal(user.username, 'tapped')
+    assert.isFalse(user.$isPersisted)
+  })
+
+  test('bubble erros when makeStubbed fails', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {
+          username: 'virk',
+        }
+      },
+      factoryManager
+    )
+      .state('foo', () => {
+        throw new Error('boom')
+      })
+      .build()
+
+    await assert.rejects(async () => await factory.apply('foo').makeStubbed(), 'boom')
+  })
+
+  test('bubble erros when make fails', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {
+          username: 'virk',
+        }
+      },
+      factoryManager
+    )
+      .state('foo', () => {
+        throw new Error('boom')
+      })
+      .build()
+
+    await assert.rejects(async () => await factory.apply('foo').make(), 'boom')
+  })
 })
 
 test.group('Factory | Factory Builder | makeMany', (group) => {
@@ -719,6 +844,149 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.equal(users[1].points, 10)
     assert.isFalse(users[1].$isPersisted)
   })
+
+  test('tap into model persistence before makeStubbedMany', async ({ assert }) => {
+    assert.plan(15)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {}
+      },
+      factoryManager
+    )
+      .state('withPoints', (user) => (user.points = 10))
+      .build()
+
+    const users = await factory
+      .apply('withPoints')
+      .tap((user, ctx, builder) => {
+        assert.instanceOf(builder, FactoryBuilder)
+        assert.instanceOf(user, User)
+        assert.instanceOf(ctx, FactoryContext)
+        assert.equal(user.points, 10)
+      })
+      .makeStubbedMany(2)
+
+    assert.lengthOf(users, 2)
+    assert.exists(users[0].id)
+    assert.equal(users[0].points, 10)
+    assert.isFalse(users[0].$isPersisted)
+
+    assert.exists(users[1].id)
+    assert.equal(users[1].points, 10)
+    assert.isFalse(users[1].$isPersisted)
+  })
+
+  test('tap into model persistence before makeMany', async ({ assert }) => {
+    assert.plan(13)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {}
+      },
+      factoryManager
+    )
+      .state('withPoints', (user) => (user.points = 10))
+      .build()
+
+    const users = await factory
+      .apply('withPoints')
+      .tap((user, ctx, builder) => {
+        assert.instanceOf(builder, FactoryBuilder)
+        assert.instanceOf(user, User)
+        assert.instanceOf(ctx, FactoryContext)
+        assert.equal(user.points, 10)
+      })
+      .makeMany(2)
+
+    assert.lengthOf(users, 2)
+    assert.equal(users[0].points, 10)
+    assert.isFalse(users[0].$isPersisted)
+
+    assert.equal(users[1].points, 10)
+    assert.isFalse(users[1].$isPersisted)
+  })
+
+  test('bubble errors when makeStubbedMany fails', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {}
+      },
+      factoryManager
+    )
+      .merge(() => {
+        throw new Error('boom')
+      })
+      .build()
+
+    await assert.rejects(
+      async () => await factory.merge({ username: 'virk' }).makeStubbedMany(2),
+      'boom'
+    )
+  })
+
+  test('bubble errors when makeMany fails', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {}
+      },
+      factoryManager
+    )
+      .merge(() => {
+        throw new Error('boom')
+      })
+      .build()
+
+    await assert.rejects(async () => await factory.merge({ username: 'virk' }).makeMany(2), 'boom')
+  })
 })
 
 test.group('Factory | Factory Builder | create', (group) => {
@@ -952,9 +1220,10 @@ test.group('Factory | Factory Builder | create', (group) => {
     const user = await factory
       .connection('secondary')
       .apply('withPoints')
-      .create((_, { $trx }) => {
+      .tap((_, { $trx }) => {
         assert.equal($trx?.connectionName, 'secondary')
       })
+      .create()
 
     assert.equal(user.points, 10)
     assert.isTrue(user.$isPersisted)
@@ -989,12 +1258,82 @@ test.group('Factory | Factory Builder | create', (group) => {
     const user = await factory
       .client(client)
       .apply('withPoints')
-      .create((_, { $trx }) => {
+      .tap((_, { $trx }) => {
         assert.equal($trx?.connectionName, 'secondary')
       })
+      .create()
 
     assert.equal(user.points, 10)
     assert.isTrue(user.$isPersisted)
+  })
+
+  test('invoke tap callback before persisting the model', async ({ assert }) => {
+    assert.plan(6)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {}
+      },
+      factoryManager
+    )
+      .state('withPoints', (user) => (user.points = 10))
+      .build()
+
+    const client = db.connection('secondary')
+
+    const user = await factory
+      .client(client)
+      .apply('withPoints')
+      .tap(($user, ctx, builder) => {
+        assert.instanceOf(builder, FactoryBuilder)
+        assert.instanceOf($user, User)
+        assert.instanceOf(ctx, FactoryContext)
+        assert.equal($user.points, 10)
+      })
+      .create()
+
+    assert.equal(user.points, 10)
+    assert.isTrue(user.$isPersisted)
+  })
+
+  test('bubble errors when create fails', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {}
+      },
+      factoryManager
+    )
+      .state('withPoints', () => {
+        throw new Error('boo')
+      })
+      .build()
+
+    const client = db.connection('secondary')
+    await assert.rejects(async () => await factory.client(client).apply('withPoints').create())
   })
 })
 
@@ -1135,5 +1474,85 @@ test.group('Factory | Factory Builder | createMany', (group) => {
     assert.isTrue(users[0].$isPersisted)
     assert.equal(users[1].username, 'romain')
     assert.isTrue(users[1].$isPersisted)
+  })
+
+  test('invoke tap before persisting all models', async ({ assert }) => {
+    assert.plan(11)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {
+          username: 'virk',
+        }
+      },
+      factoryManager
+    ).build()
+
+    const users = await factory
+      .merge([{ username: 'nikk' }, { username: 'romain' }])
+      .tap(($user, ctx, builder) => {
+        assert.instanceOf(builder, FactoryBuilder)
+        assert.instanceOf($user, User)
+        assert.instanceOf(ctx, FactoryContext)
+      })
+      .createMany(2)
+
+    assert.lengthOf(users, 2)
+    assert.equal(users[0].username, 'nikk')
+    assert.isTrue(users[0].$isPersisted)
+    assert.equal(users[1].username, 'romain')
+    assert.isTrue(users[1].$isPersisted)
+  })
+
+  test('bubble errors when createMany fails', async ({ assert }) => {
+    let index = 0
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {
+          username: 'virk',
+        }
+      },
+      factoryManager
+    )
+      .merge(() => {
+        index++
+        if (index === 2) {
+          throw new Error('boom')
+        }
+      })
+      .build()
+
+    await assert.rejects(
+      async () => await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).createMany(2),
+      'boom'
+    )
+
+    const users = await User.all()
+    assert.lengthOf(users, 0)
   })
 })

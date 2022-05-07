@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { test } from '@japa/runner'
-import { BelongsTo } from '@ioc:Adonis/Lucid/Orm'
+import type { BelongsTo } from '@ioc:Adonis/Lucid/Orm'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 
 import { FactoryManager } from '../../src/Factory/index'
@@ -52,7 +52,7 @@ test.group('Factory | BelongTo | make', (group) => {
     await resetTables()
   })
 
-  test('make model with relationship', async ({ assert }) => {
+  test('make stubbed model with relationship', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public id: number
@@ -172,7 +172,7 @@ test.group('Factory | BelongTo | make', (group) => {
     assert.equal(profile.user.points, 10)
   })
 
-  test('invoke make hook on the related factory', async ({ assert }) => {
+  test('invoke make hook on the related factory during make stubbed', async ({ assert }) => {
     class Profile extends BaseModel {
       @column()
       public id: number

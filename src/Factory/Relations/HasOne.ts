@@ -37,7 +37,7 @@ export class HasOne extends BaseRelation implements FactoryRelationContract {
     const customAttributes = {}
     this.relation.hydrateForPersistance(parent, customAttributes)
 
-    const instance = await factory.makeStubbed((related) => related.merge(customAttributes))
+    const instance = await factory.tap((related) => related.merge(customAttributes)).makeStubbed()
     parent.$setRelated(this.relation.relationName, instance)
   }
 
@@ -50,7 +50,7 @@ export class HasOne extends BaseRelation implements FactoryRelationContract {
     const customAttributes = {}
     this.relation.hydrateForPersistance(parent, customAttributes)
 
-    const instance = await factory.create((related) => related.merge(customAttributes))
+    const instance = await factory.tap((related) => related.merge(customAttributes)).create()
     parent.$setRelated(this.relation.relationName, instance)
   }
 }

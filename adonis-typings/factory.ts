@@ -233,53 +233,51 @@ declare module '@ioc:Adonis/Lucid/Factory' {
     useCtx(ctx: FactoryContextContract): this
 
     /**
+     * Tap into the persistence layer of factory builder. Allows one
+     * to modify the model instance just before it is persisted
+     * to the database
+     */
+    tap(
+      callback: (
+        row: InstanceType<FactoryModel['model']>,
+        ctx: FactoryContextContract,
+        builder: this
+      ) => void
+    ): this
+
+    /**
      * Make model instance without persitance. The make method
      * doesn't process relationships
      */
-    make(
-      callback?: (model: InstanceType<FactoryModel['model']>, ctx: FactoryContextContract) => void
-    ): Promise<InstanceType<FactoryModel['model']>>
+    make(): Promise<InstanceType<FactoryModel['model']>>
 
     /**
      * Create model instance and stub out the persistance
      * mechanism
      */
-    makeStubbed(
-      callback?: (model: InstanceType<FactoryModel['model']>, ctx: FactoryContextContract) => void
-    ): Promise<InstanceType<FactoryModel['model']>>
+    makeStubbed(): Promise<InstanceType<FactoryModel['model']>>
 
     /**
      * Create and persist model instance
      */
-    create(
-      callback?: (model: InstanceType<FactoryModel['model']>, ctx: FactoryContextContract) => void
-    ): Promise<InstanceType<FactoryModel['model']>>
+    create(): Promise<InstanceType<FactoryModel['model']>>
 
     /**
      * Make model instance without persitance. The makeMany method
      * doesn't process relationships
      */
-    makeMany(
-      count: number,
-      callback?: (model: InstanceType<FactoryModel['model']>, ctx: FactoryContextContract) => void
-    ): Promise<InstanceType<FactoryModel['model']>[]>
+    makeMany(count: number): Promise<InstanceType<FactoryModel['model']>[]>
 
     /**
      * Create one or more model instances and stub
      * out the persistance mechanism.
      */
-    makeStubbedMany(
-      count: number,
-      callback?: (model: InstanceType<FactoryModel['model']>, ctx: FactoryContextContract) => void
-    ): Promise<InstanceType<FactoryModel['model']>[]>
+    makeStubbedMany(count: number): Promise<InstanceType<FactoryModel['model']>[]>
 
     /**
      * Create and persist more than one model instance
      */
-    createMany(
-      count: number,
-      callback?: (model: InstanceType<FactoryModel['model']>, ctx: FactoryContextContract) => void
-    ): Promise<InstanceType<FactoryModel['model']>[]>
+    createMany(count: number): Promise<InstanceType<FactoryModel['model']>[]>
   }
 
   /**

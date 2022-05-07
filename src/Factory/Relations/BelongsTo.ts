@@ -35,6 +35,7 @@ export class BelongsTo extends BaseRelation implements FactoryRelationContract {
   public async make(parent: LucidRow, callback?: RelationCallback) {
     const factory = this.compile(callback)
     const related = await factory.makeStubbed()
+
     this.relation.hydrateForPersistance(parent, related)
     parent.$setRelated(this.relation.relationName, related)
   }

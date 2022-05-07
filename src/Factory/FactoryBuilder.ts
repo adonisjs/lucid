@@ -35,6 +35,12 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   }[] = []
 
   /**
+   * An array of callbacks to execute before persisting the model instance
+   */
+  private tapCallbacks: ((row: LucidRow, state: FactoryContextContract, builder: this) => void)[] =
+    []
+
+  /**
    * Belongs to relationships are treated different, since they are
    * persisted before the parent model
    */
@@ -77,8 +83,8 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   /**
    * Returns factory state
    */
-  private async getCtx(isStubbed: boolean) {
-    if (isStubbed === true) {
+  private async getCtx(isStubbed: boolean, withTransaction: boolean) {
+    if (withTransaction === false) {
       return new FactoryContext(isStubbed, undefined)
     }
 
@@ -86,6 +92,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
       this.factory.model,
       this.options
     )
+
     const trx = await client.transaction()
     return new FactoryContext(isStubbed, trx)
   }
@@ -115,6 +122,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
       ctx,
       this
     )
+
     return modelInstance
   }
 
@@ -128,36 +136,39 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   }
 
   /**
+   * Invoke tap callbacks
+   */
+  private invokeTapCallback(modelInstance: LucidRow, ctx: FactoryContextContract) {
+    this.tapCallbacks.forEach((callback) => callback(modelInstance, ctx, this))
+  }
+
+  /**
    * Compile factory by instantiating model instance, applying merge
    * attributes, apply state
    */
-  private async compile(
-    isStubbed: boolean,
-    callback?: (model: LucidRow, ctx: FactoryContextContract) => void
-  ) {
-    /**
-     * Use pre-defined ctx or create a new one
-     */
-    const ctx = this.ctx || (await this.getCtx(isStubbed))
+  private async compile(ctx: FactoryContext) {
+    try {
+      /**
+       * Newup the model instance
+       */
+      const modelInstance = await this.getModelInstance(ctx)
 
-    /**
-     * Newup the model instance
-     */
-    const modelInstance = await this.getModelInstance(ctx)
+      /**
+       * Apply state
+       */
+      await this.applyStates(modelInstance, ctx)
 
-    /**
-     * Apply state
-     */
-    this.applyStates(modelInstance, ctx)
+      /**
+       * Invoke tap callbacks as the last step
+       */
+      this.invokeTapCallback(modelInstance, ctx)
+      return modelInstance
+    } catch (error) {
+      if (!this.ctx && ctx.$trx) {
+        await ctx.$trx.rollback()
+      }
 
-    /**
-     * Invoke custom callback (if defined)
-     */
-    typeof callback === 'function' && callback(modelInstance, ctx)
-
-    return {
-      modelInstance,
-      ctx,
+      throw error
     }
   }
 
@@ -166,6 +177,11 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * also persist them.
    */
   private async makeRelations(modelInstance: LucidRow, ctx: FactoryContextContract) {
+    for (let { name, count, callback } of this.withBelongsToRelations) {
+      const relation = this.factory.getRelation(name)
+      await relation.useCtx(ctx).make(modelInstance, callback, count)
+    }
+
     for (let { name, count, callback } of this.withRelations) {
       const relation = this.factory.getRelation(name)
       await relation.useCtx(ctx).make(modelInstance, callback, count)
@@ -186,6 +202,50 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
       const relation = this.factory.getRelation(name)
       await relation.useCtx(ctx).create(modelInstance, callback, count)
     }
+  }
+
+  /**
+   * Persist the model instance along with its relationships
+   */
+  private async persistModelInstance(modelInstance: LucidRow, ctx: FactoryContextContract) {
+    /**
+     * Fire the after "make" hook. There is no before make hook
+     */
+    await this.factory.hooks.exec('after', 'make', this, modelInstance, ctx)
+
+    /**
+     * Fire the before "create" hook
+     */
+    await this.factory.hooks.exec('before', 'create', this, modelInstance, ctx)
+
+    /**
+     * Sharing transaction with the model
+     */
+    modelInstance.$trx = ctx.$trx
+
+    /**
+     * Create belongs to relationships before calling the save method. Even though
+     * we can update the foriegn key after the initial insert call, we avoid it
+     * for cases, where FK is a not nullable.
+     */
+    await this.createRelations(modelInstance, ctx, 'before')
+
+    /**
+     * Persist model instance
+     */
+    await modelInstance.save()
+
+    /**
+     * Create relationships that are meant to be created after the parent
+     * row. Basically all types of relationships except belongsTo
+     */
+    await this.createRelations(modelInstance, ctx, 'after')
+
+    /**
+     * Fire after hook before the transaction is committed, so that
+     * hook can run db operations using the same transaction
+     */
+    await this.factory.hooks.exec('after', 'create', this, modelInstance, ctx)
   }
 
   /**
@@ -249,20 +309,50 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   }
 
   /**
+   * Tap into the persistence layer of factory builder. Allows one
+   * to modify the model instance just before it is persisted
+   * to the database
+   */
+  public tap(
+    callback: (row: LucidRow, state: FactoryContextContract, builder: this) => void
+  ): this {
+    this.tapCallbacks.push(callback)
+    return this
+  }
+
+  /**
    * Make model instance. Relationships are not processed with the make function.
    */
-  public async make(callback?: (model: LucidRow, ctx: FactoryContextContract) => void) {
-    const { modelInstance, ctx } = await this.compile(true, callback)
+  public async make() {
+    const ctx = this.ctx || (await this.getCtx(false, false))
+    const modelInstance = await this.compile(ctx)
     await this.factory.hooks.exec('after', 'make', this, modelInstance, ctx)
     return modelInstance
+  }
+
+  /**
+   * Create many of the factory model instances
+   */
+  public async makeMany(count: number) {
+    let modelInstances: LucidRow[] = []
+
+    const counter = new Array(count).fill(0).map((_, i) => i)
+    for (let index of counter) {
+      this.currentIndex = index
+      modelInstances.push(await this.make())
+    }
+
+    return modelInstances
   }
 
   /**
    * Returns a model instance without persisting it to the database.
    * Relationships are still loaded and states are also applied.
    */
-  public async makeStubbed(callback?: (model: LucidRow, ctx: FactoryContextContract) => void) {
-    const { modelInstance, ctx } = await this.compile(true, callback)
+  public async makeStubbed() {
+    const ctx = this.ctx || (await this.getCtx(true, false))
+    const modelInstance = await this.compile(ctx)
+
     await this.factory.hooks.exec('after', 'make', this, modelInstance, ctx)
     await this.factory.hooks.exec('before', 'makeStubbed', this, modelInstance, ctx)
 
@@ -283,44 +373,37 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   }
 
   /**
+   * Create many of model factory instances
+   */
+  public async makeStubbedMany(count: number) {
+    let modelInstances: LucidRow[] = []
+
+    const counter = new Array(count).fill(0).map((_, i) => i)
+    for (let index of counter) {
+      this.currentIndex = index
+      modelInstances.push(await this.makeStubbed())
+    }
+
+    return modelInstances
+  }
+
+  /**
    * Similar to make, but also persists the model instance to the
    * database.
    */
-  public async create(callback?: (model: LucidRow, ctx: FactoryContextContract) => void) {
-    const { modelInstance, ctx } = await this.compile(false, callback)
-    await this.factory.hooks.exec('after', 'make', this, modelInstance, ctx)
+  public async create() {
+    /**
+     * Use pre-defined ctx or create a new one
+     */
+    const ctx = this.ctx || (await this.getCtx(false, true))
 
     /**
-     * Fire the before hook
+     * Compile a model instance
      */
-    await this.factory.hooks.exec('before', 'create', this, modelInstance, ctx)
+    const modelInstance = await this.compile(ctx)
 
     try {
-      modelInstance.$trx = ctx.$trx
-
-      /**
-       * Create belongs to relationships before calling the save method. Even though
-       * we can update the foriegn key after the initial insert call, we avoid it
-       * for cases, where FK is a not nullable.
-       */
-      await this.createRelations(modelInstance, ctx, 'before')
-
-      /**
-       * Persist model instance
-       */
-      await modelInstance.save()
-
-      /**
-       * Create relationships.
-       */
-      await this.createRelations(modelInstance, ctx, 'after')
-
-      /**
-       * Fire after hook before the transaction is committed, so that
-       * hook can run db operations using the same transaction
-       */
-      await this.factory.hooks.exec('after', 'create', this, modelInstance, ctx)
-
+      await this.persistModelInstance(modelInstance, ctx)
       if (!this.ctx && ctx.$trx) {
         await ctx.$trx.commit()
       }
@@ -330,61 +413,46 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
       if (!this.ctx && ctx.$trx) {
         await ctx.$trx.rollback()
       }
+
       throw error
     }
   }
 
   /**
-   * Create many of factory model instances
-   */
-  public async makeStubbedMany(
-    count: number,
-    callback?: (model: LucidRow, ctx: FactoryContextContract) => void
-  ) {
-    let modelInstances: LucidRow[] = []
-
-    const counter = new Array(count).fill(0).map((_, i) => i)
-    for (let index of counter) {
-      this.currentIndex = index
-      modelInstances.push(await this.makeStubbed(callback))
-    }
-
-    return modelInstances
-  }
-
-  /**
    * Create and persist many of factory model instances
    */
-  public async createMany(
-    count: number,
-    callback?: (model: LucidRow, state: FactoryContextContract) => void
-  ) {
+  public async createMany(count: number) {
     let modelInstances: LucidRow[] = []
 
-    const counter = new Array(count).fill(0).map((_, i) => i)
-    for (let index of counter) {
-      this.currentIndex = index
-      modelInstances.push(await this.create(callback))
-    }
-
-    return modelInstances
-  }
-
-  /**
-   * Create many of the factory model instances
-   */
-  public async makeMany(
-    count: number,
-    callback?: (model: LucidRow, state: FactoryContextContract) => void
-  ) {
-    let modelInstances: LucidRow[] = []
+    /**
+     * Use pre-defined ctx or create a new one
+     */
+    const ctx = this.ctx || (await this.getCtx(false, true))
 
     const counter = new Array(count).fill(0).map((_, i) => i)
-    for (let index of counter) {
-      this.currentIndex = index
-      modelInstances.push(await this.make(callback))
-    }
 
-    return modelInstances
+    try {
+      for (let index of counter) {
+        this.currentIndex = index
+
+        /**
+         * Compile a model instance
+         */
+        const modelInstance = await this.compile(ctx)
+        await this.persistModelInstance(modelInstance, ctx)
+        modelInstances.push(modelInstance)
+      }
+      if (!this.ctx && ctx.$trx) {
+        await ctx.$trx.commit()
+      }
+
+      return modelInstances
+    } catch (error) {
+      if (!this.ctx && ctx.$trx) {
+        await ctx.$trx.rollback()
+      }
+
+      throw error
+    }
   }
 }
