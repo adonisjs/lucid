@@ -44,6 +44,16 @@ export default class MakeModel extends BaseCommand {
   public controller: boolean
 
   /**
+   * Defines if we generate the factory for the model.
+   */
+  @flags.boolean({
+    name: 'factory',
+    alias: 'f',
+    description: 'Generate a factory for the model',
+  })
+  public factory: boolean
+
+  /**
    * Run migrations
    */
   private async runMakeMigration() {
@@ -70,6 +80,19 @@ export default class MakeModel extends BaseCommand {
   }
 
   /**
+   * Make factory
+   */
+  private async runMakeFactory() {
+    if (!this.factory) {
+      return
+    }
+
+    const makeFactory = await this.kernel.exec('make:factory', [this.name])
+    this.exitCode = makeFactory.exitCode
+    this.error = makeFactory.error
+  }
+
+  /**
    * Execute command
    */
   public async run(): Promise<void> {
@@ -91,5 +114,6 @@ export default class MakeModel extends BaseCommand {
     }
 
     await this.runMakeController()
+    await this.runMakeFactory()
   }
 }
