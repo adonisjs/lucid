@@ -126,7 +126,7 @@ export default abstract class MigrationsBase extends BaseCommand {
     switch (migrator.status) {
       case 'completed':
         message = `❯ ${isUp ? 'Executed' : 'Reverted'} ${processedFiles.size} migrations`
-        output = this.colors.grey(message + `(${prettyHrTime(duration)})`)
+        output = this.colors.grey(message + ` (${prettyHrTime(duration)})`)
 
         break
 
