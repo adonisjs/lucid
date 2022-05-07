@@ -35,7 +35,13 @@ test.group('migration:run', (group) => {
     app.container.bind('Adonis/Lucid/Migrator', () => Migrator)
     return async () => {
       await cleanup()
-      await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
+      await cleanup([
+        'adonis_schema',
+        'adonis_schema_versions',
+        'schema_users',
+        'schema_accounts',
+        'schema_clients',
+      ])
       await db.manager.closeAll(true)
     }
   })
