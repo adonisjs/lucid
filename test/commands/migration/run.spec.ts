@@ -35,7 +35,13 @@ test.group('migration:run', (group) => {
     app.container.bind('Adonis/Lucid/Migrator', () => Migrator)
     return async () => {
       await cleanup()
-      await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users', 'schema_accounts'])
+      await cleanup([
+        'adonis_schema',
+        'adonis_schema_versions',
+        'schema_users',
+        'schema_accounts',
+        'schema_clients',
+      ])
       await db.manager.closeAll(true)
     }
   })
@@ -155,5 +161,92 @@ test.group('migration:run', (group) => {
     assert.isTrue(hasUsersTable)
     assert.equal(migrated[0].name, 'database/migrations/users')
     assert.equal(migrated[0].batch, 1)
+  })
+
+  test('run migrations with compact output should display one line', async ({ assert }) => {
+    await fs.add(
+      'database/migrations/users.ts',
+      `
+      import { Schema } from '../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    await fs.add(
+      'database/migrations/clients.ts',
+      `
+      import { Schema } from '../../../../src/Schema'
+      module.exports = class Client extends Schema {
+        public async up () {
+          this.schema.createTable('schema_clients', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    process.env.CLI_UI_IS_TESTING = 'true'
+    const kernel = new Kernel(app).mockConsoleOutput()
+    kernel.register([Migrate]).interactive(false)
+
+    const command = await kernel.exec('migration:run', ['--compact-output'])
+    const logs = command.ui.testingRenderer.logs.filter(
+      (log) => !log.message.includes('Upgrading migrations version from')
+    )
+
+    assert.deepEqual(logs.length, 1)
+    assert.isTrue(logs[0].message.includes('❯ Executed 2 migrations'))
+  })
+
+  test('run already migrated migrations with compact output should display one line', async ({
+    assert,
+  }) => {
+    await fs.add(
+      'database/migrations/users.ts',
+      `
+      import { Schema } from '../../../../src/Schema'
+      module.exports = class User extends Schema {
+        public async up () {
+          this.schema.createTable('schema_users', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    await fs.add(
+      'database/migrations/clients.ts',
+      `
+      import { Schema } from '../../../../src/Schema'
+      module.exports = class Client extends Schema {
+        public async up () {
+          this.schema.createTable('schema_clients', (table) => {
+            table.increments()
+          })
+        }
+      }
+    `
+    )
+
+    process.env.CLI_UI_IS_TESTING = 'true'
+    const kernel = new Kernel(app).mockConsoleOutput()
+    kernel.register([Migrate]).interactive(false)
+
+    await kernel.exec('migration:run', ['--compact-output'])
+    const command = await kernel.exec('migration:run', ['--compact-output'])
+    const logs = command.ui.testingRenderer.logs.filter(
+      (log) => !log.message.includes('Upgrading migrations version from')
+    )
+
+    assert.deepEqual(logs.length, 1)
+    assert.isTrue(logs[0].message.includes('❯ Already up to date'))
   })
 })

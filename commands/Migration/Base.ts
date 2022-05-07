@@ -19,6 +19,11 @@ import { prettyPrint } from '../../src/Helpers/prettyPrint'
  */
 export default abstract class MigrationsBase extends BaseCommand {
   /**
+   * Should print one-liner compact output
+   */
+  protected compactOutput = false
+
+  /**
    * Not a valid connection
    */
   protected printNotAValidConnection(connection: string) {
@@ -86,6 +91,66 @@ export default abstract class MigrationsBase extends BaseCommand {
   }
 
   /**
+   * Log final status with verbose output
+   */
+  private logVerboseFinalStatus(migrator: MigratorContract, duration?: [number, number]) {
+    switch (migrator.status) {
+      case 'completed':
+        const completionMessage = migrator.direction === 'up' ? 'Migrated in' : 'Reverted in'
+        console.log(`\n${completionMessage} ${this.colors.cyan(prettyHrTime(duration))}`)
+        break
+      case 'skipped':
+        const message =
+          migrator.direction === 'up' ? 'Already up to date' : 'Already at latest batch'
+        console.log(this.colors.cyan(message))
+        break
+      case 'error':
+        this.logger.fatal(migrator.error!)
+        this.exitCode = 1
+        break
+    }
+  }
+
+  /**
+   * Log final status with compact output
+   */
+  private logCompactFinalStatus(
+    processedFiles: Set<string>,
+    migrator: MigratorContract,
+    duration?: [number, number]
+  ) {
+    let output = ''
+    let message = ''
+    let isUp = migrator.direction === 'up'
+
+    switch (migrator.status) {
+      case 'completed':
+        message = `❯ ${isUp ? 'Executed' : 'Reverted'} ${processedFiles.size} migrations`
+        output = this.colors.grey(message + `(${prettyHrTime(duration)})`)
+
+        break
+
+      case 'skipped':
+        message = `❯ ${isUp ? 'Already up to date' : 'Already at latest batch'}`
+        output = this.colors.grey(message)
+        break
+
+      case 'error':
+        const skippedMigrations = Object.values(migrator.migratedFiles).filter(
+          (file) => file.status === 'pending'
+        ).length
+
+        message = `❯ Executed ${processedFiles.size} migrations, 1 error, ${skippedMigrations} skipped`
+        console.log(this.colors.red(message))
+        console.log('\n' + this.colors.red(migrator.error!.message))
+        this.exitCode = 1
+        break
+    }
+
+    this.logger.log(output)
+  }
+
+  /**
    * Runs the migrations using the migrator
    */
   protected async runMigrations(migrator: MigratorContract, connectionName: string): Promise<void> {
@@ -114,23 +179,30 @@ export default abstract class MigrationsBase extends BaseCommand {
      */
     migrator.on('migration:start', (file) => {
       processedFiles.add(file.file.name)
-      this.printLogMessage(file, migrator.direction)
+
+      if (!this.compactOutput) {
+        this.printLogMessage(file, migrator.direction)
+      }
     })
 
     /**
      * Migration completed
      */
     migrator.on('migration:completed', (file) => {
-      this.printLogMessage(file, migrator.direction)
-      this.logger.logUpdatePersist()
+      if (!this.compactOutput) {
+        this.printLogMessage(file, migrator.direction)
+        this.logger.logUpdatePersist()
+      }
     })
 
     /**
      * Migration error
      */
     migrator.on('migration:error', (file) => {
-      this.printLogMessage(file, migrator.direction)
-      this.logger.logUpdatePersist()
+      if (!this.compactOutput) {
+        this.printLogMessage(file, migrator.direction)
+        this.logger.logUpdatePersist()
+      }
     })
 
     /**
@@ -153,28 +225,15 @@ export default abstract class MigrationsBase extends BaseCommand {
      * fails with an error and then the migrator stops emitting events.
      */
     Object.keys(migrator.migratedFiles).forEach((file) => {
-      if (!processedFiles.has(file)) {
+      if (!processedFiles.has(file) && !this.compactOutput) {
         this.printLogMessage(migrator.migratedFiles[file], migrator.direction)
       }
     })
 
-    /**
-     * Log final status
-     */
-    switch (migrator.status) {
-      case 'completed':
-        const completionMessage = migrator.direction === 'up' ? 'Migrated in' : 'Reverted in'
-        console.log(`\n${completionMessage} ${this.colors.cyan(prettyHrTime(duration))}`)
-        break
-      case 'skipped':
-        const message =
-          migrator.direction === 'up' ? 'Already up to date' : 'Already at latest batch'
-        console.log(this.colors.cyan(message))
-        break
-      case 'error':
-        this.logger.fatal(migrator.error!)
-        this.exitCode = 1
-        break
+    if (this.compactOutput) {
+      this.logCompactFinalStatus(processedFiles, migrator, duration)
+    } else {
+      this.logVerboseFinalStatus(migrator, duration)
     }
   }
 }
