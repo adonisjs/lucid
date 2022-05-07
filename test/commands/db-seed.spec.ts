@@ -111,12 +111,11 @@ test.group('DbSeed', (group) => {
     const kernel = new Kernel(app).mockConsoleOutput()
     kernel.register([DbSeed])
 
-    process.env.NODE_ENV = 'production'
+    app.nodeEnvironment = 'production'
     const command = await kernel.exec('db:seed', ['--compact-output'])
+    app.nodeEnvironment = 'test'
 
     assert.deepEqual(command.ui.testingRenderer.logs.length, 1)
     assert.deepInclude(command.ui.testingRenderer.logs[0].message, 'Executed 2 seeders, 1 ignored')
-
-    delete process.env.NODE_ENV
   })
 })
