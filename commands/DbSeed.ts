@@ -200,6 +200,15 @@ export default class DbSeed extends BaseCommand {
 
     const color = countByStatus.failed ? 'red' : 'grey'
     this.logger.log(this.colors[color](message) as string)
+
+    if (countByStatus.failed > 0) {
+      const erroredSeeder = seedersResults.find((seeder) => seeder.status === 'failed')
+
+      const seederName = this.colors.grey(erroredSeeder!.file.name + ':')
+      const error = this.colors.red(erroredSeeder!.error!.message)
+
+      this.logger.log(`${seederName} ${error}\n`)
+    }
   }
 
   /**
