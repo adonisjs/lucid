@@ -23,8 +23,6 @@ const templates = new Filesystem(join(__dirname, '..', '..', 'templates'))
 test.group('Make Factory', async (group) => {
   let app: ApplicationContract
 
-  // group.tap((_test) => _test.pin())
-
   group.each.setup(async () => {
     await fs.add('.adonisrc.json', JSON.stringify({}))
     const rcContents = readJSONSync(join(fs.basePath, '.adonisrc.json'))
@@ -67,7 +65,6 @@ test.group('Make Factory', async (group) => {
         replaceFactoryBindings(factoryTemplate, set.model, set.finalImportPath)
       )
     })
-    .pin()
 
   test('generate a factory with custom import path')
     .with([
@@ -102,5 +99,4 @@ test.group('Make Factory', async (group) => {
         replaceFactoryBindings(factoryTemplate, set.model, set.finalImportPath)
       )
     })
-    .pin()
 })
