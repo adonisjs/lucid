@@ -43,6 +43,12 @@ export default class Migrate extends MigrationsBase {
   public dryRun: boolean
 
   /**
+   * Display migrations result in one compact single-line output
+   */
+  @flags.boolean({ description: 'A compact single-line output' })
+  public compactOutput: boolean = false
+
+  /**
    * Instantiating the migrator instance
    */
   private instantiateMigrator() {
