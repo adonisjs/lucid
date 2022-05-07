@@ -667,3 +667,11 @@ export async function cleanupReplicaDb(connection: Knex) {
 export function sleep(timeout: number) {
   return new Promise((resolve) => setTimeout(resolve, timeout))
 }
+
+export function replaceFactoryBindings(source: string, model: string, importPath: string) {
+  return toNewlineArray(
+    source
+      .replace('{{{ modelImportPath }}}', importPath)
+      .replace(/{{#toModelName}}{{{ model }}}{{\/toModelName}}/gi, model)
+  )
+}
