@@ -112,6 +112,37 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
+  test('pass instance of builder to the state callback', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {}
+      },
+      factoryManager
+    )
+      .state('withPoints', (user, __, builder) => {
+        assert.instanceOf(builder, FactoryBuilder)
+        user.merge({ points: 10 })
+      })
+      .build()
+
+    const user = await factory.apply('withPoints').makeStubbed()
+    assert.equal(user.points, 10)
+    assert.exists(user.id)
+    assert.isFalse(user.$isPersisted)
+  })
+
   test('merge custom attributes', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -170,6 +201,38 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
+  test('pass builder to custom merge function', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {
+          username: 'virk',
+        }
+      },
+      factoryManager
+    )
+      .merge((_, __, ___, builder) => {
+        assert.instanceOf(builder, FactoryBuilder)
+      })
+      .build()
+
+    const user = await factory.merge({ username: 'nikk' }).makeStubbed()
+    assert.equal(user.username, 'virk')
+    assert.exists(user.id)
+    assert.isFalse(user.$isPersisted)
+  })
+
   test('define custom newUp function', async ({ assert }) => {
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -192,6 +255,82 @@ test.group('Factory | Factory Builder | make', (group) => {
       factoryManager
     )
       .newUp((attributes) => {
+        const user = new User()
+        user.fill(attributes)
+        user.$extras = { invoked: true }
+        return user
+      })
+      .merge(() => {})
+      .build()
+
+    const user = await factory.makeStubbed()
+    assert.equal(user.username, 'virk')
+    assert.exists(user.id)
+    assert.deepEqual(user.$extras, { invoked: true })
+    assert.isFalse(user.$isPersisted)
+  })
+
+  test('pass model to custom newUp function', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {
+          username: 'virk',
+        }
+      },
+      factoryManager
+    )
+      .newUp((attributes) => {
+        const user = new User()
+        user.fill(attributes)
+        user.$extras = { invoked: true }
+        return user
+      })
+      .merge(() => {})
+      .build()
+
+    const user = await factory.makeStubbed()
+    assert.equal(user.username, 'virk')
+    assert.exists(user.id)
+    assert.deepEqual(user.$extras, { invoked: true })
+    assert.isFalse(user.$isPersisted)
+  })
+
+  test('pass factory builder to custom newUp function', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column()
+      public points: number
+    }
+
+    const factory = new FactoryModel(
+      User,
+      () => {
+        return {
+          username: 'virk',
+        }
+      },
+      factoryManager
+    )
+      .newUp((attributes, _, __, builder) => {
+        assert.instanceOf(builder, FactoryBuilder)
+
         const user = new User()
         user.fill(attributes)
         user.$extras = { invoked: true }

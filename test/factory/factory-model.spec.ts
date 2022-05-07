@@ -193,7 +193,7 @@ test.group('Factory | Factory Model', (group) => {
     const factory = new FactoryModel(User, () => new User(), factoryManager)
     assert.throws(
       () => factory.getRelation('profile'),
-      'Cannot setup undefined relationship "profile". Double check the model factory'
+      'Cannot reference "profile" relationship. Make sure to setup the relationship within the factory'
     )
   })
 

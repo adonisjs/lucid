@@ -72,7 +72,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * the runtime operations and those API's are not exposed
    * on the interface to keep the API clean
    */
-  constructor(public model: FactoryModel<LucidModel>, private options?: ModelAdapterOptions) {}
+  constructor(public factory: FactoryModel<LucidModel>, private options?: ModelAdapterOptions) {}
 
   /**
    * Returns factory state
@@ -82,7 +82,10 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
       return new FactoryContext(isStubbed, undefined)
     }
 
-    const client = this.model.model.$adapter.modelConstructorClient(this.model.model, this.options)
+    const client = this.factory.model.$adapter.modelConstructorClient(
+      this.factory.model,
+      this.options
+    )
     const trx = await client.transaction()
     return new FactoryContext(isStubbed, trx)
   }
@@ -98,9 +101,20 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Returns a new model instance with filled attributes
    */
   private async getModelInstance(ctx: FactoryContextContract): Promise<LucidRow> {
-    const modelAttributes = await this.model.define(ctx)
-    const modelInstance = this.model.newUpModelInstance(modelAttributes, ctx)
-    this.model.mergeAttributes(modelInstance, this.getMergeAttributes(this.currentIndex), ctx)
+    const modelAttributes = await this.factory.define(ctx)
+    const modelInstance = this.factory.newUpModelInstance(
+      modelAttributes,
+      ctx,
+      this.factory.model,
+      this
+    )
+
+    this.factory.mergeAttributes(
+      modelInstance,
+      this.getMergeAttributes(this.currentIndex),
+      ctx,
+      this
+    )
     return modelInstance
   }
 
@@ -109,7 +123,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    */
   private async applyStates(modelInstance: LucidRow, ctx: FactoryContextContract) {
     for (let state of this.appliedStates) {
-      await this.model.getState(state)(modelInstance, ctx)
+      await this.factory.getState(state)(modelInstance, ctx, this)
     }
   }
 
@@ -153,7 +167,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    */
   private async makeRelations(modelInstance: LucidRow, ctx: FactoryContextContract) {
     for (let { name, count, callback } of this.withRelations) {
-      const relation = this.model.getRelation(name)
+      const relation = this.factory.getRelation(name)
       await relation.useCtx(ctx).make(modelInstance, callback, count)
     }
   }
@@ -169,7 +183,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
     const relationships = cycle === 'before' ? this.withBelongsToRelations : this.withRelations
 
     for (let { name, count, callback } of relationships) {
-      const relation = this.model.getRelation(name)
+      const relation = this.factory.getRelation(name)
       await relation.useCtx(ctx).create(modelInstance, callback, count)
     }
   }
@@ -205,7 +219,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Load relationship
    */
   public with(name: string, count?: number, callback?: (factory: never) => void): this {
-    const relation = this.model.getRelation(name)
+    const relation = this.factory.getRelation(name)
 
     if (relation.relation.type === 'belongsTo') {
       this.withBelongsToRelations.push({ name, count, callback })
@@ -239,7 +253,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    */
   public async make(callback?: (model: LucidRow, ctx: FactoryContextContract) => void) {
     const { modelInstance, ctx } = await this.compile(true, callback)
-    await this.model.hooks.exec('after', 'make', this, modelInstance, ctx)
+    await this.factory.hooks.exec('after', 'make', this, modelInstance, ctx)
     return modelInstance
   }
 
@@ -249,11 +263,11 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    */
   public async makeStubbed(callback?: (model: LucidRow, ctx: FactoryContextContract) => void) {
     const { modelInstance, ctx } = await this.compile(true, callback)
-    await this.model.hooks.exec('after', 'make', this, modelInstance, ctx)
-    await this.model.hooks.exec('before', 'makeStubbed', this, modelInstance, ctx)
+    await this.factory.hooks.exec('after', 'make', this, modelInstance, ctx)
+    await this.factory.hooks.exec('before', 'makeStubbed', this, modelInstance, ctx)
 
-    const id = modelInstance.$primaryKeyValue || this.model.manager.getNextId(modelInstance)
-    modelInstance[this.model.model.primaryKey] = id
+    const id = modelInstance.$primaryKeyValue || this.factory.manager.getNextId(modelInstance)
+    modelInstance[this.factory.model.primaryKey] = id
 
     /**
      * Make relationships. The relationships will be not persisted
@@ -263,7 +277,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
     /**
      * Fire the after hook
      */
-    await this.model.hooks.exec('after', 'makeStubbed', this, modelInstance, ctx)
+    await this.factory.hooks.exec('after', 'makeStubbed', this, modelInstance, ctx)
 
     return modelInstance
   }
@@ -274,12 +288,12 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    */
   public async create(callback?: (model: LucidRow, ctx: FactoryContextContract) => void) {
     const { modelInstance, ctx } = await this.compile(false, callback)
-    await this.model.hooks.exec('after', 'make', this, modelInstance, ctx)
+    await this.factory.hooks.exec('after', 'make', this, modelInstance, ctx)
 
     /**
      * Fire the before hook
      */
-    await this.model.hooks.exec('before', 'create', this, modelInstance, ctx)
+    await this.factory.hooks.exec('before', 'create', this, modelInstance, ctx)
 
     try {
       modelInstance.$trx = ctx.$trx
@@ -305,7 +319,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
        * Fire after hook before the transaction is committed, so that
        * hook can run db operations using the same transaction
        */
-      await this.model.hooks.exec('after', 'create', this, modelInstance, ctx)
+      await this.factory.hooks.exec('after', 'create', this, modelInstance, ctx)
 
       if (!this.ctx && ctx.$trx) {
         await ctx.$trx.commit()

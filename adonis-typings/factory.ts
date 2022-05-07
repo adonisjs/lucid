@@ -63,24 +63,28 @@ declare module '@ioc:Adonis/Lucid/Factory' {
    */
   export type NewUpCallback<T extends FactoryModelContract<LucidModel>> = (
     attributes: ExtractFactoryAttributes<T>,
-    ctx: FactoryContextContract
+    ctx: FactoryContextContract,
+    model: T['model'],
+    builder: FactoryBuilderContract<T>
   ) => InstanceType<T['model']>
 
   /**
    * Function to merge attributes defined during runtime
    */
   export type MergeCallback<T extends FactoryModelContract<LucidModel>> = (
-    model: InstanceType<T['model']>,
+    row: InstanceType<T['model']>,
     attributes: ExtractFactoryAttributes<T>,
-    ctx: FactoryContextContract
+    ctx: FactoryContextContract,
+    builder: FactoryBuilderContract<T>
   ) => void
 
   /**
    * Callback to define a new model state
    */
-  export type StateCallback<Model extends LucidRow> = (
-    model: Model,
-    ctx: FactoryContextContract
+  export type StateCallback<Model extends LucidModel> = (
+    row: InstanceType<Model>,
+    ctx: FactoryContextContract,
+    builder: FactoryBuilderContract<FactoryModelContract<Model>>
   ) => any | Promise<any>
 
   /**
@@ -98,8 +102,8 @@ declare module '@ioc:Adonis/Lucid/Factory' {
    * Shape of hooks handler
    */
   export type HooksHandler<Model extends FactoryModelContract<LucidModel>> = (
-    factory: FactoryBuilderContract<Model>,
-    model: InstanceType<Model['model']>,
+    builder: FactoryBuilderContract<Model>,
+    row: InstanceType<Model['model']>,
     ctx: FactoryContextContract
   ) => void | Promise<void>
 
@@ -131,7 +135,7 @@ declare module '@ioc:Adonis/Lucid/Factory' {
    * `create` and `make` methods
    */
   export type RelationCallback = (
-    factory: FactoryBuilderContract<FactoryModelContract<LucidModel>>
+    builder: FactoryBuilderContract<FactoryModelContract<LucidModel>>
   ) => void
 
   /**
@@ -174,6 +178,11 @@ declare module '@ioc:Adonis/Lucid/Factory' {
    */
   export interface FactoryBuilderContract<FactoryModel extends FactoryModelContract<LucidModel>> {
     /**
+     * Reference to the factory
+     */
+    factory: FactoryModel
+
+    /**
      * Define custom database connection
      */
     connection(connection: string): this
@@ -198,7 +207,7 @@ declare module '@ioc:Adonis/Lucid/Factory' {
         /**
          * Receives the explicitly defined factory
          */
-        factory: FactoryModel['relations'][K] extends () => FactoryBuilderContract<any>
+        builder: FactoryModel['relations'][K] extends () => FactoryBuilderContract<any>
           ? ReturnType<FactoryModel['relations'][K]>
           : never
       ) => void
@@ -310,7 +319,7 @@ declare module '@ioc:Adonis/Lucid/Factory' {
 
     /**
      * Optionally define a custom method to instantiate the model
-     * instance
+     * instance and manage merging attributes
      */
     newUp(callback: NewUpCallback<this>): this
     merge(callback: MergeCallback<this>): this
@@ -321,8 +330,8 @@ declare module '@ioc:Adonis/Lucid/Factory' {
      */
     state<K extends string>(
       state: K,
-      callback: StateCallback<InstanceType<Model>>
-    ): this & { states: { [P in K]: StateCallback<InstanceType<Model>> } }
+      callback: StateCallback<Model>
+    ): this & { states: { [P in K]: StateCallback<Model> } }
 
     /**
      * Define a relationship on another factory

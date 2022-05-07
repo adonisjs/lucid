@@ -9,7 +9,6 @@
 
 import { Hooks } from '@poppinss/hooks'
 import {
-  LucidRow,
   LucidModel,
   ModelAdapterOptions,
   ExtractModelRelations,
@@ -25,7 +24,6 @@ import {
   DefineCallback,
   FactoryModelContract,
   FactoryRelationContract,
-  FactoryBuilderQueryContract,
 } from '@ioc:Adonis/Lucid/Factory'
 
 import { FactoryManager } from './index'
@@ -44,38 +42,35 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
    * Method to instantiate a new model instance. This method can be
    * overridden using the `newUp` public method.
    */
-  public newUpModelInstance: NewUpCallback<FactoryModelContract<LucidModel>> = function (
-    attributes: any
-  ) {
-    const ModelConstructor = this.model
-
+  public newUpModelInstance: NewUpCallback<FactoryModelContract<LucidModel>> = (
+    attributes,
+    _,
+    model
+  ) => {
     /**
      * Handling case, where someone returns model instance directly
      */
-    if (attributes instanceof ModelConstructor) {
+    if (attributes instanceof model) {
       return attributes
     }
 
-    const modelInstance = new ModelConstructor()
+    const modelInstance = new model()
     modelInstance.merge(attributes)
     return modelInstance
-  }.bind(this)
+  }
 
   /**
    * Method to merge runtime attributes with the model instance. This method
    * can be overridden using the `merge` method.
    */
-  public mergeAttributes: MergeCallback<FactoryModelContract<LucidModel>> = function (
-    model: LucidRow,
-    attributes: any
-  ) {
+  public mergeAttributes: MergeCallback<FactoryModelContract<LucidModel>> = (model, attributes) => {
     model.merge(attributes)
-  }.bind(this)
+  }
 
   /**
    * A collection of factory states
    */
-  public states: { [key: string]: StateCallback<LucidRow> } = {}
+  public states: { [key: string]: StateCallback<Model> } = {}
 
   /**
    * A collection of factory relations
@@ -89,14 +84,14 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
 
   constructor(
     public model: Model,
-    public define: DefineCallback<LucidModel>,
+    public define: DefineCallback<Model>,
     public manager: FactoryManager
   ) {}
 
   /**
    * Register a before event hook
    */
-  public before(event: EventsList, handler: HooksHandler<FactoryModelContract<Model>>): this {
+  public before(event: EventsList, handler: HooksHandler<any>): this {
     this.hooks.add('before', event, handler)
     return this
   }
@@ -104,7 +99,7 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
   /**
    * Register an after event hook
    */
-  public after(event: EventsList, handler: HooksHandler<FactoryModelContract<Model>>): this {
+  public after(event: EventsList, handler: HooksHandler<any>): this {
     this.hooks.add('after', event, handler)
     return this
   }
@@ -113,7 +108,7 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
    * Returns state callback defined on the model factory. Raises an
    * exception, when state is not registered
    */
-  public getState(state: string): StateCallback<LucidRow> {
+  public getState(state: string): StateCallback<Model> {
     const stateCallback = this.states[state]
     if (!stateCallback) {
       throw new Error(`Cannot apply undefined state "${state}". Double check the model factory`)
@@ -130,7 +125,7 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
     const relationship = this.relations[relation]
     if (!relationship) {
       throw new Error(
-        `Cannot setup undefined relationship "${relation}". Double check the model factory`
+        `Cannot reference "${relation}" relationship. Make sure to setup the relationship within the factory`
       )
     }
 
@@ -141,7 +136,7 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
    * Define custom state for the factory. When executing the factory,
    * you can apply the pre-defined states
    */
-  public state(state: string, callback: StateCallback<InstanceType<Model>>): any {
+  public state(state: string, callback: StateCallback<Model>): any {
     this.states[state] = callback
     return this
   }
@@ -195,7 +190,7 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
   /**
    * Define a custom `newUp` method
    */
-  public newUp(callback: NewUpCallback<FactoryModelContract<LucidModel>>): this {
+  public newUp(callback: NewUpCallback<any>): this {
     this.newUpModelInstance = callback
     return this
   }
@@ -203,7 +198,7 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
   /**
    * Define a custom `merge` method
    */
-  public merge(callback: MergeCallback<FactoryModelContract<any>>): this {
+  public merge(callback: MergeCallback<any>): this {
     this.mergeAttributes = callback
     return this
   }
@@ -218,9 +213,9 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
      * method and invokes them with a fresh instance.
      */
     const builder = {
-      model: this,
+      factory: this,
       query(options?: ModelAdapterOptions) {
-        return new FactoryBuilder(this.model, options)
+        return new FactoryBuilder(this.factory, options)
       },
       client(...args: any[]) {
         return this.query().client(...args)
@@ -260,6 +255,6 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
       },
     }
 
-    return builder as unknown as FactoryBuilderQueryContract<FactoryModelContract<Model>>
+    return builder as any
   }
 }
