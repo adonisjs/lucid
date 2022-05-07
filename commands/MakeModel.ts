@@ -43,6 +43,9 @@ export default class MakeModel extends BaseCommand {
   })
   public controller: boolean
 
+  /**
+   * Defines if we generate the factory for the model.
+   */
   @flags.boolean({
     name: 'factory',
     alias: 'f',
@@ -76,6 +79,9 @@ export default class MakeModel extends BaseCommand {
     this.error = makeController.error
   }
 
+  /**
+   * Make factory
+   */
   private async runMakeFactory() {
     if (!this.factory) {
       return
