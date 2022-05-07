@@ -146,6 +146,16 @@ declare module '@ioc:Adonis/Lucid/Database' {
   }
 
   /**
+   * Possible signatures for adding a whereLike clause
+   */
+  interface WhereLike<Builder extends ChainableContract> {
+    /**
+     * Key-value pair. The value can also be a subquery
+     */
+    (key: string | RawQuery, value: StrictValues | ChainableContract): Builder
+  }
+
+  /**
    * Possible signatures for adding a where column clause
    */
   interface WhereColumn<Builder extends ChainableContract> {
@@ -512,6 +522,14 @@ declare module '@ioc:Adonis/Lucid/Database' {
     whereRaw: RawQueryFn<this>
     orWhereRaw: RawQueryFn<this>
     andWhereRaw: RawQueryFn<this>
+
+    whereLike: WhereLike<this>
+    orWhereLike: WhereLike<this>
+    andWhereLike: WhereLike<this>
+
+    whereILike: WhereLike<this>
+    orWhereILike: WhereLike<this>
+    andWhereILike: WhereLike<this>
 
     join: Join<this>
     innerJoin: Join<this>

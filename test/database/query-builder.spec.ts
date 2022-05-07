@@ -12008,3 +12008,697 @@ test.group('Query Builder | withNotMaterialized', (group) => {
     await connection.disconnect()
   })
 })
+
+test.group('Query Builder | whereLike', (group) => {
+  group.setup(async () => {
+    app = await setupApplication()
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  group.each.teardown(async () => {
+    app.container.use('Adonis/Core/Event').clearListeners('db:query')
+    await resetTables()
+  })
+
+  test('add where like clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db.from('users').whereLike('username', 'virk').toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .whereLike('username', 'virk')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereLike('username', 'virk')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .whereLike('my_username', 'virk')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap where like clause to its own group', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereLike('username', 'virk')
+      .orWhereLike('email', 'virk')
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .where((q) => q.whereLike('username', 'virk').orWhereLike('email', 'virk'))
+      .where((q) => q.whereNull('deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereLike('username', 'virk')
+      .orWhereLike('email', 'virk')
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .where((q) => q.whereLike('my_username', 'virk').orWhereLike('my_email', 'virk'))
+      .where((q) => q.whereNull('my_deleted_at'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('add where like clause as a raw query', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereLike(
+        'age',
+        getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages limit 1;')
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .whereLike('age', connection.client!.raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap raw query', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereLike(
+        'age',
+        getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages limit 1;')
+      )
+      .wrapExisting()
+      .whereNotNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .where((q) => q.whereLike('age', connection.client!.raw('select min_age from ages limit 1;')))
+      .where((q) => q.whereNotNull('deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('add where like clause as a raw builder query', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereLike('age', getDb(app).raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .whereLike('age', connection.client!.raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap raw query builder query', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereLike('age', getDb(app).raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .whereLike('age', connection.client!.raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('add orWhereLike clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db.from('users').whereLike('age', 22).orWhereLike('age', 18).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .whereLike('age', 22)
+      .orWhereLike('age', 18)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereLike('age', 22)
+      .orWhereLike('age', 18)
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .whereLike('my_age', 22)
+      .orWhereLike('my_age', 18)
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('wrap orWhereLike clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereLike('age', 22)
+      .wrapExisting()
+      .orWhereLike('age', 18)
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .where((q) => q.whereLike('age', 22))
+      .orWhere((q) => q.whereLike('age', 18))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereLike('age', 22)
+      .wrapExisting()
+      .orWhereLike('age', 18)
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .where((q) => q.whereLike('my_age', 22))
+      .orWhere((q) => q.whereLike('my_age', 18))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('add whereLike clause using ref', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db.from('users').whereLike('username', 'virk').toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .whereLike('username', 'virk')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereLike('username', getDb(app).ref('foo.username'))
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .whereLike('my_username', connection.client!.ref('foo.username'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap whereLike clause using ref', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereLike('username', getDb(app).ref('foo.username'))
+      .wrapExisting()
+      .orWhereNotNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .where((q) => q.whereLike('username', connection.client!.ref('foo.username')))
+      .orWhere((q) => q.whereNotNull('deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereLike('username', getDb(app).ref('foo.username'))
+      .wrapExisting()
+      .orWhereNotNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .where((q) => q.whereLike('my_username', connection.client!.ref('foo.username')))
+      .orWhere((q) => q.whereNotNull('my_deleted_at'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+})
+
+test.group('Query Builder | whereILike', (group) => {
+  group.setup(async () => {
+    app = await setupApplication()
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  group.each.teardown(async () => {
+    app.container.use('Adonis/Core/Event').clearListeners('db:query')
+    await resetTables()
+  })
+
+  test('add whereILike clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db.from('users').whereILike('username', 'virk').toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .whereILike('username', 'virk')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereILike('username', 'virk')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .whereILike('my_username', 'virk')
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap whereILike clause to its own group', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereILike('username', 'virk')
+      .orWhereLike('email', 'virk')
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .where((q) => q.whereILike('username', 'virk').orWhereLike('email', 'virk'))
+      .where((q) => q.whereNull('deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereILike('username', 'virk')
+      .orWhereLike('email', 'virk')
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .where((q) => q.whereILike('my_username', 'virk').orWhereLike('my_email', 'virk'))
+      .where((q) => q.whereNull('my_deleted_at'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('add whereILike clause as a raw query', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereILike(
+        'age',
+        getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages limit 1;')
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .whereILike('age', connection.client!.raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap raw query', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereILike(
+        'age',
+        getRawQueryBuilder(getQueryClient(connection, app), 'select min_age from ages limit 1;')
+      )
+      .wrapExisting()
+      .whereNotNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .where((q) =>
+        q.whereILike('age', connection.client!.raw('select min_age from ages limit 1;'))
+      )
+      .where((q) => q.whereNotNull('deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('add whereILike clause as a raw builder query', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereILike('age', getDb(app).raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .whereILike('age', connection.client!.raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap raw query builder query', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereILike('age', getDb(app).raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .whereILike('age', connection.client!.raw('select min_age from ages limit 1;'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+    await connection.disconnect()
+  })
+
+  test('add orWhereILike clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db.from('users').whereILike('age', 22).orWhereILike('age', 18).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .whereILike('age', 22)
+      .orWhereILike('age', 18)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereILike('age', 22)
+      .orWhereILike('age', 18)
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .whereILike('my_age', 22)
+      .orWhereILike('my_age', 18)
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('wrap orWhereILike clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereILike('age', 22)
+      .wrapExisting()
+      .orWhereILike('age', 18)
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .where((q) => q.whereILike('age', 22))
+      .orWhere((q) => q.whereILike('age', 18))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereILike('age', 22)
+      .wrapExisting()
+      .orWhereILike('age', 18)
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .where((q) => q.whereILike('my_age', 22))
+      .orWhere((q) => q.whereILike('my_age', 18))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('add whereILike clause using ref', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db.from('users').whereILike('username', 'virk').toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .whereILike('username', 'virk')
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereILike('username', getDb(app).ref('foo.username'))
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .whereILike('my_username', connection.client!.ref('foo.username'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap whereILike clause using ref', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereILike('username', getDb(app).ref('foo.username'))
+      .wrapExisting()
+      .orWhereNotNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .where((q) => q.whereILike('username', connection.client!.ref('foo.username')))
+      .orWhere((q) => q.whereNotNull('deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereILike('username', getDb(app).ref('foo.username'))
+      .wrapExisting()
+      .orWhereNotNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .where((q) => q.whereILike('my_username', connection.client!.ref('foo.username')))
+      .orWhere((q) => q.whereNotNull('my_deleted_at'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+})

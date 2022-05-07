@@ -851,6 +851,48 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   }
 
   /**
+   * Add a `where like` clause
+   */
+  public whereLike(key: any, value?: any): this {
+    return this.where(key, 'like', value)
+  }
+
+  /**
+   * Add a `where like` clause
+   */
+  public orWhereLike(key: any, value?: any): this {
+    return this.orWhere(key, 'like', value)
+  }
+
+  /**
+   * Add a `where like` clause
+   */
+  public andWhereLike(key: any, value?: any): this {
+    return this.andWhere(key, 'like', value)
+  }
+
+  /**
+   * Add a `where like` clause
+   */
+  public whereILike(key: any, value?: any): this {
+    return this.where(key, 'ilike', value)
+  }
+
+  /**
+   * Add a `where like` clause
+   */
+  public orWhereILike(key: any, value?: any): this {
+    return this.orWhere(key, 'ilike', value)
+  }
+
+  /**
+   * Add a `where like` clause
+   */
+  public andWhereILike(key: any, value?: any): this {
+    return this.andWhere(key, 'ilike', value)
+  }
+
+  /**
    * Add a join clause
    */
   public join(table: any, first: any, operator?: any, second?: any): this {
