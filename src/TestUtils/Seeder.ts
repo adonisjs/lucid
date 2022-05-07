@@ -18,7 +18,7 @@ export class TestsSeeder {
   private async runCommand(commandName: string) {
     const args: string[] = []
     if (this.connectionName) {
-      args.push(`--connection="${this.connectionName}"`)
+      args.push(`--connection=${this.connectionName}`)
     }
 
     const command = await this.ace.exec(commandName, args)
