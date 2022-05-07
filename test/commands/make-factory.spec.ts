@@ -10,30 +10,24 @@
 import { test } from '@japa/runner'
 import { join } from 'path'
 import { Kernel } from '@adonisjs/ace'
-import { readJSONSync } from 'fs-extra'
 import { Filesystem } from '@poppinss/dev-utils'
-import { Application } from '@adonisjs/application'
-import { replaceFactoryBindings, toNewlineArray } from '../../test-helpers/index'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
 import MakeFactory from '../../commands/MakeFactory'
+import {
+  fs,
+  toNewlineArray,
+  setupApplication,
+  replaceFactoryBindings,
+} from '../../test-helpers/index'
 
-const fs = new Filesystem(join(__dirname, '__app'))
 const templates = new Filesystem(join(__dirname, '..', '..', 'templates'))
 
 test.group('Make Factory', async (group) => {
   let app: ApplicationContract
 
   group.each.setup(async () => {
-    await fs.add('.adonisrc.json', JSON.stringify({}))
-    const rcContents = readJSONSync(join(fs.basePath, '.adonisrc.json'))
-    app = new Application(fs.basePath, 'test', rcContents)
-
-    process.env.ADONIS_ACE_CWD = fs.basePath
-
-    return async () => {
-      process.env.ADONIS_ACE_CWD = fs.basePath
-      await fs.cleanup()
-    }
+    app = await setupApplication()
+    return () => fs.cleanup()
   })
 
   test('generate a factory for {model}')
