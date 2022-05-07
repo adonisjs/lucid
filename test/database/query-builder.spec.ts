@@ -11790,3 +11790,221 @@ test.group('Query Builder | withRecursive', (group) => {
     await connection.disconnect()
   })
 })
+
+test.group('Query Builder | withMaterialized', (group) => {
+  group.setup(async () => {
+    app = await setupApplication()
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  group.each.teardown(async () => {
+    app.container.use('Adonis/Core/Event').clearListeners('db:query')
+    await resetTables()
+  })
+
+  test('define withMaterialized clause as a raw query', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const client = getQueryClient(connection, app)
+    let db = getQueryBuilder(client)
+
+    const { sql, bindings } = db
+      .from('users')
+      .withMaterialized('with_alias', client.raw(`SELECT * FROM "users"`))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .withMaterialized('with_alias', connection.client!.raw(`SELECT * FROM "users"`))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define withMaterialized clause as a callback', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const client = getQueryClient(connection, app)
+    let db = getQueryBuilder(client)
+
+    const { sql, bindings } = db
+      .from('users')
+      .withMaterialized('with_alias', (query) => query.select('*').from('users'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .withMaterialized('with_alias', (query) => query.select('*').from('users'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define withMaterialized clause as a subquery', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const client = getQueryClient(connection, app)
+    let db = getQueryBuilder(client)
+
+    const { sql, bindings } = db
+      .from('users')
+      .withMaterialized('with_alias', getQueryBuilder(client).select('*').from('users'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .withMaterialized('with_alias', connection.client!.from('users').select('*'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define withMaterialized clause and column list', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const client = getQueryClient(connection, app)
+    let db = getQueryBuilder(client)
+
+    const { sql, bindings } = db
+      .from('users')
+      .withMaterialized('with_alias', client.raw(`SELECT * FROM "users"`), ['id'])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .withMaterialized('with_alias', ['id'], connection.client!.raw(`SELECT * FROM "users"`))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+})
+
+test.group('Query Builder | withNotMaterialized', (group) => {
+  group.setup(async () => {
+    app = await setupApplication()
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  group.each.teardown(async () => {
+    app.container.use('Adonis/Core/Event').clearListeners('db:query')
+    await resetTables()
+  })
+
+  test('define withNotMaterialized clause as a raw query', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const client = getQueryClient(connection, app)
+    let db = getQueryBuilder(client)
+
+    const { sql, bindings } = db
+      .from('users')
+      .withNotMaterialized('with_alias', client.raw(`SELECT * FROM "users"`))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .withNotMaterialized('with_alias', connection.client!.raw(`SELECT * FROM "users"`))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define withNotMaterialized clause as a callback', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const client = getQueryClient(connection, app)
+    let db = getQueryBuilder(client)
+
+    const { sql, bindings } = db
+      .from('users')
+      .withNotMaterialized('with_alias', (query) => query.select('*').from('users'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .withNotMaterialized('with_alias', (query) => query.select('*').from('users'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define withNotMaterialized clause as a subquery', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const client = getQueryClient(connection, app)
+    let db = getQueryBuilder(client)
+
+    const { sql, bindings } = db
+      .from('users')
+      .withNotMaterialized('with_alias', getQueryBuilder(client).select('*').from('users'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .withNotMaterialized('with_alias', connection.client!.from('users').select('*'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define withNotMaterialized clause and column list', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const client = getQueryClient(connection, app)
+    let db = getQueryBuilder(client)
+
+    const { sql, bindings } = db
+      .from('users')
+      .withNotMaterialized('with_alias', client.raw(`SELECT * FROM "users"`), ['id'])
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .withNotMaterialized('with_alias', ['id'], connection.client!.raw(`SELECT * FROM "users"`))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
+})

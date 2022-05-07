@@ -1528,6 +1528,32 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   }
 
   /**
+   * Define `with materialized` CTE
+   */
+  public withMaterialized(alias: any, query: any, columns: string[] = []): this {
+    if (columns.length > 0) {
+      this.knexQuery.withMaterialized(alias, columns, this.transformValue(query))
+    } else {
+      this.knexQuery.withMaterialized(alias, this.transformValue(query))
+    }
+
+    return this
+  }
+
+  /**
+   * Define not `with materialized` CTE
+   */
+  public withNotMaterialized(alias: any, query: any, columns: string[] = []): this {
+    if (columns.length > 0) {
+      this.knexQuery.withNotMaterialized(alias, columns, this.transformValue(query))
+    } else {
+      this.knexQuery.withNotMaterialized(alias, this.transformValue(query))
+    }
+
+    return this
+  }
+
+  /**
    * Define schema for the table
    */
   public withSchema(schema: any): this {

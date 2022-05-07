@@ -579,6 +579,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
 
     with: With<this>
     withRecursive: With<this>
+    withMaterialized: With<this>
+    withNotMaterialized: With<this>
 
     withSchema(schema: string): this
     as(name: string): this
