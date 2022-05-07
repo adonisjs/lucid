@@ -241,7 +241,6 @@ test.group('migration:run', (group) => {
     )
 
     assert.deepEqual(logs.length, 1)
-    console.log(logs[0].message)
     assert.isTrue(logs[0].message.includes('❯ Already up to date'))
   })
 })
