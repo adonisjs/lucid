@@ -8,7 +8,13 @@
  */
 
 import { QueryClientContract, OneOrMany } from '@ioc:Adonis/Lucid/Database'
-import { LucidRow, LucidModel, ModelObject, HasManyClientContract } from '@ioc:Adonis/Lucid/Orm'
+import {
+  LucidRow,
+  LucidModel,
+  ModelObject,
+  HasManyClientContract,
+  ModelAssignOptions,
+} from '@ioc:Adonis/Lucid/Orm'
 
 import { HasMany } from './index'
 import { managedTransaction } from '../../../utils'
@@ -102,21 +108,24 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
   /**
    * Create instance of the related model
    */
-  public async create(values: ModelObject): Promise<LucidRow> {
+  public async create(values: ModelObject, options?: ModelAssignOptions): Promise<LucidRow> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
 
       const valuesToPersist = Object.assign({}, values)
       this.relation.hydrateForPersistance(this.parent, valuesToPersist)
-      return this.relation.relatedModel().create(valuesToPersist, { client: trx })
+      return this.relation.relatedModel().create(valuesToPersist, { client: trx, ...options })
     })
   }
 
   /**
    * Create instance of the related model
    */
-  public async createMany(values: ModelObject[]): Promise<LucidRow[]> {
+  public async createMany(
+    values: ModelObject[],
+    options?: ModelAssignOptions
+  ): Promise<LucidRow[]> {
     const parent = this.parent
 
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
@@ -129,14 +138,18 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
         return valueToPersist
       })
 
-      return this.relation.relatedModel().createMany(valuesToPersist, { client: trx })
+      return this.relation.relatedModel().createMany(valuesToPersist, { client: trx, ...options })
     })
   }
 
   /**
    * Get the first matching related instance or create a new one
    */
-  public async firstOrCreate(search: any, savePayload?: any): Promise<LucidRow> {
+  public async firstOrCreate(
+    search: any,
+    savePayload?: any,
+    options?: ModelAssignOptions
+  ): Promise<LucidRow> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
@@ -146,14 +159,18 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
 
       return this.relation
         .relatedModel()
-        .firstOrCreate(valuesToPersist, savePayload, { client: trx })
+        .firstOrCreate(valuesToPersist, savePayload, { client: trx, ...options })
     })
   }
 
   /**
    * Update the existing row or create a new one
    */
-  public async updateOrCreate(search: ModelObject, updatePayload: ModelObject): Promise<LucidRow> {
+  public async updateOrCreate(
+    search: ModelObject,
+    updatePayload: ModelObject,
+    options?: ModelAssignOptions
+  ): Promise<LucidRow> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
@@ -163,14 +180,18 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
 
       return this.relation
         .relatedModel()
-        .updateOrCreate(valuesToPersist, updatePayload, { client: trx })
+        .updateOrCreate(valuesToPersist, updatePayload, { client: trx, ...options })
     })
   }
 
   /**
    * Fetch the existing related rows or create new one's
    */
-  public async fetchOrCreateMany(payload: ModelObject[], predicate?: any): Promise<LucidRow[]> {
+  public async fetchOrCreateMany(
+    payload: ModelObject[],
+    predicate?: any,
+    options?: ModelAssignOptions
+  ): Promise<LucidRow[]> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
@@ -185,6 +206,7 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
         .relatedModel()
         .fetchOrCreateMany(predicate.concat(this.relation.foreignKey) as any, payload, {
           client: trx,
+          ...options,
         })
     })
   }
@@ -192,7 +214,11 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
   /**
    * Update the existing related rows or create new one's
    */
-  public async updateOrCreateMany(payload: ModelObject[], predicate?: any): Promise<LucidRow[]> {
+  public async updateOrCreateMany(
+    payload: ModelObject[],
+    predicate?: any,
+    options?: ModelAssignOptions
+  ): Promise<LucidRow[]> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
@@ -207,6 +233,7 @@ export class HasManyQueryClient implements HasManyClientContract<HasMany, LucidM
         .relatedModel()
         .updateOrCreateMany(predicate.concat(this.relation.foreignKey) as any, payload, {
           client: trx,
+          ...options,
         })
     })
   }

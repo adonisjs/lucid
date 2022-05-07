@@ -8,7 +8,13 @@
  */
 
 import { DateTime } from 'luxon'
-import { LucidModel, LucidRow, ModelObject, ManyToManyClientContract } from '@ioc:Adonis/Lucid/Orm'
+import {
+  LucidModel,
+  LucidRow,
+  ModelObject,
+  ManyToManyClientContract,
+  ModelAssignOptions,
+} from '@ioc:Adonis/Lucid/Orm'
 import {
   OneOrMany,
   QueryClientContract,
@@ -228,7 +234,11 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
    * entry to create the relationship
    * @note: Read the "NO_PIVOT_ATTRS" section at the top
    */
-  public async create(values: ModelObject, pivotAttributes?: ModelObject): Promise<LucidRow> {
+  public async create(
+    values: ModelObject,
+    pivotAttributes?: ModelObject,
+    options?: ModelAssignOptions
+  ): Promise<LucidRow> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
@@ -236,7 +246,7 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
       /**
        * Create and persist related model instance
        */
-      const related = await this.relation.relatedModel().create(values, { client: trx })
+      const related = await this.relation.relatedModel().create(values, { client: trx, ...options })
 
       const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(related)
       const pivotPayload = {
@@ -258,7 +268,8 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
    */
   public async createMany(
     values: ModelObject[],
-    pivotAttributes?: (ModelObject | undefined)[]
+    pivotAttributes?: (ModelObject | undefined)[],
+    options?: ModelAssignOptions
   ): Promise<LucidRow[]> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
@@ -267,7 +278,9 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
       /**
        * Create and persist related model instance
        */
-      const related = await this.relation.relatedModel().createMany(values, { client: trx })
+      const related = await this.relation
+        .relatedModel()
+        .createMany(values, { client: trx, ...options })
 
       const relatedForeignKeyValues = related.reduce<Record<string, ModelObject>>(
         (result, one, index) => {

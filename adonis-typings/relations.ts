@@ -583,7 +583,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
      * Create related instance. Sets up the FK automatically
      */
     create(
-      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>
+      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
+      options?: ModelAssignOptions
     ): Promise<InstanceType<RelatedModel>>
 
     /**
@@ -591,7 +592,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
      */
     firstOrCreate(
       search: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
-      savePayload?: Partial<ModelAttributes<InstanceType<RelatedModel>>>
+      savePayload?: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
+      options?: ModelAssignOptions
     ): Promise<InstanceType<RelatedModel>>
 
     /**
@@ -599,7 +601,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
      */
     updateOrCreate(
       search: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
-      updatePayload: Partial<ModelAttributes<InstanceType<RelatedModel>>>
+      updatePayload: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
+      options?: ModelAssignOptions
     ): Promise<InstanceType<RelatedModel>>
   }
 
@@ -620,7 +623,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
      * Create many of related instances. Sets up FK automatically
      */
     createMany(
-      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>[]
+      values: Partial<ModelAttributes<InstanceType<RelatedModel>>>[],
+      options?: ModelAssignOptions
     ): Promise<InstanceType<RelatedModel>[]>
 
     /**
@@ -630,7 +634,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
       payload: Partial<ModelAttributes<InstanceType<RelatedModel>>>[],
       predicate?:
         | keyof ModelAttributes<InstanceType<RelatedModel>>
-        | (keyof ModelAttributes<InstanceType<RelatedModel>>)[]
+        | (keyof ModelAttributes<InstanceType<RelatedModel>>)[],
+      options?: ModelAssignOptions
     ): Promise<InstanceType<RelatedModel>[]>
 
     /**
@@ -640,7 +645,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
       payload: Partial<ModelAttributes<InstanceType<RelatedModel>>>[],
       predicate?:
         | keyof ModelAttributes<InstanceType<RelatedModel>>
-        | (keyof ModelAttributes<InstanceType<RelatedModel>>)[]
+        | (keyof ModelAttributes<InstanceType<RelatedModel>>)[],
+      options?: ModelAssignOptions
     ): Promise<InstanceType<RelatedModel>[]>
 
     /**
@@ -711,7 +717,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
      */
     create(
       values: Partial<ModelAttributes<InstanceType<RelatedModel>>>,
-      pivotAttributes?: ModelObject
+      pivotAttributes?: ModelObject,
+      options?: ModelAssignOptions
     ): Promise<InstanceType<RelatedModel>>
 
     /**
@@ -719,7 +726,8 @@ declare module '@ioc:Adonis/Lucid/Orm' {
      */
     createMany(
       values: Partial<ModelAttributes<InstanceType<RelatedModel>>>[],
-      pivotAttributes?: (ModelObject | undefined)[]
+      pivotAttributes?: (ModelObject | undefined)[],
+      options?: ModelAssignOptions
     ): Promise<InstanceType<RelatedModel>[]>
 
     /**

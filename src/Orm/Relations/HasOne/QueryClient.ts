@@ -8,7 +8,13 @@
  */
 
 import { QueryClientContract, OneOrMany } from '@ioc:Adonis/Lucid/Database'
-import { ModelObject, LucidModel, LucidRow, HasOneClientContract } from '@ioc:Adonis/Lucid/Orm'
+import {
+  ModelObject,
+  LucidModel,
+  LucidRow,
+  HasOneClientContract,
+  ModelAssignOptions,
+} from '@ioc:Adonis/Lucid/Orm'
 
 import { HasOne } from './index'
 import { managedTransaction } from '../../../utils'
@@ -85,7 +91,7 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
   /**
    * Create instance of the related model
    */
-  public async create(values: ModelObject): Promise<LucidRow> {
+  public async create(values: ModelObject, options?: ModelAssignOptions): Promise<LucidRow> {
     const parent = this.parent
 
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
@@ -94,14 +100,18 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
 
       const valuesToPersist = Object.assign({}, values)
       this.relation.hydrateForPersistance(this.parent, valuesToPersist)
-      return this.relation.relatedModel().create(valuesToPersist, { client: trx })
+      return this.relation.relatedModel().create(valuesToPersist, { client: trx, ...options })
     })
   }
 
   /**
    * Get the first matching related instance or create a new one
    */
-  public async firstOrCreate(search: ModelObject, savePayload?: ModelObject): Promise<LucidRow> {
+  public async firstOrCreate(
+    search: ModelObject,
+    savePayload?: ModelObject,
+    options?: ModelAssignOptions
+  ): Promise<LucidRow> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
@@ -111,14 +121,18 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
 
       return this.relation
         .relatedModel()
-        .firstOrCreate(valuesToPersist, savePayload, { client: trx })
+        .firstOrCreate(valuesToPersist, savePayload, { client: trx, ...options })
     })
   }
 
   /**
    * Update the existing row or create a new one
    */
-  public async updateOrCreate(search: ModelObject, updatePayload: ModelObject): Promise<LucidRow> {
+  public async updateOrCreate(
+    search: ModelObject,
+    updatePayload: ModelObject,
+    options?: ModelAssignOptions
+  ): Promise<LucidRow> {
     return managedTransaction(this.parent.$trx || this.client, async (trx) => {
       this.parent.$trx = trx
       await this.parent.save()
@@ -128,7 +142,7 @@ export class HasOneQueryClient implements HasOneClientContract<HasOne, LucidMode
 
       return this.relation
         .relatedModel()
-        .updateOrCreate(valuesToPersist, updatePayload, { client: trx })
+        .updateOrCreate(valuesToPersist, updatePayload, { client: trx, ...options })
     })
   }
 }
