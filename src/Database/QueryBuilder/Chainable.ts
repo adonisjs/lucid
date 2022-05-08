@@ -893,6 +893,288 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   }
 
   /**
+   * Define a where clause with value that matches for JSON
+   */
+  public whereJson(column: string, value: any) {
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'whereJsonObject',
+      args: [this.resolveColumn(column), this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Define a or where clause with value that matches for JSON
+   */
+  public orWhereJson(column: string, value: any) {
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'orWhereJsonObject',
+      args: [this.resolveColumn(column), this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Define a where clause with value that matches for JSON
+   *
+   * @alias whereJson
+   */
+  public andWhereJson(column: string, value: any) {
+    return this.whereJson(column, value)
+  }
+
+  /**
+   * Define a where clause with value that matches for JSON
+   */
+  public whereNotJson(column: string, value: any) {
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'whereNotJsonObject',
+      args: [this.resolveColumn(column), this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Define a or where clause with value that matches for JSON
+   */
+  public orWhereNotJson(column: string, value: any) {
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'orWhereNotJsonObject',
+      args: [this.resolveColumn(column), this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Define a where clause with value that matches for JSON
+   *
+   * @alias whereNotJson
+   */
+  public andWhereNotJson(column: string, value: any) {
+    return this.whereNotJson(column, value)
+  }
+
+  /**
+   * Define a where clause with value that matches for a superset of
+   * JSON
+   */
+  public whereJsonSuperset(column: string, value: any) {
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'whereJsonSupersetOf',
+      args: [this.resolveColumn(column), this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Define a or where clause with value that matches for a superset of
+   * JSON
+   */
+  public orWhereJsonSuperset(column: string, value: any) {
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'orWhereJsonSupersetOf',
+      args: [this.resolveColumn(column), this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Define or where clause with value that matches for a superset of
+   * JSON
+   *
+   * @alias whereJsonSuperset
+   */
+  public andWhereJsonSuperset(column: string, value: any) {
+    return this.whereJsonSuperset(column, value)
+  }
+
+  /**
+   * Define a where clause with value that matches for a superset of
+   * JSON
+   */
+  public whereNotJsonSuperset(column: string, value: any) {
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'whereJsonNotSupersetOf',
+      args: [this.resolveColumn(column), this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Define a or where clause with value that matches for a superset of
+   * JSON
+   */
+  public orWhereNotJsonSuperset(column: string, value: any) {
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'orWhereJsonNotSupersetOf',
+      args: [this.resolveColumn(column), this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Define or where clause with value that matches for a superset of
+   * JSON
+   *
+   * @alias whereNotJsonSuperset
+   */
+  public andWhereNotJsonSuperset(column: string, value: any) {
+    return this.whereNotJsonSuperset(column, value)
+  }
+
+  /**
+   * Define a where clause with value that matches for a subset of
+   * JSON
+   */
+  public whereJsonSubset(column: string, value: any) {
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'whereJsonSubsetOf',
+      args: [this.resolveColumn(column), this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Define a or where clause with value that matches for a subset of
+   * JSON
+   */
+  public orWhereJsonSubset(column: string, value: any) {
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'orWhereJsonSubsetOf',
+      args: [this.resolveColumn(column), this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Define or where clause with value that matches for a subset of
+   * JSON
+   *
+   * @alias whereJsonSubset
+   */
+  public andWhereJsonSubset(column: string, value: any) {
+    return this.whereJsonSubset(column, value)
+  }
+
+  /**
+   * Define a where clause with value that matches for a subset of
+   * JSON
+   */
+  public whereNotJsonSubset(column: string, value: any) {
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'whereJsonNotSubsetOf',
+      args: [this.resolveColumn(column), this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Define a or where clause with value that matches for a subset of
+   * JSON
+   */
+  public orWhereNotJsonSubset(column: string, value: any) {
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'orWhereJsonNotSubsetOf',
+      args: [this.resolveColumn(column), this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Define or where clause with value that matches for a subset of
+   * JSON
+   *
+   * @alias whereNotJsonSubset
+   */
+  public andWhereNotJsonSubset(column: string, value: any) {
+    return this.whereNotJsonSubset(column, value)
+  }
+
+  /**
+   * Adds a where clause with comparison of a value returned
+   * by a JsonPath given an operator and a value.
+   */
+  public whereJsonPath(column: string, jsonPath: string, operator: any, value?: any): this {
+    const whereClauses = this.getRecentStackItem()
+    if (!value) {
+      value = operator
+      operator = '='
+    }
+
+    whereClauses.push({
+      method: 'whereJsonPath',
+      args: [this.resolveColumn(column), jsonPath, operator, this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Adds a or where clause with comparison of a value returned
+   * by a JsonPath given an operator and a value.
+   */
+  public orWhereJsonPath(column: string, jsonPath: string, operator: any, value?: any): this {
+    const whereClauses = this.getRecentStackItem()
+    if (!value) {
+      value = operator
+      operator = '='
+    }
+
+    whereClauses.push({
+      method: 'orWhereJsonPath',
+      args: [this.resolveColumn(column), jsonPath, operator, this.transformValue(value)],
+    })
+
+    return this
+  }
+
+  /**
+   * Adds a where clause with comparison of a value returned
+   * by a JsonPath given an operator and a value.
+   *
+   * @alias whereJsonPath
+   */
+  public andWhereJsonPath(column: string, jsonPath: string, operator: any, value?: any): this {
+    return this.whereJsonPath(column, jsonPath, operator, value)
+  }
+
+  /**
    * Add a join clause
    */
   public join(table: any, first: any, operator?: any, second?: any): this {

@@ -152,7 +152,52 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Key-value pair. The value can also be a subquery
      */
-    (key: string | RawQuery, value: StrictValues | ChainableContract): Builder
+    (key: string, value: StrictValues | ChainableContract): Builder
+  }
+
+  /**
+   * Possible signatures for adding a whereLike clause
+   */
+  interface WhereJson<Builder extends ChainableContract> {
+    /**
+     * Key-value pair. The value can also be a subquery
+     */
+    (
+      column: string,
+      value: Record<string, any> | ChainableContract | QueryCallback<Builder>
+    ): Builder
+  }
+
+  interface WhereJsonPath<Builder extends ChainableContract> {
+    (
+      column: string,
+      jsonPath: string,
+      value:
+        | string
+        | number
+        | boolean
+        | string[]
+        | number[]
+        | boolean[]
+        | Record<string, any>
+        | ChainableContract
+        | QueryCallback<Builder>
+    ): Builder
+    (
+      column: string,
+      jsonPath: string,
+      operator: string,
+      value:
+        | string
+        | number
+        | boolean
+        | string[]
+        | number[]
+        | boolean[]
+        | Record<string, any>
+        | ChainableContract
+        | QueryCallback<Builder>
+    ): Builder
   }
 
   /**
@@ -530,6 +575,34 @@ declare module '@ioc:Adonis/Lucid/Database' {
     whereILike: WhereLike<this>
     orWhereILike: WhereLike<this>
     andWhereILike: WhereLike<this>
+
+    whereJson: WhereJson<this>
+    orWhereJson: WhereJson<this>
+    andWhereJson: WhereJson<this>
+
+    whereNotJson: WhereJson<this>
+    orWhereNotJson: WhereJson<this>
+    andWhereNotJson: WhereJson<this>
+
+    whereJsonSuperset: WhereJson<this>
+    orWhereJsonSuperset: WhereJson<this>
+    andWhereJsonSuperset: WhereJson<this>
+
+    whereNotJsonSuperset: WhereJson<this>
+    orWhereNotJsonSuperset: WhereJson<this>
+    andWhereNotJsonSuperset: WhereJson<this>
+
+    whereJsonSubset: WhereJson<this>
+    orWhereJsonSubset: WhereJson<this>
+    andWhereJsonSubset: WhereJson<this>
+
+    whereNotJsonSubset: WhereJson<this>
+    orWhereNotJsonSubset: WhereJson<this>
+    andWhereNotJsonSubset: WhereJson<this>
+
+    whereJsonPath: WhereJsonPath<this>
+    orWhereJsonPath: WhereJsonPath<this>
+    andWhereJsonPath: WhereJsonPath<this>
 
     join: Join<this>
     innerJoin: Join<this>

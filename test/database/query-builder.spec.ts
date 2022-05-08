@@ -4174,6 +4174,41 @@ test.group('Query Builder | join', (group) => {
 
     await connection.disconnect()
   })
+
+  test('use onJsonPathEquals method from the join callback', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    const db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .join('profiles', (builder) => {
+        builder.onJsonPathEquals(
+          'country_name', // json column in cities
+          '$.country.name', // json path to country name in 'country_name' column
+          'description', // json column in country
+          '$.name' // json field in 'description' column
+        )
+      })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .join('profiles', (builder) => {
+        builder.onJsonPathEquals(
+          'country_name', // json column in cities
+          '$.country.name', // json path to country name in 'country_name' column
+          'description', // json column in country
+          '$.name' // json field in 'description' column
+        )
+      })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    await connection.disconnect()
+  })
 })
 
 test.group('Query Builder | innerJoin', (group) => {
@@ -12699,6 +12734,1653 @@ test.group('Query Builder | whereILike', (group) => {
 
     assert.equal(resolverSql, knexResolverSql)
     assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+})
+
+test.group('Query Builder | whereJson', (group) => {
+  group.setup(async () => {
+    app = await setupApplication()
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  group.each.teardown(async () => {
+    app.container.use('Adonis/Core/Event').clearListeners('db:query')
+    await resetTables()
+  })
+
+  test('add where json clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db.from('users').whereJson('location', { country: 'India' }).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonObject('location', { country: 'India' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJson('location', { country: 'India' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonObject('my_location', { country: 'India' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap where json clause to its own group', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJson('location', { country: 'India' })
+      .orWhereJson('location', { country: 'Brazil' })
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .where((q) =>
+        q
+          .whereJsonObject('location', { country: 'India' })
+          .orWhereJsonObject('location', { country: 'Brazil' })
+      )
+      .where((q) => q.whereNull('deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJson('location', { country: 'India' })
+      .orWhereJson('location', { country: 'Brazil' })
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .where((q) =>
+        q
+          .whereJsonObject('my_location', { country: 'India' })
+          .orWhereJsonObject('my_location', { country: 'Brazil' })
+      )
+      .where((q) => q.whereNull('my_deleted_at'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('add orWhereJson clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJson('location', { country: 'India' })
+      .orWhereJson('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonObject('location', { country: 'India' })
+      .orWhereJsonObject('location', { country: 'Brazil' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJson('location', { country: 'India' })
+      .orWhereJson('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonObject('my_location', { country: 'India' })
+      .orWhereJsonObject('my_location', { country: 'Brazil' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('wrap orWhereJson clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJson('location', { country: 'India' })
+      .wrapExisting()
+      .orWhereJson('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .where((q) => q.whereJsonObject('location', { country: 'India' }))
+      .orWhere((q) => q.whereJsonObject('location', { country: 'Brazil' }))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJson('location', { country: 'India' })
+      .wrapExisting()
+      .orWhereJson('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .where((q) => q.whereJsonObject('my_location', { country: 'India' }))
+      .orWhere((q) => q.whereJsonObject('my_location', { country: 'Brazil' }))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define whereJson value as a callback', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJson('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonObject('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJson('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonObject('my_location', (q) => q.from('locations').where('my_user_id', '1'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define whereJson value as a subquery', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJson(
+        'location',
+        getQueryBuilder(getQueryClient(connection, app)).from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonObject('location', connection.client!.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJson(
+        'location',
+        getQueryBuilder(getQueryClient(connection, app)).from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonObject('my_location', connection.client!.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+})
+
+test.group('Query Builder | whereNotJson', (group) => {
+  group.setup(async () => {
+    app = await setupApplication()
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  group.each.teardown(async () => {
+    app.container.use('Adonis/Core/Event').clearListeners('db:query')
+    await resetTables()
+  })
+
+  test('add where not json clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJson('location', { country: 'India' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereNotJsonObject('location', { country: 'India' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJson('location', { country: 'India' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereNotJsonObject('my_location', { country: 'India' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap where not json clause to its own group', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJson('location', { country: 'India' })
+      .orWhereNotJson('location', { country: 'Brazil' })
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .where((q) =>
+        q
+          .whereNotJsonObject('location', { country: 'India' })
+          .orWhereNotJsonObject('location', { country: 'Brazil' })
+      )
+      .where((q) => q.whereNull('deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJson('location', { country: 'India' })
+      .orWhereNotJson('location', { country: 'Brazil' })
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .where((q) =>
+        q
+          .whereNotJsonObject('my_location', { country: 'India' })
+          .orWhereNotJsonObject('my_location', { country: 'Brazil' })
+      )
+      .where((q) => q.whereNull('my_deleted_at'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('add orWhereNotJson clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJson('location', { country: 'India' })
+      .orWhereNotJson('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereNotJsonObject('location', { country: 'India' })
+      .orWhereNotJsonObject('location', { country: 'Brazil' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJson('location', { country: 'India' })
+      .orWhereNotJson('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereNotJsonObject('my_location', { country: 'India' })
+      .orWhereNotJsonObject('my_location', { country: 'Brazil' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('wrap orWhereNotJson clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJson('location', { country: 'India' })
+      .wrapExisting()
+      .orWhereNotJson('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .where((q) => q.whereNotJsonObject('location', { country: 'India' }))
+      .orWhere((q) => q.whereNotJsonObject('location', { country: 'Brazil' }))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJson('location', { country: 'India' })
+      .wrapExisting()
+      .orWhereNotJson('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .where((q) => q.whereNotJsonObject('my_location', { country: 'India' }))
+      .orWhere((q) => q.whereNotJsonObject('my_location', { country: 'Brazil' }))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define whereNotJson value as a callback', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJson('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereNotJsonObject('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJson('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereNotJsonObject('my_location', (q) => q.from('locations').where('my_user_id', '1'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define whereNotJson value as a subquery', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJson(
+        'location',
+        getQueryBuilder(getQueryClient(connection, app)).from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereNotJsonObject('location', connection.client!.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJson(
+        'location',
+        getQueryBuilder(getQueryClient(connection, app)).from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereNotJsonObject('my_location', connection.client!.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+})
+
+test.group('Query Builder | whereJsonSuperset', (group) => {
+  group.setup(async () => {
+    app = await setupApplication()
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  group.each.teardown(async () => {
+    app.container.use('Adonis/Core/Event').clearListeners('db:query')
+    await resetTables()
+  })
+
+  test('add where json superset clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJsonSuperset('location', { country: 'India' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSupersetOf('location', { country: 'India' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJsonSuperset('location', { country: 'India' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSupersetOf('my_location', { country: 'India' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap where json superset clause to its own group', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJsonSuperset('location', { country: 'India' })
+      .orWhereJsonSuperset('location', { country: 'Brazil' })
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .where((q) =>
+        q
+          .whereJsonSupersetOf('location', { country: 'India' })
+          .orWhereJsonSupersetOf('location', { country: 'Brazil' })
+      )
+      .where((q) => q.whereNull('deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJsonSuperset('location', { country: 'India' })
+      .orWhereJsonSuperset('location', { country: 'Brazil' })
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .where((q) =>
+        q
+          .whereJsonSupersetOf('my_location', { country: 'India' })
+          .orWhereJsonSupersetOf('my_location', { country: 'Brazil' })
+      )
+      .where((q) => q.whereNull('my_deleted_at'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('add orWhereJsonSuperset clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJsonSuperset('location', { country: 'India' })
+      .orWhereJsonSuperset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSupersetOf('location', { country: 'India' })
+      .orWhereJsonSupersetOf('location', { country: 'Brazil' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJsonSuperset('location', { country: 'India' })
+      .orWhereJsonSuperset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSupersetOf('my_location', { country: 'India' })
+      .orWhereJsonSupersetOf('my_location', { country: 'Brazil' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('wrap orWhereJsonSuperset clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJsonSuperset('location', { country: 'India' })
+      .wrapExisting()
+      .orWhereJsonSuperset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .where((q) => q.whereJsonSupersetOf('location', { country: 'India' }))
+      .orWhere((q) => q.whereJsonSupersetOf('location', { country: 'Brazil' }))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJsonSuperset('location', { country: 'India' })
+      .wrapExisting()
+      .orWhereJsonSuperset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .where((q) => q.whereJsonSupersetOf('my_location', { country: 'India' }))
+      .orWhere((q) => q.whereJsonSupersetOf('my_location', { country: 'Brazil' }))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define whereJsonSuperset value as a callback', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJsonSuperset('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSupersetOf('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJsonSuperset('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSupersetOf('my_location', (q) => q.from('locations').where('my_user_id', '1'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define whereJsonSuperset value as a subquery', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJsonSuperset(
+        'location',
+        getQueryBuilder(getQueryClient(connection, app)).from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSupersetOf('location', connection.client!.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJsonSuperset(
+        'location',
+        getQueryBuilder(getQueryClient(connection, app)).from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSupersetOf(
+        'my_location',
+        connection.client!.from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+})
+
+test.group('Query Builder | whereNotJsonSuperset', (group) => {
+  group.setup(async () => {
+    app = await setupApplication()
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  group.each.teardown(async () => {
+    app.container.use('Adonis/Core/Event').clearListeners('db:query')
+    await resetTables()
+  })
+
+  test('add where not json superset clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJsonSuperset('location', { country: 'India' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSupersetOf('location', { country: 'India' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJsonSuperset('location', { country: 'India' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSupersetOf('my_location', { country: 'India' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap where not json superset clause to its own group', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJsonSuperset('location', { country: 'India' })
+      .orWhereNotJsonSuperset('location', { country: 'Brazil' })
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .where((q) =>
+        q
+          .whereJsonNotSupersetOf('location', { country: 'India' })
+          .orWhereJsonNotSupersetOf('location', { country: 'Brazil' })
+      )
+      .where((q) => q.whereNull('deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJsonSuperset('location', { country: 'India' })
+      .orWhereNotJsonSuperset('location', { country: 'Brazil' })
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .where((q) =>
+        q
+          .whereJsonNotSupersetOf('my_location', { country: 'India' })
+          .orWhereJsonNotSupersetOf('my_location', { country: 'Brazil' })
+      )
+      .where((q) => q.whereNull('my_deleted_at'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('add orWhereNotJsonSuperset clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJsonSuperset('location', { country: 'India' })
+      .orWhereNotJsonSuperset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSupersetOf('location', { country: 'India' })
+      .orWhereJsonNotSupersetOf('location', { country: 'Brazil' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJsonSuperset('location', { country: 'India' })
+      .orWhereNotJsonSuperset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSupersetOf('my_location', { country: 'India' })
+      .orWhereJsonNotSupersetOf('my_location', { country: 'Brazil' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('wrap orWhereNotJsonSuperset clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJsonSuperset('location', { country: 'India' })
+      .wrapExisting()
+      .orWhereNotJsonSuperset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .where((q) => q.whereJsonNotSupersetOf('location', { country: 'India' }))
+      .orWhere((q) => q.whereJsonNotSupersetOf('location', { country: 'Brazil' }))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJsonSuperset('location', { country: 'India' })
+      .wrapExisting()
+      .orWhereNotJsonSuperset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .where((q) => q.whereJsonNotSupersetOf('my_location', { country: 'India' }))
+      .orWhere((q) => q.whereJsonNotSupersetOf('my_location', { country: 'Brazil' }))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define whereNotJsonSuperset value as a callback', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJsonSuperset('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSupersetOf('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJsonSuperset('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSupersetOf('my_location', (q) => q.from('locations').where('my_user_id', '1'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define whereNotJsonSuperset value as a subquery', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJsonSuperset(
+        'location',
+        getQueryBuilder(getQueryClient(connection, app)).from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSupersetOf(
+        'location',
+        connection.client!.from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJsonSuperset(
+        'location',
+        getQueryBuilder(getQueryClient(connection, app)).from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSupersetOf(
+        'my_location',
+        connection.client!.from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+})
+
+test.group('Query Builder | whereJsonSubset', (group) => {
+  group.setup(async () => {
+    app = await setupApplication()
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  group.each.teardown(async () => {
+    app.container.use('Adonis/Core/Event').clearListeners('db:query')
+    await resetTables()
+  })
+
+  test('add where json subset clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJsonSubset('location', { country: 'India' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSubsetOf('location', { country: 'India' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJsonSubset('location', { country: 'India' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSubsetOf('my_location', { country: 'India' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap where json subset clause to its own group', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJsonSubset('location', { country: 'India' })
+      .orWhereJsonSubset('location', { country: 'Brazil' })
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .where((q) =>
+        q
+          .whereJsonSubsetOf('location', { country: 'India' })
+          .orWhereJsonSubsetOf('location', { country: 'Brazil' })
+      )
+      .where((q) => q.whereNull('deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJsonSubset('location', { country: 'India' })
+      .orWhereJsonSubset('location', { country: 'Brazil' })
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .where((q) =>
+        q
+          .whereJsonSubsetOf('my_location', { country: 'India' })
+          .orWhereJsonSubsetOf('my_location', { country: 'Brazil' })
+      )
+      .where((q) => q.whereNull('my_deleted_at'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('add orWhereJsonSubset clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJsonSubset('location', { country: 'India' })
+      .orWhereJsonSubset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSubsetOf('location', { country: 'India' })
+      .orWhereJsonSubsetOf('location', { country: 'Brazil' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJsonSubset('location', { country: 'India' })
+      .orWhereJsonSubset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSubsetOf('my_location', { country: 'India' })
+      .orWhereJsonSubsetOf('my_location', { country: 'Brazil' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('wrap orWhereJsonSubset clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJsonSubset('location', { country: 'India' })
+      .wrapExisting()
+      .orWhereJsonSubset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .where((q) => q.whereJsonSubsetOf('location', { country: 'India' }))
+      .orWhere((q) => q.whereJsonSubsetOf('location', { country: 'Brazil' }))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJsonSubset('location', { country: 'India' })
+      .wrapExisting()
+      .orWhereJsonSubset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .where((q) => q.whereJsonSubsetOf('my_location', { country: 'India' }))
+      .orWhere((q) => q.whereJsonSubsetOf('my_location', { country: 'Brazil' }))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define whereJsonSubset value as a callback', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJsonSubset('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSubsetOf('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJsonSubset('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSubsetOf('my_location', (q) => q.from('locations').where('my_user_id', '1'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define whereJsonSubset value as a subquery', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereJsonSubset(
+        'location',
+        getQueryBuilder(getQueryClient(connection, app)).from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSubsetOf('location', connection.client!.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereJsonSubset(
+        'location',
+        getQueryBuilder(getQueryClient(connection, app)).from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonSubsetOf('my_location', connection.client!.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+})
+
+test.group('Query Builder | whereNotJsonSubset', (group) => {
+  group.setup(async () => {
+    app = await setupApplication()
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  group.each.teardown(async () => {
+    app.container.use('Adonis/Core/Event').clearListeners('db:query')
+    await resetTables()
+  })
+
+  test('add where not json subset clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJsonSubset('location', { country: 'India' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSubsetOf('location', { country: 'India' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJsonSubset('location', { country: 'India' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSubsetOf('my_location', { country: 'India' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('wrap where not json Subset clause to its own group', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJsonSubset('location', { country: 'India' })
+      .orWhereNotJsonSubset('location', { country: 'Brazil' })
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .where((q) =>
+        q
+          .whereJsonNotSubsetOf('location', { country: 'India' })
+          .orWhereJsonNotSubsetOf('location', { country: 'Brazil' })
+      )
+      .where((q) => q.whereNull('deleted_at'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJsonSubset('location', { country: 'India' })
+      .orWhereNotJsonSubset('location', { country: 'Brazil' })
+      .wrapExisting()
+      .whereNull('deleted_at')
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .where((q) =>
+        q
+          .whereJsonNotSubsetOf('my_location', { country: 'India' })
+          .orWhereJsonNotSubsetOf('my_location', { country: 'Brazil' })
+      )
+      .where((q) => q.whereNull('my_deleted_at'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
+  test('add orWhereNotJsonSubset clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJsonSubset('location', { country: 'India' })
+      .orWhereNotJsonSubset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSubsetOf('location', { country: 'India' })
+      .orWhereJsonNotSubsetOf('location', { country: 'Brazil' })
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJsonSubset('location', { country: 'India' })
+      .orWhereNotJsonSubset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSubsetOf('my_location', { country: 'India' })
+      .orWhereJsonNotSubsetOf('my_location', { country: 'Brazil' })
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('wrap orWhereNotJsonSubset clause', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJsonSubset('location', { country: 'India' })
+      .wrapExisting()
+      .orWhereNotJsonSubset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .where((q) => q.whereJsonNotSubsetOf('location', { country: 'India' }))
+      .orWhere((q) => q.whereJsonNotSubsetOf('location', { country: 'Brazil' }))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJsonSubset('location', { country: 'India' })
+      .wrapExisting()
+      .orWhereNotJsonSubset('location', { country: 'Brazil' })
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .where((q) => q.whereJsonNotSubsetOf('my_location', { country: 'India' }))
+      .orWhere((q) => q.whereJsonNotSubsetOf('my_location', { country: 'Brazil' }))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define whereNotJsonSubset value as a callback', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJsonSubset('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSubsetOf('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJsonSubset('location', (q) => q.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSubsetOf('my_location', (q) => q.from('locations').where('my_user_id', '1'))
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
+    await connection.disconnect()
+  })
+
+  test('define whereNotJsonSubset value as a subquery', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db
+      .from('users')
+      .whereNotJsonSubset(
+        'location',
+        getQueryBuilder(getQueryClient(connection, app)).from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSubsetOf('location', connection.client!.from('locations').where('user_id', '1'))
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .whereNotJsonSubset(
+        'location',
+        getQueryBuilder(getQueryClient(connection, app)).from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from<any>('users')
+      .whereJsonNotSubsetOf(
+        'my_location',
+        connection.client!.from('locations').where('user_id', '1')
+      )
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+
     await connection.disconnect()
   })
 })
