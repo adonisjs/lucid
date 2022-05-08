@@ -853,43 +853,71 @@ export abstract class Chainable extends Macroable implements ChainableContract {
   /**
    * Add a `where like` clause
    */
-  public whereLike(key: any, value?: any): this {
-    return this.where(key, 'like', value)
+  public whereLike(key: any, value: any): this {
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'whereLike',
+      args: [this.resolveColumn(key), this.transformValue(value)],
+    })
+
+    return this
   }
 
   /**
    * Add a `where like` clause
    */
   public orWhereLike(key: any, value?: any): this {
-    return this.orWhere(key, 'like', value)
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'orWhereLike',
+      args: [this.resolveColumn(key), this.transformValue(value)],
+    })
+
+    return this
   }
 
   /**
    * Add a `where like` clause
    */
   public andWhereLike(key: any, value?: any): this {
-    return this.andWhere(key, 'like', value)
+    return this.whereLike(key, value)
   }
 
   /**
    * Add a `where like` clause
    */
   public whereILike(key: any, value?: any): this {
-    return this.where(key, 'ilike', value)
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'whereILike',
+      args: [this.resolveColumn(key), this.transformValue(value)],
+    })
+
+    return this
   }
 
   /**
    * Add a `where like` clause
    */
   public orWhereILike(key: any, value?: any): this {
-    return this.orWhere(key, 'ilike', value)
+    const whereClauses = this.getRecentStackItem()
+
+    whereClauses.push({
+      method: 'orWhereILike',
+      args: [this.resolveColumn(key), this.transformValue(value)],
+    })
+
+    return this
   }
 
   /**
    * Add a `where like` clause
    */
   public andWhereILike(key: any, value?: any): this {
-    return this.andWhere(key, 'ilike', value)
+    return this.whereILike(key, value)
   }
 
   /**
