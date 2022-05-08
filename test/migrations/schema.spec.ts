@@ -350,4 +350,36 @@ test.group('Schema', (group) => {
     await db.connection().schema.dropTable('schema_accounts')
     await db.connection().schema.dropTable('schema_users')
   })
+
+  test('define index predicate as knex query', async ({ assert }) => {
+    class UsersSchema extends getBaseSchema() {
+      public up() {
+        this.schema.createTable('users', (table) => {
+          table.increments('id')
+          table.index(['name', 'last_name'], 'idx_name_last_name', {
+            indexType: 'FULLTEXT',
+            storageEngineIndexType: 'hash',
+            predicate: this.knex().whereNotNull('email'),
+          })
+        })
+      }
+    }
+
+    const schema = new UsersSchema(db.connection(), 'users.ts', true)
+    const queries = await schema.execUp()
+
+    const knexSchema = db
+      .connection()
+      .schema.createTable('users', (table) => {
+        table.increments('id')
+        table.index(['name', 'last_name'], 'idx_name_last_name', {
+          indexType: 'FULLTEXT',
+          storageEngineIndexType: 'hash',
+          predicate: db.connection().knexQuery().whereNotNull('email'),
+        })
+      })
+      .toQuery()
+
+    assert.deepEqual(queries, [knexSchema])
+  })
 })

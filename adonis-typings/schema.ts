@@ -34,6 +34,7 @@ declare module '@ioc:Adonis/Lucid/Schema' {
     db: QueryClientContract
     schema: Knex.SchemaBuilder
     now(precision?: number): Knex.Raw
+    knex(): Knex.QueryBuilder
     raw(sql: string, bindings?: RawQueryBindings): Knex.Raw
     defer: (cb: DeferCallback) => void
     up(): Promise<void> | void

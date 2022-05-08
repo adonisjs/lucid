@@ -126,6 +126,13 @@ export class Schema implements SchemaContract {
   }
 
   /**
+   * Get access to the underlying knex query builder
+   */
+  public knex() {
+    return this.db.knexQuery()
+  }
+
+  /**
    * Wrapping database calls inside defer ensures that they run
    * in the right order and also they won't be executed when
    * schema is invoked to return the SQL queries
