@@ -50,6 +50,12 @@ export default class DbSeed extends BaseCommand {
   public files: string[] = []
 
   /**
+   * Display migrations result in one compact single-line output
+   */
+  @flags.boolean({ description: 'A compact single-line output' })
+  public compactOutput: boolean = false
+
+  /**
    * Print log message to the console
    */
   private printLogMessage(file: SeederFileNode) {
@@ -142,6 +148,70 @@ export default class DbSeed extends BaseCommand {
   }
 
   /**
+   * Execute selected seeders
+   */
+  private async executedSeeders(selectedSeederFiles: string[], files: FileNode<unknown>[]) {
+    const seedersResults: SeederFileNode[] = []
+
+    for (let fileName of selectedSeederFiles) {
+      const sourceFile = files.find(({ name }) => slash(fileName) === slash(name))
+
+      if (!sourceFile) {
+        this.printNotAValidFile(fileName)
+        this.hasError = true
+        return
+      }
+
+      const response = await this.seeder.run(sourceFile)
+      if (response.status === 'failed') {
+        this.hasError = true
+      }
+
+      if (!this.compactOutput) {
+        this.printLogMessage(response)
+      }
+
+      seedersResults.push(response)
+    }
+
+    return seedersResults
+  }
+
+  /**
+   * Print Single-line output when `compact-output` is enabled
+   */
+  private logCompactFinalStatus(seedersResults: SeederFileNode[]) {
+    const countByStatus = seedersResults.reduce(
+      (acc, value) => {
+        acc[value.status] = acc[value.status] + 1
+        return acc
+      },
+      { completed: 0, failed: 0, ignored: 0, pending: 0 }
+    )
+    let message = `❯ Executed ${countByStatus.completed} seeders`
+
+    if (countByStatus.failed) {
+      message += `, ${countByStatus.failed} failed`
+    }
+
+    if (countByStatus.ignored) {
+      message += `, ${countByStatus.ignored} ignored`
+    }
+
+    const color = countByStatus.failed ? 'red' : 'grey'
+    this.logger.log(this.colors[color](message) as string)
+
+    if (countByStatus.failed > 0) {
+      const erroredSeeder = seedersResults.find((seeder) => seeder.status === 'failed')
+
+      const seederName = this.colors.grey(erroredSeeder!.file.name + ':')
+      const error = this.colors.red(erroredSeeder!.error!.message)
+
+      this.logger.log(`${seederName} ${error}\n`)
+    }
+  }
+
+  /**
    * Run as a subcommand. Never close database connection or exit
    * process here
    */
@@ -170,23 +240,10 @@ export default class DbSeed extends BaseCommand {
     await this.instantiateSeeder()
     const files = await this.seeder.getList()
     const cherryPickedFiles = await this.getCherryPickedFiles(files)
+    const result = await this.executedSeeders(cherryPickedFiles, files)
 
-    /**
-     * Execute selected seeders
-     */
-    for (let fileName of cherryPickedFiles) {
-      const sourceFile = files.find(({ name }) => slash(fileName) === slash(name))
-
-      if (!sourceFile) {
-        this.printNotAValidFile(fileName)
-        this.hasError = true
-      } else {
-        const response = await this.seeder.run(sourceFile)
-        if (response.status === 'failed') {
-          this.hasError = true
-        }
-        this.printLogMessage(response)
-      }
+    if (this.compactOutput && result) {
+      this.logCompactFinalStatus(result)
     }
 
     this.exitCode = this.hasError ? 1 : 0

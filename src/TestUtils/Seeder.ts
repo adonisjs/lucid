@@ -16,7 +16,7 @@ export class TestsSeeder {
   constructor(private ace: typeof Ace, private connectionName?: string) {}
 
   private async runCommand(commandName: string) {
-    const args: string[] = []
+    const args: string[] = ['--compact-output']
     if (this.connectionName) {
       args.push(`--connection=${this.connectionName}`)
     }
