@@ -89,7 +89,7 @@ export class ManyToManyQueryBuilder
    * The keys for constructing the join query
    */
   protected getRelationKeys(): string[] {
-    return [`${this.relation.relatedModel().table}.${this.relation.relatedKeyColumnName}`]
+    return [this.prefixRelatedTable(this.relation.relatedKeyColumnName)]
   }
 
   /**

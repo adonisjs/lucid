@@ -122,7 +122,7 @@ export class HasManyThroughQueryBuilder
    * The keys for constructing the join query
    */
   protected getRelationKeys(): string[] {
-    return [this.relation.throughForeignKeyColumnName]
+    return [this.prefixRelatedTable(this.relation.throughForeignKeyColumnName)]
   }
 
   /**
