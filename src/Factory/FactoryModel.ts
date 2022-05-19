@@ -235,6 +235,9 @@ export class FactoryModel<Model extends LucidModel> implements FactoryModelContr
       merge(attributes) {
         return this.query().merge(attributes)
       },
+      mergeRecursive(attributes) {
+        return this.query().mergeRecursive(attributes)
+      },
       useCtx(ctx) {
         return this.query().useCtx(ctx)
       },

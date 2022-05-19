@@ -157,6 +157,7 @@ export async function setup(destroyDb: boolean = true) {
     await db.schema.createTable('users', (table) => {
       table.increments()
       table.integer('country_id')
+      table.integer('tenant_id').nullable()
       table.string('username').unique()
       table.string('email').unique()
       table.integer('points').defaultTo(0)
@@ -232,6 +233,7 @@ export async function setup(destroyDb: boolean = true) {
     await db.schema.createTable('posts', (table) => {
       table.increments()
       table.integer('user_id')
+      table.integer('tenant_id').nullable()
       table.string('title').notNullable()
       table.boolean('is_published').defaultTo(false)
       table.timestamps()
@@ -242,6 +244,7 @@ export async function setup(destroyDb: boolean = true) {
   if (!hasComments) {
     await db.schema.createTable('comments', (table) => {
       table.increments()
+      table.integer('tenant_id').nullable()
       table.integer('post_id')
       table.string('body')
       table.timestamps()

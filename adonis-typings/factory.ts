@@ -151,6 +151,11 @@ declare module '@ioc:Adonis/Lucid/Factory' {
     relation: RelationshipsContract
 
     /**
+     * Merge attributes with the relationship and its children
+     */
+    merge(attributes: any): this
+
+    /**
      * Define custom pivot attributes for many to many
      * relationship
      */
@@ -235,6 +240,12 @@ declare module '@ioc:Adonis/Lucid/Factory' {
      * according to the array index.
      */
     merge(attributes: OneOrMany<ExtractFactoryAttributes<FactoryModel>>): this
+
+    /**
+     * Merge custom set of attributes with the correct factory builder
+     * model and all of its relationships as well
+     */
+    mergeRecursive(attributes: any): this
 
     /**
      * Define custom runtime context. This method is usually called by

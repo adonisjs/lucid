@@ -62,6 +62,11 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   private attributes: any = {}
 
   /**
+   * Custom attributes to pass to relationship merge methods
+   */
+  private recursiveAttributes: any = {}
+
+  /**
    * States to apply. One state can be applied only once and hence
    * a set is used.
    */
@@ -114,7 +119,15 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Returns attributes to merge for a given index
    */
   private getMergeAttributes(index: number) {
-    return Array.isArray(this.attributes) ? this.attributes[index] : this.attributes
+    const attributes = Array.isArray(this.attributes) ? this.attributes[index] : this.attributes
+    const recursiveAttributes = Array.isArray(this.recursiveAttributes)
+      ? this.recursiveAttributes[index]
+      : this.recursiveAttributes
+
+    return {
+      ...recursiveAttributes,
+      ...attributes,
+    }
   }
 
   /**
@@ -200,12 +213,18 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   private async makeRelations(modelInstance: LucidRow, ctx: FactoryContextContract) {
     for (let { name, count, callback } of this.withBelongsToRelations) {
       const relation = this.factory.getRelation(name)
-      await relation.useCtx(ctx).make(modelInstance, callback, count)
+      await relation
+        .useCtx(ctx)
+        .merge(this.recursiveAttributes)
+        .make(modelInstance, callback, count)
     }
 
     for (let { name, count, callback } of this.withRelations) {
       const relation = this.factory.getRelation(name)
-      await relation.useCtx(ctx).make(modelInstance, callback, count)
+      await relation
+        .useCtx(ctx)
+        .merge(this.recursiveAttributes)
+        .make(modelInstance, callback, count)
     }
   }
 
@@ -221,7 +240,10 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
 
     for (let { name, count, callback } of relationships) {
       const relation = this.factory.getRelation(name)
-      await relation.useCtx(ctx).create(modelInstance, callback, count)
+      await relation
+        .useCtx(ctx)
+        .merge(this.recursiveAttributes)
+        .create(modelInstance, callback, count)
     }
   }
 
@@ -326,6 +348,15 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    */
   public merge(attributes: any) {
     this.attributes = attributes
+    return this
+  }
+
+  /**
+   * Merge custom set of attributes with the correct factory builder
+   * model and all of its relationships as well
+   */
+  public mergeRecursive(attributes: any): this {
+    this.recursiveAttributes = attributes
     return this
   }
 

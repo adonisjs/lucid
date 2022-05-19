@@ -21,6 +21,7 @@ import {
  */
 export abstract class BaseRelation {
   protected ctx: FactoryContextContract
+  private attributes: any = {}
 
   constructor(
     private factory: () => FactoryBuilderQueryContract<FactoryModelContract<LucidModel>>
@@ -35,8 +36,16 @@ export abstract class BaseRelation {
       callback(builder)
     }
 
-    builder.useCtx(this.ctx)
+    builder.useCtx(this.ctx).mergeRecursive(this.attributes)
     return builder
+  }
+
+  /**
+   * Merge attributes with the relationship and its children
+   */
+  public merge(attributes: any) {
+    this.attributes = attributes
+    return this
   }
 
   /**
