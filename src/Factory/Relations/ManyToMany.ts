@@ -40,7 +40,7 @@ export class ManyToMany extends BaseRelation implements FactoryRelationContract 
    * Make relationship and set it on the parent model instance
    */
   public async make(parent: LucidRow, callback?: RelationCallback, count?: number) {
-    const builder = this.compile(this, callback)
+    const builder = this.compile(this, parent, callback)
     const instances = await builder.makeStubbedMany(count || 1)
     parent.$setRelated(this.relation.relationName, instances)
   }
@@ -57,7 +57,7 @@ export class ManyToMany extends BaseRelation implements FactoryRelationContract 
    * Persist relationship and set it on the parent model instance
    */
   public async create(parent: LucidRow, callback?: RelationCallback, count?: number) {
-    const builder = this.compile(this, callback)
+    const builder = this.compile(this, parent, callback)
     const instances = await builder.createMany(count || 1)
 
     /**

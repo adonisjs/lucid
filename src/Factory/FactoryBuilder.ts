@@ -99,6 +99,14 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   ) {}
 
   /**
+   * Access the parent relationship for which the model instance
+   * is created
+   */
+  public get parent() {
+    return this.viaRelation ? this.viaRelation.parent : undefined
+  }
+
+  /**
    * Returns factory state
    */
   private async getCtx(isStubbed: boolean, withTransaction: boolean) {

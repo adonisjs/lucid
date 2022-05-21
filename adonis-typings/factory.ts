@@ -145,6 +145,8 @@ declare module '@ioc:Adonis/Lucid/Factory' {
    * relationship
    */
   export interface FactoryRelationContract {
+    parent: LucidRow
+
     /**
      * Reference to the Lucid model relationship
      */
@@ -220,7 +222,9 @@ declare module '@ioc:Adonis/Lucid/Factory' {
          * Receives the explicitly defined factory
          */
         builder: FactoryModel['relations'][K] extends () => FactoryBuilderContract<any>
-          ? ReturnType<FactoryModel['relations'][K]>
+          ? ReturnType<FactoryModel['relations'][K]> & {
+              parent: InstanceType<FactoryModel['model']>
+            }
           : never
       ) => void
     ): this

@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { LucidModel } from '@ioc:Adonis/Lucid/Orm'
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Orm'
 import {
   RelationCallback,
   FactoryModelContract,
@@ -23,6 +23,8 @@ export abstract class BaseRelation {
   protected ctx: FactoryContextContract
   private attributes: any = {}
 
+  public parent: LucidRow
+
   constructor(
     private factory: () => FactoryBuilderQueryContract<FactoryModelContract<LucidModel>>
   ) {}
@@ -30,7 +32,12 @@ export abstract class BaseRelation {
   /**
    * Instantiates the relationship factory
    */
-  protected compile(relation: FactoryRelationContract, callback?: RelationCallback) {
+  protected compile(
+    relation: FactoryRelationContract,
+    parent: LucidRow,
+    callback?: RelationCallback
+  ) {
+    this.parent = parent
     const builder = this.factory().query(undefined, relation)
     if (typeof callback === 'function') {
       callback(builder)
