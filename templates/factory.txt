@@ -5,4 +5,4 @@ export default Factory.define({{#toModelName}}{{{ model }}}{{/toModelName}}, ({ 
   return {
     //
   }
-})
+}).build()
