@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { RawBuilder } from '../Database/StaticBuilder/Raw'
-import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { DialectContract, MysqlConfig, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
 export class MysqlDialect implements DialectContract {
   public readonly name = 'mysql'
@@ -31,7 +31,7 @@ export class MysqlDialect implements DialectContract {
    */
   public readonly dateTimeFormat = 'yyyy-MM-dd HH:mm:ss'
 
-  constructor(private client: QueryClientContract) {}
+  constructor(private client: QueryClientContract, private config: MysqlConfig) {}
 
   /**
    * Truncate mysql table with option to cascade
@@ -99,13 +99,20 @@ export class MysqlDialect implements DialectContract {
   public async dropAllTables() {
     let tables = await this.getAllTables()
 
-    if (!tables.length) return
+    /**
+     * Filter out tables that are not allowed to be dropped
+     */
+    tables = tables.filter((table) => !(this.config.dontDrop || []).includes(table))
 
     /**
      * Add backquote around table names to avoid syntax errors
      * in case of a table name with a reserved keyword
      */
     tables = tables.map((table) => '`' + table + '`')
+
+    if (!tables.length) {
+      return
+    }
 
     /**
      * Cascade and truncate

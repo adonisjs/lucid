@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { DialectContract, PostgreConfig, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
 export class PgDialect implements DialectContract {
   public readonly name = 'postgres'
@@ -30,7 +30,7 @@ export class PgDialect implements DialectContract {
    */
   public readonly dateTimeFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZ"
 
-  constructor(private client: QueryClientContract) {}
+  constructor(private client: QueryClientContract, private config: PostgreConfig) {}
 
   /**
    * Returns an array of table names for one or many schemas.
@@ -87,8 +87,18 @@ export class PgDialect implements DialectContract {
    * Drop all tables inside the database
    */
   public async dropAllTables(schemas: string[]) {
-    const tables = await this.getAllTables(schemas)
-    if (!tables.length) return
+    let tables = await this.getAllTables(schemas)
+
+    /**
+     * Filter out tables that are not allowed to be dropped
+     */
+    tables = tables.filter(
+      (table) => !(this.config.dontDrop || ['spatial_ref_sys']).includes(table)
+    )
+
+    if (!tables.length) {
+      return
+    }
 
     await this.client.rawQuery(`DROP TABLE "${tables.join('", "')}" CASCADE;`)
   }

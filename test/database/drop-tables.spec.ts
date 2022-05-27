@@ -65,7 +65,7 @@ test.group('Query client | drop tables', (group) => {
     await connection.disconnect()
   })
 
-  test('dropAllTables should not throw when there are no tables', async ({ assert }) => {
+  test('drop all tables should not throw when there are no tables', async ({ assert }) => {
     await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
@@ -81,4 +81,37 @@ test.group('Query client | drop tables', (group) => {
 
     await connection.disconnect()
   })
+
+  test('drop all tables except those defined in dontDrop', async ({ assert }) => {
+    await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
+    const config = getConfig()
+    config.dontDrop = ['table_that_should_not_be_dropped']
+
+    const connection = new Connection('primary', config, app.logger)
+    connection.connect()
+
+    await connection.client!.schema.createTableIfNotExists('temp_users', (table) => {
+      table.increments('id')
+    })
+
+    await connection.client!.schema.createTableIfNotExists('temp_posts', (table) => {
+      table.increments('id')
+    })
+
+    await connection.client!.schema.createTableIfNotExists(
+      'table_that_should_not_be_dropped',
+      (table) => {
+        table.increments('id')
+      }
+    )
+
+    const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
+    await client.dialect.dropAllTables(['public'])
+
+    assert.isFalse(await connection.client!.schema.hasTable('temp_users'))
+    assert.isFalse(await connection.client!.schema.hasTable('temp_posts'))
+    assert.isTrue(await connection.client!.schema.hasTable('table_that_should_not_be_dropped'))
+
+    await connection.disconnect()
+  }).skip(!['pg', 'mysql'].includes(process.env.DB!))
 })
