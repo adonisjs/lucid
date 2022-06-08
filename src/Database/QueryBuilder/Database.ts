@@ -294,16 +294,14 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
     page = Number(page)
     perPage = Number(perPage)
 
-    const countQuery = this.clone()
-      .clearOrder()
-      .clearLimit()
-      .clearOffset()
-      .clearSelect()
+    const countQuery = this.client
+      .query()
+      .from(this.clone().clearOrder().clearLimit().clearOffset().as('subQuery'))
       .count('* as total')
 
     const aggregates = await countQuery.exec()
 
-    const total = this.hasGroupBy ? aggregates.length : aggregates[0].total
+    const total = aggregates[0].total
     const results = total > 0 ? await this.forPage(page, perPage).exec() : []
 
     return new SimplePaginator(total, perPage, page, ...results)

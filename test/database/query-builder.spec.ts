@@ -10713,6 +10713,42 @@ test.group('Query Builder | paginate', (group) => {
     await connection.disconnect()
   })
 
+  test('paginate through rows with select distinct', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    await getInsertBuilder(getQueryClient(connection, app)).table('users').multiInsert(getUsers(18))
+
+    const query = db.from('users').distinct('users.id').joinRaw('cross join users u2')
+
+    const users = await query.paginate(1, 5)
+    users.baseUrl('/users')
+
+    assert.lengthOf(users.all(), 5)
+    assert.equal(users.perPage, 5)
+    assert.equal(users.currentPage, 1)
+    assert.equal(users.lastPage, 4)
+    assert.isTrue(users.hasPages)
+    assert.isTrue(users.hasMorePages)
+    assert.isFalse(users.isEmpty)
+    assert.equal(users.total, 18)
+    assert.isTrue(users.hasTotal)
+    assert.deepEqual(users.getMeta(), {
+      total: 18,
+      per_page: 5,
+      current_page: 1,
+      last_page: 4,
+      first_page: 1,
+      first_page_url: '/users?page=1',
+      last_page_url: '/users?page=4',
+      next_page_url: '/users?page=2',
+      previous_page_url: null,
+    })
+
+    await connection.disconnect()
+  })
+
   test('generate range of pagination urls', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
