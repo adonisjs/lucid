@@ -15,6 +15,7 @@ declare module '@ioc:Adonis/Lucid/Seeder' {
    */
   export type SeederConstructorContract = {
     developmentOnly: boolean
+    environment: string[]
     new (client: QueryClientContract): {
       client: QueryClientContract
       run(): Promise<void>
