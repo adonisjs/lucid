@@ -60,7 +60,10 @@ export class SeedsRunner {
     /**
      * Ignore when when the node environement is not the same as the seeder configuration.
      */
-    if (Source.developmentOnly && !this.app.inDev || Source.environment && !Source.environment.includes(this.app.nodeEnvironment)) {
+    if (
+      (Source.developmentOnly && !this.app.inDev) ||
+      (Source.environment && !Source.environment.includes(this.app.nodeEnvironment))
+    ) {
       seeder.status = 'ignored'
       return seeder
     }
