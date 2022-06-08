@@ -96,4 +96,62 @@ test.group('Seeds Runner', (group) => {
     delete process.env.NODE_ENV
     await db.manager.closeAll()
   })
+
+  test('mark file as ignored when "environment = production" and not running in production mode', async ({
+    assert,
+  }) => {
+    process.env.NODE_ENV = 'development'
+
+    const app = await setupApplication()
+    const db = getDb(app)
+    const runner = new SeedsRunner(db, app)
+
+    await fs.add(
+      'database/seeders/User.ts',
+      `export default class FooSeeder {
+      public static invoked = false
+      public static environment = ['production']
+
+      run () {
+        (this.constructor as any).invoked = true
+      }
+    }`
+    )
+
+    const files = await runner.getList()
+    const report = await runner.run(files[0])
+    assert.equal(report.status, 'ignored')
+
+    delete process.env.NODE_ENV
+    await db.manager.closeAll()
+  })
+
+  test('mark file as ignored when "environment = development" and not running in development mode', async ({
+    assert,
+  }) => {
+    process.env.NODE_ENV = 'production'
+
+    const app = await setupApplication()
+    const db = getDb(app)
+    const runner = new SeedsRunner(db, app)
+
+    await fs.add(
+      'database/seeders/User.ts',
+      `export default class FooSeeder {
+      public static invoked = false
+      public static environment = ['development']
+
+      run () {
+        (this.constructor as any).invoked = true
+      }
+    }`
+    )
+
+    const files = await runner.getList()
+    const report = await runner.run(files[0])
+    assert.equal(report.status, 'ignored')
+
+    delete process.env.NODE_ENV
+    await db.manager.closeAll()
+  })
 })
