@@ -344,7 +344,9 @@ declare module '@ioc:Adonis/Lucid/Database' {
     healthCheck?: boolean
     migrations?: MigratorConfig
     seeders?: SeedersConfig
-    dontDrop?: string[]
+    wipe?: {
+      ignoreTables?: string[]
+    }
     pool?: {
       afterCreate?: (conn: any, done: any) => void
       min?: number
