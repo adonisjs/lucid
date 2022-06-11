@@ -93,7 +93,7 @@ export class PgDialect implements DialectContract {
      * Filter out tables that are not allowed to be dropped
      */
     tables = tables.filter(
-      (table) => !(this.config.dontDrop || ['spatial_ref_sys']).includes(table)
+      (table) => !(this.config.wipe?.ignoreTables || ['spatial_ref_sys']).includes(table)
     )
 
     if (!tables.length) {

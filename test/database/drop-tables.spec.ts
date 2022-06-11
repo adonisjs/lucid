@@ -85,7 +85,8 @@ test.group('Query client | drop tables', (group) => {
   test('drop all tables except those defined in dontDrop', async ({ assert }) => {
     await fs.fsExtra.ensureDir(join(fs.basePath, 'temp'))
     const config = getConfig()
-    config.dontDrop = ['table_that_should_not_be_dropped']
+    config.wipe = {}
+    config.wipe.ignoreTables = ['table_that_should_not_be_dropped']
 
     const connection = new Connection('primary', config, app.logger)
     connection.connect()

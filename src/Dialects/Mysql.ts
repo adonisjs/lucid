@@ -102,7 +102,7 @@ export class MysqlDialect implements DialectContract {
     /**
      * Filter out tables that are not allowed to be dropped
      */
-    tables = tables.filter((table) => !(this.config.dontDrop || []).includes(table))
+    tables = tables.filter((table) => !(this.config.wipe?.ignoreTables || []).includes(table))
 
     /**
      * Add backquote around table names to avoid syntax errors
