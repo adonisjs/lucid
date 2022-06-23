@@ -593,6 +593,12 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     merge(value: Partial<ModelAttributes<this>>, allowExtraProperties?: boolean): this
 
     /**
+     * Enable force update even when no attributes
+     * are dirty
+     */
+    enableForceUpdate(): this
+
+    /**
      * Actions to perform on the instance
      */
     save(): Promise<this>

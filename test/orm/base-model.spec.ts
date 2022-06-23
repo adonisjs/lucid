@@ -5628,6 +5628,52 @@ test.group('Base Model | datetime', (group) => {
     const user = await User.find(1)
     assert.equal(user!.toJSON().joined_at, DateTime.local().minus({ days: 1 }).toISODate())
   })
+
+  test('force update when enabledForceUpdate method is called', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.dateTime({ autoCreate: true, autoUpdate: true })
+      public joinedAt: DateTime
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    const originalDateTimeString = user.joinedAt.toString()
+
+    await sleep(1000)
+    await user.enableForceUpdate().save()
+    assert.notEqual(originalDateTimeString, user.joinedAt.toString())
+  })
+
+  test('force update when enabledForceUpdate method and there are no timestamps', async ({ assert }) => {
+    assert.plan(1)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @afterUpdate()
+      public static afterHook(user: User) {
+        assert.instanceOf(user, User)
+      }
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.enableForceUpdate().save()
+  })
 })
 
 test.group('Base Model | paginate', (group) => {
