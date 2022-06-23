@@ -57,6 +57,10 @@ export class SeedsRunner {
       file: file,
     }
 
+    if ('developmentOnly' in Source) {
+      this.app.logger.warn(`Seeder "${file.name}" is using the deprecated flag "developmentOnly".`)
+    }
+
     /**
      * Ignore when when the node environement is not the same as the seeder configuration.
      */
