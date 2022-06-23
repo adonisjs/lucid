@@ -5652,7 +5652,9 @@ test.group('Base Model | datetime', (group) => {
     assert.notEqual(originalDateTimeString, user.joinedAt.toString())
   })
 
-  test('force update when enabledForceUpdate method and there are no timestamps', async ({ assert }) => {
+  test('force update when enabledForceUpdate method and there are no timestamps', async ({
+    assert,
+  }) => {
     assert.plan(1)
 
     class User extends BaseModel {
