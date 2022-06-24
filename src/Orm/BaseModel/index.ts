@@ -1773,10 +1773,13 @@ export class BaseModel implements LucidRow {
     await Model.$hooks.exec('before', 'update', this)
     await Model.$hooks.exec('before', 'save', this)
 
+    const forceUpdate = this.forceUpdate
+    this.forceUpdate = false
+
     /**
      * Do not issue updates when model doesn't have any mutations
      */
-    if (!this.$isDirty && !this.forceUpdate) {
+    if (!this.$isDirty && !forceUpdate) {
       return this
     }
 
