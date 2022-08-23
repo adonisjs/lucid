@@ -18,7 +18,9 @@ declare module '@ioc:Adonis/Core/Validator' {
     caseInsensitive?: boolean
     constraints?: { [key: string]: any }
     where?: { [key: string]: any }
+    orWhere?: { [key: string]: any }
     whereNot?: { [key: string]: any }
+    orWhereNot?: { [key: string]: any }
   }
 
   export interface Rules {

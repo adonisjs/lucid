@@ -30,9 +30,14 @@ type NormalizedConstraint = {
 /**
  * Normalized validation options
  */
-type NormalizedOptions = Omit<DbRowCheckOptions, 'constraints' | 'where' | 'whereNot'> & {
+type NormalizedOptions = Omit<
+  DbRowCheckOptions,
+  'constraints' | 'where' | 'orWhere' | 'whereNot' | 'orWhereNot'
+> & {
   where: NormalizedConstraint[]
+  orWhere: NormalizedConstraint[]
   whereNot: NormalizedConstraint[]
+  orWhereNot: NormalizedConstraint[]
 }
 
 /**
@@ -69,6 +74,28 @@ class DbRowCheck {
   }
 
   /**
+   * Applies user defined or where constraints on the query builder
+   */
+  private applyOrWhere(
+    query: DatabaseQueryBuilderContract,
+    constraints: NormalizedConstraint[],
+    refs: ValidationRuntimeOptions['refs']
+  ) {
+    if (!constraints.length) {
+      return
+    }
+
+    constraints.forEach(({ key, operator, value, ref }) => {
+      const val = ref ? refs[ref].value : value
+      if (operator === 'in') {
+        query.orWhereIn(key, val as string[])
+      } else {
+        query.orWhere(key, val as string[])
+      }
+    })
+  }
+
+  /**
    * Applies user defined where not constraints on the query builder
    */
   private applyWhereNot(
@@ -87,6 +114,27 @@ class DbRowCheck {
         query.whereNotIn(key, val as string[])
       } else {
         query.whereNot(key, val as string)
+      }
+    })
+  }
+
+  /**
+   * Applies user defined or where not constraints on the query builder
+   */
+  private applyOrWhereNot(
+    query: DatabaseQueryBuilderContract,
+    constraints: NormalizedConstraint[],
+    refs: ValidationRuntimeOptions['refs']
+  ) {
+    if (!constraints.length) {
+      return
+    }
+    constraints.forEach(({ key, operator, value, ref }) => {
+      const val = ref ? refs[ref].value : value
+      if (operator === 'in') {
+        query.orWhereNotIn(key, val as string[])
+      } else {
+        query.orWhereNot(key, val as string[])
       }
     })
   }
@@ -144,7 +192,9 @@ class DbRowCheck {
       connection: options.connection,
       dateFormat: options.dateFormat,
       where: this.normalizeConstraints(options.where || options.constraints),
+      orWhere: this.normalizeConstraints(options.orWhere),
       whereNot: this.normalizeConstraints(options.whereNot),
+      orWhereNot: this.normalizeConstraints(options.orWhereNot),
     }
   }
 
@@ -153,7 +203,17 @@ class DbRowCheck {
    */
   public async validate(
     value: any,
-    { table, column, where, whereNot, connection, caseInsensitive, dateFormat }: NormalizedOptions,
+    {
+      table,
+      column,
+      where,
+      orWhere,
+      whereNot,
+      orWhereNot,
+      connection,
+      caseInsensitive,
+      dateFormat,
+    }: NormalizedOptions,
     { pointer, errorReporter, arrayExpressionPointer, refs }: ValidationRuntimeOptions
   ) {
     const client = this.database.connection(connection)
@@ -182,7 +242,9 @@ class DbRowCheck {
     }
 
     this.applyWhere(query, where, refs)
+    this.applyOrWhere(query, orWhere, refs)
     this.applyWhereNot(query, whereNot, refs)
+    this.applyOrWhereNot(query, orWhereNot, refs)
 
     const row = await query.first()
     if (this.ruleName === 'exists') {
