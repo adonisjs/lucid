@@ -505,6 +505,446 @@ test.group('Validator | exists', (group) => {
     }
   })
 
+  test('add or where constraints', async ({ assert }) => {
+    assert.plan(2)
+
+    const [row] = await db
+      .table<{ id: string } | number>('users')
+      .returning('id')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk' })
+
+    db.connection()
+      .getReadClient()
+      .on('query', ({ sql, bindings }) => {
+        const { sql: knexSql, bindings: knexBindings } = db
+          .connection()
+          .getReadClient()
+          .select(1)
+          .from('users')
+          .where('id', typeof row === 'number' ? row : row.id)
+          .where('username', 'nikk')
+          .orWhere('points', 1)
+          .limit(1)
+          .toSQL()
+          .toNative()
+
+        assert.equal(sql, knexSql)
+        assert.deepEqual(bindings, knexBindings)
+      })
+
+    try {
+      await validator.validate({
+        schema: schema.create({
+          id: schema.number([
+            rules.exists({
+              table: 'users',
+              column: 'id',
+              where: {
+                username: 'nikk',
+              },
+              orWhere: {
+                point: 1,
+              },
+            }),
+          ]),
+        }),
+        data: { id: typeof row === 'number' ? row : row.id },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['exists validation failure'],
+      })
+    }
+  })
+
+  test('add or where constraints with refs', async ({ assert }) => {
+    assert.plan(3)
+
+    const [row] = await db
+      .table<{ id: string } | number>('users')
+      .returning('id')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk' })
+
+    db.connection()
+      .getReadClient()
+      .on('query', ({ sql, bindings }) => {
+        const { sql: knexSql, bindings: knexBindings } = db
+          .connection()
+          .getReadClient()
+          .select(1)
+          .from('users')
+          .where('id', typeof row === 'number' ? row : row.id)
+          .where('username', 'nikk')
+          .orWhere('points', 1)
+          .limit(1)
+          .toSQL()
+          .toNative()
+
+        assert.equal(sql, knexSql)
+        assert.deepEqual(bindings, knexBindings)
+      })
+
+    try {
+      const refs = schema.refs({
+        username: 'nikk',
+        point: 1,
+      })
+
+      await validator.validate({
+        refs,
+        schema: schema.create({
+          id: schema.number([
+            rules.exists({
+              table: 'users',
+              column: 'id',
+              where: {
+                username: refs.username,
+              },
+              orWhere: {
+                points: refs.point,
+              },
+            }),
+          ]),
+        }),
+        data: { id: typeof row === 'number' ? row : row.id },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['exists validation failure'],
+      })
+    }
+  })
+
+  test('add or where in constraints', async ({ assert }) => {
+    assert.plan(3)
+
+    const [row] = await db
+      .table<{ id: string } | number>('users')
+      .returning('id')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk' })
+
+    db.connection()
+      .getReadClient()
+      .on('query', ({ sql, bindings }) => {
+        const { sql: knexSql, bindings: knexBindings } = db
+          .connection()
+          .getReadClient()
+          .select(1)
+          .from('users')
+          .where('id', typeof row === 'number' ? row : row.id)
+          .whereIn('username', ['nikk', 'romain'])
+          .orWhereIn('points', [1, 2])
+          .limit(1)
+          .toSQL()
+          .toNative()
+
+        assert.equal(sql, knexSql)
+        assert.deepEqual(bindings, knexBindings)
+      })
+
+    try {
+      await validator.validate({
+        schema: schema.create({
+          id: schema.number([
+            rules.exists({
+              table: 'users',
+              column: 'id',
+              where: {
+                username: ['nikk', 'romain'],
+              },
+              orWhere: {
+                points: [1, 2],
+              },
+            }),
+          ]),
+        }),
+        data: { id: typeof row === 'number' ? row : row.id },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['exists validation failure'],
+      })
+    }
+  })
+
+  test('add or where in constraints with refs', async ({ assert }) => {
+    assert.plan(3)
+
+    const [row] = await db
+      .table<{ id: string } | number>('users')
+      .returning('id')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk' })
+
+    db.connection()
+      .getReadClient()
+      .on('query', ({ sql, bindings }) => {
+        const { sql: knexSql, bindings: knexBindings } = db
+          .connection()
+          .getReadClient()
+          .select(1)
+          .from('users')
+          .where('id', typeof row === 'number' ? row : row.id)
+          .whereIn('username', ['nikk', 'romain'])
+          .orWhereIn('points', [1, 2])
+          .limit(1)
+          .toSQL()
+          .toNative()
+
+        assert.equal(sql, knexSql)
+        assert.deepEqual(bindings, knexBindings)
+      })
+
+    try {
+      const refs = schema.refs({
+        username: ['nikk', 'romain'],
+        points: [1, 2],
+      })
+
+      await validator.validate({
+        refs,
+        schema: schema.create({
+          id: schema.number([
+            rules.exists({
+              table: 'users',
+              column: 'id',
+              where: {
+                username: refs.username,
+              },
+              orWhere: {
+                points: [1, 2],
+              },
+            }),
+          ]),
+        }),
+        data: { id: typeof row === 'number' ? row : row.id },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['exists validation failure'],
+      })
+    }
+  })
+
+  test('add or where not constraints', async ({ assert }) => {
+    assert.plan(2)
+
+    const [row] = await db
+      .table<{ id: string } | number>('users')
+      .returning('id')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk' })
+
+    db.connection()
+      .getReadClient()
+      .on('query', ({ sql, bindings }) => {
+        const { sql: knexSql, bindings: knexBindings } = db
+          .connection()
+          .getReadClient()
+          .select(1)
+          .from('users')
+          .where('id', typeof row === 'number' ? row : row.id)
+          .whereNot('username', 'virk')
+          .orWhereNot('points', 1)
+          .limit(1)
+          .toSQL()
+          .toNative()
+
+        assert.equal(sql, knexSql)
+        assert.deepEqual(bindings, knexBindings)
+      })
+
+    try {
+      await validator.validate({
+        schema: schema.create({
+          id: schema.number([
+            rules.exists({
+              table: 'users',
+              column: 'id',
+              whereNot: {
+                username: 'virk',
+              },
+              orWhereNot: {
+                points: 1,
+              },
+            }),
+          ]),
+        }),
+        data: { id: typeof row === 'number' ? row : row.id },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['exists validation failure'],
+      })
+    }
+  })
+
+  test('add or where not constraints with refs', async ({ assert }) => {
+    assert.plan(2)
+
+    const [row] = await db
+      .table<{ id: string } | number>('users')
+      .returning('id')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk' })
+
+    db.connection()
+      .getReadClient()
+      .on('query', ({ sql, bindings }) => {
+        const { sql: knexSql, bindings: knexBindings } = db
+          .connection()
+          .getReadClient()
+          .select(1)
+          .from('users')
+          .where('id', typeof row === 'number' ? row : row.id)
+          .whereNot('username', 'virk')
+          .orWhereNot('points', 1)
+          .limit(1)
+          .toSQL()
+          .toNative()
+
+        assert.equal(sql, knexSql)
+        assert.deepEqual(bindings, knexBindings)
+      })
+
+    try {
+      const refs = schema.refs({
+        username: 'virk',
+        points: 1,
+      })
+
+      await validator.validate({
+        refs,
+        schema: schema.create({
+          id: schema.number([
+            rules.exists({
+              table: 'users',
+              column: 'id',
+              whereNot: {
+                username: refs.username,
+              },
+              orWhereNot: {
+                points: refs.points,
+              },
+            }),
+          ]),
+        }),
+        data: { id: typeof row === 'number' ? row : row.id },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['exists validation failure'],
+      })
+    }
+  })
+
+  test('add or where not in constraints', async ({ assert }) => {
+    assert.plan(2)
+
+    const [row] = await db
+      .table<{ id: string } | number>('users')
+      .returning('id')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk' })
+
+    db.connection()
+      .getReadClient()
+      .on('query', ({ sql, bindings }) => {
+        const { sql: knexSql, bindings: knexBindings } = db
+          .connection()
+          .getReadClient()
+          .select(1)
+          .from('users')
+          .where('id', typeof row === 'number' ? row : row.id)
+          .whereNotIn('username', ['virk', 'nikk'])
+          .orWhereNotIn('points', [1, 2])
+          .limit(1)
+          .toSQL()
+          .toNative()
+
+        assert.equal(sql, knexSql)
+        assert.deepEqual(bindings, knexBindings)
+      })
+
+    try {
+      await validator.validate({
+        schema: schema.create({
+          id: schema.number([
+            rules.exists({
+              table: 'users',
+              column: 'id',
+              whereNot: {
+                username: ['virk', 'nikk'],
+              },
+              orWhereNot: {
+                points: [1, 2],
+              },
+            }),
+          ]),
+        }),
+        data: { id: typeof row === 'number' ? row : row.id },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['exists validation failure'],
+      })
+    }
+  })
+
+  test('add or where not in constraints with refs', async ({ assert }) => {
+    assert.plan(2)
+
+    const [row] = await db
+      .table<{ id: string } | number>('users')
+      .returning('id')
+      .insert({ email: 'virk@adonisjs.com', username: 'virk' })
+
+    db.connection()
+      .getReadClient()
+      .on('query', ({ sql, bindings }) => {
+        const { sql: knexSql, bindings: knexBindings } = db
+          .connection()
+          .getReadClient()
+          .select(1)
+          .from('users')
+          .where('id', typeof row === 'number' ? row : row.id)
+          .whereNotIn('username', ['virk', 'nikk'])
+          .orWhereNotIn('points', [1, 2])
+          .limit(1)
+          .toSQL()
+          .toNative()
+
+        assert.equal(sql, knexSql)
+        assert.deepEqual(bindings, knexBindings)
+      })
+
+    try {
+      const refs = schema.refs({
+        username: ['virk', 'nikk'],
+        points: [1, 2],
+      })
+
+      await validator.validate({
+        refs,
+        schema: schema.create({
+          id: schema.number([
+            rules.exists({
+              table: 'users',
+              column: 'id',
+              whereNot: {
+                username: refs.username,
+              },
+              orWhereNot: {
+                points: refs.points,
+              },
+            }),
+          ]),
+        }),
+        data: { id: typeof row === 'number' ? row : row.id },
+      })
+    } catch (error) {
+      assert.deepEqual(error.messages, {
+        id: ['exists validation failure'],
+      })
+    }
+  })
+
   test('perform case-insensitive query', async ({ assert }) => {
     assert.plan(2)
 
