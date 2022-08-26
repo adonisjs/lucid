@@ -475,6 +475,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     lobPrefetchSize?: number
     maxRows?: number
     oracleClientVersion?: number
+    connectString?: string
   }
   export type OracleConfig = SharedConfigNode & {
     client: 'oracledb'
