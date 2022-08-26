@@ -57,11 +57,17 @@ export class SeedsRunner {
       file: file,
     }
 
+    if ('developmentOnly' in Source) {
+      this.app.logger.warn(`Seeder "${file.name}" is using the deprecated flag "developmentOnly".`)
+    }
+
     /**
-     * Ignore when running in non-development environment and seeder is development
-     * only
+     * Ignore when when the node environement is not the same as the seeder configuration.
      */
-    if (Source.developmentOnly && !this.app.inDev) {
+    if (
+      (Source.developmentOnly && !this.app.inDev) ||
+      (Source.environment && !Source.environment.includes(this.app.nodeEnvironment))
+    ) {
       seeder.status = 'ignored'
       return seeder
     }
