@@ -11,7 +11,6 @@
 
 import { test } from '@japa/runner'
 import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import { resolveClientNameWithAliases } from 'knex/lib/util/helpers'
 
 import { Connection } from '../../src/Connection'
 import { QueryClient } from '../../src/QueryClient'
@@ -401,9 +400,7 @@ if (!['sqlite', 'mssql', 'better_sqlite'].includes(process.env.DB as string)) {
 
       const client = new QueryClient('dual', connection, app.container.use('Adonis/Core/Event'))
       const lock = await client.dialect.getAdvisoryLock(1)
-
       assert.isTrue(lock)
-      assert.equal(client.dialect.name, resolveClientNameWithAliases(connection.config.client))
 
       await client.dialect.releaseAdvisoryLock(1)
       await connection.disconnect()
