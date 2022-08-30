@@ -6694,3 +6694,22 @@ test.group('Base model | inheritance', (group) => {
     assert.isFalse(MyBaseModel.$hooks.has('before', 'create', hook2))
   })
 })
+
+test('add hasOne with serialize', async ({ assert }) => {
+  class User extends BaseModel {
+    @column()
+    public name: string
+
+    @column({
+      serialize(value: string) {
+        return `https://twitter.com/${value}`
+      },
+    })
+    public twitter: string
+  }
+
+  const user = new User()
+  user.$attributes = { name: 'virk', twitter: 'adonisframework' }
+  assert.equal(user.name, 'virk')
+  assert.equal(user.toJSON().twitter, 'https://twitter.com/adonisframework')
+})
