@@ -56,6 +56,12 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     foreignKey?: string
     serializeAs?: string | null
     onQuery?(query: Related['builder'] | Related['subQuery']): void
+    serialize?: (
+      value: any,
+      attribute: string,
+      model: LucidRow,
+      cherryPickRelations?: CherryPick
+    ) => any
   }
 
   /**
@@ -260,6 +266,14 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     readonly serializeAs: string | null
     readonly booted: boolean
     readonly model: ParentModel
+
+    readonly serialize?: (
+      value: any,
+      attribute: string,
+      model: LucidRow,
+      cherryPickRelations?: CherryPick
+    ) => any
+
     relatedModel(): RelatedModel
     boot(): void
     clone(parent: LucidModel): this
