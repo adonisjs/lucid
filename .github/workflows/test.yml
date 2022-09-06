@@ -31,6 +31,7 @@ jobs:
   test-postgres:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node-version: [14, 16, 18]
         postgres-version: [11, 14]
@@ -57,6 +58,7 @@ jobs:
   test-mysql:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         mysql: [{ version: '5.7', command: 'mysql_legacy' }, { version: '8.0', command: 'mysql' }]
         node-version: [14, 16, 18]
@@ -84,6 +86,7 @@ jobs:
   test-sqlite:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         lib: ['sqlite', 'better_sqlite']
         node-version: [14, 16, 18]
@@ -101,6 +104,7 @@ jobs:
   test-mssql:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node-version: [14, 16, 18]
     services:
