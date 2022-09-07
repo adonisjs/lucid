@@ -57,7 +57,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     serializeAs?: string | null
     onQuery?(query: Related['builder'] | Related['subQuery']): void
     serialize?: (
-      value: any,
+      value: Related | null,
       attribute: string,
       model: LucidRow,
       cherryPickRelations?: CherryPick
