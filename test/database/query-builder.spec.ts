@@ -10718,31 +10718,39 @@ test.group('Query Builder | paginate', (group) => {
     connection.connect()
 
     let db = getQueryBuilder(getQueryClient(connection, app))
-    await getInsertBuilder(getQueryClient(connection, app)).table('users').multiInsert(getUsers(18))
+    let usersToInsert = getUsers(18).map((user, index) => {
+      return {
+        ...user,
+        country_id: index % 2, // 0 or 1 as dummy country_id
+      }
+    })
 
-    const query = db.from('users').distinct('users.id').joinRaw('cross join users u2')
+    await getInsertBuilder(getQueryClient(connection, app))
+      .table('users')
+      .multiInsert(usersToInsert)
 
-    const users = await query.paginate(1, 5)
-    users.baseUrl('/users')
+    const query = db.from('users').distinct('users.country_id').joinRaw('cross join users u2')
 
-    assert.lengthOf(users.all(), 5)
-    assert.equal(users.perPage, 5)
-    assert.equal(users.currentPage, 1)
-    assert.equal(users.lastPage, 4)
-    assert.isTrue(users.hasPages)
-    assert.isTrue(users.hasMorePages)
-    assert.isFalse(users.isEmpty)
-    assert.equal(users.total, 18)
-    assert.isTrue(users.hasTotal)
-    assert.deepEqual(users.getMeta(), {
-      total: 18,
-      per_page: 5,
+    const results = await query.paginate(1, 1)
+    results.baseUrl('/users-country-ids')
+    assert.lengthOf(results.all(), 1)
+    assert.equal(results.perPage, 1)
+    assert.equal(results.currentPage, 1)
+    assert.equal(results.lastPage, 2)
+    assert.isTrue(results.hasPages)
+    assert.isTrue(results.hasMorePages)
+    assert.isFalse(results.isEmpty)
+    assert.equal(results.total, 2)
+    assert.isTrue(results.hasTotal)
+    assert.deepEqual(results.getMeta(), {
+      total: 2,
+      per_page: 1,
       current_page: 1,
-      last_page: 4,
+      last_page: 2,
       first_page: 1,
-      first_page_url: '/users?page=1',
-      last_page_url: '/users?page=4',
-      next_page_url: '/users?page=2',
+      first_page_url: '/users-country-ids?page=1',
+      last_page_url: '/users-country-ids?page=2',
+      next_page_url: '/users-country-ids?page=2',
       previous_page_url: null,
     })
 
