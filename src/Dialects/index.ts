@@ -14,7 +14,6 @@ import { SqliteDialect } from './Sqlite'
 import { OracleDialect } from './Oracle'
 import { RedshiftDialect } from './Redshift'
 import { BetterSqliteDialect } from './BetterSqlite'
-import { DialectContract, QueryClientContract, SharedConfigNode } from '@ioc:Adonis/Lucid/Database'
 
 export const dialects = {
   'mssql': MssqlDialect,
@@ -25,8 +24,4 @@ export const dialects = {
   'redshift': RedshiftDialect,
   'sqlite3': SqliteDialect,
   'better-sqlite3': BetterSqliteDialect,
-} as {
-  [key: string]: {
-    new (client: QueryClientContract, config: SharedConfigNode): DialectContract
-  }
 }
