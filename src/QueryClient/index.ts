@@ -44,10 +44,7 @@ export class QueryClient implements QueryClientContract {
   /**
    * The dialect in use
    */
-  public dialect: DialectContract = new dialects[this.connection.dialectName](
-    this,
-    this.connection.config
-  )
+  public dialect: DialectContract = new dialects[this.connection.dialectName](this)
 
   /**
    * The profiler to be used for profiling queries

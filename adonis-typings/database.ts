@@ -336,7 +336,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
   /**
    * Shared config options for all clients
    */
-  export type SharedConfigNode = {
+  type SharedConfigNode = {
     useNullAsDefault?: boolean
     debug?: boolean
     asyncStackTraces?: boolean
@@ -344,9 +344,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
     healthCheck?: boolean
     migrations?: MigratorConfig
     seeders?: SeedersConfig
-    wipe?: {
-      ignoreTables?: string[]
-    }
     pool?: {
       afterCreate?: (conn: any, done: any) => void
       min?: number

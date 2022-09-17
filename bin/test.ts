@@ -21,7 +21,7 @@ import { join } from 'path'
 configure({
   ...processCliArgs(process.argv.slice(2)),
   ...{
-    files: ['test/**/*.spec.ts'],
+    files: ['test/**/*.spec.ts', '!test/database/drop-table.spec.ts'],
     plugins: [assert(), runFailedTests()],
     reporters: [specReporter()],
     importer: (filePath: string) => import(filePath),
