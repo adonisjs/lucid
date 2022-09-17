@@ -80,7 +80,7 @@ export class MssqlDialect implements DialectContract {
 
     await this.client.rawQuery(`
       EXEC sp_MSforeachtable 'DROP TABLE \\?',
-      @whereand='AND o.Name NOT IN (${ignoredTables})'
+      @whereand='AND o.Name NOT IN (${ignoredTables || '""'})'
     `)
   }
 
