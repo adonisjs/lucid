@@ -114,5 +114,5 @@ test.group('Query client | drop tables', (group) => {
     assert.isTrue(await connection.client!.schema.hasTable('table_that_should_not_be_dropped'))
 
     await connection.disconnect()
-  }).skip(!['pg', 'mysql'].includes(process.env.DB!))
+  }).skip(!['pg', 'mysql', 'sqlite'].includes(process.env.DB!))
 })
