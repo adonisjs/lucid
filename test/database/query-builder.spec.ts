@@ -10713,6 +10713,50 @@ test.group('Query Builder | paginate', (group) => {
     await connection.disconnect()
   })
 
+  test('paginate through rows with select distinct', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    let usersToInsert = getUsers(18).map((user, index) => {
+      return {
+        ...user,
+        country_id: index % 2, // 0 or 1 as dummy country_id
+      }
+    })
+
+    await getInsertBuilder(getQueryClient(connection, app))
+      .table('users')
+      .multiInsert(usersToInsert)
+
+    const query = db.from('users').distinct('users.country_id').joinRaw('cross join users u2')
+
+    const results = await query.paginate(1, 1)
+    results.baseUrl('/users-country-ids')
+    assert.lengthOf(results.all(), 1)
+    assert.equal(results.perPage, 1)
+    assert.equal(results.currentPage, 1)
+    assert.equal(results.lastPage, 2)
+    assert.isTrue(results.hasPages)
+    assert.isTrue(results.hasMorePages)
+    assert.isFalse(results.isEmpty)
+    assert.equal(results.total, 2)
+    assert.isTrue(results.hasTotal)
+    assert.deepEqual(results.getMeta(), {
+      total: 2,
+      per_page: 1,
+      current_page: 1,
+      last_page: 2,
+      first_page: 1,
+      first_page_url: '/users-country-ids?page=1',
+      last_page_url: '/users-country-ids?page=2',
+      next_page_url: '/users-country-ids?page=2',
+      previous_page_url: null,
+    })
+
+    await connection.disconnect()
+  })
+
   test('generate range of pagination urls', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()

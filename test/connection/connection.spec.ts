@@ -166,7 +166,7 @@ if (process.env.DB === 'mysql') {
       const connection = new Connection('primary', config, app.logger)
       connection.connect()
 
-      assert.equal(connection.client!['context'].client.constructor.name, 'Client_MySQL')
+      assert.equal(connection.client!['context'].client.constructor.name, 'Client_MySQL2')
       assert.equal(connection.client!['context'].client.config.connection.charset, 'utf-8')
       assert.equal(connection.client!['context'].client.config.connection.typeCast, false)
       await connection.disconnect()

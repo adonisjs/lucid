@@ -82,7 +82,7 @@ export function getConfig(): ConnectionConfig {
       }
     case 'mysql':
       return {
-        client: 'mysql',
+        client: 'mysql2',
         connection: {
           host: process.env.MYSQL_HOST as string,
           port: Number(process.env.MYSQL_PORT),
@@ -95,7 +95,7 @@ export function getConfig(): ConnectionConfig {
       }
     case 'mysql_legacy':
       return {
-        client: 'mysql',
+        client: 'mysql2',
         connection: {
           host: process.env.MYSQL_LEGACY_HOST as string,
           port: Number(process.env.MYSQL_LEGACY_PORT),

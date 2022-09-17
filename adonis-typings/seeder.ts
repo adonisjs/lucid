@@ -14,7 +14,11 @@ declare module '@ioc:Adonis/Lucid/Seeder' {
    * Shape of seeder class
    */
   export type SeederConstructorContract = {
+    /**
+     * @deprecated
+     */
     developmentOnly: boolean
+    environment: string[]
     new (client: QueryClientContract): {
       client: QueryClientContract
       run(): Promise<void>

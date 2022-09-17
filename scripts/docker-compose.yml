@@ -12,6 +12,7 @@ services:
       - '3306:3306'
     expose:
       - '3306'
+
   mysql_replica_1:
     platform: linux/x86_64
     image: mysql:5.7
@@ -24,6 +25,7 @@ services:
       - '3304:3306'
     expose:
       - '3306'
+
   mysql_replica_2:
     platform: linux/x86_64
     image: mysql:5.7
@@ -36,6 +38,7 @@ services:
       - '3303:3306'
     expose:
       - '3306'
+
   mysql:
     platform: linux/x86_64
     image: mysql:8.0
@@ -49,6 +52,7 @@ services:
       - '3305:3306'
     expose:
       - '3306'
+
   pg:
     image: postgres:11
     environment:
@@ -59,7 +63,8 @@ services:
       - 5432:5432
     expose:
       - '5432'
-  microsoftsql:
+
+  mssql:
     image: mcr.microsoft.com/mssql/server:2019-latest
     ports:
       - 21433:1433

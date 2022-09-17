@@ -1013,6 +1013,11 @@ export class BaseModel implements LucidRow {
   private cachedGetters: { [key: string]: CacheNode } = {}
 
   /**
+   * Find if force updates are enabled
+   */
+  private forceUpdate: boolean = false
+
+  /**
    * Raises exception when mutations are performed on a delete model
    */
   private ensureIsntDeleted() {
@@ -1661,6 +1666,15 @@ export class BaseModel implements LucidRow {
   }
 
   /**
+   * Enable force update even when no attributes
+   * are dirty
+   */
+  public enableForceUpdate(): this {
+    this.forceUpdate = true
+    return this
+  }
+
+  /**
    * Preloads one or more relationships for the current model
    */
   public async load(relationName: any, callback?: any) {
@@ -1759,10 +1773,13 @@ export class BaseModel implements LucidRow {
     await Model.$hooks.exec('before', 'update', this)
     await Model.$hooks.exec('before', 'save', this)
 
+    const forceUpdate = this.forceUpdate
+    this.forceUpdate = false
+
     /**
      * Do not issue updates when model doesn't have any mutations
      */
-    if (!this.$isDirty) {
+    if (!this.$isDirty && !forceUpdate) {
       return this
     }
 
@@ -1770,9 +1787,13 @@ export class BaseModel implements LucidRow {
      * Perform update
      */
     this.initiateAutoUpdateColumns()
-    await Model.$adapter.update(this, this.prepareForAdapter(this.$dirty))
-    this.$hydrateOriginals()
 
+    const updatePayload = this.prepareForAdapter(this.$dirty)
+    if (Object.keys(updatePayload).length > 0) {
+      await Model.$adapter.update(this, updatePayload)
+    }
+
+    this.$hydrateOriginals()
     await Model.$hooks.exec('after', 'update', this)
     await Model.$hooks.exec('after', 'save', this)
     return this

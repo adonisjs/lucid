@@ -67,6 +67,7 @@ export default class Migrate extends MigrationsBase {
     this.migrator = new Migrator(db, this.application, {
       direction: 'down',
       connectionName: this.connection,
+      batch: this.batch,
       dryRun: this.dryRun,
     })
   }

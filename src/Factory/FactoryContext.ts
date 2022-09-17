@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import faker from '@faker-js/faker'
+import { faker } from '@faker-js/faker'
 import { FactoryContextContract } from '@ioc:Adonis/Lucid/Factory'
 import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
 

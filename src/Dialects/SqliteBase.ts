@@ -9,7 +9,7 @@
 
 /// <reference path="../../adonis-typings/index.ts" />
 
-import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { DialectContract, QueryClientContract, SqliteConfig } from '@ioc:Adonis/Lucid/Database'
 
 export abstract class BaseSqliteDialect implements DialectContract {
   public abstract readonly name: 'sqlite3' | 'better-sqlite3'
@@ -30,7 +30,7 @@ export abstract class BaseSqliteDialect implements DialectContract {
    */
   public readonly dateTimeFormat = 'yyyy-MM-dd HH:mm:ss'
 
-  constructor(private client: QueryClientContract) {}
+  constructor(private client: QueryClientContract, private config: SqliteConfig) {}
 
   /**
    * Returns an array of table names
@@ -81,9 +81,13 @@ export abstract class BaseSqliteDialect implements DialectContract {
    */
   public async dropAllTables() {
     await this.client.rawQuery('PRAGMA writable_schema = 1;')
-    await this.client.rawQuery(
-      `delete from sqlite_master where type in ('table', 'index', 'trigger');`
-    )
+    await this.client
+      .knexQuery()
+      .delete()
+      .from('sqlite_master')
+      .whereIn('type', ['table', 'index', 'trigger'])
+      .andWhereNot('name', this.config.wipe?.ignoreTables || [])
+
     await this.client.rawQuery('PRAGMA writable_schema = 0;')
     await this.client.rawQuery('VACUUM;')
   }
