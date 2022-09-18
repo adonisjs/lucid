@@ -10,7 +10,7 @@
 /// <reference path="../../adonis-typings/index.ts" />
 
 import { RawBuilder } from '../Database/StaticBuilder/Raw'
-import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { DialectContract, MssqlConfig, QueryClientContract } from '@ioc:Adonis/Lucid/Database'
 
 export class MssqlDialect implements DialectContract {
   public readonly name = 'mssql'
@@ -31,7 +31,7 @@ export class MssqlDialect implements DialectContract {
    */
   public readonly dateTimeFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZ"
 
-  constructor(private client: QueryClientContract) {}
+  constructor(private client: QueryClientContract, private config: MssqlConfig) {}
 
   /**
    * Returns an array of table names
@@ -67,14 +67,21 @@ export class MssqlDialect implements DialectContract {
   public async dropAllTables() {
     await this.client.rawQuery(`
 			DECLARE @sql NVARCHAR(MAX) = N'';
-				SELECT @sql += 'ALTER TABLE '
-					+ QUOTENAME(OBJECT_SCHEMA_NAME(parent_object_id)) + '.' + + QUOTENAME(OBJECT_NAME(parent_object_id))
-					+ ' DROP CONSTRAINT ' + QUOTENAME(name) + ';'
-				FROM sys.foreign_keys;
-				EXEC sp_executesql @sql;
+      SELECT @sql += 'ALTER TABLE '
+        + QUOTENAME(OBJECT_SCHEMA_NAME(parent_object_id)) + '.' + + QUOTENAME(OBJECT_NAME(parent_object_id))
+        + ' DROP CONSTRAINT ' + QUOTENAME(name) + ';'
+      FROM sys.foreign_keys;
+      EXEC sp_executesql @sql;
 		`)
 
-    await this.client.rawQuery(`EXEC sp_MSforeachtable 'DROP TABLE \\?';`)
+    const ignoredTables = (this.config.wipe?.ignoreTables || [])
+      .map((table) => `"${table}"`)
+      .join(', ')
+
+    await this.client.rawQuery(`
+      EXEC sp_MSforeachtable 'DROP TABLE \\?',
+      @whereand='AND o.Name NOT IN (${ignoredTables || '""'})'
+    `)
   }
 
   public async getAllViews(): Promise<string[]> {
