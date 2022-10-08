@@ -79,7 +79,7 @@ const DB_SERVER_ENV_VALUES = {
  */
 const DB_DRIVER_PACKAGES = {
   sqlite: 'sqlite3',
-  mysql: 'mysql',
+  mysql: 'mysql2',
   pg: 'pg',
   oracle: 'oracledb',
   mssql: 'mssql',
