@@ -1889,7 +1889,9 @@ export class BaseModel implements LucidRow {
 
       if (typeof relation.serialize === 'function') {
         if (Array.isArray(value)) {
-          result[relation.serializeAs] = value.map((one) => one.serialize(relationOptions))
+          result[relation.serializeAs] = value.map((one) =>
+            relation.serialize?.(one, key, this, relationOptions)
+          )
           return result
         }
 
