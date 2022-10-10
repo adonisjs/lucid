@@ -25,9 +25,6 @@ configure({
     plugins: [assert(), runFailedTests()],
     reporters: [specReporter()],
     importer: (filePath: string) => import(filePath),
-    filters: {
-      tests: ['add hasMany with serialize'],
-    },
     teardown: [
       async () => {
         await remove(join(__dirname, 'test-helpers', 'tmp'))
