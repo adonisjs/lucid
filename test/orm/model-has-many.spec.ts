@@ -5424,4 +5424,71 @@ test.group('Model | HasMany | delete', (group) => {
     assert.deepEqual(bindings, rawBindings)
     assert.deepEqual(sql, rawSql)
   })
+
+  test('add hasMany with serialize', async ({ assert }) => {
+    class Profile extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public userId: number
+
+      @column()
+      public displayName: string
+    }
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @hasMany(() => Profile, {
+        serialize: (value) => {
+          if (value === null) {
+            return { type: 'profile', displayable: '---' }
+          }
+
+          return {
+            type: 'profile',
+            displayable: `${value.userId} - ${value.displayName}`,
+          }
+        },
+      })
+      public profile: HasMany<typeof Profile>
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    await user.save()
+
+    await user.load('profile')
+
+    assert.deepEqual(user.serialize(), {
+      username: 'virk',
+      id: 1,
+      profile: [],
+    })
+
+    const firstProfile = new Profile()
+    firstProfile.displayName = 'Hvirk 1'
+
+    const secondProfile = new Profile()
+    secondProfile.displayName = 'Hvirk 2'
+
+    await user.related('profile').save(firstProfile)
+    await user.related('profile').save(secondProfile)
+
+    await user.load('profile')
+
+    assert.deepEqual(user.serialize(), {
+      username: 'virk',
+      id: 1,
+      profile: [
+        { type: 'profile', displayable: '1 - Hvirk 1' },
+        { type: 'profile', displayable: '1 - Hvirk 2' },
+      ],
+    })
+  })
 })
