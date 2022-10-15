@@ -117,5 +117,5 @@ test.group('Query client | drop tables', (group) => {
     assert.isTrue(await connection.client!.schema.hasTable('ignore_me'))
 
     await connection.disconnect()
-  }).pin()
+  })
 })
