@@ -44,11 +44,11 @@ test.group('db:truncate', (group) => {
 
     await kernel.exec('db:truncate', [])
 
-    const usersCount = await db.from('users').count('*')
-    const friendsCount = await db.from('friends').count('*')
+    const usersCount = await db.from('users').count('*', 'total')
+    const friendsCount = await db.from('friends').count('*', 'total')
 
-    assert.isTrue(usersCount[0]['count'] === '0')
-    assert.isTrue(friendsCount[0]['count'] === '0')
+    assert.equal(usersCount[0]['total'], 0)
+    assert.equal(friendsCount[0]['total'], 0)
   })
 
   test('should not truncate adonis migrations tables', async ({ assert }) => {
@@ -70,10 +70,10 @@ test.group('db:truncate', (group) => {
 
     await kernel.exec('db:truncate', [])
 
-    const adonisSchemaCount = await db.from('adonis_schema').count('*')
-    const adonisSchemaVersionsCount = await db.from('adonis_schema_versions').count('*')
+    const adonisSchemaCount = await db.from('adonis_schema').count('*', 'total')
+    const adonisSchemaVersionsCount = await db.from('adonis_schema_versions').count('*', 'total')
 
-    assert.isTrue(adonisSchemaCount[0]['count'] === '1')
-    assert.isTrue(adonisSchemaVersionsCount[0]['count'] === '1')
+    assert.equal(adonisSchemaCount[0]['total'], 1)
+    assert.equal(adonisSchemaVersionsCount[0]['total'], 1)
   })
 })
