@@ -15,6 +15,7 @@ declare module '@ioc:Adonis/Core/TestUtils' {
     db(connectionName?: string): {
       seed: HookCallback
       migrate: HookCallback
+      truncate: HookCallback
     }
   }
 }

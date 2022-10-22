@@ -158,7 +158,7 @@ test.group('Query client', (group) => {
 
     await connection.client?.schema.dropTable('user')
     await connection.disconnect()
-  }).pin()
+  })
 })
 
 test.group('Query client | dual mode', (group) => {
