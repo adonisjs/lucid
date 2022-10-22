@@ -26,7 +26,7 @@ test.group('Query client | drop tables', (group) => {
   })
 
   group.teardown(async () => {
-    await cleanup(['temp_posts', 'temp_users', 'table_that_should_not_be_dropped'])
+    await cleanup(['temp_posts', 'temp_users', 'table_that_should_not_be_dropped', 'ignore_me'])
     await cleanup()
     await fs.cleanup()
   })
