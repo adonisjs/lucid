@@ -77,7 +77,7 @@ export default class DbSeed extends BaseCommand {
         break
       case 'ignored':
         message = 'ignored  '
-        prefix = 'Enabled only in development environment'
+        prefix = 'Enabled only in another environment'
         color = 'dim'
         break
       case 'completed':
