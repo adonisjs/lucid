@@ -77,7 +77,7 @@ export default class DbSeed extends BaseCommand {
         break
       case 'ignored':
         message = 'ignored  '
-        prefix = 'Enabled only in another environment'
+        prefix = `Disabled in "${this.application.environment}" environment`
         color = 'dim'
         break
       case 'completed':
