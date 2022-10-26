@@ -143,6 +143,22 @@ test.group('Query client', (group) => {
       await connection.disconnect()
     })
   }
+
+  test('truncate a table with reserved keywork', async () => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    await connection.client?.schema.createTableIfNotExists('user', (table) => {
+      table.increments('id').primary()
+      table.string('username')
+    })
+
+    const client = new QueryClient('write', connection, app.container.use('Adonis/Core/Event'))
+    await client.truncate('user', true)
+
+    await connection.client?.schema.dropTable('user')
+    await connection.disconnect()
+  })
 })
 
 test.group('Query client | dual mode', (group) => {

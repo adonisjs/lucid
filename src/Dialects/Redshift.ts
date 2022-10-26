@@ -87,8 +87,8 @@ export class RedshiftDialect implements DialectContract {
    */
   public async truncate(table: string, cascade: boolean = false) {
     return cascade
-      ? this.client.rawQuery(`TRUNCATE ${table} RESTART IDENTITY CASCADE;`)
-      : this.client.rawQuery(`TRUNCATE ${table};`)
+      ? this.client.rawQuery(`TRUNCATE "${table}" RESTART IDENTITY CASCADE;`)
+      : this.client.rawQuery(`TRUNCATE "${table}";`)
   }
 
   /**

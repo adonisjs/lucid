@@ -49,7 +49,7 @@ services:
       MYSQL_PASSWORD: password
       MYSQL_ROOT_PASSWORD: password
     ports:
-      - '3305:3306'
+      - '3306:3306'
     expose:
       - '3306'
 
@@ -67,7 +67,7 @@ services:
   mssql:
     image: mcr.microsoft.com/mssql/server:2019-latest
     ports:
-      - 21433:1433
+      - 1433:1433
     expose:
       - '1433'
     environment:

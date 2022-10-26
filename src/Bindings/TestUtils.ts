@@ -13,6 +13,7 @@ import type Ace from '@ioc:Adonis/Core/Ace'
 
 import { TestsSeeder } from '../TestUtils/Seeder'
 import { TestsMigrator } from '../TestUtils/Migration'
+import { TestsTruncator } from '../TestUtils/Truncator'
 
 /**
  * Define database testing utilities
@@ -25,6 +26,9 @@ export function defineTestUtils(testUtils: TestUtilsContract, ace: typeof Ace) {
       },
       seed() {
         return new TestsSeeder(ace, connectionName).run()
+      },
+      truncate() {
+        return new TestsTruncator(ace, connectionName).run()
       },
     }
   })
