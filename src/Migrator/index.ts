@@ -583,9 +583,15 @@ export class Migrator extends EventEmitter implements MigratorContract {
       }
     } catch (error) {
       this.error = error
+      throw error
     }
 
-    await this.shutdown()
+    try {
+      await this.shutdown()
+    } catch (error) {
+      this.error = error
+      throw error
+    }
   }
 
   /**
