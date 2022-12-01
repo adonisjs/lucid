@@ -2061,6 +2061,9 @@ test.group('Base Model | toJSON', (group) => {
       @column()
       public username: string
 
+      @column()
+      public companyName: string
+
       @computed()
       public get fullName() {
         return this.username.toUpperCase()
@@ -2069,12 +2072,13 @@ test.group('Base Model | toJSON', (group) => {
 
     const user = new User()
     user.username = 'virk'
+    user.companyName = 'Adonis Inc'
 
     assert.deepEqual(
       user.serialize({
-        fields: ['username'],
+        fields: ['username', 'companyName'],
       }),
-      { username: 'virk' }
+      { username: 'virk', company_name: 'Adonis Inc' }
     )
   })
 
@@ -2764,6 +2768,9 @@ test.group('Base Model | relations', (group) => {
       public username: string
 
       @column()
+      public companyName: string
+
+      @column()
       public userId: number
 
       @belongsTo(() => User)
@@ -2789,7 +2796,7 @@ test.group('Base Model | relations', (group) => {
     const profileUser = new User()
     profileUser.$consumeAdapterResult({ id: 1, email: 'virk@adonisjs.com' })
 
-    const profile = await Profile.create({ username: 'virk' })
+    const profile = await Profile.create({ username: 'virk', companyName: 'Adonis Inc' })
     user.$setRelated('profile', profile)
     profile.$setRelated('user', profileUser)
     profile.userId = 1
@@ -2799,7 +2806,7 @@ test.group('Base Model | relations', (group) => {
         fields: ['id'],
         relations: {
           profile: {
-            fields: ['username'],
+            fields: ['username', 'companyName'],
             relations: {
               user: {
                 fields: ['email'],
@@ -2812,6 +2819,7 @@ test.group('Base Model | relations', (group) => {
         id: 1,
         profile: {
           username: 'virk',
+          company_name: 'Adonis Inc',
           user: {
             email: 'virk@adonisjs.com',
           },

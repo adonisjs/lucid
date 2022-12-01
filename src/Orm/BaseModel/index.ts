@@ -1106,6 +1106,7 @@ export class BaseModel implements LucidRow {
    */
   private shouldSerializeField(
     serializeAs: string | null,
+    key: string,
     fields?: CherryPickFields
   ): serializeAs is string {
     /**
@@ -1128,14 +1129,14 @@ export class BaseModel implements LucidRow {
     /**
      * Return false, when under omit array
      */
-    if (omit && omit.includes(serializeAs)) {
+    if (omit && (omit.includes(serializeAs) || omit.includes(key))) {
       return false
     }
 
     /**
      * Otherwise ensure is inside pick array
      */
-    return !pick || pick.includes(serializeAs)
+    return !pick || pick.includes(serializeAs) || pick.includes(key)
   }
 
   /**
@@ -1822,7 +1823,7 @@ export class BaseModel implements LucidRow {
 
     return Object.keys(this.$attributes).reduce<ModelObject>((result, key) => {
       const column = Model.$getColumn(key)!
-      if (!this.shouldSerializeField(column.serializeAs, fields)) {
+      if (!this.shouldSerializeField(column.serializeAs, key, fields)) {
         return result
       }
 
@@ -1843,7 +1844,10 @@ export class BaseModel implements LucidRow {
 
     Model.$computedDefinitions.forEach((value, key) => {
       const computedValue = this[key]
-      if (computedValue !== undefined && this.shouldSerializeField(value.serializeAs, fields)) {
+      if (
+        computedValue !== undefined &&
+        this.shouldSerializeField(value.serializeAs, key, fields)
+      ) {
         result[value.serializeAs] = computedValue
       }
     })
