@@ -1741,6 +1741,15 @@ export class BaseModel implements LucidRow {
   }
 
   /**
+   * Perform update on the model instance (merge + save).
+   */
+  public async update(values: any): Promise<this> {
+    this.merge(values)
+    await this.save()
+    return this
+  }
+
+  /**
    * Perform save on the model instance to commit mutations.
    */
   public async save(): Promise<this> {
