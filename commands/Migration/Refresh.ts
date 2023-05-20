@@ -45,6 +45,12 @@ export default class Refresh extends BaseCommand {
   public seed: boolean
 
   /**
+   * Disable advisory locks
+   */
+  @flags.boolean({ description: 'Disable advisory locks' })
+  public disableLocks: boolean
+
+  /**
    * Converting command properties to arguments
    */
   private getArgs() {
@@ -59,6 +65,10 @@ export default class Refresh extends BaseCommand {
 
     if (this.dryRun) {
       args.push('--dry-run')
+    }
+
+    if (this.disableLocks) {
+      args.push('--disable-locks')
     }
 
     return args
