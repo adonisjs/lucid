@@ -37,7 +37,7 @@
   <sub>Built with ❤︎ by <a href="https://twitter.com/AmanVirk1">Harminder Virk</a>
 </div>
 
-[gh-workflow-image]: https://img.shields.io/github/workflow/status/adonisjs/lucid/test?style=for-the-badge
+[gh-workflow-image]: https://img.shields.io/github/actions/workflow/status/adonisjs/lucid/test.yml?style=for-the-badge
 [gh-workflow-url]: https://github.com/adonisjs/lucid/actions/workflows/test.yml "Github action"
 
 [typescript-image]: https://img.shields.io/badge/Typescript-294E80.svg?style=for-the-badge&logo=typescript
