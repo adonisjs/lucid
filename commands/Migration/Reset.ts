@@ -41,7 +41,7 @@ export default class Reset extends BaseCommand {
   /**
    * Disable advisory locks
    */
-  @flags.boolean({ description: 'Disable advisory locks' })
+  @flags.boolean({ description: 'Disable locks acquired to run migrations safely' })
   public disableLocks: boolean
 
   /**
