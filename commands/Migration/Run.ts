@@ -49,6 +49,12 @@ export default class Migrate extends MigrationsBase {
   public compactOutput: boolean = false
 
   /**
+   * Disable advisory locks
+   */
+  @flags.boolean({ description: 'Disable advisory locks' })
+  public disableLocks: boolean
+
+  /**
    * Instantiating the migrator instance
    */
   private instantiateMigrator() {
@@ -59,6 +65,7 @@ export default class Migrate extends MigrationsBase {
       direction: 'up',
       connectionName: this.connection,
       dryRun: this.dryRun,
+      disableLocks: this.disableLocks,
     })
   }
 
