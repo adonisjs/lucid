@@ -75,7 +75,7 @@ export default class Migrate extends MigrationsBase {
       connectionName: this.connection,
       batch: this.batch,
       dryRun: this.dryRun,
-      disableLocks: this.disableLocks
+      disableLocks: this.disableLocks,
     })
   }
 
