@@ -20,12 +20,14 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
         direction: 'up'
         connectionName?: string
         dryRun?: boolean
+        disableLocks?: boolean
       }
     | {
         direction: 'down'
         batch?: number
         connectionName?: string
         dryRun?: boolean
+        disableLocks?: boolean
       }
 
   /**
@@ -53,6 +55,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
    */
   export interface MigratorContract extends EventEmitter {
     dryRun: boolean
+    disableLocks: boolean
     version: number
     direction: 'up' | 'down'
     status: 'completed' | 'skipped' | 'pending' | 'error'

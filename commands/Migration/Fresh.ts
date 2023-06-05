@@ -51,6 +51,12 @@ export default class Refresh extends BaseCommand {
   public dropTypes: boolean
 
   /**
+   * Disable advisory locks
+   */
+  @flags.boolean({ description: 'Disable locks acquired to run migrations safely' })
+  public disableLocks: boolean
+
+  /**
    * Converting command properties to arguments
    */
   private getArgs() {
@@ -61,6 +67,10 @@ export default class Refresh extends BaseCommand {
 
     if (this.connection) {
       args.push(`--connection="${this.connection}"`)
+    }
+
+    if (this.disableLocks) {
+      args.push('--disable-locks')
     }
 
     return args

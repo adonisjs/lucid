@@ -81,6 +81,11 @@ export class Migrator extends EventEmitter implements MigratorContract {
   public dryRun: boolean = !!this.options.dryRun
 
   /**
+   * Disable advisory locks
+   */
+  public disableLocks: boolean = !!this.options.disableLocks
+
+  /**
    * An array of files we have successfully migrated. The files are
    * collected regardless of `up` or `down` methods
    */
@@ -252,7 +257,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * to the real execution cycle
    */
   private async acquireLock() {
-    if (!this.client.dialect.supportsAdvisoryLocks) {
+    if (!this.client.dialect.supportsAdvisoryLocks || this.disableLocks) {
       return
     }
 
@@ -268,7 +273,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * `Mysql`, `PostgreSQL` and `MariaDb` for now.
    */
   private async releaseLock() {
-    if (!this.client.dialect.supportsAdvisoryLocks) {
+    if (!this.client.dialect.supportsAdvisoryLocks || this.disableLocks) {
       return
     }
 
