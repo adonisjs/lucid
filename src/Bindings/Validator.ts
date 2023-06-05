@@ -42,7 +42,7 @@ class DbRowCheck {
   constructor(
     private ruleName: 'exists' | 'unique',
     private database: DatabaseContract,
-    private helpers: typeof validatorStatic['helpers']
+    private helpers: (typeof validatorStatic)['helpers']
   ) {}
 
   /**
@@ -224,7 +224,7 @@ export function extendValidator(
    */
   const existsChecker = new DbRowCheck('exists', database, validator.helpers)
 
-  validator.rule<ReturnType<typeof existsChecker['compile']>>(
+  validator.rule<ReturnType<(typeof existsChecker)['compile']>>(
     'exists',
     async (value, compiledOptions, options) => {
       try {
@@ -252,7 +252,7 @@ export function extendValidator(
    */
   const uniqueChecker = new DbRowCheck('unique', database, validator.helpers)
 
-  validator.rule<ReturnType<typeof existsChecker['compile']>>(
+  validator.rule<ReturnType<(typeof existsChecker)['compile']>>(
     'unique',
     async (value, compiledOptions, options) => {
       try {
