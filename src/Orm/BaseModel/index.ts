@@ -1250,7 +1250,7 @@ export class BaseModel implements LucidRow {
             : value === originalValue
       } else if (isObject(value) && 'isDirty' in value) {
         isEqual = !value.isDirty
-      } else if (value !== undefined) {
+      } else {
         isEqual = equal(originalValue, value)
       }
 
