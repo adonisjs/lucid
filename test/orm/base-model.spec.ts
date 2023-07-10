@@ -6358,7 +6358,7 @@ test.group('Base Model | json column/decorator', (group) => {
     user.username = 'ndianabasi'
     user.preference = preference
     await user.save()
-  }).pin()
+  })
 
   test('raise error when json column value cannot be stringified', async ({ assert }) => {
     assert.plan(1)
