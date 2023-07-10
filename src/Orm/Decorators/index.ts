@@ -22,10 +22,12 @@ import {
   ManyToManyDecorator,
   DateTimeColumnDecorator,
   HasManyThroughDecorator,
+  JsonColumnDecorator,
 } from '@ioc:Adonis/Lucid/Orm'
 
 import { dateColumn } from './date'
 import { dateTimeColumn } from './datetime'
+import { jsonColumn } from './json'
 
 /**
  * Define property on a model as a column. The decorator needs a
@@ -34,6 +36,7 @@ import { dateTimeColumn } from './datetime'
 export const column: ColumnDecorator & {
   date: DateColumnDecorator
   dateTime: DateTimeColumnDecorator
+  json: JsonColumnDecorator
 } = (options?) => {
   return function decorateAsColumn(target, property) {
     const Model = target.constructor as LucidModel
@@ -44,6 +47,7 @@ export const column: ColumnDecorator & {
 
 column.date = dateColumn
 column.dateTime = dateTimeColumn
+column.json = jsonColumn
 
 /**
  * Define computed property on a model. The decorator needs a

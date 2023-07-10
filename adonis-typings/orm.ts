@@ -59,6 +59,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   export const column: ColumnDecorator & {
     date: DateColumnDecorator
     dateTime: DateTimeColumnDecorator
+    json: JsonColumnDecorator
   }
   export const computed: ComputedDecorator
 }
