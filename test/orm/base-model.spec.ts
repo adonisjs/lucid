@@ -6333,6 +6333,33 @@ test.group('Base Model | json column/decorator', (group) => {
     await user.save()
   })
 
+  test('save provided Javascript Object with a "space" value', async ({ assert }) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json({ space: 'nnnn' })
+      public preference: typeof preference | string
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.equal(attributes.preference, JSON.stringify(preference, undefined, 'nnnn'))
+    })
+
+    user.username = 'ndianabasi'
+    user.preference = preference
+    await user.save()
+  }).pin()
+
   test('raise error when json column value cannot be stringified', async ({ assert }) => {
     assert.plan(1)
 
