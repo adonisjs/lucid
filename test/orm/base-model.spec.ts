@@ -6085,6 +6085,425 @@ test.group('Base Model | toObject', (group) => {
   })
 })
 
+test.group('Base Model | json column/decorator', (group) => {
+  const preference = {
+    highQualityVideos: true,
+    sendEmailNotifications: true,
+    sendSmsNotifications: false,
+  }
+  const replacer = (_key: string, value: any) => {
+    return value instanceof Map ? Array.from(value.entries()) : value
+  }
+
+  const reviver = (key: string, value: any) => (key === '' ? new Map(value) : value)
+
+  group.setup(async () => {
+    app = await setupApplication()
+    db = getDb(app)
+    BaseModel = getBaseModel(ormAdapter(db), app)
+    await setup()
+  })
+
+  group.teardown(async () => {
+    await db.manager.closeAll()
+    await cleanup()
+    await fs.cleanup()
+  })
+
+  group.each.teardown(async () => {
+    await resetTables()
+  })
+
+  group.each.setup((testToPin) => testToPin.tags(['@json_decorator']))
+
+  test('define a json column', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json()
+      public preference: typeof preference
+    }
+
+    assert.deepEqual(User.$getColumn('preference')!.meta, {
+      type: 'json',
+      replacer: undefined,
+      space: undefined,
+      reviver: undefined,
+      nullOnParseError: false,
+    })
+  })
+
+  test('define a json column with the "replacer" option', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json({ replacer })
+      public preference: typeof preference
+    }
+
+    assert.containsSubset(User.$getColumn('preference')!.meta, {
+      type: 'json',
+      space: undefined,
+      reviver: undefined,
+      nullOnParseError: false,
+    })
+    assert.isTrue(typeof User.$getColumn('preference')!.meta.replacer === 'function')
+  })
+
+  test('define a json column with the "reviver" option', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json({ reviver })
+      public preference: typeof preference
+    }
+
+    assert.containsSubset(User.$getColumn('preference')!.meta, {
+      type: 'json',
+      space: undefined,
+      replacer: undefined,
+      nullOnParseError: false,
+    })
+    assert.isTrue(typeof User.$getColumn('preference')!.meta.reviver === 'function')
+  })
+
+  test('define a json column with the "space" option', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json({ space: 4 })
+      public preference: typeof preference
+    }
+
+    assert.containsSubset(User.$getColumn('preference')!.meta, {
+      type: 'json',
+      space: 4,
+      replacer: undefined,
+      reviver: undefined,
+      nullOnParseError: false,
+    })
+  })
+
+  test('define a json column with the "nullOnParseError" option', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json({ nullOnParseError: true })
+      public preference: typeof preference
+    }
+
+    assert.containsSubset(User.$getColumn('preference')!.meta, {
+      type: 'json',
+      space: undefined,
+      replacer: undefined,
+      reviver: undefined,
+      nullOnParseError: true,
+    })
+  })
+
+  test('ignore undefined values', async ({ assert }) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json()
+      public preference: typeof preference
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.isUndefined(attributes.preference)
+    })
+
+    user.username = 'ndianabasi'
+    await user.save()
+  })
+
+  test('save provided string values', async ({ assert }) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json()
+      public preference: typeof preference | string
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.equal(attributes.preference, userPreference)
+    })
+
+    const userPreference = '[{"0":1},{"0":1},{"0":1}]'
+    user.username = 'ndianabasi'
+    user.preference = userPreference
+    await user.save()
+  })
+
+  test('save provided Javascript Object', async ({ assert }) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json()
+      public preference: typeof preference | string
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.equal(attributes.preference, JSON.stringify(preference))
+    })
+
+    user.username = 'ndianabasi'
+    user.preference = preference
+    await user.save()
+  })
+
+  test('save provided Javascript Object with replacer function', async ({ assert }) => {
+    const map = new Map([
+      [1, 'one'],
+      [2, 'two'],
+      [3, 'three'],
+    ])
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json({ replacer })
+      public preference: typeof map
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.equal(attributes.preference, JSON.stringify(map, replacer))
+    })
+
+    user.username = 'ndianabasi'
+    user.preference = map
+    await user.save()
+  })
+
+  test('raise error when json column value cannot be stringified', async ({ assert }) => {
+    assert.plan(1)
+
+    const adapter = new FakeAdapter()
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json()
+      public preference: typeof preference
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+
+    const userPreference = {} as any
+    userPreference.preference = userPreference
+
+    user.username = 'ndianabasi'
+    user.preference = userPreference
+    try {
+      await user.save()
+    } catch ({ message }) {
+      assert.match(message, /Converting circular structure to JSON/)
+    }
+  })
+
+  test('raise error when json column value cannot be parsed')
+    .with(['[1, 2, 3, 4, ]', "{'foo': 1}"])
+    .run(async ({ assert }, jsonString) => {
+      assert.plan(1)
+
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public username: string
+
+        @column.json()
+        public preference: typeof preference | string
+      }
+
+      const user = new User()
+
+      user.username = 'ndianabasi'
+      user.preference = jsonString
+      await user.save()
+
+      try {
+        await User.query().where('id', user.id).firstOrFail()
+      } catch ({ message }) {
+        assert.match(message, /Unexpected token/)
+      }
+    })
+
+  test('return null when json column value cannot be parsed')
+    .with(['[1, 2, 3, 4, ]', "{'foo': 1}"])
+    .run(async ({ assert }, jsonString) => {
+      class User extends BaseModel {
+        @column({ isPrimary: true })
+        public id: number
+
+        @column()
+        public username: string
+
+        @column.json({ nullOnParseError: true })
+        public preference: typeof preference | string
+      }
+
+      let user = new User()
+
+      user.username = 'ndianabasi'
+      user.preference = jsonString
+      await user.save()
+
+      user = await User.query().where('id', user.id).firstOrFail()
+      assert.isNull(user.preference)
+    })
+
+  test('allow overriding prepare method', async ({ assert }) => {
+    assert.plan(1)
+    const adapter = new FakeAdapter()
+
+    const userPreference = '[{"0":1},{"0":1},{"0":1}]'
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json({
+        prepare: () => userPreference,
+      })
+      public preference: typeof preference
+    }
+
+    const user = new User()
+    User.$adapter = adapter
+    adapter.on('insert', (_: User, attributes) => {
+      assert.containsSubset(attributes, { preference: userPreference })
+    })
+
+    user.username = 'ndianabasi'
+    user.preference = {
+      highQualityVideos: false,
+      sendEmailNotifications: false,
+      sendSmsNotifications: false,
+    }
+    await user.save()
+  })
+
+  test('should parse persisted JSON object', async ({ assert }) => {
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json()
+      public preference: typeof preference | string
+    }
+
+    let user = new User()
+
+    user.username = 'ndianabasi'
+    user.preference = preference
+    await user.save()
+
+    user = await User.query().where('id', user.id).firstOrFail()
+    assert.deepEqual(preference, user.preference)
+  })
+
+  test('should parse persisted JSON object with reviver function', async ({ assert }) => {
+    const map = new Map([
+      [1, 'one'],
+      [2, 'two'],
+      [3, 'three'],
+    ])
+    const jsonText = JSON.stringify(map, replacer)
+
+    class User extends BaseModel {
+      @column({ isPrimary: true })
+      public id: number
+
+      @column()
+      public username: string
+
+      @column.json({ reviver })
+      public preference: typeof Map<number, any> | string
+    }
+
+    let user = new User()
+
+    user.username = 'ndianabasi'
+    user.preference = jsonText
+    await user.save()
+
+    user = await User.query().where('id', user.id).firstOrFail()
+    assert.isTrue(user.preference instanceof Map)
+    assert.equal(jsonText, JSON.stringify(user.preference, replacer))
+  })
+})
+
 test.group('Base model | inheritance', (group) => {
   group.setup(async () => {
     app = await setupApplication()

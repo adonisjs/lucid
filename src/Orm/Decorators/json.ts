@@ -21,14 +21,22 @@ function prepareJsonColumn(value: any, attributeName: string, modelInstance: Luc
   /**
    * Return string or missing values as it is.
    */
-  if (typeof value === 'string' || !value) {
+  if (typeof value === 'string') {
     return value
   }
 
   try {
     const column = model.$getColumn(attributeName)
-    return JSON.stringify(value, column?.meta.stringifyReplacer, column?.meta.stringifySpace)
+    return JSON.stringify(value, column?.meta.replacer, column?.meta.space)
   } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Exception(
+        `Cannot stringify "${modelName}.${attributeName}": ${error.message}`,
+        500,
+        'E_INVALID_JSON_COLUMN_VALUE'
+      )
+    }
+
     throw new Exception(
       `Cannot stringify "${modelName}.${attributeName}" ${typeof value} value to a JSON string literal`,
       500,
@@ -43,15 +51,18 @@ function prepareJsonColumn(value: any, attributeName: string, modelInstance: Luc
 function consumeJsonColumn(value: any, attributeName: string, modelInstance: LucidRow) {
   const model = modelInstance.constructor as LucidModel
   const modelName = model.name
+  const column = model.$getColumn(attributeName)
 
-  const getErrorDescription = () => {
-    return `Cannot parse "${modelName}.${attributeName}" ${typeof value} value to an object`
+  const getErrorDescription = (message?: string) => {
+    return `Cannot parse value for column "${modelName}.${attributeName}"${
+      message ? `: "${message}"` : ' to an object'
+    } at ${model.primaryKey}: ${modelInstance.$primaryKeyValue}`
   }
 
   /**
    * Bypass null columns
    */
-  if (!value) {
+  if (!value && typeof value !== 'string') {
     return value
   }
 
@@ -60,11 +71,22 @@ function consumeJsonColumn(value: any, attributeName: string, modelInstance: Luc
    */
   if (typeof value === 'string') {
     try {
-      const column = model.$getColumn(attributeName)
-      return JSON.parse(value, column?.meta.parseReviver)
+      return JSON.parse(value, column?.meta.reviver)
     } catch (error) {
+      if (column?.meta.nullOnParseError) {
+        return null
+      }
+
+      if (error instanceof SyntaxError) {
+        throw new Exception(getErrorDescription(error.message), 500, 'E_INVALID_JSON_COLUMN_VALUE')
+      }
+
       throw new Exception(getErrorDescription(), 500, 'E_INVALID_JSON_COLUMN_VALUE')
     }
+  }
+
+  if (column?.meta.nullOnParseError) {
+    return null
   }
 
   /**
@@ -81,7 +103,7 @@ export const jsonColumn: JsonColumnDecorator = (options?) => {
     const Model = target.constructor as LucidModel
     Model.boot()
 
-    const { stringifyReplacer, stringifySpace, parseReviver, ...columnOptions } = options || {}
+    const { replacer, space, reviver, nullOnParseError, ...columnOptions } = options || {}
 
     const normalizedOptions = Object.assign(
       {
@@ -96,9 +118,10 @@ export const jsonColumn: JsonColumnDecorator = (options?) => {
      * Type always has to be a JSON
      */
     normalizedOptions.meta.type = 'json'
-    normalizedOptions.meta.stringifyReplacer = stringifyReplacer
-    normalizedOptions.meta.stringifySpace = stringifySpace
-    normalizedOptions.meta.parseReviver = parseReviver
+    normalizedOptions.meta.replacer = replacer
+    normalizedOptions.meta.space = space
+    normalizedOptions.meta.reviver = reviver
+    normalizedOptions.meta.nullOnParseError = nullOnParseError === true
 
     Model.$addColumn(property, normalizedOptions)
   }

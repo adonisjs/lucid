@@ -159,6 +159,7 @@ export async function setup(destroyDb: boolean = true) {
       table.integer('country_id')
       table.integer('tenant_id').nullable()
       table.string('username').unique()
+      table.json('preference').nullable()
       table.string('email').unique()
       table.integer('points').defaultTo(0)
       table.timestamp('joined_at', { useTz: process.env.DB === 'mssql' })
@@ -657,6 +658,7 @@ export async function setupReplicaDb(connection: Knex, datatoInsert: { username:
     await connection.schema.createTable('replica_users', (table) => {
       table.increments()
       table.string('username')
+      table.json('preference').nullable()
     })
   }
 

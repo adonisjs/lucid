@@ -254,9 +254,10 @@ declare module '@ioc:Adonis/Lucid/Orm' {
 
   export type JsonColumnOptions<JsonType = any> = Partial<
     ColumnOptions & {
-      stringifyReplacer: (key: string, value: any) => any
-      stringifySpace: string | number
-      parseReviver: (key: string, value: any) => JsonType
+      replacer: (key: string, value: any) => any
+      space: string | number
+      reviver: (key: string, value: any) => JsonType
+      nullOnParseError: boolean
     }
   >
 
@@ -265,7 +266,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
    */
   export type JsonColumnDecorator = <JsonType extends any>(
     options?: JsonColumnOptions<JsonType>
-  ) => TypedDecorator<JsonType>
+  ) => OptionalTypedDecorator<JsonType | string | null>
 
   /**
    * Decorator for defining hooks. The generics enforces that
