@@ -17,3 +17,4 @@ dist
 yarn.lock
 shrinkwrap.yaml
 test/__app
+.env
