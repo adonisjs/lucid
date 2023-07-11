@@ -4423,7 +4423,7 @@ test.group('Base Model | hooks', (group) => {
   })
 
   test('invoke before and after fetch hooks', async ({ assert }) => {
-    assert.plan(3)
+    assert.plan(4)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4441,9 +4441,10 @@ test.group('Base Model | hooks', (group) => {
       }
 
       @afterFetch()
-      public static afterFetchHook(users: User[]) {
+      public static afterFetchHook(users: User[], query: ModelQueryBuilder) {
         assert.lengthOf(users, 1)
         assert.equal(users[0].username, 'virk')
+        assert.equal(query.model, User)
       }
     }
 
@@ -4504,7 +4505,7 @@ test.group('Base Model | hooks', (group) => {
   })
 
   test('invoke before and after find hooks', async ({ assert }) => {
-    assert.plan(2)
+    assert.plan(3)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4522,8 +4523,9 @@ test.group('Base Model | hooks', (group) => {
       }
 
       @afterFind()
-      public static afterFindHook(user: User) {
+      public static afterFindHook(user: User, query: ModelQueryBuilder) {
         assert.equal(user.username, 'virk')
+        assert.equal(query.model, User)
       }
     }
 
@@ -4583,9 +4585,10 @@ test.group('Base Model | hooks', (group) => {
       }
 
       @afterPaginate()
-      public static afterPaginateHook(paginator: SimplePaginator) {
+      public static afterPaginateHook(paginator: SimplePaginator, query: ModelQueryBuilder) {
         assert.equal(paginator.total, 1)
         assert.equal(paginator.all()[0].username, 'virk')
+        assert.equal(query.model, User)
       }
     }
 

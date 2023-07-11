@@ -462,7 +462,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     const result = await this.limit(1).execQuery()
 
     if (result[0] && isFetchCall) {
-      await this.model.$hooks.exec('after', 'find', result[0])
+      await this.model.$hooks.exec('after', 'find', result[0], this)
     }
 
     return result[0] || null
@@ -749,7 +749,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     const result = await this.execQuery()
 
     if (isFetchCall) {
-      await this.model.$hooks.exec('after', 'fetch', result)
+      await this.model.$hooks.exec('after', 'fetch', result, this)
     }
 
     return result
@@ -799,8 +799,8 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     paginator.namingStrategy = this.model.namingStrategy
 
     if (isFetchCall) {
-      await this.model.$hooks.exec('after', 'paginate', paginator)
-      await this.model.$hooks.exec('after', 'fetch', results)
+      await this.model.$hooks.exec('after', 'paginate', paginator, this)
+      await this.model.$hooks.exec('after', 'fetch', results, this)
     }
 
     return paginator
