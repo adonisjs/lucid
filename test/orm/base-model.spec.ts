@@ -5542,7 +5542,7 @@ test.group('Base Model | datetime', (group) => {
     user.username = 'virk'
     await user.save()
 
-    // wait for 2 ms, so that the updated at timestamp is different
+    // waiting for 2 ms, so that the updated at timestamp is different
     await new Promise((resolve) => setTimeout(resolve, 200))
 
     user.username = 'nikk'
