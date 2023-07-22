@@ -321,7 +321,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
      */
     this.emit('create:schema_versions:table')
     await this.client.schema.createTable(this.schemaVersionsTableName, (table) => {
-      table.integer('version').notNullable()
+      table.integer('version').unsigned().primary()
     })
   }
 
