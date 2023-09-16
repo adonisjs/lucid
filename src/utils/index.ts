@@ -9,7 +9,7 @@
 
 import slash from 'slash'
 import { join, extname } from 'node:path'
-import { Exception, fsImportAll } from '@poppinss/utils'
+import { Exception, fsReadAll, isScriptFile } from '@poppinss/utils'
 import { RelationshipsContract } from '../../adonis-typings/relations.js'
 import { LucidRow, ModelObject, CherryPickFields } from '../../adonis-typings/model.js'
 import {
@@ -17,6 +17,7 @@ import {
   QueryClientContract,
   TransactionClientContract,
 } from '../../adonis-typings/database.js'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 /**
  * Ensure that relation is defined
@@ -205,12 +206,14 @@ export function normalizeCherryPickObject(fields: CherryPickFields) {
  * Sources files from a given directory
  */
 export async function sourceFiles(
-  fromLocation: string,
+  fromLocation: URL,
   directory: string,
   naturalSort: boolean
 ): Promise<{ directory: string; files: FileNode<unknown>[] }> {
-  const absDirectoryPath = join(fromLocation, directory)
-  let files = await fsImportAll(absDirectoryPath)
+  const absDirectoryPath = fileURLToPath(new URL(directory, fromLocation))
+  let files = await fsReadAll(absDirectoryPath, {
+    filter: isScriptFile,
+  })
 
   /**
    * Sort files
@@ -243,7 +246,7 @@ export async function sourceFiles(
          * Import schema file
          */
         getSource() {
-          return esmRequire(this.absPath)
+          return import(pathToFileURL(this.absPath).href)
         },
       }
     }),

@@ -7,20 +7,19 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
 import { Knex } from 'knex'
 import { Exception } from '@poppinss/utils'
-import { QueryReporter } from '../QueryReporter'
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { SchemaContract, DeferCallback } from '@ioc:Adonis/Lucid/Schema'
-import { getDDLMethod } from '../utils'
+import { getDDLMethod } from '../utils/index.js'
+import { QueryReporter } from '../query_reporter/index.js'
+import { DeferCallback } from '../../adonis-typings/schema.js'
+import { QueryClientContract } from '../../adonis-typings/database.js'
+import { RawQueryBindings } from '../../adonis-typings/querybuilder.js'
 
 /**
  * Exposes the API to define table schema using deferred database
  * calls.
  */
-export class Schema implements SchemaContract {
+export class Schema {
   /**
    * All calls to `schema` and `defer` are tracked to be
    * executed later
@@ -35,12 +34,12 @@ export class Schema implements SchemaContract {
   /**
    * Enable/disable transactions for this schema
    */
-  public static disableTransactions = false
+  static disableTransactions = false
 
   /**
    * Returns the schema to build database tables
    */
-  public get schema() {
+  get schema() {
     const schema = this.db.schema
     this.trackedCalls.push(schema)
     return schema
@@ -50,20 +49,22 @@ export class Schema implements SchemaContract {
    * Control whether to debug the query or not. The initial
    * value is inherited from the query client
    */
-  public debug: boolean = this.db.debug
+  debug: boolean
 
   constructor(
     public db: QueryClientContract,
     public file: string,
     public dryRun: boolean = false
-  ) {}
+  ) {
+    this.debug = this.db.debug
+  }
 
   /**
    * Returns schema queries sql without executing them
    */
   private getQueries(): string[] {
     return this.trackedCalls
-      .filter((schema) => typeof schema['toQuery'] === 'function')
+      .filter((schema: any) => typeof schema['toQuery'] === 'function')
       .map((schema) => (schema as Knex.SchemaBuilder).toQuery())
   }
 
@@ -98,7 +99,9 @@ export class Schema implements SchemaContract {
         const reporter = this.getReporter()
 
         try {
-          trackedCall['once']('query', (sql: Knex.Sql) => reporter.begin(this.getQueryData(sql)))
+          ;(trackedCall as any)['once']('query', (sql: Knex.Sql) =>
+            reporter.begin(this.getQueryData(sql))
+          )
           await trackedCall
           reporter.end()
         } catch (error) {
@@ -112,7 +115,7 @@ export class Schema implements SchemaContract {
   /**
    * Returns raw query for `now`
    */
-  public now(precision?: number) {
+  now(precision?: number) {
     return precision
       ? this.db.knexRawQuery(`CURRENT_TIMESTAMP(${precision})`)
       : this.db.knexRawQuery('CURRENT_TIMESTAMP')
@@ -121,14 +124,14 @@ export class Schema implements SchemaContract {
   /**
    * Instance of raw knex query builder
    */
-  public raw(query: string, bindings?: any[]) {
-    return this.db.knexRawQuery(query, bindings)
+  raw(sql: string, bindings?: RawQueryBindings): Knex.Raw {
+    return this.db.knexRawQuery(sql, bindings)
   }
 
   /**
    * Get access to the underlying knex query builder
    */
-  public knex() {
+  knex() {
     return this.db.knexQuery()
   }
 
@@ -137,7 +140,7 @@ export class Schema implements SchemaContract {
    * in the right order and also they won't be executed when
    * schema is invoked to return the SQL queries
    */
-  public defer(cb: DeferCallback): void {
+  defer(cb: DeferCallback): void {
     this.trackedCalls.push(cb)
   }
 
@@ -145,7 +148,7 @@ export class Schema implements SchemaContract {
    * Invokes schema `up` method. Returns an array of queries
    * when `dryRun` is set to true
    */
-  public async execUp() {
+  async execUp() {
     if (this.state === 'completed') {
       throw new Exception('Cannot execute a given schema twice')
     }
@@ -165,7 +168,7 @@ export class Schema implements SchemaContract {
    * Invokes schema `down` method. Returns an array of queries
    * when `dryRun` is set to true
    */
-  public async execDown() {
+  async execDown() {
     if (this.state === 'completed') {
       throw new Exception('Cannot execute a given schema twice')
     }
@@ -181,6 +184,6 @@ export class Schema implements SchemaContract {
     return true
   }
 
-  public async up() {}
-  public async down() {}
+  async up() {}
+  async down() {}
 }

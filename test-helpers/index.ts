@@ -55,7 +55,7 @@ dotenv.config()
 export const APP_ROOT = new URL('./tmp', import.meta.url)
 export const SQLITE_BASE_PATH = fileURLToPath(APP_ROOT)
 
-export const app = new AppFactory().create(APP_ROOT, () => {})
+const app = new AppFactory().create(APP_ROOT, () => {})
 export const emitter = new Emitter<any>(app)
 export const logger = new Logger({})
 export const createEmitter = () => new Emitter<any>(app)

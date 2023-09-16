@@ -18,7 +18,10 @@ import { processCLIArgs, configure, run } from '@japa/runner'
 processCLIArgs(process.argv.slice(2))
 configure({
   files: ['test/**/*.spec.ts'],
-  plugins: [assert(), fileSystem()],
+  plugins: [
+    assert(),
+    fileSystem({ basePath: new URL('../test-helpers/fs-plugin/', import.meta.url) }),
+  ],
 })
 
 /*

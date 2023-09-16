@@ -7,11 +7,9 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import { ConnectionConfig, FileNode } from '@ioc:Adonis/Lucid/Database'
-import { sourceFiles } from '../utils'
+import type { Application } from '@adonisjs/core/app'
+import { sourceFiles } from '../utils/index.js'
+import { SharedConfigNode, FileNode } from '../../adonis-typings/database.js'
 
 /**
  * Migration source exposes the API to read the migration files
@@ -19,8 +17,8 @@ import { sourceFiles } from '../utils'
  */
 export class MigrationSource {
   constructor(
-    private config: ConnectionConfig,
-    private app: ApplicationContract
+    private config: SharedConfigNode,
+    private app: Application<any>
   ) {}
 
   /**
@@ -43,14 +41,15 @@ export class MigrationSource {
    */
   private getMigrationsPath(): string[] {
     const directories = (this.config.migrations || {}).paths
-    const defaultDirectory = this.app.directoriesMap.get('migrations') || 'database/migrations'
+    const defaultDirectory =
+      this.app.relativePath(this.app.migrationsPath()) || 'database/migrations'
     return directories && directories.length ? directories : [`./${defaultDirectory}`]
   }
 
   /**
    * Returns an array of files for all defined directories
    */
-  public async getMigrations() {
+  async getMigrations() {
     const migrationPaths = this.getMigrationsPath()
     const directories = await Promise.all(
       migrationPaths.map((directoryPath) => {

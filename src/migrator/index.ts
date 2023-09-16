@@ -7,55 +7,47 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
 import slash from 'slash'
-import { EventEmitter } from 'events'
+import { EventEmitter } from 'node:events'
 import { Exception } from '@poppinss/utils'
-
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import { SchemaConstructorContract } from '@ioc:Adonis/Lucid/Schema'
 
 import {
   MigratorOptions,
   MigratedFileNode,
-  MigratorContract,
   MigrationListNode,
-} from '@ioc:Adonis/Lucid/Migrator'
+} from '../../adonis-typings/migrator.js'
 
 import {
   FileNode,
-  DatabaseContract,
+  MigratorConfig,
   QueryClientContract,
+  SharedConfigNode,
   TransactionClientContract,
-} from '@ioc:Adonis/Lucid/Database'
+} from '../../adonis-typings/database.js'
 
-import { MigrationSource } from './MigrationSource'
+import { MigrationSource } from './migration_source.js'
+import { Database } from '../database/index.js'
+import { Application } from '@adonisjs/core/app'
+import { Schema } from '../schema/index.js'
 
 /**
  * Migrator exposes the API to execute migrations using the schema files
  * for a given connection at a time.
  */
-export class Migrator extends EventEmitter implements MigratorContract {
-  private client = this.db.connection(this.options.connectionName || this.db.primaryConnectionName)
-  private config = this.db.getRawConnection(this.client.connectionName)!.config
+export class Migrator extends EventEmitter {
+  private client: QueryClientContract
+  private config: SharedConfigNode
 
   /**
    * Reference to the migrations config for the given connection
    */
-  private migrationsConfig = Object.assign(
-    {
-      tableName: 'adonis_schema',
-      disableTransactions: false,
-    },
-    this.config.migrations
-  )
+  private migrationsConfig: MigratorConfig
 
   /**
    * Table names for storing schema files and schema versions
    */
-  private schemaTableName = this.migrationsConfig.tableName
-  private schemaVersionsTableName = `${this.schemaTableName}_versions`
+  private schemaTableName: string
+  private schemaVersionsTableName: string
 
   /**
    * Whether or not the migrator has been booted
@@ -65,7 +57,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
   /**
    * Migration source to collect schema files from the disk
    */
-  private migrationSource = new MigrationSource(this.config, this.app)
+  private migrationSource: MigrationSource
 
   /**
    * Mode decides in which mode the migrator is executing migrations. The migrator
@@ -73,33 +65,33 @@ export class Migrator extends EventEmitter implements MigratorContract {
    *
    * The value is set when `migrate` or `rollback` method is invoked
    */
-  public direction: 'up' | 'down' = this.options.direction
+  direction: 'up' | 'down'
 
   /**
    * Instead of executing migrations, just return the generated SQL queries
    */
-  public dryRun: boolean = !!this.options.dryRun
+  dryRun: boolean
 
   /**
    * Disable advisory locks
    */
-  public disableLocks: boolean = !!this.options.disableLocks
+  disableLocks: boolean
 
   /**
    * An array of files we have successfully migrated. The files are
    * collected regardless of `up` or `down` methods
    */
-  public migratedFiles: { [file: string]: MigratedFileNode } = {}
+  migratedFiles: { [file: string]: MigratedFileNode } = {}
 
   /**
    * Last error occurred when executing migrations
    */
-  public error: null | Error = null
+  error: null | Error = null
 
   /**
    * Current status of the migrator
    */
-  public get status() {
+  get status() {
     return !this.booted
       ? 'pending'
       : this.error
@@ -114,14 +106,29 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * existing migrations if we are plan to make a breaking
    * change.
    */
-  public version: number = 2
+  version: number = 2
 
   constructor(
-    private db: DatabaseContract,
-    private app: ApplicationContract,
+    private db: Database,
+    private app: Application<any>,
     private options: MigratorOptions
   ) {
     super()
+    this.client = this.db.connection(this.options.connectionName || this.db.primaryConnectionName)
+    this.config = this.db.getRawConnection(this.client.connectionName)!.config
+    this.migrationsConfig = Object.assign(
+      {
+        tableName: 'adonis_schema',
+        disableTransactions: false,
+      },
+      this.config.migrations
+    )
+    this.schemaTableName = this.migrationsConfig.tableName!
+    this.schemaVersionsTableName = `${this.schemaTableName}_versions`
+    this.migrationSource = new MigrationSource(this.config, this.app)
+    this.direction = this.options.direction
+    this.dryRun = !!this.options.dryRun
+    this.disableLocks = !!this.options.disableLocks
   }
 
   /**
@@ -202,12 +209,10 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * Returns the migration source by ensuring value is a class constructor and
    * has disableTransactions property.
    */
-  private async getMigrationSource(
-    migration: FileNode<unknown>
-  ): Promise<SchemaConstructorContract> {
+  private async getMigrationSource(migration: FileNode<unknown>): Promise<typeof Schema> {
     const source = await migration.getSource()
     if (typeof source === 'function' && 'disableTransactions' in source) {
-      return source
+      return source as typeof Schema
     }
 
     throw new Error(`Invalid schema class exported by "${migration.name}"`)
@@ -218,11 +223,11 @@ export class Migrator extends EventEmitter implements MigratorContract {
    * in case of failure
    */
   private async executeMigration(migration: FileNode<unknown>) {
-    const Schema = await this.getMigrationSource(migration)
+    const SchemaClass = await this.getMigrationSource(migration)
     const client = await this.getClient(Schema.disableTransactions)
 
     try {
-      const schema = new Schema(client, migration.name, this.dryRun)
+      const schema = new SchemaClass(client, migration.name, this.dryRun)
       this.emit('migration:start', this.migratedFiles[migration.name])
 
       if (this.direction === 'up') {
@@ -482,11 +487,10 @@ export class Migrator extends EventEmitter implements MigratorContract {
     existing.forEach((file) => {
       const migration = collected.find(({ name }) => name === file.name)
       if (!migration) {
-        throw new Exception(
-          `Cannot perform rollback. Schema file {${file.name}} is missing`,
-          500,
-          'E_MISSING_SCHEMA_FILES'
-        )
+        throw new Exception(`Cannot perform rollback. Schema file {${file.name}} is missing`, {
+          status: 500,
+          code: 'E_MISSING_SCHEMA_FILES',
+        })
       }
 
       this.migratedFiles[migration.name] = {
@@ -503,27 +507,24 @@ export class Migrator extends EventEmitter implements MigratorContract {
     }
   }
 
-  public on(event: 'start', callback: () => void): this
-  public on(event: 'end', callback: () => void): this
-  public on(event: 'acquire:lock', callback: () => void): this
-  public on(event: 'release:lock', callback: () => void): this
-  public on(event: 'create:schema:table', callback: () => void): this
-  public on(event: 'create:schema_versions:table', callback: () => void): this
-  public on(
-    event: 'upgrade:version',
-    callback: (payload: { from: number; to: number }) => void
-  ): this
-  public on(event: 'migration:start', callback: (file: MigratedFileNode) => void): this
-  public on(event: 'migration:completed', callback: (file: MigratedFileNode) => void): this
-  public on(event: 'migration:error', callback: (file: MigratedFileNode) => void): this
-  public on(event: string, callback: (...args: any[]) => void): this {
+  on(event: 'start', callback: () => void): this
+  on(event: 'end', callback: () => void): this
+  on(event: 'acquire:lock', callback: () => void): this
+  on(event: 'release:lock', callback: () => void): this
+  on(event: 'create:schema:table', callback: () => void): this
+  on(event: 'create:schema_versions:table', callback: () => void): this
+  on(event: 'upgrade:version', callback: (payload: { from: number; to: number }) => void): this
+  on(event: 'migration:start', callback: (file: MigratedFileNode) => void): this
+  on(event: 'migration:completed', callback: (file: MigratedFileNode) => void): this
+  on(event: 'migration:error', callback: (file: MigratedFileNode) => void): this
+  on(event: string, callback: (...args: any[]) => void): this {
     return super.on(event, callback)
   }
 
   /**
    * Returns a merged list of completed and pending migrations
    */
-  public async getList(): Promise<MigrationListNode[]> {
+  async getList(): Promise<MigrationListNode[]> {
     const existingCollected: Set<string> = new Set()
     await this.makeMigrationsTable()
     const existing = await this.getMigratedFilesTillBatch(0)
@@ -568,7 +569,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
   /**
    * Migrate the database by calling the up method
    */
-  public async run() {
+  async run() {
     try {
       await this.boot()
 
@@ -596,7 +597,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
   /**
    * Close database connections
    */
-  public async close() {
+  async close() {
     await this.db.manager.closeAll(true)
   }
 }
