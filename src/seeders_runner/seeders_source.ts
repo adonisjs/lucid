@@ -7,19 +7,18 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
+import { Application } from '@adonisjs/core/app'
 
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import { ConnectionConfig, FileNode } from '@ioc:Adonis/Lucid/Database'
-import { sourceFiles } from '../utils'
+import { FileNode, SharedConfigNode } from '../../adonis-typings/database.js'
+import { sourceFiles } from '../utils/index.js'
 
 /**
  * Seeders source exposes the API to read the seeders from disk for a given connection.
  */
 export class SeedersSource {
   constructor(
-    private config: ConnectionConfig,
-    private app: ApplicationContract
+    private config: SharedConfigNode,
+    private app: Application<any>
   ) {}
 
   /**
@@ -37,14 +36,14 @@ export class SeedersSource {
    */
   private getSeedersPaths(): string[] {
     const directories = (this.config.seeders || {}).paths
-    const defaultDirectory = this.app.directoriesMap.get('seeds') || 'database/seeders'
+    const defaultDirectory = this.app.relativePath(this.app.seedersPath()) || 'database/seeders'
     return directories && directories.length ? directories : [`./${defaultDirectory}`]
   }
 
   /**
    * Returns an array of files for the defined seed directories
    */
-  public async getSeeders() {
+  async getSeeders() {
     const seedersPaths = this.getSeedersPaths()
     const directories = await Promise.all(
       seedersPaths.map((directoryPath) => {

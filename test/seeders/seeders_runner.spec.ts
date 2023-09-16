@@ -8,9 +8,10 @@
  */
 
 import { test } from '@japa/runner'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
-import { SeedsRunner } from '../../src/SeedsRunner'
-import { getDb, setup, cleanup, setupApplication, fs } from '../../test-helpers'
+import { SeedsRunner } from '../../src/seeders_runner/index.js'
+import { getDb, setup, cleanup as cleanupTables } from '../../test-helpers/index.js'
 
 test.group('Seeds Runner', (group) => {
   group.each.setup(async () => {
@@ -18,19 +19,21 @@ test.group('Seeds Runner', (group) => {
   })
 
   group.each.teardown(async () => {
-    await cleanup()
-    await fs.cleanup()
+    await cleanupTables()
   })
 
-  test('run a seeder file', async ({ assert }) => {
-    const app = await setupApplication()
-    const db = getDb(app)
+  test('run a seeder file', async ({ fs, assert, cleanup }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    cleanup(() => db.manager.closeAll())
+
     const runner = new SeedsRunner(db, app)
 
-    await fs.add(
+    await fs.create(
       'database/seeders/User.ts',
       `export default class FooSeeder {
-      public static invoked = false
+      static invoked = false
 
       run () {
         (this.constructor as any).invoked = true
@@ -40,19 +43,20 @@ test.group('Seeds Runner', (group) => {
 
     const files = await runner.getList()
     const report = await runner.run(files[0])
-    assert.equal((report.file.getSource() as any)['invoked'], true)
-    assert.equal(report.status, 'completed')
+    const fileSource = await report.file.getSource()
 
-    await db.manager.closeAll()
+    assert.equal((fileSource as any)['invoked'], true)
+    assert.equal(report.status, 'completed')
   })
 
-  test('catch and return seeder errors', async ({ assert }) => {
-    const app = await setupApplication()
-    const db = getDb(app)
+  test('catch and return seeder errors', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
     const runner = new SeedsRunner(db, app)
 
-    await fs.add(
-      'database/seeders/User.ts',
+    await fs.create(
+      'database/seeders/User_v1.ts',
       `export default class FooSeeder {
       run () {
         throw new Error('Failed')
@@ -67,47 +71,19 @@ test.group('Seeds Runner', (group) => {
 
     await db.manager.closeAll()
   })
-
-  test('mark file as ignored when "developmentOnly = true" and not running in development mode', async ({
-    assert,
-  }) => {
-    process.env.NODE_ENV = 'production'
-
-    const app = await setupApplication()
-    const db = getDb(app)
-    const runner = new SeedsRunner(db, app)
-
-    await fs.add(
-      'database/seeders/User.ts',
-      `export default class FooSeeder {
-      public static invoked = false
-      public static developmentOnly = true
-
-      run () {
-        (this.constructor as any).invoked = true
-      }
-    }`
-    )
-
-    const files = await runner.getList()
-    const report = await runner.run(files[0])
-    assert.equal(report.status, 'ignored')
-
-    delete process.env.NODE_ENV
-    await db.manager.closeAll()
-  })
-
   test('mark file as ignored when "environment = production" and not running in production mode', async ({
     assert,
+    fs,
   }) => {
-    process.env.NODE_ENV = 'development'
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
 
-    const app = await setupApplication()
-    const db = getDb(app)
     const runner = new SeedsRunner(db, app)
+    runner.nodeEnvironment = 'development'
 
-    await fs.add(
-      'database/seeders/User.ts',
+    await fs.create(
+      'database/seeders/User_v2.ts',
       `export default class FooSeeder {
       public static invoked = false
       public static environment = ['production']
@@ -128,15 +104,17 @@ test.group('Seeds Runner', (group) => {
 
   test('mark file as ignored when "environment = development" and not running in development mode', async ({
     assert,
+    fs,
   }) => {
-    process.env.NODE_ENV = 'production'
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
 
-    const app = await setupApplication()
-    const db = getDb(app)
     const runner = new SeedsRunner(db, app)
+    runner.nodeEnvironment = 'production'
 
-    await fs.add(
-      'database/seeders/User.ts',
+    await fs.create(
+      'database/seeders/User_v3.ts',
       `export default class FooSeeder {
       public static invoked = false
       public static environment = ['development']

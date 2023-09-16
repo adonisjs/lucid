@@ -7,11 +7,12 @@
  * file that was distributed with this source code.
  */
 
+import { join } from 'node:path'
 import { test } from '@japa/runner'
-import { join } from 'path'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
-import { SeedersSource } from '../../src/SeedsRunner/SeedersSource'
-import { getDb, setup, setupApplication, fs, cleanup } from '../../test-helpers'
+import { SeedersSource } from '../../src/seeders_runner/seeders_source.js'
+import { getDb, setup, cleanup } from '../../test-helpers/index.js'
 
 test.group('Seeds Source', (group) => {
   group.each.setup(async () => {
@@ -20,22 +21,22 @@ test.group('Seeds Source', (group) => {
 
   group.each.teardown(async () => {
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('get list of seed files recursively', async ({ assert }) => {
-    const app = await setupApplication()
-    const db = getDb(app)
+  test('get list of seed files recursively', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
 
-    const seedsSource = new SeedersSource(db.getRawConnection('primary')!.config, app)
+    const seedersSource = new SeedersSource(db.getRawConnection('primary')!.config, app)
 
-    await fs.add('database/seeders/User.ts', '')
-    await fs.add('database/seeders/Tenant/User.ts', '')
-    await fs.add('database/seeders/Country/Post.ts', '')
+    await fs.create('database/seeders/User.ts', '')
+    await fs.create('database/seeders/Tenant/User.ts', '')
+    await fs.create('database/seeders/Country/Post.ts', '')
 
     await db.manager.closeAll()
 
-    const files = await seedsSource.getSeeders()
+    const files = await seedersSource.getSeeders()
     assert.deepEqual(
       files.map((file) => {
         return { absPath: file.absPath, name: file.name }
@@ -57,20 +58,22 @@ test.group('Seeds Source', (group) => {
     )
   })
 
-  test('only pick .ts/.js files', async ({ assert }) => {
-    const app = await setupApplication()
-    const db = getDb(app)
-    const seedsSource = new SeedersSource(db.getRawConnection('primary')!.config, app)
+  test('only pick .ts/.js files', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
 
-    await fs.add('database/seeders/User.ts', '')
-    await fs.add('database/seeders/Tenant/User.ts', '')
-    await fs.add('database/seeders/Country/Post.ts', '')
-    await fs.add('database/seeders/foo.bar', '')
-    await fs.add('database/seeders/foo.js', '')
+    const seedersSource = new SeedersSource(db.getRawConnection('primary')!.config, app)
+
+    await fs.create('database/seeders/User.ts', '')
+    await fs.create('database/seeders/Tenant/User.ts', '')
+    await fs.create('database/seeders/Country/Post.ts', '')
+    await fs.create('database/seeders/foo.bar', '')
+    await fs.create('database/seeders/foo.js', '')
 
     await db.manager.closeAll()
 
-    const files = await seedsSource.getSeeders()
+    const files = await seedersSource.getSeeders()
     assert.deepEqual(
       files.map((file) => {
         return { absPath: file.absPath, name: file.name }
@@ -96,9 +99,10 @@ test.group('Seeds Source', (group) => {
     )
   })
 
-  test('sort multiple seeders directories seperately', async ({ assert }) => {
-    const app = await setupApplication()
-    const db = getDb(app)
+  test('sort multiple seeders directories seperately', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
 
     const config = Object.assign({}, db.getRawConnection('primary')!.config, {
       seeders: {
@@ -106,15 +110,15 @@ test.group('Seeds Source', (group) => {
       },
     })
 
-    const seedsSource = new SeedersSource(config, app)
-    await fs.add('database/secondary/User.ts', '')
-    await fs.add('database/secondary/Tenant/User.ts', '')
+    const seedersSource = new SeedersSource(config, app)
+    await fs.create('database/secondary/User.ts', '')
+    await fs.create('database/secondary/Tenant/User.ts', '')
 
-    await fs.add('database/primary/Account.ts', '')
-    await fs.add('database/primary/Team.ts', '')
+    await fs.create('database/primary/Account.ts', '')
+    await fs.create('database/primary/Team.ts', '')
     await db.manager.closeAll()
 
-    const files = await seedsSource.getSeeders()
+    const files = await seedersSource.getSeeders()
 
     assert.deepEqual(
       files.map((file) => {

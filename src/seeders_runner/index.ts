@@ -7,25 +7,32 @@
  * file that was distributed with this source code.
  */
 
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import { FileNode, DatabaseContract } from '@ioc:Adonis/Lucid/Database'
-import { SeederFileNode, SeederConstructorContract } from '@ioc:Adonis/Lucid/Seeder'
+import { Application } from '@adonisjs/core/app'
+import { FileNode, QueryClientContract, SharedConfigNode } from '../../adonis-typings/database.js'
+import { SeederConstructorContract, SeederFileNode } from '../../adonis-typings/seeder.js'
 
-import { SeedersSource } from './SeedersSource'
+import { SeedersSource } from './seeders_source.js'
+import { Database } from '../database/index.js'
 
 /**
  * Seeds Runner exposes the API to traverse seeders and execute them
  * in bulk
  */
 export class SeedsRunner {
-  private client = this.db.connection(this.connectionName || this.db.primaryConnectionName)
-  private config = this.db.getRawConnection(this.client.connectionName)!.config
+  private client: QueryClientContract
+  private config: SharedConfigNode
+
+  nodeEnvironment: string
 
   constructor(
-    private db: DatabaseContract,
-    private app: ApplicationContract,
+    private db: Database,
+    private app: Application<any>,
     private connectionName?: string
-  ) {}
+  ) {
+    this.client = this.db.connection(this.connectionName || this.db.primaryConnectionName)
+    this.config = this.db.getRawConnection(this.client.connectionName)!.config
+    this.nodeEnvironment = this.app.nodeEnvironment
+  }
 
   /**
    * Returns the seeder source by ensuring value is a class constructor
@@ -42,14 +49,14 @@ export class SeedsRunner {
   /**
    * Returns an array of seeders
    */
-  public async getList() {
+  async getList() {
     return new SeedersSource(this.config, this.app).getSeeders()
   }
 
   /**
    * Executes the seeder
    */
-  public async run(file: FileNode<unknown>): Promise<SeederFileNode> {
+  async run(file: FileNode<unknown>): Promise<SeederFileNode> {
     const Source = await this.getSeederSource(file)
 
     const seeder: SeederFileNode = {
@@ -57,17 +64,10 @@ export class SeedsRunner {
       file: file,
     }
 
-    if ('developmentOnly' in Source) {
-      this.app.logger.warn(`Seeder "${file.name}" is using the deprecated flag "developmentOnly".`)
-    }
-
     /**
      * Ignore when when the node environement is not the same as the seeder configuration.
      */
-    if (
-      (Source.developmentOnly && !this.app.inDev) ||
-      (Source.environment && !Source.environment.includes(this.app.nodeEnvironment))
-    ) {
+    if (Source.environment && !Source.environment.includes(this.nodeEnvironment)) {
       seeder.status = 'ignored'
       return seeder
     }
@@ -91,7 +91,7 @@ export class SeedsRunner {
   /**
    * Close database connections
    */
-  public async close() {
+  async close() {
     await this.db.manager.closeAll(true)
   }
 }

@@ -7,15 +7,11 @@
  * file that was distributed with this source code.
  */
 
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
+import { QueryClientContract } from '../../adonis-typings/database.js'
 
 export class BaseSeeder {
-  /**
-   * @deprecated
-   */
-  public static developmentOnly: boolean
-  public static environment: string[]
+  static environment: string[]
   constructor(public client: QueryClientContract) {}
 
-  public async run() {}
+  async run() {}
 }
