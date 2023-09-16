@@ -213,6 +213,7 @@ export async function sourceFiles(
   const absDirectoryPath = fileURLToPath(new URL(directory, fromLocation))
   let files = await fsReadAll(absDirectoryPath, {
     filter: isScriptFile,
+    ignoreMissingRoot: true,
   })
 
   /**
@@ -245,8 +246,13 @@ export async function sourceFiles(
         /**
          * Import schema file
          */
-        getSource() {
-          return import(pathToFileURL(this.absPath).href)
+        async getSource() {
+          const exports = await import(pathToFileURL(this.absPath).href)
+          if (!exports.default) {
+            throw new Error(`Missing default export from "${this.name}" schema file`)
+          }
+
+          return exports.default
         },
       }
     }),

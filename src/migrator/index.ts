@@ -60,6 +60,11 @@ export class Migrator extends EventEmitter {
   private migrationSource: MigrationSource
 
   /**
+   * Flag to know if running the app in production
+   */
+  isInProduction: boolean
+
+  /**
    * Mode decides in which mode the migrator is executing migrations. The migrator
    * instance can only run in one mode at a time.
    *
@@ -129,6 +134,7 @@ export class Migrator extends EventEmitter {
     this.direction = this.options.direction
     this.dryRun = !!this.options.dryRun
     this.disableLocks = !!this.options.disableLocks
+    this.isInProduction = app.inProduction
   }
 
   /**
@@ -467,7 +473,7 @@ export class Migrator extends EventEmitter {
    * Migrate down (aka rollback)
    */
   private async runDown(batch?: number) {
-    if (this.app.inProduction && this.migrationsConfig.disableRollbacksInProduction) {
+    if (this.isInProduction && this.migrationsConfig.disableRollbacksInProduction) {
       throw new Error(
         'Rollback in production environment is disabled. Check "config/database" file for options.'
       )

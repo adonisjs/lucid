@@ -39,6 +39,9 @@ import { Database } from '../src/database/index.js'
 import { DatabaseQueryBuilder } from '../src/database/query_builder/database.js'
 import { RawQueryBuilder } from '../src/database/query_builder/raw.js'
 import { InsertQueryBuilder } from '../src/database/query_builder/insert.js'
+import { Migrator } from '../src/migrator/index.js'
+import { Application } from '@adonisjs/core/app'
+import { Schema } from '../src/schema/index.js'
 
 // import { Schema } from '../src/Schema'
 // import { Migrator } from '../src/Migrator'
@@ -400,7 +403,7 @@ export function getInsertBuilder(client: QueryClientContract) {
 /**
  * Returns the database instance
  */
-export function getDb() {
+export function getDb(eventEmitter?: Emitter<any>) {
   const config = {
     connection: 'primary',
     connections: {
@@ -409,7 +412,7 @@ export function getDb() {
     },
   }
 
-  return new Database(config, logger, createEmitter())
+  return new Database(config, logger, eventEmitter || createEmitter())
 }
 
 /**
@@ -549,18 +552,14 @@ export function mapToObj<T extends any>(collection: Map<any, any>): T {
  * Returns the base schema class typed to it's interface
  */
 export function getBaseSchema() {
-  return Schema as SchemaConstructorContract
+  return Schema
 }
 
 /**
  * Returns instance of migrator
  */
-export function getMigrator(
-  db: DatabaseContract,
-  app: ApplicationContract,
-  config: MigratorOptions
-) {
-  return new Migrator(db, app, config) as MigratorContract
+export function getMigrator(db: Database, application: Application<any>, config: MigratorOptions) {
+  return new Migrator(db, application, config)
 }
 
 /**

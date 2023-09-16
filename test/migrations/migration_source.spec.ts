@@ -7,12 +7,12 @@
  * file that was distributed with this source code.
  */
 
+import { join } from 'node:path'
 import { test } from '@japa/runner'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
 import { MigrationSource } from '../../src/migrator/migration_source.js'
 import { setup, getDb, resetTables } from '../../test-helpers/index.js'
-import { AppFactory } from '@adonisjs/core/factories/app'
-import { join } from 'node:path'
 
 test.group('MigrationSource', (group) => {
   group.each.setup(async () => {
@@ -135,9 +135,9 @@ test.group('MigrationSource', (group) => {
     await fs.create('database/migrations/baz.ts', 'export default class Baz {}')
 
     const directories = await migrationSource.getMigrations()
-    console.log(await directories[0].getSource())
-    // assert.equal((await directories[0].getSource()).name, 'Bar')
-    // assert.equal(await directories[1].getSource().name, 'Baz')
-    // assert.equal(await directories[2].getSource().name, 'Foo')
+
+    assert.equal(((await directories[0].getSource()) as any).name, 'Bar')
+    assert.equal(((await directories[1].getSource()) as any).name, 'Baz')
+    assert.equal(((await directories[2].getSource()) as any).name, 'Foo')
   })
 })
