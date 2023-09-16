@@ -7,27 +7,21 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
+import { Knex } from 'knex'
 import { test } from '@japa/runner'
-import { MysqlConfig } from '@ioc:Adonis/Lucid/Database'
+import { MysqlConfig } from '../../adonis-typings/database.js'
 
-import { Connection } from '../../src/Connection'
-import { fs, getConfig, setup, cleanup, resetTables, setupApplication } from '../../test-helpers'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-
-let app: ApplicationContract
+import { Connection } from '../../src/connection/index.js'
+import { setup, cleanup, getConfig, resetTables, logger } from '../../test-helpers/index.js'
 
 if (process.env.DB !== 'sqlite') {
   test.group('Connection | config', (group) => {
     group.setup(async () => {
-      app = await setupApplication()
       await setup()
     })
 
     group.teardown(async () => {
       await cleanup()
-      await fs.cleanup()
     })
 
     test('get write config by merging values from connection', ({ assert }) => {
@@ -47,11 +41,11 @@ if (process.env.DB !== 'sqlite') {
         },
       }
 
-      const connection = new Connection('primary', config, app.logger)
+      const connection = new Connection('primary', config, logger)
       const writeConfig = connection['getWriteConfig']()
 
       assert.equal(writeConfig.client, config.client)
-      assert.equal(writeConfig.connection!['host'], '10.0.0.1')
+      assert.equal((writeConfig.connection as Knex.ConnectionConfig).host, '10.0.0.1')
     })
 
     test('get read config by merging values from connection', ({ assert }) => {
@@ -71,7 +65,7 @@ if (process.env.DB !== 'sqlite') {
         },
       }
 
-      const connection = new Connection('primary', config, app.logger)
+      const connection = new Connection('primary', config, logger)
       const readConfig = connection['getReadConfig']()
 
       assert.equal(readConfig.client, config.client)
@@ -81,13 +75,11 @@ if (process.env.DB !== 'sqlite') {
 
 test.group('Connection | setup', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
     await setup()
   })
 
   group.teardown(async () => {
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
@@ -95,13 +87,12 @@ test.group('Connection | setup', (group) => {
   })
 
   test('do not instantiate knex unless connect is called', async ({ assert }) => {
-    const connection = new Connection('primary', getConfig(), app.logger)
-
+    const connection = new Connection('primary', getConfig(), logger)
     assert.isUndefined(connection.client)
   })
 
   test('instantiate knex when connect is invoked', async ({ assert }, done) => {
-    const connection = new Connection('primary', getConfig(), app.logger)
+    const connection = new Connection('primary', getConfig(), logger)
     connection.on('connect', async () => {
       assert.isDefined(connection.client!)
       assert.equal(connection.pool!.numUsed(), 0)
@@ -113,16 +104,16 @@ test.group('Connection | setup', (group) => {
   }).waitForDone()
 
   test('on disconnect destroy knex', async ({ assert }) => {
-    const connection = new Connection('primary', getConfig(), app.logger)
+    const connection = new Connection('primary', getConfig(), logger)
     connection.connect()
     await connection.disconnect()
 
     assert.isUndefined(connection.client)
-    assert.isUndefined(connection['_readClient'])
+    assert.isUndefined(connection.readClient)
   })
 
   test('on disconnect emit disconnect event', async ({ assert }, done) => {
-    const connection = new Connection('primary', getConfig(), app.logger)
+    const connection = new Connection('primary', getConfig(), logger)
     connection.connect()
 
     connection.on('disconnect', () => {
@@ -139,7 +130,7 @@ test.group('Connection | setup', (group) => {
     const connection = new Connection(
       'primary',
       Object.assign({}, getConfig(), { client: null }),
-      app.logger
+      logger
     )
 
     connection.on('error', ({ message }) => {
@@ -163,12 +154,12 @@ if (process.env.DB === 'mysql') {
       config.connection!.charset = 'utf-8'
       config.connection!.typeCast = false
 
-      const connection = new Connection('primary', config, app.logger)
+      const connection = new Connection('primary', config, logger)
       connection.connect()
 
-      assert.equal(connection.client!['context'].client.constructor.name, 'Client_MySQL2')
-      assert.equal(connection.client!['context'].client.config.connection.charset, 'utf-8')
-      assert.equal(connection.client!['context'].client.config.connection.typeCast, false)
+      assert.equal((connection.client as any)['context'].client.constructor.name, 'Client_MySQL2')
+      assert.equal((connection.client as any)['context'].client.config.connection.charset, 'utf-8')
+      assert.equal((connection.client as any)['context'].client.config.connection.typeCast, false)
       await connection.disconnect()
     })
   })
@@ -176,17 +167,15 @@ if (process.env.DB === 'mysql') {
 
 test.group('Health Checks', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
     await setup()
   })
 
   group.teardown(async () => {
     await cleanup()
-    await fs.cleanup()
   })
 
   test('get healthcheck report for healthy connection', async ({ assert }) => {
-    const connection = new Connection('primary', getConfig(), app.logger)
+    const connection = new Connection('primary', getConfig(), logger)
     connection.connect()
 
     const report = await connection.getReport()
@@ -208,7 +197,7 @@ test.group('Health Checks', (group) => {
             host: 'bad-host',
           },
         }),
-        app.logger
+        logger
       )
       connection.connect()
 
@@ -235,7 +224,7 @@ test.group('Health Checks', (group) => {
             },
           },
         }),
-        app.logger
+        logger
       )
       connection.connect()
 

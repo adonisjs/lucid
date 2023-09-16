@@ -13,7 +13,10 @@ import type Ace from '@ioc:Adonis/Core/Ace'
  * Seeder class to be used for testing
  */
 export class TestsSeeder {
-  constructor(private ace: typeof Ace, private connectionName?: string) {}
+  constructor(
+    private ace: typeof Ace,
+    private connectionName?: string
+  ) {}
 
   private async runCommand(commandName: string) {
     const args: string[] = ['--compact-output']

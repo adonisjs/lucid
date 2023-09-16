@@ -633,7 +633,10 @@ test.group('Base Model | dirty', (group) => {
   test('compute diff for properties represented as classes', async ({ assert }) => {
     class Location {
       public isDirty = false
-      constructor(public state: string, public country: string) {}
+      constructor(
+        public state: string,
+        public country: string
+      ) {}
     }
 
     const adapter = new FakeAdapter()
@@ -4575,7 +4578,7 @@ test.group('Base Model | hooks', (group) => {
       @beforePaginate()
       public static beforePaginateHook([countQuery, query]: [
         ModelQueryBuilder,
-        ModelQueryBuilder
+        ModelQueryBuilder,
       ]) {
         assert.instanceOf(query, ModelQueryBuilder)
         assert.instanceOf(countQuery, ModelQueryBuilder)

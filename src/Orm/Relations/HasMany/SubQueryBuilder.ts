@@ -20,7 +20,11 @@ export class HasManySubQueryBuilder
 {
   protected appliedConstraints: boolean = false
 
-  constructor(builder: Knex.QueryBuilder, client: QueryClientContract, private relation: HasMany) {
+  constructor(
+    builder: Knex.QueryBuilder,
+    client: QueryClientContract,
+    private relation: HasMany
+  ) {
     super(builder, client, relation, (userFn) => {
       return ($builder) => {
         const subQuery = new HasManySubQueryBuilder($builder, this.client, this.relation)

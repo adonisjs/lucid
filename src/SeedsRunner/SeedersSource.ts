@@ -17,7 +17,10 @@ import { sourceFiles } from '../utils'
  * Seeders source exposes the API to read the seeders from disk for a given connection.
  */
 export class SeedersSource {
-  constructor(private config: ConnectionConfig, private app: ApplicationContract) {}
+  constructor(
+    private config: ConnectionConfig,
+    private app: ApplicationContract
+  ) {}
 
   /**
    * Returns an array of files inside a given directory. Relative

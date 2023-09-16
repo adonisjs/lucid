@@ -1,9 +1,6 @@
 import { assert } from '@japa/assert'
-import { specReporter } from '@japa/spec-reporter'
-import { runFailedTests } from '@japa/run-failed-tests'
-import { processCliArgs, configure, run } from '@japa/runner'
-import { remove } from 'fs-extra'
-import { join } from 'path'
+import { fileSystem } from '@japa/file-system'
+import { processCLIArgs, configure, run } from '@japa/runner'
 
 /*
 |--------------------------------------------------------------------------
@@ -18,19 +15,10 @@ import { join } from 'path'
 |
 | Please consult japa.dev/runner-config for the config docs.
 */
+processCLIArgs(process.argv.slice(2))
 configure({
-  ...processCliArgs(process.argv.slice(2)),
-  ...{
-    files: ['test/**/*.spec.ts'],
-    plugins: [assert(), runFailedTests()],
-    reporters: [specReporter()],
-    importer: (filePath: string) => import(filePath),
-    teardown: [
-      async () => {
-        await remove(join(__dirname, 'test-helpers', 'tmp'))
-      },
-    ],
-  },
+  files: ['test/**/*.spec.ts'],
+  plugins: [assert(), fileSystem()],
 })
 
 /*

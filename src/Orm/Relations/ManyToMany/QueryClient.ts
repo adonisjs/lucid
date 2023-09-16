@@ -388,10 +388,13 @@ export class ManyToManyQueryClient implements ManyToManyClientContract<ManyToMan
        * an object of key-value pair.
        */
       const pivotRows = !hasAttributes
-        ? (ids as (string | number)[]).reduce((result, id) => {
-            result[id] = {}
-            return result
-          }, {} as Record<string, ModelObject>)
+        ? (ids as (string | number)[]).reduce(
+            (result, id) => {
+              result[id] = {}
+              return result
+            },
+            {} as Record<string, ModelObject>
+          )
         : (ids as Record<string, ModelObject>)
 
       const query = this.pivotQuery().useTransaction(transaction)

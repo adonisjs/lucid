@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 20
       - run: npm install
       - run: npm run lint
 
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 20
       - run: npm install
       - run: npx tsc
 
@@ -29,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [14, 16, 18]
+        node-version: [18, 20]
         postgres-version: [11, 14]
     services:
       postgres:
@@ -56,7 +56,7 @@ jobs:
       fail-fast: false
       matrix:
         mysql: [{ version: '5.7', command: 'mysql_legacy' }, { version: '8.0', command: 'mysql' }]
-        node-version: [14, 16, 18]
+        node-version: [18, 20]
     services:
       mysql:
         image: mysql:${{ matrix.mysql.version }}
@@ -83,7 +83,7 @@ jobs:
       fail-fast: false
       matrix:
         lib: ['sqlite', 'better_sqlite']
-        node-version: [14, 16, 18]
+        node-version: [18, 20]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -99,7 +99,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [16, 18]
+        node-version: [18, 20]
     services:
       mssql:
         image: mcr.microsoft.com/mssql/server:2019-latest
