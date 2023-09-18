@@ -20,7 +20,6 @@ import {
 } from '../../adonis-typings/database.js'
 
 import { dialects } from '../dialects/index.js'
-// import { ModelQueryBuilder } from '../Orm/QueryBuilder'
 import { TransactionClient } from '../transaction_client/index.js'
 import { RawBuilder } from '../database/static_builder/raw.js'
 import { RawQueryBuilder } from '../database/query_builder/raw.js'
@@ -32,6 +31,7 @@ import {
   RawQueryBindings,
   DatabaseQueryBuilderContract,
 } from '../../adonis-typings/querybuilder.js'
+import { ModelQueryBuilder } from '../orm/query_builder/index.js'
 
 /**
  * Query client exposes the API to fetch instance of different query builders
@@ -232,8 +232,11 @@ export class QueryClient implements QueryClientContract {
    * Returns a query builder instance for a given model.
    */
   modelQuery<T extends LucidModel, Result = T>(model: T): ModelQueryBuilderContract<T, Result> {
-    // modelQuery(model: any): any {
-    // return new ModelQueryBuilder(this.knexQuery(), model, this)
+    return new ModelQueryBuilder(
+      this.knexQuery(),
+      model,
+      this
+    ) as unknown as ModelQueryBuilderContract<T, Result>
   }
 
   /**

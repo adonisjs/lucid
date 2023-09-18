@@ -29,7 +29,7 @@ import { InsertQueryBuilder } from './query_builder/insert.js'
 import { ReferenceBuilder } from './static_builder/reference.js'
 import { SimplePaginator } from './paginator/simple_paginator.js'
 import { DatabaseQueryBuilder } from './query_builder/database.js'
-// import { ModelQueryBuilder } from '../Orm/QueryBuilder/index.js'
+import { ModelQueryBuilder } from '../orm/query_builder/index.js'
 
 /**
  * Database class exposes the API to manage multiple connections and obtain an instance
@@ -58,7 +58,7 @@ export class Database extends Macroable {
    */
   DatabaseQueryBuilder = DatabaseQueryBuilder
   InsertQueryBuilder = InsertQueryBuilder
-  // ModelQueryBuilder = ModelQueryBuilder
+  ModelQueryBuilder = ModelQueryBuilder
   SimplePaginator = SimplePaginator
 
   /**

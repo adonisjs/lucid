@@ -11,6 +11,7 @@ import dotenv from 'dotenv'
 import { join } from 'node:path'
 import { Chance } from 'chance'
 import knex, { Knex } from 'knex'
+import { getActiveTest } from '@japa/runner'
 import { Logger } from '@adonisjs/core/logger'
 import { Emitter } from '@adonisjs/core/events'
 import { AppFactory } from '@adonisjs/core/factories/app'
@@ -33,7 +34,6 @@ import { LucidRow, LucidModel, AdapterContract } from '../adonis-typings/model.j
 import { fileURLToPath } from 'node:url'
 // import { QueryClient } from '../src/QueryClient/index.js'
 import { DefineCallback, FactoryModelContract } from '../adonis-typings/factory.js'
-import { EventsList } from '../adonis-typings/events.js'
 import { QueryClient } from '../src/query_client/index.js'
 import { Database } from '../src/database/index.js'
 import { DatabaseQueryBuilder } from '../src/database/query_builder/database.js'
@@ -42,6 +42,8 @@ import { InsertQueryBuilder } from '../src/database/query_builder/insert.js'
 import { Migrator } from '../src/migrator/index.js'
 import { Application } from '@adonisjs/core/app'
 import { Schema } from '../src/schema/index.js'
+import { BaseModel } from '../src/orm/base_model/index.js'
+import { Adapter } from '../src/orm/adapter/index.js'
 
 // import { Schema } from '../src/Schema'
 // import { Migrator } from '../src/Migrator'
@@ -412,23 +414,28 @@ export function getDb(eventEmitter?: Emitter<any>) {
     },
   }
 
-  return new Database(config, logger, eventEmitter || createEmitter())
+  const db = new Database(config, logger, eventEmitter || createEmitter())
+  const test = getActiveTest()
+  test?.cleanup(() => {
+    return db.manager.closeAll()
+  })
+  return db
 }
 
 /**
  * Returns the orm adapter
  */
-export function ormAdapter(db: DatabaseContract) {
+export function ormAdapter(db: Database) {
   return new Adapter(db)
 }
 
 /**
  * Returns the base model with the adapter attached to it
  */
-export function getBaseModel(adapter: AdapterContract, application: ApplicationContract) {
+export function getBaseModel(adapter: AdapterContract, application: Application<any>) {
   BaseModel.$adapter = adapter
   BaseModel.$container = application.container
-  return BaseModel as LucidModel
+  return BaseModel
 }
 
 /**
@@ -486,7 +493,7 @@ export class FakeAdapter implements AdapterContract {
   on(action: 'find', handler: (model: LucidModel, options?: any) => void): void
   on(action: 'findAll', handler: (model: LucidModel, options?: any) => void): void
   on(
-    action: string,
+    action: 'insert' | 'update' | 'delete' | 'refresh' | 'find' | 'findAll',
     handler: ((model: LucidRow, attributes?: any) => void) | ((model: LucidModel) => void)
   ): void {
     this._handlers[action] = handler

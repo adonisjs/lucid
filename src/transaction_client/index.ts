@@ -17,12 +17,13 @@ import {
   TransactionClientContract,
 } from '../../adonis-typings/database.js'
 
+import { ModelQueryBuilder } from '../orm/query_builder/index.js'
 import { RawBuilder } from '../database/static_builder/raw.js'
-// import { ModelQueryBuilder } from '../Orm/QueryBuilder/index.js'
 import { RawQueryBuilder } from '../database/query_builder/raw.js'
 import { InsertQueryBuilder } from '../database/query_builder/insert.js'
 import { ReferenceBuilder } from '../database/static_builder/reference.js'
 import { DatabaseQueryBuilder } from '../database/query_builder/database.js'
+import { LucidModel, ModelQueryBuilderContract } from '../../adonis-typings/model.js'
 
 /**
  * Transaction uses a dedicated connection from the connection pool
@@ -169,8 +170,12 @@ export class TransactionClient extends EventEmitter implements TransactionClient
    * and `profiler` is passed down to the model, so that it continue
    * using the same options
    */
-  modelQuery(model: any): any {
-    // return new ModelQueryBuilder(this.knexQuery(), model, this)
+  modelQuery<T extends LucidModel, Result = T>(model: T): ModelQueryBuilderContract<T, Result> {
+    return new ModelQueryBuilder(
+      this.knexQuery(),
+      model,
+      this
+    ) as unknown as ModelQueryBuilderContract<T, Result>
   }
 
   /**

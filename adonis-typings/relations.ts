@@ -11,7 +11,6 @@ import {
   RawQuery,
   OneOrMany,
   StrictValues,
-  QueryCallback,
   ChainableContract,
   RawBuilderContract,
 } from './querybuilder.js'
@@ -37,14 +36,14 @@ import {
  * Extracts relationship attributes from the model
  */
 export type ExtractModelRelations<Model extends LucidRow> = {
-  [Key in keyof Model]: Model[Key] extends ModelRelations ? Key : never
+  [Key in keyof Model]: Model[Key] extends ModelRelations<LucidModel, LucidModel> ? Key : never
 }[keyof Model]
 
 /**
  * Returns relationship model instance or array of instances based
  * upon the relationship type
  */
-export type GetRelationModelInstance<Relation extends ModelRelations> =
+export type GetRelationModelInstance<Relation extends ModelRelations<LucidModel, LucidModel>> =
   Relation['__opaque_type'] extends 'hasOne' | 'belongsTo'
     ? Relation['instance']
     : Relation['instance'][]
@@ -59,7 +58,11 @@ export type GetRelationModelInstance<Relation extends ModelRelations> =
  * Options accepted when defining a new relationship. Certain
  * relationships like `manyToMany` have their own options
  */
-export type RelationOptions<Related extends ModelRelations> = {
+export type RelationOptions<
+  RelatedModel extends LucidModel,
+  ParentModel extends LucidModel,
+  Related extends ModelRelations<RelatedModel, ParentModel>,
+> = {
   localKey?: string
   foreignKey?: string
   serializeAs?: string | null
@@ -69,7 +72,7 @@ export type RelationOptions<Related extends ModelRelations> = {
 /**
  * Options accepted by many to many relationship
  */
-export type ManyToManyRelationOptions<Related extends ModelRelations> = {
+export type ManyToManyRelationOptions<Related extends ModelRelations<LucidModel, LucidModel>> = {
   pivotTable?: string
   localKey?: string
   pivotForeignKey?: string
@@ -89,7 +92,11 @@ export type ManyToManyRelationOptions<Related extends ModelRelations> = {
 /**
  * Options accepted by through relationships
  */
-export type ThroughRelationOptions<Related extends ModelRelations> = RelationOptions<Related> & {
+export type ThroughRelationOptions<
+  RelatedModel extends LucidModel,
+  ParentModel extends LucidModel,
+  Related extends ModelRelations<RelatedModel, ParentModel>,
+> = RelationOptions<RelatedModel, ParentModel, Related> & {
   throughLocalKey?: string
   throughForeignKey?: string
   throughModel: () => LucidModel
@@ -106,7 +113,7 @@ export type ThroughRelationOptions<Related extends ModelRelations> = RelationOpt
  */
 export type HasOneDecorator = <RelatedModel extends LucidModel>(
   model: () => RelatedModel,
-  options?: RelationOptions<HasOne<RelatedModel>>
+  options?: RelationOptions<RelatedModel, LucidModel, HasOne<RelatedModel, LucidModel>>
 ) => TypedDecorator<HasOne<RelatedModel>>
 
 /**
@@ -114,7 +121,7 @@ export type HasOneDecorator = <RelatedModel extends LucidModel>(
  */
 export type HasManyDecorator = <RelatedModel extends LucidModel>(
   model: () => RelatedModel,
-  options?: RelationOptions<HasOne<RelatedModel>>
+  options?: RelationOptions<RelatedModel, LucidModel, HasOne<RelatedModel, LucidModel>>
 ) => TypedDecorator<HasMany<RelatedModel>>
 
 /**
@@ -122,7 +129,7 @@ export type HasManyDecorator = <RelatedModel extends LucidModel>(
  */
 export type BelongsToDecorator = <RelatedModel extends LucidModel>(
   model: () => RelatedModel,
-  options?: RelationOptions<HasOne<RelatedModel>>
+  options?: RelationOptions<RelatedModel, LucidModel, HasOne<RelatedModel, LucidModel>>
 ) => TypedDecorator<BelongsTo<RelatedModel>>
 
 /**
@@ -138,7 +145,10 @@ export type ManyToManyDecorator = <RelatedModel extends LucidModel>(
  */
 export type HasManyThroughDecorator = <RelatedModel extends LucidModel>(
   model: [() => RelatedModel, () => LucidModel],
-  column?: Omit<ThroughRelationOptions<HasManyThrough<RelatedModel>>, 'throughModel'>
+  column?: Omit<
+    ThroughRelationOptions<RelatedModel, LucidModel, HasManyThrough<RelatedModel>>,
+    'throughModel'
+  >
 ) => TypedDecorator<HasManyThrough<RelatedModel>>
 
 /**
@@ -243,12 +253,15 @@ export type HasManyThrough<
  * is to distinguish relationship properties from other model
  * properties.
  */
-export type ModelRelations =
-  | HasOne<LucidModel, LucidModel>
-  | HasMany<LucidModel, LucidModel>
-  | BelongsTo<LucidModel, LucidModel>
-  | ManyToMany<LucidModel, LucidModel>
-  | HasManyThrough<LucidModel, LucidModel>
+export type ModelRelations<
+  RelatedModel extends LucidModel,
+  ParentModel extends LucidModel = LucidModel,
+> =
+  | HasOne<RelatedModel, ParentModel>
+  | HasMany<RelatedModel, ParentModel>
+  | BelongsTo<RelatedModel, ParentModel>
+  | ManyToMany<RelatedModel, ParentModel>
+  | HasManyThrough<RelatedModel, ParentModel>
 
 /**
  * ------------------------------------------------------
@@ -877,7 +890,7 @@ interface WhereInPivot<Builder> {
   (K: string[], value: StrictValues[][]): Builder
   (
     k: string,
-    subquery: ChainableContract | QueryCallback<Builder> | RawBuilderContract | RawQuery
+    subquery: ChainableContract | ((builder: Builder) => void) | RawBuilderContract | RawQuery
   ): Builder
   (k: string[], subquery: ChainableContract | RawBuilderContract | RawQuery): Builder
 }
@@ -961,7 +974,9 @@ export interface ManyToManySubQueryBuilderContract<Related extends LucidModel>
 export interface WithCount<Model extends LucidRow, Builder> {
   <
     Name extends ExtractModelRelations<Model>,
-    RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['subQuery'] : never,
+    RelatedBuilder = Model[Name] extends ModelRelations<LucidModel, LucidModel>
+      ? Model[Name]['subQuery']
+      : never,
   >(
     relation: Name,
     callback?: (builder: RelatedBuilder) => void
@@ -974,7 +989,9 @@ export interface WithCount<Model extends LucidRow, Builder> {
 export interface WithAggregate<Model extends LucidRow, Builder> {
   <
     Name extends ExtractModelRelations<Model>,
-    RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['subQuery'] : never,
+    RelatedBuilder = Model[Name] extends ModelRelations<LucidModel, LucidModel>
+      ? Model[Name]['subQuery']
+      : never,
   >(
     relation: Name,
     callback: (builder: RelatedBuilder) => void
@@ -998,7 +1015,9 @@ export interface Has<Model extends LucidRow, Builder> {
 export interface WhereHas<Model extends LucidRow, Builder> {
   <
     Name extends ExtractModelRelations<Model>,
-    RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['subQuery'] : never,
+    RelatedBuilder = Model[Name] extends ModelRelations<LucidModel, LucidModel>
+      ? Model[Name]['subQuery']
+      : never,
   >(
     relation: Name,
     callback: (builder: RelatedBuilder) => void,
@@ -1019,7 +1038,9 @@ export interface WhereHas<Model extends LucidRow, Builder> {
 export interface Preload<Model extends LucidRow, Builder> {
   <
     Name extends ExtractModelRelations<Model>,
-    RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['builder'] : never,
+    RelatedBuilder = Model[Name] extends ModelRelations<LucidModel, LucidModel>
+      ? Model[Name]['builder']
+      : never,
   >(
     relation: Name,
     callback?: (builder: RelatedBuilder) => void

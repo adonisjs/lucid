@@ -37,6 +37,7 @@ import {
   WithAggregate,
   WithCount,
 } from './relations.js'
+import { Container } from '@adonisjs/core/container'
 
 /**
  * ------------------------------------------------------
@@ -106,7 +107,7 @@ export type ModelAttributes<Model extends LucidRow> = Model['$columns'] extends 
  */
 export type ExtractScopes<Model extends LucidModel> = {
   [Scope in keyof PickProperties<Model, QueryScope<Model, QueryScopeCallback<Model>>>]: (
-    ...args: Model[Scope] extends QueryScopeCallback ? OmitFirst<Model[Scope]> : never
+    ...args: Model[Scope] extends QueryScopeCallback<Model> ? OmitFirst<Model[Scope]> : never
   ) => ExtractScopes<Model>
 }
 
@@ -237,9 +238,9 @@ export type ComputedOptions = {
  * Options accepted by the Model.$addRelation method
  */
 export type ModelRelationOptions =
-  | RelationOptions<ModelRelations>
-  | ManyToManyRelationOptions<ModelRelations>
-  | ThroughRelationOptions<ModelRelations>
+  | RelationOptions<LucidModel, LucidModel, ModelRelations<LucidModel, LucidModel>>
+  | ManyToManyRelationOptions<ModelRelations<LucidModel, LucidModel>>
+  | ThroughRelationOptions<LucidModel, LucidModel, ModelRelations<LucidModel, LucidModel>>
 
 /**
  * Signature for column decorator function
@@ -638,7 +639,9 @@ export interface LucidRow {
   loadAggregate: <
     Self extends this,
     Name extends ExtractModelRelations<Self>,
-    RelatedBuilder = Self[Name] extends ModelRelations ? Self[Name]['subQuery'] : never,
+    RelatedBuilder = Self[Name] extends ModelRelations<LucidModel, LucidModel>
+      ? Self[Name]['subQuery']
+      : never,
   >(
     name: Name,
     callback: (builder: RelatedBuilder) => void
@@ -650,7 +653,9 @@ export interface LucidRow {
   loadCount: <
     Self extends this,
     Name extends ExtractModelRelations<Self>,
-    RelatedBuilder = Self[Name] extends ModelRelations ? Self[Name]['subQuery'] : never,
+    RelatedBuilder = Self[Name] extends ModelRelations<LucidModel, LucidModel>
+      ? Self[Name]['subQuery']
+      : never,
   >(
     name: Name,
     callback?: (builder: RelatedBuilder) => void
@@ -703,7 +708,7 @@ export interface LucidRow {
    */
   related<Name extends ExtractModelRelations<this>>(
     relation: Name
-  ): this[Name] extends ModelRelations ? this[Name]['client'] : never
+  ): this[Name] extends ModelRelations<LucidModel, LucidModel> ? this[Name]['client'] : never
 }
 
 /**
@@ -725,6 +730,8 @@ export interface LucidModel {
    * are ignored
    */
   readonly booted: boolean
+
+  $container: Container<any>
 
   /**
    * A map of defined columns
@@ -847,7 +854,7 @@ export interface LucidModel {
   $getRelation<Model extends LucidModel, Name extends ExtractModelRelations<InstanceType<Model>>>(
     this: Model,
     name: Name
-  ): InstanceType<Model>[Name] extends ModelRelations
+  ): InstanceType<Model>[Name] extends ModelRelations<Model, LucidModel>
     ? InstanceType<Model>[Name]['client']['relation']
     : RelationshipsContract
   $getRelation<Model extends LucidModel>(this: Model, name: string): RelationshipsContract
@@ -1153,7 +1160,7 @@ export interface NamingStrategyContract {
    * The local key for a given model relationship
    */
   relationLocalKey(
-    relation: ModelRelations['__opaque_type'],
+    relation: ModelRelations<LucidModel, LucidModel>['__opaque_type'],
     model: LucidModel,
     relatedModel: LucidModel,
     relationName: string
@@ -1163,7 +1170,7 @@ export interface NamingStrategyContract {
    * The foreign key for a given model relationship
    */
   relationForeignKey(
-    relation: ModelRelations['__opaque_type'],
+    relation: ModelRelations<LucidModel, LucidModel>['__opaque_type'],
     model: LucidModel,
     relatedModel: LucidModel,
     relationName: string
