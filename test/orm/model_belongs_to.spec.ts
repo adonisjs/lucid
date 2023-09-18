@@ -7,15 +7,12 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
 import { test } from '@japa/runner'
-import type { BelongsTo } from '@ioc:Adonis/Lucid/Orm'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import type { BelongsTo } from '../../adonis-typings/relations.js'
+import { scope } from '../../src/orm/base_model/index.js'
 
-import { scope } from '../../src/Helpers/scope'
-import { column, belongsTo } from '../../src/Orm/Decorators'
-import { BelongsToQueryBuilder } from '../../src/Orm/Relations/BelongsTo/QueryBuilder'
+import { column, belongsTo } from '../../src/orm/decorators/index.js'
+import { BelongsToQueryBuilder } from '../../src/orm/relations/belongs_to/query_builder.js'
 import {
   ormAdapter,
   getBaseModel,
@@ -23,30 +20,26 @@ import {
   cleanup,
   resetTables,
   getDb,
-  setupApplication,
-  fs,
-} from '../../test-helpers'
-
-let db: ReturnType<typeof getDb>
-let app: ApplicationContract
-let BaseModel: ReturnType<typeof getBaseModel>
+} from '../../test-helpers/index.js'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
 test.group('Model | BelongsTo | Options', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('raise error when localKey is missing', ({ assert }) => {
+  test('raise error when localKey is missing', async ({ fs, assert }) => {
     assert.plan(1)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     try {
       class User extends BaseModel {}
@@ -54,33 +47,36 @@ test.group('Model | BelongsTo | Options', (group) => {
 
       class Profile extends BaseModel {
         @belongsTo(() => User)
-        public user: BelongsTo<typeof User>
+        declare user: BelongsTo<typeof User>
       }
 
       Profile.boot()
       Profile.$getRelation('user')!.boot()
     } catch ({ message }) {
-      assert.equal(
-        message,
-        'E_MISSING_MODEL_ATTRIBUTE: "Profile.user" expects "id" to exist on "User" model, but is missing'
-      )
+      assert.equal(message, '"Profile.user" expects "id" to exist on "User" model, but is missing')
     }
   })
 
-  test('raise error when foreignKey is missing', ({ assert }) => {
+  test('raise error when foreignKey is missing', async ({ fs, assert }) => {
     assert.plan(1)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     try {
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
       }
 
       User.boot()
 
       class Profile extends BaseModel {
         @belongsTo(() => User)
-        public user: BelongsTo<typeof User>
+        declare user: BelongsTo<typeof User>
       }
 
       Profile.boot()
@@ -88,23 +84,29 @@ test.group('Model | BelongsTo | Options', (group) => {
     } catch ({ message }) {
       assert.equal(
         message,
-        'E_MISSING_MODEL_ATTRIBUTE: "Profile.user" expects "userId" to exist on "Profile" model, but is missing'
+        '"Profile.user" expects "userId" to exist on "Profile" model, but is missing'
       )
     }
   })
 
-  test('use primary key is as the local key', ({ assert }) => {
+  test('use primary key is as the local key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     Profile.$getRelation('user')!.boot()
@@ -112,21 +114,27 @@ test.group('Model | BelongsTo | Options', (group) => {
     assert.equal(Profile.$getRelation('user')!['localKey'], 'id')
   })
 
-  test('use custom defined local key', ({ assert }) => {
+  test('use custom defined local key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column({ columnName: 'user_uid' })
-      public uid: number
+      declare uid: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User, { localKey: 'uid' })
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     Profile.$getRelation('user')!.boot()
@@ -134,37 +142,49 @@ test.group('Model | BelongsTo | Options', (group) => {
     assert.equal(Profile.$getRelation('user')!['localKey'], 'uid')
   })
 
-  test('compute foreign key from model name and primary key', ({ assert }) => {
+  test('compute foreign key from model name and primary key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     Profile.$getRelation('user')!.boot()
 
-    assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userId')
+    assert.equal(Profile.$getRelation('user')['foreignKey'], 'userId')
   })
 
-  test('use pre defined foreign key', ({ assert }) => {
+  test('use pre defined foreign key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column({ columnName: 'user_id' })
-      public userUid: number
+      declare userUid: number
 
       @belongsTo(() => User, { foreignKey: 'userUid' })
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     Profile.$getRelation('user')!.boot()
@@ -172,18 +192,24 @@ test.group('Model | BelongsTo | Options', (group) => {
     assert.equal(Profile.$getRelation('user')!['foreignKey'], 'userUid')
   })
 
-  test('clone relationship instance with options', ({ assert }) => {
+  test('clone relationship instance with options', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class BaseProfile extends BaseModel {
       @column({ columnName: 'user_id' })
-      public userUid: number
+      declare userUid: number
 
       @belongsTo(() => User, { foreignKey: 'userUid' })
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     class Profile extends BaseProfile {}
@@ -199,30 +225,31 @@ test.group('Model | BelongsTo | Options', (group) => {
 
 test.group('Model | BelongsTo | Set Relations', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('set related model instance', ({ assert }) => {
+  test('set related model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     Profile.$getRelation('user')!.boot()
@@ -237,18 +264,24 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
     assert.deepEqual(profile.user, user)
   })
 
-  test('push related model instance', ({ assert }) => {
+  test('push related model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     Profile.$getRelation('user')!.boot()
@@ -270,18 +303,24 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
     assert.deepEqual(profile.user, user1)
   })
 
-  test('set many of related instances', ({ assert }) => {
+  test('set many of related instances', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     Profile.$getRelation('user')!.boot()
@@ -310,34 +349,35 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
 
 test.group('Model | BelongsTo | bulk operations', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sql for selecting related rows', async ({ assert }) => {
+  test('generate correct sql for selecting related rows', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.table('profiles').insert({ user_id: 4, display_name: 'Hvirk' })
@@ -357,18 +397,24 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for selecting many related rows', async ({ assert }) => {
+  test('generate correct sql for selecting many related rows', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.table('profiles').multiInsert([
@@ -393,18 +439,24 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for updating related row', async ({ assert }) => {
+  test('generate correct sql for updating related row', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.table('profiles').insert({ user_id: 2, display_name: 'virk' })
@@ -430,18 +482,24 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for deleting related row', async ({ assert }) => {
+  test('generate correct sql for deleting related row', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.table('profiles').insert({ user_id: 2, display_name: 'virk' })
@@ -464,43 +522,44 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
 
 test.group('Model | BelongsTo | sub queries', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sub query for selecting rows', async ({ assert }) => {
+  test('generate correct sub query for selecting rows', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     Profile.boot()
@@ -518,27 +577,33 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('create aggregate query', async ({ assert }) => {
+  test('create aggregate query', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     Profile.boot()
@@ -561,27 +626,33 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('allow selecting custom columns', async ({ assert }) => {
+  test('allow selecting custom columns', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     Profile.boot()
@@ -604,19 +675,25 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct self relationship subquery', async ({ assert }) => {
+  test('generate correct self relationship subquery', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public username: string
+      declare username: string
 
       @belongsTo(() => User)
-      public child: BelongsTo<typeof User>
+      declare child: BelongsTo<typeof User>
     }
 
     User.boot()
@@ -639,27 +716,33 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('raise exception when trying to execute the query', async ({ assert }) => {
+  test('raise exception when trying to execute the query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     Profile.boot()
@@ -681,32 +764,38 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     assert.throws(firstOrFail, 'Cannot execute relationship subqueries')
   })
 
-  test('run onQuery method when defined', async ({ assert }) => {
+  test('run onQuery method when defined', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User, {
         onQuery: (query) => query.where('isActive', false),
       })
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public isActive: boolean
+      declare isActive: boolean
 
       @column()
-      public username: string
+      declare username: string
     }
 
     Profile.boot()
@@ -730,34 +819,35 @@ test.group('Model | BelongsTo | sub queries', (group) => {
 
 test.group('Model | BelongsTo | preload', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('preload relationship', async ({ assert }) => {
+  test('preload relationship', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
@@ -771,18 +861,24 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.equal(profiles[0].user.id, profiles[0].userId)
   })
 
-  test('set property value to null when no preload rows were found', async ({ assert }) => {
+  test('set property value to null when no preload rows were found', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: null })
@@ -795,18 +891,24 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.isNull(profiles[0].user)
   })
 
-  test('set value to null when serializing', async ({ assert }) => {
+  test('set value to null when serializing', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: null })
@@ -819,18 +921,24 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.isNull(profiles[0].toJSON().user)
   })
 
-  test('preload relationship for many rows', async ({ assert }) => {
+  test('preload relationship for many rows', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
@@ -856,18 +964,24 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.equal(profiles[1].user.id, profiles[1].userId)
   })
 
-  test('add runtime constraints to related query', async ({ assert }) => {
+  test('add runtime constraints to related query', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
@@ -895,21 +1009,27 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.isNull(profiles[1].user)
   })
 
-  test('cherry pick columns during preload', async ({ assert }) => {
+  test('cherry pick columns during preload', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
@@ -938,21 +1058,27 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.deepEqual(profiles[1].user.$extras, {})
   })
 
-  test('do not repeat fk when already defined', async ({ assert }) => {
+  test('do not repeat fk when already defined', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
@@ -981,23 +1107,29 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.deepEqual(profiles[1].user.$extras, {})
   })
 
-  test('raise exception when local key is not selected', async ({ assert }) => {
+  test('raise exception when local key is not selected', async ({ assert, fs }) => {
     assert.plan(1)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
@@ -1030,24 +1162,30 @@ test.group('Model | BelongsTo | preload', (group) => {
     }
   })
 
-  test('preload using model instance', async ({ assert }) => {
+  test('preload using model instance', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db
@@ -1077,38 +1215,44 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.equal(profile.user.id, profile.userId)
   })
 
-  test('preload nested relations', async ({ assert }) => {
+  test('preload nested relations', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     class Identity extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public profileId: number
+      declare profileId: number
 
       @column()
-      public identityName: string
+      declare identityName: string
 
       @belongsTo(() => Profile)
-      public profile: BelongsTo<typeof Profile>
+      declare profile: BelongsTo<typeof Profile>
     }
 
     await db
@@ -1152,38 +1296,44 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.instanceOf(identity!.profile!.user, User)
   })
 
-  test('preload nested relations using model instance', async ({ assert }) => {
+  test('preload nested relations using model instance', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     class Identity extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public profileId: number
+      declare profileId: number
 
       @column()
-      public identityName: string
+      declare identityName: string
 
       @belongsTo(() => Profile)
-      public profile: BelongsTo<typeof Profile>
+      declare profile: BelongsTo<typeof Profile>
     }
 
     await db
@@ -1227,38 +1377,44 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.instanceOf(identity!.profile!.user, User)
   })
 
-  test('pass main query options down the chain', async ({ assert }) => {
+  test('pass main query options down the chain', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     class Identity extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public profileId: number
+      declare profileId: number
 
       @column()
-      public identityName: string
+      declare identityName: string
 
       @belongsTo(() => Profile)
-      public profile: BelongsTo<typeof Profile>
+      declare profile: BelongsTo<typeof Profile>
     }
 
     await db
@@ -1305,55 +1461,24 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.equal(identity!.profile.$options!.connection, 'secondary')
     assert.equal(identity!.profile.user.$options!.connection, 'secondary')
   })
-
-  test('pass relationship metadata to the profiler', async ({ assert }) => {
-    assert.plan(1)
+  test('work fine when foreign key is null', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
-    }
-
-    const profiler = app.profiler
-
-    let profilerPacketIndex = 0
-
-    profiler.process((packet) => {
-      profilerPacketIndex++
-      if (profilerPacketIndex === 4) {
-        assert.deepEqual(packet.data.relation, {
-          model: 'Profile',
-          relatedModel: 'User',
-          type: 'belongsTo',
-        })
-      }
-    })
-
-    await db.insertQuery().table('users').insert({ username: 'virk' })
-    await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: 1 })
-    await Profile.query({ profiler }).preload('user')
-  })
-
-  test('work fine when foreign key is null', async ({ assert }) => {
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-    }
-
-    class Profile extends BaseModel {
-      @column()
-      public userId: number
-
-      @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: null })
@@ -1366,18 +1491,24 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.isNull(profiles[0].user)
   })
 
-  test('work fine during lazy load when foreign key is null', async ({ assert }) => {
+  test('work fine during lazy load when foreign key is null', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.insertQuery().table('profiles').insert({ display_name: 'Hvirk', user_id: null })
@@ -1391,18 +1522,24 @@ test.group('Model | BelongsTo | preload', (group) => {
     assert.isNull(profiles[0].user)
   })
 
-  test('do not run preload query when parent rows are empty', async ({ assert }) => {
+  test('do not run preload query when parent rows are empty', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     Profile.boot()
@@ -1416,34 +1553,35 @@ test.group('Model | BelongsTo | preload', (group) => {
 
 test.group('Model | BelongsTo | withCount', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get count of a relationship rows', async ({ assert }) => {
+  test('get count of a relationship rows', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
@@ -1457,21 +1595,27 @@ test.group('Model | BelongsTo | withCount', (group) => {
     assert.equal(profiles[0].$extras.user_count, 1)
   })
 
-  test('allow cherry picking columns', async ({ assert }) => {
+  test('allow cherry picking columns', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
@@ -1485,21 +1629,27 @@ test.group('Model | BelongsTo | withCount', (group) => {
     assert.deepEqual(profiles[0].$attributes, { displayName: 'Hvirk' })
   })
 
-  test('lazy load relationship row', async ({ assert }) => {
+  test('lazy load relationship row', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.insertQuery().table('users').insert({ username: 'virk' })
@@ -1516,34 +1666,35 @@ test.group('Model | BelongsTo | withCount', (group) => {
 
 test.group('Model | BelongsTo | has', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async ({ assert }) => {
+  test('limit rows to the existance of relationship', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db
@@ -1565,37 +1716,38 @@ test.group('Model | BelongsTo | has', (group) => {
 
 test.group('Model | BelongsTo | whereHas', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async ({ assert }) => {
+  test('limit rows to the existance of relationship', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db
@@ -1632,40 +1784,41 @@ test.group('Model | BelongsTo | whereHas', (group) => {
 
 test.group('Model | BelongsTo | associate', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('associate related instance', async ({ assert }) => {
+  test('associate related instance', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     const user = new User()
@@ -1684,26 +1837,32 @@ test.group('Model | BelongsTo | associate', (group) => {
     assert.equal(profiles[0].user_id, user.id)
   })
 
-  test('wrap associate call inside transaction', async ({ assert }) => {
+  test('wrap associate call inside transaction', async ({ assert, fs }) => {
     assert.plan(3)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     const user = new User()
@@ -1726,43 +1885,44 @@ test.group('Model | BelongsTo | associate', (group) => {
 
 test.group('Model | BelongsTo | dissociate', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('dissociate relation', async ({ assert }) => {
+  test('dissociate relation', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     class Profile extends BaseModel {
       @column()
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     const [row] = await db
@@ -1787,36 +1947,37 @@ test.group('Model | BelongsTo | dissociate', (group) => {
 
 test.group('Model | BelongsTo | bulk operations', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('disallow pagination', async ({ assert }) => {
+  test('disallow pagination', async ({ assert, fs }) => {
     assert.plan(1)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     await db.table('profiles').insert({ user_id: 4, display_name: 'Hvirk' })
@@ -1832,41 +1993,42 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
 
 test.group('Model | BelongsTo | clone', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('clone related query builder', async ({ assert }) => {
+  test('clone related query builder', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
     User.boot()
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 
@@ -1882,31 +2044,32 @@ test.group('Model | BelongsTo | clone', (group) => {
 
 test.group('Model | BelongsTo | scopes', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply scopes during eagerload', async ({ assert }) => {
+  test('apply scopes during eagerload', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
-      public static fromCountry = scope((query, countryId) => {
+      static fromCountry = scope((query, countryId) => {
         query.where('country_id', countryId)
       })
     }
@@ -1914,13 +2077,13 @@ test.group('Model | BelongsTo | scopes', (group) => {
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 
@@ -1938,15 +2101,21 @@ test.group('Model | BelongsTo | scopes', (group) => {
     assert.instanceOf(profileWithoutScope?.user, User)
   })
 
-  test('apply scopes on related query', async ({ assert }) => {
+  test('apply scopes on related query', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
-      public static fromCountry = scope((query, countryId) => {
+      static fromCountry = scope((query, countryId) => {
         query.where('country_id', countryId)
       })
     }
@@ -1954,13 +2123,13 @@ test.group('Model | BelongsTo | scopes', (group) => {
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 
@@ -1984,45 +2153,46 @@ test.group('Model | BelongsTo | scopes', (group) => {
 
 test.group('Model | BelongsTo | onQuery', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('invoke onQuery method when preloading relationship', async ({ assert }) => {
+  test('invoke onQuery method when preloading relationship', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
     User.boot()
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User, {
         onQuery: (builder) => {
           builder.where('country_id', 1)
         },
       })
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 
@@ -2033,24 +2203,30 @@ test.group('Model | BelongsTo | onQuery', (group) => {
     assert.isNull(profile?.user)
   })
 
-  test('do not run onQuery hook on subqueries', async ({ assert }) => {
+  test('do not run onQuery hook on subqueries', async ({ assert, fs }) => {
     assert.plan(2)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
     User.boot()
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User, {
         onQuery: (builder) => {
@@ -2058,7 +2234,7 @@ test.group('Model | BelongsTo | onQuery', (group) => {
           builder.where('country_id', 1)
         },
       })
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 
@@ -2074,29 +2250,35 @@ test.group('Model | BelongsTo | onQuery', (group) => {
     assert.isNull(profile?.user)
   })
 
-  test('invoke onQuery method on related query builder', async ({ assert }) => {
+  test('invoke onQuery method on related query builder', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
     User.boot()
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User, {
         onQuery: (builder) => {
           builder.where('country_id', 1)
         },
       })
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 
@@ -2107,29 +2289,35 @@ test.group('Model | BelongsTo | onQuery', (group) => {
     assert.isNull(user)
   })
 
-  test('do not run onQuery hook on related query builder subqueries', async ({ assert }) => {
+  test('do not run onQuery hook on related query builder subqueries', async ({ assert, fs }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
     User.boot()
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User, {
         onQuery: (builder) => {
           builder.where('country_id', 1)
         },
       })
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 

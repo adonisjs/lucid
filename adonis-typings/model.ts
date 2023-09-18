@@ -149,9 +149,10 @@ export type CherryPick = {
  * List of events for which a model will trigger hooks
  */
 export type EventsList = 'save' | 'create' | 'update' | 'delete' | 'fetch' | 'find' | 'paginate'
-export type HooksHandler<Data, Event extends EventsList> =
-  | ((data: Data, event: Event) => Promise<void> | void)
-  | string
+export type HooksHandler<Data, Event extends EventsList> = (
+  data: Data,
+  event: Event
+) => Promise<void> | void
 
 /**
  * ------------------------------------------------------
@@ -854,7 +855,7 @@ export interface LucidModel {
   $getRelation<Model extends LucidModel, Name extends ExtractModelRelations<InstanceType<Model>>>(
     this: Model,
     name: Name
-  ): InstanceType<Model>[Name] extends ModelRelations<Model, LucidModel>
+  ): InstanceType<Model>[Name] extends ModelRelations<LucidModel, LucidModel>
     ? InstanceType<Model>[Name]['client']['relation']
     : RelationshipsContract
   $getRelation<Model extends LucidModel>(this: Model, name: string): RelationshipsContract

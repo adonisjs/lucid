@@ -30,6 +30,7 @@ import { ReferenceBuilder } from './static_builder/reference.js'
 import { SimplePaginator } from './paginator/simple_paginator.js'
 import { DatabaseQueryBuilder } from './query_builder/database.js'
 import { ModelQueryBuilder } from '../orm/query_builder/index.js'
+import { LucidModel } from '../../adonis-typings/model.js'
 
 /**
  * Database class exposes the API to manage multiple connections and obtain an instance
@@ -77,18 +78,8 @@ export class Database extends Macroable {
     this.manager = new ConnectionManager(this.logger, this.emitter)
     this.primaryConnectionName = this.config.connection
 
-    this.validateConfig()
     this.registerConnections()
     this.findIfHealthChecksAreEnabled()
-  }
-
-  /**
-   * Validate config at runtime
-   */
-  private validateConfig() {
-    // const validator = new ManagerConfigValidator(this.config, 'database', 'config/database')
-    // validator.validateDefault('connection')
-    // validator.validateList('connections', 'connection')
   }
 
   /**
@@ -188,8 +179,8 @@ export class Database extends Macroable {
   /**
    * Returns query builder. Optionally one can define the mode as well
    */
-  query(options?: DatabaseClientOptions) {
-    return this.connection(this.primaryConnectionName, options).query()
+  query<Result = any>(options?: DatabaseClientOptions) {
+    return this.connection(this.primaryConnectionName, options).query<Result>()
   }
 
   /**
@@ -197,15 +188,15 @@ export class Database extends Macroable {
    * hence it doesn't matter, since in both `dual` and `write` mode,
    * the `write` connection is always used.
    */
-  insertQuery(options?: DatabaseClientOptions) {
-    return this.connection(this.primaryConnectionName, options).insertQuery()
+  insertQuery<ReturnColumns = any>(options?: DatabaseClientOptions) {
+    return this.connection(this.primaryConnectionName, options).insertQuery<ReturnColumns>()
   }
 
   /**
    * Returns a query builder instance for a given model.
    */
-  modelQuery(model: any, options?: DatabaseClientOptions) {
-    return this.connection(this.primaryConnectionName, options).modelQuery(model)
+  modelQuery<T extends LucidModel, Result = T>(model: any, options?: DatabaseClientOptions) {
+    return this.connection(this.primaryConnectionName, options).modelQuery<T, Result>(model)
   }
 
   /**
@@ -213,8 +204,8 @@ export class Database extends Macroable {
    * defined the `read/write` mode in which to execute the
    * query
    */
-  rawQuery(sql: string, bindings?: any, options?: DatabaseClientOptions) {
-    return this.connection(this.primaryConnectionName, options).rawQuery(sql, bindings)
+  rawQuery<Result = any>(sql: string, bindings?: any, options?: DatabaseClientOptions) {
+    return this.connection(this.primaryConnectionName, options).rawQuery<Result>(sql, bindings)
   }
 
   /**
@@ -236,31 +227,37 @@ export class Database extends Macroable {
   /**
    * Returns instance of a query builder and selects the table
    */
-  from(table: any) {
+  from: QueryClientContract['from'] = (table) => {
     return this.connection().from(table)
   }
 
   /**
    * Returns insert query builder and selects the table
    */
-  table(table: any) {
-    return this.connection().table(table)
+  table<ReturnColumns = any>(table: any) {
+    return this.connection().table<ReturnColumns>(table)
   }
 
   /**
    * Returns a transaction instance on the default
    * connection
    */
-  transaction(
-    callback?:
-      | { isolationLevel?: IsolationLevels }
-      | ((trx: TransactionClientContract) => Promise<any>),
+  transaction<T>(
+    callback: (trx: TransactionClientContract) => Promise<T>,
     options?: { isolationLevel?: IsolationLevels }
-  ) {
+  ): Promise<T>
+  transaction(options?: { isolationLevel?: IsolationLevels }): Promise<TransactionClientContract>
+  transaction<T>(
+    callbackOrOptions?:
+      | ((trx: TransactionClientContract) => Promise<T>)
+      | { isolationLevel?: IsolationLevels },
+    options?: { isolationLevel?: IsolationLevels }
+  ): Promise<TransactionClientContract | T> {
     const client = this.connection()
-    return typeof callback === 'function'
-      ? client.transaction(callback, options)
-      : client.transaction(callback)
+
+    return typeof callbackOrOptions === 'function'
+      ? client.transaction(callbackOrOptions, options)
+      : client.transaction(callbackOrOptions)
   }
 
   /**

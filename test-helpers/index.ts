@@ -419,6 +419,7 @@ export function getDb(eventEmitter?: Emitter<any>) {
   test?.cleanup(() => {
     return db.manager.closeAll()
   })
+
   return db
 }
 

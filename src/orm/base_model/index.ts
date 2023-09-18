@@ -33,6 +33,10 @@ import {
   ModelAssignOptions,
   ModelAdapterOptions,
   ModelRelationOptions,
+  ModelQueryBuilderContract,
+  ModelPaginatorContract,
+  QueryScopeCallback,
+  QueryScope,
 } from '../../../adonis-typings/model.js'
 
 import {
@@ -595,17 +599,46 @@ class BaseModelImpl implements LucidRow {
   /**
    * Register before hooks
    */
-  static before(event: EventsList, handler: HooksHandler<any, EventsList>) {
+  static before<Model extends LucidModel, Event extends 'find' | 'fetch'>(
+    this: Model,
+    event: Event,
+    handler: HooksHandler<ModelQueryBuilderContract<Model>, Event>
+  ): void
+  static before<Model extends LucidModel>(
+    this: Model,
+    event: 'paginate',
+    handler: HooksHandler<
+      [ModelQueryBuilderContract<Model>, ModelQueryBuilderContract<Model>],
+      'paginate'
+    >
+  ): void
+  static before<Model extends LucidModel, Event extends EventsList>(
+    this: Model,
+    event: Event,
+    handler: HooksHandler<InstanceType<Model>, Event>
+  ): void {
     this.$hooks.add(`before:${event}`, handler)
-    return this
   }
 
   /**
    * Register after hooks
    */
-  static after(event: EventsList, handler: HooksHandler<any, EventsList>) {
+  static after<Model extends LucidModel>(
+    this: Model,
+    event: 'fetch',
+    handler: HooksHandler<InstanceType<Model>[], 'fetch'>
+  ): void
+  static after<Model extends LucidModel>(
+    this: Model,
+    event: 'paginate',
+    handler: HooksHandler<ModelPaginatorContract<InstanceType<Model>>, 'paginate'>
+  ): void
+  static after<Model extends LucidModel, Event extends EventsList>(
+    this: Model,
+    event: Event,
+    handler: HooksHandler<InstanceType<Model>, Event>
+  ): void {
     this.$hooks.add(`after:${event}`, handler)
-    return this
   }
 
   /**
@@ -2038,3 +2071,12 @@ class BaseModelImpl implements LucidRow {
 }
 
 export const BaseModel: LucidModel = BaseModelImpl
+
+/**
+ * Helper to mark a function as query scope
+ */
+export function scope<Model extends LucidModel, Callback extends QueryScopeCallback<Model>>(
+  callback: Callback
+): QueryScope<Model, Callback> {
+  return callback as QueryScope<Model, Callback>
+}

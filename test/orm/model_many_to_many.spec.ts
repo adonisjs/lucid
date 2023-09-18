@@ -7,48 +7,43 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
 import { test } from '@japa/runner'
-import type { ManyToMany } from '@ioc:Adonis/Lucid/Orm'
+import type { ManyToMany } from '../../adonis-typings/relations.js'
 
-import { scope } from '../../src/Helpers/scope'
-import { manyToMany, column } from '../../src/Orm/Decorators'
-import { ManyToManyQueryBuilder } from '../../src/Orm/Relations/ManyToMany/QueryBuilder'
+import { scope } from '../../src/orm/base_model/index.js'
+import { column, manyToMany } from '../../src/orm/decorators/index.js'
+import { ManyToManyQueryBuilder } from '../../src/orm/relations/many_to_many/query_builder.js'
+
 import {
-  fs,
   getDb,
   getBaseModel,
   ormAdapter,
   setup,
   resetTables,
   cleanup,
-  setupApplication,
-} from '../../test-helpers'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-import { DateTime } from 'luxon'
+} from '../../test-helpers/index.js'
 
-let db: ReturnType<typeof getDb>
-let app: ApplicationContract
-let BaseModel: ReturnType<typeof getBaseModel>
+import { DateTime } from 'luxon'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
 const sleep = (time: number) => new Promise<void>((resolve) => setTimeout(resolve, time))
 
 test.group('Model | ManyToMany | Options', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('raise error when localKey is missing', ({ assert }) => {
+  test('raise error when localKey is missing', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(1)
 
     try {
@@ -56,31 +51,34 @@ test.group('Model | ManyToMany | Options', (group) => {
 
       class User extends BaseModel {
         @manyToMany(() => Skill)
-        public skills: ManyToMany<typeof Skill>
+        declare skills: ManyToMany<typeof Skill>
       }
 
       User.boot()
       User.$getRelation('skills')!.boot()
     } catch ({ message }) {
-      assert.equal(
-        message,
-        'E_MISSING_MODEL_ATTRIBUTE: "User.skills" expects "id" to exist on "User" model, but is missing'
-      )
+      assert.equal(message, '"User.skills" expects "id" to exist on "User" model, but is missing')
     }
   })
 
-  test('use primary key as the local key', ({ assert }) => {
+  test('use primary key as the local key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.$getRelation('skills')!.boot()
@@ -89,21 +87,27 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['localKeyColumnName'], 'id')
   })
 
-  test('use custom defined local key', ({ assert }) => {
+  test('use custom defined local key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public uid: number
+      declare uid: number
 
       @manyToMany(() => Skill, { localKey: 'uid' })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -113,7 +117,13 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['localKeyColumnName'], 'uid')
   })
 
-  test('raise error when relatedKey is missing', ({ assert }) => {
+  test('raise error when relatedKey is missing', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(1)
 
     try {
@@ -122,34 +132,37 @@ test.group('Model | ManyToMany | Options', (group) => {
 
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @manyToMany(() => Skill)
-        public skills: ManyToMany<typeof Skill>
+        declare skills: ManyToMany<typeof Skill>
       }
 
       User.boot()
       User.$getRelation('skills')!.boot()
     } catch ({ message }) {
-      assert.equal(
-        message,
-        'E_MISSING_MODEL_ATTRIBUTE: "User.skills" expects "id" to exist on "Skill" model, but is missing'
-      )
+      assert.equal(message, '"User.skills" expects "id" to exist on "Skill" model, but is missing')
     }
   })
 
-  test('use related model primary key as the related key', ({ assert }) => {
+  test('use related model primary key as the related key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.$getRelation('skills')!.boot()
@@ -158,21 +171,27 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['relatedKeyColumnName'], 'id')
   })
 
-  test('use custom defined related key', ({ assert }) => {
+  test('use custom defined related key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public uid: number
+      declare uid: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, { relatedKey: 'uid' })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.$getRelation('skills')!.boot()
@@ -181,18 +200,24 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['relatedKeyColumnName'], 'uid')
   })
 
-  test('compute pivotForeignKey from table name + primary key', ({ assert }) => {
+  test('compute pivotForeignKey from table name + primary key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.$getRelation('skills')!.boot()
@@ -200,18 +225,24 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['pivotForeignKey'], 'user_id')
   })
 
-  test('use custom defined pivotForeignKey', ({ assert }) => {
+  test('use custom defined pivotForeignKey', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, { pivotForeignKey: 'user_uid' })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.$getRelation('skills')!.boot()
@@ -219,18 +250,27 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['pivotForeignKey'], 'user_uid')
   })
 
-  test('compute relatedPivotForeignKey from related model name + primary key', ({ assert }) => {
+  test('compute relatedPivotForeignKey from related model name + primary key', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -239,18 +279,24 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['pivotRelatedForeignKey'], 'skill_id')
   })
 
-  test('use custom defined relatedPivotForeignKey', ({ assert }) => {
+  test('use custom defined relatedPivotForeignKey', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, { pivotRelatedForeignKey: 'skill_uid' })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -259,18 +305,24 @@ test.group('Model | ManyToMany | Options', (group) => {
     assert.equal(User.$getRelation('skills')!['pivotRelatedForeignKey'], 'skill_uid')
   })
 
-  test('clone relationship instance with options', ({ assert }) => {
+  test('clone relationship instance with options', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class BaseUser extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, { pivotRelatedForeignKey: 'skill_uid' })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     class User extends BaseUser {}
@@ -284,30 +336,31 @@ test.group('Model | ManyToMany | Options', (group) => {
 
 test.group('Model | ManyToMany | Set Relations', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('set related model instance', ({ assert }) => {
+  test('set related model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.$getRelation('skills')!.boot()
@@ -318,18 +371,24 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
     assert.deepEqual(user.skills, [skill])
   })
 
-  test('push related model instance', ({ assert }) => {
+  test('push related model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.$getRelation('skills')!.boot()
@@ -343,21 +402,27 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
     assert.deepEqual(user.skills, [skill, skill1])
   })
 
-  test('set many of related instances', ({ assert }) => {
+  test('set many of related instances', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => User)
-      public users: ManyToMany<typeof User>
+      declare users: ManyToMany<typeof User>
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.$getRelation('skills')!.boot()
@@ -396,34 +461,35 @@ test.group('Model | ManyToMany | Set Relations', (group) => {
 
 test.group('Model | ManyToMany | bulk operations', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sql for selecting related rows', async ({ assert }) => {
+  test('generate correct sql for selecting related rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -448,18 +514,24 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for selecting related for many rows', async ({ assert }) => {
+  test('generate correct sql for selecting related for many rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').multiInsert([{ username: 'virk' }, { username: 'nikk' }])
@@ -487,20 +559,26 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('select extra columns', async ({ assert }) => {
+  test('select extra columns', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, {
         pivotColumns: ['score'],
       })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -526,18 +604,24 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('select extra columns at runtime', async ({ assert }) => {
+  test('select extra columns at runtime', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -563,18 +647,24 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for updating rows', async ({ assert }) => {
+  test('generate correct sql for updating rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -596,18 +686,24 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for deleting rows', async ({ assert }) => {
+  test('generate correct sql for deleting rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -627,23 +723,29 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('convert timestamps instance of Luxon', async ({ assert }) => {
+  test('convert timestamps instance of Luxon', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, {
         pivotTimestamps: true,
       })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db
@@ -680,34 +782,35 @@ test.group('Model | ManyToMany | bulk operations', (group) => {
 
 test.group('Model | ManyToMany | sub queries', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sub query for selecting rows', async ({ assert }) => {
+  test('generate correct sub query for selecting rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -726,18 +829,24 @@ test.group('Model | ManyToMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('create aggregate query', async ({ assert }) => {
+  test('create aggregate query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -761,18 +870,24 @@ test.group('Model | ManyToMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('allow selecting custom columns', async ({ assert }) => {
+  test('allow selecting custom columns', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -796,17 +911,23 @@ test.group('Model | ManyToMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct self relationship subquery', async ({ assert }) => {
+  test('generate correct self relationship subquery', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => User, {
         pivotTable: 'follows',
         pivotForeignKey: 'user_id',
         pivotRelatedForeignKey: 'following_user_id',
       })
-      public follows: ManyToMany<typeof User>
+      declare follows: ManyToMany<typeof User>
     }
 
     User.boot()
@@ -826,17 +947,23 @@ test.group('Model | ManyToMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where pivot clause when self relationship subQuery', async ({ assert }) => {
+  test('add where pivot clause when self relationship subQuery', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => User, {
         pivotTable: 'follows',
         pivotForeignKey: 'user_id',
         pivotRelatedForeignKey: 'following_user_id',
       })
-      public follows: ManyToMany<typeof User>
+      declare follows: ManyToMany<typeof User>
     }
 
     User.boot()
@@ -864,18 +991,24 @@ test.group('Model | ManyToMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('allow selecting custom pivot columns', async ({ assert }) => {
+  test('allow selecting custom pivot columns', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -899,23 +1032,29 @@ test.group('Model | ManyToMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('run onQuery method when defined', async ({ assert }) => {
+  test('run onQuery method when defined', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, {
         onQuery: (query) => query.where('name', 'Programming'),
       })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -940,34 +1079,35 @@ test.group('Model | ManyToMany | sub queries', (group) => {
 
 test.group('Model | Many To Many | aggregates', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get total of all related rows', async ({ assert }) => {
+  test('get total of all related rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -986,18 +1126,24 @@ test.group('Model | Many To Many | aggregates', (group) => {
     assert.deepEqual(Number(total[0].$extras.total), 2)
   })
 
-  test('select extra columns with count', async ({ assert }) => {
+  test('select extra columns with count', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -1027,18 +1173,24 @@ test.group('Model | Many To Many | aggregates', (group) => {
     assert.equal(Number(total[1].$extras.total), 1)
   })
 
-  test('select extra pivot columns with count', async ({ assert }) => {
+  test('select extra pivot columns with count', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -1072,37 +1224,38 @@ test.group('Model | Many To Many | aggregates', (group) => {
 
 test.group('Model | ManyToMany | preload', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('preload relation', async ({ assert }) => {
+  test('preload relation', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1132,23 +1285,29 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[0].skills[0].$extras.pivot_skill_id, 1)
   })
 
-  test('convert dates to luxon datetime instance during preload', async ({ assert }) => {
+  test('convert dates to luxon datetime instance during preload', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, {
         pivotTimestamps: true,
       })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1182,21 +1341,27 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime)
   })
 
-  test('preload relation for many', async ({ assert }) => {
+  test('preload relation for many', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1245,21 +1410,27 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[1].skills[0].$extras.pivot_skill_id, 2)
   })
 
-  test('preload relation using model instance', async ({ assert }) => {
+  test('preload relation using model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1314,23 +1485,30 @@ test.group('Model | ManyToMany | preload', (group) => {
 
   test('convert dates to luxon datetime instance when preload using model instance', async ({
     assert,
+    fs,
   }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, {
         pivotTimestamps: true,
       })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1366,24 +1544,30 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.instanceOf(users[0].skills[0].$extras.pivot_updated_at, DateTime)
   })
 
-  test('select extra pivot columns', async ({ assert }) => {
+  test('select extra pivot columns', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
 
       @column()
-      public proficiency: string
+      declare proficiency: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, { pivotColumns: ['proficiency'] })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1438,24 +1622,30 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
   })
 
-  test('select extra pivot columns at runtime', async ({ assert }) => {
+  test('select extra pivot columns at runtime', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
 
       @column()
-      public proficiency: string
+      declare proficiency: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1513,21 +1703,27 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.equal(users[1].skills[0].$extras.pivot_proficiency, 'beginner')
   })
 
-  test('cherry pick columns during preload', async ({ assert }) => {
+  test('cherry pick columns during preload', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1559,23 +1755,29 @@ test.group('Model | ManyToMany | preload', (group) => {
     assert.deepEqual(users[0].skills[0].$extras, { pivot_user_id: 1, pivot_skill_id: 1 })
   })
 
-  test('raise error when local key is not selected', async ({ assert }) => {
+  test('raise error when local key is not selected', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(1)
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1613,21 +1815,27 @@ test.group('Model | ManyToMany | preload', (group) => {
     }
   })
 
-  test('do not run preload query when parent rows are empty', async ({ assert }) => {
+  test('do not run preload query when parent rows are empty', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1641,37 +1849,38 @@ test.group('Model | ManyToMany | preload', (group) => {
 
 test.group('Model | ManyToMany | withCount', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get count of a relationship rows', async ({ assert }) => {
+  test('get count of a relationship rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1710,21 +1919,27 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[1].$extras.skills_count), 1)
   })
 
-  test('apply constraints to the withCount subquery', async ({ assert }) => {
+  test('apply constraints to the withCount subquery', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1767,21 +1982,27 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[1].$extras.skills_count), 0)
   })
 
-  test('allow subquery to have custom aggregates', async ({ assert }) => {
+  test('allow subquery to have custom aggregates', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1824,24 +2045,30 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[1].$extras.skillsCount), 1)
   })
 
-  test('allow cherry picking columns', async ({ assert }) => {
+  test('allow cherry picking columns', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1880,17 +2107,23 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(users[1].$attributes, { username: 'nikk' })
   })
 
-  test('get count of self relationship', async ({ assert }) => {
+  test('get count of self relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => User, {
         pivotTable: 'follows',
         pivotForeignKey: 'user_id',
         pivotRelatedForeignKey: 'following_user_id',
       })
-      public follows: ManyToMany<typeof User>
+      declare follows: ManyToMany<typeof User>
     }
 
     User.boot()
@@ -1932,24 +2165,30 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[3].$extras.follows_count), 0)
   })
 
-  test('define custom alias for the count', async ({ assert }) => {
+  test('define custom alias for the count', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -1993,29 +2232,35 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[1].$extras.mySkills), 1)
   })
 
-  test('get count of a nested relationship rows', async ({ assert }) => {
+  test('get count of a nested relationship rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     class Group extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => User)
-      public users: ManyToMany<typeof User>
+      declare users: ManyToMany<typeof User>
     }
 
     Group.boot()
@@ -2102,21 +2347,27 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(users[1].$extras.skills_count), 1)
   })
 
-  test('lazy load count of relationship rows', async ({ assert }) => {
+  test('lazy load count of relationship rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -2150,21 +2401,27 @@ test.group('Model | ManyToMany | withCount', (group) => {
     assert.deepEqual(Number(user.$extras.skills_count), 2)
   })
 
-  test('apply constraints to the loadCount subquery', async ({ assert }) => {
+  test('apply constraints to the loadCount subquery', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -2203,40 +2460,41 @@ test.group('Model | ManyToMany | withCount', (group) => {
 
 test.group('Model | ManyToMany | has', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async ({ assert }) => {
+  test('limit rows to the existance of relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -2269,24 +2527,30 @@ test.group('Model | ManyToMany | has', (group) => {
     assert.deepEqual(users[0].username, 'virk')
   })
 
-  test('define expected number of rows', async ({ assert }) => {
+  test('define expected number of rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -2326,40 +2590,41 @@ test.group('Model | ManyToMany | has', (group) => {
 
 test.group('Model | ManyToMany | whereHas', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async ({ assert }) => {
+  test('limit rows to the existance of relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -2404,24 +2669,30 @@ test.group('Model | ManyToMany | whereHas', (group) => {
     assert.deepEqual(users[0].username, 'virk')
   })
 
-  test('define expected number of rows', async ({ assert }) => {
+  test('define expected number of rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
@@ -2474,37 +2745,38 @@ test.group('Model | ManyToMany | whereHas', (group) => {
 if (process.env.DB !== 'mysql_legacy') {
   test.group('Model | ManyToMany | Group Limit', (group) => {
     group.setup(async () => {
-      app = await setupApplication()
-      db = getDb(app)
-      BaseModel = getBaseModel(ormAdapter(db), app)
       await setup()
     })
 
     group.teardown(async () => {
-      await db.manager.closeAll()
       await cleanup()
-      await fs.cleanup()
     })
 
     group.each.teardown(async () => {
       await resetTables()
     })
 
-    test('apply group limit', async ({ assert }) => {
+    test('apply group limit', async ({ fs, assert }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter, app)
+
       class Skill extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public name: string
+        declare name: string
       }
 
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @manyToMany(() => Skill)
-        public skills: ManyToMany<typeof Skill>
+        declare skills: ManyToMany<typeof Skill>
       }
 
       User.boot()
@@ -2569,21 +2841,27 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(users[1].skills[1].$extras.pivot_skill_id, 4)
     })
 
-    test('apply group limit with extra constraints', async ({ assert }) => {
+    test('apply group limit with extra constraints', async ({ fs, assert }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter, app)
+
       class Skill extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public name: string
+        declare name: string
       }
 
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @manyToMany(() => Skill)
-        public skills: ManyToMany<typeof Skill>
+        declare skills: ManyToMany<typeof Skill>
       }
 
       User.boot()
@@ -2692,21 +2970,27 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(users[1].skills[1].$extras.pivot_skill_id, 3)
     })
 
-    test('apply group limit and select custom columns', async ({ assert }) => {
+    test('apply group limit and select custom columns', async ({ fs, assert }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter, app)
+
       class Skill extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public name: string
+        declare name: string
       }
 
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @manyToMany(() => Skill)
-        public skills: ManyToMany<typeof Skill>
+        declare skills: ManyToMany<typeof Skill>
       }
 
       User.boot()
@@ -2823,21 +3107,27 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(users[1].skills[1].$extras.pivot_proficiency, 'Master')
     })
 
-    test('define custom order by clause', async ({ assert }) => {
+    test('define custom order by clause', async ({ fs, assert }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter, app)
+
       class Skill extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public name: string
+        declare name: string
       }
 
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @manyToMany(() => Skill)
-        public skills: ManyToMany<typeof Skill>
+        declare skills: ManyToMany<typeof Skill>
       }
 
       User.boot()
@@ -2955,21 +3245,27 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(users[1].skills[1].$extras.pivot_proficiency, 'Master')
     })
 
-    test('apply standard limit when not eagerloading', async ({ assert }) => {
+    test('apply standard limit when not eagerloading', async ({ fs, assert }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter, app)
+
       class Skill extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public name: string
+        declare name: string
       }
 
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @manyToMany(() => Skill)
-        public skills: ManyToMany<typeof Skill>
+        declare skills: ManyToMany<typeof Skill>
       }
 
       User.boot()
@@ -3022,21 +3318,27 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.deepEqual(bindings, knexBindings)
     })
 
-    test('apply standard order by when not eagerloading', async ({ assert }) => {
+    test('apply standard order by when not eagerloading', async ({ fs, assert }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter, app)
+
       class Skill extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public name: string
+        declare name: string
       }
 
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @manyToMany(() => Skill)
-        public skills: ManyToMany<typeof Skill>
+        declare skills: ManyToMany<typeof Skill>
       }
 
       User.boot()
@@ -3100,37 +3402,38 @@ if (process.env.DB !== 'mysql_legacy') {
 
 test.group('Model | ManyToMany | wherePivot', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('add where clause', async ({ assert }) => {
+  test('add where clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query.wherePivot('username', 'virk').toSQL()
 
@@ -3145,25 +3448,31 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where wrapped clause', async ({ assert }) => {
+  test('add where wrapped clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .where((builder) => builder.wherePivot('username', 'virk'))
@@ -3180,25 +3489,31 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where clause with operator', async ({ assert }) => {
+  test('add where clause with operator', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query.wherePivot('age', '>', 22).toSQL()
 
@@ -3213,25 +3528,31 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where clause as a raw query', async ({ assert }) => {
+  test('add where clause as a raw query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .wherePivot('age', '>', db.rawQuery('select min_age from ages limit 1;'))
@@ -3252,25 +3573,31 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhere clause', async ({ assert }) => {
+  test('add orWhere clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query.wherePivot('age', '>', 22).orWherePivot('age', 18).toSQL()
 
@@ -3286,25 +3613,31 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhere wrapped clause', async ({ assert }) => {
+  test('add orWhere wrapped clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .wherePivot('age', '>', 22)
@@ -3326,97 +3659,42 @@ test.group('Model | ManyToMany | wherePivot', (group) => {
     assert.equal(sql, knexSql)
     assert.deepEqual(bindings, knexBindings)
   })
-
-  test('pass relationship metadata to the profiler', async ({ assert }) => {
-    assert.plan(1)
-
-    class Skill extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public name: string
-    }
-
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
-    }
-
-    User.boot()
-    await db
-      .insertQuery()
-      .table('users')
-      .insert([{ username: 'virk' }])
-    await db
-      .insertQuery()
-      .table('skills')
-      .insert([{ name: 'Programming' }, { name: 'Dancing' }])
-    await db
-      .insertQuery()
-      .table('skill_user')
-      .insert([
-        {
-          user_id: 1,
-          skill_id: 1,
-        },
-      ])
-
-    const profiler = app.profiler
-
-    let profilerPacketIndex = 0
-    profiler.process((packet) => {
-      if (profilerPacketIndex === 1) {
-        assert.deepEqual(packet.data.relation, {
-          model: 'User',
-          relatedModel: 'Skill',
-          pivotTable: 'skill_user',
-          type: 'manyToMany',
-        })
-      }
-      profilerPacketIndex++
-    })
-
-    await User.query({ profiler }).preload('skills')
-  })
 })
 
 test.group('Model | ManyToMany | whereNotPivot', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('add where no clause', async ({ assert }) => {
+  test('add where no clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
     const { sql, bindings } = query.whereNotPivot('username', 'virk').toSQL()
 
     const { sql: knexSql, bindings: knexBindings } = db
@@ -3430,25 +3708,31 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where not clause with operator', async ({ assert }) => {
+  test('add where not clause with operator', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query.whereNotPivot('age', '>', 22).toSQL()
 
@@ -3463,25 +3747,31 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where not clause as a raw query', async ({ assert }) => {
+  test('add where not clause as a raw query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotPivot('age', '>', db.rawQuery('select min_age from ages limit 1;'))
@@ -3502,25 +3792,31 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhereNot clause', async ({ assert }) => {
+  test('add orWhereNot clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query.whereNotPivot('age', '>', 22).orWhereNotPivot('age', 18).toSQL()
 
@@ -3539,37 +3835,38 @@ test.group('Model | ManyToMany | whereNotPivot', (group) => {
 
 test.group('Model | ManyToMany | whereInPivot', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('add whereIn clause', async ({ assert }) => {
+  test('add whereIn clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query.whereInPivot('username', ['virk', 'nikk']).toSQL()
 
@@ -3584,25 +3881,31 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereIn as a query callback', async ({ assert }) => {
+  test('add whereIn as a query callback', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot('username', (builder) => {
@@ -3623,25 +3926,31 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereIn as a subquery', async ({ assert }) => {
+  test('add whereIn as a subquery', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot('username', db.query().select('id').from('accounts'))
@@ -3661,27 +3970,33 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereIn as a rawquery', async ({ assert }) => {
+  test('add whereIn as a rawquery', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     const ref = db.connection().getWriteClient().ref.bind(db.connection().getWriteClient())
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot('username', [db.rawQuery(`select ${ref('id')} from ${ref('accounts')}`)])
@@ -3703,25 +4018,31 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereIn as a subquery with array of keys', async ({ assert }) => {
+  test('add whereIn as a subquery with array of keys', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot(['username', 'email'], db.query().select('username', 'email').from('accounts'))
@@ -3741,25 +4062,31 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereIn as a 2d array', async ({ assert }) => {
+  test('add whereIn as a 2d array', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query.whereInPivot(['username', 'email'], [['foo', 'bar']]).toSQL()
 
@@ -3774,25 +4101,31 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhereIn clause', async ({ assert }) => {
+  test('add orWhereIn clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot('username', ['virk', 'nikk'])
@@ -3811,25 +4144,31 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhereIn as a query callback', async ({ assert }) => {
+  test('add orWhereIn as a query callback', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereInPivot('username', (builder) => {
@@ -3859,37 +4198,38 @@ test.group('Model | ManyToMany | whereInPivot', (group) => {
 
 test.group('Model | ManyToMany | whereNotInPivot', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('add whereNotIn clause', async ({ assert }) => {
+  test('add whereNotIn clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query.whereNotInPivot('username', ['virk', 'nikk']).toSQL()
 
@@ -3904,25 +4244,31 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereNotIn as a query callback', async ({ assert }) => {
+  test('add whereNotIn as a query callback', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotInPivot('username', (builder) => {
@@ -3943,25 +4289,31 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereNotIn as a sub query', async ({ assert }) => {
+  test('add whereNotIn as a sub query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotInPivot('username', db.query().select('username').from('accounts'))
@@ -3981,25 +4333,31 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add whereNotIn as a 2d array', async ({ assert }) => {
+  test('add whereNotIn as a 2d array', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query.whereNotInPivot(['username', 'email'], [['foo', 'bar']]).toSQL()
 
@@ -4014,25 +4372,31 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhereNotIn clause', async ({ assert }) => {
+  test('add orWhereNotIn clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotInPivot('username', ['virk', 'nikk'])
@@ -4051,25 +4415,31 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhereNotIn as a subquery', async ({ assert }) => {
+  test('add orWhereNotIn as a subquery', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotInPivot('username', (builder) => {
@@ -4099,37 +4469,38 @@ test.group('Model | ManyToMany | whereNotInPivot', (group) => {
 
 test.group('Model | ManyToMany | whereNullPivot', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('add where null clause', async ({ assert }) => {
+  test('add where null clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query.whereNullPivot('deleted_at').toSQL()
 
@@ -4144,25 +4515,31 @@ test.group('Model | ManyToMany | whereNullPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where null wrapped clause', async ({ assert }) => {
+  test('add where null wrapped clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .where((builder) => builder.whereNullPivot('deleted_at'))
@@ -4179,25 +4556,31 @@ test.group('Model | ManyToMany | whereNullPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhere null clause', async ({ assert }) => {
+  test('add orWhere null clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNullPivot('deleted_at')
@@ -4216,25 +4599,31 @@ test.group('Model | ManyToMany | whereNullPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhere null wrapped clause', async ({ assert }) => {
+  test('add orWhere null wrapped clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNullPivot('deleted_at')
@@ -4260,37 +4649,38 @@ test.group('Model | ManyToMany | whereNullPivot', (group) => {
 
 test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('add where not null clause', async ({ assert }) => {
+  test('add where not null clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query.whereNotNullPivot('deleted_at').toSQL()
 
@@ -4305,25 +4695,31 @@ test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add where not null wrapped clause', async ({ assert }) => {
+  test('add where not null wrapped clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .where((builder) => builder.whereNotNullPivot('deleted_at'))
@@ -4340,25 +4736,31 @@ test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhere not null clause', async ({ assert }) => {
+  test('add orWhere not null clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotNullPivot('deleted_at')
@@ -4377,25 +4779,31 @@ test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('add orWhere not null wrapped clause', async ({ assert }) => {
+  test('add orWhere not null wrapped clause', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     User.boot()
     const user = new User()
     const query = user!.related('skills').query()
 
-    query['appliedConstraints'] = true
+    ;(query as any)['appliedConstraints'] = true
 
     const { sql, bindings } = query
       .whereNotNullPivot('deleted_at')
@@ -4421,40 +4829,41 @@ test.group('Model | ManyToMany | whereNotNullPivot', (group) => {
 
 test.group('Model | ManyToMany | save', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('save related instance', async ({ assert }) => {
+  test('save related instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -4483,24 +4892,30 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('save related instance with pivot attributes', async ({ assert }) => {
+  test('save related instance with pivot attributes', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -4532,24 +4947,30 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('do not attach duplicates when save is called more than once', async ({ assert }) => {
+  test('do not attach duplicates when save is called more than once', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -4580,24 +5001,30 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('perform update with different pivot attributes', async ({ assert }) => {
+  test('perform update with different pivot attributes', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -4635,24 +5062,31 @@ test.group('Model | ManyToMany | save', (group) => {
 
   test('attach duplicates when save is called more than once with with checkExisting = false', async ({
     assert,
+    fs,
   }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -4688,24 +5122,31 @@ test.group('Model | ManyToMany | save', (group) => {
 
   test('attach duplicates with different pivot attributes and with checkExisting = false', async ({
     assert,
+    fs,
   }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -4747,24 +5188,31 @@ test.group('Model | ManyToMany | save', (group) => {
 
   test('attach when related pivot entry exists but for a different parent @sanityCheck', async ({
     assert,
+    fs,
   }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -4802,26 +5250,32 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('save related instance with timestamps', async ({ assert }) => {
+  test('save related instance with timestamps', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill, {
         pivotTimestamps: true,
       })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -4852,26 +5306,32 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('do not set created_at on update', async ({ assert }) => {
+  test('do not set created_at on update', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill, {
         pivotTimestamps: true,
       })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -4908,21 +5368,27 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('do not set updated_at when disabled', async ({ assert }) => {
+  test('do not set updated_at when disabled', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill, {
         pivotTimestamps: {
@@ -4930,7 +5396,7 @@ test.group('Model | ManyToMany | save', (group) => {
           updatedAt: false,
         },
       })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -4961,21 +5427,27 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('do not set created_at when disabled', async ({ assert }) => {
+  test('do not set created_at when disabled', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill, {
         pivotTimestamps: {
@@ -4983,7 +5455,7 @@ test.group('Model | ManyToMany | save', (group) => {
           updatedAt: true,
         },
       })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5014,24 +5486,30 @@ test.group('Model | ManyToMany | save', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('do not set timestamps when disabled', async ({ assert }) => {
+  test('do not set timestamps when disabled', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5065,40 +5543,41 @@ test.group('Model | ManyToMany | save', (group) => {
 
 test.group('Model | ManyToMany | saveMany', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('save many of related instance', async ({ assert }) => {
+  test('save many of related instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5134,24 +5613,30 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('save many of related instance with pivot attributes', async ({ assert }) => {
+  test('save many of related instance with pivot attributes', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5197,24 +5682,30 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('allow pivot rows without custom pivot attributes', async ({ assert }) => {
+  test('allow pivot rows without custom pivot attributes', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5258,24 +5749,33 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('do not attach duplicates when saveMany is called more than once', async ({ assert }) => {
+  test('do not attach duplicates when saveMany is called more than once', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5312,24 +5812,30 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('update pivot row when saveMany is called more than once', async ({ assert }) => {
+  test('update pivot row when saveMany is called more than once', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5385,24 +5891,31 @@ test.group('Model | ManyToMany | saveMany', (group) => {
 
   test('attach duplicates when saveMany is called more than once with checkExisting = false', async ({
     assert,
+    fs,
   }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5446,24 +5959,31 @@ test.group('Model | ManyToMany | saveMany', (group) => {
 
   test('attach when related pivot entry exists but for a different parent @sanityCheck', async ({
     assert,
+    fs,
   }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5509,24 +6029,30 @@ test.group('Model | ManyToMany | saveMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('wrap saveMany inside a custom transaction', async ({ assert }) => {
+  test('wrap saveMany inside a custom transaction', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const trx = await db.transaction()
@@ -5567,40 +6093,41 @@ test.group('Model | ManyToMany | saveMany', (group) => {
 
 test.group('Model | ManyToMany | create', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create related instance', async ({ assert }) => {
+  test('create related instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5626,24 +6153,30 @@ test.group('Model | ManyToMany | create', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('create related instance with pivot attributes', async ({ assert }) => {
+  test('create related instance with pivot attributes', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5675,24 +6208,30 @@ test.group('Model | ManyToMany | create', (group) => {
     assert.isUndefined(skill.$trx)
   })
 
-  test('wrap create inside a custom transaction', async ({ assert }) => {
+  test('wrap create inside a custom transaction', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const trx = await db.transaction()
@@ -5726,40 +6265,41 @@ test.group('Model | ManyToMany | create', (group) => {
 
 test.group('Model | ManyToMany | createMany', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create many of related instance', async ({ assert }) => {
+  test('create many of related instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5793,24 +6333,30 @@ test.group('Model | ManyToMany | createMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('create many of related instance with pivot attributes', async ({ assert }) => {
+  test('create many of related instance with pivot attributes', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5849,24 +6395,30 @@ test.group('Model | ManyToMany | createMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('allow pivot entries without custom attributes', async ({ assert }) => {
+  test('allow pivot entries without custom attributes', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -5905,24 +6457,30 @@ test.group('Model | ManyToMany | createMany', (group) => {
     assert.isUndefined(skill1.$trx)
   })
 
-  test('wrap create many inside a custom transaction', async ({ assert }) => {
+  test('wrap create many inside a custom transaction', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const trx = await db.transaction()
@@ -5954,40 +6512,41 @@ test.group('Model | ManyToMany | createMany', (group) => {
 
 test.group('Model | ManyToMany | attach', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('attach one or more ids to the pivot table', async ({ assert }) => {
+  test('attach one or more ids to the pivot table', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -6013,24 +6572,30 @@ test.group('Model | ManyToMany | attach', (group) => {
     assert.equal(skillUsers[1].skill_id, 2)
   })
 
-  test('attach with extra attributes', async ({ assert }) => {
+  test('attach with extra attributes', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -6068,40 +6633,41 @@ test.group('Model | ManyToMany | attach', (group) => {
 
 test.group('Model | ManyToMany | detach', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('detach one or more ids from the pivot table', async ({ assert }) => {
+  test('detach one or more ids from the pivot table', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -6138,24 +6704,30 @@ test.group('Model | ManyToMany | detach', (group) => {
     assert.equal(skillUsers[0].skill_id, 2)
   })
 
-  test('scope detach self to @sanityCheck', async ({ assert }) => {
+  test('scope detach self to @sanityCheck', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -6198,40 +6770,41 @@ test.group('Model | ManyToMany | detach', (group) => {
 
 test.group('Model | ManyToMany | sync', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test("sync ids by dropping only the missing one's", async ({ assert }) => {
+  test("sync ids by dropping only the missing one's", async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -6278,24 +6851,30 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[1].skill_id, 1)
   })
 
-  test('keep duplicates of the id under sync', async ({ assert }) => {
+  test('keep duplicates of the id under sync', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -6342,24 +6921,30 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[1].skill_id, 1)
   })
 
-  test('update pivot rows when additional properties are changed', async ({ assert }) => {
+  test('update pivot rows when additional properties are changed', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -6412,24 +6997,30 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[1].proficiency, 'Master')
   })
 
-  test('do not update pivot row when no extra properties are defined', async ({ assert }) => {
+  test('do not update pivot row when no extra properties are defined', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -6478,24 +7069,30 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[1].proficiency, 'Master')
   })
 
-  test('do not remove rows when detach = false', async ({ assert }) => {
+  test('do not remove rows when detach = false', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -6549,24 +7146,30 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[2].proficiency, 'Master')
   })
 
-  test('do not remove rows when nothing has changed', async ({ assert }) => {
+  test('do not remove rows when nothing has changed', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -6620,24 +7223,30 @@ test.group('Model | ManyToMany | sync', (group) => {
     assert.equal(skillUsers[2].proficiency, 'Master')
   })
 
-  test('use custom transaction', async ({ assert }) => {
+  test('use custom transaction', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()
@@ -6708,34 +7317,35 @@ test.group('Model | ManyToMany | sync', (group) => {
 
 test.group('Model | ManyToMany | pagination', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('paginate using related model query builder instance', async ({ assert }) => {
+  test('paginate using related model query builder instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -6786,20 +7396,26 @@ test.group('Model | ManyToMany | pagination', (group) => {
     })
   })
 
-  test('disallow paginate during preload', async ({ assert }) => {
+  test('disallow paginate during preload', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(1)
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -6833,34 +7449,35 @@ test.group('Model | ManyToMany | pagination', (group) => {
 
 test.group('Model | ManyToMany | clone', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('clone related model query builder', async ({ assert }) => {
+  test('clone related model query builder', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -6890,41 +7507,42 @@ test.group('Model | ManyToMany | clone', (group) => {
 
 test.group('Model | ManyToMany | scopes', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply scopes during eagerload', async ({ assert }) => {
+  test('apply scopes during eagerload', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
 
-      public static programmingOnly = scope((query) => {
+      static programmingOnly = scope((query) => {
         query.where('name', 'Programming')
       })
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -6959,25 +7577,31 @@ test.group('Model | ManyToMany | scopes', (group) => {
     assert.equal(user.skills[0].name, 'Programming')
   })
 
-  test('apply scopes on related query', async ({ assert }) => {
+  test('apply scopes on related query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
 
-      public static programmingOnly = scope((query) => {
+      static programmingOnly = scope((query) => {
         query.where('name', 'Programming')
       })
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -7014,39 +7638,40 @@ test.group('Model | ManyToMany | scopes', (group) => {
 
 test.group('Model | ManyToMany | onQuery', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('invoke onQuery method when preloading relationship', async ({ assert }) => {
+  test('invoke onQuery method when preloading relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, {
         onQuery: (query) => query.where('name', 'Programming'),
       })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -7073,20 +7698,26 @@ test.group('Model | ManyToMany | onQuery', (group) => {
     assert.equal(user.skills[0].name, 'Programming')
   })
 
-  test('do not invoke onQuery method during preloading subqueries', async ({ assert }) => {
+  test('do not invoke onQuery method during preloading subqueries', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(3)
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, {
         onQuery: (query) => {
@@ -7094,7 +7725,7 @@ test.group('Model | ManyToMany | onQuery', (group) => {
           query.where('name', 'Programming')
         },
       })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -7126,23 +7757,29 @@ test.group('Model | ManyToMany | onQuery', (group) => {
     assert.equal(user.skills[0].name, 'Programming')
   })
 
-  test('invoke onQuery method on related query builder', async ({ assert }) => {
+  test('invoke onQuery method on related query builder', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, {
         onQuery: (query) => query.where('name', 'Programming'),
       })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -7170,27 +7807,33 @@ test.group('Model | ManyToMany | onQuery', (group) => {
     assert.equal(skills[0].name, 'Programming')
   })
 
-  test('invoke onQuery method on pivot query builder', async ({ assert }) => {
+  test('invoke onQuery method on pivot query builder', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(4)
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @manyToMany(() => Skill, {
         onQuery: (query) => {
           assert.isTrue('isPivotOnlyQuery' in query)
         },
       })
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -7224,40 +7867,41 @@ test.group('Model | ManyToMany | onQuery', (group) => {
 
 test.group('Model | ManyToMany | delete', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('delete related instance', async ({ assert }) => {
+  test('delete related instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
     const user = new User()

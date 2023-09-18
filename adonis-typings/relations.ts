@@ -281,6 +281,12 @@ export interface BaseRelationContract<
   readonly serializeAs: string | null
   readonly booted: boolean
   readonly model: ParentModel
+
+  foreignKey: string
+  foreignKeyColumnName: string
+  localKey: string
+  localKeyColumnName: string
+
   relatedModel(): RelatedModel
   boot(): void
   clone(parent: LucidModel): this
@@ -462,6 +468,7 @@ export interface ManyToManyRelationContract<
   readonly pivotRelatedForeignKey: string
   readonly pivotTable: string
   pivotColumns: string[]
+  relatedKeyColumnName: string
 
   /**
    * Set related models as a relationship on the parent model
@@ -529,6 +536,8 @@ export interface HasManyThroughRelationContract<
   readonly foreignKey: string
   readonly throughLocalKey: string
   readonly throughForeignKey: string
+  throughLocalKeyColumnName: string
+  throughForeignKeyColumnName: string
 
   /**
    * Set related models as a relationship on the parent model
@@ -888,10 +897,8 @@ interface WhereNullPivot<Builder> {
 interface WhereInPivot<Builder> {
   (K: string, value: StrictValues[]): Builder
   (K: string[], value: StrictValues[][]): Builder
-  (
-    k: string,
-    subquery: ChainableContract | ((builder: Builder) => void) | RawBuilderContract | RawQuery
-  ): Builder
+  (k: string, callback: (builder: Builder) => void): Builder
+  (k: string, subquery: ChainableContract | RawBuilderContract | RawQuery): Builder
   (k: string[], subquery: ChainableContract | RawBuilderContract | RawQuery): Builder
 }
 

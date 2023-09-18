@@ -7,46 +7,39 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
 import { test } from '@japa/runner'
-import type { HasManyThrough } from '@ioc:Adonis/Lucid/Orm'
+import type { HasManyThrough } from '../../adonis-typings/relations.js'
 
-import { scope } from '../../src/Helpers/scope'
-import { hasManyThrough, column } from '../../src/Orm/Decorators'
-import { HasManyThroughQueryBuilder } from '../../src/Orm/Relations/HasManyThrough/QueryBuilder'
+import { scope } from '../../src/orm/base_model/index.js'
+import { hasManyThrough, column } from '../../src/orm/decorators/index.js'
+import { HasManyThroughQueryBuilder } from '../../src/orm/relations/has_many_through/query_builder.js'
 import {
-  fs,
   ormAdapter,
   getBaseModel,
   setup,
   cleanup,
   resetTables,
   getDb,
-  setupApplication,
-} from '../../test-helpers'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-
-let db: ReturnType<typeof getDb>
-let app: ApplicationContract
-let BaseModel: ReturnType<typeof getBaseModel>
+} from '../../test-helpers/index.js'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
 test.group('Model | Has Many Through | Options', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('raise error when localKey is missing', ({ assert }) => {
+  test('raise error when localKey is missing', async ({ fs, assert }) => {
     assert.plan(1)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     try {
       class User extends BaseModel {}
@@ -57,7 +50,7 @@ test.group('Model | Has Many Through | Options', (group) => {
 
       class Country extends BaseModel {
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<typeof Post>
+        declare posts: HasManyThrough<typeof Post>
       }
       Country.boot()
 
@@ -70,8 +63,14 @@ test.group('Model | Has Many Through | Options', (group) => {
     }
   })
 
-  test('raise error when foreignKey is missing', ({ assert }) => {
+  test('raise error when foreignKey is missing', async ({ fs, assert }) => {
     assert.plan(1)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     try {
       class User extends BaseModel {}
@@ -82,10 +81,10 @@ test.group('Model | Has Many Through | Options', (group) => {
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<typeof Post>
+        declare posts: HasManyThrough<typeof Post>
       }
 
       Country.boot()
@@ -98,13 +97,19 @@ test.group('Model | Has Many Through | Options', (group) => {
     }
   })
 
-  test('raise error when through local key is missing', ({ assert }) => {
+  test('raise error when through local key is missing', async ({ fs, assert }) => {
     assert.plan(1)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     try {
       class User extends BaseModel {
         @column()
-        public countryId: number
+        declare countryId: number
       }
       User.boot()
 
@@ -113,10 +118,10 @@ test.group('Model | Has Many Through | Options', (group) => {
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<typeof Post>
+        declare posts: HasManyThrough<typeof Post>
       }
 
       Country.boot()
@@ -129,16 +134,22 @@ test.group('Model | Has Many Through | Options', (group) => {
     }
   })
 
-  test('raise error when through foreign key is missing', ({ assert }) => {
+  test('raise error when through foreign key is missing', async ({ fs, assert }) => {
     assert.plan(1)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     try {
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public countryId: number
+        declare countryId: number
       }
       User.boot()
 
@@ -147,10 +158,10 @@ test.group('Model | Has Many Through | Options', (group) => {
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<typeof Post>
+        declare posts: HasManyThrough<typeof Post>
       }
 
       Country.boot()
@@ -163,28 +174,34 @@ test.group('Model | Has Many Through | Options', (group) => {
     }
   })
 
-  test('compute all required keys', ({ assert }) => {
+  test('compute all required keys', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -205,25 +222,31 @@ test.group('Model | Has Many Through | Options', (group) => {
     assert.equal(relation['throughForeignKeyColumnName'], 'user_id')
   })
 
-  test('compute custom keys', ({ assert }) => {
+  test('compute custom keys', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public uid: number
+      declare uid: number
 
       @column()
-      public countryUid: number
+      declare countryUid: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userUid: number
+      declare userUid: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public uid: number
+      declare uid: number
 
       @hasManyThrough([() => Post, () => User], {
         throughForeignKey: 'userUid',
@@ -231,7 +254,7 @@ test.group('Model | Has Many Through | Options', (group) => {
         foreignKey: 'countryUid',
         localKey: 'uid',
       })
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -252,25 +275,31 @@ test.group('Model | Has Many Through | Options', (group) => {
     assert.equal(relation['throughForeignKeyColumnName'], 'user_uid')
   })
 
-  test('clone relationship instance with options', ({ assert }) => {
+  test('clone relationship instance with options', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public uid: number
+      declare uid: number
 
       @column()
-      public countryUid: number
+      declare countryUid: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userUid: number
+      declare userUid: number
     }
     Post.boot()
 
     class BaseCountry extends BaseModel {
       @column({ isPrimary: true })
-      public uid: number
+      declare uid: number
 
       @hasManyThrough([() => Post, () => User], {
         throughForeignKey: 'userUid',
@@ -278,7 +307,7 @@ test.group('Model | Has Many Through | Options', (group) => {
         foreignKey: 'countryUid',
         localKey: 'uid',
       })
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     class Country extends BaseCountry {}
@@ -305,40 +334,41 @@ test.group('Model | Has Many Through | Options', (group) => {
 
 test.group('Model | Has Many Through | Set Relations', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('set related model instance', ({ assert }) => {
+  test('set related model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -351,28 +381,34 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
     assert.deepEqual(country.posts, [post])
   })
 
-  test('push related model instance', ({ assert }) => {
+  test('push related model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -387,28 +423,34 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
     assert.deepEqual(country.posts, [post, post1])
   })
 
-  test('set many of related instances', ({ assert }) => {
+  test('set many of related instances', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -453,44 +495,45 @@ test.group('Model | Has Many Through | Set Relations', (group) => {
 
 test.group('Model | Has Many Through | bulk operations', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sql for selecting related rows', async ({ assert }) => {
+  test('generate correct sql for selecting related rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -512,28 +555,34 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for selecting many related rows', async ({ assert }) => {
+  test('generate correct sql for selecting many related rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -558,28 +607,34 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for updating related rows', async ({ assert }) => {
+  test('generate correct sql for updating related rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -610,28 +665,34 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for deleting related rows', async ({ assert }) => {
+  test('generate correct sql for deleting related rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -657,44 +718,45 @@ test.group('Model | Has Many Through | bulk operations', (group) => {
 
 test.group('Model | HasMany | sub queries', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sub query for selecting rows', async ({ assert }) => {
+  test('generate correct sub query for selecting rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -713,28 +775,34 @@ test.group('Model | HasMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('create aggregate query', async ({ assert }) => {
+  test('create aggregate query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -758,28 +826,34 @@ test.group('Model | HasMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('allow selecting custom columns', async ({ assert }) => {
+  test('allow selecting custom columns', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -803,28 +877,34 @@ test.group('Model | HasMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct self relationship subquery', async ({ assert }) => {
+  test('generate correct self relationship subquery', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       /**
        * Funny relationship, but just ignore it
        */
       @hasManyThrough([() => Country, () => User])
-      public countries: HasManyThrough<typeof Country>
+      declare countries: HasManyThrough<typeof Country>
     }
 
     Country.boot()
@@ -848,28 +928,34 @@ test.group('Model | HasMany | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('raise exception when trying to execute the query', async ({ assert }) => {
+  test('raise exception when trying to execute the query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -891,33 +977,39 @@ test.group('Model | HasMany | sub queries', (group) => {
     assert.throws(firstOrFail, 'Cannot execute relationship subqueries')
   })
 
-  test('run onQuery method when defined', async ({ assert }) => {
+  test('run onQuery method when defined', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public isPublished: boolean
+      declare isPublished: boolean
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User], {
         onQuery: (query) => query.where('isPublished', true),
       })
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -940,44 +1032,45 @@ test.group('Model | HasMany | sub queries', (group) => {
 
 test.group('Model | Has Many Through | aggregates', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get total of all related rows', async ({ assert }) => {
+  test('get total of all related rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -1007,28 +1100,34 @@ test.group('Model | Has Many Through | aggregates', (group) => {
     assert.deepEqual(Number(total[0].$extras.total), 2)
   })
 
-  test('select extra columns with count', async ({ assert }) => {
+  test('select extra columns with count', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
 
     Country.boot()
@@ -1071,50 +1170,51 @@ test.group('Model | Has Many Through | aggregates', (group) => {
 
 test.group('Model | Has Many Through | preload', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('preload through relationships', async ({ assert }) => {
+  test('preload through relationships', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1153,34 +1253,40 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.equal(countries[0].posts[2].$extras.through_country_id, 1)
   })
 
-  test('preload many relationships', async ({ assert }) => {
+  test('preload many relationships', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1221,34 +1327,40 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
   })
 
-  test('preload many relationships using model instance', async ({ assert }) => {
+  test('preload many relationships using model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1293,34 +1405,40 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.equal(countries[1].posts[0].$extras.through_country_id, 2)
   })
 
-  test('cherry pick columns during preload', async ({ assert }) => {
+  test('cherry pick columns during preload', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1364,34 +1482,40 @@ test.group('Model | Has Many Through | preload', (group) => {
     assert.deepEqual(countries[1].posts[0].$extras, { through_country_id: 2 })
   })
 
-  test('raise error when local key is not selected', async ({ assert }) => {
+  test('raise error when local key is not selected', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1424,107 +1548,40 @@ test.group('Model | Has Many Through | preload', (group) => {
     }
   })
 
-  test('pass relationship metadata to the profiler', async ({ assert }) => {
-    assert.plan(1)
+  test('do not run preload query when parent rows are empty', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
-    }
-    Country.boot()
-
-    await db
-      .insertQuery()
-      .table('countries')
-      .insert([{ name: 'India' }])
-
-    await db
-      .insertQuery()
-      .table('users')
-      .insert([
-        { username: 'virk', country_id: 1 },
-        { username: 'nikk', country_id: 1 },
-      ])
-
-    await db
-      .insertQuery()
-      .table('posts')
-      .insert([
-        { title: 'Adonis 101', user_id: 1 },
-        { title: 'Lucid 101', user_id: 1 },
-        { title: 'Adonis5', user_id: 2 },
-      ])
-
-    const profiler = app.profiler
-
-    let profilerPacketIndex = 0
-    profiler.process((packet) => {
-      if (profilerPacketIndex === 1) {
-        assert.deepEqual(packet.data.relation, {
-          model: 'Country',
-          relatedModel: 'Post',
-          throughModel: 'User',
-          type: 'hasManyThrough',
-        })
-      }
-      profilerPacketIndex++
-    })
-
-    await Country.query({ profiler }).preload('posts')
-  })
-
-  test('do not run preload query when parent rows are empty', async ({ assert }) => {
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public countryId: number
-    }
-    User.boot()
-
-    class Post extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public userId: number
-
-      @column()
-      public title: string
-    }
-    Post.boot()
-
-    class Country extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1537,50 +1594,51 @@ test.group('Model | Has Many Through | preload', (group) => {
 
 test.group('Model | Has Many Through | withCount', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get count of a relationship rows', async ({ assert }) => {
+  test('get count of a relationship rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1617,34 +1675,40 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.equal(countries[1].$extras.posts_count, 2)
   })
 
-  test('apply constraints to the withCount subquery', async ({ assert }) => {
+  test('apply constraints to the withCount subquery', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1685,34 +1749,40 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.equal(countries[1].$extras.posts_count, 1)
   })
 
-  test('allow subquery to have custom aggregates', async ({ assert }) => {
+  test('allow subquery to have custom aggregates', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1753,37 +1823,43 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.equal(countries[1].$extras.postsCount, 2)
   })
 
-  test('allow cherry picking columns', async ({ assert }) => {
+  test('allow cherry picking columns', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1820,37 +1896,43 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.deepEqual(countries[1].$attributes, { name: 'Switzerland' })
   })
 
-  test('define custom alias for the count', async ({ assert }) => {
+  test('define custom alias for the count', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1892,34 +1974,40 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.deepEqual(Number(countries[1].$extras.countryPosts), 2)
   })
 
-  test('lazy load relationship rows', async ({ assert }) => {
+  test('lazy load relationship rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -1953,34 +2041,40 @@ test.group('Model | Has Many Through | withCount', (group) => {
     assert.equal(Number(country.$extras.posts_count), 3)
   })
 
-  test('apply constraints to the loadCount subquery', async ({ assert }) => {
+  test('apply constraints to the loadCount subquery', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -2019,53 +2113,54 @@ test.group('Model | Has Many Through | withCount', (group) => {
 
 test.group('Model | Has Many Through | has', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async ({ assert }) => {
+  test('limit rows to the existance of relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -2099,37 +2194,43 @@ test.group('Model | Has Many Through | has', (group) => {
     assert.equal(countries[0].name, 'India')
   })
 
-  test('define expected number of rows', async ({ assert }) => {
+  test('define expected number of rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -2168,53 +2269,54 @@ test.group('Model | Has Many Through | has', (group) => {
 
 test.group('Model | Has Many Through | whereHas', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async ({ assert }) => {
+  test('limit rows to the existance of relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -2254,37 +2356,43 @@ test.group('Model | Has Many Through | whereHas', (group) => {
     assert.equal(countries[0].name, 'India')
   })
 
-  test('define expected number of rows', async ({ assert }) => {
+  test('define expected number of rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -2333,50 +2441,51 @@ test.group('Model | Has Many Through | whereHas', (group) => {
 if (process.env.DB !== 'mysql_legacy') {
   test.group('Model | Has Many Through | Group Limit', (group) => {
     group.setup(async () => {
-      app = await setupApplication()
-      db = getDb(app)
-      BaseModel = getBaseModel(ormAdapter(db), app)
       await setup()
     })
 
     group.teardown(async () => {
-      await db.manager.closeAll()
       await cleanup()
-      await fs.cleanup()
     })
 
     group.each.teardown(async () => {
       await resetTables()
     })
 
-    test('apply group limit', async ({ assert }) => {
+    test('apply group limit', async ({ fs, assert }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter, app)
+
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public countryId: number
+        declare countryId: number
       }
       User.boot()
 
       class Post extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public userId: number
+        declare userId: number
 
         @column()
-        public title: string
+        declare title: string
       }
       Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<typeof Post>
+        declare posts: HasManyThrough<typeof Post>
       }
       Country.boot()
 
@@ -2438,34 +2547,40 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(countries[1].posts[1].$extras.through_country_id, 2)
     })
 
-    test('apply group limit with custom constraints', async ({ assert }) => {
+    test('apply group limit with custom constraints', async ({ fs, assert }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter, app)
+
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public countryId: number
+        declare countryId: number
       }
       User.boot()
 
       class Post extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public userId: number
+        declare userId: number
 
         @column()
-        public title: string
+        declare title: string
       }
       Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<typeof Post>
+        declare posts: HasManyThrough<typeof Post>
       }
       Country.boot()
 
@@ -2529,37 +2644,43 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(countries[1].posts[1].$extras.through_country_id, 2)
     })
 
-    test('apply group limit and cherry pick fields', async ({ assert }) => {
+    test('apply group limit and cherry pick fields', async ({ fs, assert }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter, app)
+
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public countryId: number
+        declare countryId: number
       }
       User.boot()
 
       class Post extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public userId: number
+        declare userId: number
 
         @column()
-        public title: string
+        declare title: string
 
         @column()
-        public createdAt: Date
+        declare createdAt: Date
       }
       Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<typeof Post>
+        declare posts: HasManyThrough<typeof Post>
       }
       Country.boot()
 
@@ -2627,37 +2748,43 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(countries[1].posts[1].$extras.through_country_id, 2)
     })
 
-    test('apply group limit with custom order', async ({ assert }) => {
+    test('apply group limit with custom order', async ({ fs, assert }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter, app)
+
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public countryId: number
+        declare countryId: number
       }
       User.boot()
 
       class Post extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public userId: number
+        declare userId: number
 
         @column()
-        public title: string
+        declare title: string
 
         @column()
-        public createdAt: Date
+        declare createdAt: Date
       }
       Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<typeof Post>
+        declare posts: HasManyThrough<typeof Post>
       }
       Country.boot()
 
@@ -2725,34 +2852,40 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.equal(countries[1].posts[1].$extras.through_country_id, 2)
     })
 
-    test('apply standard limit when not eagerloading', async ({ assert }) => {
+    test('apply standard limit when not eagerloading', async ({ fs, assert }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter, app)
+
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public countryId: number
+        declare countryId: number
       }
       User.boot()
 
       class Post extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public userId: number
+        declare userId: number
 
         @column()
-        public title: string
+        declare title: string
       }
       Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<typeof Post>
+        declare posts: HasManyThrough<typeof Post>
       }
       Country.boot()
 
@@ -2798,34 +2931,40 @@ if (process.env.DB !== 'mysql_legacy') {
       assert.deepEqual(bindings, knexBindings)
     })
 
-    test('apply standard order by when not eagerloading', async ({ assert }) => {
+    test('apply standard order by when not eagerloading', async ({ fs, assert }) => {
+      const app = new AppFactory().create(fs.baseUrl, () => {})
+      await app.init()
+      const db = getDb()
+      const adapter = ormAdapter(db)
+      const BaseModel = getBaseModel(adapter, app)
+
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public countryId: number
+        declare countryId: number
       }
       User.boot()
 
       class Post extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @column()
-        public userId: number
+        declare userId: number
 
         @column()
-        public title: string
+        declare title: string
       }
       Post.boot()
 
       class Country extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @hasManyThrough([() => Post, () => User])
-        public posts: HasManyThrough<typeof Post>
+        declare posts: HasManyThrough<typeof Post>
       }
       Country.boot()
 
@@ -2882,44 +3021,45 @@ if (process.env.DB !== 'mysql_legacy') {
 
 test.group('Model | Has Many Through | pagination', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('paginate using related model query builder instance', async ({ assert }) => {
+  test('paginate using related model query builder instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -2986,30 +3126,36 @@ test.group('Model | Has Many Through | pagination', (group) => {
     })
   })
 
-  test('disallow paginate during preload', async ({ assert }) => {
+  test('disallow paginate during preload', async ({ fs, assert }) => {
     assert.plan(1)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -3025,44 +3171,45 @@ test.group('Model | Has Many Through | pagination', (group) => {
 
 test.group('Model | Has Many Through | clone', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('clone related model query builder', async ({ assert }) => {
+  test('clone related model query builder', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -3109,40 +3256,41 @@ test.group('Model | Has Many Through | clone', (group) => {
 
 test.group('Model | Has Many Through | scopes', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply scopes during eagerload', async ({ assert }) => {
+  test('apply scopes during eagerload', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
 
-      public static adonisOnly = scope((query) => {
+      static adonisOnly = scope((query) => {
         query.where('title', 'Adonis 101')
       })
     }
@@ -3150,10 +3298,10 @@ test.group('Model | Has Many Through | scopes', (group) => {
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -3206,24 +3354,30 @@ test.group('Model | Has Many Through | scopes', (group) => {
     assert.equal(country.posts[0].title, 'Adonis 101')
   })
 
-  test('apply scopes on related query', async ({ assert }) => {
+  test('apply scopes on related query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
 
-      public static adonisOnly = scope((query) => {
+      static adonisOnly = scope((query) => {
         query.where('title', 'Adonis 101')
       })
     }
@@ -3231,10 +3385,10 @@ test.group('Model | Has Many Through | scopes', (group) => {
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User])
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -3288,49 +3442,50 @@ test.group('Model | Has Many Through | scopes', (group) => {
 
 test.group('Model | Has Many Through | onQuery', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('invoke onQuery method when preloading relationship', async ({ assert }) => {
+  test('invoke onQuery method when preloading relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User], {
         onQuery: (query) => query.where('title', 'Adonis 101'),
       })
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -3374,30 +3529,36 @@ test.group('Model | Has Many Through | onQuery', (group) => {
     assert.equal(country.posts[0].title, 'Adonis 101')
   })
 
-  test('do not invoke onQuery method on preloading subqueries', async ({ assert }) => {
+  test('do not invoke onQuery method on preloading subqueries', async ({ fs, assert }) => {
     assert.plan(3)
+
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User], {
         onQuery: (query) => {
@@ -3405,7 +3566,7 @@ test.group('Model | Has Many Through | onQuery', (group) => {
           query.where('title', 'Adonis 101')
         },
       })
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -3453,33 +3614,39 @@ test.group('Model | Has Many Through | onQuery', (group) => {
     assert.equal(country.posts[0].title, 'Adonis 101')
   })
 
-  test('invoke onQuery method on related query builder', async ({ assert }) => {
+  test('invoke onQuery method on related query builder', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User], {
         onQuery: (query) => query.where('title', 'Adonis 101'),
       })
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 
@@ -3525,33 +3692,42 @@ test.group('Model | Has Many Through | onQuery', (group) => {
     assert.equal(posts[0].title, 'Adonis 101')
   })
 
-  test('do not invoke onQuery method on related query builder subqueries', async ({ assert }) => {
+  test('do not invoke onQuery method on related query builder subqueries', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public countryId: number
+      declare countryId: number
     }
     User.boot()
 
     class Post extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public title: string
+      declare title: string
     }
     Post.boot()
 
     class Country extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasManyThrough([() => Post, () => User], {
         onQuery: (query) => query.where('title', 'Adonis 101'),
       })
-      public posts: HasManyThrough<typeof Post>
+      declare posts: HasManyThrough<typeof Post>
     }
     Country.boot()
 

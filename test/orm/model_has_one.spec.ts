@@ -7,45 +7,39 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
 import { test } from '@japa/runner'
-import type { HasOne, BelongsTo } from '@ioc:Adonis/Lucid/Orm'
+import type { HasOne, BelongsTo } from '../../adonis-typings/relations.js'
 
-import { scope } from '../../src/Helpers/scope'
-import { hasOne, column, belongsTo } from '../../src/Orm/Decorators'
-import { HasOneQueryBuilder } from '../../src/Orm/Relations/HasOne/QueryBuilder'
+import { scope } from '../../src/orm/base_model/index.js'
+import { column, hasOne, belongsTo } from '../../src/orm/decorators/index.js'
+import { HasOneQueryBuilder } from '../../src/orm/relations/has_one/query_builder.js'
+
 import {
-  fs,
   getDb,
   getBaseModel,
   ormAdapter,
   setup,
   cleanup,
   resetTables,
-  setupApplication,
-} from '../../test-helpers'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-
-let db: ReturnType<typeof getDb>
-let app: ApplicationContract
-let BaseModel: ReturnType<typeof getBaseModel>
+} from '../../test-helpers/index.js'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
 test.group('Model | HasOne | Options', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('raise error when localKey is missing', ({ assert }) => {
+  test('raise error when localKey is missing', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(1)
 
     try {
@@ -53,20 +47,23 @@ test.group('Model | HasOne | Options', (group) => {
 
       class User extends BaseModel {
         @hasOne(() => Profile)
-        public profile: HasOne<typeof Profile>
+        declare profile: HasOne<typeof Profile>
       }
 
       User.boot()
       User.$getRelation('profile')!.boot()
     } catch ({ message }) {
-      assert.equal(
-        message,
-        'E_MISSING_MODEL_ATTRIBUTE: "User.profile" expects "id" to exist on "User" model, but is missing'
-      )
+      assert.equal(message, '"User.profile" expects "id" to exist on "User" model, but is missing')
     }
   })
 
-  test('raise error when foreignKey is missing', ({ assert }) => {
+  test('raise error when foreignKey is missing', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(1)
 
     try {
@@ -75,10 +72,10 @@ test.group('Model | HasOne | Options', (group) => {
 
       class User extends BaseModel {
         @column({ isPrimary: true })
-        public id: number
+        declare id: number
 
         @hasOne(() => Profile)
-        public profile: HasOne<typeof Profile>
+        declare profile: HasOne<typeof Profile>
       }
 
       User.boot()
@@ -86,24 +83,30 @@ test.group('Model | HasOne | Options', (group) => {
     } catch ({ message }) {
       assert.equal(
         message,
-        'E_MISSING_MODEL_ATTRIBUTE: "User.profile" expects "userId" to exist on "Profile" model, but is missing'
+        '"User.profile" expects "userId" to exist on "Profile" model, but is missing'
       )
     }
   })
 
-  test('use primary key is as the local key', ({ assert }) => {
+  test('use primary key is as the local key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -112,22 +115,28 @@ test.group('Model | HasOne | Options', (group) => {
     assert.equal(User.$getRelation('profile')!['localKey'], 'id')
   })
 
-  test('use custom defined local key', ({ assert }) => {
+  test('use custom defined local key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column({ columnName: 'user_uid' })
-      public uid: number
+      declare uid: number
 
       @hasOne(() => Profile, { localKey: 'uid' })
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -136,19 +145,25 @@ test.group('Model | HasOne | Options', (group) => {
     assert.equal(User.$getRelation('profile')!['localKey'], 'uid')
   })
 
-  test('compute foreign key from model name and primary key', ({ assert }) => {
+  test('compute foreign key from model name and primary key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -157,19 +172,25 @@ test.group('Model | HasOne | Options', (group) => {
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userId')
   })
 
-  test('use pre defined foreign key', ({ assert }) => {
+  test('use pre defined foreign key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ columnName: 'user_id' })
-      public userUid: number
+      declare userUid: number
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile, { foreignKey: 'userUid' })
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -178,19 +199,25 @@ test.group('Model | HasOne | Options', (group) => {
     assert.equal(User.$getRelation('profile')!['foreignKey'], 'userUid')
   })
 
-  test('clone relationship instance with options', ({ assert }) => {
+  test('clone relationship instance with options', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ columnName: 'user_id' })
-      public userUid: number
+      declare userUid: number
     }
     Profile.boot()
 
     class BaseUser extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile, { foreignKey: 'userUid' })
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     class User extends BaseUser {}
@@ -205,30 +232,31 @@ test.group('Model | HasOne | Options', (group) => {
 
 test.group('Model | HasOne | Set Relations', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
-  test('set related model instance', ({ assert }) => {
+  test('set related model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
 
     class User extends BaseModel {
       @column()
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -240,18 +268,24 @@ test.group('Model | HasOne | Set Relations', (group) => {
     assert.deepEqual(user.profile, profile)
   })
 
-  test('push related model instance', ({ assert }) => {
+  test('push related model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
 
     class User extends BaseModel {
       @column()
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -263,18 +297,24 @@ test.group('Model | HasOne | Set Relations', (group) => {
     assert.deepEqual(user.profile, profile)
   })
 
-  test('set many of related instances', ({ assert }) => {
+  test('set many of related instances', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
     }
 
     class User extends BaseModel {
       @column()
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -304,43 +344,44 @@ test.group('Model | HasOne | Set Relations', (group) => {
 
 test.group('Model | HasOne | bulk operations', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct sql for selecting related rows', async ({ assert }) => {
+  test('generate correct sql for selecting related rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -360,27 +401,33 @@ test.group('Model | HasOne | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for selecting related many rows', async ({ assert }) => {
+  test('generate correct sql for selecting related many rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db.table('users').multiInsert([{ username: 'virk' }, { username: 'nikk' }])
@@ -402,27 +449,33 @@ test.group('Model | HasOne | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for updating related row', async ({ assert }) => {
+  test('generate correct sql for updating related row', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -448,27 +501,33 @@ test.group('Model | HasOne | bulk operations', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct sql for deleting related row', async ({ assert }) => {
+  test('generate correct sql for deleting related row', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -491,43 +550,44 @@ test.group('Model | HasOne | bulk operations', (group) => {
 
 test.group('Model | HasOne | sub queries', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('generate correct subquery for selecting rows', async ({ assert }) => {
+  test('generate correct subquery for selecting rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -545,27 +605,33 @@ test.group('Model | HasOne | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('create aggregate query', async ({ assert }) => {
+  test('create aggregate query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -588,27 +654,33 @@ test.group('Model | HasOne | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('allow selecting custom columns', async ({ assert }) => {
+  test('allow selecting custom columns', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -631,19 +703,25 @@ test.group('Model | HasOne | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('generate correct self relationship subquery', async ({ assert }) => {
+  test('generate correct self relationship subquery', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => User)
-      public parent: HasOne<typeof User>
+      declare parent: HasOne<typeof User>
     }
 
     User.boot()
@@ -666,27 +744,33 @@ test.group('Model | HasOne | sub queries', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('raise exception when trying to execute the query', async ({ assert }) => {
+  test('raise exception when trying to execute the query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -708,32 +792,38 @@ test.group('Model | HasOne | sub queries', (group) => {
     assert.throws(firstOrFail, 'Cannot execute relationship subqueries')
   })
 
-  test('run onQuery method when defined', async ({ assert }) => {
+  test('run onQuery method when defined', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public accountType: string
+      declare accountType: string
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile, {
         onQuery: (query) => query.where('accountType', 'twitter'),
       })
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -757,40 +847,41 @@ test.group('Model | HasOne | sub queries', (group) => {
 
 test.group('Model | HasOne | preload', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('preload relationship', async ({ assert }) => {
+  test('preload relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -824,24 +915,31 @@ test.group('Model | HasOne | preload', (group) => {
 
   test('set relationship property value to null when no related rows were found', async ({
     assert,
+    fs,
   }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -858,38 +956,44 @@ test.group('Model | HasOne | preload', (group) => {
     assert.isNull(users[1].profile)
   })
 
-  test('preload nested relations', async ({ assert }) => {
+  test('preload nested relations', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Identity extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public profileId: number
+      declare profileId: number
 
       @column()
-      public identityName: string
+      declare identityName: string
     }
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @hasOne(() => Identity)
-      public identity: HasOne<typeof Identity>
+      declare identity: HasOne<typeof Identity>
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -935,27 +1039,33 @@ test.group('Model | HasOne | preload', (group) => {
     assert.instanceOf(user!.profile!.identity, Identity)
   })
 
-  test('preload self referenced relationship', async ({ assert }) => {
+  test('preload self referenced relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -987,24 +1097,30 @@ test.group('Model | HasOne | preload', (group) => {
     assert.deepEqual(users[1].profile.user.id, users[1].id)
   })
 
-  test('add constraints during preload', async ({ assert }) => {
+  test('add constraints during preload', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -1038,24 +1154,30 @@ test.group('Model | HasOne | preload', (group) => {
     assert.isNull(users[1].profile)
   })
 
-  test('cherry pick columns during preload', async ({ assert }) => {
+  test('cherry pick columns during preload', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -1089,24 +1211,30 @@ test.group('Model | HasOne | preload', (group) => {
     assert.deepEqual(users[1].profile.$extras, {})
   })
 
-  test('do not repeat fk when already defined', async ({ assert }) => {
+  test('do not repeat fk when already defined', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -1140,24 +1268,30 @@ test.group('Model | HasOne | preload', (group) => {
     assert.deepEqual(users[1].profile.$extras, {})
   })
 
-  test('pass sideloaded attributes to the relationship', async ({ assert }) => {
+  test('pass sideloaded attributes to the relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -1191,24 +1325,30 @@ test.group('Model | HasOne | preload', (group) => {
     assert.deepEqual(users[1].profile.$sideloaded, { id: 1 })
   })
 
-  test('preload using model instance', async ({ assert }) => {
+  test('preload using model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -1241,26 +1381,32 @@ test.group('Model | HasOne | preload', (group) => {
     assert.equal(users[1].profile.userId, users[1].id)
   })
 
-  test('raise exception when local key is not selected', async ({ assert }) => {
+  test('raise exception when local key is not selected', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(1)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -1290,38 +1436,44 @@ test.group('Model | HasOne | preload', (group) => {
     }
   })
 
-  test('preload nested relations using model instance', async ({ assert }) => {
+  test('preload nested relations using model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Identity extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public profileId: number
+      declare profileId: number
 
       @column()
-      public identityName: string
+      declare identityName: string
     }
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @hasOne(() => Identity)
-      public identity: HasOne<typeof Identity>
+      declare identity: HasOne<typeof Identity>
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -1376,38 +1528,44 @@ test.group('Model | HasOne | preload', (group) => {
     assert.instanceOf(users[1].profile!.identity, Identity)
   })
 
-  test('pass main query options down the chain', async ({ assert }) => {
+  test('pass main query options down the chain', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Identity extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public profileId: number
+      declare profileId: number
 
       @column()
-      public identityName: string
+      declare identityName: string
     }
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @hasOne(() => Identity)
-      public identity: HasOne<typeof Identity>
+      declare identity: HasOne<typeof Identity>
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -1457,84 +1615,30 @@ test.group('Model | HasOne | preload', (group) => {
     assert.equal(user!.profile.identity.$options!.connection, 'secondary')
   })
 
-  test('pass relationship metadata to the profiler', async ({ assert }) => {
-    assert.plan(1)
+  test('do not run preload query when parent rows are empty', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
-    }
-
-    await db
-      .insertQuery()
-      .table('users')
-      .insert([{ username: 'virk' }, { username: 'nikk' }])
-
-    const [user0, user1] = await db.query().from('users')
-    await db
-      .insertQuery()
-      .table('profiles')
-      .insert([
-        {
-          user_id: user0.id,
-          display_name: 'virk',
-        },
-        {
-          user_id: user1.id,
-          display_name: 'nikk',
-        },
-      ])
-
-    const profiler = app.profiler
-
-    let profilerPacketIndex = 0
-    profiler.process((packet) => {
-      if (profilerPacketIndex === 1) {
-        assert.deepEqual(packet.data.relation, {
-          model: 'User',
-          relatedModel: 'Profile',
-          type: 'hasOne',
-        })
-      }
-      profilerPacketIndex++
-    })
-
-    User.boot()
-    await User.query({ profiler }).preload('profile')
-  })
-
-  test('do not run preload query when parent rows are empty', async ({ assert }) => {
-    class Profile extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public userId: number
-
-      @column()
-      public displayName: string
-    }
-
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     User.boot()
@@ -1549,40 +1653,41 @@ test.group('Model | HasOne | preload', (group) => {
 
 test.group('Model | HasOne | withCount', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get count of a relationship rows', async ({ assert }) => {
+  test('get count of a relationship rows', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -1614,27 +1719,33 @@ test.group('Model | HasOne | withCount', (group) => {
     assert.equal(users[1].$extras.profile_count, 1)
   })
 
-  test('allow cherry picking columns', async ({ assert }) => {
+  test('allow cherry picking columns', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: number
+      declare username: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -1666,24 +1777,30 @@ test.group('Model | HasOne | withCount', (group) => {
     assert.deepEqual(users[1].$attributes, { username: 'nikk' })
   })
 
-  test('lazy load related count', async ({ assert }) => {
+  test('lazy load related count', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -1714,16 +1831,22 @@ test.group('Model | HasOne | withCount', (group) => {
     assert.deepEqual(Number(user.$extras.profile_count), 1)
   })
 
-  test('lazy load count of self referenced relationship', async ({ assert }) => {
+  test('lazy load count of self referenced relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public parentId: number
+      declare parentId: number
 
       @hasOne(() => User, { foreignKey: 'parentId' })
-      public manager: HasOne<typeof User>
+      declare manager: HasOne<typeof User>
     }
 
     await db
@@ -1742,43 +1865,44 @@ test.group('Model | HasOne | withCount', (group) => {
 
 test.group('Model | HasOne | has', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async ({ assert }) => {
+  test('limit rows to the existance of relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -1808,43 +1932,44 @@ test.group('Model | HasOne | has', (group) => {
 
 test.group('Model | HasOne | whereHas', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('limit rows to the existance of relationship', async ({ assert }) => {
+  test('limit rows to the existance of relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db
@@ -1887,43 +2012,44 @@ test.group('Model | HasOne | whereHas', (group) => {
 
 test.group('Model | HasOne | save', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('save related instance', async ({ assert }) => {
+  test('save related instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -1939,29 +2065,35 @@ test.group('Model | HasOne | save', (group) => {
     assert.equal(user.id, profile.userId)
   })
 
-  test('wrap save calls inside a managed transaction', async ({ assert }) => {
+  test('wrap save calls inside a managed transaction', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(3)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -1981,29 +2113,35 @@ test.group('Model | HasOne | save', (group) => {
     assert.lengthOf(profiles, 0)
   })
 
-  test('use parent model transaction when its defined', async ({ assert }) => {
+  test('use parent model transaction when its defined', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(4)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const trx = await db.transaction()
@@ -2031,43 +2169,44 @@ test.group('Model | HasOne | save', (group) => {
 
 test.group('Model | HasOne | create', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create related instance', async ({ assert }) => {
+  test('create related instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -2082,29 +2221,35 @@ test.group('Model | HasOne | create', (group) => {
     assert.equal(user.id, profile.userId)
   })
 
-  test('wrap create call inside a managed transaction', async ({ assert }) => {
+  test('wrap create call inside a managed transaction', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(3)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -2123,27 +2268,33 @@ test.group('Model | HasOne | create', (group) => {
     assert.lengthOf(profiles, 0)
   })
 
-  test('use parent model transaction during create', async ({ assert }) => {
+  test('use parent model transaction during create', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const trx = await db.transaction()
@@ -2169,43 +2320,44 @@ test.group('Model | HasOne | create', (group) => {
 
 test.group('Model | HasOne | firstOrCreate', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test("create related instance when there isn't any existing row", async ({ assert }) => {
+  test("create related instance when there isn't any existing row", async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -2225,27 +2377,33 @@ test.group('Model | HasOne | firstOrCreate', (group) => {
     assert.equal(profile.displayName, 'Hvirk')
   })
 
-  test('return the existing row vs creating a new one', async ({ assert }) => {
+  test('return the existing row vs creating a new one', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -2272,43 +2430,44 @@ test.group('Model | HasOne | firstOrCreate', (group) => {
 
 test.group('Model | HasOne | updateOrCreate', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test("create related instance when there isn't any existing row", async ({ assert }) => {
+  test("create related instance when there isn't any existing row", async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -2332,27 +2491,33 @@ test.group('Model | HasOne | updateOrCreate', (group) => {
     assert.equal(profiles[0].display_name, 'Virk')
   })
 
-  test('update the existing row vs creating a new one', async ({ assert }) => {
+  test('update the existing row vs creating a new one', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const user = new User()
@@ -2380,45 +2545,46 @@ test.group('Model | HasOne | updateOrCreate', (group) => {
 
 test.group('Model | HasOne | pagination', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('dis-allow pagination', async ({ assert }) => {
+  test('dis-allow pagination', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(1)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -2434,45 +2600,46 @@ test.group('Model | HasOne | pagination', (group) => {
 
 test.group('Model | HasOne | clone', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('clone related query builder', async ({ assert }) => {
+  test('clone related query builder', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(1)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     await db.table('users').insert({ username: 'virk' })
@@ -2485,47 +2652,48 @@ test.group('Model | HasOne | clone', (group) => {
 
 test.group('Model | HasOne | scopes', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply scopes during eagerload', async ({ assert }) => {
+  test('apply scopes during eagerload', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
-      public static twitter = scope((query) => {
+      static twitter = scope((query) => {
         query.where('type', 'twitter')
       })
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const [row] = await db
@@ -2549,31 +2717,37 @@ test.group('Model | HasOne | scopes', (group) => {
     assert.instanceOf(userWithScopes.profile, Profile)
   })
 
-  test('apply scopes on related query', async ({ assert }) => {
+  test('apply scopes on related query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
-      public static twitter = scope((query) => {
+      static twitter = scope((query) => {
         query.where('type', 'twitter')
       })
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const [row] = await db
@@ -2602,45 +2776,46 @@ test.group('Model | HasOne | scopes', (group) => {
 
 test.group('Model | HasOne | onQuery', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('invoke onQuery method when preloading relationship', async ({ assert }) => {
+  test('invoke onQuery method when preloading relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile, {
         onQuery: (query) => query.where('type', 'twitter'),
       })
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const [row] = await db
@@ -2657,26 +2832,32 @@ test.group('Model | HasOne | onQuery', (group) => {
     assert.isNull(user.profile)
   })
 
-  test('do not invoke onQuery method on preloading subqueries', async ({ assert }) => {
+  test('do not invoke onQuery method on preloading subqueries', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(2)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile, {
         onQuery: (query) => {
@@ -2684,7 +2865,7 @@ test.group('Model | HasOne | onQuery', (group) => {
           query.where('type', 'twitter')
         },
       })
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const [row] = await db
@@ -2703,29 +2884,35 @@ test.group('Model | HasOne | onQuery', (group) => {
     assert.isNull(user.profile)
   })
 
-  test('invoke onQuery method on related query builder', async ({ assert }) => {
+  test('invoke onQuery method on related query builder', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile, {
         onQuery: (query) => query.where('type', 'twitter'),
       })
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const [row] = await db
@@ -2743,29 +2930,38 @@ test.group('Model | HasOne | onQuery', (group) => {
     assert.isNull(profile)
   })
 
-  test('do not invoke onQuery method on related query builder subqueries', async ({ assert }) => {
+  test('do not invoke onQuery method on related query builder subqueries', async ({
+    fs,
+    assert,
+  }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile, {
         onQuery: (query) => query.where('type', 'twitter'),
       })
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const [row] = await db
@@ -2806,43 +3002,44 @@ test.group('Model | HasOne | onQuery', (group) => {
 
 test.group('Model | HasOne | delete', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('delete related instance', async ({ assert }) => {
+  test('delete related instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
     const user = new User()

@@ -7,79 +7,85 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
 import { test } from '@japa/runner'
-import { column } from '../../src/Orm/Decorators'
-import { scope } from '../../src/Helpers/scope'
-import { ModelQueryBuilder } from '../../src/Orm/QueryBuilder'
+import { AppFactory } from '@adonisjs/core/factories/app'
+
+import { column } from '../../src/orm/decorators/index.js'
+import { scope } from '../../src/orm/base_model/index.js'
+import { ModelQueryBuilder } from '../../src/orm/query_builder/index.js'
 import {
-  fs,
   getDb,
   setup,
   cleanup,
   ormAdapter,
   resetTables,
   getBaseModel,
-  setupApplication,
-} from '../../test-helpers'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
-
-let db: ReturnType<typeof getDb>
-let app: ApplicationContract
-let BaseModel: ReturnType<typeof getBaseModel>
+} from '../../test-helpers/index.js'
 
 test.group('Model query builder', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('get instance of query builder for the given model', async ({ assert }) => {
+  test('get instance of query builder for the given model', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
     assert.instanceOf(User.query(), ModelQueryBuilder)
   })
 
-  test('pre select the table for the query builder instance', async ({ assert }) => {
+  test('pre select the table for the query builder instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
-    assert.equal(User.query().knexQuery['_single'].table, 'users')
+    assert.equal((User.query().knexQuery as any)['_single'].table, 'users')
   })
 
-  test('execute select queries', async ({ assert }) => {
+  test('execute select queries', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -94,13 +100,19 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
   })
 
-  test('pass custom connection to the model instance', async ({ assert }) => {
+  test('pass custom connection to the model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -116,13 +128,19 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(users[0].$options!.connection, 'secondary')
   })
 
-  test('pass sideloaded attributes to the model instance', async ({ assert }) => {
+  test('pass sideloaded attributes to the model instance', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -141,36 +159,19 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(users[0].$sideloaded, { loggedInUser: { id: 1 } })
   })
 
-  test('pass custom profiler to the model instance', async ({ assert }) => {
+  test('perform update using model query builder', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
-    }
-
-    User.boot()
-    await db
-      .insertQuery()
-      .table('users')
-      .insert([{ username: 'virk' }, { username: 'nikk' }])
-
-    const profiler = app.profiler
-    const users = await User.query({ profiler }).where('username', 'virk')
-    assert.lengthOf(users, 1)
-    assert.instanceOf(users[0], User)
-    assert.deepEqual(users[0].$attributes, { id: 1, username: 'virk' })
-    assert.deepEqual(users[0].$options!.profiler, profiler)
-  })
-
-  test('perform update using model query builder', async ({ assert }) => {
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      public id: number
-
-      @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -187,13 +188,19 @@ test.group('Model query builder', (group) => {
     assert.equal(user!.username, 'hvirk')
   })
 
-  test('perform increment using model query builder', async ({ assert }) => {
+  test('perform increment using model query builder', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -210,13 +217,19 @@ test.group('Model query builder', (group) => {
     assert.equal(user!.points, 2)
   })
 
-  test('perform decrement using model query builder', async ({ assert }) => {
+  test('perform decrement using model query builder', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -233,13 +246,19 @@ test.group('Model query builder', (group) => {
     assert.equal(user!.points, 2)
   })
 
-  test('delete in bulk', async ({ assert }) => {
+  test('delete in bulk', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -256,13 +275,19 @@ test.group('Model query builder', (group) => {
     assert.isNull(user)
   })
 
-  test('clone query builder', async ({ assert }) => {
+  test('clone query builder', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -272,13 +297,19 @@ test.group('Model query builder', (group) => {
     assert.instanceOf(clonedQuery, ModelQueryBuilder)
   })
 
-  test('clone query builder with internal flags', async ({ assert }) => {
+  test('clone query builder with internal flags', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -288,13 +319,19 @@ test.group('Model query builder', (group) => {
     assert.isTrue(clonedQuery.hasGroupBy)
   })
 
-  test('pass sideloaded data to cloned query', async ({ assert }) => {
+  test('pass sideloaded data to cloned query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
@@ -308,15 +345,21 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(user.$sideloaded, { username: 'virk' })
   })
 
-  test('apply scopes', async ({ assert }) => {
+  test('apply scopes', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
-      public static active = scope((query) => {
+      static active = scope((query) => {
         query.where('is_active', true)
       })
     }
@@ -339,15 +382,21 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('apply scopes inside a sub query', async ({ assert }) => {
+  test('apply scopes inside a sub query', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
-      public static active = scope((query) => {
+      static active = scope((query) => {
         query.where('is_active', true)
       })
     }
@@ -370,13 +419,19 @@ test.group('Model query builder', (group) => {
     assert.deepEqual(bindings, knexBindings)
   })
 
-  test('make aggregate queries with the model query builder', async ({ assert }) => {
+  test('make aggregate queries with the model query builder', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
     }
 
     User.boot()
