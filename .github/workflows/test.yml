@@ -35,11 +35,9 @@ jobs:
       postgres:
         image: postgres:${{ matrix.postgres-version }}
         env:
-          PG_HOST: localhost
-          PG_PASSWORD: secret
-          PG_DATABASE: lucid
-          PG_PORT: 5432
-          PG_USER: virk
+          POSTGRES_DB: lucid
+          POSTGRES_USER: virk
+          POSTGRES_PASSWORD: secret
         ports:
           - 5432:5432
     steps:
@@ -63,17 +61,11 @@ jobs:
       mysql:
         image: mysql:${{ matrix.mysql.version }}
         env:
-          MYSQL_HOST: localhost
-          MYSQL_PASSWORD: secret
           MYSQL_DATABASE: lucid
-          MYSQL_PORT: 3306
           MYSQL_USER: virk
-          MYSQL_ROOT_PASSWORD: password
-          LEGACY_MYSQL_HOST: localhost
-          LEGACY_MYSQL_PASSWORD: secret
-          LEGACY_MYSQL_DATABASE: lucid
-          LEGACY_MYSQL_PORT: 3306
-          LEGACY_MYSQL_USER: virk
+          MYSQL_PASSWORD: secret
+          MYSQL_ROOT_PASSWORD: secret
+          MYSQL_PORT: 3306
         ports:
           - '3306:3306'
     steps:
