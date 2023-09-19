@@ -74,7 +74,6 @@ jobs:
           LEGACY_MYSQL_DATABASE: lucid
           LEGACY_MYSQL_PORT: 3306
           LEGACY_MYSQL_USER: virk
-          MYSQL_ROOT_PASSWORD: password
         ports:
           - '3306:3306'
     steps:
