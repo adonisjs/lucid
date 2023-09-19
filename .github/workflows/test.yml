@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 20
       - run: npm install
-      - run: npx tsc
+      - run: npm run typecheck
 
   test-postgres:
     runs-on: ubuntu-latest
