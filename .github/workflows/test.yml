@@ -68,6 +68,7 @@ jobs:
           MYSQL_PORT: 3306
         ports:
           - '3306:3306'
+          - '3308:3306'
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -105,7 +106,7 @@ jobs:
       mssql:
         image: mcr.microsoft.com/mssql/server:2019-latest
         env:
-          SA_PASSWORD: 'arandom&233password'
+          SA_PASSWORD: 'secrearandom&233passwordt'
           ACCEPT_EULA: 'Y'
         ports:
           - '1433:1433'
