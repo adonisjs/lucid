@@ -59,9 +59,9 @@
     "@poppinss/utils": "^6.5.0-6",
     "fast-deep-equal": "^3.1.3",
     "igniculus": "^1.5.0",
+    "kleur": "^4.1.5",
     "knex": "^2.4.2",
     "knex-dynamic-connection": "^3.1.0",
-    "luxon": "^3.3.0",
     "pretty-hrtime": "^1.0.3",
     "qs": "^6.11.2",
     "slash": "^5.1.0",
@@ -96,6 +96,7 @@
     "fs-extra": "^11.1.1",
     "github-label-sync": "^2.3.1",
     "husky": "^8.0.3",
+    "luxon": "^3.4.3",
     "mysql2": "^3.3.1",
     "np": "^8.0.4",
     "pg": "^8.11.0",
@@ -105,6 +106,19 @@
     "tedious": "^16.1.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
+  },
+  "peerDependencies": {
+    "@adonisjs/assembler": "^6.1.3-22",
+    "@adonisjs/core": "^6.1.5-26",
+    "luxon": "^3.4.3"
+  },
+  "peerDependenciesMeta": {
+    "@adonisjs/assembler": {
+      "optional": true
+    },
+    "luxon": {
+      "optional": true
+    }
   },
   "license": "MIT",
   "author": "virk,adonisjs",
