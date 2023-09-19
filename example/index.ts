@@ -1,10 +1,9 @@
 import { DateTime } from 'luxon'
-import { BaseModel } from '../src/orm/base_model/index.js'
+import { BaseModel, scope } from '../src/orm/base_model/index.js'
 import { column, hasOne } from '../src/orm/decorators/index.js'
 import { HasOne } from '../src/types/relations.js'
-import { scope } from '../src/helpers/scope.js'
 import { ModelQueryBuilderContract } from '../src/types/model.js'
-// import Factory from '@ioc:Adonis/Lucid/Factory'
+import factory from '../src/factories/main.js'
 
 enum ProfileTypes {
   TWITTER = 'TWITTER',
@@ -51,36 +50,36 @@ User.create({ id: '1', username: 'virk' })
 User.create({ id: '1', username: 'virk' })
 User.create({ id: '1' })
 
-// const F = Factory.define(User, ({ faker }) => {
-//   return {
-//     username: faker.internet.userName(),
-//   }
-// })
+const F = factory.define(User, ({ faker }) => {
+  return {
+    username: faker.internet.userName(),
+  }
+})
 
-// const P = Factory.define(Profile, () => {
-//   return {}
-// })
+const P = factory.define(Profile, () => {
+  return {}
+})
 
-// const ProfileF = P.state('social', () => {}).build()
+const ProfileF = P.state('social', () => {}).build()
 
-// const UserF = F.state('active', (user) => {
-//   user.username = 'virk'
-// })
-//   .relation('profile', () => ProfileF)
-//   .build()
+const UserF = F.state('active', (user) => {
+  user.username = 'virk'
+})
+  .relation('profile', () => ProfileF)
+  .build()
 
-// UserF.with('profile', 1).merge({})
+UserF.with('profile', 1).merge({})
 User.query().withCount('profile', (query) => {
   query.where('isActive', true).has('user', '>', 1)
 })
 
 User.query().withCount('profile')
 
-// User.query()
-//   .paginate(1, 1)
-//   .then((users) => {
-//     users.forEach((user) => user.username)
-//   })
+User.query()
+  .paginate(1, 1)
+  .then((users) => {
+    users.forEach((user) => user.username)
+  })
 
 const user = new User()
 user.loadCount('profile')
