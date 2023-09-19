@@ -7,15 +7,16 @@
  * file that was distributed with this source code.
  */
 
-import { LucidModel, LucidRow, HasOneRelationContract } from '@ioc:Adonis/Lucid/Orm'
+import { LucidModel, LucidRow } from '../../../adonis-typings/model.js'
+import { HasOneRelationContract } from '../../../adonis-typings/relations.js'
 import {
   RelationCallback,
   FactoryModelContract,
   FactoryRelationContract,
   FactoryBuilderQueryContract,
-} from '@ioc:Adonis/Lucid/Factory'
+} from '../../../adonis-typings/factory.js'
 
-import { BaseRelation } from './Base'
+import { BaseRelation } from './base.js'
 
 /**
  * Has one to factory relation
@@ -23,7 +24,7 @@ import { BaseRelation } from './Base'
 export class HasOne extends BaseRelation implements FactoryRelationContract {
   constructor(
     public relation: HasOneRelationContract<LucidModel, LucidModel>,
-    factory: () => FactoryBuilderQueryContract<FactoryModelContract<LucidModel>>
+    factory: () => FactoryBuilderQueryContract<LucidModel, FactoryModelContract<LucidModel>>
   ) {
     super(factory)
     this.relation.boot()
@@ -32,7 +33,7 @@ export class HasOne extends BaseRelation implements FactoryRelationContract {
   /**
    * Make relationship and set it on the parent model instance
    */
-  public async make(parent: LucidRow, callback?: RelationCallback) {
+  async make(parent: LucidRow, callback?: RelationCallback) {
     const factory = this.compile(this, parent, callback)
     const customAttributes = {}
     this.relation.hydrateForPersistance(parent, customAttributes)
@@ -44,7 +45,7 @@ export class HasOne extends BaseRelation implements FactoryRelationContract {
   /**
    * Persist relationship and set it on the parent model instance
    */
-  public async create(parent: LucidRow, callback?: RelationCallback) {
+  async create(parent: LucidRow, callback?: RelationCallback) {
     const factory = this.compile(this, parent, callback)
 
     const customAttributes = {}

@@ -440,19 +440,6 @@ export function getBaseModel(adapter: AdapterContract, application: Application<
 }
 
 /**
- * Returns the factory model
- */
-export function getFactoryModel() {
-  return FactoryModel as {
-    new <Model extends LucidModel>(
-      model: Model,
-      callback: DefineCallback<Model>,
-      manager: FactoryManagerContract
-    ): FactoryModelContract<Model>
-  }
-}
-
-/**
  * Fake adapter implementation
  */
 export class FakeAdapter implements AdapterContract {

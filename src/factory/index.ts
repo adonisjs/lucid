@@ -7,35 +7,42 @@
  * file that was distributed with this source code.
  */
 
-import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Orm'
-import { FactoryManagerContract, DefineCallback, StubIdCallback } from '@ioc:Adonis/Lucid/Factory'
-import { FactoryModel } from './FactoryModel'
+import { LucidModel, LucidRow } from '../../adonis-typings/model.js'
+import {
+  DefineCallback,
+  FactoryModelContract,
+  StubIdCallback,
+} from '../../adonis-typings/factory.js'
+import { FactoryModel } from './factory_model.js'
 
 /**
  * Factory manager exposes the API to register factories.
  */
-export class FactoryManager implements FactoryManagerContract {
+export class FactoryManager {
   private stubCounter = 1
   private stubIdCallback: StubIdCallback = (counter) => counter
 
   /**
    * Returns the next id
    */
-  public getNextId(model: LucidRow) {
+  getNextId(model: LucidRow) {
     return this.stubIdCallback(this.stubCounter++, model)
   }
 
   /**
    * Define a factory model
    */
-  public define<Model extends LucidModel>(model: Model, callback: DefineCallback<Model>) {
+  define<Model extends LucidModel>(
+    model: Model,
+    callback: DefineCallback<Model>
+  ): FactoryModelContract<Model> {
     return new FactoryModel(model, callback, this)
   }
 
   /**
    * Define custom callback to generate stub ids
    */
-  public stubId(callback: StubIdCallback) {
+  stubId(callback: StubIdCallback): void {
     this.stubIdCallback = callback
   }
 }

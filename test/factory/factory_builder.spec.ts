@@ -7,71 +7,61 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
 import { test } from '@japa/runner'
-import { randomUUID } from 'crypto'
-import { column } from '../../src/Orm/Decorators'
-import { FactoryManager } from '../../src/Factory/index'
-import { FactoryContext } from '../../src/Factory/FactoryContext'
-import { FactoryBuilder } from '../../src/Factory/FactoryBuilder'
+import { randomUUID } from 'node:crypto'
+
+import { column } from '../../src/orm/decorators/index.js'
+import { FactoryManager } from '../../src/factory/index.js'
+import { FactoryContext } from '../../src/factory/factory_context.js'
+import { FactoryBuilder } from '../../src/factory/factory_builder.js'
 
 import {
-  fs,
   setup,
   getDb,
   cleanup,
   ormAdapter,
   resetTables,
   getBaseModel,
-  getFactoryModel,
-  setupApplication,
-} from '../../test-helpers'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+} from '../../test-helpers/index.js'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
-let db: ReturnType<typeof getDb>
-let app: ApplicationContract
-let BaseModel: ReturnType<typeof getBaseModel>
-const FactoryModel = getFactoryModel()
 const factoryManager = new FactoryManager()
 
 test.group('Factory | Factory Builder | make', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply factory model state', async ({ assert }) => {
+  test('apply factory model state', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user) => (user.points = 10))
       .build()
 
@@ -81,25 +71,28 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('applying a state twice must be a noop', async ({ assert }) => {
+  test('applying a state twice must be a noop', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user) => {
         user.points += 10
       })
@@ -112,25 +105,28 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('pass instance of builder to the state callback', async ({ assert }) => {
+  test('pass instance of builder to the state callback', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user, __, builder) => {
         assert.instanceOf(builder, FactoryBuilder)
         user.merge({ points: 10 })
@@ -143,27 +139,31 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('merge custom attributes', async ({ assert }) => {
+  test('merge custom attributes', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const user = await factory.merge({ username: 'nikk' }).makeStubbed()
     assert.equal(user.username, 'nikk')
@@ -171,27 +171,30 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('define custom merge function', async ({ assert }) => {
+  test('define custom merge function', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .merge(() => {})
       .build()
 
@@ -201,27 +204,30 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('pass builder to custom merge function', async ({ assert }) => {
+  test('pass builder to custom merge function', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .merge((_, __, ___, builder) => {
         assert.instanceOf(builder, FactoryBuilder)
       })
@@ -233,27 +239,30 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('define custom newUp function', async ({ assert }) => {
+  test('define custom newUp function', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .newUp((attributes) => {
         const user = new User()
         user.fill(attributes)
@@ -270,27 +279,30 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('pass model to custom newUp function', async ({ assert }) => {
+  test('pass model to custom newUp function', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .newUp((attributes) => {
         const user = new User()
         user.fill(attributes)
@@ -307,27 +319,30 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('pass factory builder to custom newUp function', async ({ assert }) => {
+  test('pass factory builder to custom newUp function', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .newUp((attributes, _, __, builder) => {
         assert.instanceOf(builder, FactoryBuilder)
 
@@ -346,27 +361,31 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('use 0 index elements when attributes are defined as an array', async ({ assert }) => {
+  test('use 0 index elements when attributes are defined as an array', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const user = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).makeStubbed()
     assert.equal(user.username, 'nikk')
@@ -374,29 +393,32 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('invoke after make hook', async ({ assert }) => {
+  test('invoke after make hook', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(6)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .after('make', (_, user, ctx) => {
         assert.instanceOf(_, FactoryBuilder)
         assert.instanceOf(user, User)
@@ -410,29 +432,32 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('invoke after makeStubbed hook', async ({ assert }) => {
+  test('invoke after makeStubbed hook', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(6)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .after('makeStubbed', (_, user, ctx) => {
         assert.instanceOf(_, FactoryBuilder)
         assert.instanceOf(user, User)
@@ -446,29 +471,32 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('define custom id inside make hook', async ({ assert }) => {
+  test('define custom id inside make hook', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(3)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .after('make', (_, user, ctx) => {
         if (ctx.isStubbed) {
           user.id = 100
@@ -482,27 +510,31 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('tap into model persistence before makeStubbed', async ({ assert }) => {
+  test('tap into model persistence before makeStubbed', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const user = await factory
       .tap(($user, ctx) => {
@@ -517,27 +549,31 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('tap into model persistence before make', async ({ assert }) => {
+  test('tap into model persistence before make', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const user = await factory
       .tap(($user) => {
@@ -549,27 +585,30 @@ test.group('Factory | Factory Builder | make', (group) => {
     assert.isFalse(user.$isPersisted)
   })
 
-  test('bubble erros when makeStubbed fails', async ({ assert }) => {
+  test('bubble erros when makeStubbed fails', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .state('foo', () => {
         throw new Error('boom')
       })
@@ -578,27 +617,30 @@ test.group('Factory | Factory Builder | make', (group) => {
     await assert.rejects(async () => await factory.apply('foo').makeStubbed(), 'boom')
   })
 
-  test('bubble erros when make fails', async ({ assert }) => {
+  test('bubble erros when make fails', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .state('foo', () => {
         throw new Error('boom')
       })
@@ -610,41 +652,39 @@ test.group('Factory | Factory Builder | make', (group) => {
 
 test.group('Factory | Factory Builder | makeMany', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply factory model state', async ({ assert }) => {
+  test('apply factory model state', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user) => (user.points = 10))
       .build()
 
@@ -659,25 +699,28 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.isFalse(users[1].$isPersisted)
   })
 
-  test('applying a state twice must be a noop', async ({ assert }) => {
+  test('applying a state twice must be a noop', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user) => (user.points += 10))
       .build()
 
@@ -693,27 +736,31 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.isFalse(users[1].$isPersisted)
   })
 
-  test('define custom attributes accepted by the newUp method', async ({ assert }) => {
+  test('define custom attributes accepted by the newUp method', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const users = await factory.merge({ username: 'nikk' }).makeStubbedMany(2)
     assert.lengthOf(users, 2)
@@ -727,27 +774,31 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.isFalse(users[1].$isPersisted)
   })
 
-  test('define index specific attributes for makeMany', async ({ assert }) => {
+  test('define index specific attributes for makeMany', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const users = await factory
       .merge([{ username: 'nikk' }, { username: 'romain' }])
@@ -763,27 +814,30 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.isFalse(users[1].$isPersisted)
   })
 
-  test('run makeStubbed hook for all the model instances', async ({ assert }) => {
+  test('run makeStubbed hook for all the model instances', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(15)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .after('makeStubbed', (_, user, ctx) => {
         assert.instanceOf(_, FactoryBuilder)
         assert.instanceOf(user, User)
@@ -804,27 +858,30 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.isFalse(users[1].$isPersisted)
   })
 
-  test('run make hook for all the model instances', async ({ assert }) => {
+  test('run make hook for all the model instances', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(15)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .after('make', (_, user, ctx) => {
         assert.instanceOf(_, FactoryBuilder)
         assert.instanceOf(user, User)
@@ -845,27 +902,30 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.isFalse(users[1].$isPersisted)
   })
 
-  test('tap into model persistence before makeStubbedMany', async ({ assert }) => {
+  test('tap into model persistence before makeStubbedMany', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(15)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user) => (user.points = 10))
       .build()
 
@@ -889,27 +949,30 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.isFalse(users[1].$isPersisted)
   })
 
-  test('tap into model persistence before makeMany', async ({ assert }) => {
+  test('tap into model persistence before makeMany', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(13)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user) => (user.points = 10))
       .build()
 
@@ -931,25 +994,28 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     assert.isFalse(users[1].$isPersisted)
   })
 
-  test('bubble errors when makeStubbedMany fails', async ({ assert }) => {
+  test('bubble errors when makeStubbedMany fails', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .merge(() => {
         throw new Error('boom')
       })
@@ -961,25 +1027,28 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
     )
   })
 
-  test('bubble errors when makeMany fails', async ({ assert }) => {
+  test('bubble errors when makeMany fails', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .merge(() => {
         throw new Error('boom')
       })
@@ -991,41 +1060,39 @@ test.group('Factory | Factory Builder | makeMany', (group) => {
 
 test.group('Factory | Factory Builder | create', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply factory model state', async ({ assert }) => {
+  test('apply factory model state', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user) => (user.points = 10))
       .build()
 
@@ -1034,25 +1101,28 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('applying a state twice must be a noop', async ({ assert }) => {
+  test('applying a state twice must be a noop', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user) => (user.points += 10))
       .build()
 
@@ -1061,81 +1131,92 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('define custom attributes accepted by the newUp method', async ({ assert }) => {
+  test('define custom attributes accepted by the newUp method', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const user = await factory.merge({ username: 'nikk' }).create()
     assert.equal(user.username, 'nikk')
     assert.isTrue(user.$isPersisted)
   })
 
-  test('use index 0 elements when attributes are defined as an array', async ({ assert }) => {
+  test('use index 0 elements when attributes are defined as an array', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const user = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).create()
     assert.equal(user.username, 'nikk')
     assert.isTrue(user.$isPersisted)
   })
 
-  test('invoke before and after create hook', async ({ assert }) => {
+  test('invoke before and after create hook', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(4)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .before('create', (_, user) => {
         assert.isFalse(user.$isPersisted)
       })
@@ -1150,28 +1231,31 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('invoke after make hook', async ({ assert }) => {
+  test('invoke after make hook', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(6)
     const stack: string[] = []
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .before('create', (_, user) => {
         stack.push('beforeCreate')
         assert.isFalse(user.$isPersisted)
@@ -1193,27 +1277,30 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.deepEqual(stack, ['afterMake', 'beforeCreate', 'afterCreate'])
   })
 
-  test('define custom connection', async ({ assert }) => {
+  test('define custom connection', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(3)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user) => (user.points = 10))
       .build()
 
@@ -1229,27 +1316,30 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('define custom query client', async ({ assert }) => {
+  test('define custom query client', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(3)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user) => (user.points = 10))
       .build()
 
@@ -1267,27 +1357,30 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('invoke tap callback before persisting the model', async ({ assert }) => {
+  test('invoke tap callback before persisting the model', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(6)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user) => (user.points = 10))
       .build()
 
@@ -1308,25 +1401,28 @@ test.group('Factory | Factory Builder | create', (group) => {
     assert.isTrue(user.$isPersisted)
   })
 
-  test('bubble errors when create fails', async ({ assert }) => {
+  test('bubble errors when create fails', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', () => {
         throw new Error('boo')
       })
@@ -1339,41 +1435,39 @@ test.group('Factory | Factory Builder | create', (group) => {
 
 test.group('Factory | Factory Builder | createMany', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('apply factory model state', async ({ assert }) => {
+  test('apply factory model state', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user) => (user.points = 10))
       .build()
 
@@ -1385,25 +1479,28 @@ test.group('Factory | Factory Builder | createMany', (group) => {
     assert.isTrue(users[1].$isPersisted)
   })
 
-  test('applying a state twice must be a noop', async ({ assert }) => {
+  test('applying a state twice must be a noop', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .state('withPoints', (user) => (user.points += 10))
       .build()
 
@@ -1415,28 +1512,32 @@ test.group('Factory | Factory Builder | createMany', (group) => {
     assert.isTrue(users[1].$isPersisted)
   })
 
-  test('define custom attributes accepted by the newUp method', async ({ assert }) => {
+  test('define custom attributes accepted by the newUp method', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: randomUUID(),
           points: 0,
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const users = await factory.merge({ points: 10 }).createMany(2)
     assert.lengthOf(users, 2)
@@ -1446,27 +1547,31 @@ test.group('Factory | Factory Builder | createMany', (group) => {
     assert.isTrue(users[1].$isPersisted)
   })
 
-  test('define index specific attributes for makeMany', async ({ assert }) => {
+  test('define index specific attributes for makeMany', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const users = await factory.merge([{ username: 'nikk' }, { username: 'romain' }]).createMany(2)
     assert.lengthOf(users, 2)
@@ -1476,29 +1581,33 @@ test.group('Factory | Factory Builder | createMany', (group) => {
     assert.isTrue(users[1].$isPersisted)
   })
 
-  test('invoke tap before persisting all models', async ({ assert }) => {
+  test('invoke tap before persisting all models', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(11)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const users = await factory
       .merge([{ username: 'nikk' }, { username: 'romain' }])
@@ -1516,29 +1625,32 @@ test.group('Factory | Factory Builder | createMany', (group) => {
     assert.isTrue(users[1].$isPersisted)
   })
 
-  test('bubble errors when createMany fails', async ({ assert }) => {
+  test('bubble errors when createMany fails', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     let index = 0
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number
+      declare points: number
     }
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .merge(() => {
         index++
         if (index === 2) {

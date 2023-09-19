@@ -7,26 +7,26 @@
  * file that was distributed with this source code.
  */
 
-import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Orm'
+import { LucidModel, LucidRow } from '../../../adonis-typings/model.js'
 import {
   RelationCallback,
   FactoryModelContract,
   FactoryContextContract,
   FactoryBuilderQueryContract,
   FactoryRelationContract,
-} from '@ioc:Adonis/Lucid/Factory'
+} from '../../../adonis-typings/factory.js'
 
 /**
  * Base relation to be extended by other factory relations
  */
 export abstract class BaseRelation {
-  protected ctx: FactoryContextContract
+  protected ctx?: FactoryContextContract
   private attributes: any = {}
 
-  public parent: LucidRow
+  declare parent: LucidRow
 
   constructor(
-    private factory: () => FactoryBuilderQueryContract<FactoryModelContract<LucidModel>>
+    private factory: () => FactoryBuilderQueryContract<LucidModel, FactoryModelContract<LucidModel>>
   ) {}
 
   /**
@@ -43,14 +43,18 @@ export abstract class BaseRelation {
       callback(builder)
     }
 
-    builder.useCtx(this.ctx).mergeRecursive(this.attributes)
+    if (this.ctx) {
+      builder.useCtx(this.ctx)
+    }
+
+    builder.mergeRecursive(this.attributes)
     return builder
   }
 
   /**
    * Merge attributes with the relationship and its children
    */
-  public merge(attributes: any) {
+  merge(attributes: any) {
     this.attributes = attributes
     return this
   }
@@ -59,7 +63,7 @@ export abstract class BaseRelation {
    * Use custom ctx. This must always be called by the factory, otherwise
    * `make` and `create` calls will fail.
    */
-  public useCtx(ctx: FactoryContextContract): this {
+  useCtx(ctx: FactoryContextContract): this {
     this.ctx = ctx
     return this
   }

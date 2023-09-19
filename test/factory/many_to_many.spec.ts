@@ -6,92 +6,79 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-
-/// <reference path="../../adonis-typings/index.ts" />
-
 import { test } from '@japa/runner'
-import type { ManyToMany } from '@ioc:Adonis/Lucid/Orm'
-import { FactoryManager } from '../../src/Factory/index'
-import { column, manyToMany } from '../../src/Orm/Decorators'
+import type { ManyToMany } from '../../adonis-typings/relations.js'
+
+import { FactoryManager } from '../../src/factory/index.js'
+import { column, manyToMany } from '../../src/orm/decorators/index.js'
 
 import {
-  fs,
   setup,
   getDb,
   cleanup,
   ormAdapter,
   resetTables,
   getBaseModel,
-  getFactoryModel,
-  setupApplication,
-} from '../../test-helpers'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+} from '../../test-helpers/index.js'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
-let db: ReturnType<typeof getDb>
-let app: ApplicationContract
-let BaseModel: ReturnType<typeof getBaseModel>
-const FactoryModel = getFactoryModel()
 const factoryManager = new FactoryManager()
 
 test.group('Factory | ManyToMany | make', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('make model with relationship', async ({ assert }) => {
+  test('make model with relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
     Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
-    const postFactory = new FactoryModel(
-      Skill,
-      () => {
+    const postFactory = factoryManager
+      .define(Skill, () => {
         return {
           name: 'Programming',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('skills', () => postFactory)
       .build()
 
@@ -107,47 +94,48 @@ test.group('Factory | ManyToMany | make', (group) => {
     assert.isFalse(user.skills[0].$isPersisted)
   })
 
-  test('pass custom attributes to relationship', async ({ assert }) => {
+  test('pass custom attributes to relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
     Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
-    const postFactory = new FactoryModel(
-      Skill,
-      () => {
+    const postFactory = factoryManager
+      .define(Skill, () => {
         return {
           name: 'Programming',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('skills', () => postFactory)
       .build()
 
@@ -164,47 +152,48 @@ test.group('Factory | ManyToMany | make', (group) => {
     assert.equal(user.skills[0].name, 'Dancing')
   })
 
-  test('make many relationship', async ({ assert }) => {
+  test('make many relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
     Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
-    const postFactory = new FactoryModel(
-      Skill,
-      () => {
+    const postFactory = factoryManager
+      .define(Skill, () => {
         return {
           name: 'Programming',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('skills', () => postFactory)
       .build()
 
@@ -229,63 +218,59 @@ test.group('Factory | ManyToMany | make', (group) => {
 
 test.group('Factory | ManyToMany | create', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create model with relationship', async ({ assert }) => {
+  test('create model with relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
     Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
-    const postFactory = new FactoryModel(
-      Skill,
-      () => {
+    const postFactory = factoryManager
+      .define(Skill, () => {
         return {
           name: 'Programming',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('skills', () => postFactory)
       .build()
 
@@ -306,47 +291,48 @@ test.group('Factory | ManyToMany | create', (group) => {
     assert.equal(skillUsers[0].skill_id, skills[0].id)
   })
 
-  test('pass custom attributes', async ({ assert }) => {
+  test('pass custom attributes', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
     Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
-    const postFactory = new FactoryModel(
-      Skill,
-      () => {
+    const postFactory = factoryManager
+      .define(Skill, () => {
         return {
           name: 'Programming',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('skills', () => postFactory)
       .build()
 
@@ -361,47 +347,48 @@ test.group('Factory | ManyToMany | create', (group) => {
     assert.equal(user.skills[0].name, 'Dancing')
   })
 
-  test('create many relationships', async ({ assert }) => {
+  test('create many relationships', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
     Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
-    const postFactory = new FactoryModel(
-      Skill,
-      () => {
+    const postFactory = factoryManager
+      .define(Skill, () => {
         return {
           name: 'Programming',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('skills', () => postFactory)
       .build()
 
@@ -420,47 +407,48 @@ test.group('Factory | ManyToMany | create', (group) => {
     assert.equal(user.skills[1].name, 'Programming')
   })
 
-  test('rollback changes on error', async ({ assert }) => {
+  test('rollback changes on error', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(4)
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
     Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
-    const postFactory = new FactoryModel(
-      Skill,
-      () => {
+    const postFactory = factoryManager
+      .define(Skill, () => {
         return {}
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('skills', () => postFactory)
       .build()
 
@@ -479,47 +467,48 @@ test.group('Factory | ManyToMany | create', (group) => {
     assert.lengthOf(userSkills, 0)
   })
 
-  test('define pivot attributes for the pivot table', async ({ assert }) => {
+  test('define pivot attributes for the pivot table', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Skill extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public name: string
+      declare name: string
     }
     Skill.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @manyToMany(() => Skill)
-      public skills: ManyToMany<typeof Skill>
+      declare skills: ManyToMany<typeof Skill>
     }
 
-    const postFactory = new FactoryModel(
-      Skill,
-      () => {
+    const postFactory = factoryManager
+      .define(Skill, () => {
         return {
           name: 'Programming',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('skills', () => postFactory)
       .build()
 

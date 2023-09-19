@@ -191,17 +191,19 @@ export interface FactoryBuilderContract<
   /**
    * Define custom database connection
    */
-  connection(connection: string): this
+  connection(connection: string): FactoryBuilderContract<Model, FactoryModel>
 
   /**
    * Define custom query client
    */
-  client(client: QueryClientContract): this
+  client(client: QueryClientContract): FactoryBuilderContract<Model, FactoryModel>
 
   /**
    * Apply pre-defined state
    */
-  apply<K extends keyof FactoryModel['states']>(...states: K[]): this
+  apply<K extends keyof FactoryModel['states']>(
+    ...states: K[]
+  ): FactoryBuilderContract<Model, FactoryModel>
 
   /**
    * Create/make relationships for explicitly defined related factories
@@ -219,14 +221,16 @@ export interface FactoryBuilderContract<
           }
         : never
     ) => void
-  ): this
+  ): FactoryBuilderContract<Model, FactoryModel>
 
   /**
    * Define pivot attributes when persisting a many to many
    * relationship. Results in a noop, when not called
    * for a many to many relationship
    */
-  pivotAttributes(attributes: ModelObject | ModelObject[]): this
+  pivotAttributes(
+    attributes: ModelObject | ModelObject[]
+  ): FactoryBuilderContract<Model, FactoryModel>
 
   /**
    * Merge custom set of attributes. They are passed to the merge method of
@@ -235,13 +239,15 @@ export interface FactoryBuilderContract<
    * For `createMany` and `makeMany`, you can pass an array of attributes mapped
    * according to the array index.
    */
-  merge(attributes: OneOrMany<ExtractFactoryAttributes<Model>>): this
+  merge(
+    attributes: OneOrMany<ExtractFactoryAttributes<Model>>
+  ): FactoryBuilderContract<Model, FactoryModel>
 
   /**
    * Merge custom set of attributes with the correct factory builder
    * model and all of its relationships as well
    */
-  mergeRecursive(attributes: any): this
+  mergeRecursive(attributes: any): FactoryBuilderContract<Model, FactoryModel>
 
   /**
    * Define custom runtime context. This method is usually called by
@@ -251,7 +257,7 @@ export interface FactoryBuilderContract<
    * Do not define a custom context, unless you know what you are really
    * doing.
    */
-  useCtx(ctx: FactoryContextContract): this
+  useCtx(ctx: FactoryContextContract): FactoryBuilderContract<Model, FactoryModel>
 
   /**
    * Tap into the persistence layer of factory builder. Allows one
@@ -262,9 +268,9 @@ export interface FactoryBuilderContract<
     callback: (
       row: InstanceType<FactoryModel['model']>,
       ctx: FactoryContextContract,
-      builder: this
+      builder: FactoryBuilderContract<Model, FactoryModel>
     ) => void
-  ): this
+  ): FactoryBuilderContract<Model, FactoryModel>
 
   /**
    * Make model instance without persitance. The make method
@@ -357,12 +363,22 @@ export interface FactoryModelContract<Model extends LucidModel> {
   ): this & { states: { [P in K]: StateCallback<Model> } }
 
   /**
+   * Returns state callback
+   */
+  getState(state: keyof this['states']): StateCallback<Model>
+
+  /**
    * Define a relationship on another factory
    */
   relation<K extends ExtractModelRelations<InstanceType<Model>>, Relation>(
     relation: K,
     callback: Relation
   ): this & { relations: { [P in K]: Relation } }
+
+  /**
+   * Returns registered relationship for a factory
+   */
+  getRelation(relation: keyof this['relations']): FactoryRelationContract
 
   /**
    * Define before hooks. Only `create` event is invoked

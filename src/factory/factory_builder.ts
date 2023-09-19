@@ -7,22 +7,29 @@
  * file that was distributed with this source code.
  */
 
-import { QueryClientContract } from '@ioc:Adonis/Lucid/Database'
-import { LucidRow, LucidModel, ModelAdapterOptions, ModelObject } from '@ioc:Adonis/Lucid/Orm'
+import { QueryClientContract } from '../../adonis-typings/database.js'
+import {
+  LucidRow,
+  LucidModel,
+  ModelAdapterOptions,
+  ModelObject,
+} from '../../adonis-typings/model.js'
 import {
   FactoryModelContract,
   FactoryContextContract,
   FactoryBuilderContract,
   FactoryRelationContract,
-} from '@ioc:Adonis/Lucid/Factory'
+} from '../../adonis-typings/factory.js'
 
-import { FactoryModel } from './FactoryModel'
-import { FactoryContext } from './FactoryContext'
+import { FactoryModel } from './factory_model.js'
+import { FactoryContext } from './factory_context.js'
 
 /**
  * Factory builder exposes the API to create/persist factory model instances.
  */
-export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContract<LucidModel>> {
+export class FactoryBuilder
+  implements FactoryBuilderContract<LucidModel, FactoryModelContract<LucidModel>>
+{
   /**
    * Relationships to setup. Do note: It is possible to load one relationship
    * twice. A practical use case is to apply different states. For example:
@@ -102,7 +109,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Access the parent relationship for which the model instance
    * is created
    */
-  public get parent() {
+  get parent() {
     return this.viaRelation ? this.viaRelation.parent : undefined
   }
 
@@ -262,12 +269,12 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
     /**
      * Fire the after "make" hook. There is no before make hook
      */
-    await this.factory.hooks.exec('after', 'make', this, modelInstance, ctx)
+    await this.factory.hooks.runner('after:make').run(this, modelInstance, ctx)
 
     /**
      * Fire the before "create" hook
      */
-    await this.factory.hooks.exec('before', 'create', this, modelInstance, ctx)
+    await this.factory.hooks.runner('before:create').run(this, modelInstance, ctx)
 
     /**
      * Sharing transaction with the model
@@ -296,13 +303,13 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
      * Fire after hook before the transaction is committed, so that
      * hook can run db operations using the same transaction
      */
-    await this.factory.hooks.exec('after', 'create', this, modelInstance, ctx)
+    await this.factory.hooks.runner('after:create').run(this, modelInstance, ctx)
   }
 
   /**
    * Define custom database connection
    */
-  public connection(connection: string): this {
+  connection(connection: string): this {
     this.options = this.options || {}
     this.options.connection = connection
     return this
@@ -311,7 +318,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   /**
    * Define custom query client
    */
-  public client(client: QueryClientContract): this {
+  client(client: QueryClientContract): this {
     this.options = this.options || {}
     this.options.client = client
     return this
@@ -321,7 +328,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Define custom context. Usually called by the relationships
    * to share the parent context with relationship factory
    */
-  public useCtx(ctx: FactoryContextContract): this {
+  useCtx(ctx: FactoryContextContract): this {
     this.ctx = ctx
     return this
   }
@@ -329,15 +336,15 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   /**
    * Load relationship
    */
-  public with(name: string, count?: number, callback?: (factory: never) => void): this {
+  with(name: string, count?: number, callback?: (factory: never) => void): this {
     const relation = this.factory.getRelation(name)
 
     if (relation.relation.type === 'belongsTo') {
-      this.withBelongsToRelations.push({ name, count, callback })
+      this.withBelongsToRelations.push({ name, count, callback: callback as any })
       return this
     }
 
-    this.withRelations.push({ name, count, callback })
+    this.withRelations.push({ name, count, callback: callback as any })
     return this
   }
 
@@ -345,7 +352,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Apply one or more states. Multiple calls to apply a single
    * state will be ignored
    */
-  public apply(...states: string[]): this {
+  apply(...states: string[]): this {
     states.forEach((state) => this.appliedStates.add(state))
     return this
   }
@@ -354,7 +361,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Fill custom set of attributes. They are passed down to the newUp
    * method of the factory
    */
-  public merge(attributes: any) {
+  merge(attributes: any) {
     this.attributes = attributes
     return this
   }
@@ -363,7 +370,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Merge custom set of attributes with the correct factory builder
    * model and all of its relationships as well
    */
-  public mergeRecursive(attributes: any): this {
+  mergeRecursive(attributes: any): this {
     this.recursiveAttributes = attributes
     return this
   }
@@ -373,7 +380,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * relationship. Results in a noop, when not called
    * for a many to many relationship
    */
-  public pivotAttributes(attributes: ModelObject | ModelObject[]): this {
+  pivotAttributes(attributes: ModelObject | ModelObject[]): this {
     this.attributesForPivotTable = attributes
     return this
   }
@@ -383,9 +390,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * to modify the model instance just before it is persisted
    * to the database
    */
-  public tap(
-    callback: (row: LucidRow, state: FactoryContextContract, builder: this) => void
-  ): this {
+  tap(callback: (row: LucidRow, state: FactoryContextContract, builder: this) => void): this {
     this.tapCallbacks.push(callback)
     return this
   }
@@ -393,17 +398,17 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   /**
    * Make model instance. Relationships are not processed with the make function.
    */
-  public async make() {
+  async make() {
     const ctx = this.ctx || (await this.getCtx(false, false))
     const modelInstance = await this.compile(ctx)
-    await this.factory.hooks.exec('after', 'make', this, modelInstance, ctx)
+    await this.factory.hooks.runner('after:make').run(this, modelInstance, ctx)
     return modelInstance
   }
 
   /**
    * Create many of the factory model instances
    */
-  public async makeMany(count: number) {
+  async makeMany(count: number) {
     let modelInstances: LucidRow[] = []
 
     const counter = new Array(count).fill(0).map((_, i) => i)
@@ -419,15 +424,15 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Returns a model instance without persisting it to the database.
    * Relationships are still loaded and states are also applied.
    */
-  public async makeStubbed() {
+  async makeStubbed() {
     const ctx = this.ctx || (await this.getCtx(true, false))
     const modelInstance = await this.compile(ctx)
 
-    await this.factory.hooks.exec('after', 'make', this, modelInstance, ctx)
-    await this.factory.hooks.exec('before', 'makeStubbed', this, modelInstance, ctx)
+    await this.factory.hooks.runner('after:make').run(this, modelInstance, ctx)
+    await this.factory.hooks.runner('before:makeStubbed').run(this, modelInstance, ctx)
 
     const id = modelInstance.$primaryKeyValue || this.factory.manager.getNextId(modelInstance)
-    modelInstance[this.factory.model.primaryKey] = id
+    ;(modelInstance as any)[this.factory.model.primaryKey] = id
 
     /**
      * Make relationships. The relationships will be not persisted
@@ -437,7 +442,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
     /**
      * Fire the after hook
      */
-    await this.factory.hooks.exec('after', 'makeStubbed', this, modelInstance, ctx)
+    await this.factory.hooks.runner('after:makeStubbed').run(this, modelInstance, ctx)
 
     return modelInstance
   }
@@ -445,7 +450,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   /**
    * Create many of model factory instances
    */
-  public async makeStubbedMany(count: number) {
+  async makeStubbedMany(count: number) {
     let modelInstances: LucidRow[] = []
 
     const counter = new Array(count).fill(0).map((_, i) => i)
@@ -461,7 +466,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
    * Similar to make, but also persists the model instance to the
    * database.
    */
-  public async create() {
+  async create() {
     /**
      * Use pre-defined ctx or create a new one
      */
@@ -491,7 +496,7 @@ export class FactoryBuilder implements FactoryBuilderContract<FactoryModelContra
   /**
    * Create and persist many of factory model instances
    */
-  public async createMany(count: number) {
+  async createMany(count: number) {
     let modelInstances: LucidRow[] = []
 
     /**

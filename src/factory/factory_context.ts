@@ -8,11 +8,11 @@
  */
 
 import { faker } from '@faker-js/faker'
-import { FactoryContextContract } from '@ioc:Adonis/Lucid/Factory'
-import { TransactionClientContract } from '@ioc:Adonis/Lucid/Database'
+import { FactoryContextContract } from '../../adonis-typings/factory.js'
+import { TransactionClientContract } from '../../adonis-typings/database.js'
 
 export class FactoryContext implements FactoryContextContract {
-  public faker = faker
+  faker = faker
 
   constructor(
     public isStubbed: boolean,

@@ -7,94 +7,82 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
 import { test } from '@japa/runner'
-import type { HasOne } from '@ioc:Adonis/Lucid/Orm'
-import { FactoryManager } from '../../src/Factory/index'
-import { column, hasOne } from '../../src/Orm/Decorators'
+import type { HasOne } from '../../adonis-typings/relations.js'
+
+import { FactoryManager } from '../../src/factory/index.js'
+import { column, hasOne } from '../../src/orm/decorators/index.js'
 
 import {
-  fs,
   setup,
   getDb,
   cleanup,
   ormAdapter,
   resetTables,
   getBaseModel,
-  getFactoryModel,
-  setupApplication,
-} from '../../test-helpers'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+} from '../../test-helpers/index.js'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
-let db: ReturnType<typeof getDb>
-let app: ApplicationContract
-let BaseModel: ReturnType<typeof getBaseModel>
-const FactoryModel = getFactoryModel()
 const factoryManager = new FactoryManager()
 
 test.group('Factory | HasOne | make', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('make model with relationship', async ({ assert }) => {
+  test('make model with relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
-    const profileFactory = new FactoryModel(
-      Profile,
-      () => {
+    const profileFactory = factoryManager
+      .define(Profile, () => {
         return {
           displayName: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('profile', () => profileFactory)
       .build()
 
@@ -109,50 +97,51 @@ test.group('Factory | HasOne | make', (group) => {
     assert.equal(user.profile.userId, user.id)
   })
 
-  test('pass custom attributes to relationship', async ({ assert }) => {
+  test('pass custom attributes to relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
-    const profileFactory = new FactoryModel(
-      Profile,
-      () => {
+    const profileFactory = factoryManager
+      .define(Profile, () => {
         return {
           displayName: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('profile', () => profileFactory)
       .build()
 
@@ -172,63 +161,59 @@ test.group('Factory | HasOne | make', (group) => {
 
 test.group('Factory | HasOne | create', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create model with relationship', async ({ assert }) => {
+  test('create model with relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
-    const profileFactory = new FactoryModel(
-      Profile,
-      () => {
+    const profileFactory = factoryManager
+      .define(Profile, () => {
         return {
           displayName: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('profile', () => profileFactory)
       .build()
 
@@ -247,47 +232,48 @@ test.group('Factory | HasOne | create', (group) => {
     assert.equal(profiles[0].user_id, users[0].id)
   })
 
-  test('pass custom attributes to relationship', async ({ assert }) => {
+  test('pass custom attributes to relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
-    const profileFactory = new FactoryModel(
-      Profile,
-      () => {
+    const profileFactory = factoryManager
+      .define(Profile, () => {
         return {
           displayName: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('profile', () => profileFactory)
       .build()
 
@@ -302,47 +288,48 @@ test.group('Factory | HasOne | create', (group) => {
     assert.equal(user.profile.userId, user.id)
   })
 
-  test('create model with custom foreign key', async ({ assert }) => {
+  test('create model with custom foreign key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ columnName: 'user_id' })
-      public authorId: number
+      declare authorId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @hasOne(() => Profile, { foreignKey: 'authorId' })
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
-    const profileFactory = new FactoryModel(
-      Profile,
-      () => {
+    const profileFactory = factoryManager
+      .define(Profile, () => {
         return {
           displayName: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('profile', () => profileFactory)
       .build()
 
@@ -354,47 +341,48 @@ test.group('Factory | HasOne | create', (group) => {
     assert.equal(user.profile.authorId, user.id)
   })
 
-  test('rollback changes on error', async ({ assert }) => {
+  test('rollback changes on error', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(3)
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
 
       @hasOne(() => Profile)
-      public profile: HasOne<typeof Profile>
+      declare profile: HasOne<typeof Profile>
     }
 
-    const profileFactory = new FactoryModel(
-      Profile,
-      () => {
+    const profileFactory = factoryManager
+      .define(Profile, () => {
         return {}
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    )
+      })
       .relation('profile', () => profileFactory)
       .build()
 

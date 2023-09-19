@@ -7,97 +7,84 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
-
 import { test } from '@japa/runner'
-import type { BelongsTo } from '@ioc:Adonis/Lucid/Orm'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import type { BelongsTo } from '../../adonis-typings/relations.js'
 
-import { FactoryManager } from '../../src/Factory/index'
-import { column, belongsTo } from '../../src/Orm/Decorators'
+import { FactoryManager } from '../../src/factory/index.js'
+import { column, belongsTo } from '../../src/orm/decorators/index.js'
 
 import {
-  fs,
   setup,
   getDb,
   cleanup,
   ormAdapter,
   resetTables,
   getBaseModel,
-  setupApplication,
-  getFactoryModel,
-} from '../../test-helpers'
+} from '../../test-helpers/index.js'
+import { AppFactory } from '@adonisjs/core/factories/app'
 
-let db: ReturnType<typeof getDb>
-let app: ApplicationContract
-let BaseModel: ReturnType<typeof getBaseModel>
-const FactoryModel = getFactoryModel()
 const factoryManager = new FactoryManager()
 
 test.group('Factory | BelongTo | make', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('make stubbed model with relationship', async ({ assert }) => {
+  test('make stubbed model with relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
     }
 
-    const profileFactory = new FactoryModel(
-      Profile,
-      () => {
+    const profileFactory = factoryManager
+      .define(Profile, () => {
         return {
           displayName: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .relation('user', () => factory)
       .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const profile = await profileFactory.with('user').makeStubbed()
     assert.exists(profile.id)
@@ -109,54 +96,55 @@ test.group('Factory | BelongTo | make', (group) => {
     assert.equal(profile.user.id, profile.userId)
   })
 
-  test('pass custom attributes to the relationship', async ({ assert }) => {
+  test('pass custom attributes to the relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
     }
 
-    const profileFactory = new FactoryModel(
-      Profile,
-      () => {
+    const profileFactory = factoryManager
+      .define(Profile, () => {
         return {
           displayName: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .relation('user', () => factory)
       .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           points: 0,
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const profile = await profileFactory
       .with('user', 1, (related) => related.merge({ points: 10 }))
@@ -172,55 +160,55 @@ test.group('Factory | BelongTo | make', (group) => {
     assert.equal(profile.user.points, 10)
   })
 
-  test('invoke make hook on the related factory during make stubbed', async ({ assert }) => {
+  test('invoke make hook on the related factory during make stubbed', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public id: number
+      declare id: number
 
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
     }
     User.boot()
 
-    const profileFactory = new FactoryModel(
-      Profile,
-      () => {
+    const profileFactory = factoryManager
+      .define(Profile, () => {
         return {
           displayName: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .relation('user', () => factory)
       .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           points: 0,
         }
-      },
-      factoryManager
-    )
+      })
       .after('make', (_, user) => {
         user.id = 100
       })
@@ -244,65 +232,61 @@ test.group('Factory | BelongTo | make', (group) => {
 
 test.group('Factory | BelongTo | create', (group) => {
   group.setup(async () => {
-    app = await setupApplication()
-    db = getDb(app)
-    BaseModel = getBaseModel(ormAdapter(db), app)
     await setup()
   })
 
   group.teardown(async () => {
-    await db.manager.closeAll()
     await cleanup()
-    await fs.cleanup()
   })
 
   group.each.teardown(async () => {
     await resetTables()
   })
 
-  test('create model with relationship', async ({ assert }) => {
+  test('create model with relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
     }
 
-    const profileFactory = new FactoryModel(
-      Profile,
-      () => {
+    const profileFactory = factoryManager
+      .define(Profile, () => {
         return {
           displayName: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .relation('user', () => factory)
       .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {}
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const profile = await profileFactory.with('user').create()
 
@@ -319,51 +303,52 @@ test.group('Factory | BelongTo | create', (group) => {
     assert.equal(profiles[0].user_id, users[0].id)
   })
 
-  test('pass custom attributes to the relationship', async ({ assert }) => {
+  test('pass custom attributes to the relationship', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
     }
 
-    const profileFactory = new FactoryModel(
-      Profile,
-      () => {
+    const profileFactory = factoryManager
+      .define(Profile, () => {
         return {
           displayName: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .relation('user', () => factory)
       .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           points: 0,
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const profile = await profileFactory
       .with('user', 1, (related) => related.merge({ points: 10 }))
@@ -376,51 +361,52 @@ test.group('Factory | BelongTo | create', (group) => {
     assert.equal(profile.user.points, 10)
   })
 
-  test('create model with custom foreign key', async ({ assert }) => {
+  test('create model with custom foreign key', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     class Profile extends BaseModel {
       @column({ columnName: 'user_id' })
-      public authorId: number
+      declare authorId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User, { foreignKey: 'authorId' })
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
     }
 
-    const profileFactory = new FactoryModel(
-      Profile,
-      () => {
+    const profileFactory = factoryManager
+      .define(Profile, () => {
         return {
           displayName: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .relation('user', () => factory)
       .build()
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           points: 0,
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     const profile = await profileFactory
       .with('user', 1, (related) => related.merge({ points: 10 }))
@@ -433,41 +419,44 @@ test.group('Factory | BelongTo | create', (group) => {
     assert.equal(profile.user.points, 10)
   })
 
-  test('rollback changes on error', async ({ assert }) => {
+  test('rollback changes on error', async ({ fs, assert }) => {
+    const app = new AppFactory().create(fs.baseUrl, () => {})
+    await app.init()
+    const db = getDb()
+    const adapter = ormAdapter(db)
+    const BaseModel = getBaseModel(adapter, app)
+
     assert.plan(3)
 
     class Profile extends BaseModel {
       @column()
-      public userId: number
+      declare userId: number
 
       @column()
-      public displayName: string
+      declare displayName: string
 
       @belongsTo(() => User)
-      public user: BelongsTo<typeof User>
+      declare user: BelongsTo<typeof User>
     }
     Profile.boot()
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public id: number
+      declare id: number
 
       @column()
-      public username: string
+      declare username: string
 
       @column()
-      public points: number = 0
+      points: number = 0
     }
 
-    const profileFactory = new FactoryModel(
-      Profile,
-      () => {
+    const profileFactory = factoryManager
+      .define(Profile, () => {
         return {
           displayName: 'virk',
         }
-      },
-      factoryManager
-    )
+      })
       .relation('user', () => factory)
       .build()
 
@@ -480,15 +469,13 @@ test.group('Factory | BelongTo | create', (group) => {
      */
     await db.table('users').insert({ username: 'virk' })
 
-    const factory = new FactoryModel(
-      User,
-      () => {
+    const factory = factoryManager
+      .define(User, () => {
         return {
           username: 'virk',
         }
-      },
-      factoryManager
-    ).build()
+      })
+      .build()
 
     try {
       await profileFactory.with('user').create()

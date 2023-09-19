@@ -7,20 +7,17 @@
  * file that was distributed with this source code.
  */
 
-import {
-  ManyToManyRelationContract,
-  LucidModel,
-  LucidRow,
-  ModelObject,
-} from '@ioc:Adonis/Lucid/Orm'
+import { LucidModel, LucidRow, ModelObject } from '../../../adonis-typings/model.js'
+import { ManyToManyRelationContract } from '../../../adonis-typings/relations.js'
+
 import {
   RelationCallback,
   FactoryModelContract,
   FactoryRelationContract,
   FactoryBuilderQueryContract,
-} from '@ioc:Adonis/Lucid/Factory'
+} from '../../../adonis-typings/factory.js'
 
-import { BaseRelation } from './Base'
+import { BaseRelation } from './base.js'
 
 /**
  * Many to many factory relation
@@ -30,7 +27,7 @@ export class ManyToMany extends BaseRelation implements FactoryRelationContract 
 
   constructor(
     public relation: ManyToManyRelationContract<LucidModel, LucidModel>,
-    factory: () => FactoryBuilderQueryContract<FactoryModelContract<LucidModel>>
+    factory: () => FactoryBuilderQueryContract<LucidModel, FactoryModelContract<LucidModel>>
   ) {
     super(factory)
     this.relation.boot()
@@ -39,7 +36,7 @@ export class ManyToMany extends BaseRelation implements FactoryRelationContract 
   /**
    * Make relationship and set it on the parent model instance
    */
-  public async make(parent: LucidRow, callback?: RelationCallback, count?: number) {
+  async make(parent: LucidRow, callback?: RelationCallback, count?: number) {
     const builder = this.compile(this, parent, callback)
     const instances = await builder.makeStubbedMany(count || 1)
     parent.$setRelated(this.relation.relationName, instances)
@@ -48,7 +45,7 @@ export class ManyToMany extends BaseRelation implements FactoryRelationContract 
   /**
    * Define pivot attributes
    */
-  public pivotAttributes(attributes: ModelObject | ModelObject[]) {
+  pivotAttributes(attributes: ModelObject | ModelObject[]) {
     this.attributesForPivotTable = attributes
     return this
   }
@@ -56,7 +53,7 @@ export class ManyToMany extends BaseRelation implements FactoryRelationContract 
   /**
    * Persist relationship and set it on the parent model instance
    */
-  public async create(parent: LucidRow, callback?: RelationCallback, count?: number) {
+  async create(parent: LucidRow, callback?: RelationCallback, count?: number) {
     const builder = this.compile(this, parent, callback)
     const instances = await builder.createMany(count || 1)
 
@@ -79,7 +76,7 @@ export class ManyToMany extends BaseRelation implements FactoryRelationContract 
     /**
      * Make pivot insert query
      */
-    await this.relation.client(parent, this.ctx.$trx!).attach(relatedForeignKeyValues)
+    await this.relation.client(parent, this.ctx?.$trx!).attach(relatedForeignKeyValues)
 
     /**
      * Setup in-memory relationship

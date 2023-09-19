@@ -7,15 +7,16 @@
  * file that was distributed with this source code.
  */
 
-import { LucidModel, LucidRow, HasManyRelationContract } from '@ioc:Adonis/Lucid/Orm'
+import { LucidModel, LucidRow } from '../../../adonis-typings/model.js'
+import { HasManyRelationContract } from '../../../adonis-typings/relations.js'
 import {
   RelationCallback,
   FactoryModelContract,
   FactoryRelationContract,
   FactoryBuilderQueryContract,
-} from '@ioc:Adonis/Lucid/Factory'
+} from '../../../adonis-typings/factory.js'
 
-import { BaseRelation } from './Base'
+import { BaseRelation } from './base.js'
 
 /**
  * Has many to factory relation
@@ -23,7 +24,7 @@ import { BaseRelation } from './Base'
 export class HasMany extends BaseRelation implements FactoryRelationContract {
   constructor(
     public relation: HasManyRelationContract<LucidModel, LucidModel>,
-    factory: () => FactoryBuilderQueryContract<FactoryModelContract<LucidModel>>
+    factory: () => FactoryBuilderQueryContract<LucidModel, FactoryModelContract<LucidModel>>
   ) {
     super(factory)
     this.relation.boot()
@@ -32,7 +33,7 @@ export class HasMany extends BaseRelation implements FactoryRelationContract {
   /**
    * Make relationship and set it on the parent model instance
    */
-  public async make(parent: LucidRow, callback?: RelationCallback, count?: number) {
+  async make(parent: LucidRow, callback?: RelationCallback, count?: number) {
     const factory = this.compile(this, parent, callback)
 
     const customAttributes = {}
@@ -50,7 +51,7 @@ export class HasMany extends BaseRelation implements FactoryRelationContract {
   /**
    * Persist relationship and set it on the parent model instance
    */
-  public async create(parent: LucidRow, callback?: RelationCallback, count?: number) {
+  async create(parent: LucidRow, callback?: RelationCallback, count?: number) {
     const factory = this.compile(this, parent, callback)
 
     const customAttributes = {}
