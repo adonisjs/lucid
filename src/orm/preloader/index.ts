@@ -9,15 +9,15 @@
 
 import { Exception } from '@poppinss/utils'
 
-import { LucidRow, LucidModel, ModelObject } from '../../../adonis-typings/model.js'
+import { LucidRow, LucidModel, ModelObject } from '../../types/model.js'
 
 import {
   PreloaderContract,
   RelationshipsContract,
   RelationQueryBuilderContract,
-} from '../../../adonis-typings/relations.js'
+} from '../../types/relations.js'
 
-import { QueryClientContract } from '../../../adonis-typings/database.js'
+import { QueryClientContract } from '../../types/database.js'
 
 /**
  * Exposes the API to define and preload relationships in reference to

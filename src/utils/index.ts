@@ -10,13 +10,9 @@
 import slash from 'slash'
 import { join, extname } from 'node:path'
 import { Exception, fsReadAll, isScriptFile } from '@poppinss/utils'
-import { RelationshipsContract } from '../../adonis-typings/relations.js'
-import { LucidRow, ModelObject, CherryPickFields } from '../../adonis-typings/model.js'
-import {
-  FileNode,
-  QueryClientContract,
-  TransactionClientContract,
-} from '../../adonis-typings/database.js'
+import { RelationshipsContract } from '../types/relations.js'
+import { LucidRow, ModelObject, CherryPickFields } from '../types/model.js'
+import { FileNode, QueryClientContract, TransactionClientContract } from '../types/database.js'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 /**

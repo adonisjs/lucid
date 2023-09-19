@@ -11,9 +11,9 @@ import { test } from '@japa/runner'
 import { randomUUID } from 'node:crypto'
 
 import { column } from '../../src/orm/decorators/index.js'
-import { FactoryManager } from '../../src/factory/index.js'
-import { FactoryContext } from '../../src/factory/factory_context.js'
-import { FactoryBuilder } from '../../src/factory/factory_builder.js'
+import { FactoryManager } from '../../src/factories/main.js'
+import { FactoryContext } from '../../src/factories/factory_context.js'
+import { FactoryBuilder } from '../../src/factories/factory_builder.js'
 
 import {
   setup,

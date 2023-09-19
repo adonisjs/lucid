@@ -8,7 +8,7 @@
  */
 
 import { Knex } from 'knex'
-import { ReferenceBuilderContract } from '../../../adonis-typings/querybuilder.js'
+import { ReferenceBuilderContract } from '../../types/querybuilder.js'
 
 /**
  * Reference builder to create SQL reference values

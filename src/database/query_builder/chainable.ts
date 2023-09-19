@@ -10,7 +10,7 @@
 import { Knex } from 'knex'
 import Macroable from '@poppinss/macroable'
 import { Exception } from '@poppinss/utils'
-import { ChainableContract, DBQueryCallback } from '../../../adonis-typings/querybuilder.js'
+import { ChainableContract, DBQueryCallback } from '../../types/querybuilder.js'
 
 import { isObject } from '../../utils/index.js'
 import { RawQueryBuilder } from './raw.js'

@@ -10,8 +10,8 @@
 import { Knex } from 'knex'
 
 import { QueryRunner } from '../../query_runner/index.js'
-import { RawQueryBuilderContract } from '../../../adonis-typings/querybuilder.js'
-import { QueryClientContract, TransactionClientContract } from '../../../adonis-typings/database.js'
+import { RawQueryBuilderContract } from '../../types/querybuilder.js'
+import { QueryClientContract, TransactionClientContract } from '../../types/database.js'
 
 /**
  * Exposes the API to execute raw queries

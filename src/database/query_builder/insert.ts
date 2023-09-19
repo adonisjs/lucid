@@ -10,8 +10,8 @@
 import { Knex } from 'knex'
 import Macroable from '@poppinss/macroable'
 
-import { InsertQueryBuilderContract } from '../../../adonis-typings/querybuilder.js'
-import { QueryClientContract, TransactionClientContract } from '../../../adonis-typings/database.js'
+import { InsertQueryBuilderContract } from '../../types/querybuilder.js'
+import { QueryClientContract, TransactionClientContract } from '../../types/database.js'
 
 import { RawQueryBuilder } from './raw.js'
 import { RawBuilder } from '../static_builder/raw.js'

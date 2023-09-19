@@ -10,7 +10,7 @@
 import { test } from '@japa/runner'
 import { AppFactory } from '@adonisjs/core/factories/app'
 
-import { SeedsRunner } from '../../src/seeders_runner/index.js'
+import { SeedsRunner } from '../../src/seeders/runner.js'
 import { getDb, setup, cleanup as cleanupTables } from '../../test-helpers/index.js'
 
 test.group('Seeds Runner', (group) => {

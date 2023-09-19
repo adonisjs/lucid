@@ -9,7 +9,7 @@
 
 import { test } from '@japa/runner'
 
-import { Database } from '../../src/database/index.js'
+import { Database } from '../../src/database/main.js'
 import { getConfig, setup, cleanup, logger, createEmitter } from '../../test-helpers/index.js'
 
 test.group('Database', (group) => {

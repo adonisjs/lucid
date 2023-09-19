@@ -7,9 +7,9 @@
  * file that was distributed with this source code.
  */
 import { test } from '@japa/runner'
-import type { ManyToMany } from '../../adonis-typings/relations.js'
+import type { ManyToMany } from '../../src/types/relations.js'
 
-import { FactoryManager } from '../../src/factory/index.js'
+import { FactoryManager } from '../../src/factories/main.js'
 import { column, manyToMany } from '../../src/orm/decorators/index.js'
 
 import {

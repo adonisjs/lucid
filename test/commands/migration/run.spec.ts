@@ -7,51 +7,34 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../../adonis-typings/index.ts" />
-
 import 'reflect-metadata'
-import { join } from 'path'
 import { test } from '@japa/runner'
-import { Kernel } from '@adonisjs/core/build/standalone'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { AceFactory } from '@adonisjs/core/factories'
 
-import { Migrator } from '../../../src/Migrator'
-import Migrate from '../../../commands/Migration/Run'
-import { fs, setup, cleanup, getDb, setupApplication } from '../../../test-helpers'
-
-let db: ReturnType<typeof getDb>
-let app: ApplicationContract
+import Migrate from '../../../commands/migration/run.js'
+import { setup, cleanup as cleanupTables, getDb } from '../../../test-helpers/index.js'
 
 test.group('migration:run', (group) => {
   group.each.setup(async () => {
-    app = await setupApplication()
     await setup()
-    return () => fs.cleanup()
-  })
-
-  group.each.setup(async () => {
-    db = getDb(app)
-    app.container.bind('Adonis/Lucid/Database', () => db)
-    app.container.bind('Adonis/Lucid/Migrator', () => Migrator)
     return async () => {
-      await cleanup()
-      await cleanup([
+      await cleanupTables()
+      await cleanupTables([
         'adonis_schema',
         'adonis_schema_versions',
         'schema_users',
         'schema_accounts',
         'schema_clients',
       ])
-      await db.manager.closeAll(true)
     }
   })
 
-  test('run migrations from default directory', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('run migrations from default directory', async ({ fs, assert }) => {
+    await fs.create(
+      'database/migrations/run_cmd_users.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { Schema } from '../../../../src/schema/index.js'
+      export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -61,36 +44,44 @@ test.group('migration:run', (group) => {
     `
     )
 
-    const kernel = new Kernel(app).mockConsoleOutput()
-    kernel.register([Migrate])
-    await kernel.exec('migration:run', [])
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+
+    const migrate = await ace.create(Migrate, [])
+    await migrate.exec()
 
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
 
     assert.lengthOf(migrated, 1)
     assert.isTrue(hasUsersTable)
-    assert.equal(migrated[0].name, 'database/migrations/users')
+    assert.equal(migrated[0].name, 'database/migrations/run_cmd_users')
     assert.equal(migrated[0].batch, 1)
   })
 
-  test('skip migrations when already up to date', async ({ assert }) => {
-    await fs.fsExtra.ensureDir(join(fs.basePath, 'database/migrations'))
+  test('skip migrations when already up to date', async ({ fs, assert }) => {
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
 
-    const kernel = new Kernel(app).mockConsoleOutput()
-    kernel.register([Migrate])
-    await kernel.exec('migration:run', [])
+    const migrate = await ace.create(Migrate, [])
+    await migrate.exec()
 
     const migrated = await db.connection().from('adonis_schema').select('*')
     assert.lengthOf(migrated, 0)
   })
 
-  test('do not execute migrations in dry-run', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('do not execute migrations in dry-run', async ({ fs, assert }) => {
+    await fs.create(
+      'database/migrations/run_cmd_users_v1.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { Schema } from '../../../../src/schema/index.js'
+      export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -100,23 +91,31 @@ test.group('migration:run', (group) => {
     `
     )
 
-    const kernel = new Kernel(app).mockConsoleOutput()
-    kernel.register([Migrate])
-    await kernel.exec('migration:run', ['--dry-run'])
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+
+    const migrate = await ace.create(Migrate, ['--dry-run'])
+    await migrate.exec()
 
     const migrated = await db.connection().from('adonis_schema').select('*')
     assert.lengthOf(migrated, 0)
   })
 
-  test('do not run migrations in production', async ({ assert }) => {
+  test('do not run migrations in production', async ({ fs, assert, cleanup }) => {
     assert.plan(1)
-    app.nodeEnvironment = 'production'
+    process.env.NODE_ENV = 'production'
+    cleanup(() => {
+      delete process.env.NODE_ENV
+    })
 
-    await fs.add(
-      'database/migrations/users.ts',
+    await fs.create(
+      'database/migrations/run_cmd_users_v2.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { Schema } from '../../../../src/schema/index.js'
+      export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -126,21 +125,43 @@ test.group('migration:run', (group) => {
     `
     )
 
-    const kernel = new Kernel(app).mockConsoleOutput()
-    kernel.register([Migrate]).interactive(false)
-    await kernel.exec('migration:run', [])
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => {
+        return import(filePath)
+      },
+    })
+
+    await ace.app.init()
+    await ace.app.boot()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+
+    const migrate = await ace.create(Migrate, [])
+    migrate.prompt
+      .trap('You are in production environment. Want to continue running migrations?')
+      .reject()
+
+    await migrate.exec()
 
     assert.isFalse(await db.connection().schema.hasTable('adonis_schema'))
   })
 
-  test('run migrations in production when --force flag is passed', async ({ assert }) => {
-    app.nodeEnvironment = 'production'
+  test('run migrations in production when --force flag is passed', async ({
+    fs,
+    assert,
+    cleanup,
+  }) => {
+    process.env.NODE_ENV = 'production'
+    cleanup(() => {
+      delete process.env.NODE_ENV
+    })
 
-    await fs.add(
-      'database/migrations/users.ts',
+    await fs.create(
+      'database/migrations/run_cmd_users_v3.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { Schema } from '../../../../src/schema/index.js'
+      export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -150,25 +171,36 @@ test.group('migration:run', (group) => {
     `
     )
 
-    const kernel = new Kernel(app).mockConsoleOutput()
-    kernel.register([Migrate]).interactive(false)
-    await kernel.exec('migration:run', ['--force'])
+    const db = getDb()
+
+    const ace = await new AceFactory().make(fs.baseUrl, {
+      importer: (filePath) => {
+        return import(filePath)
+      },
+    })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
+
+    const migrate = await ace.create(Migrate, ['--force'])
+    await migrate.exec()
 
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
 
     assert.lengthOf(migrated, 1)
     assert.isTrue(hasUsersTable)
-    assert.equal(migrated[0].name, 'database/migrations/users')
+    assert.equal(migrated[0].name, 'database/migrations/run_cmd_users_v3')
     assert.equal(migrated[0].batch, 1)
   })
 
-  test('run migrations with compact output should display one line', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('run migrations with compact output should display one line', async ({ fs }) => {
+    await fs.create(
+      'database/migrations/run_cmd_users_v4.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { Schema } from '../../../../src/schema/index.js'
+
+      export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -178,11 +210,12 @@ test.group('migration:run', (group) => {
     `
     )
 
-    await fs.add(
-      'database/migrations/clients.ts',
+    await fs.create(
+      'database/migrations/run_cmd_clients_v4.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class Client extends Schema {
+      import { Schema } from '../../../../src/schema/index.js'
+
+      export default class Client extends Schema {
         public async up () {
           this.schema.createTable('schema_clients', (table) => {
             table.increments()
@@ -192,27 +225,27 @@ test.group('migration:run', (group) => {
     `
     )
 
-    process.env.CLI_UI_IS_TESTING = 'true'
-    const kernel = new Kernel(app).mockConsoleOutput()
-    kernel.register([Migrate]).interactive(false)
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
 
-    const command = await kernel.exec('migration:run', ['--compact-output'])
-    const logs = command.ui.testingRenderer.logs.filter(
-      (log) => !log.message.includes('Upgrading migrations version from')
-    )
+    const migrate = await ace.create(Migrate, ['--compact-output'])
+    await migrate.exec()
 
-    assert.deepEqual(logs.length, 1)
-    assert.isTrue(logs[0].message.includes('❯ Executed 2 migrations'))
+    migrate.assertLogMatches(/grey\(❯ Executed 2 migrations/)
   })
 
   test('run already migrated migrations with compact output should display one line', async ({
-    assert,
+    fs,
   }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+    await fs.create(
+      'database/migrations/run_cmd_users_v5.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { Schema } from '../../../../src/schema/index.js'
+
+      export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -222,11 +255,12 @@ test.group('migration:run', (group) => {
     `
     )
 
-    await fs.add(
-      'database/migrations/clients.ts',
+    await fs.create(
+      'database/migrations/run_cmd_clients_v5.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class Client extends Schema {
+      import { Schema } from '../../../../src/schema/index.js'
+
+      export default class Client extends Schema {
         public async up () {
           this.schema.createTable('schema_clients', (table) => {
             table.increments()
@@ -236,17 +270,16 @@ test.group('migration:run', (group) => {
     `
     )
 
-    process.env.CLI_UI_IS_TESTING = 'true'
-    const kernel = new Kernel(app).mockConsoleOutput()
-    kernel.register([Migrate]).interactive(false)
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
 
-    await kernel.exec('migration:run', ['--compact-output'])
-    const command = await kernel.exec('migration:run', ['--compact-output'])
-    const logs = command.ui.testingRenderer.logs.filter(
-      (log) => !log.message.includes('Upgrading migrations version from')
-    )
+    const migrate = await ace.create(Migrate, ['--compact-output'])
+    await migrate.exec()
+    await migrate.exec()
 
-    assert.deepEqual(logs.length, 1)
-    assert.isTrue(logs[0].message.includes('❯ Already up to date'))
+    migrate.assertLogMatches(/grey\(❯ Already up to date/)
   })
 })

@@ -8,10 +8,7 @@
  */
 
 import { stringify } from 'qs'
-import {
-  SimplePaginatorContract,
-  SimplePaginatorMetaKeys,
-} from '../../../adonis-typings/querybuilder.js'
+import { SimplePaginatorContract, SimplePaginatorMetaKeys } from '../../types/querybuilder.js'
 import { SnakeCaseNamingStrategy } from '../../Orm/naming_strategies/snake_case.js'
 
 /**

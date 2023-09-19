@@ -16,21 +16,21 @@ import {
   ModelObject,
   ModelAdapterOptions,
   ModelQueryBuilderContract,
-} from '../../../adonis-typings/model.js'
+} from '../../types/model.js'
 
 import {
   PreloaderContract,
   RelationshipsContract,
   RelationQueryBuilderContract,
-} from '../../../adonis-typings/relations.js'
+} from '../../types/relations.js'
 
 import {
   DialectContract,
   QueryClientContract,
   TransactionClientContract,
-} from '../../../adonis-typings/database.js'
+} from '../../types/database.js'
 
-import { DBQueryCallback, Dictionary, OneOrMany } from '../../../adonis-typings/querybuilder.js'
+import { DBQueryCallback, Dictionary, OneOrMany } from '../../types/querybuilder.js'
 
 import { isObject } from '../../utils/index.js'
 import { Preloader } from '../preloader/index.js'

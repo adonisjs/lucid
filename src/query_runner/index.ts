@@ -10,7 +10,7 @@
 import { Knex } from 'knex'
 import { Exception } from '@poppinss/utils'
 import { QueryReporter } from '../query_reporter/index.js'
-import { QueryClientContract, TransactionClientContract } from '../../adonis-typings/database.js'
+import { QueryClientContract, TransactionClientContract } from '../types/database.js'
 
 /**
  * Query runner exposes the API for executing knex query builder by using the

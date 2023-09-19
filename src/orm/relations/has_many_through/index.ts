@@ -7,14 +7,14 @@
  * file that was distributed with this source code.
  */
 
-import { QueryClientContract } from '../../../../adonis-typings/database.js'
-import { OneOrMany } from '../../../../adonis-typings/querybuilder.js'
-import { LucidRow, LucidModel } from '../../../../adonis-typings/model.js'
+import { QueryClientContract } from '../../../types/database.js'
+import { OneOrMany } from '../../../types/querybuilder.js'
+import { LucidRow, LucidModel } from '../../../types/model.js'
 import {
   ThroughRelationOptions,
   HasManyThroughRelationContract,
   HasManyThrough as ModelHasManyThrough,
-} from '../../../../adonis-typings/relations.js'
+} from '../../../types/relations.js'
 
 import { KeysExtractor } from '../keys_extractor.js'
 import { HasManyThroughClient } from './query_client.js'

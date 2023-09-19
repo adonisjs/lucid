@@ -7,11 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import type {
-  DialectContract,
-  QueryClientContract,
-  SharedConfigNode,
-} from '../../adonis-typings/database.js'
+import type { DialectContract, QueryClientContract, SharedConfigNode } from '../types/database.js'
 
 export abstract class BaseSqliteDialect implements DialectContract {
   abstract readonly name: 'sqlite3' | 'better-sqlite3'

@@ -9,8 +9,8 @@
 
 import { Knex } from 'knex'
 import { Exception } from '@poppinss/utils'
-import { LucidRow } from '../../../../adonis-typings/model.js'
-import { QueryClientContract } from '../../../../adonis-typings/database.js'
+import { LucidRow } from '../../../types/model.js'
+import { QueryClientContract } from '../../../types/database.js'
 
 import { BelongsTo } from './index.js'
 import { unique } from '../../../utils/index.js'

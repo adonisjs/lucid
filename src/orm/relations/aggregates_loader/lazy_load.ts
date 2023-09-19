@@ -12,7 +12,7 @@ import {
   LucidModel,
   ModelQueryBuilderContract,
   LazyLoadAggregatesContract,
-} from '../../../../adonis-typings/model.js'
+} from '../../../types/model.js'
 
 /**
  * An implementation for lazy loading model relationship aggregates

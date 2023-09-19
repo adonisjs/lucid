@@ -14,11 +14,7 @@ import { SqliteDialect } from './sqlite.js'
 import { OracleDialect } from './oracle.js'
 import { RedshiftDialect } from './red_shift.js'
 import { BetterSqliteDialect } from './better_sqlite.js'
-import {
-  DialectContract,
-  QueryClientContract,
-  SharedConfigNode,
-} from '../../adonis-typings/database.js'
+import { DialectContract, QueryClientContract, SharedConfigNode } from '../types/database.js'
 
 export const dialects: {
   [key: string]: {

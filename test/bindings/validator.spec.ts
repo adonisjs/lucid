@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../adonis-typings/index.ts" />
+/// <reference path="../../src/types/index.ts" />
 
 import { test } from '@japa/runner'
 import { rules } from '@adonisjs/validator/build/src/Rules'

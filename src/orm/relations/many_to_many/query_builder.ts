@@ -9,9 +9,9 @@
 
 import { Knex } from 'knex'
 import { DateTime } from 'luxon'
-import { QueryClientContract } from '../../../../adonis-typings/database.js'
-import { LucidModel, LucidRow } from '../../../../adonis-typings/model.js'
-import { ManyToManyQueryBuilderContract } from '../../../../adonis-typings/relations.js'
+import { QueryClientContract } from '../../../types/database.js'
+import { LucidModel, LucidRow } from '../../../types/model.js'
+import { ManyToManyQueryBuilderContract } from '../../../types/relations.js'
 
 import { ManyToMany } from './index.js'
 import { PivotHelpers } from './pivot_helpers.js'

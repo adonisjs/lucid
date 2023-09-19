@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { QueryClientContract, TransactionClientContract } from '../../adonis-typings/database.js'
+import { QueryClientContract, TransactionClientContract } from '../types/database.js'
 
 /**
  * Used for reporting queries using the profiler and the event

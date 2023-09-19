@@ -8,9 +8,9 @@
  */
 
 import { test } from '@japa/runner'
-import type { HasOne } from '../../adonis-typings/relations.js'
+import type { HasOne } from '../../src/types/relations.js'
 
-import { FactoryManager } from '../../src/factory/index.js'
+import { FactoryManager } from '../../src/factories/main.js'
 import { column, hasOne } from '../../src/orm/decorators/index.js'
 
 import {

@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import type { HasManyThrough } from '../../adonis-typings/relations.js'
+import type { HasManyThrough } from '../../src/types/relations.js'
 
 import { scope } from '../../src/orm/base_model/index.js'
 import { hasManyThrough, column } from '../../src/orm/decorators/index.js'

@@ -11,7 +11,7 @@ import { join } from 'node:path'
 import { test } from '@japa/runner'
 import { AppFactory } from '@adonisjs/core/factories/app'
 
-import { SeedersSource } from '../../src/seeders_runner/seeders_source.js'
+import { SeedersSource } from '../../src/seeders/source.js'
 import { getDb, setup, cleanup } from '../../test-helpers/index.js'
 
 test.group('Seeds Source', (group) => {

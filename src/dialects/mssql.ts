@@ -8,11 +8,7 @@
  */
 
 import { RawBuilder } from '../database/static_builder/raw.js'
-import {
-  DialectContract,
-  SharedConfigNode,
-  QueryClientContract,
-} from '../../adonis-typings/database.js'
+import { DialectContract, SharedConfigNode, QueryClientContract } from '../types/database.js'
 
 export class MssqlDialect implements DialectContract {
   readonly name = 'mssql'

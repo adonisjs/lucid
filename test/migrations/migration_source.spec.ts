@@ -11,7 +11,7 @@ import { join } from 'node:path'
 import { test } from '@japa/runner'
 import { AppFactory } from '@adonisjs/core/factories/app'
 
-import { MigrationSource } from '../../src/migrator/migration_source.js'
+import { MigrationSource } from '../../src/migration/source.js'
 import { setup, getDb, resetTables } from '../../test-helpers/index.js'
 
 test.group('MigrationSource', (group) => {

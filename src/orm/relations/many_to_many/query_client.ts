@@ -8,18 +8,10 @@
  */
 
 import { DateTime } from 'luxon'
-import {
-  LucidModel,
-  LucidRow,
-  ModelObject,
-  ModelAssignOptions,
-} from '../../../../adonis-typings/model.js'
-import { ManyToManyClientContract } from '../../../../adonis-typings/relations.js'
-import {
-  QueryClientContract,
-  TransactionClientContract,
-} from '../../../../adonis-typings/database.js'
-import { OneOrMany } from '../../../../adonis-typings/querybuilder.js'
+import { LucidModel, LucidRow, ModelObject, ModelAssignOptions } from '../../../types/model.js'
+import { ManyToManyClientContract } from '../../../types/relations.js'
+import { QueryClientContract, TransactionClientContract } from '../../../types/database.js'
+import { OneOrMany } from '../../../types/querybuilder.js'
 
 import { ManyToMany } from './index.js'
 import { ManyToManyQueryBuilder } from './query_builder.js'

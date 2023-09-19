@@ -8,9 +8,9 @@
  */
 
 import { Knex } from 'knex'
-import { QueryClientContract } from '../../../../adonis-typings/database.js'
-import { LucidModel } from '../../../../adonis-typings/model.js'
-import { RelationSubQueryBuilderContract } from '../../../../adonis-typings/relations.js'
+import { QueryClientContract } from '../../../types/database.js'
+import { LucidModel } from '../../../types/model.js'
+import { RelationSubQueryBuilderContract } from '../../../types/relations.js'
 
 import { HasManyThrough } from './index.js'
 import { BaseSubQueryBuilder } from '../base/sub_query_builder.js'

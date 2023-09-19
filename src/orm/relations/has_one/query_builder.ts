@@ -8,8 +8,8 @@
  */
 
 import { Knex } from 'knex'
-import { LucidRow } from '../../../../adonis-typings/model.js'
-import { QueryClientContract } from '../../../../adonis-typings/database.js'
+import { LucidRow } from '../../../types/model.js'
+import { QueryClientContract } from '../../../types/database.js'
 
 import { HasOne } from './index.js'
 import { getValue, unique } from '../../../utils/index.js'

@@ -16,32 +16,26 @@ import { Logger } from '@adonisjs/core/logger'
 import { Emitter } from '@adonisjs/core/events'
 import { AppFactory } from '@adonisjs/core/factories/app'
 
-import {
-  ConnectionConfig,
-  ConnectionContract,
-  QueryClientContract,
-} from '../adonis-typings/database.js'
+import { ConnectionConfig, ConnectionContract, DatabaseConfig, QueryClientContract } from '../src/types/database.js'
 
 import {
   RawQueryBuilderContract,
   InsertQueryBuilderContract,
   DatabaseQueryBuilderContract,
-} from '../adonis-typings/querybuilder.js'
+} from '../src/types/querybuilder.js'
 
-import { MigratorOptions } from '../adonis-typings/migrator.js'
-import { LucidRow, LucidModel, AdapterContract } from '../adonis-typings/model.js'
+import { MigratorOptions } from '../src/types/migrator.js'
+import { LucidRow, LucidModel, AdapterContract } from '../src/types/model.js'
 
 import { fileURLToPath } from 'node:url'
-// import { QueryClient } from '../src/QueryClient/index.js'
-import { DefineCallback, FactoryModelContract } from '../adonis-typings/factory.js'
 import { QueryClient } from '../src/query_client/index.js'
-import { Database } from '../src/database/index.js'
+import { Database } from '../src/database/main.js'
 import { DatabaseQueryBuilder } from '../src/database/query_builder/database.js'
 import { RawQueryBuilder } from '../src/database/query_builder/raw.js'
 import { InsertQueryBuilder } from '../src/database/query_builder/insert.js'
-import { Migrator } from '../src/migrator/index.js'
+import { MigrationRunner } from '../src/migration/runner.js'
 import { Application } from '@adonisjs/core/app'
-import { Schema } from '../src/schema/index.js'
+import { Schema } from '../src/schema/main.js'
 import { BaseModel } from '../src/orm/base_model/index.js'
 import { Adapter } from '../src/orm/adapter/index.js'
 
@@ -405,8 +399,8 @@ export function getInsertBuilder(client: QueryClientContract) {
 /**
  * Returns the database instance
  */
-export function getDb(eventEmitter?: Emitter<any>) {
-  const config = {
+export function getDb(eventEmitter?: Emitter<any>, config?: DatabaseConfig) {
+  const defaultConfig = {
     connection: 'primary',
     connections: {
       primary: getConfig(),
@@ -414,7 +408,7 @@ export function getDb(eventEmitter?: Emitter<any>) {
     },
   }
 
-  const db = new Database(config, logger, eventEmitter || createEmitter())
+  const db = new Database(config || defaultConfig, logger, eventEmitter || createEmitter())
   const test = getActiveTest()
   test?.cleanup(() => {
     return db.manager.closeAll()
@@ -538,7 +532,7 @@ export class FakeAdapter implements AdapterContract {
 export function mapToObj<T extends any>(collection: Map<any, any>): T {
   let obj = {} as T
   collection.forEach((value, key) => {
-    obj[key] = value
+    ;(obj as any)[key] = value
   })
   return obj
 }
@@ -554,7 +548,7 @@ export function getBaseSchema() {
  * Returns instance of migrator
  */
 export function getMigrator(db: Database, application: Application<any>, config: MigratorOptions) {
-  return new Migrator(db, application, config)
+  return new MigrationRunner(db, application, config)
 }
 
 /**
@@ -588,58 +582,6 @@ export function getPosts(count: number, userId: number) {
       title: chance.sentence({ words: 5 }),
     }
   })
-}
-
-/**
- * Setup application
- */
-export async function setupApplication(
-  dbConfig?: any,
-  additionalProviders?: string[],
-  environment: 'web' | 'repl' | 'test' = 'test'
-) {
-  await fs.add('.env', '')
-  await fs.add(
-    'config/app.ts',
-    `
-    export const appKey = 'averylong32charsrandomsecretkey',
-    export const http = {
-      cookie: {},
-      trustProxy: () => true,
-    }
-  `
-  )
-
-  await fs.add(
-    'config/database.ts',
-    `
-    const dbConfig = ${JSON.stringify(dbConfig, null, 2)}
-    export default dbConfig
-  `
-  )
-
-  const app = new Application(fs.basePath, environment, {
-    aliases: {
-      App: './app',
-    },
-    providers: ['@adonisjs/core', '@adonisjs/repl'].concat(additionalProviders || []),
-  })
-
-  await app.setup()
-  await app.registerProviders()
-  await app.bootProviders()
-
-  if (process.env.DEBUG) {
-    app.container.use('Adonis/Core/Event').on('db:query', (query) => {
-      console.log({
-        model: query.model,
-        sql: query.sql,
-        bindings: query.bindings,
-      })
-    })
-  }
-
-  return app
 }
 
 export async function setupReplicaDb(connection: Knex, datatoInsert: { username: string }[]) {

@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { ModelKeysContract, ModelObject } from '../../../adonis-typings/model.js'
+import { ModelKeysContract, ModelObject } from '../../types/model.js'
 
 /**
  * Exposes the API to collect, get and resolve model keys

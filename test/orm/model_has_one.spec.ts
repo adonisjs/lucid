@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import type { HasOne, BelongsTo } from '../../adonis-typings/relations.js'
+import type { HasOne, BelongsTo } from '../../src/types/relations.js'
 
 import { scope } from '../../src/orm/base_model/index.js'
 import { column, hasOne, belongsTo } from '../../src/orm/decorators/index.js'

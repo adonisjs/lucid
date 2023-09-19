@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { DialectContract, QueryClientContract } from '../../adonis-typings/database.js'
+import { DialectContract, QueryClientContract } from '../types/database.js'
 
 export class OracleDialect implements DialectContract {
   readonly name = 'oracledb'

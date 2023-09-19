@@ -8,9 +8,9 @@
  */
 
 import { Knex } from 'knex'
-import { QueryClientContract } from '../../../../adonis-typings/database.js'
-import { LucidRow, LucidModel } from '../../../../adonis-typings/model.js'
-import { HasManyThroughQueryBuilderContract } from '../../../../adonis-typings/relations.js'
+import { QueryClientContract } from '../../../types/database.js'
+import { LucidRow, LucidModel } from '../../../types/model.js'
+import { HasManyThroughQueryBuilderContract } from '../../../types/relations.js'
 
 import { HasManyThrough } from './index.js'
 import { getValue, unique } from '../../../utils/index.js'

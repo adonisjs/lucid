@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import type { HasMany } from '../../adonis-typings/relations.js'
+import type { HasMany } from '../../src/types/relations.js'
 
 import { scope } from '../../src/orm/base_model/index.js'
 import { column, hasMany } from '../../src/orm/decorators/index.js'

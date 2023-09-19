@@ -17,7 +17,7 @@ import {
   ConnectionContract,
   QueryClientContract,
   TransactionClientContract,
-} from '../../adonis-typings/database.js'
+} from '../types/database.js'
 
 import { dialects } from '../dialects/index.js'
 import { TransactionClient } from '../transaction_client/index.js'
@@ -26,11 +26,18 @@ import { RawQueryBuilder } from '../database/query_builder/raw.js'
 import { InsertQueryBuilder } from '../database/query_builder/insert.js'
 import { ReferenceBuilder } from '../database/static_builder/reference.js'
 import { DatabaseQueryBuilder } from '../database/query_builder/database.js'
-import { LucidModel, ModelQueryBuilderContract } from '../../adonis-typings/model.js'
+import { LucidModel, ModelQueryBuilderContract } from '../types/model.js'
 import {
   RawQueryBindings,
   DatabaseQueryBuilderContract,
-} from '../../adonis-typings/querybuilder.js'
+  InsertQueryBuilderContract,
+  RawQueryBuilderContract,
+  RawBuilderContract,
+  ReferenceBuilderContract,
+  ChainableContract,
+  Dictionary,
+  QueryCallback,
+} from '../types/querybuilder.js'
 import { ModelQueryBuilder } from '../orm/query_builder/index.js'
 
 /**
@@ -178,12 +185,17 @@ export class QueryClient implements QueryClientContract {
    * Returns an instance of a transaction. Each transaction will
    * query and hold a single connection for all queries.
    */
-  async transaction(
+  transaction<T>(
+    callback: (trx: TransactionClientContract) => Promise<T>,
+    options?: { isolationLevel?: IsolationLevels }
+  ): Promise<T>
+  transaction(options?: { isolationLevel?: IsolationLevels }): Promise<TransactionClientContract>
+  async transaction<T>(
     callback?:
       | { isolationLevel?: IsolationLevels }
       | ((trx: TransactionClientContract) => Promise<any>),
     options?: { isolationLevel?: IsolationLevels }
-  ): Promise<TransactionClientContract> {
+  ): Promise<TransactionClientContract | T> {
     const trx = await this.getWriteClient().transaction(options)
     const transaction = new TransactionClient(
       trx,
@@ -250,15 +262,21 @@ export class QueryClient implements QueryClientContract {
   /**
    * Returns instance of a query builder for inserting rows
    */
-  insertQuery(): any {
+  insertQuery<ReturnColumns = any>(): InsertQueryBuilderContract<ReturnColumns[]> {
     return new InsertQueryBuilder(this.getWriteClient().queryBuilder(), this)
   }
 
   /**
    * Returns instance of raw query builder
    */
-  rawQuery(sql: any, bindings?: any): any {
-    return new RawQueryBuilder(this.connection.client!.raw(sql, bindings), this)
+  rawQuery<Result = any>(
+    sql: string,
+    bindings?: RawQueryBindings | undefined
+  ): RawQueryBuilderContract<Result> {
+    return new RawQueryBuilder(
+      bindings ? this.connection.client!.raw(sql, bindings) : this.connection.client!.raw(sql),
+      this
+    )
   }
 
   /**
@@ -266,21 +284,27 @@ export class QueryClient implements QueryClientContract {
    * cannot be executed. Use `rawQuery`, if you want to execute
    * queries raw queries.
    */
-  raw(sql: string, bindings?: any) {
+  raw(sql: string, bindings?: RawQueryBindings | undefined): RawBuilderContract {
     return new RawBuilder(sql, bindings)
   }
 
   /**
    * Returns reference builder.
    */
-  ref(reference: string) {
+  ref(reference: string): ReferenceBuilderContract {
     return new ReferenceBuilder(reference, this.getReadClient().client)
   }
 
   /**
    * Returns instance of a query builder and selects the table
    */
-  from(table: any): any {
+  from(
+    table:
+      | string
+      | Dictionary<string, string>
+      | QueryCallback<DatabaseQueryBuilderContract>
+      | ChainableContract
+  ): DatabaseQueryBuilderContract {
     return this.query().from(table)
   }
 
@@ -288,21 +312,21 @@ export class QueryClient implements QueryClientContract {
    * Returns instance of a query builder and selects the table
    * for an insert query
    */
-  table(table: any): any {
+  table<ReturnColumns = any>(table: string): InsertQueryBuilderContract<ReturnColumns[]> {
     return this.insertQuery().table(table)
   }
 
   /**
    * Get advisory lock on the selected connection
    */
-  getAdvisoryLock(key: string, timeout?: number): any {
+  getAdvisoryLock(key: string | number, timeout?: number | undefined): Promise<boolean> {
     return this.dialect.getAdvisoryLock(key, timeout)
   }
 
   /**
    * Release advisory lock
    */
-  releaseAdvisoryLock(key: string): any {
+  releaseAdvisoryLock(key: string | number): Promise<boolean> {
     return this.dialect.releaseAdvisoryLock(key)
   }
 }

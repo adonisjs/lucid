@@ -13,7 +13,7 @@ import Hooks from '@poppinss/hooks'
 import lodash from '@poppinss/utils/lodash'
 import type { Container } from '@adonisjs/core/container'
 import { Exception, defineStaticProperty } from '@poppinss/utils'
-import { QueryClientContract, TransactionClientContract } from '../../../adonis-typings/database.js'
+import { QueryClientContract, TransactionClientContract } from '../../types/database.js'
 
 import {
   LucidRow,
@@ -37,7 +37,7 @@ import {
   ModelPaginatorContract,
   QueryScopeCallback,
   QueryScope,
-} from '../../../adonis-typings/model.js'
+} from '../../types/model.js'
 
 import {
   ModelRelations,
@@ -45,7 +45,7 @@ import {
   RelationshipsContract,
   ThroughRelationOptions,
   ManyToManyRelationOptions,
-} from '../../../adonis-typings/relations.js'
+} from '../../types/relations.js'
 
 import { ModelKeys } from '../model_keys/index.js'
 import { Preloader } from '../preloader/index.js'

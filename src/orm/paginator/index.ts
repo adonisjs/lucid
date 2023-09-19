@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { ModelPaginatorContract, CherryPick } from '../../../adonis-typings/model.js'
+import { ModelPaginatorContract, CherryPick } from '../../types/model.js'
 import { SimplePaginator } from '../../database/paginator/simple_paginator.js'
 
 /**

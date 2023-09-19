@@ -8,8 +8,8 @@
  */
 
 import string from '@poppinss/utils/string'
-import { ModelRelations } from '../../../adonis-typings/relations.js'
-import { NamingStrategyContract, LucidModel } from '../../../adonis-typings/model.js'
+import { ModelRelations } from '../../types/relations.js'
+import { NamingStrategyContract, LucidModel } from '../../types/model.js'
 
 /**
  * Uses snake case as the naming strategy for different model properties

@@ -7,48 +7,33 @@
  * file that was distributed with this source code.
  */
 
-/// <reference path="../../../adonis-typings/index.ts" />
-
 import 'reflect-metadata'
 import { test } from '@japa/runner'
-import Migrate from '../../../commands/Migration/Run'
-import { Kernel } from '@adonisjs/core/build/standalone'
-import { ApplicationContract } from '@ioc:Adonis/Core/Application'
+import { AceFactory } from '@adonisjs/core/factories'
 
-import DbSeed from '../../../commands/DbSeed'
-import DbWipe from '../../../commands/DbWipe'
-import { Migrator } from '../../../src/Migrator'
-import Fresh from '../../../commands/Migration/Fresh'
-import { fs, setup, cleanup, getDb, setupApplication } from '../../../test-helpers'
-
-let app: ApplicationContract
-let db: ReturnType<typeof getDb>
+import Migrate from '../../../commands/migration/run.js'
+import Fresh from '../../../commands/migration/fresh.js'
+import { setup, cleanup, getDb } from '../../../test-helpers/index.js'
+import { ListLoader } from '@adonisjs/core/ace'
+import DbWipe from '../../../commands/db_wipe.js'
+import DbSeed from '../../../commands/db_seed.js'
 
 test.group('migrate:fresh', (group) => {
   group.each.setup(async () => {
-    app = await setupApplication()
-    return () => fs.cleanup()
-  })
-
-  group.each.setup(async () => {
-    db = getDb(app)
-    app.container.bind('Adonis/Lucid/Database', () => db)
-    app.container.bind('Adonis/Lucid/Migrator', () => Migrator)
     await setup()
 
     return async () => {
       await cleanup()
       await cleanup(['adonis_schema', 'adonis_schema_versions', 'schema_users'])
-      await db.manager.closeAll()
     }
   })
 
-  test('migration:fresh should drop all tables and run migrations', async ({ assert }) => {
-    await fs.add(
-      'database/migrations/users.ts',
+  test('migration:fresh should drop all tables and run migrations', async ({ fs, assert }) => {
+    await fs.create(
+      'database/migrations/fresh_cmd_users.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { Schema } from '../../../../src/schema/index.js'
+      export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -58,24 +43,40 @@ test.group('migrate:fresh', (group) => {
     `
     )
 
-    const kernel = new Kernel(app).mockConsoleOutput()
-    kernel.register([Migrate, Fresh, DbWipe])
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
 
-    await kernel.exec('migration:run', [])
-    await kernel.exec('migration:fresh', [])
+    ace.addLoader(new ListLoader([DbWipe, DbSeed, Migrate]))
+
+    const migrate = await ace.create(Migrate, [])
+    await migrate.exec()
 
     const migrated = await db.connection().from('adonis_schema').select('*')
     const hasUsersTable = await db.connection().schema.hasTable('schema_users')
 
     assert.lengthOf(migrated, 1)
     assert.isTrue(hasUsersTable)
-    assert.equal(migrated[0].name, 'database/migrations/users')
+    assert.equal(migrated[0].name, 'database/migrations/fresh_cmd_users')
     assert.equal(migrated[0].batch, 1)
+
+    const fresh = await ace.create(Fresh, [])
+    await fresh.exec()
+
+    const migrated1 = await db.connection().from('adonis_schema').select('*')
+    const hasUsersTable1 = await db.connection().schema.hasTable('schema_users')
+
+    assert.lengthOf(migrated1, 1)
+    assert.isTrue(hasUsersTable1)
+    assert.equal(migrated1[0].name, 'database/migrations/fresh_cmd_users')
+    assert.equal(migrated1[0].batch, 1)
   })
 
-  test('migration:fresh --seed should run seeders', async ({ assert }) => {
-    await fs.add(
-      'database/seeders/user.ts',
+  test('migration:fresh --seed should run seeders', async ({ fs, assert }) => {
+    await fs.create(
+      'database/seeders/fresh_cmd_user.ts',
       `export default class UserSeeder {
         public async run () {
           process.env.EXEC_USER_SEEDER = 'true'
@@ -83,11 +84,11 @@ test.group('migrate:fresh', (group) => {
       }`
     )
 
-    await fs.add(
-      'database/migrations/users.ts',
+    await fs.create(
+      'database/migrations/fresh_cmd_users_v1.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { Schema } from '../../../../src/schema/index.js'
+      export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()
@@ -97,11 +98,19 @@ test.group('migrate:fresh', (group) => {
     `
     )
 
-    const kernel = new Kernel(app).mockConsoleOutput()
-    kernel.register([Migrate, Fresh, DbSeed, DbWipe])
+    const db = getDb()
+    const ace = await new AceFactory().make(fs.baseUrl, { importer: () => {} })
+    await ace.app.init()
+    ace.app.container.singleton('lucid.db', () => db)
+    ace.ui.switchMode('raw')
 
-    await kernel.exec('migration:run', [])
-    await kernel.exec('migration:fresh', ['--seed'])
+    ace.addLoader(new ListLoader([DbWipe, DbSeed, Migrate]))
+
+    const migrate = await ace.create(Migrate, [])
+    await migrate.exec()
+
+    const fresh = await ace.create(Fresh, ['--seed'])
+    await fresh.exec()
 
     assert.equal(process.env.EXEC_USER_SEEDER, 'true')
     delete process.env.EXEC_USER_SEEDER

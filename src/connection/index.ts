@@ -15,7 +15,7 @@ import { patchKnex } from 'knex-dynamic-connection'
 import type { Logger } from '@adonisjs/core/logger'
 // @ts-expect-error
 import { resolveClientNameWithAliases } from 'knex/lib/util/helpers.js'
-import { ConnectionConfig, ConnectionContract, ReportNode } from '../../adonis-typings/database.js'
+import { ConnectionConfig, ConnectionContract, ReportNode } from '../types/database.js'
 
 import { Logger as ConnectionLogger } from './logger.js'
 

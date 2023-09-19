@@ -8,7 +8,7 @@
  */
 
 import { test } from '@japa/runner'
-import type { ManyToMany } from '../../adonis-typings/relations.js'
+import type { ManyToMany } from '../../src/types/relations.js'
 
 import { scope } from '../../src/orm/base_model/index.js'
 import { column, manyToMany } from '../../src/orm/decorators/index.js'

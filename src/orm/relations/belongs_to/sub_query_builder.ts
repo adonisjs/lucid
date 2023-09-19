@@ -8,9 +8,9 @@
  */
 
 import { Knex } from 'knex'
-import { LucidModel } from '../../../../adonis-typings/model.js'
-import { QueryClientContract } from '../../../../adonis-typings/database.js'
-import { RelationSubQueryBuilderContract } from '../../../../adonis-typings/relations.js'
+import { LucidModel } from '../../../types/model.js'
+import { QueryClientContract } from '../../../types/database.js'
+import { RelationSubQueryBuilderContract } from '../../../types/relations.js'
 
 import { BelongsTo } from './index.js'
 import { BaseSubQueryBuilder } from '../base/sub_query_builder.js'
@@ -86,8 +86,8 @@ export class BelongsToSubQueryBuilder
     }
 
     this.wrapExisting().where(
-      `${tablePrefix}.${this.relation.localKeyColumName}`,
-      this.client.ref(`${localTable}.${this.relation.foreignKeyColumName}`)
+      `${tablePrefix}.${this.relation.localKeyColumnName}`,
+      this.client.ref(`${localTable}.${this.relation.foreignKeyColumnName}`)
     )
   }
 }

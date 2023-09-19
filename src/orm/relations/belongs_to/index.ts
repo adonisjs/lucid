@@ -7,15 +7,15 @@
  * file that was distributed with this source code.
  */
 
-import { QueryClientContract } from '../../../../adonis-typings/database.js'
-import { OneOrMany } from '../../../../adonis-typings/querybuilder.js'
+import { QueryClientContract } from '../../../types/database.js'
+import { OneOrMany } from '../../../types/querybuilder.js'
 
-import { LucidRow, LucidModel, ModelObject } from '../../../../adonis-typings/model.js'
+import { LucidRow, LucidModel, ModelObject } from '../../../types/model.js'
 import {
   RelationOptions,
   BelongsToRelationContract,
   BelongsTo as ModelBelongsTo,
-} from '../../../../adonis-typings/relations.js'
+} from '../../../types/relations.js'
 
 import { KeysExtractor } from '../keys_extractor.js'
 import { BelongsToQueryClient } from './query_client.js'
@@ -45,14 +45,14 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
    * @note: Available after boot is invoked
    */
   declare localKey: string
-  declare localKeyColumName: string
+  declare localKeyColumnName: string
 
   /**
    * Foreign key is reference to the foreign key in the self table
    * @note: Available after boot is invoked
    */
   declare foreignKey: string
-  declare foreignKeyColumName: string
+  declare foreignKeyColumnName: string
 
   /**
    * Reference to the onQuery hook defined by the user
@@ -133,13 +133,13 @@ export class BelongsTo implements BelongsToRelationContract<LucidModel, LucidMod
      * Keys on the related model
      */
     this.localKey = localKey.attributeName
-    this.localKeyColumName = localKey.columnName
+    this.localKeyColumnName = localKey.columnName
 
     /**
      * Keys on the parent model
      */
     this.foreignKey = foreignKey.attributeName
-    this.foreignKeyColumName = foreignKey.columnName
+    this.foreignKeyColumnName = foreignKey.columnName
 
     /**
      * Booted successfully

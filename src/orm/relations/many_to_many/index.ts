@@ -7,13 +7,13 @@
  * file that was distributed with this source code.
  */
 
-import { QueryClientContract } from '../../../../adonis-typings/database.js'
-import { LucidRow, LucidModel } from '../../../../adonis-typings/model.js'
+import { QueryClientContract } from '../../../types/database.js'
+import { LucidRow, LucidModel } from '../../../types/model.js'
 import {
   ManyToManyRelationOptions,
   ManyToManyRelationContract,
   ManyToMany as ModelManyToMany,
-} from '../../../../adonis-typings/relations.js'
+} from '../../../types/relations.js'
 
 import { KeysExtractor } from '../keys_extractor.js'
 import { ManyToManyQueryClient } from './query_client.js'

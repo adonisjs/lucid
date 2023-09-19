@@ -7,10 +7,10 @@
  * file that was distributed with this source code.
  */
 
-import { OneOrMany } from '../../../../adonis-typings/querybuilder.js'
-import { QueryClientContract } from '../../../../adonis-typings/database.js'
-import { LucidModel, LucidRow } from '../../../../adonis-typings/model.js'
-import { BelongsToClientContract } from '../../../../adonis-typings/relations.js'
+import { OneOrMany } from '../../../types/querybuilder.js'
+import { QueryClientContract } from '../../../types/database.js'
+import { LucidModel, LucidRow } from '../../../types/model.js'
+import { BelongsToClientContract } from '../../../types/relations.js'
 
 import { BelongsTo } from './index.js'
 import { managedTransaction } from '../../../utils/index.js'

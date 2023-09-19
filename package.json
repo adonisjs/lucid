@@ -6,6 +6,15 @@
     "node": ">=18.16.0"
   },
   "type": "module",
+  "exports": {
+    "./schema": "./build/src/schema/main.js",
+    "./factories": "./build/src/factories/main.js",
+    "./database": "./build/src/database/main.js",
+    "./orm": "./build/src/orm/main.js",
+    "./seeders": "./build/src/seeders/main.js",
+    "./services/*": "./build/services/*.js",
+    "./types/*": "./build/types/*.js"
+  },
   "scripts": {
     "pretest": "npm run lint",
     "test:better_sqlite": "DB=better_sqlite node --enable-source-maps --loader=ts-node/esm ./bin/test.js",

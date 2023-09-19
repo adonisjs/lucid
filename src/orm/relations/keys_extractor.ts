@@ -8,7 +8,7 @@
  */
 
 import { Exception } from '@poppinss/utils'
-import { LucidModel } from '../../../adonis-typings/model.js'
+import { LucidModel } from '../../types/model.js'
 
 /**
  * Utility to consistently extract relationship keys from the model

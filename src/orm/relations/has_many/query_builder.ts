@@ -8,9 +8,9 @@
  */
 
 import { Knex } from 'knex'
-import { QueryClientContract } from '../../../../adonis-typings/database.js'
-import { LucidRow, LucidModel } from '../../../../adonis-typings/model.js'
-import { HasManyQueryBuilderContract } from '../../../../adonis-typings/relations.js'
+import { QueryClientContract } from '../../../types/database.js'
+import { LucidRow, LucidModel } from '../../../types/model.js'
+import { HasManyQueryBuilderContract } from '../../../types/relations.js'
 
 import { HasMany } from './index.js'
 import { getValue, unique } from '../../../utils/index.js'
@@ -139,7 +139,7 @@ export class HasManyQueryBuilder
     }
 
     const rowName = 'adonis_group_limit_counter'
-    const partitionBy = `PARTITION BY ${this.relation.foreignKeyColumName}`
+    const partitionBy = `PARTITION BY ${this.relation.foreignKeyColumnName}`
     const orderBy = `ORDER BY ${column} ${direction}`
 
     /**

@@ -9,7 +9,7 @@
 
 import { Knex } from 'knex'
 import { test } from '@japa/runner'
-import { MysqlConfig } from '../../adonis-typings/database.js'
+import { MysqlConfig } from '../../src/types/database.js'
 
 import { Connection } from '../../src/connection/index.js'
 import { setup, cleanup, getConfig, resetTables, logger } from '../../test-helpers/index.js'

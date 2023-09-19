@@ -17,7 +17,7 @@ import {
   ConnectionConfig,
   ConnectionContract,
   ConnectionManagerContract,
-} from '../../adonis-typings/database.js'
+} from '../types/database.js'
 
 import { Connection } from './index.js'
 

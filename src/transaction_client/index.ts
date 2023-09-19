@@ -11,11 +11,7 @@ import { Knex } from 'knex'
 import Hooks from '@poppinss/hooks'
 import { EventEmitter } from 'node:events'
 import type { Emitter } from '@adonisjs/core/events'
-import {
-  IsolationLevels,
-  DialectContract,
-  TransactionClientContract,
-} from '../../adonis-typings/database.js'
+import { IsolationLevels, DialectContract, TransactionClientContract } from '../types/database.js'
 
 import { ModelQueryBuilder } from '../orm/query_builder/index.js'
 import { RawBuilder } from '../database/static_builder/raw.js'
@@ -23,7 +19,7 @@ import { RawQueryBuilder } from '../database/query_builder/raw.js'
 import { InsertQueryBuilder } from '../database/query_builder/insert.js'
 import { ReferenceBuilder } from '../database/static_builder/reference.js'
 import { DatabaseQueryBuilder } from '../database/query_builder/database.js'
-import { LucidModel, ModelQueryBuilderContract } from '../../adonis-typings/model.js'
+import { LucidModel, ModelQueryBuilderContract } from '../types/model.js'
 
 /**
  * Transaction uses a dedicated connection from the connection pool

@@ -8,13 +8,10 @@
  */
 
 import { Knex } from 'knex'
-import { DBQueryCallback } from '../../../../adonis-typings/querybuilder.js'
-import { QueryClientContract } from '../../../../adonis-typings/database.js'
-import { LucidModel } from '../../../../adonis-typings/model.js'
-import {
-  RelationSubQueryBuilderContract,
-  RelationshipsContract,
-} from '../../../../adonis-typings/relations.js'
+import { DBQueryCallback } from '../../../types/querybuilder.js'
+import { QueryClientContract } from '../../../types/database.js'
+import { LucidModel } from '../../../types/model.js'
+import { RelationSubQueryBuilderContract, RelationshipsContract } from '../../../types/relations.js'
 import { ModelQueryBuilder } from '../../query_builder/index.js'
 
 /**

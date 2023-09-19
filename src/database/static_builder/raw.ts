@@ -8,7 +8,7 @@
  */
 
 import { Knex } from 'knex'
-import { RawBuilderContract } from '../../../adonis-typings/querybuilder.js'
+import { RawBuilderContract } from '../../types/querybuilder.js'
 
 /**
  * Exposes the API to construct raw queries. If you want to execute

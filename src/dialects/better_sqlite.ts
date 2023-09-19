@@ -7,7 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import { DialectContract } from '../../adonis-typings/database.js'
+import { DialectContract } from '../types/database.js'
 import { BaseSqliteDialect } from './base_sqlite.js'
 
 export class BetterSqliteDialect extends BaseSqliteDialect implements DialectContract {

@@ -13,7 +13,7 @@ import lodash from '@poppinss/utils/lodash'
 import { AppFactory } from '@adonisjs/core/factories/app'
 
 import { ModelQueryBuilder } from '../../src/orm/query_builder/index.js'
-import type { HasOne, HasMany, BelongsTo } from '../../adonis-typings/relations.js'
+import type { HasOne, HasMany, BelongsTo } from '../../src/types/relations.js'
 
 import {
   column,
@@ -50,11 +50,11 @@ import {
   cleanup as cleanupTables,
 } from '../../test-helpers/index.js'
 import { ModelPaginator } from '../../src/orm/paginator/index.js'
-import { QueryClientContract } from '../../adonis-typings/database.js'
+import { QueryClientContract } from '../../src/types/database.js'
 import { SimplePaginator } from '../../src/database/paginator/simple_paginator.js'
-import { InsertQueryBuilderContract } from '../../adonis-typings/querybuilder.js'
+import { InsertQueryBuilderContract } from '../../src/types/querybuilder.js'
 import { SnakeCaseNamingStrategy } from '../../src/orm/naming_strategies/snake_case.js'
-import { ModelQueryBuilderContract, LucidModel, LucidRow } from '../../adonis-typings/model.js'
+import { ModelQueryBuilderContract, LucidModel, LucidRow } from '../../src/types/model.js'
 
 test.group('Base model | boot', (group) => {
   group.setup(async () => {

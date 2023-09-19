@@ -1,9 +1,9 @@
 import { DateTime } from 'luxon'
 import { BaseModel } from '../src/orm/base_model/index.js'
 import { column, hasOne } from '../src/orm/decorators/index.js'
-import { HasOne } from '../adonis-typings/relations.js'
+import { HasOne } from '../src/types/relations.js'
 import { scope } from '../src/helpers/scope.js'
-import { ModelQueryBuilderContract } from '../adonis-typings/model.js'
+import { ModelQueryBuilderContract } from '../src/types/model.js'
 // import Factory from '@ioc:Adonis/Lucid/Factory'
 
 enum ProfileTypes {

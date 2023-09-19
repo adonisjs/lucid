@@ -14,7 +14,7 @@ import {
   ComputedDecorator,
   DateColumnDecorator,
   DateTimeColumnDecorator,
-} from '../../../adonis-typings/model.js'
+} from '../../types/model.js'
 
 import {
   HasOneDecorator,
@@ -22,7 +22,7 @@ import {
   BelongsToDecorator,
   ManyToManyDecorator,
   HasManyThroughDecorator,
-} from '../../../adonis-typings/relations.js'
+} from '../../types/relations.js'
 
 import { dateColumn } from './date.js'
 import { dateTimeColumn } from './date_time.js'

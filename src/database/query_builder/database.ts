@@ -13,11 +13,8 @@ import {
   DialectContract,
   QueryClientContract,
   TransactionClientContract,
-} from '../../../adonis-typings/database.js'
-import {
-  DBQueryCallback,
-  DatabaseQueryBuilderContract,
-} from '../../../adonis-typings/querybuilder.js'
+} from '../../types/database.js'
+import { DBQueryCallback, DatabaseQueryBuilderContract } from '../../types/querybuilder.js'
 
 import { Chainable } from './chainable.js'
 import { QueryRunner } from '../../query_runner/index.js'

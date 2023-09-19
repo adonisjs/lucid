@@ -8,9 +8,9 @@
  */
 
 import { test } from '@japa/runner'
-import type { BelongsTo } from '../../adonis-typings/relations.js'
+import type { BelongsTo } from '../../src/types/relations.js'
 
-import { FactoryManager } from '../../src/factory/index.js'
+import { FactoryManager } from '../../src/factories/main.js'
 import { column, belongsTo } from '../../src/orm/decorators/index.js'
 
 import {

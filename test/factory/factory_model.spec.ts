@@ -9,11 +9,11 @@
 
 import { test } from '@japa/runner'
 
-import { FactoryManager } from '../../src/factory/index.js'
-import type { HasOne } from '../../adonis-typings/relations.js'
+import { FactoryManager } from '../../src/factories/main.js'
+import type { HasOne } from '../../src/types/relations.js'
 import { column, hasOne } from '../../src/orm/decorators/index.js'
-import { FactoryModel } from '../../src/factory/factory_model.js'
-import { HasOne as FactoryHasOne } from '../../src/factory/relations/has_one.js'
+import { FactoryModel } from '../../src/factories/factory_model.js'
+import { HasOne as FactoryHasOne } from '../../src/factories/relations/has_one.js'
 
 import {
   setup,

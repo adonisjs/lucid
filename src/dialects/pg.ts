@@ -7,11 +7,7 @@
  * file that was distributed with this source code.
  */
 
-import {
-  DialectContract,
-  SharedConfigNode,
-  QueryClientContract,
-} from '../../adonis-typings/database.js'
+import { DialectContract, SharedConfigNode, QueryClientContract } from '../types/database.js'
 
 export class PgDialect implements DialectContract {
   readonly name = 'postgres'
