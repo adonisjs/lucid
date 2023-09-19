@@ -8,18 +8,20 @@
  */
 
 import dotenv from 'dotenv'
-import { join } from 'node:path'
 import { Chance } from 'chance'
+import { join } from 'node:path'
 import knex, { Knex } from 'knex'
+import { fileURLToPath } from 'node:url'
 import { getActiveTest } from '@japa/runner'
 import { Logger } from '@adonisjs/core/logger'
 import { Emitter } from '@adonisjs/core/events'
+import { Application } from '@adonisjs/core/app'
 import { AppFactory } from '@adonisjs/core/factories/app'
 
 import {
+  DatabaseConfig,
   ConnectionConfig,
   ConnectionContract,
-  DatabaseConfig,
   QueryClientContract,
 } from '../src/types/database.js'
 
@@ -29,31 +31,17 @@ import {
   DatabaseQueryBuilderContract,
 } from '../src/types/querybuilder.js'
 
-import { MigratorOptions } from '../src/types/migrator.js'
-import { LucidRow, LucidModel, AdapterContract } from '../src/types/model.js'
-
-import { fileURLToPath } from 'node:url'
-import { QueryClient } from '../src/query_client/index.js'
+import { Schema } from '../src/schema/main.js'
 import { Database } from '../src/database/main.js'
-import { DatabaseQueryBuilder } from '../src/database/query_builder/database.js'
+import { Adapter } from '../src/orm/adapter/index.js'
+import { BaseModel } from '../src/orm/base_model/index.js'
+import { QueryClient } from '../src/query_client/index.js'
+import { MigratorOptions } from '../src/types/migrator.js'
+import { MigrationRunner } from '../src/migration/runner.js'
 import { RawQueryBuilder } from '../src/database/query_builder/raw.js'
 import { InsertQueryBuilder } from '../src/database/query_builder/insert.js'
-import { MigrationRunner } from '../src/migration/runner.js'
-import { Application } from '@adonisjs/core/app'
-import { Schema } from '../src/schema/main.js'
-import { BaseModel } from '../src/orm/base_model/index.js'
-import { Adapter } from '../src/orm/adapter/index.js'
-
-// import { Schema } from '../src/Schema'
-// import { Migrator } from '../src/Migrator'
-// import { Adapter } from '../src/Orm/Adapter'
-// import { Database } from '../src/Database/index'
-// import { QueryClient } from '../src/QueryClient'
-// import { BaseModel } from '../src/Orm/BaseModel'
-// import { FactoryModel } from '../src/Factory/FactoryModel'
-// import { RawQueryBuilder } from '../src/Database/QueryBuilder/Raw'
-// import { InsertQueryBuilder } from '../src/Database/QueryBuilder/Insert'
-// import { DatabaseQueryBuilder } from '../src/Database/QueryBuilder/Database'
+import { LucidRow, LucidModel, AdapterContract } from '../src/types/model.js'
+import { DatabaseQueryBuilder } from '../src/database/query_builder/database.js'
 
 dotenv.config()
 export const APP_ROOT = new URL('./tmp', import.meta.url)
@@ -136,9 +124,9 @@ export function getConfig(): ConnectionConfig {
       return {
         client: 'mssql',
         connection: {
-          user: process.env.MSSQL_USER as string,
-          port: Number(process.env.MSSQL_PORT! as string),
           server: process.env.MSSQL_HOST as string,
+          port: Number(process.env.MSSQL_PORT! as string),
+          user: process.env.MSSQL_USER as string,
           password: process.env.MSSQL_PASSWORD as string,
           database: 'master',
           options: {
