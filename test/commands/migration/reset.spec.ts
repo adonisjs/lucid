@@ -31,7 +31,7 @@ test.group('migration:reset', (group) => {
     await fs.create(
       'database/migrations/reset_cmd_users.ts',
       `
-        import { Schema } from '../../../../src/schema/index.js'
+        import { Schema } from '../../../../src/schema/main.js'
         export default class User extends Schema {
           public async up () {
             this.schema.createTable('schema_users', (table) => {

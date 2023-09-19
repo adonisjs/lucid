@@ -470,6 +470,7 @@ export interface ManyToManyRelationContract<
   readonly pivotTable: string
   pivotColumns: string[]
   relatedKeyColumnName: string
+  localKeyColumnName: string
 
   /**
    * Set related models as a relationship on the parent model

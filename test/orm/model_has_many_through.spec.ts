@@ -58,7 +58,7 @@ test.group('Model | Has Many Through | Options', (group) => {
     } catch ({ message }) {
       assert.equal(
         message,
-        'E_MISSING_MODEL_ATTRIBUTE: "Country.posts" expects "id" to exist on "Country" model, but is missing'
+        '"Country.posts" expects "id" to exist on "Country" model, but is missing'
       )
     }
   })
@@ -92,7 +92,7 @@ test.group('Model | Has Many Through | Options', (group) => {
     } catch ({ message }) {
       assert.equal(
         message,
-        'E_MISSING_MODEL_ATTRIBUTE: "Country.posts" expects "countryId" to exist on "User" model, but is missing'
+        '"Country.posts" expects "countryId" to exist on "User" model, but is missing'
       )
     }
   })
@@ -127,10 +127,7 @@ test.group('Model | Has Many Through | Options', (group) => {
       Country.boot()
       Country.$getRelation('posts')!.boot()
     } catch ({ message }) {
-      assert.equal(
-        message,
-        'E_MISSING_MODEL_ATTRIBUTE: "Country.posts" expects "id" to exist on "User" model, but is missing'
-      )
+      assert.equal(message, '"Country.posts" expects "id" to exist on "User" model, but is missing')
     }
   })
 
@@ -169,7 +166,7 @@ test.group('Model | Has Many Through | Options', (group) => {
     } catch ({ message }) {
       assert.equal(
         message,
-        'E_MISSING_MODEL_ATTRIBUTE: "Country.posts" expects "userId" to exist on "Post" model, but is missing'
+        '"Country.posts" expects "userId" to exist on "Post" model, but is missing'
       )
     }
   })

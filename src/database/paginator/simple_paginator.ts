@@ -9,7 +9,7 @@
 
 import { stringify } from 'qs'
 import { SimplePaginatorContract, SimplePaginatorMetaKeys } from '../../types/querybuilder.js'
-import { SnakeCaseNamingStrategy } from '../../Orm/naming_strategies/snake_case.js'
+import { SnakeCaseNamingStrategy } from '../../orm/naming_strategies/snake_case.js'
 
 /**
  * Simple paginator works with the data set provided by the standard

@@ -49,12 +49,10 @@ import {
   sleep,
   cleanup as cleanupTables,
 } from '../../test-helpers/index.js'
+import { LucidRow } from '../../src/types/model.js'
 import { ModelPaginator } from '../../src/orm/paginator/index.js'
-import { QueryClientContract } from '../../src/types/database.js'
 import { SimplePaginator } from '../../src/database/paginator/simple_paginator.js'
-import { InsertQueryBuilderContract } from '../../src/types/querybuilder.js'
 import { SnakeCaseNamingStrategy } from '../../src/orm/naming_strategies/snake_case.js'
-import { ModelQueryBuilderContract, LucidModel, LucidRow } from '../../src/types/model.js'
 
 test.group('Base model | boot', (group) => {
   group.setup(async () => {
@@ -402,7 +400,7 @@ test.group('Base Model | getter-setters', (group) => {
 
     class User extends BaseModel {
       @column()
-      public set username(value: any) {
+      set username(value: any) {
         this.$setAttribute('username', value.toUpperCase())
       }
     }
@@ -462,7 +460,7 @@ test.group('Base Model | getter-setters', (group) => {
 
     class User extends BaseModel {
       @column()
-      public get username() {
+      get username() {
         return this.$getAttribute('username').toUpperCase()
       }
     }
@@ -522,7 +520,7 @@ test.group('Base Model | getter-setters', (group) => {
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public get id() {
+      get id() {
         return String(this.$getAttribute('id'))
       }
 
@@ -546,7 +544,7 @@ test.group('Base Model | getter-setters', (group) => {
 
     class User extends BaseModel {
       @column({ isPrimary: true })
-      public get id() {
+      get id() {
         return String(this.$getAttribute('id'))
       }
 
@@ -574,11 +572,11 @@ test.group('Base Model | getter-setters', (group) => {
 
     class User extends BaseModel {
       @column()
-      public get preferences(): object {
+      get preferences(): object {
         return this.$getAttribute('preferences')
       }
 
-      public set preferences(value: object) {
+      set preferences(value: object) {
         this.$setAttribute('preferences', lodash.merge(this.preferences, value))
       }
     }
@@ -782,7 +780,7 @@ test.group('Base Model | dirty', (group) => {
     const BaseModel = getBaseModel(adapter, app)
 
     class Location {
-      public isDirty = false
+      isDirty = false
       constructor(
         public state: string,
         public country: string
@@ -797,7 +795,7 @@ test.group('Base Model | dirty', (group) => {
       declare age: number
 
       @column()
-      public location: any
+      location: any
     }
     User.$adapter = adapter
 
@@ -5619,101 +5617,6 @@ test.group('Base Model | hooks', (group) => {
 
     const users = await db.from('users').select('*')
     assert.equal(users[0].username, 'nikk')
-  })
-})
-
-test.group('Base model | extend', (group) => {
-  group.setup(async () => {
-    await setup()
-  })
-
-  group.teardown(async () => {
-    await cleanupTables()
-  })
-
-  test('extend model query builder', async ({ fs, assert }) => {
-    const app = new AppFactory().create(fs.baseUrl, () => {})
-    await app.init()
-    const db = getDb()
-    const adapter = ormAdapter(db)
-
-    const BaseModel = getBaseModel(adapter, app)
-
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      declare id: number
-
-      @column()
-      declare username: string
-    }
-    User.boot()
-
-    db.ModelQueryBuilder.macro('whereActive', function () {
-      this.where('is_active', true)
-      return this
-    })
-
-    const knexClient = db.connection().getReadClient()
-    const { sql, bindings } = User.query()['whereActive']().toSQL()
-    const { sql: knexSql, bindings: knexBindings } = knexClient
-      .from('users')
-      .where('is_active', true)
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
-  })
-
-  test('extend model insert query builder', async ({ fs, assert }) => {
-    const app = new AppFactory().create(fs.baseUrl, () => {})
-    await app.init()
-    const db = getDb()
-    const adapter = ormAdapter(db)
-
-    const BaseModel = getBaseModel(adapter, app)
-
-    class User extends BaseModel {
-      @column({ isPrimary: true })
-      declare id: number
-
-      @column()
-      declare username: string
-
-      $getQueryFor(
-        action: 'insert',
-        client: QueryClientContract
-      ): InsertQueryBuilderContract<unknown[]>
-      $getQueryFor(
-        action: 'update' | 'delete' | 'refresh',
-        client: QueryClientContract
-      ): ModelQueryBuilderContract<LucidModel, LucidRow>
-      $getQueryFor(
-        _: 'insert' | 'update' | 'delete' | 'refresh',
-        client: QueryClientContract
-      ): InsertQueryBuilderContract<unknown[]> | ModelQueryBuilderContract<LucidModel, LucidRow> {
-        return client.insertQuery().table('users').withId()
-      }
-    }
-    User.boot()
-
-    db.InsertQueryBuilder.macro('withId', function (this: InsertQueryBuilderContract) {
-      this.knexQuery.returning('id')
-      return this
-    })
-
-    const knexClient = db.connection().getReadClient()
-    const user = new User()
-
-    const { sql, bindings } = user.$getQueryFor('insert', db.connection()).insert({ id: 1 }).toSQL()
-
-    const { sql: knexSql, bindings: knexBindings } = knexClient
-      .from('users')
-      .returning('id')
-      .insert({ id: 1 })
-      .toSQL()
-
-    assert.equal(sql, knexSql)
-    assert.deepEqual(bindings, knexBindings)
   })
 })
 

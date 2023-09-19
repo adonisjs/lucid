@@ -62,7 +62,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v1.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -115,7 +115,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v2.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -130,7 +130,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/accounts_v2.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -190,7 +190,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v3.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -204,7 +204,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/accounts_v3.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -277,7 +277,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v4.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -291,7 +291,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/accounts_v4.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -351,7 +351,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/accounts_v5.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -368,7 +368,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v5.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -411,7 +411,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v6.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -432,7 +432,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/accounts_v6.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -489,7 +489,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v7.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -510,7 +510,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/accounts_v7.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -563,7 +563,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v8.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -584,7 +584,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/accounts_v8.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -648,7 +648,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v9.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -669,7 +669,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/accounts_v9.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -751,7 +751,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v10.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -772,7 +772,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/accounts_v10.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -839,7 +839,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v11.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -857,7 +857,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/accounts_v11.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -907,7 +907,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v12.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -925,7 +925,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/accounts_v12.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -961,7 +961,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v13.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -975,7 +975,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/accounts_v13.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -1165,7 +1165,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v14.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -1187,7 +1187,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/accounts_v14.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_accounts', (table) => {
@@ -1236,7 +1236,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v15.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -1299,7 +1299,7 @@ test.group('Migrator', (group) => {
     await fs.create(
       'database/migrations/users_v16.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {

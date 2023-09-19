@@ -33,7 +33,7 @@ test.group('migration:run', (group) => {
     await fs.create(
       'database/migrations/run_cmd_users.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -80,7 +80,7 @@ test.group('migration:run', (group) => {
     await fs.create(
       'database/migrations/run_cmd_users_v1.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -114,7 +114,7 @@ test.group('migration:run', (group) => {
     await fs.create(
       'database/migrations/run_cmd_users_v2.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -160,7 +160,7 @@ test.group('migration:run', (group) => {
     await fs.create(
       'database/migrations/run_cmd_users_v3.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
       export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
@@ -198,7 +198,7 @@ test.group('migration:run', (group) => {
     await fs.create(
       'database/migrations/run_cmd_users_v4.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
 
       export default class User extends Schema {
         public async up () {
@@ -213,7 +213,7 @@ test.group('migration:run', (group) => {
     await fs.create(
       'database/migrations/run_cmd_clients_v4.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
 
       export default class Client extends Schema {
         public async up () {
@@ -243,7 +243,7 @@ test.group('migration:run', (group) => {
     await fs.create(
       'database/migrations/run_cmd_users_v5.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
 
       export default class User extends Schema {
         public async up () {
@@ -258,7 +258,7 @@ test.group('migration:run', (group) => {
     await fs.create(
       'database/migrations/run_cmd_clients_v5.ts',
       `
-      import { Schema } from '../../../../src/schema/index.js'
+      import { Schema } from '../../../../src/schema/main.js'
 
       export default class Client extends Schema {
         public async up () {
