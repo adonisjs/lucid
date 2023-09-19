@@ -9,7 +9,7 @@
 
 import { flags } from '@adonisjs/core/ace'
 
-import MigrationsBase from './base.js'
+import MigrationsBase from './_base.js'
 import { MigrationRunner } from '../../src/migration/runner.js'
 
 /**

@@ -5,15 +5,28 @@
   "engines": {
     "node": ">=18.16.0"
   },
+  "files": [
+    "build/commands",
+    "build/providers",
+    "build/services",
+    "build/src",
+    "build/stubs",
+    "build/index.d.ts",
+    "build/index.js",
+    "build/configure.d.ts",
+    "build/configure.js"
+  ],
   "type": "module",
   "exports": {
     "./schema": "./build/src/schema/main.js",
+    "./commands": "./build/commands/main.js",
     "./factories": "./build/src/factories/main.js",
     "./database": "./build/src/database/main.js",
     "./orm": "./build/src/orm/main.js",
     "./seeders": "./build/src/seeders/main.js",
     "./services/*": "./build/services/*.js",
-    "./types/*": "./build/types/*.js"
+    "./types/*": "./build/types/*.js",
+    "./database_provider": "./build/providers/database_provider.js"
   },
   "scripts": {
     "pretest": "npm run lint",
@@ -26,8 +39,9 @@
     "test:docker": "npm run test:mysql && npm run test:mysql_legacy && npm run test:pg && npm run test:mssql",
     "lint": "eslint . --ext=.ts",
     "clean": "del-cli build",
-    "compile": "npm run lint && npm run clean && tsc && npm run copyfiles",
-    "copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
+    "compile": "npm run lint && npm run clean && tsc",
+    "postcompile": "npm run copy:templates && npm run index:commands",
+    "copy:templates": "copyfiles \"stubs/**/**/*.stub\" build",
     "build": "npm run compile",
     "release": "np",
     "version": "npm run build",
@@ -35,7 +49,8 @@
     "sync-labels": "github-label-sync --labels ./node_modules/@adonisjs/mrm-preset/gh-labels.json adonisjs/lucid",
     "format": "prettier --write .",
     "prepublishOnly": "npm run build",
-    "test": "c8 npm run test:docker"
+    "test": "c8 npm run test:docker",
+    "index:commands": "adonis-kit index build/commands"
   },
   "dependencies": {
     "@faker-js/faker": "^8.0.1",
@@ -53,6 +68,7 @@
     "tarn": "^3.0.2"
   },
   "devDependencies": {
+    "@adonisjs/assembler": "^6.1.3-22",
     "@adonisjs/core": "^6.1.5-26",
     "@adonisjs/eslint-config": "^1.1.8",
     "@adonisjs/prettier-config": "^1.1.8",

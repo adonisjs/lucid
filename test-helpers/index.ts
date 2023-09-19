@@ -16,7 +16,12 @@ import { Logger } from '@adonisjs/core/logger'
 import { Emitter } from '@adonisjs/core/events'
 import { AppFactory } from '@adonisjs/core/factories/app'
 
-import { ConnectionConfig, ConnectionContract, DatabaseConfig, QueryClientContract } from '../src/types/database.js'
+import {
+  ConnectionConfig,
+  ConnectionContract,
+  DatabaseConfig,
+  QueryClientContract,
+} from '../src/types/database.js'
 
 import {
   RawQueryBuilderContract,
