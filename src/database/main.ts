@@ -22,8 +22,9 @@ import {
 } from '../types/database.js'
 
 import { LucidModel } from '../types/model.js'
-import { QueryClient } from '../query_client/index.js'
+import { Adapter } from '../orm/adapter/index.js'
 import { RawBuilder } from './static_builder/raw.js'
+import { QueryClient } from '../query_client/index.js'
 import { prettyPrint } from '../helpers/pretty_print.js'
 import { ConnectionManager } from '../connection/manager.js'
 import { InsertQueryBuilder } from './query_builder/insert.js'
@@ -183,6 +184,13 @@ export class Database extends Macroable {
    */
   modelQuery<T extends LucidModel, Result = T>(model: any, options?: DatabaseClientOptions) {
     return this.connection(this.primaryConnectionName, options).modelQuery<T, Result>(model)
+  }
+
+  /**
+   * Returns an adapter lucid models
+   */
+  modelAdapter() {
+    return new Adapter(this)
   }
 
   /**
