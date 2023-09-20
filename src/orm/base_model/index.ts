@@ -88,6 +88,14 @@ class BaseModelImpl implements LucidRow {
   static $adapter: AdapterContract
 
   /**
+   * Define an adapter to use for interacting with
+   * the database
+   */
+  static useAdapter(adapter: AdapterContract) {
+    this.$adapter = adapter
+  }
+
+  /**
    * Naming strategy for model properties
    */
   static namingStrategy = new SnakeCaseNamingStrategy()

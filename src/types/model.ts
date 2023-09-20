@@ -779,6 +779,12 @@ export interface LucidModel {
   $adapter: AdapterContract
 
   /**
+   * Define an adapter to use for interacting with
+   * the database
+   */
+  useAdapter(adapter: AdapterContract): void
+
+  /**
    * Reference to hooks
    */
   $hooks: Hooks<any>
