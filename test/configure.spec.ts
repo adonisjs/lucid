@@ -64,7 +64,7 @@ test.group('Configure', (group) => {
     await assert.fileContains('start/env.ts', `DB_HOST: Env.schema.string({ format: 'host' })`)
     await assert.fileContains('start/env.ts', 'DB_PORT: Env.schema.number()')
     await assert.fileContains('start/env.ts', 'DB_USER: Env.schema.string()')
-    await assert.fileContains('start/env.ts', 'DB_PASSWORD: Env.schema.string()')
+    await assert.fileContains('start/env.ts', 'DB_PASSWORD: Env.schema.string.optional()')
     await assert.fileContains('start/env.ts', 'DB_DATABASE: Env.schema.string()')
   }).timeout(6000)
 
