@@ -11,7 +11,6 @@ import { DateTime } from 'luxon'
 import equal from 'fast-deep-equal'
 import Hooks from '@poppinss/hooks'
 import lodash from '@poppinss/utils/lodash'
-import type { Container } from '@adonisjs/core/container'
 import { Exception, defineStaticProperty } from '@poppinss/utils'
 import { QueryClientContract, TransactionClientContract } from '../../types/database.js'
 
@@ -92,14 +91,6 @@ class BaseModelImpl implements LucidRow {
    * Naming strategy for model properties
    */
   static namingStrategy = new SnakeCaseNamingStrategy()
-
-  /**
-   * The container required to resolve hooks
-   *
-   * NOTE: Container is a singleton and share among all the models, unless
-   * a user wants to swap the container for a given model
-   */
-  static $container: Container<any>
 
   /**
    * Primary key is required to build relationships across models

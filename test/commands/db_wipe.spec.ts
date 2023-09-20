@@ -29,8 +29,8 @@ test.group('db:wipe and migrate:fresh', (group) => {
     await fs.create(
       'database/migrations/users.ts',
       `
-      import { Schema } from '../../../../src/Schema'
-      module.exports = class User extends Schema {
+      import { BaseSchema as Schema } from '../../../../src/schema/index.js'
+      export default class User extends Schema {
         public async up () {
           this.schema.createTable('schema_users', (table) => {
             table.increments()

@@ -8,9 +8,9 @@
  */
 
 import { Exception } from '@poppinss/utils'
-import { LucidRow, LucidModel, AdapterContract, ModelAdapterOptions } from '../../types/model.js'
 import { isObject } from '../../utils/index.js'
 import type { Database } from '../../database/main.js'
+import { LucidRow, LucidModel, AdapterContract, ModelAdapterOptions } from '../../types/model.js'
 
 /**
  * Adapter exposes the API to make database queries and constructor

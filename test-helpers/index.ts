@@ -420,9 +420,8 @@ export function ormAdapter(db: Database) {
 /**
  * Returns the base model with the adapter attached to it
  */
-export function getBaseModel(adapter: AdapterContract, application: Application<any>) {
+export function getBaseModel(adapter: AdapterContract) {
   BaseModel.$adapter = adapter
-  BaseModel.$container = application.container
   return BaseModel
 }
 

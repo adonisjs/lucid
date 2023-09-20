@@ -45,7 +45,7 @@ test.group('Factory | Factory Model', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -64,7 +64,7 @@ test.group('Factory | Factory Model', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -84,7 +84,7 @@ test.group('Factory | Factory Model', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -115,7 +115,7 @@ test.group('Factory | Factory Model', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -135,7 +135,7 @@ test.group('Factory | Factory Model', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -157,7 +157,7 @@ test.group('Factory | Factory Model', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -192,7 +192,7 @@ test.group('Factory | Factory Model', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {}
     Profile.boot()
@@ -223,7 +223,7 @@ test.group('Factory | Factory Model', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -246,7 +246,7 @@ test.group('Factory | Factory Model', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {}
     Profile.boot()
@@ -277,7 +277,7 @@ test.group('Factory | Factory Model', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {}
     Profile.boot()

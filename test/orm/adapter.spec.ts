@@ -27,7 +27,7 @@ test.group('Adapter', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -56,7 +56,7 @@ test.group('Adapter', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -90,7 +90,7 @@ test.group('Adapter', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -124,7 +124,7 @@ test.group('Adapter', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -160,7 +160,7 @@ test.group('Adapter', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -196,7 +196,7 @@ test.group('Adapter', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -232,7 +232,7 @@ test.group('Adapter', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -263,7 +263,7 @@ test.group('Adapter', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -301,7 +301,7 @@ test.group('Adapter', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -341,7 +341,7 @@ test.group('Adapter', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'

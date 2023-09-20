@@ -37,7 +37,6 @@ import {
   WithAggregate,
   WithCount,
 } from './relations.js'
-import { Container } from '@adonisjs/core/container'
 
 /**
  * ------------------------------------------------------
@@ -731,8 +730,6 @@ export interface LucidModel {
    * are ignored
    */
   readonly booted: boolean
-
-  $container: Container<any>
 
   /**
    * A map of defined columns

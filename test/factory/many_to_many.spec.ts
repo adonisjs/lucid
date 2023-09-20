@@ -42,7 +42,7 @@ test.group('Factory | ManyToMany | make', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })
@@ -99,7 +99,7 @@ test.group('Factory | ManyToMany | make', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })
@@ -157,7 +157,7 @@ test.group('Factory | ManyToMany | make', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })
@@ -234,7 +234,7 @@ test.group('Factory | ManyToMany | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })
@@ -296,7 +296,7 @@ test.group('Factory | ManyToMany | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })
@@ -352,7 +352,7 @@ test.group('Factory | ManyToMany | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })
@@ -412,7 +412,7 @@ test.group('Factory | ManyToMany | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     assert.plan(4)
 
@@ -472,7 +472,7 @@ test.group('Factory | ManyToMany | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Skill extends BaseModel {
       @column({ isPrimary: true })

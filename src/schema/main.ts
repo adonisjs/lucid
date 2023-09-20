@@ -19,7 +19,7 @@ import type { RawQueryBindings } from '../types/querybuilder.js'
  * Exposes the API to define table schema using deferred database
  * calls.
  */
-export abstract class BaseSchema {
+export class BaseSchema {
   /**
    * All calls to `schema` and `defer` are tracked to be
    * executed later

@@ -43,7 +43,7 @@ test.group('Factory | BelongTo | make', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -101,7 +101,7 @@ test.group('Factory | BelongTo | make', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -165,7 +165,7 @@ test.group('Factory | BelongTo | make', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -248,7 +248,7 @@ test.group('Factory | BelongTo | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -308,7 +308,7 @@ test.group('Factory | BelongTo | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -366,7 +366,7 @@ test.group('Factory | BelongTo | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ columnName: 'user_id' })
@@ -424,7 +424,7 @@ test.group('Factory | BelongTo | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     assert.plan(3)
 

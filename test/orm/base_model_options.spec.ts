@@ -39,7 +39,7 @@ test.group('Model options | QueryBuilder', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -64,7 +64,7 @@ test.group('Model options | QueryBuilder', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -88,7 +88,7 @@ test.group('Model options | QueryBuilder', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -120,7 +120,7 @@ test.group('Model options | QueryBuilder', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -166,7 +166,7 @@ test.group('Model options | Adapter', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -189,7 +189,7 @@ test.group('Model options | Adapter', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -214,7 +214,7 @@ test.group('Model options | Adapter', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -254,7 +254,7 @@ test.group('Model options | Model.find', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -277,7 +277,7 @@ test.group('Model options | Model.find', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -315,7 +315,7 @@ test.group('Model options | Model.findOrFail', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -338,7 +338,7 @@ test.group('Model options | Model.findOrFail', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -376,7 +376,7 @@ test.group('Model options | Model.findMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -399,7 +399,7 @@ test.group('Model options | Model.findMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -437,7 +437,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -465,7 +465,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -493,7 +493,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -520,7 +520,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -547,7 +547,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -576,7 +576,7 @@ test.group('Model options | Model.firstOrCreate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -618,7 +618,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -647,7 +647,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -674,7 +674,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -702,7 +702,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -731,7 +731,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -765,7 +765,7 @@ test.group('Model options | Model.fetchOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -815,7 +815,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -845,7 +845,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -873,7 +873,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -901,7 +901,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -930,7 +930,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -964,7 +964,7 @@ test.group('Model options | Model.updateOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static$table = 'users'
@@ -1014,7 +1014,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
@@ -1053,7 +1053,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
@@ -1095,7 +1095,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
@@ -1136,7 +1136,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
@@ -1182,7 +1182,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
@@ -1229,7 +1229,7 @@ test.group('Model options | Query Builder Preloads', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
@@ -1292,7 +1292,7 @@ test.group('Model options | Model Preloads', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
@@ -1332,7 +1332,7 @@ test.group('Model options | Model Preloads', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
@@ -1371,7 +1371,7 @@ test.group('Model options | Model Preloads', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })

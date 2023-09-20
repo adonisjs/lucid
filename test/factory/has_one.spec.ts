@@ -43,7 +43,7 @@ test.group('Factory | HasOne | make', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -102,7 +102,7 @@ test.group('Factory | HasOne | make', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -177,7 +177,7 @@ test.group('Factory | HasOne | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -237,7 +237,7 @@ test.group('Factory | HasOne | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -293,7 +293,7 @@ test.group('Factory | HasOne | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ columnName: 'user_id' })
@@ -346,7 +346,7 @@ test.group('Factory | HasOne | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     assert.plan(3)
 

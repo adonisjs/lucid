@@ -39,7 +39,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     try {
       class User extends BaseModel {}
@@ -64,7 +64,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     try {
       class User extends BaseModel {
@@ -94,7 +94,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -119,7 +119,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -147,7 +147,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -172,7 +172,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -197,7 +197,7 @@ test.group('Model | BelongsTo | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -237,7 +237,7 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -269,7 +269,7 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -308,7 +308,7 @@ test.group('Model | BelongsTo | Set Relations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -365,7 +365,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -402,7 +402,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -444,7 +444,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -487,7 +487,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -538,7 +538,7 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
@@ -582,7 +582,7 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
@@ -631,7 +631,7 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
@@ -680,7 +680,7 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -721,7 +721,7 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
@@ -769,7 +769,7 @@ test.group('Model | BelongsTo | sub queries', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column({ isPrimary: true })
@@ -835,7 +835,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -866,7 +866,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -896,7 +896,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -926,7 +926,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -969,7 +969,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1014,7 +1014,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1063,7 +1063,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1114,7 +1114,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1167,7 +1167,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1220,7 +1220,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1301,7 +1301,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1382,7 +1382,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1466,7 +1466,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1496,7 +1496,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1527,7 +1527,7 @@ test.group('Model | BelongsTo | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1569,7 +1569,7 @@ test.group('Model | BelongsTo | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1600,7 +1600,7 @@ test.group('Model | BelongsTo | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1634,7 +1634,7 @@ test.group('Model | BelongsTo | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1682,7 +1682,7 @@ test.group('Model | BelongsTo | has', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1732,7 +1732,7 @@ test.group('Model | BelongsTo | whereHas', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1800,7 +1800,7 @@ test.group('Model | BelongsTo | associate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1844,7 +1844,7 @@ test.group('Model | BelongsTo | associate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1901,7 +1901,7 @@ test.group('Model | BelongsTo | dissociate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1965,7 +1965,7 @@ test.group('Model | BelongsTo | bulk operations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -2009,7 +2009,7 @@ test.group('Model | BelongsTo | clone', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -2060,7 +2060,7 @@ test.group('Model | BelongsTo | scopes', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -2106,7 +2106,7 @@ test.group('Model | BelongsTo | scopes', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -2169,7 +2169,7 @@ test.group('Model | BelongsTo | onQuery', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -2210,7 +2210,7 @@ test.group('Model | BelongsTo | onQuery', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -2255,7 +2255,7 @@ test.group('Model | BelongsTo | onQuery', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -2294,7 +2294,7 @@ test.group('Model | BelongsTo | onQuery', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })

@@ -31,7 +31,7 @@ test.group('migration:refresh', (group) => {
     await fs.create(
       'database/migrations/refresh_cmd_users.ts',
       `
-        import { Schema } from '../../../../src/schema/main.js'
+        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
         export default class User extends Schema {
           public async up () {
             this.schema.createTable('schema_users', (table) => {
@@ -49,7 +49,7 @@ test.group('migration:refresh', (group) => {
     await fs.create(
       'database/migrations/refresh_cmd_posts.ts',
       `
-        import { Schema } from '../../../../src/schema/main.js'
+        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
         export default class Account extends Schema {
           public async up () {
             this.schema.createTable('schema_accounts', (table) => {
@@ -100,7 +100,7 @@ test.group('migration:refresh', (group) => {
     await fs.create(
       'database/migrations/refres_cmd_users_v1.ts',
       `
-        import { Schema } from '../../../../src/schema/main.js'
+        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
         export default class User extends Schema {
           public async up () {
             this.schema.createTable('schema_users', (table) => {
@@ -118,7 +118,7 @@ test.group('migration:refresh', (group) => {
     await fs.create(
       'database/migrations/posts.ts',
       `
-        import { Schema } from '../../../../src/schema/main.js'
+        import { BaseSchema as Schema } from '../../../../src/schema/main.js'
         export default class Account extends Schema {
           public async up () {
             this.schema.createTable('schema_accounts', (table) => {

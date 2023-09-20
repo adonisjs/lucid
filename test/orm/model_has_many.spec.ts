@@ -39,7 +39,7 @@ test.group('Model | HasMany | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     assert.plan(1)
 
@@ -63,7 +63,7 @@ test.group('Model | HasMany | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     assert.plan(1)
 
@@ -94,7 +94,7 @@ test.group('Model | HasMany | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -120,7 +120,7 @@ test.group('Model | HasMany | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -149,7 +149,7 @@ test.group('Model | HasMany | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -175,7 +175,7 @@ test.group('Model | HasMany | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ columnName: 'user_id' })
@@ -201,7 +201,7 @@ test.group('Model | HasMany | Options', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ columnName: 'user_id' })
@@ -240,7 +240,7 @@ test.group('Model | HasMany | Set Relations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -273,7 +273,7 @@ test.group('Model | HasMany | Set Relations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -311,7 +311,7 @@ test.group('Model | HasMany | Set Relations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -372,7 +372,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -411,7 +411,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -452,7 +452,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -498,7 +498,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -535,7 +535,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -582,7 +582,7 @@ test.group('Model | HasMany | bulk operations', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -639,7 +639,7 @@ test.group('Model | HasMany | sub queries', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -677,7 +677,7 @@ test.group('Model | HasMany | sub queries', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -720,7 +720,7 @@ test.group('Model | HasMany | sub queries', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -763,7 +763,7 @@ test.group('Model | HasMany | sub queries', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -804,7 +804,7 @@ test.group('Model | HasMany | sub queries', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -845,7 +845,7 @@ test.group('Model | HasMany | sub queries', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -905,7 +905,7 @@ test.group('Model | HasMany | aggregates', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -954,7 +954,7 @@ test.group('Model | HasMany | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -1006,7 +1006,7 @@ test.group('Model | HasMany | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -1040,7 +1040,7 @@ test.group('Model | HasMany | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1102,7 +1102,7 @@ test.group('Model | HasMany | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1162,7 +1162,7 @@ test.group('Model | HasMany | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1221,7 +1221,7 @@ test.group('Model | HasMany | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -1280,7 +1280,7 @@ test.group('Model | HasMany | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     assert.plan(1)
 
@@ -1337,7 +1337,7 @@ test.group('Model | HasMany | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Comment extends BaseModel {
       @column({ isPrimary: true })
@@ -1419,7 +1419,7 @@ test.group('Model | HasMany | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Comment extends BaseModel {
       @column({ isPrimary: true })
@@ -1510,7 +1510,7 @@ test.group('Model | HasMany | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Comment extends BaseModel {
       @column({ isPrimary: true })
@@ -1596,7 +1596,7 @@ test.group('Model | HasMany | preload', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -1639,7 +1639,7 @@ test.group('Model | HasMany | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -1692,7 +1692,7 @@ test.group('Model | HasMany | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -1747,7 +1747,7 @@ test.group('Model | HasMany | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -1802,7 +1802,7 @@ test.group('Model | HasMany | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -1861,7 +1861,7 @@ test.group('Model | HasMany | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1920,7 +1920,7 @@ test.group('Model | HasMany | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -1977,7 +1977,7 @@ test.group('Model | HasMany | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Comment extends BaseModel {
       @column({ isPrimary: true })
@@ -2089,7 +2089,7 @@ test.group('Model | HasMany | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -2147,7 +2147,7 @@ test.group('Model | HasMany | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -2206,7 +2206,7 @@ test.group('Model | HasMany | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -2260,7 +2260,7 @@ test.group('Model | HasMany | withCount', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -2324,7 +2324,7 @@ test.group('Model | HasMany | has', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -2388,7 +2388,7 @@ test.group('Model | HasMany | has', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -2459,7 +2459,7 @@ test.group('Model | HasMany | has', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -2531,7 +2531,7 @@ test.group('Model | HasMany | has', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -2603,7 +2603,7 @@ test.group('Model | HasMany | has', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -2672,7 +2672,7 @@ test.group('Model | HasMany | has', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -2763,7 +2763,7 @@ test.group('Model | HasMany | whereHas', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -2837,7 +2837,7 @@ test.group('Model | HasMany | whereHas', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -2926,7 +2926,7 @@ test.group('Model | HasMany | whereHas', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -3012,7 +3012,7 @@ test.group('Model | HasMany | whereHas', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -3115,7 +3115,7 @@ test.group('Model | HasMany | whereHas', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -3223,7 +3223,7 @@ test.group('Model | HasMany | whereHas', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -3346,7 +3346,7 @@ if (process.env.DB !== 'mysql_legacy') {
       await app.init()
       const db = getDb()
       const adapter = ormAdapter(db)
-      const BaseModel = getBaseModel(adapter, app)
+      const BaseModel = getBaseModel(adapter)
 
       class Post extends BaseModel {
         @column()
@@ -3465,7 +3465,7 @@ if (process.env.DB !== 'mysql_legacy') {
       await app.init()
       const db = getDb()
       const adapter = ormAdapter(db)
-      const BaseModel = getBaseModel(adapter, app)
+      const BaseModel = getBaseModel(adapter)
 
       class Post extends BaseModel {
         @column()
@@ -3581,7 +3581,7 @@ if (process.env.DB !== 'mysql_legacy') {
       await app.init()
       const db = getDb()
       const adapter = ormAdapter(db)
-      const BaseModel = getBaseModel(adapter, app)
+      const BaseModel = getBaseModel(adapter)
 
       class Post extends BaseModel {
         @column()
@@ -3688,7 +3688,7 @@ if (process.env.DB !== 'mysql_legacy') {
       await app.init()
       const db = getDb()
       const adapter = ormAdapter(db)
-      const BaseModel = getBaseModel(adapter, app)
+      const BaseModel = getBaseModel(adapter)
 
       class Post extends BaseModel {
         @column()
@@ -3809,7 +3809,7 @@ if (process.env.DB !== 'mysql_legacy') {
       await app.init()
       const db = getDb()
       const adapter = ormAdapter(db)
-      const BaseModel = getBaseModel(adapter, app)
+      const BaseModel = getBaseModel(adapter)
 
       class Post extends BaseModel {
         @column()
@@ -3890,7 +3890,7 @@ if (process.env.DB !== 'mysql_legacy') {
       await app.init()
       const db = getDb()
       const adapter = ormAdapter(db)
-      const BaseModel = getBaseModel(adapter, app)
+      const BaseModel = getBaseModel(adapter)
 
       class Post extends BaseModel {
         @column()
@@ -3977,7 +3977,7 @@ if (process.env.DB !== 'mysql_legacy') {
       await app.init()
       const db = getDb()
       const adapter = ormAdapter(db)
-      const BaseModel = getBaseModel(adapter, app)
+      const BaseModel = getBaseModel(adapter)
 
       class Comment extends BaseModel {
         @column({ isPrimary: true })
@@ -4115,7 +4115,7 @@ if (process.env.DB !== 'mysql_legacy') {
       await app.init()
       const db = getDb()
       const adapter = ormAdapter(db)
-      const BaseModel = getBaseModel(adapter, app)
+      const BaseModel = getBaseModel(adapter)
 
       class Comment extends BaseModel {
         @column({ isPrimary: true })
@@ -4272,7 +4272,7 @@ test.group('Model | HasMany | save', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -4334,7 +4334,7 @@ test.group('Model | HasMany | saveMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -4388,7 +4388,7 @@ test.group('Model | HasMany | saveMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     assert.plan(6)
 
@@ -4443,7 +4443,7 @@ test.group('Model | HasMany | saveMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -4512,7 +4512,7 @@ test.group('Model | HasMany | create', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -4571,7 +4571,7 @@ test.group('Model | HasMany | createMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -4626,7 +4626,7 @@ test.group('Model | HasMany | createMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     assert.plan(4)
 
@@ -4674,7 +4674,7 @@ test.group('Model | HasMany | createMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -4735,7 +4735,7 @@ test.group('Model | HasMany | firstOrCreate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -4786,7 +4786,7 @@ test.group('Model | HasMany | firstOrCreate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -4851,7 +4851,7 @@ test.group('Model | HasMany | updateOrCreate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -4902,7 +4902,7 @@ test.group('Model | HasMany | updateOrCreate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -4968,7 +4968,7 @@ test.group('Model | HasMany | fetchOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -5019,7 +5019,7 @@ test.group('Model | HasMany | fetchOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -5103,7 +5103,7 @@ test.group('Model | HasMany | fetchOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -5154,7 +5154,7 @@ test.group('Model | HasMany | fetchOrCreateMany', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })
@@ -5250,7 +5250,7 @@ test.group('Model | HasMany | paginate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -5307,7 +5307,7 @@ test.group('Model | HasMany | paginate', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     assert.plan(1)
 
@@ -5357,7 +5357,7 @@ test.group('Model | HasMany | clone', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -5401,7 +5401,7 @@ test.group('Model | HasMany | scopes', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -5458,7 +5458,7 @@ test.group('Model | HasMany | scopes', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -5529,7 +5529,7 @@ test.group('Model | HasMany | onQuery', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -5576,7 +5576,7 @@ test.group('Model | HasMany | onQuery', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     assert.plan(3)
 
@@ -5629,7 +5629,7 @@ test.group('Model | HasMany | onQuery', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -5677,7 +5677,7 @@ test.group('Model | HasMany | onQuery', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column()
@@ -5757,7 +5757,7 @@ test.group('Model | HasMany | delete', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Post extends BaseModel {
       @column({ isPrimary: true })

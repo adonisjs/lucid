@@ -68,7 +68,7 @@ test.group('Base model | boot', (group) => {
     const adapter = new FakeAdapter()
     await app.init()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -93,7 +93,7 @@ test.group('Base model | boot', (group) => {
     const adapter = new FakeAdapter()
     await app.init()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -117,7 +117,7 @@ test.group('Base model | boot', (group) => {
     const adapter = new FakeAdapter()
     await app.init()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -141,7 +141,7 @@ test.group('Base model | boot', (group) => {
     const adapter = new FakeAdapter()
     await app.init()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -163,7 +163,7 @@ test.group('Base model | boot', (group) => {
     const adapter = new FakeAdapter()
     await app.init()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -181,7 +181,7 @@ test.group('Base model | boot', (group) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     const adapter = new FakeAdapter()
     await app.init()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static table = 'my_users'
@@ -201,7 +201,7 @@ test.group('Base model | boot', (group) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     const adapter = new FakeAdapter()
     await app.init()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {}
 
@@ -215,7 +215,7 @@ test.group('Base model | boot', (group) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     const adapter = new FakeAdapter()
     await app.init()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static $increments = false
@@ -235,7 +235,7 @@ test.group('Base model | boot', (group) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     const adapter = new FakeAdapter()
     await app.init()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static $increments = false
@@ -255,7 +255,7 @@ test.group('Base model | boot', (group) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     const adapter = new FakeAdapter()
     await app.init()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static $increments = false
@@ -275,7 +275,7 @@ test.group('Base model | boot', (group) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     const adapter = new FakeAdapter()
     await app.init()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static $increments = false
@@ -295,7 +295,7 @@ test.group('Base model | boot', (group) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     const adapter = new FakeAdapter()
     await app.init()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static $increments = false
@@ -315,7 +315,7 @@ test.group('Base model | boot', (group) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     const adapter = new FakeAdapter()
     await app.init()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static $increments = false
@@ -347,7 +347,7 @@ test.group('Base Model | options', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -377,7 +377,7 @@ test.group('Base Model | getter-setters', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -396,7 +396,7 @@ test.group('Base Model | getter-setters', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -417,7 +417,7 @@ test.group('Base Model | getter-setters', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       declare username: string
@@ -437,7 +437,7 @@ test.group('Base Model | getter-setters', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -456,7 +456,7 @@ test.group('Base Model | getter-setters', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -477,7 +477,7 @@ test.group('Base Model | getter-setters', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       username = 'virk'
@@ -494,7 +494,7 @@ test.group('Base Model | getter-setters', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -516,7 +516,7 @@ test.group('Base Model | getter-setters', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -540,7 +540,7 @@ test.group('Base Model | getter-setters', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -568,7 +568,7 @@ test.group('Base Model | getter-setters', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -627,7 +627,7 @@ test.group('Base Model | dirty', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -647,7 +647,7 @@ test.group('Base Model | dirty', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -670,7 +670,7 @@ test.group('Base Model | dirty', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -693,7 +693,7 @@ test.group('Base Model | dirty', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -715,7 +715,7 @@ test.group('Base Model | dirty', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -745,7 +745,7 @@ test.group('Base Model | dirty', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -777,7 +777,7 @@ test.group('Base Model | dirty', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Location {
       isDirty = false
@@ -832,7 +832,7 @@ test.group('Base Model | persist', (group) => {
     const adapter = new FakeAdapter()
     await app.init()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -875,7 +875,7 @@ test.group('Base Model | persist', (group) => {
     const adapter = new FakeAdapter()
     await app.init()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -913,7 +913,7 @@ test.group('Base Model | persist', (group) => {
     const adapter = new FakeAdapter()
     await app.init()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -948,7 +948,7 @@ test.group('Base Model | persist', (group) => {
     const adapter = new FakeAdapter()
     await app.init()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -981,7 +981,7 @@ test.group('Base Model | persist', (group) => {
     const adapter = new FakeAdapter()
     await app.init()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1021,7 +1021,7 @@ test.group('Base Model | persist', (group) => {
     const adapter = new FakeAdapter()
     await app.init()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1050,7 +1050,7 @@ test.group('Base Model | persist', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1086,7 +1086,7 @@ test.group('Base Model | persist', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1140,7 +1140,7 @@ test.group('Base Model | persist', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1180,7 +1180,7 @@ test.group('Base Model | persist', (group) => {
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1216,7 +1216,7 @@ test.group('Base Model | persist', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1254,7 +1254,7 @@ test.group('Base Model | persist', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -1288,7 +1288,7 @@ test.group('Base Model | persist', (group) => {
     const db = await getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static table = 'uuid_users'
@@ -1334,7 +1334,7 @@ test.group('Base Model | persist', (group) => {
     const db = await getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static table = 'uuid_users'
@@ -1380,7 +1380,7 @@ test.group('Self assign primary key', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static selfAssignPrimaryKey = true
@@ -1419,7 +1419,7 @@ test.group('Self assign primary key', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       static selfAssignPrimaryKey = true
@@ -1475,7 +1475,7 @@ test.group('Base Model | create from adapter results', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1503,7 +1503,7 @@ test.group('Base Model | create from adapter results', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1531,7 +1531,7 @@ test.group('Base Model | create from adapter results', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1553,7 +1553,7 @@ test.group('Base Model | create from adapter results', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1587,7 +1587,7 @@ test.group('Base Model | create from adapter results', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1625,7 +1625,7 @@ test.group('Base Model | create from adapter results', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1653,7 +1653,7 @@ test.group('Base Model | create from adapter results', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1679,7 +1679,7 @@ test.group('Base Model | create from adapter results', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1717,7 +1717,7 @@ test.group('Base Model | delete', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1745,7 +1745,7 @@ test.group('Base Model | delete', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1771,7 +1771,7 @@ test.group('Base Model | serializeAttributes', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1789,7 +1789,7 @@ test.group('Base Model | serializeAttributes', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ serialize: (value) => value.toUpperCase() })
@@ -1807,7 +1807,7 @@ test.group('Base Model | serializeAttributes', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ serializeAs: 'uname' })
@@ -1825,7 +1825,7 @@ test.group('Base Model | serializeAttributes', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ serializeAs: null })
@@ -1843,7 +1843,7 @@ test.group('Base Model | serializeAttributes', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1865,7 +1865,7 @@ test.group('Base Model | serializeAttributes', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1892,7 +1892,7 @@ test.group('Base Model | serializeAttributes', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1923,7 +1923,7 @@ test.group('Base Model | serializeAttributes', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -1945,7 +1945,7 @@ test.group('Base Model | serializeAttributes', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ serialize: (value) => value.toUpperCase() })
@@ -1963,7 +1963,7 @@ test.group('Base Model | serializeAttributes', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ serializeAs: 'uname' })
@@ -1981,7 +1981,7 @@ test.group('Base Model | serializeAttributes', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ serializeAs: null })
@@ -1999,7 +1999,7 @@ test.group('Base Model | serializeAttributes', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2021,7 +2021,7 @@ test.group('Base Model | serializeAttributes', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2054,7 +2054,7 @@ test.group('Base Model | serializeRelations', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -2091,7 +2091,7 @@ test.group('Base Model | serializeRelations', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -2128,7 +2128,7 @@ test.group('Base Model | serializeRelations', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -2160,7 +2160,7 @@ test.group('Base Model | serializeRelations', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -2194,7 +2194,7 @@ test.group('Base Model | serializeRelations', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -2231,7 +2231,7 @@ test.group('Base Model | serializeRelations', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -2263,7 +2263,7 @@ test.group('Base Model | serializeRelations', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -2309,7 +2309,7 @@ test.group('Base Model | serializeRelations', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -2354,7 +2354,7 @@ test.group('Base Model | serializeRelations', () => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -2405,7 +2405,7 @@ test.group('Base Model | toJSON', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2423,7 +2423,7 @@ test.group('Base Model | toJSON', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ serializeAs: 'theUsername' })
@@ -2441,7 +2441,7 @@ test.group('Base Model | toJSON', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ serializeAs: null })
@@ -2459,7 +2459,7 @@ test.group('Base Model | toJSON', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2482,7 +2482,7 @@ test.group('Base Model | toJSON', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2505,7 +2505,7 @@ test.group('Base Model | toJSON', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2533,7 +2533,7 @@ test.group('Base Model | toJSON', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       serializeExtras = true
@@ -2565,7 +2565,7 @@ test.group('Base Model | toJSON', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       serializeExtras() {
@@ -2603,7 +2603,7 @@ test.group('Base Model | toJSON', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2624,7 +2624,7 @@ test.group('Base Model | toJSON', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2657,7 +2657,7 @@ test.group('BaseModel | cache', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2686,7 +2686,7 @@ test.group('BaseModel | cache', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2727,7 +2727,7 @@ test.group('BaseModel | fill/merge', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2744,7 +2744,7 @@ test.group('BaseModel | fill/merge', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2767,7 +2767,7 @@ test.group('BaseModel | fill/merge', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2785,7 +2785,7 @@ test.group('BaseModel | fill/merge', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2808,7 +2808,7 @@ test.group('BaseModel | fill/merge', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2831,7 +2831,7 @@ test.group('BaseModel | fill/merge', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2854,7 +2854,7 @@ test.group('BaseModel | fill/merge', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2883,7 +2883,7 @@ test.group('BaseModel | fill/merge', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2900,7 +2900,7 @@ test.group('BaseModel | fill/merge', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2926,7 +2926,7 @@ test.group('BaseModel | fill/merge', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -2952,7 +2952,7 @@ test.group('BaseModel | fill/merge', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Super extends BaseModel {
       foo!: string
@@ -2993,7 +2993,7 @@ test.group('Base | apdater', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -3023,7 +3023,7 @@ test.group('Base | apdater', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -3058,7 +3058,7 @@ test.group('Base | apdater', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -3093,7 +3093,7 @@ test.group('Base | apdater', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ columnName: 'first_name' })
@@ -3133,7 +3133,7 @@ test.group('Base Model | sideloaded', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -3155,7 +3155,7 @@ test.group('Base Model | sideloaded', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -3175,7 +3175,7 @@ test.group('Base Model | sideloaded', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -3211,7 +3211,7 @@ test.group('Base Model | relations', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -3243,7 +3243,7 @@ test.group('Base Model | relations', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -3275,7 +3275,7 @@ test.group('Base Model | relations', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -3311,7 +3311,7 @@ test.group('Base Model | relations', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -3360,7 +3360,7 @@ test.group('Base Model | relations', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -3428,7 +3428,7 @@ test.group('Base Model | relations', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -3464,7 +3464,7 @@ test.group('Base Model | relations', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -3502,7 +3502,7 @@ test.group('Base Model | relations', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -3544,7 +3544,7 @@ test.group('Base Model | relations', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -3588,7 +3588,7 @@ test.group('Base Model | relations', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -3622,7 +3622,7 @@ test.group('Base Model | relations', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -3670,7 +3670,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -3698,7 +3698,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -3724,7 +3724,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -3754,7 +3754,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -3784,7 +3784,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -3820,7 +3820,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -3853,7 +3853,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -3886,7 +3886,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -3920,7 +3920,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -3978,7 +3978,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4018,7 +4018,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4057,7 +4057,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4097,7 +4097,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4151,7 +4151,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4214,7 +4214,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4270,7 +4270,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4335,7 +4335,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4396,7 +4396,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4447,7 +4447,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4493,7 +4493,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4547,7 +4547,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4611,7 +4611,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4687,7 +4687,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4746,7 +4746,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4804,7 +4804,7 @@ test.group('Base Model | fetch', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -4879,7 +4879,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     const stack: string[] = []
 
@@ -4942,7 +4942,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5002,7 +5002,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5042,7 +5042,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5082,7 +5082,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5138,7 +5138,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5204,7 +5204,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5243,7 +5243,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5294,7 +5294,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5328,7 +5328,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5361,7 +5361,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5396,7 +5396,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5431,7 +5431,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5466,7 +5466,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5504,7 +5504,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5537,7 +5537,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5570,7 +5570,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5599,7 +5599,7 @@ test.group('Base Model | hooks', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5639,7 +5639,7 @@ test.group('Base Model | aggregates', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5673,7 +5673,7 @@ test.group('Base Model | aggregates', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5721,7 +5721,7 @@ test.group('Base Model | date', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5747,7 +5747,7 @@ test.group('Base Model | date', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5773,7 +5773,7 @@ test.group('Base Model | date', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5800,7 +5800,7 @@ test.group('Base Model | date', (group) => {
     await app.init()
 
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5834,7 +5834,7 @@ test.group('Base Model | date', (group) => {
     await app.init()
 
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5869,7 +5869,7 @@ test.group('Base Model | date', (group) => {
     await app.init()
 
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5902,7 +5902,7 @@ test.group('Base Model | date', (group) => {
     await app.init()
 
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5932,7 +5932,7 @@ test.group('Base Model | date', (group) => {
     await app.init()
 
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5963,7 +5963,7 @@ test.group('Base Model | date', (group) => {
     await app.init()
 
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -5993,7 +5993,7 @@ test.group('Base Model | date', (group) => {
     await app.init()
 
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6025,7 +6025,7 @@ test.group('Base Model | date', (group) => {
     await app.init()
 
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6057,7 +6057,7 @@ test.group('Base Model | date', (group) => {
     await app.init()
 
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6089,7 +6089,7 @@ test.group('Base Model | date', (group) => {
 
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6113,7 +6113,7 @@ test.group('Base Model | date', (group) => {
 
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6137,7 +6137,7 @@ test.group('Base Model | date', (group) => {
 
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6164,7 +6164,7 @@ test.group('Base Model | date', (group) => {
 
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6210,7 +6210,7 @@ test.group('Base Model | datetime', (group) => {
 
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6236,7 +6236,7 @@ test.group('Base Model | datetime', (group) => {
 
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6262,7 +6262,7 @@ test.group('Base Model | datetime', (group) => {
 
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6288,7 +6288,7 @@ test.group('Base Model | datetime', (group) => {
 
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6327,7 +6327,7 @@ test.group('Base Model | datetime', (group) => {
     await app.init()
 
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6357,7 +6357,7 @@ test.group('Base Model | datetime', (group) => {
     await app.init()
 
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6389,7 +6389,7 @@ test.group('Base Model | datetime', (group) => {
     await app.init()
 
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6421,7 +6421,7 @@ test.group('Base Model | datetime', (group) => {
     await app.init()
 
     const adapter = new FakeAdapter()
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6453,7 +6453,7 @@ test.group('Base Model | datetime', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6477,7 +6477,7 @@ test.group('Base Model | datetime', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6502,7 +6502,7 @@ test.group('Base Model | datetime', (group) => {
     await app.init()
     const adapter = new FakeAdapter()
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6535,7 +6535,7 @@ test.group('Base Model | datetime', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6563,7 +6563,7 @@ test.group('Base Model | datetime', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6601,7 +6601,7 @@ test.group('Base Model | datetime', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6635,7 +6635,7 @@ test.group('Base Model | datetime', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6671,7 +6671,7 @@ test.group('Base Model | datetime', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6706,7 +6706,7 @@ test.group('Base Model | datetime', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6748,7 +6748,7 @@ test.group('Base Model | paginate', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6796,7 +6796,7 @@ test.group('Base Model | paginate', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6841,7 +6841,7 @@ test.group('Base Model | paginate', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6889,7 +6889,7 @@ test.group('Base Model | paginate', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -6950,7 +6950,7 @@ test.group('Base Model | paginate', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ isPrimary: true })
@@ -7014,7 +7014,7 @@ test.group('Base Model | toObject', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -7033,7 +7033,7 @@ test.group('Base Model | toObject', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column({ serializeAs: 'theUserName', columnName: 'user_name' })
@@ -7052,7 +7052,7 @@ test.group('Base Model | toObject', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -7076,7 +7076,7 @@ test.group('Base Model | toObject', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class User extends BaseModel {
       @column()
@@ -7100,7 +7100,7 @@ test.group('Base Model | toObject', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -7140,7 +7140,7 @@ test.group('Base Model | toObject', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Comment extends BaseModel {
       @column()
@@ -7218,7 +7218,7 @@ test.group('Base model | inheritance', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class MyBaseModel extends BaseModel {
       static primaryKey = 'user_id'
@@ -7244,7 +7244,7 @@ test.group('Base model | inheritance', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class MyBaseModel extends BaseModel {
       static primaryKey = 'user_id'
@@ -7272,7 +7272,7 @@ test.group('Base model | inheritance', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class MyBaseModel extends BaseModel {
       static table = 'foo'
@@ -7298,7 +7298,7 @@ test.group('Base model | inheritance', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class MyBaseModel extends BaseModel {
       @column({ isPrimary: true })
@@ -7401,7 +7401,7 @@ test.group('Base model | inheritance', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class MyBaseModel extends BaseModel {
       @column({ isPrimary: true })
@@ -7507,7 +7507,7 @@ test.group('Base model | inheritance', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class MyBaseModel extends BaseModel {
       @computed()
@@ -7609,7 +7609,7 @@ test.group('Base model | inheritance', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class MyBaseModel extends BaseModel {
       @computed()
@@ -7704,7 +7704,7 @@ test.group('Base model | inheritance', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -7746,7 +7746,7 @@ test.group('Base model | inheritance', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class SocialProfile extends BaseModel {
       @column()
@@ -7802,7 +7802,7 @@ test.group('Base model | inheritance', (group) => {
     const db = getDb()
     const adapter = ormAdapter(db)
 
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class Profile extends BaseModel {
       @column()
@@ -7854,7 +7854,7 @@ test.group('Base model | inheritance', (group) => {
     await app.init()
     const db = getDb()
     const adapter = ormAdapter(db)
-    const BaseModel = getBaseModel(adapter, app)
+    const BaseModel = getBaseModel(adapter)
 
     class MyBaseModel extends BaseModel {
       static boot() {
