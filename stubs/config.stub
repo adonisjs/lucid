@@ -2,12 +2,13 @@
 to: {{ app.configPath('database.ts') }}
 ---
 import env from '#start/env'
+{{#if dialect === 'sqlite'}}
 import app from '@adonisjs/core/services/app'
+{{/if}}
 import { defineConfig } from '@adonisjs/lucid'
 
-const allyConfig = defineConfig({
+const dbConfig = defineConfig({
   connection: '{{ dialect }}',
-
   connections: {
     {{#if dialect === 'sqlite'}}
     sqlite: {
@@ -20,7 +21,7 @@ const allyConfig = defineConfig({
         naturalSort: true,
         paths: ['database/migrations'],
       },
-    }
+    },
     {{#elif dialect === 'postgres'}}
     postgres: {
       client: 'pg',
@@ -34,8 +35,8 @@ const allyConfig = defineConfig({
       migrations: {
         naturalSort: true,
         paths: ['database/migrations'],
-      }
-    }
+      },
+    },
     {{#elif dialect === 'mysql'}}
     mysql: {
       client: 'mysql2',
@@ -49,8 +50,8 @@ const allyConfig = defineConfig({
       migrations: {
         naturalSort: true,
         paths: ['database/migrations'],
-      }
-    }
+      },
+    },
     {{#elif dialect === 'mssql'}}
     mssql: {
       client: 'tedious',
@@ -64,8 +65,10 @@ const allyConfig = defineConfig({
       migrations: {
         naturalSort: true,
         paths: ['database/migrations'],
-      }
-    }
+      },
+    },
     {{/if}}
-  }
+  },
 })
+
+export default dbConfig

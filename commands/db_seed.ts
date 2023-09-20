@@ -14,12 +14,13 @@ import { BaseCommand, flags } from '@adonisjs/core/ace'
 import { FileNode } from '../src/types/database.js'
 import { SeederFileNode } from '../src/types/seeder.js'
 import type { SeedsRunner } from '../src/seeders/runner.js'
+import { CommandOptions } from '@adonisjs/core/types/ace'
 
 export default class DbSeed extends BaseCommand {
   static commandName = 'db:seed'
   static description = 'Execute database seeders'
-  static settings = {
-    loadApp: true,
+  static options: CommandOptions = {
+    startApp: true,
   }
 
   private declare seeder: SeedsRunner

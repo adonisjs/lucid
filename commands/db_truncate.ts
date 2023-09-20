@@ -9,12 +9,13 @@
 
 import { BaseCommand, flags } from '@adonisjs/core/ace'
 import { QueryClientContract } from '../src/types/database.js'
+import { CommandOptions } from '@adonisjs/core/types/ace'
 
 export default class DbTruncate extends BaseCommand {
   static commandName = 'db:truncate'
   static description = 'Truncate all tables in database'
-  static settings = {
-    loadApp: true,
+  static options: CommandOptions = {
+    startApp: true,
   }
 
   /**

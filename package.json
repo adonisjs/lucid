@@ -5,6 +5,7 @@
   "engines": {
     "node": ">=18.16.0"
   },
+  "main": "./build/index.js",
   "files": [
     "build/commands",
     "build/providers",
@@ -18,6 +19,7 @@
   ],
   "type": "module",
   "exports": {
+    ".": "./build/index.js",
     "./schema": "./build/src/schema/main.js",
     "./commands": "./build/commands/main.js",
     "./factories": "./build/src/factories/main.js",

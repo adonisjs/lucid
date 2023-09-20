@@ -10,7 +10,7 @@ import factory from '@adonisjs/lucid/factories'
 import {{ modelName }} from '{{ modelImportPath }}'
 
 export const {{ factoryName }} = factory
-  .define({{ modelName }}, ({ faker }) => {
+  .define({{ modelName }}, async ({ faker }) => {
     return {}
   })
   .build()

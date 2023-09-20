@@ -23,7 +23,7 @@ import {
 import { MigrationSource } from './source.js'
 import { Database } from '../database/main.js'
 import { Application } from '@adonisjs/core/app'
-import { Schema } from '../schema/main.js'
+import { BaseSchema } from '../schema/main.js'
 
 /**
  * Migrator exposes the API to execute migrations using the schema files
@@ -210,10 +210,10 @@ export class MigrationRunner extends EventEmitter {
    * Returns the migration source by ensuring value is a class constructor and
    * has disableTransactions property.
    */
-  private async getMigrationSource(migration: FileNode<unknown>): Promise<typeof Schema> {
+  private async getMigrationSource(migration: FileNode<unknown>): Promise<typeof BaseSchema> {
     const source = await migration.getSource()
     if (typeof source === 'function' && 'disableTransactions' in source) {
-      return source as typeof Schema
+      return source as typeof BaseSchema
     }
 
     throw new Error(`Invalid schema class exported by "${migration.name}"`)
@@ -225,7 +225,7 @@ export class MigrationRunner extends EventEmitter {
    */
   private async executeMigration(migration: FileNode<unknown>) {
     const SchemaClass = await this.getMigrationSource(migration)
-    const client = await this.getClient(Schema.disableTransactions)
+    const client = await this.getClient(BaseSchema.disableTransactions)
 
     try {
       const schema = new SchemaClass(client, migration.name, this.dryRun)

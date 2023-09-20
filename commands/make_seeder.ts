@@ -9,10 +9,15 @@
 
 import { BaseCommand, args } from '@adonisjs/core/ace'
 import { stubsRoot } from '../stubs/main.js'
+import { CommandOptions } from '@adonisjs/core/types/ace'
 
 export default class MakeSeeder extends BaseCommand {
   static commandName = 'make:seeder'
   static description = 'Make a new Seeder file'
+
+  static options: CommandOptions = {
+    allowUnknownFlags: true,
+  }
 
   /**
    * The name of the seeder file.

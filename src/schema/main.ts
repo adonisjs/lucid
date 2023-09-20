@@ -10,8 +10,8 @@
 import type { Knex } from 'knex'
 import { Exception } from '@poppinss/utils'
 import { getDDLMethod } from '../utils/index.js'
-import { QueryReporter } from '../query_reporter/index.js'
 import type { DeferCallback } from '../types/schema.js'
+import { QueryReporter } from '../query_reporter/index.js'
 import type { QueryClientContract } from '../types/database.js'
 import type { RawQueryBindings } from '../types/querybuilder.js'
 
@@ -19,7 +19,7 @@ import type { RawQueryBindings } from '../types/querybuilder.js'
  * Exposes the API to define table schema using deferred database
  * calls.
  */
-export class Schema {
+export abstract class BaseSchema {
   /**
    * All calls to `schema` and `defer` are tracked to be
    * executed later

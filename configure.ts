@@ -39,7 +39,7 @@ const DIALECTS_INFO: {
       DB_HOST: `Env.schema.string({ format: 'host' })`,
       DB_PORT: `Env.schema.number()`,
       DB_USER: 'Env.schema.string()',
-      DB_PASSWORD: 'Env.schema.string()',
+      DB_PASSWORD: 'Env.schema.string.optional()',
       DB_DATABASE: 'Env.schema.string()',
     },
   },
@@ -55,7 +55,7 @@ const DIALECTS_INFO: {
       DB_HOST: `Env.schema.string({ format: 'host' })`,
       DB_PORT: `Env.schema.number()`,
       DB_USER: 'Env.schema.string()',
-      DB_PASSWORD: 'Env.schema.string()',
+      DB_PASSWORD: 'Env.schema.string.optional()',
       DB_DATABASE: 'Env.schema.string()',
     },
     pkg: 'pg',
@@ -72,7 +72,7 @@ const DIALECTS_INFO: {
       DB_HOST: `Env.schema.string({ format: 'host' })`,
       DB_PORT: `Env.schema.number()`,
       DB_USER: 'Env.schema.string()',
-      DB_PASSWORD: 'Env.schema.string()',
+      DB_PASSWORD: 'Env.schema.string.optional()',
       DB_DATABASE: 'Env.schema.string()',
     },
     pkg: 'tedious',
@@ -84,9 +84,6 @@ const DIALECTS_INFO: {
  */
 export async function configure(command: Configure) {
   const codemods = await command.createCodemods()
-  await codemods.updateRcFile((rcFile) => {
-    rcFile.addProvider('@adonisjs/lucid/database_provider')
-  })
 
   /**
    * Prompt to select the dialect to use
@@ -97,6 +94,16 @@ export async function configure(command: Configure) {
     })) || 'postgres'
 
   const { pkg, envVars, envValidations } = DIALECTS_INFO[dialect]
+  const installNpmDriver = await command.prompt.confirm(
+    `Do you want to install npm package "${pkg}"?`
+  )
+
+  /**
+   * Register provider
+   */
+  await codemods.updateRcFile((rcFile) => {
+    rcFile.addProvider('@adonisjs/lucid/database_provider')
+  })
 
   /**
    * Define environment variables
@@ -111,7 +118,7 @@ export async function configure(command: Configure) {
   if (envValidations) {
     codemods.defineEnvValidations({
       variables: envValidations,
-      leadingComment: 'Variables for configuring ally package',
+      leadingComment: 'Variables for configuring database connection',
     })
   }
 
@@ -121,9 +128,9 @@ export async function configure(command: Configure) {
   await command.publishStub('config.stub', { dialect: dialect })
 
   /**
-   * Prompt to install package
+   * Install package or show steps to install package
    */
-  if (await command.prompt.confirm(`Do you want to install npm package "${pkg}"?`)) {
+  if (installNpmDriver) {
     await command.installPackages([{ name: pkg, isDevDependency: false }])
   } else {
     command.listPackagesToInstall([{ name: pkg, isDevDependency: false }])

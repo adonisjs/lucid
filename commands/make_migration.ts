@@ -7,14 +7,15 @@
  * file that was distributed with this source code.
  */
 
+import { CommandOptions } from '@adonisjs/core/types/ace'
 import { stubsRoot } from '../stubs/main.js'
 import { args, BaseCommand, flags } from '@adonisjs/core/ace'
 
 export default class MakeMigration extends BaseCommand {
   static commandName = 'make:migration'
   static description = 'Make a new migration file'
-  static settings = {
-    loadApp: true,
+  static options: CommandOptions = {
+    startApp: true,
     allowUnknownFlags: true,
   }
 
@@ -115,7 +116,7 @@ export default class MakeMigration extends BaseCommand {
     const prefix = new Date().getTime()
     const action = this.alter ? 'alter' : 'create'
     const tableName = this.app.generators.tableName(entity.name)
-    const fileName = `${prefix}_${action}_${tableName}_table`
+    const fileName = `${prefix}_${action}_${tableName}_table.ts`
 
     const codemods = await this.createCodemods()
     await codemods.makeUsingStub(stubsRoot, `make/migration/${action}.stub`, {

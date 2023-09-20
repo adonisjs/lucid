@@ -8,6 +8,7 @@
  */
 
 import { flags, BaseCommand } from '@adonisjs/core/ace'
+import { CommandOptions } from '@adonisjs/core/types/ace'
 
 /**
  * This command reset the database by rolling back to batch 0 and then
@@ -16,8 +17,8 @@ import { flags, BaseCommand } from '@adonisjs/core/ace'
 export default class Refresh extends BaseCommand {
   static commandName = 'migration:fresh'
   static description = 'Drop all tables and re-migrate the database'
-  static settings = {
-    loadApp: true,
+  static options: CommandOptions = {
+    startApp: true,
   }
 
   /**

@@ -9,12 +9,13 @@
 
 import { BaseCommand, flags } from '@adonisjs/core/ace'
 import { QueryClientContract } from '../src/types/database.js'
+import { CommandOptions } from '@adonisjs/core/types/ace'
 
 export default class DbWipe extends BaseCommand {
   static commandName = 'db:wipe'
   static description = 'Drop all tables, views and types in database'
-  static settings = {
-    loadApp: true,
+  static options: CommandOptions = {
+    startApp: true,
   }
 
   /**

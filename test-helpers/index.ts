@@ -31,7 +31,7 @@ import {
   DatabaseQueryBuilderContract,
 } from '../src/types/querybuilder.js'
 
-import { Schema } from '../src/schema/main.js'
+import { BaseSchema } from '../src/schema/main.js'
 import { Database } from '../src/database/main.js'
 import { Adapter } from '../src/orm/adapter/index.js'
 import { BaseModel } from '../src/orm/base_model/index.js'
@@ -534,7 +534,7 @@ export function mapToObj<T extends any>(collection: Map<any, any>): T {
  * Returns the base schema class typed to it's interface
  */
 export function getBaseSchema() {
-  return Schema
+  return BaseSchema
 }
 
 /**

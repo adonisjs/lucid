@@ -10,6 +10,7 @@
 import { flags, BaseCommand } from '@adonisjs/core/ace'
 import { MigrationListNode } from '../../src/types/migrator.js'
 import { MigrationRunner } from '../../src/migration/runner.js'
+import { CommandOptions } from '@adonisjs/core/types/ace'
 
 /**
  * The command is meant to migrate the database by execute migrations
@@ -18,8 +19,8 @@ import { MigrationRunner } from '../../src/migration/runner.js'
 export default class Status extends BaseCommand {
   static commandName = 'migration:status'
   static description = 'View migrations status'
-  static settings = {
-    loadApp: true,
+  static options: CommandOptions = {
+    startApp: true,
   }
 
   private migrator?: MigrationRunner

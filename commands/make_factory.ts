@@ -7,6 +7,7 @@
  * file that was distributed with this source code.
  */
 
+import { CommandOptions } from '@adonisjs/core/types/ace'
 import { stubsRoot } from '../stubs/main.js'
 import { args, BaseCommand } from '@adonisjs/core/ace'
 
@@ -17,7 +18,7 @@ export default class MakeFactory extends BaseCommand {
   static commandName = 'make:factory'
   static description = 'Make a new factory'
 
-  static options = {
+  static options: CommandOptions = {
     allowUnknownFlags: true,
   }
 
