@@ -27,7 +27,7 @@
     "./orm": "./build/src/orm/main.js",
     "./seeders": "./build/src/seeders/main.js",
     "./services/*": "./build/services/*.js",
-    "./types/*": "./build/types/*.js",
+    "./types/*": "./build/src/types/*.js",
     "./database_provider": "./build/providers/database_provider.js"
   },
   "scripts": {
