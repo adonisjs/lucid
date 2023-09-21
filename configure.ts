@@ -102,6 +102,7 @@ export async function configure(command: Configure) {
    * Register provider
    */
   await codemods.updateRcFile((rcFile) => {
+    rcFile.addCommand('@adonisjs/lucid/commands')
     rcFile.addProvider('@adonisjs/lucid/database_provider')
   })
 

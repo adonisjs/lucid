@@ -52,6 +52,7 @@ test.group('Configure', (group) => {
 
     await assert.fileExists('config/database.ts')
     await assert.fileExists('adonisrc.ts')
+    await assert.fileContains('adonisrc.ts', '@adonisjs/lucid/commands')
     await assert.fileContains('adonisrc.ts', '@adonisjs/lucid/database_provider')
     await assert.fileContains('config/database.ts', 'defineConfig({')
 
