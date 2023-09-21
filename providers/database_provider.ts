@@ -11,6 +11,8 @@ import type { ApplicationService } from '@adonisjs/core/types'
 
 import { Database } from '../src/database/main.js'
 import { QueryClient } from '../src/query_client/index.js'
+import { BaseModel } from '../src/orm/base_model/index.js'
+import { Adapter } from '../src/orm/adapter/index.js'
 import type { DatabaseConfig } from '../src/types/database.js'
 
 declare module '@adonisjs/core/types' {
@@ -39,5 +41,10 @@ export default class DatabaseServiceProvider {
     })
 
     this.app.container.alias('lucid.db', Database)
+  }
+
+  async boot() {
+    const db = await this.app.container.make('lucid.db')
+    BaseModel.$adapter = new Adapter(db)
   }
 }
