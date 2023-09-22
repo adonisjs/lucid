@@ -99,7 +99,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   export type HasOneDecorator = <RelatedModel extends LucidModel>(
     model: () => RelatedModel,
     options?: RelationOptions<HasOne<RelatedModel>>
-  ) => TypedDecorator<HasOne<RelatedModel>>
+  ) => TypedDecorator<HasOne<RelatedModel> | null>
 
   /**
    * Decorator signature to define has many relationship
@@ -115,7 +115,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
   export type BelongsToDecorator = <RelatedModel extends LucidModel>(
     model: () => RelatedModel,
     options?: RelationOptions<HasOne<RelatedModel>>
-  ) => TypedDecorator<BelongsTo<RelatedModel>>
+  ) => TypedDecorator<BelongsTo<RelatedModel> | null>
 
   /**
    * Decorator signature to define many to many relationship
