@@ -114,7 +114,7 @@ export type ThroughRelationOptions<
 export type HasOneDecorator = <RelatedModel extends LucidModel>(
   model: () => RelatedModel,
   options?: RelationOptions<RelatedModel, LucidModel, HasOne<RelatedModel, LucidModel>>
-) => TypedDecorator<HasOne<RelatedModel>>
+) => TypedDecorator<HasOne<RelatedModel> | null>
 
 /**
  * Decorator signature to define has many relationship
@@ -130,7 +130,7 @@ export type HasManyDecorator = <RelatedModel extends LucidModel>(
 export type BelongsToDecorator = <RelatedModel extends LucidModel>(
   model: () => RelatedModel,
   options?: RelationOptions<RelatedModel, LucidModel, HasOne<RelatedModel, LucidModel>>
-) => TypedDecorator<BelongsTo<RelatedModel>>
+) => TypedDecorator<BelongsTo<RelatedModel> | null>
 
 /**
  * Decorator signature to define many to many relationship
