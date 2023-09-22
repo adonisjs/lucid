@@ -2,6 +2,9 @@
   "name": "@adonisjs/lucid",
   "version": "18.4.0",
   "description": "SQL ORM built on top of Active Record pattern",
+  "engines": {
+    "node": ">=14.15.4"
+  },
   "main": "build/providers/DatabaseProvider.js",
   "files": [
     "build/adonis-typings",
