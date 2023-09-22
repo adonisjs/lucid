@@ -7101,7 +7101,7 @@ test.group('Query Builder | havingNull', (group) => {
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
       ['havingNull']('deleted_at')
-      .orHavingNull('updated_at')
+      ['orHavingNull']('updated_at')
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -7119,7 +7119,7 @@ test.group('Query Builder | havingNull', (group) => {
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
       ['havingNull']('my_deleted_at')
-      .orHavingNull('my_updated_at')
+      ['orHavingNull']('my_updated_at')
       .toSQL()
 
     assert.equal(resolverSql, knexResolverSql)
@@ -7193,7 +7193,7 @@ test.group('Query Builder | havingNotNull', (group) => {
     const { sql: knexSql, bindings: knexBindings } = connection
       .client!.from('users')
       ['havingNotNull']('deleted_at')
-      .orHavingNotNull('updated_at')
+      ['orHavingNotNull']('updated_at')
       .toSQL()
 
     assert.equal(sql, knexSql)
@@ -7211,7 +7211,7 @@ test.group('Query Builder | havingNotNull', (group) => {
     const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
       .client!.from('users')
       ['havingNotNull']('my_deleted_at')
-      .orHavingNotNull('my_updated_at')
+      ['orHavingNotNull']('my_updated_at')
       .toSQL()
 
     assert.equal(resolverSql, knexResolverSql)
