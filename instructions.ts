@@ -45,28 +45,28 @@ const DB_SERVER_PROMPT_CHOICES = [
 const DB_SERVER_ENV_VALUES = {
   sqlite: {},
   mysql: {
-    MYSQL_HOST: 'localhost',
+    MYSQL_HOST: '127.0.0.1',
     MYSQL_PORT: 3306,
     MYSQL_USER: 'lucid',
     MYSQL_PASSWORD: '',
     MYSQL_DB_NAME: 'lucid',
   },
   pg: {
-    PG_HOST: 'localhost',
+    PG_HOST: '127.0.0.1',
     PG_PORT: 5432,
     PG_USER: 'lucid',
     PG_PASSWORD: '',
     PG_DB_NAME: 'lucid',
   },
   oracle: {
-    ORACLE_HOST: 'localhost',
+    ORACLE_HOST: '127.0.0.1',
     ORACLE_PORT: 1521,
     ORACLE_USER: 'lucid',
     ORACLE_PASSWORD: '',
     ORACLE_DB_NAME: 'lucid',
   },
   mssql: {
-    MSSQL_SERVER: 'localhost',
+    MSSQL_SERVER: '127.0.0.1',
     MSSQL_PORT: 1433,
     MSSQL_USER: 'lucid',
     MSSQL_PASSWORD: '',
@@ -93,7 +93,7 @@ function getDbDrivers(sink: typeof sinkStatic) {
     .getPrompt()
     .multiple('Select the database driver you want to use', DB_SERVER_PROMPT_CHOICES, {
       validate(choices) {
-        return choices && choices.length ? true : 'Select atleast one database driver to continue'
+        return choices && choices.length ? true : 'Select at least one database driver to continue'
       },
     })
 }
