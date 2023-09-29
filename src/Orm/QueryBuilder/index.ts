@@ -75,7 +75,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
   /**
    * A copy of defined preloads on the model instance
    */
-  protected preloader: PreloaderContract<LucidRow> = new Preloader(this.model)
+  protected preloader: PreloaderContract<LucidRow> = new Preloader(this.model, this.client)
 
   /**
    * A custom callback to transform each model row
@@ -207,7 +207,7 @@ export class ModelQueryBuilder extends Chainable implements ModelQueryBuilderCon
     await this.preloader
       .sideload(this.sideloaded)
       .debug(this.debugQueries)
-      .processAllForMany(modelInstances, this.client)
+      .processAllForMany(modelInstances)
 
     return modelInstances
   }

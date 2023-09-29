@@ -1688,7 +1688,7 @@ export class BaseModel implements LucidRow {
     }
 
     const Model = this.constructor as LucidModel
-    const preloader = new Preloader(Model)
+    const preloader = new Preloader(Model, Model.$adapter.modelClient(this))
 
     if (typeof relationName === 'function') {
       relationName(preloader)
@@ -1696,9 +1696,7 @@ export class BaseModel implements LucidRow {
       preloader.load(relationName, callback)
     }
 
-    await preloader
-      .sideload(this.$sideloaded)
-      .processAllForOne(this, Model.$adapter.modelClient(this))
+    await preloader.sideload(this.$sideloaded).processAllForOne(this)
   }
 
   /**

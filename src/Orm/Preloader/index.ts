@@ -38,17 +38,21 @@ export class Preloader implements PreloaderContract<LucidRow> {
    */
   private sideloaded: ModelObject = {}
 
-  private debugQueries: boolean
+  /**
+   * Control whether to debug the query or not. The initial
+   * value is inherited from the query client
+   */
+  private debugQueries: boolean = this.client.debug
 
-  constructor(private model: LucidModel) {}
+  constructor(private model: LucidModel, private client: QueryClientContract) {}
 
   /**
    * Processes a relationship for a single parent
    */
-  private async processRelation(name: string, parent: LucidRow, client: QueryClientContract) {
+  private async processRelation(name: string, parent: LucidRow) {
     const { relation, callback } = this.preloads[name]
     const query = relation
-      .eagerQuery(parent, client)
+      .eagerQuery(parent, this.client)
       .debug(this.debugQueries)
       .sideload(this.sideloaded)
 
@@ -79,14 +83,10 @@ export class Preloader implements PreloaderContract<LucidRow> {
    * Process a given relationship for many parent instances. This happens
    * during eagerloading
    */
-  private async processRelationForMany(
-    name: string,
-    parent: LucidRow[],
-    client: QueryClientContract
-  ) {
+  private async processRelationForMany(name: string, parent: LucidRow[]) {
     const { relation, callback } = this.preloads[name]
     const query = relation
-      .eagerQuery(parent, client)
+      .eagerQuery(parent, this.client)
       .debug(this.debugQueries)
       .sideload(this.sideloaded)
 
@@ -154,10 +154,10 @@ export class Preloader implements PreloaderContract<LucidRow> {
   /**
    * Process of all the preloaded relationships for a single parent
    */
-  public async processAllForOne(parent: LucidRow, client: QueryClientContract) {
+  public async processAllForOne(parent: LucidRow) {
     await Promise.all(
       Object.keys(this.preloads).map((relationName) => {
-        return this.processRelation(relationName, parent, client)
+        return this.processRelation(relationName, parent)
       })
     )
   }
@@ -165,14 +165,14 @@ export class Preloader implements PreloaderContract<LucidRow> {
   /**
    * Process of all the preloaded relationships for many parents
    */
-  public async processAllForMany(parent: LucidRow[], client: QueryClientContract) {
+  public async processAllForMany(parent: LucidRow[]) {
     if (!parent.length) {
       return
     }
 
     await Promise.all(
       Object.keys(this.preloads).map((relationName) => {
-        return this.processRelationForMany(relationName, parent, client)
+        return this.processRelationForMany(relationName, parent)
       })
     )
   }
