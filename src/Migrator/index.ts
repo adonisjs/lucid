@@ -343,7 +343,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
   /**
    * Upgrade migrations name from version 1 to version 2
    */
-  private async upgradeFromOnetoTwo() {
+  private async upgradeFromOneToTwo() {
     const migrations = await this.getMigratedFilesTillBatch(0)
     const client = await this.getClient(false)
 
@@ -362,7 +362,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
       await client.from(this.schemaVersionsTableName).where('version', 1).update({ version: 2 })
       await this.commit(client)
     } catch (error) {
-      this.rollback(client)
+      await this.rollback(client)
       throw error
     }
   }
@@ -373,7 +373,7 @@ export class Migrator extends EventEmitter implements MigratorContract {
   private async upgradeVersion(latestVersion: number): Promise<void> {
     if (latestVersion === 1) {
       this.emit('upgrade:version', { from: 1, to: 2 })
-      await this.upgradeFromOnetoTwo()
+      await this.upgradeFromOneToTwo()
     }
   }
 
