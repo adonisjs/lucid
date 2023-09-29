@@ -482,10 +482,11 @@ export class Migrator extends EventEmitter implements MigratorContract {
     existing.forEach((file) => {
       const migration = collected.find(({ name }) => name === file.name)
       if (!migration) {
-        throw new Exception(`Cannot perform rollback. Schema file {${file.name}} is missing`, {
-          code: 'E_MISSING_SCHEMA_FILES',
-          status: 500,
-        })
+        throw new Exception(
+          `Cannot perform rollback. Schema file {${file.name}} is missing`,
+          500,
+          'E_MISSING_SCHEMA_FILES'
+        )
       }
 
       this.migratedFiles[migration.name] = {
