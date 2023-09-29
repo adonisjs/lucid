@@ -851,6 +851,31 @@ test.group('Base Model | persist', (group) => {
     assert.deepEqual(user.$original, { username: 'virk', updatedAt: '2019-11-20' })
   })
 
+  test('the dirty should not contain DateTime field if DateTime value is same', async ({
+    assert,
+  }) => {
+    const currentTime = DateTime.now().toISO()!
+    class User extends BaseModel {
+      @column()
+      public username: string
+
+      @column.dateTime({ columnName: 'updated_at' })
+      public updatedAt: DateTime
+    }
+
+    const user = new User()
+    user.username = 'virk'
+    user.updatedAt = DateTime.fromISO(currentTime)
+    await user.save()
+
+    assert.isTrue(user.$isPersisted)
+
+    user.merge({ updatedAt: DateTime.fromISO(currentTime) })
+
+    assert.isFalse(user.$isDirty)
+    assert.deepEqual(user.$dirty, {})
+  })
+
   test('do not issue update when model is not dirty', async ({ assert }) => {
     const adapter = new FakeAdapter()
 
@@ -5516,6 +5541,9 @@ test.group('Base Model | datetime', (group) => {
     const user = new User()
     user.username = 'virk'
     await user.save()
+
+    // waiting for 2 ms, so that the updated at timestamp is different
+    await new Promise((resolve) => setTimeout(resolve, 200))
 
     user.username = 'nikk'
     await user.save()
