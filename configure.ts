@@ -132,7 +132,11 @@ export async function configure(command: Configure) {
    * Install package or show steps to install package
    */
   if (installNpmDriver) {
-    await command.installPackages([{ name: pkg, isDevDependency: false }])
+    await command.installPackages([
+      { name: pkg, isDevDependency: false },
+      { name: 'luxon', isDevDependency: false },
+      { name: '@types/luxon', isDevDependency: true },
+    ])
   } else {
     command.listPackagesToInstall([{ name: pkg, isDevDependency: false }])
   }
