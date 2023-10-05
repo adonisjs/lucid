@@ -8,7 +8,7 @@
  */
 
 import { DateTime } from 'luxon'
-import { Exception } from '@poppinss/utils'
+import * as errors from '../../errors.js'
 import { LucidRow, LucidModel, DateColumnDecorator } from '../../types/model.js'
 
 /**
@@ -31,13 +31,10 @@ function prepareDateColumn(value: any, attributeName: string, modelInstance: Luc
    */
   if (DateTime.isDateTime(value)) {
     if (!value.isValid) {
-      throw new Exception(
-        `Invalid value for "${modelName}.${attributeName}". ${value.invalidReason}`,
-        {
-          status: 500,
-          code: 'E_INVALID_DATE_COLUMN_VALUE',
-        }
-      )
+      throw new errors.E_INVALID_DATE_COLUMN_VALUE([
+        `${modelName}.${attributeName}`,
+        value.invalidReason,
+      ])
     }
 
     return value.toISODate()
@@ -46,13 +43,10 @@ function prepareDateColumn(value: any, attributeName: string, modelInstance: Luc
   /**
    * Anything else if not an acceptable value for date column
    */
-  throw new Exception(
-    `The value for "${modelName}.${attributeName}" must be an instance of "luxon.DateTime"`,
-    {
-      status: 500,
-      code: 'E_INVALID_DATE_COLUMN_VALUE',
-    }
-  )
+  throw new errors.E_INVALID_DATE_COLUMN_VALUE([
+    `${modelName}.${attributeName}`,
+    'The value must be an instance of "luxon.DateTime"',
+  ])
 }
 
 /**
@@ -84,13 +78,10 @@ function consumeDateColumn(value: any, attributeName: string, modelInstance: Luc
    * Any another value cannot be formatted
    */
   const modelName = modelInstance.constructor.name
-  throw new Exception(
-    `Cannot format "${modelName}.${attributeName}" ${typeof value} value to an instance of "luxon.DateTime"`,
-    {
-      status: 500,
-      code: 'E_INVALID_DATE_COLUMN_VALUE',
-    }
-  )
+  throw new errors.E_INVALID_DATE_COLUMN_VALUE([
+    `${modelName}.${attributeName}`,
+    `${typeof value} cannot be formatted`,
+  ])
 }
 
 /**

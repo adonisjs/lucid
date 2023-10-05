@@ -7,7 +7,6 @@
  * file that was distributed with this source code.
  */
 
-import { Exception } from '@poppinss/utils'
 import type { Emitter } from '@adonisjs/core/events'
 import type { Logger } from '@adonisjs/core/logger'
 
@@ -20,6 +19,7 @@ import {
 } from '../types/database.js'
 
 import { Connection } from './index.js'
+import * as errors from '../errors.js'
 
 /**
  * Connection manager job is to manage multiple named connections. You can add any number
@@ -126,10 +126,7 @@ export class ConnectionManager implements ConnectionManagerContract {
   connect(connectionName: string): void {
     const connection = this.connections.get(connectionName)
     if (!connection) {
-      throw new Exception(`Cannot connect to unregistered connection ${connectionName}`, {
-        code: 'E_UNMANAGED_DB_CONNECTION',
-        status: 500,
-      })
+      throw new errors.E_UNMANAGED_DB_CONNECTION([connectionName])
     }
 
     /**
