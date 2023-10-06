@@ -47,7 +47,7 @@ function prepareDateTimeColumn(value: any, attributeName: string, modelInstance:
    */
   throw new errors.E_INVALID_DATE_COLUMN_VALUE([
     `${modelName}.${attributeName}`,
-    'It must be an instance of "luxon.DateTime',
+    'It must be an instance of "luxon.DateTime"',
   ])
 }
 
