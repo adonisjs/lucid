@@ -14,6 +14,7 @@ import { RelationshipsContract } from '../types/relations.js'
 import { LucidRow, ModelObject, CherryPickFields } from '../types/model.js'
 import { FileNode, QueryClientContract, TransactionClientContract } from '../types/database.js'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import * as errors from '../errors.js'
 
 /**
  * Ensure that relation is defined
@@ -57,10 +58,9 @@ export function collectValues(payload: any[], key: string, missingCallback: () =
  */
 export function ensureRelationIsBooted(relation: RelationshipsContract) {
   if (!relation.booted) {
-    throw new Exception('Relationship is not booted. Make sure to call boot first', {
-      status: 500,
-      code: 'E_RUNTIME_EXCEPTION',
-    })
+    throw new errors.E_RUNTIME_EXCEPTION([
+      'Relationship is not booted. Make sure to call boot first',
+    ])
   }
 }
 
@@ -181,7 +181,7 @@ export function getDDLMethod(sql: string) {
 }
 
 /**
- * Normalizes the cherry picking object to always be an object with
+ * Normalizes the cherry-picking object to always be an object with
  * `pick` and `omit` properties
  */
 export function normalizeCherryPickObject(fields: CherryPickFields) {

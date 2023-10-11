@@ -7,8 +7,6 @@
  * file that was distributed with this source code.
  */
 
-import { Exception } from '@poppinss/utils'
-
 import { LucidRow, LucidModel, ModelObject } from '../../types/model.js'
 
 import {
@@ -18,6 +16,7 @@ import {
 } from '../../types/relations.js'
 
 import { QueryClientContract } from '../../types/database.js'
+import * as errors from '../../errors.js'
 
 /**
  * Exposes the API to define and preload relationships in reference to
@@ -32,7 +31,7 @@ export class Preloader implements PreloaderContract<LucidRow> {
   } = {}
 
   /**
-   * When invoked via query builder. The preloader will get the sideloaded
+   * When invoked via query builder. The preloader will get the side-loaded
    * object, that should be transferred to relationship model instances.
    */
   private sideloaded: ModelObject = {}
@@ -76,7 +75,7 @@ export class Preloader implements PreloaderContract<LucidRow> {
 
   /**
    * Process a given relationship for many parent instances. This happens
-   * during eagerloading
+   * during eager-loading
    */
   private async processRelationForMany(
     name: string,
@@ -110,13 +109,7 @@ export class Preloader implements PreloaderContract<LucidRow> {
   load(name: any, callback?: any): this {
     const relation = this.model.$getRelation(name) as RelationshipsContract
     if (!relation) {
-      throw new Exception(
-        `"${name}" is not defined as a relationship on "${this.model.name}" model`,
-        {
-          status: 500,
-          code: 'E_UNDEFINED_RELATIONSHIP',
-        }
-      )
+      throw new errors.E_UNDEFINED_RELATIONSHIP([name, this.model.name])
     }
 
     relation.boot()
@@ -145,7 +138,7 @@ export class Preloader implements PreloaderContract<LucidRow> {
 
   /**
    * Define attributes to be passed to all the model instance as
-   * sideloaded attributes
+   * side-loaded attributes
    */
   sideload(values: ModelObject): this {
     this.sideloaded = values

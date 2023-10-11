@@ -38,6 +38,7 @@ import { ModelPaginator } from '../paginator/index.js'
 import { QueryRunner } from '../../query_runner/index.js'
 import { Chainable } from '../../database/query_builder/chainable.js'
 import { SimplePaginator } from '../../database/paginator/simple_paginator.js'
+import * as errors from '../../errors.js'
 
 /**
  * A wrapper to invoke scope methods on the query builder
@@ -73,7 +74,7 @@ export class ModelQueryBuilder
   implements ModelQueryBuilderContract<LucidModel, LucidRow>
 {
   /**
-   * Sideloaded attributes that will be passed to the model instances
+   * Side-loaded attributes that will be passed to the model instances
    */
   protected sideloaded: ModelObject = {}
 
@@ -100,7 +101,7 @@ export class ModelQueryBuilder
   private scopesWrapper: ModelScopes | undefined = undefined
 
   /**
-   * Control whether or not to wrap adapter result to model
+   * Control whether to wrap adapter result to model
    * instances or not
    */
   protected wrapResultsToModelInstances: boolean = true
@@ -129,7 +130,7 @@ export class ModelQueryBuilder
   clientOptions: ModelAdapterOptions
 
   /**
-   * Whether or not query is a subquery for `.where` callback
+   * Whether query is a sub-query for `.where` callback
    */
   isChildQuery = false
 
@@ -231,7 +232,7 @@ export class ModelQueryBuilder
   }
 
   /**
-   * Defines sub query for checking the existance of a relationship
+   * Defines sub query for checking the existence of a relationship
    */
   private addWhereHas(
     relationName: any,
@@ -325,13 +326,7 @@ export class ModelQueryBuilder
      * Ensure relationship exists
      */
     if (!relation) {
-      throw new Exception(
-        `"${name}" is not defined as a relationship on "${this.model.name}" model`,
-        {
-          status: 500,
-          code: 'E_UNDEFINED_RELATIONSHIP',
-        }
-      )
+      throw new errors.E_UNDEFINED_RELATIONSHIP([name, this.model.name])
     }
 
     relation.boot()
@@ -450,7 +445,7 @@ export class ModelQueryBuilder
   }
 
   /**
-   * Set sideloaded properties to be passed to the model instance
+   * Set side-loaded properties to be passed to the model instance
    */
   sideload(value: ModelObject) {
     this.sideloaded = value
@@ -485,14 +480,14 @@ export class ModelQueryBuilder
   async firstOrFail(): Promise<any> {
     const row = await this.first()
     if (!row) {
-      throw new Exception('Row not found', { status: 404, code: 'E_ROW_NOT_FOUND' })
+      throw new errors.E_ROW_NOT_FOUND()
     }
 
     return row
   }
 
   /**
-   * Load aggregate value as a subquery for a relationship
+   * Load aggregate value as a sub-query for a relationship
    */
   withAggregate(relationName: any, userCallback: any): this {
     const subQuery = this.getRelationship(relationName).subQuery(this.client)
@@ -525,7 +520,7 @@ export class ModelQueryBuilder
     }
 
     /**
-     * Count subquery selection
+     * Count sub-query selection
      */
     this.select(subQuery.prepare())
 
@@ -538,7 +533,7 @@ export class ModelQueryBuilder
   }
 
   /**
-   * Get count of a relationship along side the main query results
+   * Get count of a relationship alongside the main query results
    */
   withCount(relationName: any, userCallback?: any): this {
     this.withAggregate(relationName, (subQuery: RelationQueryBuilderContract<any, any>) => {
@@ -554,7 +549,7 @@ export class ModelQueryBuilder
       }
 
       /**
-       * Define alias for the subquery
+       * Define alias for the sub-query
        */
       if (!subQuery.subQueryAlias) {
         subQuery.as(`${relationName}_count`)
@@ -860,8 +855,8 @@ export class ModelQueryBuilder
   /**
    * Implementation of `finally` for the promise API
    */
-  finally(fullfilled: any) {
-    return this.exec().finally(fullfilled)
+  finally(fulfilled: any) {
+    return this.exec().finally(fulfilled)
   }
 
   /**

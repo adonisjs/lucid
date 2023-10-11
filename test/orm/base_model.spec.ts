@@ -53,6 +53,7 @@ import { LucidRow } from '../../src/types/model.js'
 import { ModelPaginator } from '../../src/orm/paginator/index.js'
 import { SimplePaginator } from '../../src/database/paginator/simple_paginator.js'
 import { SnakeCaseNamingStrategy } from '../../src/orm/naming_strategies/snake_case.js'
+import * as errors from '../../src/errors.js'
 
 test.group('Base model | boot', (group) => {
   group.setup(async () => {
@@ -6018,7 +6019,7 @@ test.group('Base Model | date', (group) => {
   })
 
   test('raise error when date column value is unprocessable', async ({ fs, assert }) => {
-    assert.plan(1)
+    assert.plan(2)
 
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
@@ -6044,8 +6045,12 @@ test.group('Base Model | date', (group) => {
     user.dob = 10 as any
     try {
       await user.save()
-    } catch ({ message }) {
-      assert.equal(message, 'The value for "User.dob" must be an instance of "luxon.DateTime"')
+    } catch (error) {
+      assert.instanceOf(error, errors.E_INVALID_DATE_COLUMN_VALUE)
+      assert.equal(
+        error.message,
+        'Invalid value for "User.dob". The value must be an instance of "luxon.DateTime"'
+      )
     }
   })
 
@@ -6414,7 +6419,7 @@ test.group('Base Model | datetime', (group) => {
   })
 
   test('raise error when datetime column value is unprocessable', async ({ fs, assert }) => {
-    assert.plan(1)
+    assert.plan(2)
 
     const app = new AppFactory().create(fs.baseUrl, () => {})
     await app.init()
@@ -6440,8 +6445,12 @@ test.group('Base Model | datetime', (group) => {
     user.dob = 10 as any
     try {
       await user.save()
-    } catch ({ message }) {
-      assert.equal(message, 'The value for "User.dob" must be an instance of "luxon.DateTime"')
+    } catch (error) {
+      assert.instanceOf(error, errors.E_INVALID_DATE_COLUMN_VALUE)
+      assert.equal(
+        error.message,
+        'Invalid value for "User.dob". It must be an instance of "luxon.DateTime"'
+      )
     }
   })
 

@@ -18,6 +18,7 @@ import {
   getMigrator,
   cleanup as cleanupTables,
 } from '../../test-helpers/index.js'
+import * as errors from '../../src/errors.js'
 
 test.group('Migrator', (group) => {
   group.each.setup(async () => {
@@ -834,7 +835,7 @@ test.group('Migrator', (group) => {
     const db = getDb()
     cleanup(() => db.manager.closeAll())
 
-    assert.plan(4)
+    assert.plan(5)
 
     await fs.create(
       'database/migrations/users_v11.ts',
@@ -892,9 +893,10 @@ test.group('Migrator', (group) => {
     assert.lengthOf(migrated, 2)
     assert.isTrue(hasUsersTable)
     assert.isTrue(hasAccountsTable)
+    assert.instanceOf(migrator1.error, errors.E_MISSING_SCHEMA_FILES)
     assert.equal(
       migrator1.error!.message,
-      'Cannot perform rollback. Schema file {database/migrations/accounts_v11} is missing'
+      'Cannot perform rollback. Schema file "database/migrations/accounts_v11" is missing'
     )
   })
 

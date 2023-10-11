@@ -8,8 +8,8 @@
  */
 
 import { DateTime } from 'luxon'
-import { Exception } from '@poppinss/utils'
 import { LucidRow, LucidModel, DateTimeColumnDecorator } from '../../types/model.js'
+import * as errors from '../../errors.js'
 
 /**
  * The method to prepare the datetime column before persisting it's
@@ -32,13 +32,10 @@ function prepareDateTimeColumn(value: any, attributeName: string, modelInstance:
    */
   if (DateTime.isDateTime(value)) {
     if (!value.isValid) {
-      throw new Exception(
-        `Invalid value for "${modelName}.${attributeName}". ${value.invalidReason}`,
-        {
-          status: 500,
-          code: 'E_INVALID_DATETIME_COLUMN_VALUE',
-        }
-      )
+      throw new errors.E_INVALID_DATE_COLUMN_VALUE([
+        `${modelName}.${attributeName}`,
+        value.invalidReason,
+      ])
     }
 
     const dateTimeFormat = model.query(modelInstance.$options).client.dialect.dateTimeFormat
@@ -48,13 +45,10 @@ function prepareDateTimeColumn(value: any, attributeName: string, modelInstance:
   /**
    * Anything else if not an acceptable value for date column
    */
-  throw new Exception(
-    `The value for "${modelName}.${attributeName}" must be an instance of "luxon.DateTime"`,
-    {
-      status: 500,
-      code: 'E_INVALID_DATETIME_COLUMN_VALUE',
-    }
-  )
+  throw new errors.E_INVALID_DATE_COLUMN_VALUE([
+    `${modelName}.${attributeName}`,
+    'It must be an instance of "luxon.DateTime"',
+  ])
 }
 
 /**
@@ -86,13 +80,10 @@ function consumeDateTimeColumn(value: any, attributeName: string, modelInstance:
    * Any another value cannot be formatted
    */
   const modelName = modelInstance.constructor.name
-  throw new Exception(
-    `Cannot format "${modelName}.${attributeName}" ${typeof value} value to an instance of "luxon.DateTime"`,
-    {
-      status: 500,
-      code: 'E_INVALID_DATETIME_COLUMN_VALUE',
-    }
-  )
+  throw new errors.E_INVALID_DATE_COLUMN_VALUE([
+    `${modelName}.${attributeName}`,
+    `${typeof value} cannot be formatted`,
+  ])
 }
 
 /**

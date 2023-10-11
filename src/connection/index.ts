@@ -10,7 +10,6 @@
 import { Pool } from 'tarn'
 import knex, { Knex } from 'knex'
 import { EventEmitter } from 'node:events'
-import { Exception } from '@poppinss/utils'
 import { patchKnex } from 'knex-dynamic-connection'
 import type { Logger } from '@adonisjs/core/logger'
 // @ts-expect-error
@@ -18,6 +17,7 @@ import { resolveClientNameWithAliases } from 'knex/lib/util/helpers.js'
 import { ConnectionConfig, ConnectionContract, ReportNode } from '../types/database.js'
 
 import { Logger as ConnectionLogger } from './logger.js'
+import * as errors from '../errors.js'
 
 /**
  * Connection class manages a given database connection. Internally it uses
@@ -81,17 +81,11 @@ export class Connection extends EventEmitter implements ConnectionContract {
   private validateConfig(): void {
     if (this.config.replicas) {
       if (!this.config.replicas.read || !this.config.replicas.write) {
-        throw new Exception('Make sure to define read/write replicas or use connection property', {
-          code: 'E_INCOMPLETE_REPLICAS_CONFIG',
-          status: 500,
-        })
+        throw new errors.E_INCOMPLETE_REPLICAS_CONFIG()
       }
 
       if (!this.config.replicas.read.connection || !this.config.replicas.read.connection) {
-        throw new Exception('Make sure to define connection property inside read/write replicas', {
-          status: 500,
-          code: 'E_INVALID_REPLICAS_CONFIG',
-        })
+        throw new errors.E_INVALID_REPLICAS_CONFIG()
       }
     }
   }

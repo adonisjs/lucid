@@ -9,7 +9,6 @@
 
 import slash from 'slash'
 import { EventEmitter } from 'node:events'
-import { Exception } from '@poppinss/utils'
 import { MigratorOptions, MigratedFileNode, MigrationListNode } from '../types/migrator.js'
 
 import {
@@ -24,6 +23,7 @@ import { MigrationSource } from './source.js'
 import { Database } from '../database/main.js'
 import { Application } from '@adonisjs/core/app'
 import { BaseSchema } from '../schema/main.js'
+import * as errors from '../errors.js'
 
 /**
  * Migrator exposes the API to execute migrations using the schema files
@@ -45,7 +45,7 @@ export class MigrationRunner extends EventEmitter {
   private schemaVersionsTableName: string
 
   /**
-   * Whether or not the migrator has been booted
+   * Whether the migrator has been booted
    */
   private booted: boolean = false
 
@@ -254,7 +254,7 @@ export class MigrationRunner extends EventEmitter {
 
   /**
    * Acquires a lock to disallow concurrent transactions. Only works with
-   * `Mysql`, `PostgreSQL` and `MariaDb` for now.
+   * `Mysql`, `PostgresSQL` and `MariaDb` for now.
    *
    * Make sure we are acquiring lock outside the transactions, since we want
    * to block other processes from acquiring the same lock.
@@ -269,14 +269,14 @@ export class MigrationRunner extends EventEmitter {
 
     const acquired = await this.client.dialect.getAdvisoryLock(1)
     if (!acquired) {
-      throw new Exception('Unable to acquire lock. Concurrent migrations are not allowed')
+      throw new errors.E_UNABLE_ACQUIRE_LOCK()
     }
     this.emit('acquire:lock')
   }
 
   /**
    * Release a lock once complete the migration process. Only works with
-   * `Mysql`, `PostgreSQL` and `MariaDb` for now.
+   * `Mysql`, `PostgresSQL` and `MariaDb` for now.
    */
   private async releaseLock() {
     if (!this.client.dialect.supportsAdvisoryLocks || this.disableLocks) {
@@ -285,7 +285,7 @@ export class MigrationRunner extends EventEmitter {
 
     const released = await this.client.dialect.releaseAdvisoryLock(1)
     if (!released) {
-      throw new Exception('Migration completed, but unable to release database lock')
+      throw new errors.E_UNABLE_RELEASE_LOCK()
     }
     this.emit('release:lock')
   }
@@ -293,7 +293,7 @@ export class MigrationRunner extends EventEmitter {
   /**
    * Makes the migrations table (if missing). Also created in dry run, since
    * we always reads from the schema table to find which migrations files to
-   * execute and that cannot done without missing table.
+   * execute and that cannot be done without missing table.
    */
   private async makeMigrationsTable() {
     const hasTable = await this.client.schema.hasTable(this.schemaTableName)
@@ -332,7 +332,7 @@ export class MigrationRunner extends EventEmitter {
   }
 
   /**
-   * Returns the latest migrations version. If no rows exists
+   * Returns the latest migrations version. If no rows exist
    * it inserts a new row for version 1
    */
   private async getLatestVersion() {
@@ -349,7 +349,7 @@ export class MigrationRunner extends EventEmitter {
   /**
    * Upgrade migrations name from version 1 to version 2
    */
-  private async upgradeFromOnetoTwo() {
+  private async upgradeFromOneToTwo() {
     const migrations = await this.getMigratedFilesTillBatch(0)
     const client = await this.getClient(false)
 
@@ -368,7 +368,7 @@ export class MigrationRunner extends EventEmitter {
       await client.from(this.schemaVersionsTableName).where('version', 1).update({ version: 2 })
       await this.commit(client)
     } catch (error) {
-      this.rollback(client)
+      await this.rollback(client)
       throw error
     }
   }
@@ -379,7 +379,7 @@ export class MigrationRunner extends EventEmitter {
   private async upgradeVersion(latestVersion: number): Promise<void> {
     if (latestVersion === 1) {
       this.emit('upgrade:version', { from: 1, to: 2 })
-      await this.upgradeFromOnetoTwo()
+      await this.upgradeFromOneToTwo()
     }
   }
 
@@ -488,10 +488,7 @@ export class MigrationRunner extends EventEmitter {
     existing.forEach((file) => {
       const migration = collected.find(({ name }) => name === file.name)
       if (!migration) {
-        throw new Exception(`Cannot perform rollback. Schema file {${file.name}} is missing`, {
-          status: 500,
-          code: 'E_MISSING_SCHEMA_FILES',
-        })
+        throw new errors.E_MISSING_SCHEMA_FILES([file.name])
       }
 
       this.migratedFiles[migration.name] = {

@@ -19,6 +19,7 @@ import { DBQueryCallback, DatabaseQueryBuilderContract } from '../../types/query
 import { Chainable } from './chainable.js'
 import { QueryRunner } from '../../query_runner/index.js'
 import { SimplePaginator } from '../paginator/simple_paginator.js'
+import * as errors from '../../errors.js'
 
 /**
  * Wrapping the user function for a query callback and give them
@@ -29,7 +30,7 @@ const queryCallback: DBQueryCallback = (userFn, keysResolver) => {
   return (builder: Knex.QueryBuilder) => {
     /**
      * Sub queries don't need the client, since client is used to execute the query
-     * and subqueries are not executed seperately. That's why we just pass
+     * and sub-queries are not executed separately. That's why we just pass
      * an empty object.
      *
      * Other option is to have this method for each instance of the class, but this
@@ -198,7 +199,7 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   async firstOrFail(): Promise<any> {
     const row = await this.first()
     if (!row) {
-      throw new Exception('Row not found', { status: 404, code: 'E_ROW_NOT_FOUND' })
+      throw new errors.E_ROW_NOT_FOUND()
     }
 
     return row
@@ -330,8 +331,8 @@ export class DatabaseQueryBuilder extends Chainable implements DatabaseQueryBuil
   /**
    * Implementation of `finally` for the promise API
    */
-  finally(fullfilled: any) {
-    return this.exec().finally(fullfilled)
+  finally(fulfilled: any) {
+    return this.exec().finally(fulfilled)
   }
 
   /**

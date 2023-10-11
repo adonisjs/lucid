@@ -7,8 +7,8 @@
  * file that was distributed with this source code.
  */
 
-import { Exception } from '@poppinss/utils'
 import { LucidModel } from '../../types/model.js'
+import * as errors from '../../errors.js'
 
 /**
  * Utility to consistently extract relationship keys from the model
@@ -33,13 +33,7 @@ export class KeysExtractor<Keys extends { [key: string]: { key: string; model: L
         const attribute = model.$getColumn(key)
 
         if (!attribute) {
-          throw new Exception(
-            `"${relationRef}" expects "${key}" to exist on "${model.name}" model, but is missing`,
-            {
-              status: 500,
-              code: 'E_MISSING_MODEL_ATTRIBUTE',
-            }
-          )
+          throw new errors.E_MISSING_MODEL_ATTRIBUTE([relationRef, key, model.name])
         }
 
         result[extractKey] = {

@@ -63,6 +63,7 @@ import {
 } from '../../utils/index.js'
 import { SnakeCaseNamingStrategy } from '../naming_strategies/snake_case.js'
 import { LazyLoadAggregates } from '../relations/aggregates_loader/lazy_load.js'
+import * as errors from '../../errors.js'
 
 const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough']
 const DATE_TIME_TYPES = {
@@ -106,7 +107,7 @@ class BaseModelImpl implements LucidRow {
   static primaryKey: string
 
   /**
-   * Whether or not the model has been booted. Booting the model initializes it's
+   * Whether the model has been booted. Booting the model initializes its
    * static properties. Base models must not be initialized.
    */
   static booted: boolean
@@ -307,7 +308,7 @@ class BaseModelImpl implements LucidRow {
     }
 
     /**
-     * Set column as the primary column, when `primary` is to true
+     * Set column as the primary column, when `primary` is true
      */
     if (column.isPrimary) {
       this.primaryKey = name
@@ -401,7 +402,7 @@ class BaseModelImpl implements LucidRow {
   }
 
   /**
-   * Register many to many relationship
+   * Register many-to-many relationship
    */
   protected static $addManyToMany(
     name: string,
@@ -412,7 +413,7 @@ class BaseModelImpl implements LucidRow {
   }
 
   /**
-   * Register many to many relationship
+   * Register has many through relationship
    */
   protected static $addHasManyThrough(
     name: string,
@@ -533,7 +534,7 @@ class BaseModelImpl implements LucidRow {
     this.$defineProperty('selfAssignPrimaryKey', false, 'inherit')
 
     /**
-     * Define the keys property. This allows looking up variations
+     * Define the keys' property. This allows looking up variations
      * for model keys
      */
     this.$defineProperty(
@@ -927,7 +928,7 @@ class BaseModelImpl implements LucidRow {
     )
 
     /**
-     * Perist inside db inside a transaction
+     * Persist inside db inside a transaction
      */
     await managedTransaction(query.client, async (trx) => {
       for (let row of rows) {
@@ -1033,7 +1034,7 @@ class BaseModelImpl implements LucidRow {
 
   /**
    * The transaction listener listens for the `commit` and `rollback` events and
-   * cleansup the `$trx` reference
+   * cleanup the `$trx` reference
    */
   private transactionListener = function listener(this: BaseModelImpl) {
     this.modelTrx = undefined
@@ -1061,10 +1062,7 @@ class BaseModelImpl implements LucidRow {
    */
   private ensureIsntDeleted() {
     if (this.$isDeleted) {
-      throw new Exception('Cannot mutate delete model instance', {
-        status: 500,
-        code: 'E_MODEL_DELETED',
-      })
+      throw new errors.E_MODEL_DELETED()
     }
   }
 
@@ -1203,7 +1201,7 @@ class BaseModelImpl implements LucidRow {
 
   /**
    * Extras are dynamic properties set on the model instance, which
-   * are not serialized and neither casted for adapter calls.
+   * are not serialized and neither cast for adapter calls.
    *
    * This is helpful when adapter wants to load some extra data conditionally
    * and that data must not be persisted back the adapter.
@@ -1211,18 +1209,18 @@ class BaseModelImpl implements LucidRow {
   $extras: ModelObject = {}
 
   /**
-   * Sideloaded are dynamic properties set on the model instance, which
-   * are not serialized and neither casted for adapter calls.
+   * Side-loaded are dynamic properties set on the model instance, which
+   * are not serialized and neither cast for adapter calls.
    *
-   * This is helpful when you want to add dynamic meta data to the model
+   * This is helpful when you want to add dynamic metadata to the model
    * and it's children as well.
    *
    * The difference between [[extras]] and [[sideloaded]] is:
    *
    * - Extras can be different for each model instance
    * - Extras are not shared down the hierarchy (example relationships)
-   * - Sideloaded are shared across multiple model instances created via `$createMultipleFromAdapterResult`.
-   * - Sideloaded are passed to the relationships as well.
+   * - Side-loaded are shared across multiple model instances created via `$createMultipleFromAdapterResult`.
+   * - Side-loaded are passed to the relationships as well.
    */
   $sideloaded: ModelObject = {}
 
@@ -1535,7 +1533,7 @@ class BaseModelImpl implements LucidRow {
     }
 
     /**
-     * Dis-allow setting multiple model instances for a one to one relationship
+     * Dis-allow setting multiple model instances for a one-to-one relationship
      */
     if (Array.isArray(models)) {
       throw new Error(
@@ -1666,7 +1664,7 @@ class BaseModelImpl implements LucidRow {
 
         /**
          * Resolve the attribute name from the column names. Since people
-         * usaully define the column names directly as well by
+         * usually define the column names directly as well by
          * accepting them directly from the API.
          */
         const attributeName = Model.$keys.columnsToAttributes.get(key)
@@ -1791,7 +1789,7 @@ class BaseModelImpl implements LucidRow {
     const Model = this.constructor as typeof BaseModel
 
     /**
-     * Persit the model when it's not persisted already
+     * Persist the model when it's not persisted already
      */
     if (!this.$isPersisted) {
       await Model.$hooks.runner('before:create').run(this)
@@ -1809,7 +1807,7 @@ class BaseModelImpl implements LucidRow {
     }
 
     /**
-     * Call hooks before hand, so that they have the chance
+     * Call hooks beforehand, so that they have the chance
      * to make mutations that produces one or more `$dirty`
      * fields.
      */
@@ -1896,7 +1894,7 @@ class BaseModelImpl implements LucidRow {
 
   /**
    * Serializes relationships to a plain object. When `raw=true`, it will
-   * recurisvely serialize the relationships as well.
+   * recursively serialize the relationships as well.
    */
   serializeRelations(
     cherryPick?: CherryPick['relations'],
@@ -1925,7 +1923,7 @@ class BaseModelImpl implements LucidRow {
       }
 
       /**
-       * Always make sure we passing a valid object or undefined
+       * Always make sure we are passing a valid object or undefined
        * to the relationships
        */
       const relationOptions = cherryPick ? cherryPick[relation.serializeAs] : undefined
