@@ -467,6 +467,41 @@ test.group('Query Builder | where', (group) => {
     await connection.disconnect()
   })
 
+  test('add where clause with a null comparison', async ({ assert }) => {
+    const connection = new Connection('primary', getConfig(), app.logger)
+    connection.connect()
+
+    let db = getQueryBuilder(getQueryClient(connection, app))
+    const { sql, bindings } = db.from('users').where('username', null).toSQL()
+
+    const { sql: knexSql, bindings: knexBindings } = connection
+      .client!.from('users')
+      .where('username', null)
+      .toSQL()
+
+    assert.equal(sql, knexSql)
+    assert.deepEqual(bindings, knexBindings)
+
+    /**
+     * Using keys resolver
+     */
+    db = getQueryBuilder(getQueryClient(connection, app))
+    db.keysResolver = (key) => `my_${key}`
+    const { sql: resolverSql, bindings: resolverBindings } = db
+      .from('users')
+      .where('username', null)
+      .toSQL()
+
+    const { sql: knexResolverSql, bindings: knexResolverBindings } = connection
+      .client!.from('users')
+      .where('my_username', null)
+      .toSQL()
+
+    assert.equal(resolverSql, knexResolverSql)
+    assert.deepEqual(resolverBindings, knexResolverBindings)
+    await connection.disconnect()
+  })
+
   test('wrap where clause to its own group', async ({ assert }) => {
     const connection = new Connection('primary', getConfig(), app.logger)
     connection.connect()
