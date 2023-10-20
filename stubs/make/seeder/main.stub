@@ -1,7 +1,9 @@
 {{#var seederFileName = generators.seederFileName(entity.name)}}
----
-to: {{ app.seedersPath(entity.path, seederFileName) }}
----
+{{{
+  exports({
+    to: app.seedersPath(entity.path, seederFileName)
+  })
+}}}
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 
 export default class extends BaseSeeder {

@@ -1,8 +1,10 @@
 {{#var modelName = generators.modelName(entity.name)}}
 {{#var modelFileName = generators.modelFileName(entity.name)}}
----
-to: {{ app.modelsPath(entity.path, modelFileName) }}
----
+{{{
+  exports({
+    to: app.modelsPath(entity.path, modelFileName)
+  })
+}}}
 import { DateTime } from 'luxon'
 import { BaseModel, column } from '@adonisjs/lucid/orm'
 

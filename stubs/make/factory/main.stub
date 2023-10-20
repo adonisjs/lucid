@@ -3,9 +3,11 @@
 {{#var modelName = generators.modelName(model.name)}}
 {{#var modelFileName = generators.modelFileName(model.name)}}
 {{#var modelImportPath = generators.importPath('#models', model.path, modelFileName.replace(/\.ts$/, ''))}}
----
-to: {{ app.factoriesPath(entity.path, factoryFileName) }}
----
+{{{
+  exports({
+    to: app.factoriesPath(entity.path, factoryFileName)
+  })
+}}}
 import factory from '@adonisjs/lucid/factories'
 import {{ modelName }} from '{{ modelImportPath }}'
 

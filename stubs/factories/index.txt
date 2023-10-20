@@ -1,1 +1,0 @@
-import factory from '@adonisjs/lucid/factories'

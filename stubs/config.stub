@@ -1,6 +1,6 @@
----
-to: {{ app.configPath('database.ts') }}
----
+{{{
+  exports({ to: app.configPath('database.ts') })
+}}}
 import env from '#start/env'
 {{#if dialect === 'sqlite'}}
 import app from '@adonisjs/core/services/app'
