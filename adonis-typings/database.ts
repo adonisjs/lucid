@@ -427,6 +427,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    */
   type PostgresConnectionNode = {
     ssl?: boolean | ConnectionOptions
+    connectionString?: string
   }
   export type PostgreConfig = SharedConfigNode & {
     client: 'pg' | 'postgres' | 'postgresql'
